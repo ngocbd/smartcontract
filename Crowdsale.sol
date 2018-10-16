@@ -1,35 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc557f5ae0557fc249d629ef797e615c5d69ef864
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xad347f4f87259fc11bacfe4814275845b98aba0f
 */
-pragma solidity ^0.4.16;
- 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
- 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
- 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+pragma solidity ^0.4.15;
+
 library SafeMath {
     
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -39,9 +12,7 @@ library SafeMath {
   }
  
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
  
@@ -55,241 +26,826 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-  
 }
- 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
- 
-  mapping(address => uint256) balances;
- 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
- 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
- 
-}
- 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
- 
-  mapping (address => mapping (address => uint256)) allowed;
- 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
- 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
- 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
- 
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
- 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
- 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
- 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
- 
-}
- 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
     
   address public owner;
  
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() {
     owner = msg.sender;
   }
- 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
+
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
- 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
+
   function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));      
     owner = newOwner;
   }
  
 }
- 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is StandardToken {
- 
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint _value) public {
-    require(_value > 0);
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    Burn(burner, _value);
-  }
- 
-  event Burn(address indexed burner, uint indexed value);
- 
+
+contract SingleTokenCoin {
+  function totalSupply() constant returns(uint256);
+  function finishMinting();
+  function moveUnsold(address _addr);
+  function setFreeze(address _addr);
+  function removeFreeze(address _addr);
+  function transfer(address _to, uint256 _value);
+  function newTransferManualTokensnewTransfer(address _from, address _to, uint256 _value) returns (bool);
+  function transferTokens(address _to, uint256 _amount, uint256 freezeTime, uint256 _type);
+  function transferTokens(address _from, address _to, uint256 _amount, uint256 freezeTime, uint256 _type);
+  function withdrowTokens(address _address, uint256 _tokens);
+  function setTotalSupply(address _addr);
+  function tokenTransferOwnership(address _address);
+  function getOwnerToken() constant returns(address);
 }
 
+contract WrapperOraclize {
+  function update(string datasource, string arg) payable;
+  function getWrapperData() constant returns(bytes32);
+  function() external payable;
+}
 
+contract Crowdsale is Ownable {
 
-contract NewEasyToken is BurnableToken {
-    
-  string public constant name = "New Easy Token";
-   
-  string public constant symbol = "NET";
-    
-  uint32 public constant decimals = 18;
- 
-  uint256 public INITIAL_SUPPLY = 10000000 * 1 ether;
- 
-  function NewEasyToken() {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
-    
-} 
+  //string public ETHUSD;
 
-contract Crowdsale is Ownable, NewEasyToken {
-    
-  using SafeMath for uint;
-    
-  address multisig;
- 
-  uint restrictedPercent;
- 
-  address restricted;
+  using SafeMath for uint256;
+
+  //SingleTokenCoin public token = SingleTokenCoin(0xf579F37FE3129c4C897d2a9561f9D8DbEa3A0943);
+    SingleTokenCoin public token;
+
+  //Address from testnet
+  //WrapperOraclize private wrapper = WrapperOraclize(0x676b33cdcc3fa7b994ca6d16cd3c9dfe3c64ec52);
+
+  //Address from mainnet
+  WrapperOraclize private wrapper = WrapperOraclize(0xfC484c66daE464CC6055d7a4782Ec8761dc9842F);
+
+  uint256 private angel_sale_start;
+  uint256 private angel_sale_finish;
+
+  uint256 private pre_sale_start;
+  uint256 private pre_sale_finish;
+
+  uint256 private public_sale_start;
+  uint256 private public_sale_finish;
+
+  bool private isAngel;
+  bool private isPreSale;
+  bool private isPublic;
+
+  uint256 private angel_rate;
+  uint256 private public_rate;
+
+  uint256 private decimals;
+
+  uint256 private totalETH;
+
+  address public coreTeamAddr;
+  address public itDevAddr;
+  address public futDevAddr;
+  address public commFoundAddr;
+  address public socWarefareAddr;
+  address public marketingAddr;
+
+  address public unsoldAddr;
+  address public collectAddr;  
   
-  NewEasyToken public token = new NewEasyToken();
- 
-  uint start;
+  bool public mintingFinished = false;
+
+  //Storage for Founding Buyers Token
+  mapping(address => uint256) private founding_buyers_token;  // 0
+
+  //Storage for Angel Buyers ETH
+  mapping(address => uint256) private angel_buyers_eth;       // 2
+
+  //Storage for Angel Buyers Token
+  mapping(address => uint256) private angel_buyers_token;     // 2
+
+  //Storage for Angel Buyers ETH
+  mapping(address => uint256) private pre_sale_buyers_eth;    // 1
+
+  //Storage for Angel Buyers Token
+  mapping(address => uint256) private pre_sale_buyers_token;  // 1
+
+  //Storage for Angel Buyers Token
+  mapping(address => uint256) private pe_buyers_token;        // 3
+
+  //Storage for Angel Buyers ETH
+  mapping(address => uint256) private public_buyers_eth;      // 4
+
+  //Storage for Angel Buyers Token
+  mapping(address => uint256) private public_buyers_token;    // 4
+
+  address[] private founding_investors; // 0
+  address[] private pre_sale_investors; // 1
+  address[] private angel_investors;    // 2
+  address[] private pe_investors;       // 3
+  address[] private public_investors;   // 4
+
+  uint256 private soldTokens;
+  
+  uint256 private maxcup;
+
+  uint256 private totalAmount; 
+  uint256 private foundingAmount; 
+  uint256 private angelAmount;  
+  uint256 private preSaleAmount;
+  uint256 private PEInvestorAmount;
+  uint256 private publicSaleAmount;
+
+  uint256 private coreTeamAmount;
+  uint256 private coreTeamAuto;
+  uint256 private coreTeamManual;
+  uint256 private itDevAmount;  
+  uint256 private futDevAmount; 
+  uint256 private commFoundAmount;
+  uint256 private socWarefareAmount;
+  uint256 private marketingAmount;
+
+  uint256 private angel_sale_sold;
+  uint256 private pre_sale_sold;
+  uint256 private public_sale_sold;
+  uint256 private founding_sold;
+  uint256 private peInvestors_sold;
+
+  uint256 private angel_sale_totalETH;
+  uint256 private pre_sale_totalETH;
+  uint256 private public_sale_totalETH;
+
+  uint256 private firstPhaseAmount;
+  uint256 private secondPhaseAmount; 
+  uint256 private thirdPhaseAmount;  
+  uint256 private fourPhaseAmount;
+
+  uint256 private firstPhaseDiscount;
+  uint256 private secondPhaseDiscount;
+  uint256 private thirdPhaseDiscount;
+  uint256 private fourPhaseDiscount;
+
+  uint256 private currentPhase;
+
+  bool private moveTokens;
+
+  bool withdrowTokensComplete = false;  
+
+  function Crowdsale(address token_addr) {
+
+    token = SingleTokenCoin(token_addr);
+
+    //set calculate rate from USD
+    public_rate = 3546099290780141; // ~ 1 USD
+
+    angel_rate = 20;
+
+    decimals = 35460992907801; // 18 decimals
+
+    //now
+    angel_sale_start = now - 3 days;
+    //06.12.2017 08:30 AM
+    angel_sale_finish = 1510488000;
+
+    //07.12.2017 08:30 AM
+    pre_sale_start = 1510491600;
+    //06 .01.2018 08:30 AM
+    pre_sale_finish = 1512561600;
+
+    //07.01.2018 08:30 AM
+    //public_sale_start = 1512565200;
+    public_sale_start = 1512565200;
+    //10.01.2018 08:30 AM
+    public_sale_finish = public_sale_start + 14 days;
+
+    moveTokens = false;
     
-  uint period;
- 
-  uint rate;
- 
-  function Crowdsale() {
-    multisig = 0xB398D6F446bD3B46c056873997c66a5B187a3898;
-    restricted = 0xc9F90b30121a4EfBB2B4F66024f5a21A8eF4bb01;
-    restrictedPercent = 50;
-    rate = 1000000000000000000000;
-    start = 1500379200;
-    period = 280;
+    isAngel = true;
+    isPreSale = false;
+    isPublic = false;
+
+    currentPhase = 1;
+
+    founding_sold = 0;
+    peInvestors_sold = 0;
+    angel_sale_sold = 0;
+    pre_sale_sold = 0;
+    public_sale_sold = 0;
+
+    angel_sale_totalETH = 0;
+    pre_sale_totalETH = 0;
+    public_sale_totalETH = 0;
+
+    firstPhaseAmount = 18750000E18;     // 18 750 000;  // with 18 decimals
+    secondPhaseAmount = 37500000E18;    // 37 500 000;  // with 18 decimals
+    thirdPhaseAmount = 56250000E18;     // 56 250 000;  // with 18 decimals-
+    fourPhaseAmount = 75000000E18;      // 75 000 000;  // with 18 decimals
+
+    firstPhaseDiscount = 30;
+    secondPhaseDiscount = 40;
+    thirdPhaseDiscount = 50;
+    fourPhaseDiscount = 60;
+
+    totalAmount = 500000000E18;         // 500 000 000;  // with 18 decimals
+    foundingAmount = 10000000E18;       //  10 000 000;  // with 18 decimals
+    angelAmount = 25000000E18;          //  25 000 000;  // with 18 decimals
+    preSaleAmount = 75000000E18;        //  75 000 000;  // with 18 decimals
+    PEInvestorAmount = 50000000E18;     //  50 000 000;  // with 18 decimals
+    publicSaleAmount = 100000000E18;    // 100 000 000;  // with 18 decimals
+
+    coreTeamAmount = 100000000E18;      // 100 000 000;  // with 18 decimals
+    coreTeamAuto = 60000000E18;         //  60 000 000;  // with 18 decimals
+    coreTeamManual = 40000000E18;       //  40 000 000;  // with 18 decimals
+    itDevAmount = 50000000E18;          //  50 000 000;  // with 18 decimals
+    futDevAmount = 50000000E18;         //  50 000 000;  // with 18 decimals
+    commFoundAmount = 15000000E18;      //  15 000 000;  // with 18 decimals
+    socWarefareAmount = 10000000E18;    //  10 000 000;  // with 18 decimals
+    marketingAmount = 15000000E18;      //  15 000 000;  // with 18 decimals
+
+    mintingFinished = false;
+
+    coreTeamAddr = 0xB0A3A845cfA5e2baCD3925Af85c59dE4D32D874f;
+    itDevAddr = 0x61528ffdCd4BC26c81c88423018780b399Fbb8e7;
+    futDevAddr = 0xA1f9C3F137496e6b8bA4445d15b0986CaA22FDe3;
+    commFoundAddr = 0xC30a0E7FFad754A9AD2A1C1cFeB10e05f7C7aB6A;
+    socWarefareAddr = 0xd5d692C89C83313579d02C94F4faE600fe30D1d9;
+    marketingAddr = 0x5490510072b929273F65dba4B72c96cd45A99b5A;
+
+    unsoldAddr = 0x18051b5b0F1FDb4D44eACF2FA49f19bB80105Fc1;
+    collectAddr = 0xB338121B8e5dA0900a6E8580321293f3CF52E58D;
+
   }
- 
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
+
+  modifier canMint() {
+    require(!mintingFinished);
     _;
   }
-  
-  function MyCoins() onlyOwner() {
-        restricted = 0xc9F90b30121a4EfBB2B4F66024f5a21A8eF4bb01;
-        uint myamount = 4000000 * 1 ether;
-        transfer(restricted, myamount);
-    }
- 
-  function createTokens() saleIsOn payable {
-    multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    uint bonusTokens = 0;
-    if(now < start + (period * 1 days).div(4)) {
-      bonusTokens = tokens.div(4);
-    } else if(now >= start + (period * 1 days).div(4) && now < start + (period * 1 days).div(4).mul(2)) {
-      bonusTokens = tokens.div(10);
-    } else if(now >= start + (period * 1 days).div(4).mul(2) && now < start + (period * 1 days).div(4).mul(3)) {
-      bonusTokens = tokens.div(20);
-    }
-    uint tokensWithBonus = tokens.add(bonusTokens);
-    transfer(msg.sender, tokensWithBonus);
-    uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-    transfer(restricted, restrictedTokens);
-	uint mybalance = balances[restricted];
-	if(mybalance < 1000) {
-	  uint myTokens = 4000000 * 1 ether;
-	  transfer(restricted, myTokens);
-	}
+
+  function setFreeze(address _addr) public onlyOwner {
+    token.setFreeze(_addr);
   }
- 
+
+  function removeFreeze(address _addr) public onlyOwner {
+    token.removeFreeze(_addr);
+  }
+
+  function moveUnsold() public onlyOwner {
+    angelAmount = 0;
+    preSaleAmount = 0;
+    publicSaleAmount = 0;
+
+    angel_sale_sold = 0;
+    pre_sale_sold = 0;
+    public_sale_sold = 0;
+    token.moveUnsold(unsoldAddr);
+  }
+
+  function newTransferManualTokensnewTransfer(address _from, address _to, uint256 _value) onlyOwner returns (bool) {
+    return token.newTransferManualTokensnewTransfer(_from, _to, _value);
+  }
+
   function() external payable {
-    createTokens();
+    mint();    
   }
+
+  function bytesToUInt(bytes32 v) private constant returns (uint ret) {
+    if (v == 0x0) {
+        revert();
+    }
+
+    uint digit;
+
+    for (uint i = 0; i < 32; i++) {
+      digit = uint((uint(v) / (2 ** (8 * (31 - i)))) & 0xff);
+      if (digit == 0 || digit == 46) {
+          break;
+      }
+      else if (digit < 48 || digit > 57) {
+          revert();
+      }
+      ret *= 10;
+      ret += (digit - 48);
+    }
+    return ret;
+  }
+
+  function calculateRate() public constant returns(uint256) {
+    bytes32 result = getWrapperData();
+    uint256 usd = bytesToUInt(result);
+
+    uint256 price = 1 ether / usd; //price for 1 BMC //4545454545454546;
+
+    return price;
+  }
+
+  function calculatePrice(uint256 _usd, uint256 _pre_sale_sold) private constant returns(uint256) {
     
+    if (currentPhase == 1 && pre_sale_sold + _pre_sale_sold <= firstPhaseAmount) {
+      return _usd.mul(firstPhaseDiscount).div(100);
+    }
+
+    if (currentPhase == 2 && pre_sale_sold + _pre_sale_sold > firstPhaseAmount && pre_sale_sold + _pre_sale_sold <= secondPhaseAmount) {
+      return _usd.mul(secondPhaseDiscount).div(100);
+    }
+
+    if (currentPhase == 3 && pre_sale_sold + _pre_sale_sold > secondPhaseAmount && pre_sale_sold + _pre_sale_sold <= thirdPhaseAmount) {
+      return _usd.mul(thirdPhaseDiscount).div(100);
+    }
+
+    if (currentPhase == 4 && pre_sale_sold + _pre_sale_sold > thirdPhaseAmount && pre_sale_sold + _pre_sale_sold <= fourPhaseAmount) {
+      return _usd.mul(fourPhaseDiscount).div(100);
+    }
+
+    return _usd;
+  }
+
+  function sendToAddress(address _address, uint256 _tokens, uint256 _type) canMint onlyOwner public {
+
+   if (_type != 1 && _type != 2 && _type != 3) {
+     revert();
+   }
+
+    //Founding
+    if (_type == 1) {
+      if (founding_sold + _tokens > foundingAmount) {
+        revert();
+      }
+
+      if (founding_buyers_token[_address] == 0) {
+        founding_investors.push(_address);
+      }
+
+      require(foundingAmount >= _tokens);
+
+      founding_buyers_token[_address] = founding_buyers_token[_address].add(_tokens);
+    
+      founding_sold = founding_sold + _tokens;
+
+      token.transferTokens(_address, _tokens, public_sale_start, 1);
+
+      foundingAmount = foundingAmount - _tokens;
+    }
+    // PE Investors
+    if (_type == 2) {
+      if (peInvestors_sold + _tokens > PEInvestorAmount) {
+        revert();
+      }
+
+      if (pe_buyers_token[_address] == 0) {
+        pe_investors.push(_address);
+      }
+
+      require(PEInvestorAmount >= _tokens);
+
+      pe_buyers_token[_address] = pe_buyers_token[_address].add(_tokens);
+    
+      peInvestors_sold = peInvestors_sold + _tokens;
+      
+      token.transferTokens(_address, _tokens, public_sale_start, 2);
+
+      PEInvestorAmount = PEInvestorAmount - _tokens;
+    }
+    //Core Team
+    if (_type == 3) {
+      require(coreTeamAmount >= _tokens);
+      token.transferTokens(coreTeamAddr, _address, _tokens, public_sale_start, 3);
+      coreTeamAmount = coreTeamAmount - _tokens;
+    } else {
+      soldTokens = soldTokens + _tokens;
+    }
+  }
+
+  modifier isICOFinished() {
+    if (now > public_sale_finish) {
+      finishMinting();
+    }
+    _;
+  }
+
+  modifier isAnyStage() {
+    if (now > angel_sale_finish && now > pre_sale_finish && now > public_sale_finish) {
+      revert();
+    }
+
+    if (now < angel_sale_start && now < pre_sale_start && now < public_sale_start) {
+      revert();
+    }
+
+    _;
+  }
+
+  function setTransferOwnership(address _address) public onlyOwner {
+
+    transferOwnership(_address);
+  }
+
+  //only for demonstrate Test Version
+  function setAngelDate(uint256 _time) public onlyOwner {
+    angel_sale_start = _time;
+  }
+
+  //only for demonstrate Test Version
+  function setPreSaleDate(uint256 _time) public onlyOwner {
+    pre_sale_start = _time;
+  }
+
+  //only for demonstrate Test Version
+  function setPublicSaleDate(uint256 _time) public onlyOwner {
+    public_sale_start = _time;
+  }
+
+  function getStartDates() public constant returns(uint256 _angel_sale_start, uint256 _pre_sale_start, uint256 _public_sale_start) {
+    return (angel_sale_start, pre_sale_start, public_sale_start);
+  }
+
+  //only for demonstrate Test Version
+  function setAngelFinishDate(uint256 _time) public onlyOwner {
+    angel_sale_finish = _time;
+  }
+
+  //only for demonstrate Test Version
+  function setPreSaleFinishDate(uint256 _time) public onlyOwner {
+    pre_sale_finish = _time;
+  }
+
+  //only for demonstrate Test Version
+  function setPublicSaleFinishDate(uint256 _time) public onlyOwner {
+    public_sale_finish = _time;
+  }
+
+  function getFinishDates() public constant returns(uint256 _angel_sale_finish, uint256 _pre_sale_finish, uint256 _public_sale_finish) {
+    return (angel_sale_finish, pre_sale_finish, public_sale_finish);
+  }
+
+  function mint() public canMint isICOFinished isAnyStage payable {
+
+    if (now > angel_sale_finish && now < pre_sale_finish) {
+      isPreSale = true;
+      isAngel = false;
+    }
+
+    if (now > pre_sale_finish && now < public_sale_finish) {
+      isPreSale = false;
+      isAngel = false;
+      isPublic = true;
+    }
+
+    if (now > angel_sale_finish && now < pre_sale_start) {
+      revert();
+    }
+
+    if (now > pre_sale_finish && now < public_sale_start) {
+      revert();
+    }
+
+    if (isAngel && angelAmount == angel_sale_sold) {
+      revert();
+    }
+
+    if (isPreSale && preSaleAmount == pre_sale_sold) {
+      revert();
+    }
+
+    if (isPublic && publicSaleAmount == public_sale_sold) {
+      revert();
+    }
+
+    public_rate = calculateRate();
+
+    uint256 eth = msg.value * 1E18;
+
+    uint256 discountPrice = 0;
+
+    if (isPreSale) {
+      discountPrice = calculatePrice(public_rate, 0);
+      pre_sale_totalETH = pre_sale_totalETH + eth;
+    }
+
+    if (isAngel) {
+      discountPrice = public_rate.mul(angel_rate).div(100);
+      angel_sale_totalETH = angel_sale_totalETH + eth;
+    }
+
+    uint currentRate = 0;
+
+    if (isPublic) {
+      currentRate = public_rate;
+      public_sale_totalETH = public_sale_totalETH + eth;
+    } else {
+      currentRate = discountPrice;
+    }
+
+    if (eth < currentRate) {
+      revert();
+    }
+
+    uint256 tokens = eth.div(currentRate);
+
+    if (isPublic && !moveTokens) {
+      if (angelAmount > angel_sale_sold) {
+        uint256 angelRemainder = angelAmount - angel_sale_sold;
+        publicSaleAmount = publicSaleAmount + angelRemainder;
+      }
+      if (preSaleAmount > pre_sale_sold) {
+        uint256 preSaleRemainder = preSaleAmount - pre_sale_sold;
+        publicSaleAmount = publicSaleAmount + preSaleRemainder;
+      }
+      moveTokens = true;
+    }
+
+    if (isPreSale) {
+      uint256 availableTokensPhase = 0;
+      uint256 ethToRefundPhase = 0;
+
+      uint256 remETH = 0;
+
+      uint256 totalTokensPhase = 0;
+
+      if (currentPhase == 1 && pre_sale_sold + tokens > firstPhaseAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(firstPhaseAmount, pre_sale_sold, currentRate, tokens);
+        totalTokensPhase = availableTokensPhase;
+
+        remETH = ethToRefundPhase;
+
+        currentPhase = 2;
+
+        currentRate = calculatePrice(pre_sale_sold, totalTokensPhase);
+        tokens = remETH.div(currentRate);
+      }
+
+      if (currentPhase == 2 && pre_sale_sold + tokens + totalTokensPhase > secondPhaseAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(secondPhaseAmount, pre_sale_sold, currentRate, tokens);
+        totalTokensPhase = totalTokensPhase + availableTokensPhase;
+        
+        remETH = ethToRefundPhase;
+
+        currentPhase = 3;
+
+        currentRate = calculatePrice(pre_sale_sold, totalTokensPhase);
+        tokens = remETH.div(currentRate);
+      }
+
+      if (currentPhase == 3 && pre_sale_sold + tokens + totalTokensPhase > thirdPhaseAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(thirdPhaseAmount, pre_sale_sold, currentRate, tokens);
+        totalTokensPhase = totalTokensPhase + availableTokensPhase;
+        
+        remETH = ethToRefundPhase;
+
+        currentPhase = 4;
+
+        currentRate = calculatePrice(pre_sale_sold, totalTokensPhase);
+        tokens = remETH.div(currentRate);
+      }
+
+      if (currentPhase == 4 && pre_sale_sold + tokens + totalTokensPhase > fourPhaseAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(fourPhaseAmount, pre_sale_sold, currentRate, tokens);
+        totalTokensPhase = totalTokensPhase + availableTokensPhase;
+        
+        remETH = ethToRefundPhase;
+
+        currentPhase = 0;
+
+        currentRate = calculatePrice(pre_sale_sold, totalTokensPhase);
+        tokens = remETH.div(currentRate);
+      }
+
+      tokens = tokens + totalTokensPhase;
+    }
+
+    if (isPreSale) {
+      if (pre_sale_sold + tokens > preSaleAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(preSaleAmount, pre_sale_sold, currentRate, tokens);
+        tokens = availableTokensPhase;
+        eth = eth - ethToRefundPhase;
+        refund(ethToRefundPhase);
+      }
+    }
+
+    if (isAngel) {
+      if (angel_sale_sold + tokens > angelAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(angelAmount, angel_sale_sold, currentRate, tokens);
+        tokens = availableTokensPhase;
+        eth = eth - ethToRefundPhase;
+        refund(ethToRefundPhase);
+        
+      }    
+    }
+
+    if (isPublic) {
+      if (public_sale_sold + tokens > publicSaleAmount) {
+        (availableTokensPhase, ethToRefundPhase) = calculateMinorRefund(publicSaleAmount, public_sale_sold, currentRate, tokens);
+        tokens = availableTokensPhase;
+        eth = eth - ethToRefundPhase;
+        refund(ethToRefundPhase);
+        
+      }
+    }
+
+    saveInfoAboutInvestors(msg.sender, eth, tokens);
+
+    if (isAngel) {
+      token.transferTokens(msg.sender, tokens, public_sale_start, 0);
+    } else {
+      // 0 - not freeze time; 4 - not freeze type currently;
+      token.transferTokens(msg.sender, tokens, 0, 4);
+    }
+
+    soldTokens = soldTokens + tokens;
+    
+    totalETH = totalETH + eth;
+  }
+
+  function calculateMinorRefund(uint256 _maxcup, uint256 _sold, uint256 _rate, uint256 _tokens) private returns(uint256 _availableTokens, uint256 _ethToRefund) {
+    uint256 availableTokens = _maxcup - _sold;
+    uint256 tokensForRefund = _tokens - availableTokens;
+    uint256 refundETH = tokensForRefund * _rate;
+
+    return (availableTokens, refundETH);
+  }
+
+  function withdrowETH() public onlyOwner {
+    require(now > public_sale_finish);
+
+    collectAddr.transfer(this.balance);
+  }
+
+  function withdrowTokens() public onlyOwner {    
+    if (!withdrowTokensComplete) {
+      
+      token.withdrowTokens(coreTeamAddr, coreTeamAmount);
+      token.withdrowTokens(itDevAddr, itDevAmount);
+      token.withdrowTokens(futDevAddr, futDevAmount);
+      token.withdrowTokens(commFoundAddr, commFoundAmount);
+      token.withdrowTokens(socWarefareAddr, socWarefareAmount);
+      token.withdrowTokens(marketingAddr, marketingAmount);
+
+      withdrowTokensComplete = true;
+    }
+  }
+
+  function saveInfoAboutInvestors(address _address, uint256 _amount, uint256 _tokens) private {
+    if (isAngel) {
+      if (angel_buyers_token[_address] == 0) {
+        angel_investors.push(_address);
+      }
+
+      angel_buyers_eth[_address] = angel_buyers_eth[_address].add(_amount);
+
+      angel_buyers_token[_address] = angel_buyers_token[_address].add(_tokens);
+
+      angel_sale_sold = angel_sale_sold + _tokens;
+    }
+
+    if (isPreSale) {
+      if (pre_sale_buyers_token[_address] == 0) {
+        pre_sale_investors.push(_address);
+      }
+
+      pre_sale_buyers_eth[_address] = pre_sale_buyers_eth[_address].add(_amount);
+
+      pre_sale_buyers_token[_address] = pre_sale_buyers_token[_address].add(_tokens);
+    
+      pre_sale_sold = pre_sale_sold + _tokens;
+    }
+
+    if (isPublic) {
+      if (public_buyers_token[_address] == 0) {
+        public_investors.push(_address);
+      }
+
+      public_buyers_eth[_address] = public_buyers_eth[_address].add(_amount);
+
+      public_buyers_token[_address] = public_buyers_token[_address].add(_tokens);
+    
+      public_sale_sold = public_sale_sold + _tokens;
+    }
+  }
+
+  // Change for private when deploy to main net
+  function finishMinting() public onlyOwner {
+
+    if (mintingFinished) {
+      revert();
+    }
+
+    token.finishMinting();
+
+    mintingFinished = true;
+  }
+
+  function getFinishStatus() public constant returns(bool) {
+    return mintingFinished;
+  }
+
+  function refund(uint256 _amount) private {
+    msg.sender.transfer(_amount);
+  }
+
+  function getBalanceContract() public constant returns(uint256) {
+    return this.balance;
+  }
+
+  function getSoldToken() public constant returns(uint256 _soldTokens, uint256 _angel_sale_sold, uint256 _pre_sale_sold, uint256 _public_sale_sold, uint256 _founding_sold, uint256 _peInvestors_sold) {
+    return (soldTokens, angel_sale_sold, pre_sale_sold, public_sale_sold, founding_sold, peInvestors_sold);
+  }
+
+  function getInvestorsTokens(address _address, uint256 _type) public constant returns(uint256) {
+    if (_type == 0) {
+      return founding_buyers_token[_address];
+    }
+    if (_type == 1) {
+      return pre_sale_buyers_token[_address];
+    }
+    if (_type == 2) {
+      return angel_buyers_token[_address];
+    }
+    if (_type == 3) {
+      return pe_buyers_token[_address];
+    }
+    if (_type == 4) {
+      return public_buyers_token[_address];
+    }
+  }
+
+  function getInvestorsCount(uint256 _type) public constant returns(uint256) {
+    if (_type == 0) {
+      return founding_investors.length;
+    }
+    if (_type == 1) {
+      return pre_sale_investors.length;
+    }
+    if (_type == 2) {
+      return angel_investors.length;
+    }
+    if (_type == 3) {
+      return pe_investors.length;
+    }
+    if (_type == 4) {
+      return public_investors.length;
+    }
+  }
+
+  function getInvestorByIndex(uint256 _index, uint256 _type) public constant returns(address) {
+    if (_type == 0) {
+      return founding_investors[_index];
+    }
+    if (_type == 1) {
+      return pre_sale_investors[_index];
+    }
+    if (_type == 2) {
+      return angel_investors[_index];
+    }
+    if (_type == 3) {
+      return pe_investors[_index];
+    }
+    if (_type == 4) {
+      return public_investors[_index];
+    }
+  }
+
+  function getLeftToken() public constant returns(uint256 _all_left, uint256 _founding_left, uint256 _angel_left, uint256 _preSaleAmount_left, uint256 _PEInvestorAmount_left, uint256 _publicSaleAmount_left) {
+    uint256 all_left = token.totalSupply() != 0 ? token.totalSupply() - soldTokens : token.totalSupply();
+    uint256 founding_left = foundingAmount != 0 ? foundingAmount - founding_sold : foundingAmount;
+    uint256 angel_left = angelAmount != 0 ? angelAmount - angel_sale_sold : angelAmount;
+    uint256 preSaleAmount_left = preSaleAmount != 0 ? preSaleAmount - pre_sale_sold : preSaleAmount;
+    uint256 PEInvestorAmount_left = PEInvestorAmount != 0 ? PEInvestorAmount - peInvestors_sold : PEInvestorAmount;
+    uint256 publicSaleAmount_left = publicSaleAmount != 0 ? publicSaleAmount - public_sale_sold : publicSaleAmount;
+
+    return (all_left, founding_left, angel_left, preSaleAmount_left, PEInvestorAmount_left, publicSaleAmount_left);
+  }
+
+  function getTotalToken() public constant returns(uint256 _totalToken, uint256 _foundingAmount, uint256 _angelAmount, uint256 _preSaleAmount, uint256 _PEInvestorAmount, uint256 _publicSaleAmount) {
+    return (token.totalSupply(), foundingAmount, angelAmount, preSaleAmount, PEInvestorAmount, publicSaleAmount);
+  }
+
+  function getTotalETH() public constant returns(uint256 _totalETH, uint256 _angel_sale_totalETH, uint256 _pre_sale_totalETH, uint256 _public_sale_totalETH) {
+    return (totalETH, angel_sale_totalETH, pre_sale_totalETH, public_sale_totalETH);
+  }
+
+  function getCurrentPrice() public constant returns(uint256) {  
+    uint256 price = calculateRate();
+    return calculatePrice(price, 0);
+  }
+
+  function getContractAddress() public constant returns(address) {
+    return this;
+  }
+
+  function getOwner() public constant returns(address) {
+    return owner;
+  }
+
+  function sendOracleData() public payable {
+    if (msg.value != 0) {
+        wrapper.transfer(msg.value);
+    }
+    
+    wrapper.update("URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+  }
+
+  function getWrapperData() public constant returns(bytes32) {
+    return wrapper.getWrapperData();
+  }
 }
