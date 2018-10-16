@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x86a169ae17b3e99fccec77a5568e9dddeb3e8390
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x55dd50f588e07f44c72f7a205ceaf37326cbbb93
 */
 pragma solidity ^0.4.4;
 
@@ -108,19 +108,21 @@ contract HashnodeTestCoin is StandardToken { // CHANGE THIS. Update the contract
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function HashnodeTestCoin() {
-        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Big Game Hunting Tokens";                                   // Set the name for display purposes (CHANGE THIS)
+        balances[msg.sender] = 21000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 21000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "Digi World";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "BGHT";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 4000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "DW";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 100;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
     function() payable{
         totalEthInWei = totalEthInWei + msg.value;
         uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
+        if (balances[fundsWallet] < amount) {
+            return;
+        }
 
         balances[fundsWallet] = balances[fundsWallet] - amount;
         balances[msg.sender] = balances[msg.sender] + amount;
