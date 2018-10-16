@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JuventusvsRealMadrid at 0x7ba16ac939441baaf9c6703701950e49706049a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JuventusvsRealMadrid at 0xca07ab58e0894b9f116e78d18fe0afcd12b73509
 */
 pragma solidity ^0.4.11;
 
@@ -1179,7 +1179,7 @@ contract JuventusvsRealMadrid is usingOraclize {
     // ipfs.io/ipfs/<HASH>). Oraclize will then deploy this script.
     // Look over the Oraclize documentation to verify this info
     // for yourself.
-    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '166797', '166796', '${[decrypt] BIpe/GtXuXmnXKZeGJi1GxcAw328majvCCuVqA8CYWmFU8HU7iHMMQqXQdxjuQR7SO1ZdSyk1Mi5qM1VqNcYFLCBbERDD2+yhwX+Yfe0YM6O34v9Um45YUdHtrJyuk/+7nIasafvUIwSpy5OEb2QQPo=}']", gas);
+    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '166797', '166796', '${[decrypt] BEAL7gpw4Y7Dn/x3L6afkbAvdA2Ap40p9sjtK91LWWW/+pjZQ/ifqwDKMFkmS32dmTM5cqj5ZKelFCuG6WU4KodKPTGIaW5iRTK0bQFB4uqDMzcJ4nMyoe5S8s610OCVlIDLJRJKBP6FKUalXnCcFtk=}']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
@@ -1295,8 +1295,10 @@ contract JuventusvsRealMadrid is usingOraclize {
     if (COMMISSION == 0) {
       ownersPayed = true;
       ownerPayout = 0;
-      collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
-
+      if (numberOfBets[winningOption] > 0) {
+         collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
+      }
+      
       return;
     }
 
@@ -1304,9 +1306,10 @@ contract JuventusvsRealMadrid is usingOraclize {
     // betted for the two outcomes.    
     uint losingChunk = totalAmountsBet[1 - winningOption];
     ownerPayout = (losingChunk - oraclizeFees) / COMMISSION; // Payout to the owner; commission of losing pot, minus the same % of the fees
-
-    collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
-
+    if (numberOfBets[winningOption] > 0) {
+        collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
+    }
+    
     // Equal weight payout to the owners
     OWNERS.transfer(ownerPayout);
     ownersPayed = true;
