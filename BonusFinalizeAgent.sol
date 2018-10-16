@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x4b47ef05dab8e85c83e7da3961a920cfd3951b2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0xc8b96a94d4984d0b586ef21e775ff956ae2d2247
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -1391,7 +1391,7 @@ contract BonusFinalizeAgent is FinalizeAgent {
 
     // move tokens to the team multisig wallet
     //additional 770 000 tokens are generated for the bounty bonus campaign
-    token.mint(teamMultisig, allocatedBonus + 77000000000000);
+    token.mint(teamMultisig, allocatedBonus + 28021500000000);
 
     // Make token transferable
     token.releaseTokenTransfer();
