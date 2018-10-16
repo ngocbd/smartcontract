@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x82871e14Abf646925166a7D3A88E99c225A158B3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LookRevToken at 0x21ae23b882a340a22282162086bc98d3e2b73018
 */
 pragma solidity ^0.4.11;
 
@@ -93,6 +93,9 @@ contract StandardToken is ERC20, Ownable, SafeMath {
     }
 
     function transfer(address _to, uint _amount) returns (bool success) {
+        // avoid wasting gas on 0 token transfers
+        if(_amount == 0) return true;
+
         if (balances[msg.sender] >= _amount
             && _amount > 0
             && balances[_to] + _amount > balances[_to]) {
@@ -106,6 +109,9 @@ contract StandardToken is ERC20, Ownable, SafeMath {
     }
 
     function transferFrom(address _from, address _to, uint _amount) returns (bool success) {
+        // avoid wasting gas on 0 token transfers
+        if(_amount == 0) return true;
+
         if (balances[_from] >= _amount
             && allowed[_from][msg.sender] >= _amount
             && _amount > 0
@@ -159,33 +165,32 @@ contract LookRevToken is StandardToken {
     string public VERSION = 'LOK1.0';
     bool public finalised = false;
     
-    address public wallet;
+    address public wallet = 0x0;
 
     mapping(address => bool) public kycRequired;
 
-    // Start - Wednesday, August 16, 2017 10:00:00 AM GMT-07:00 DST
-    // End - Saturday, September 16, 2017 10:00:00 AM GMT-07:00 DST
-    uint public constant START_DATE = 1502902800;
-    uint public constant END_DATE = 1505581200;
+    // Start - Wednesday, August 30, 2017 10:00:00 AM GMT-07:00 DST
+    // End - Saturday, September 30, 2017 10:00:00 AM GMT-07:00 DST
+    uint public constant START_DATE = 1504112400;
+    uint public constant END_DATE = 1506790800;
 
     uint public constant DECIMALSFACTOR = 10**uint(decimals);
     uint public constant TOKENS_SOFT_CAP =   10000000 * DECIMALSFACTOR;
     uint public constant TOKENS_HARD_CAP = 2000000000 * DECIMALSFACTOR;
-    uint public constant TOKENS_TOTAL =    4000000000 * DECIMALSFACTOR;
+    uint public constant TOKENS_TOTAL =    5000000000 * DECIMALSFACTOR;
+    uint public initialSupply = 10000000 * DECIMALSFACTOR;
 
     // 1 KETHER = 2,400,000 tokens
     // 1 ETH = 2,400 tokens
-    // Presale 20% discount 1 ETH = 3,000 tokens
-    // Presale 10% discount 1 ETH = 2,667 tokens
-    uint public tokensPerKEther = 3000000;
+    uint public tokensPerKEther = 2400000;
     uint public CONTRIBUTIONS_MIN = 0 ether;
     uint public CONTRIBUTIONS_MAX = 0 ether;
-    uint public constant KYC_THRESHOLD = 10000 * DECIMALSFACTOR;
+    uint public constant KYC_THRESHOLD = 1000000 * DECIMALSFACTOR;
 
-    function LookRevToken(address _wallet, uint _initialSupply) {
-      wallet = _wallet;
+    function LookRevToken() {
       owner = msg.sender;
-      totalSupply = _initialSupply;
+      wallet = owner;
+      totalSupply = initialSupply;
       balances[owner] = totalSupply;
     }
 
