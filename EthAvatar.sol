@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAvatar at 0x5d5194e9aa451d36ec4faa62609d18e1ed6765a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAvatar at 0x4fbf2f1613cc86314b22ae10ae95d19cf2990824
 */
 pragma solidity ^0.4.19;
 
@@ -15,7 +15,7 @@ contract EthAvatar {
         DidSetIPFSHash(msg.sender, hash);
     }
 
-    function getIPFSHash(address hashAddress) public view returns (string) {
-        return ipfsHashes[hashAddress];
+    function getIPFSHash() public view returns (string) {
+        return ipfsHashes[msg.sender];
     }
 }
