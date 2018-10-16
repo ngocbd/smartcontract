@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirtuePokerSale at 0xdebea156b181329199175e142b49cb7b558b134f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirtuePokerSale at 0xf4dec7c97afd5a2f03088513cc57cc2e48a7c5e5
 */
 pragma solidity 0.4.19;
 
@@ -332,7 +332,7 @@ contract Vault is Ownable {
 
         lastDisbursement = now;
         uint256 amountToSend = Math.min256(address(this).balance, disbursementAmount);
-        refundable = refundable.sub(amountToSend);
+        refundable = amountToSend > refundable ? 0 : refundable.sub(amountToSend);
         trustedWallet.transfer(amountToSend);
     }
 }
