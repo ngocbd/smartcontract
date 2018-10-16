@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x1a468849923b441a10b2673af9a74b5b71906087
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x2fd747959bb92e1e33e39c517605f0bc4bd12746
 */
 pragma solidity ^0.4.18;
 
@@ -119,38 +119,36 @@ contract NBACrypto {
 	// We run this function once to create all the teams and set the initial price.
 	function InitiateTeams() public onlyCeo {
 		require(teamsAreInitiated == false);
-        teams.push(Team("Cavaliers", cfoAddress, 800000000000000000)); 
-		teams.push(Team("Warriors", cfoAddress, 800000000000000000)); 
-		teams.push(Team("Celtics", cfoAddress, 400000000000000000)); 
-        teams.push(Team("Rockets", cfoAddress, 400000000000000000));
-        teams.push(Team("Raptors", cfoAddress, 400000000000000000));
-        teams.push(Team("Spurs", cfoAddress, 400000000000000000));
-        teams.push(Team("Wizards", cfoAddress, 400000000000000000));
-        teams.push(Team("Timberwolves", cfoAddress, 400000000000000000));
-        teams.push(Team("Pacers", cfoAddress, 400000000000000000));
-        teams.push(Team("Thunder", cfoAddress, 400000000000000000));
-        teams.push(Team("Bucks", cfoAddress, 400000000000000000));
-        teams.push(Team("Lakers", cfoAddress, 400000000000000000));
-        teams.push(Team("76ers", cfoAddress, 400000000000000000));
-        teams.push(Team("Blazers", cfoAddress, 200000000000000000));
-        teams.push(Team("Heat", cfoAddress, 200000000000000000));
-        teams.push(Team("Pelicans", cfoAddress, 200000000000000000));
-        teams.push(Team("Pistons", cfoAddress, 200000000000000000));
-        teams.push(Team("Clippers", cfoAddress, 200000000000000000)); 
-        teams.push(Team("Hornets", cfoAddress, 200000000000000000));
-        teams.push(Team("Jazz", cfoAddress, 200000000000000000)); 
-        teams.push(Team("Knicks", cfoAddress, 200000000000000000));
-        teams.push(Team("Nuggets", cfoAddress, 200000000000000000)); 
-        teams.push(Team("Bulls", cfoAddress, 200000000000000000)); 
-        teams.push(Team("Grizzlies", cfoAddress, 200000000000000000));
-        teams.push(Team("Nets", cfoAddress, 100000000000000000));
-        teams.push(Team("Kings", cfoAddress, 100000000000000000));
-        teams.push(Team("Magic", cfoAddress, 100000000000000000));
-        teams.push(Team("Mavericks", cfoAddress, 100000000000000000));
-        teams.push(Team("Hawks", cfoAddress, 100000000000000000)); 		
-        teams.push(Team("Suns", cfoAddress, 100000000000000000)); 
-        			
-        		
+        teams.push(Team("Raptors", cfoAddress, 750000000000000000)); 
+		teams.push(Team("Rockets", cfoAddress, 750000000000000000)); 
+		teams.push(Team("Celtics", cfoAddress, 700000000000000000)); 
+        teams.push(Team("Warriors", cfoAddress, 700000000000000000)); 
+        teams.push(Team("Cavaliers", cfoAddress, 650000000000000000)); 
+        teams.push(Team("Spurs", cfoAddress, 650000000000000000)); 
+        teams.push(Team("Wizards", cfoAddress, 600000000000000000)); 
+        teams.push(Team("Timberwolves", cfoAddress, 600000000000000000)); 
+        teams.push(Team("Pacers", cfoAddress, 550000000000000000)); 
+        teams.push(Team("Thunder", cfoAddress, 550000000000000000)); 
+        teams.push(Team("Bucks", cfoAddress, 500000000000000000));
+        teams.push(Team("Nuggets", cfoAddress, 500000000000000000)); 
+		teams.push(Team("76ers", cfoAddress, 450000000000000000));
+		teams.push(Team("Blazers", cfoAddress, 450000000000000000)); 		
+        teams.push(Team("Heat", cfoAddress, 400000000000000000)); 		
+        teams.push(Team("Pelicans", cfoAddress, 400000000000000000)); 		
+        teams.push(Team("Pistons", cfoAddress, 350000000000000000)); 		
+        teams.push(Team("Clippers", cfoAddress, 350000000000000000)); 
+        teams.push(Team("Hornets", cfoAddress, 300000000000000000));		
+        teams.push(Team("Jazz", cfoAddress, 300000000000000000)); 		
+        teams.push(Team("Knicks", cfoAddress, 250000000000000000)); 		
+        teams.push(Team("Lakers", cfoAddress, 250000000000000000)); 		
+        teams.push(Team("Bulls", cfoAddress, 200000000000000000)); 		
+        teams.push(Team("Grizzlies", cfoAddress, 200000000000000000)); 		
+        teams.push(Team("Nets", cfoAddress, 150000000000000000));		
+        teams.push(Team("Kings", cfoAddress, 150000000000000000));		
+        teams.push(Team("Magic", cfoAddress, 100000000000000000));		
+        teams.push(Team("Mavericks", cfoAddress, 100000000000000000)); 
+        teams.push(Team("Hawks", cfoAddress, 100000000000000000));			
+        teams.push(Team("Suns", cfoAddress, 100000000000000000)); 		
 	}
 
 }
