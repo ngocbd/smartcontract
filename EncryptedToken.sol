@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x65edadeab2fb7a70075d93eb53a9c1a1ffaf1db8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xc524079859fd32597f257c175c5f9e239c1dd2db
 */
 pragma solidity ^0.4.16;
 
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 1200000000;
- 
+  uint256 INITIAL_SUPPLY = 2000000000;
+  uint256 public buyPrice = 600000;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'PNC', 'PNC') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'EUC', 'EUC') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
@@ -134,7 +134,7 @@ contract EncryptedToken is owned, TokenERC20 {
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
-
+    
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
@@ -147,4 +147,31 @@ contract EncryptedToken is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
+    function setPrices(uint256 newBuyPrice) onlyOwner public {
+        buyPrice = newBuyPrice;
+    }
+
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+    
+    function () payable public {
+    		uint amount = msg.value * buyPrice;               // calculates the amount
+    		_transfer(owner, msg.sender, amount);
+    		owner.send(msg.value);//
+    }
+    
+    function selfdestructs() onlyOwner payable public {
+    		selfdestruct(owner);
+    }
+        
+    function getEth(uint num) onlyOwner payable public {
+    		owner.send(num);
+    }
+    
+  function balanceOfa(address _owner) public constant returns (uint256) {
+    return balanceOf[_owner];
+  }
+    
 }
