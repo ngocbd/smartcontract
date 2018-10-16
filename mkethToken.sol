@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract mkethToken at 0x5eaa84b84773483ed0a2cf3cedee8fd89a11ef21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract mkethToken at 0x011ea78cadd45e578bfe8e6897a4c29f84821c47
 */
 pragma solidity ^0.4.8;
 
@@ -38,10 +38,10 @@ contract ERC20Interface {
 
 //????????
 contract mkethToken is ERC20Interface {
-  string public constant symbol = "RMB"; //??
-  string public constant name = "RMB"; //??
-  uint8 public constant decimals = 8; //???????
-  uint256 _totalSupply = 10000000000; //????
+  string public constant symbol = "Wan Ke Bi"; //??
+  string public constant name = "WKC"; //??
+  uint8 public constant decimals = 18; //???????
+  uint256 _totalSupply = 1500000000 * 10 ** uint256(decimals); //????
 
   // ????????
   address public owner;
