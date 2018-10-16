@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x7a23687666b46cb674c2034e1bac94dcb5423dbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x38e2cfa5627b2fef3d0556638b13ea6bf6a5e34d
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  *
  * @author  <chicocripto@protonmail.com>
  *
  * RDFDM - Riverdimes Fiat Donation Manager
- * Version 20171027a
+ * Version B
  *
  * Overview:
  * four basic round-up operations are supported:
@@ -80,10 +80,10 @@ contract RDFDM {
 
   //events relating to donation operations
   //
-  event FiatCollectedEvent(uint indexed charity, uint usd, uint ref);
+  event FiatCollectedEvent(uint indexed charity, uint usd, string ref);
   event FiatToEthEvent(uint indexed charity, uint usd, uint eth);
   event EthToFiatEvent(uint indexed charity, uint eth, uint usd);
-  event FiatDeliveredEvent(uint indexed charity, uint usd, uint ref);
+  event FiatDeliveredEvent(uint indexed charity, uint usd, string ref);
   event EthDonationEvent(uint indexed charity, uint eth);
 
   //events relating to adding and deleting charities
@@ -142,7 +142,7 @@ contract RDFDM {
   //
   //constructor
   //
-  function RDFDM() {
+  function RDFDM() public {
     owner = msg.sender;
     manager = msg.sender;
     token = msg.sender;
@@ -173,7 +173,7 @@ contract RDFDM {
 
   //======== basic operations
 
-  function fiatCollected(uint _charity, uint _fiat, uint _ref) public managerOnly {
+  function fiatCollected(uint _charity, uint _fiat, string _ref) public managerOnly {
     require(_charity < charityCount);
     charities[charityCount].fiatBalanceIn += _fiat;
     charities[charityCount].fiatCollected += _fiat;
@@ -210,7 +210,7 @@ contract RDFDM {
     EthToFiatEvent(_charity, _eth, _fiat);
   }
 
-  function fiatDelivered(uint _charity, uint _fiat, uint _ref) public managerOnly {
+  function fiatDelivered(uint _charity, uint _fiat, string _ref) public managerOnly {
     require(_charity < charityCount);
     require(charities[_charity].fiatBalanceOut >= _fiat);
     charities[_charity].fiatBalanceOut -= _fiat;
@@ -235,7 +235,7 @@ contract RDFDM {
 
 
   //======== combo operations
-  function fiatCollectedToEth(uint _charity, uint _fiat, uint _ref) public managerOnly payable {
+  function fiatCollectedToEth(uint _charity, uint _fiat, string _ref) public managerOnly payable {
     require(token != 0);
     require(_charity < charityCount);
     charities[charityCount].fiatCollected += _fiat;
@@ -254,7 +254,7 @@ contract RDFDM {
     FiatToEthEvent(_charity, _fiat, msg.value);
   }
 
-  function ethToFiatDelivered(uint _charity, uint _eth, uint _fiat, uint _ref) public managerOnly {
+  function ethToFiatDelivered(uint _charity, uint _eth, uint _fiat, string _ref) public managerOnly {
     require(_charity < charityCount);
     require(charities[_charity].ethBalance >= _eth);
     //keep track of fiat to eth conversion price
@@ -339,13 +339,13 @@ contract RDFDM {
   //
   // default payable function.
   //
-  function () payable {
+  function () public payable {
     revert();
   }
 
   //for debug
   //only available before the contract is locked
-  function haraKiri() ownerOnly unlockedOnly {
+  function haraKiri() public ownerOnly unlockedOnly {
     selfdestruct(owner);
   }
 
