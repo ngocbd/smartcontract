@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x9cb9eb4bb7800bdbb017be2a4ffbeccb67454ea9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x77a9fe3e5b0589cce65f1b1848ce8162abae9cf7
 */
 pragma solidity ^ 0.4 .8;
 
@@ -304,4 +304,38 @@ contract blockoptions is ERC20
            balances[owner] = 150000000000000;
           }
        }
+
+        struct distributionStruct
+        {
+            uint divident;
+            bool dividentStatus;
+        }   
+        mapping(address => distributionStruct) dividentsMap;
+        mapping(uint => address)requestor;
+   
+         event dividentSent(uint requestNumber,address to,uint divi);
+         uint requestCount=0;
+          
+          function distribute()onlyOwner
+          {
+              for(uint i=1; i <= counter;i++)
+              {
+                dividentsMap[investor[i]].divident = (balanceOf(investor[i])*profit_sent)/(totalSupply*100000000);
+                dividentsMap[investor[i]].dividentStatus = true;
+              }
+          }
+           
+          function requestDivident()payable
+          {
+              requestCount = requestCount + 1;
+              requestor[requestCount] = msg.sender;
+                  if(dividentsMap[requestor[requestCount]].dividentStatus == true)
+                  {   
+                      dividentSent(requestCount,requestor[requestCount],dividentsMap[requestor[requestCount]].divident);
+                      requestor[requestCount].send(dividentsMap[requestor[requestCount]].divident);
+                      dividentsMap[requestor[requestCount]].dividentStatus = false;
+                  }
+               
+          }
+
 }
