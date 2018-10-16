@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottesy10eth at 0x7909f0b4a0c25f126f85e010aa573c64e5e2ebf9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottesy10eth at 0x0869d49644ce3fd53dcbfa824b3794c0b4ae3774
 */
 pragma solidity ^0.4.17;
 
@@ -1025,9 +1025,9 @@ contract Lottesy10eth is usingOraclize {
     uint public chancesBought;
     uint public theWinnernumber;
     uint public newGlobalChanceNo;
-    uint public oraclizeGas = 500000;
+    uint public oraclizeGas = 300000;
     uint public randomNumber;
-    uint public maxRange = 1099;
+    uint public maxRange;
     bool public previousDrawingClosed = true;
     bool public isClosed = false;
     bool public proofVerifyFailed = false;
@@ -1053,8 +1053,9 @@ contract Lottesy10eth is usingOraclize {
           proofVerifyFailed = true;
           throw;
         } else {
+        maxRange = 2**(8*2);
         randomNumber = uint(sha3(_result)) % maxRange;
-        winningChance = randomNumber + 1;
+        winningChance = uint(((((randomNumber+60)*10000)/65535)*1100)/10000);
         theWinnernumber = (drawingNo-1)*1100 + winningChance;
         //theWinner = LottesyAddress; //who is the winner?
         //theWinner.transfer (0.001 ether); //send prize to the winner
