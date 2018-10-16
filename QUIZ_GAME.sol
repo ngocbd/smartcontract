@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xb5c424cd005cd1ccc155654b551c4453346e0718
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0x0E35F4F608D4A8Fa560595dB79CfdA02D790777B
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
 contract QUIZ_GAME
 {
@@ -15,7 +15,7 @@ contract QUIZ_GAME
     public
     payable
     {
-        if(responseHash==0x0)
+        if(responseHash==0x00)
         {
             responseHash = keccak256(_response);
             question = _question;
