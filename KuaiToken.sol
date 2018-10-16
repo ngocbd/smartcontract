@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KuaiToken at 0xbfa03ed631b87672f8655ab2969929ca7276ad4b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KuaiToken at 0x38b03fe09d0a47bcbe7f80bd0441f9f83821437b
 */
 pragma solidity ^0.4.11;
 /**
@@ -445,11 +445,12 @@ contract KuaiMintableToken is BonusToken {
         createTime = now;
         lastMintTime = createTime;
         standardDailyLimit = standardDecimals.mul(_dailyLimit);
+        dailyLimitLeft = standardDailyLimit;
     }
     // mint mintAmount token
     function mint(uint256 mintAmount) onlyOperator returns(uint256 _actualRelease) {
-        require(!judgeIsReachDailyLimit(mintAmount, timestamp));
         uint256 timestamp = now;
+        require(!judgeIsReachDailyLimit(mintAmount, timestamp));
         balances[owner] = balances[owner].add(mintAmount);
         totalSupply = totalSupply.add(mintAmount);
         Mint(msg.sender, mintAmount, timestamp);
@@ -457,24 +458,22 @@ contract KuaiMintableToken is BonusToken {
     }
     function judgeIsReachDailyLimit(uint256 mintAmount, uint256 timestamp) internal returns(bool _exist) {
         bool reached = false;
-        if (dailyLimitLeft > 0) {
-            if ((timestamp.parseTimestamp().year == lastMintTime.parseTimestamp().year)
-                && (timestamp.parseTimestamp().month == lastMintTime.parseTimestamp().month)
-                && (timestamp.parseTimestamp().day == lastMintTime.parseTimestamp().day)) {
-                if (dailyLimitLeft < mintAmount) {
-                    reached = true;
-                } else {
-                    dailyLimitLeft = dailyLimitLeft.sub(mintAmount);
-                    lastMintTime = timestamp;
-                }
+        if ((timestamp.parseTimestamp().year == lastMintTime.parseTimestamp().year)
+            && (timestamp.parseTimestamp().month == lastMintTime.parseTimestamp().month)
+            && (timestamp.parseTimestamp().day == lastMintTime.parseTimestamp().day)) {
+            if (dailyLimitLeft < mintAmount) {
+                reached = true;
             } else {
-                dailyLimitLeft = standardDailyLimit;
+                dailyLimitLeft = dailyLimitLeft.sub(mintAmount);
                 lastMintTime = timestamp;
-                if (dailyLimitLeft < mintAmount) {
-                    reached = true;
-                } else {
-                    dailyLimitLeft = dailyLimitLeft.sub(mintAmount);
-                }
+            }
+        } else {
+            dailyLimitLeft = standardDailyLimit;
+            lastMintTime = timestamp;
+            if (dailyLimitLeft < mintAmount) {
+                reached = true;
+            } else {
+                dailyLimitLeft = dailyLimitLeft.sub(mintAmount);
             }
         }
         return reached;
@@ -487,7 +486,7 @@ contract KuaiMintableToken is BonusToken {
     }
 }
 contract KuaiToken is KuaiMintableToken {
-    string public standard = '2017122806';
+    string public standard = '2018011001';
     string public name = 'KuaiToken';
     string public symbol = 'KT';
     uint8 public decimals = 8;
