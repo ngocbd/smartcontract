@@ -1,46 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0xda2b561915b8100ae341898a38f010491b61af34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0x4E6f3CEfbBE715a858644100f0Aad364832596d1
 */
-pragma solidity ^0.4.19;
-
-interface FsTKAuthority {
-  function isAuthorized(address sender, address _contract, bytes data) external view returns (bool);
-  function validate() external pure returns (bool);
-}
-
-interface ServiceProvider {
-  function serviceFallback(address from, uint256 value, bytes data, uint256 gas) external;
-}
-
-interface TokenReceiver {
-  function tokenFallback(address from, uint256 value, bytes data) external;
-}
-
-interface ERC20 {
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-
-  function balanceOf(address owner) external view returns (uint256);
-  function allowance(address owner, address spender) external view returns (uint256);
-  function transfer(address to, uint256 value) external returns (bool);
-  function transferFrom(address from, address to, uint256 value) external returns (bool);
-  function approve(address spender, uint256 value) external returns (bool);
-}
-
-interface FsTKToken {
-  event Transfer(address indexed from, address indexed to, uint value, bytes data);
-  event CancelSubscription(address indexed from, address indexed to);
-  event Subscribe(address indexed from, address indexed to, uint256 startTime, uint256 interval, uint256 amount);
-
-  function transfer(address to, uint value, bytes data) external returns (bool);
-
-  function buyService(ServiceProvider service, uint256 value, bytes data) external;
-  function transfer(uint256[] data) external;
-  function approve(address spender, uint256 expectedValue, uint256 newValue) external;
-  function increaseAllowance(address spender, uint256 value) external;
-  function decreaseAllowance(address spender, uint256 value) external;
-  function decreaseAllowanceOrEmtpy(address spender, uint256 value) external;
-}
+pragma solidity ^0.4.23;
+pragma experimental "v0.5.0";
+pragma experimental ABIEncoderV2;
 
 library AddressExtension {
 
@@ -65,6 +28,7 @@ library AddressExtension {
 }
 
 library Math {
+
   struct Fraction {
     uint256 numerator;
     uint256 denominator;
@@ -96,18 +60,26 @@ library Math {
   }
 
   function mulDiv(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
-    // fast path
-    if (value == 0 || m == 0) {
-      return 0;
-    }
-
     r = value * m;
-    // if mul not overflow
     if (r / value == m) {
       r /= d;
     } else {
-      // else div first
       r = mul(value / d, m);
+    }
+  }
+
+  function mulDivCeil(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
+    r = value * m;
+    if (r / value == m) {
+      r /= d;
+      if (r % d != 0) {
+        r += 1;
+      }
+    } else {
+      r = mul(value / d, m);
+      if (value % d != 0) {
+        r += 1;
+      }
     }
   }
 
@@ -115,345 +87,468 @@ library Math {
     return mulDiv(x, f.numerator, f.denominator);
   }
 
+  function mulCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
+    return mulDivCeil(x, f.numerator, f.denominator);
+  }
+
   function div(uint256 x, Fraction memory f) internal pure returns (uint256) {
     return mulDiv(x, f.denominator, f.numerator);
+  }
+
+  function divCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
+    return mulDivCeil(x, f.denominator, f.numerator);
   }
 }
 
 contract FsTKAllocation {
-  // vested 10% total supply of FST for core team members for 4 years
-  uint256 public constant VESTED_AMOUNT = 5500000 * (10 ** 18);  
-  uint256 public constant VESTED_AMOUNT_TOTAL = VESTED_AMOUNT * 6;
-  uint256 public constant RELEASE_EPOCH = 1642032000;
-  ERC20 public token;
 
-  function initialize() public {
-    require(address(token) == 0);
-    token = ERC20(msg.sender);
-  }
-
-  function () external {
-    require(
-      token.transfer(0x808b0730252DAA3a12CadC72f42E46E92a5e1bC8, VESTED_AMOUNT) &&                                true && true && true && true && true &&                  token.transfer(0xdA01fAFaF5E49e9467f99f5969cab499a5759cC6, VESTED_AMOUNT) &&
-      token.transfer(0xddab6c29090E6111A490527614Ceac583D02C8De, VESTED_AMOUNT) &&                         true && true && true && true && true && true &&                 token.transfer(0x5E6C9EC32b088c9FA1Fc0FEFa38A9B4De4169316, VESTED_AMOUNT) &&
-      true&&                                                                                            true &&                                                                                               true&&
-      true&&                                                                                          true &&                                                                                                 true&&
-      true&&                                                                                       true &&                                                                                                    true&&
-      true&&                                                                                     true &&                                                                                                      true&&
-      true&&                                                                                   true &&                                                                                                        true&&
-      true&&                                                                                  true &&                                                                                                         true&&
-      true&&                                                                                 true &&                                                                                                          true&&
-      true&&                                                                                 true &&                                                                                                          true&&
-      true&&                                                                                true &&                                                                                                           true&&
-      true&&                                                                                true &&                                                                                                           true&&
-      true&&                                                                                true &&                                                                                                           true&&
-      true&&                                                                                 true &&                                                                                                          true&&
-      true&&                                                                                  true &&                                                                                                         true&&
-      true&&                                                                                   true &&                                                                                                        true&&
-      token.transfer(0xFFB5d7C71e8680D0e9482e107F019a2b25D225B5,VESTED_AMOUNT)&&                true &&                                                                                                       true&&
-      token.transfer(0x91cE537b1a8118Aa20Ef7F3093697a7437a5Dc4B,VESTED_AMOUNT)&&                  true &&                                                                                                     true&&
-      true&&                                                                                         true &&                                                                                                  true&&
-      true&&                                                                                            block.timestamp >= RELEASE_EPOCH && true &&                                                           true&&
-      true&&                                                                                                   true && true && true && true && true &&                                                        true&&
-      true&&                                                                                                                                     true &&                                                      true&&
-      true&&                                                                                                                                       true &&                                                    true&&
-      true&&                                                                                                                                          true &&                                                 true&&
-      true&&                                                                                                                                            true &&                                               true&&
-      true&&                                                                                                                                             true &&                                              true&&
-      true&&                                                                                                                                              true &&                                             true&&
-      true&&                                                                                                                                               true &&                                            true&&
-      true&&                                                                                                                                                true &&                                           true&&
-      true&&                                                                                                                                                true &&                                           true&&
-      true&&                                                                                                                                                true &&                                           true&&
-      true&&                                                                                                                                               true &&                                            true&&
-      true&&                                                                                                                                              true &&                                             true&&
-      true&&                                                                                                                                             true &&                                              true&&
-      true&&                                                                                                                                           true &&                                                true&&
-      true&&                                                                                                                                         true &&                                                  true&&
-      true&&                                                                                                                                       true &&                                                    true&&
-      true&&                                                                                             true && true && true && true && true && true &&                                                      true&&
-      true&&                                                                                          true && true && true && true && true && true &&                                                          true
-    );
-  }
+  function initialize(uint256 _vestedAmount) public;
 }
 
+contract FsTKAuthority {
 
+  function isAuthorized(address sender, address _contract, bytes data) public view returns (bool);
+  function isApproved(bytes32 hash, uint256 approveTime, bytes approveToken) public view returns (bool);
+  function validate() public pure returns (bool);
+}
 
 contract Authorizable {
-  using AddressExtension for address;
 
-  event FsTKAuthorityChanged(address indexed _address);
+  event SetFsTKAuthority(FsTKAuthority indexed _address);
 
   modifier onlyFsTKAuthorized {
     require(fstkAuthority.isAuthorized(msg.sender, this, msg.data));
     _;
   }
+  modifier onlyFsTKApproved(bytes32 hash, uint256 approveTime, bytes approveToken) {
+    require(fstkAuthority.isApproved(hash, approveTime, approveToken));
+    _;
+  }
 
   FsTKAuthority internal fstkAuthority;
 
-  function Authorizable(FsTKAuthority _fstkAuthority) internal {
-    require(_fstkAuthority.validate());
-    FsTKAuthorityChanged(fstkAuthority = _fstkAuthority);
+  constructor(FsTKAuthority _fstkAuthority) internal {
+    fstkAuthority = _fstkAuthority;
   }
 
-  function changeFsTKAuthority(FsTKAuthority _fstkAuthority) public onlyFsTKAuthorized {
+  function setFsTKAuthority(FsTKAuthority _fstkAuthority) public onlyFsTKAuthorized {
     require(_fstkAuthority.validate());
-    FsTKAuthorityChanged(fstkAuthority = _fstkAuthority);
+    emit SetFsTKAuthority(fstkAuthority = _fstkAuthority);
   }
 }
 
-contract AbstractToken is ERC20, FsTKToken {
-  using AddressExtension for address;
-  using Math for uint256;
+contract ERC20 {
 
-  struct Subscription {
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+  function balanceOf(address owner) public view returns (uint256);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+}
+
+contract SecureERC20 is ERC20 {
+
+  event SetERC20ApproveChecking(bool approveChecking);
+
+  function approve(address spender, uint256 expectedValue, uint256 newValue) public returns (bool);
+  function increaseAllowance(address spender, uint256 value) public returns (bool);
+  function decreaseAllowance(address spender, uint256 value, bool strict) public returns (bool);
+  function setERC20ApproveChecking(bool approveChecking) public;
+}
+
+contract FsTKToken {
+
+  event SetupDirectDebit(address indexed debtor, address indexed receiver, DirectDebitInfo info);
+  event TerminateDirectDebit(address indexed debtor, address indexed receiver);
+  event WithdrawDirectDebitFailure(address indexed debtor, address indexed receiver);
+
+  event SetMetadata(string metadata);
+  event SetLiquid(bool liquidity);
+  event SetDelegate(bool isDelegateEnable);
+  event SetDirectDebit(bool isDirectDebitEnable);
+
+  struct DirectDebitInfo {
     uint256 amount;
     uint256 startTime;
     uint256 interval;
-    uint256 epoch;
-    uint256 collectTime;
   }
-
+  struct DirectDebit {
+    DirectDebitInfo info;
+    uint256 epoch;
+  }
+  struct Instrument {
+    uint256 allowance;
+    DirectDebit directDebit;
+  }
   struct Account {
     uint256 balance;
-    mapping (address => uint256) allowances;
-    mapping (address => Subscription) subscriptions;
+    uint256 nonce;
+    mapping (address => Instrument) instruments;
   }
+
+  function spendableAllowance(address owner, address spender) public view returns (uint256);
+  function transfer(uint256[] data) public returns (bool);
+  function transferAndCall(address to, uint256 value, bytes data) public payable returns (bool);
+  function delegateTransferAndCall(
+    uint256 nonce,
+    uint256 gasAmount,
+    address to,
+    uint256 value,
+    bytes data,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public returns (bool);
+
+  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit);
+  function setupDirectDebit(address receiver, DirectDebitInfo info) public returns (bool);
+  function terminateDirectDebit(address receiver) public returns (bool);
+  function withdrawDirectDebit(address debtor) public returns (bool);
+  function withdrawDirectDebit(address[] debtors, bool strict) public returns (bool result);
+}
+
+contract AbstractToken is SecureERC20, FsTKToken {
+  using AddressExtension for address;
+  using Math for uint256;
 
   modifier liquid {
     require(isLiquid);
      _;
   }
+  modifier canUseDirectDebit {
+    require(isDirectDebitEnable);
+     _;
+  }
 
-  bool public isLiquid = true;
   bool public erc20ApproveChecking;
+  bool public isLiquid = true;
+  bool public isDelegateEnable;
+  bool public isDirectDebitEnable;
+  string public metadata;
   mapping(address => Account) internal accounts;
 
-  // *************************
-  // * ERC 20
-  // *************************
+  constructor(string _metadata) public {
+    metadata = _metadata;
+  }
 
-  function balanceOf(address owner) external view returns (uint256) {
+  function balanceOf(address owner) public view returns (uint256) {
     return accounts[owner].balance;
   }
 
-  function allowance(address owner, address spender) external view returns (uint256) {
-    return accounts[owner].allowances[spender];
+  function allowance(address owner, address spender) public view returns (uint256) {
+    return accounts[owner].instruments[spender].allowance;
   }
 
-  function transfer(address to, uint256 value) external liquid returns (bool) {
+  function transfer(address to, uint256 value) public liquid returns (bool) {
     Account storage senderAccount = accounts[msg.sender];
-    require(value <= senderAccount.balance);
+    uint256 senderBalance = senderAccount.balance;
+    require(value <= senderBalance);
 
-    senderAccount.balance -= value;
+    senderAccount.balance = senderBalance - value;
     accounts[to].balance += value;
 
-    Transfer(msg.sender, to, value);
-    Transfer(msg.sender, to, value, new bytes(0));
+    emit Transfer(msg.sender, to, value);
     return true;
   }
 
-  function transferFrom(address from, address to, uint256 value) external liquid returns (bool) {
+  function transferFrom(address from, address to, uint256 value) public liquid returns (bool) {
     Account storage fromAccount = accounts[from];
-    require(value <= fromAccount.balance && value <= fromAccount.allowances[msg.sender]);
+    uint256 fromBalance = fromAccount.balance;
+    Instrument storage senderInstrument = fromAccount.instruments[msg.sender];
+    uint256 senderAllowance = senderInstrument.allowance;
+    require(value <= fromBalance);
+    require(value <= senderAllowance);
 
-    fromAccount.balance -= value;
-    fromAccount.allowances[msg.sender] -= value;
+    fromAccount.balance = fromBalance - value;
+    senderInstrument.allowance = senderAllowance - value;
     accounts[to].balance += value;
 
-    Transfer(from, to, value);
-    Transfer(from, to, value, new bytes(0));
+    emit Transfer(from, to, value);
     return true;
   }
 
-  function approve(address spender, uint256 value) external returns (bool) {
-    Account storage senderAccount = accounts[msg.sender];
+  function approve(address spender, uint256 value) public returns (bool) {
+    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
     if (erc20ApproveChecking) {
-      require((value == 0) || (senderAccount.allowances[spender] == 0));
+      require((value == 0) || (spenderInstrument.allowance == 0));
     }
-    senderAccount.allowances[spender] = value;
+    spenderInstrument.allowance = value;
 
-    Approval(msg.sender, spender, value);
+    emit Approval(msg.sender, spender, value);
     return true;
   }
 
-  // *************************
-  // * FsTK Token
-  // *************************
+  function setERC20ApproveChecking(bool approveChecking) public {
+    emit SetERC20ApproveChecking(erc20ApproveChecking = approveChecking);
+  }
 
-  function transfer(address to, uint256 value, bytes data) external liquid returns (bool) {
-    Account storage senderAccount = accounts[msg.sender];
-    require(value <= senderAccount.balance);
+  function approve(address spender, uint256 expectedValue, uint256 newValue) public returns (bool) {
+    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
+    require(spenderInstrument.allowance == expectedValue);
 
-    senderAccount.balance -= value;
-    accounts[to].balance += value;
+    spenderInstrument.allowance = newValue;
 
-    Transfer(msg.sender, to, value);
-    Transfer(msg.sender, to, value, data);
-
-    if (!to.isAccount()) {
-      TokenReceiver(to).tokenFallback(msg.sender, value, data);
-    }
+    emit Approval(msg.sender, spender, newValue);
     return true;
   }
 
-  function buyService(ServiceProvider service, uint256 value, bytes data) external liquid {
-    uint256 gas = msg.gas;
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 currentValue = senderAccount.allowances[service];
-    senderAccount.allowances[service] = currentValue.add(value);
-    service.serviceFallback(msg.sender, value, data, gas);
-    senderAccount.allowances[service] = currentValue;
+  function increaseAllowance(address spender, uint256 value) public returns (bool) {
+    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
+
+    uint256 newValue = spenderInstrument.allowance.add(value);
+    spenderInstrument.allowance = newValue;
+
+    emit Approval(msg.sender, spender, newValue);
+    return true;
   }
 
-  function transfer(uint256[] data) external liquid {
+  function decreaseAllowance(address spender, uint256 value, bool strict) public returns (bool) {
+    Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
+
+    uint256 currentValue = spenderInstrument.allowance;
+    uint256 newValue;
+    if (strict) {
+      newValue = currentValue.sub(value);
+    } else if (value < currentValue) {
+      newValue = currentValue - value;
+    }
+    spenderInstrument.allowance = newValue;
+
+    emit Approval(msg.sender, spender, newValue);
+    return true;
+  }
+
+  function setMetadata0(string _metadata) internal {
+    emit SetMetadata(metadata = _metadata);
+  }
+
+  function setLiquid0(bool liquidity) internal {
+    emit SetLiquid(isLiquid = liquidity);
+  }
+
+  function setDelegate(bool delegate) public {
+    emit SetDelegate(isDelegateEnable = delegate);
+  }
+
+  function setDirectDebit(bool directDebit) public {
+    emit SetDirectDebit(isDirectDebitEnable = directDebit);
+  }
+
+  function spendableAllowance(address owner, address spender) public view returns (uint256) {
+    Account storage ownerAccount = accounts[owner];
+    return Math.min(
+      ownerAccount.instruments[spender].allowance,
+      ownerAccount.balance
+    );
+  }
+
+  function transfer(uint256[] data) public liquid returns (bool) {
     Account storage senderAccount = accounts[msg.sender];
+    uint256 totalValue;
     for (uint256 i = 0; i < data.length; i++) {
       address receiver = address(data[i] >> 96);
       uint256 value = data[i] & 0xffffffffffffffffffffffff;
-      require(value <= senderAccount.balance);
 
-      senderAccount.balance -= value;
+      totalValue = totalValue.add(value);
       accounts[receiver].balance += value;
 
-      Transfer(msg.sender, receiver, value);
-      Transfer(msg.sender, receiver, value, new bytes(0));
+      emit Transfer(msg.sender, receiver, value);
     }
+
+    uint256 senderBalance = senderAccount.balance;
+    require(totalValue <= senderBalance);
+    senderAccount.balance = senderBalance - totalValue;
+
+    return true;
   }
 
-  function subscriptionOf(address owner, address collector) external view returns (Subscription) {
-    return accounts[owner].subscriptions[collector];
+  function transferAndCall(address to, uint256 value, bytes data) public payable liquid returns (bool) {
+    require(to != address(this));
+    require(transfer(to, value));
+    require(data.length >= 68);
+    assembly {
+        mstore(add(data, 36), value)
+        mstore(add(data, 68), caller)
+    }
+    require(to.call.value(msg.value)(data));
+    return true;
   }
 
-  function subscribe(address collector, uint256 startTime, uint256 interval, uint256 amount) external {
-    accounts[msg.sender].subscriptions[collector] = Subscription({
-      startTime: startTime,
-      interval: interval,
-      amount: amount,
-      epoch: 0,
-      collectTime: 0
+  function delegateTransferAndCall(
+    uint256 nonce,
+    uint256 gasAmount,
+    address to,
+    uint256 value,
+    bytes data,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  )
+    public
+    liquid
+    returns (bool)
+  {
+    require(isDelegateEnable);
+    require(to != address(this));
+
+    address signer = ecrecover(
+      keccak256(nonce, gasAmount, to, value, data),
+      v,
+      r,
+      s
+    );
+    Account storage signerAccount = accounts[signer];
+    require(nonce == signerAccount.nonce);
+    signerAccount.nonce = nonce.add(1);
+    uint256 signerBalance = signerAccount.balance;
+    uint256 total = value.add(gasAmount);
+    require(total <= signerBalance);
+
+    signerAccount.balance = signerBalance - total;
+    accounts[to].balance += value;
+    emit Transfer(signer, to, value);
+    accounts[msg.sender].balance += gasAmount;
+    emit Transfer(signer, msg.sender, gasAmount);
+
+    if (!to.isAccount()) {
+      require(data.length >= 68);
+      assembly {
+        mstore(add(data, 36), value)
+        mstore(add(data, 68), signer)
+      }
+      require(to.call(data));
+    }
+
+    return true;
+  }
+
+  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit) {
+    return accounts[debtor].instruments[receiver].directDebit;
+  }
+
+  function setupDirectDebit(
+    address receiver,
+    DirectDebitInfo info
+  )
+    public
+    returns (bool)
+  {
+    accounts[msg.sender].instruments[receiver].directDebit = DirectDebit({
+      info: info,
+      epoch: 0
     });
-    Subscribe(msg.sender, collector, startTime, interval, amount);
+
+    emit SetupDirectDebit(msg.sender, receiver, info);
+    return true;
   }
 
-  function cancelSubscription(address collector) external {
-    delete accounts[msg.sender].subscriptions[collector];
-    CancelSubscription(msg.sender, collector);
+  function terminateDirectDebit(address receiver) public returns (bool) {
+    delete accounts[msg.sender].instruments[receiver].directDebit;
+
+    emit TerminateDirectDebit(msg.sender, receiver);
+    return true;
   }
 
-  function collect(address from) external {
-    Account storage fromAccount = accounts[from];
-    Subscription storage info = fromAccount.subscriptions[msg.sender];
-    uint256 epoch = (block.timestamp.sub(info.startTime)) / info.interval + 1;
-    require(info.amount > 0 && epoch > info.epoch);
-    uint256 totalAmount = (epoch - info.epoch).mul(info.amount);
-    if (totalAmount > fromAccount.balance) {
-      delete fromAccount.subscriptions[msg.sender];
-      CancelSubscription(from, msg.sender);
-    } else {
-      info.collectTime = block.timestamp;
-      fromAccount.balance -= totalAmount;
-      accounts[msg.sender].balance += totalAmount;
-
-      Transfer(from, msg.sender, totalAmount);
-      Transfer(from, msg.sender, totalAmount, new bytes(0));
-    }
+  function calculateTotalDirectDebitAmount(uint256 amount, uint256 epochNow, uint256 epochLast) pure private returns (uint256) {
+    require(amount > 0);
+    require(epochNow > epochLast);
+    return (epochNow - epochLast).mul(amount);
   }
 
-  function collect(address[] froms) external {
-    for (uint256 i = 0; i < froms.length; i++) {
-      address from = froms[i];
-      Account storage fromAccount = accounts[from];
-      Subscription storage info = fromAccount.subscriptions[msg.sender];
-      uint256 epoch = (block.timestamp.sub(info.startTime)) / info.interval + 1;
-      require(info.amount > 0 && epoch > info.epoch);
-      uint256 totalAmount = (epoch - info.epoch).mul(info.amount);
-      if (totalAmount > fromAccount.balance) {
-        delete fromAccount.subscriptions[msg.sender];
-        CancelSubscription(from, msg.sender);
+  function withdrawDirectDebit(address debtor) public liquid canUseDirectDebit returns (bool) {
+    Account storage debtorAccount = accounts[debtor];
+    uint256 debtorBalance = debtorAccount.balance;
+    DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
+    uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
+    uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
+    require(amount <= debtorBalance);
+
+    debtorAccount.balance = debtorBalance - amount;
+    accounts[msg.sender].balance += amount;
+    directDebit.epoch = epoch;
+
+    emit Transfer(debtor, msg.sender, amount);
+    return true;
+  }
+
+  function withdrawDirectDebit(address[] debtors, bool strict) public liquid canUseDirectDebit returns (bool result) {
+    Account storage receiverAccount = accounts[msg.sender];
+    result = true;
+
+    for (uint256 i = 0; i < debtors.length; i++) {
+      address debtor = debtors[i];
+      Account storage debtorAccount = accounts[debtor];
+      uint256 debtorBalance = debtorAccount.balance;
+      DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
+      uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
+      uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
+
+      if (amount > debtorBalance) {
+        if (strict) {
+          revert();
+        }
+        result = false;
+        emit WithdrawDirectDebitFailure(debtor, msg.sender);
       } else {
-        info.collectTime = block.timestamp;
-        fromAccount.balance -= totalAmount;
-        accounts[msg.sender].balance += totalAmount;
-  
-        Transfer(from, msg.sender, totalAmount);
-        Transfer(from, msg.sender, totalAmount, new bytes(0));
+        debtorAccount.balance = debtorBalance - amount;
+        receiverAccount.balance += amount;
+        directDebit.epoch = epoch;
+
+        emit Transfer(debtor, msg.sender, amount);
       }
     }
-  }
-
-  function approve(address spender, uint256 expectedValue, uint256 newValue) external {
-    Account storage senderAccount = accounts[msg.sender];
-    require(senderAccount.allowances[spender] == expectedValue);
-
-    senderAccount.allowances[spender] = newValue;
-
-    Approval(msg.sender, spender, newValue);
-  }
-
-  function increaseAllowance(address spender, uint256 value) external {
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 newValue = senderAccount.allowances[spender].add(value);
-    senderAccount.allowances[spender] = newValue;
-
-    Approval(msg.sender, spender, newValue);
-  }
-
-  function decreaseAllowance(address spender, uint256 value) external {
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 newValue = senderAccount.allowances[spender].sub(value);
-    senderAccount.allowances[spender] = newValue;
-
-    Approval(msg.sender, spender, newValue);
-  }
-
-  function decreaseAllowanceOrEmtpy(address spender, uint256 value) external {
-    Account storage senderAccount = accounts[msg.sender];
-    uint256 currentValue = senderAccount.allowances[spender];
-    uint256 newValue;
-    if (value < currentValue) {
-      newValue = currentValue - value;
-    }
-    senderAccount.allowances[spender] = newValue;
-
-    Approval(msg.sender, spender, newValue);
-  }
-
-  function setLiquid(bool _isLiquid) public {
-    isLiquid = _isLiquid;
-  }
-
-  function setERC20ApproveChecking(bool _erc20ApproveChecking) public {
-    erc20ApproveChecking = _erc20ApproveChecking;
   }
 }
 
 contract FunderSmartToken is AbstractToken, Authorizable {
+
   string public constant name = "Funder Smart Token";
   string public constant symbol = "FST";
-  uint256 public constant totalSupply = 330000000 * (10 ** 18);
+  uint256 public constant totalSupply = 330000000 ether;
   uint8 public constant decimals = 18;
 
-  function FunderSmartToken(FsTKAuthority _fstkAuthority, address fstkWallet, FsTKAllocation allocation) Authorizable(_fstkAuthority) public {
-    // vested 10% total supply of FST for core team members for 4 years
-    uint256 vestedAmount = allocation.VESTED_AMOUNT_TOTAL();
+  constructor(
+    FsTKAuthority _fstkAuthority,
+    string _metadata,
+    address coldWallet,
+    FsTKAllocation allocation
+  )
+    AbstractToken(_metadata)
+    Authorizable(_fstkAuthority)
+    public
+  {
+    uint256 vestedAmount = totalSupply / 12;
     accounts[allocation].balance = vestedAmount;
-    allocation.initialize();     
-    Transfer(address(0), allocation, vestedAmount);
-    Transfer(address(0), allocation, vestedAmount, new bytes(0));
+    emit Transfer(address(0), allocation, vestedAmount);
+    allocation.initialize(vestedAmount);
 
     uint256 releaseAmount = totalSupply - vestedAmount;
-    accounts[fstkWallet].balance = releaseAmount;
-    Transfer(address(0), fstkWallet, releaseAmount);
-    Transfer(address(0), fstkWallet, releaseAmount, new bytes(0));
+    accounts[coldWallet].balance = releaseAmount;
+
+    emit Transfer(address(0), coldWallet, releaseAmount);
   }
 
-  function setLiquid(bool _isLiquid) public onlyFsTKAuthorized {
-    AbstractToken.setLiquid(_isLiquid);
+  function setMetadata(string infoUrl) public onlyFsTKAuthorized {
+    setMetadata0(infoUrl);
   }
 
-  function setERC20ApproveChecking(bool _erc20ApproveChecking) public onlyFsTKAuthorized {
-    AbstractToken.setERC20ApproveChecking(_erc20ApproveChecking);
+  function setLiquid(bool liquidity) public onlyFsTKAuthorized {
+    setLiquid0(liquidity);
+  }
+
+  function setERC20ApproveChecking(bool approveChecking) public onlyFsTKAuthorized {
+    AbstractToken.setERC20ApproveChecking(approveChecking);
+  }
+
+  function setDelegate(bool delegate) public onlyFsTKAuthorized {
+    AbstractToken.setDelegate(delegate);
+  }
+
+  function setDirectDebit(bool directDebit) public onlyFsTKAuthorized {
+    AbstractToken.setDirectDebit(directDebit);
   }
 
   function transferToken(ERC20 erc20, address to, uint256 value) public onlyFsTKAuthorized {
