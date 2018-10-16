@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MauiWowieToken at 0x3a6235ded2d63db7eeb7cd08045c129c93e7526e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MauiWowieToken at 0xb2b5799edccc354f7bf69e9649cf85544e378055
 */
 pragma solidity ^0.4.18;
 
@@ -218,10 +218,10 @@ contract MauiWowieToken is StandardToken {
     string public name = 'MauiWowie';
     string public symbol = 'MWW';
     uint8 public decimals = 6;
-    uint public INITIAL_SUPPLY = 97622570;
+    uint public INITIAL_SUPPLY = 97622570000000;
 
     function MauiWowieToken() public {
         totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
+        balances[0x307f359756777e2db465C3FA2D2705Be6F88672E] = INITIAL_SUPPLY;
         }
 }
