@@ -1,6 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLMain at 0x618bb37e5644da4946f052c50d7819f95d327c8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLMain at 0x421411d3c9fa36ecbcbd846be352ae93a8e23642
 */
+pragma solidity ^0.4.18;
+
+/*
+    Manages ownership and permissions for the whole contract.
+*/
+
 pragma solidity ^0.4.18;
 
 /*
@@ -10,15 +16,29 @@ pragma solidity ^0.4.18;
 contract BLAccess {
 
     address public mainAddress; //Main Contract Address
+    address public bonusAddress; //BonusAddress
     event UpdatedMainAccount(address _newMainAddress);
+    event UpdatedBonusAccount(address _newBonusAddress);
 
     function BLAccess() public {
         mainAddress = msg.sender;
+        bonusAddress = msg.sender;
     }
 
     modifier onlyPrimary() {
         require(msg.sender == mainAddress);
         _;
+    }
+
+    modifier onlyBonus() {
+      require(msg.sender == bonusAddress);
+      _;
+    }
+
+    function setSecondary(address _newSecondary) external onlyPrimary {
+      require(_newSecondary != address(0));
+      bonusAddress = _newSecondary;
+      UpdatedBonusAccount(_newSecondary);
     }
 
     //Allows to change the primary account for the contract
@@ -29,6 +49,7 @@ contract BLAccess {
     }
 
 }
+
 
 /*
  Interface for our separate eternal storage.
@@ -80,6 +101,8 @@ contract BLBalances is BLStorage {
     event AllowanceGranted(address indexed owner, uint _amount);
     event SentFeeToPlatform(uint amount);
     event SentAmountToOwner(uint amount, address indexed owner);
+    event BonusGranted(address _beneficiary, uint _amount);
+    event SentAmountToNeighbours(uint reward, address indexed owner);
 
     // get the balance for a given account
     function getBalance() public view returns (uint) {
@@ -99,6 +122,19 @@ contract BLBalances is BLStorage {
         return s.getUInt(keccak256(msg.sender, "promoAllowance"));
     }
 
+    // IF a block has been assigned a bonus, provude the bonus to the next buyer.
+    function giveBonusIfExists(uint x, uint y) internal {
+      bytes32 key = getKey(x, y);
+      uint bonus = s.getUInt(keccak256(key, "bonus"));
+      uint balance = s.getUInt(keccak256(msg.sender, "balance"));
+      uint total = balance + bonus;
+      s.setUInt(keccak256(msg.sender, "balance"), total);
+      s.setUInt(keccak256(key, "bonus"), 0);
+      if (bonus > 0) {
+        BonusGranted(msg.sender, bonus);
+      }
+    }
+
     // allow a block allowance for promo and early beta users
     function grantAllowance(address beneficiary, uint allowance) public onlyPrimary {
         uint existingAllowance = s.getUInt(keccak256(beneficiary, "promoAllowance"));
@@ -115,10 +151,41 @@ contract BLBalances is BLStorage {
     }
 
     // Trading and buying balances flow
-    function rewardParties (address owner, uint feePercentage) internal {
+    function rewardParties (uint x, uint y, uint feePercentage) internal {
         uint fee = msg.value * feePercentage / 100;
+        uint remainder = msg.value - fee;
+        uint rewardPct = s.getUInt("neighbourRewardPercentage");
+        uint toOwner = remainder - (remainder * rewardPct * 8 / 100);
         rewardContract(fee);
-        rewardPreviousOwner(owner, msg.value - fee);
+        rewardPreviousOwner(x, y, toOwner);
+        rewardNeighbours(x, y, remainder, rewardPct);
+    }
+
+    function rewardNeighbours (uint x, uint y, uint remainder, uint rewardPct) internal {
+        uint rewardAmount = remainder * rewardPct / 100;
+      address nw = s.getAdd(keccak256(keccak256(x-1, ":", y-1), "owner"));
+      address n = s.getAdd(keccak256(keccak256(x-1, ":", y), "owner"));
+      address ne = s.getAdd(keccak256(keccak256(x-1, ":", y+1), "owner"));
+      address w = s.getAdd(keccak256(keccak256(x, ":", y-1), "owner"));
+      address e = s.getAdd(keccak256(keccak256(x, ":", y+1), "owner"));
+      address sw = s.getAdd(keccak256(keccak256(x+1, ":", y-1), "owner"));
+      address south = s.getAdd(keccak256(keccak256(x+1, ":", y), "owner"));
+      address se = s.getAdd(keccak256(keccak256(x+1, ":", y+1), "owner"));
+      nw != address(0) ? rewardBlock(nw, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      n != address(0) ? rewardBlock(n, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      ne != address(0) ? rewardBlock(ne, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      w != address(0) ? rewardBlock(w, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      e != address(0) ? rewardBlock(e, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      sw != address(0) ? rewardBlock(sw, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      south != address(0) ? rewardBlock(south, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+      se != address(0) ? rewardBlock(se, rewardAmount) : rewardBlock(bonusAddress, rewardAmount);
+    }
+
+    function rewardBlock(address account, uint reward) internal {
+      uint balance = s.getUInt(keccak256(account, "balance"));
+      balance += reward;
+      s.setUInt(keccak256(account, "balance"), balance);
+      SentAmountToNeighbours(reward,account);
     }
 
     // contract commissions
@@ -130,8 +197,10 @@ contract BLBalances is BLStorage {
     }
 
     // reward the previous owner of the block or the contract if the block is bought for the first time
-    function rewardPreviousOwner (address owner, uint amount) internal {
+    function rewardPreviousOwner (uint x, uint y, uint amount) internal {
         uint rewardBalance;
+        bytes32 key = getKey(x, y);
+        address owner = s.getAdd(keccak256(key, "owner"));
         if (owner == address(0)) {
             rewardBalance = s.getUInt(keccak256(mainAddress, "balance"));
             rewardBalance += amount;
@@ -212,7 +281,7 @@ contract BLBlocks is BLBalances {
         require(owner == address(0));
         uint feePercentage = s.getUInt("buyOutFeePercentage");
         if (msg.value >= initialPrice) {
-            rewardParties(owner, feePercentage);
+            rewardParties(x, y, feePercentage);
             s.setUInt(keccak256(key, "price"), msg.value);
         } else {
             allowance--;
@@ -225,6 +294,7 @@ contract BLBlocks is BLBalances {
         s.setBytes32(keccak256(key, "imageURL"), imageURL);
         s.setAdd(keccak256(key, "owner"), msg.sender);
         uint blockCount = s.getUInt("blockCount");
+        giveBonusIfExists(x, y);
         blockCount++;
         s.setUInt("blockCount", blockCount);
         storageAddress.transfer(msg.value);
@@ -294,7 +364,7 @@ contract BLBlocks is BLBalances {
         require(owner != address(0));
         require((forSale > 0 && msg.value >= forSale) || msg.value >= price * 2);
         uint feePercentage = s.getUInt("buyOutFeePercentage");
-        rewardParties(owner, feePercentage);
+        rewardParties(x, y, feePercentage);
         s.setUInt(keccak256(key, "price"), msg.value);
         s.setBytes32(keccak256(key, "name"), name);
         s.setBytes32(keccak256(key, "description"), description);
@@ -303,6 +373,7 @@ contract BLBlocks is BLBalances {
         s.setAdd(keccak256(key, "owner"), msg.sender);
         s.setUInt(keccak256(key, "forSale"), 0);
         s.setUInt(keccak256(key, "pricePerDay"), 0);
+        giveBonusIfExists(x, y);
         storageAddress.transfer(msg.value);
         BoughtBlock(x, y, msg.value, msg.sender,
             name, description, url, imageURL);
@@ -327,117 +398,27 @@ contract BLBlocks is BLBalances {
         s.setBytes32(keccak256(key, "imageURL"), imageURL);
         UpdatedBlock(x, y, name, description, url, imageURL, msg.sender);
     }
-
-}
-
-contract BLTenancies is BLBlocks {
-
-    event ToRent(
+    
+    // Add a bonus to a block. That bonus will be awarded to the next buyer.
+    // Note, we are not emitting an event to avoid cheating.
+    function addBonusToBlock(
         uint x,
         uint y,
-        uint pricePerDay,
-        address indexed owner);
-
-    event NotToRent(
-        uint x,
-        uint y,
-        address indexed owner);
-
-    event LeasedBlock(
-        uint x,
-        uint y,
-        uint paid,
-        uint expiry,
-        bytes32 tenantName,
-        bytes32 tenantDescription,
-        bytes32 teantURL,
-        bytes32 tenantImageURL,
-        address indexed owner);
-
-    event RentedBlock(
-        uint x,
-        uint y,
-        uint paid,
-        uint feePercentage,
-        address indexed owner);
-
-    // Sets a block up for rent, requires a rental price to be provided
-    function setForRent(
-        uint x,
-        uint y,
-        uint pricePerDay
-    ) public {
+        uint bonus
+    ) public onlyPrimary {
         bytes32 key = getKey(x, y);
-        uint price = s.getUInt(keccak256(key, "price"));
-        require(s.getAdd(keccak256(key, "owner")) == msg.sender);
-        require(pricePerDay >= price / 10);
-        s.setUInt(keccak256(key, "pricePerDay"), pricePerDay);
-        ToRent(x, y, pricePerDay, msg.sender);
+        uint bonusBalance = s.getUInt(keccak256(bonusAddress, "balance"));
+        require(bonusBalance >= bonus);
+        s.setUInt(keccak256(key, "bonus"), bonus);
     }
 
-    // Sets a block not for rent
-    function cancelRent(
-        uint x,
-        uint y
-    ) public {
-        bytes32 key = getKey(x, y);
-        address owner = s.getAdd(keccak256(key, "owner"));
-        require(owner == msg.sender);
-        s.setUInt(keccak256(key, "pricePerDay"), 0);
-        NotToRent(x, y, msg.sender);
-    }
-
-    // actually rent a block to a willing tenant
-    function leaseBlock(
-        uint x,
-        uint y,
-        uint duration,
-        bytes32 tenantName,
-        bytes32 tenantDescription,
-        bytes32 tenantURL,
-        bytes32 tenantImageURL
-    ) public payable {
-        bytes32 key = getKey(x, y);
-        uint pricePerDay = s.getUInt(keccak256(key, "pricePerDay"));
-        require(pricePerDay > 0);
-        require(msg.value >= pricePerDay * duration);
-        require(now >= s.getUInt(keccak256(key, "expiry")));
-        address owner = s.getAdd(keccak256(key, "owner"));
-        uint feePercentage = s.getUInt("buyOutFeePercentage");
-        rewardParties(owner, feePercentage);
-        uint expiry = now + 86400 * duration;
-        s.setUInt(keccak256(key, "expiry"), expiry);
-        s.setBytes32(keccak256(key, "tenantName"), tenantName);
-        s.setBytes32(keccak256(key, "tenantDescription"), tenantDescription);
-        s.setBytes32(keccak256(key, "tenantURL"), tenantURL);
-        s.setBytes32(keccak256(key, "tenantImageURL"), tenantImageURL);
-        storageAddress.transfer(msg.value);
-        RentedBlock(x, y, msg.value, feePercentage, owner);
-        LeasedBlock(x, y, msg.value, expiry, tenantName, tenantDescription, tenantURL, tenantImageURL, msg.sender);
-    }
-
-    // get details for a tenancy
-    function getTenancy (uint x, uint y) public view returns (
-        uint expiry,
-        bytes32 tenantName,
-        bytes32 tenantDescription,
-        bytes32 tenantURL,
-        bytes32 tenantImageURL
-    ) {
-        bytes32 key = getKey(x, y);
-        expiry = s.getUInt(keccak256(key, "tenantExpiry"));
-        tenantName = s.getBytes32(keccak256(key, "tenantName"));
-        tenantDescription = s.getBytes32(keccak256(key, "tenantDescription"));
-        tenantURL = s.getBytes32(keccak256(key, "tenantURL"));
-        tenantImageURL = s.getBytes32(keccak256(key, "tenantImageURL"));
-    }
 }
 
 /*
     Main Blocklord contract. It exposes some commodity functions and functions from its subcontracts.
 */
 
-contract BLMain is BLTenancies {
+contract BLMain is BLBlocks {
 
     event ChangedInitialPrice(uint price);
     event ChangedFeePercentage(uint fee);
