@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeDeMasterContract at 0xc6C09Ae980b3d029DEB7419fA1B7859DCe7186D0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeDeMasterContract at 0x6b4d6666156a2921850527aa00e47047857159d2
 */
 pragma solidity ^0.4.11;
 
@@ -18,147 +18,136 @@ contract DeDeMasterContract {
 
 	mapping (address => bool) public isDeDeContract;
 
-	event Issue(address dip, address scs, address issuer, address dedeAddress);
-	//event Transfer(address from, address to, address issuer, address dedeAddress); // unused in current version
-	event Activate(address dip, address scs, address issuer, address dedeAddress);
-	event Nullify(address dip, address scs, address issuer, address dedeAddress);
+	mapping (address => uint256) public validationTime;
+	mapping (address => address) public dip;
+	mapping (address => address) public scs;
+	mapping (address => address) public issuer;
+	mapping (address => address) public targetAddress;//if address value is zero, this contract itself posesses ethereum as target.
+	mapping (address => address) public bulletAddress;//if address value is zero, this contract itself gets ethereum as bullet.
+	mapping (address => uint256) public targetAmount;
+	mapping (address => uint256) public bulletAmount;
+
+	event Issue(address indexed dip, address indexed scs, address issuer, address indexed dedeAddress);
+	event Transfer(address indexed from, address indexed to, address issuer, address indexed dedeAddress); // unused in current version
+	event Activate(address indexed dip, address indexed scs, address issuer, address indexed dedeAddress);
+	event Nullify(address indexed dip, address indexed scs, address issuer, address indexed dedeAddress);
 
 	address public dedeNetworkAddress;
 
-	address public myAddress;
-
 	function DeDeMasterContract(address _dedeNetworkAddress){
 		dedeNetworkAddress = _dedeNetworkAddress;
-		myAddress = msg.sender;
 	}
 
 	function changeDedeAddress(address newDedeAddress){
-		require(msg.sender == myAddress || msg.sender == dedeNetworkAddress);
+		require(msg.sender == dedeNetworkAddress);
 		dedeNetworkAddress = newDedeAddress;
 	}
 
 	function issue(uint256 _targetAmount, uint256 _bulletAmount, address _targetAddress, address _bulletAddress, uint256 _validationTime, address _issuer) payable {
 		require(msg.sender == dedeNetworkAddress);
+		require(now + 1 days < _validationTime);
+		require(_targetAddress != _bulletAddress);
 
-		//have eth input, or try token transferfrom
-		if(_targetAddress == 0){ // ether
+		if(_targetAddress == 0){ // ether target
 			require(msg.value >= _targetAmount);
 			if(msg.value > _targetAmount){
 				msg.sender.transfer(msg.value - _targetAmount);
 			}
 		}
-		else{ // token
-			assert(ERC20Interface(_targetAddress).transferFrom(msg.sender, this, _targetAmount));
-		}
 
-		address dede = (new DeDeContract).value(_targetAddress == 0 ? _targetAmount : 0)(msg.sender, msg.sender, _issuer, _targetAmount, _bulletAmount, _targetAddress, _bulletAddress, _validationTime);
+		address dede = (new DeDeContract).value(_targetAddress == 0 ? _targetAmount : 0)(_targetAddress, _targetAmount);
 		isDeDeContract[dede] = true;
 
-		if(_targetAddress != 0){ // token
-			assert(ERC20Interface(_targetAddress).transfer(dede, _targetAmount));
+		validationTime[dede] = _validationTime;
+		dip[dede] = msg.sender;
+		scs[dede] = msg.sender;
+		issuer[dede] = _issuer;
+		targetAddress[dede] = _targetAddress;
+		bulletAddress[dede] = _bulletAddress;
+		targetAmount[dede] = _targetAmount;
+		bulletAmount[dede] = _bulletAmount;
+
+		if(_targetAddress != 0){ // send target token to dede
+			assert(ERC20Interface(_targetAddress).transferFrom(msg.sender, dede, _targetAmount));
 		}
 
-		Issue(msg.sender, dedeNetworkAddress, _issuer, dede);
+		Issue(msg.sender, msg.sender, _issuer, dede);
 	}
 	function activate(address dede) payable {
 		var _dede = DeDeContract(dede);
 
 		require(isDeDeContract[dede]);
 
+		require(msg.sender == scs[dede]);
+		require(now >= validationTime[dede] && now < validationTime[dede] + 1 days);
+
 		isDeDeContract[dede] = false;
 
-		_dede.activate.value(msg.value)(msg.sender);
+		Activate(dip[dede], scs[dede], issuer[dede], dede);
 
-		Activate(_dede.dip(), _dede.scs(), _dede.issuer(), dede);
+		if(bulletAddress[dede] == 0){
+			require(msg.value >= bulletAmount[dede]);
+			if(msg.value > bulletAmount[dede]){
+				msg.sender.transfer(msg.value - bulletAmount[dede]);
+			}
+		}
+		else{
+			assert(ERC20Interface(bulletAddress[dede]).transferFrom(scs[dede], dip[dede], bulletAmount[dede])); // send bullet token to dip
+		}
+
+		if(targetAddress[dede] != 0){
+			assert(ERC20Interface(targetAddress[dede]).transferFrom(dede, scs[dede], targetAmount[dede])); // send target token to scs
+		}
+		_dede.activate.value(bulletAddress[dede] == 0 ? bulletAmount[dede] : 0)(bulletAddress[dede] == 0 ? dip[dede] : scs[dede]); // send target ether to scs (or bullet ether to dip) and suicide dede
 	}
 	function nullify(address dede){
 		var _dede = DeDeContract(dede);
 
 		require(isDeDeContract[dede]);
 
+		require(now >= (validationTime[dede] + 1 days) && (msg.sender == dip[dede] || msg.sender == scs[dede]));
+
 		isDeDeContract[dede] = false;
 
-		_dede.nullify(msg.sender);
-
-		Nullify(_dede.dip(), _dede.scs(), _dede.issuer(), dede);
+		Nullify(dip[dede], scs[dede], issuer[dede], dede);
+	
+		if(targetAddress[dede] != 0){
+			assert(ERC20Interface(targetAddress[dede]).transferFrom(dede, dip[dede], targetAmount[dede])); // send target token to dip
+		}
+		_dede.nullify(dip[dede]); // send target ether to dip and suicide dede
 	}
 
-	/*function transfer(address receiver, address dede){ // unused in current version
-		var _dede = DeDeContract(dede);
-
+	function transfer(address receiver, address dede){ // unused in current version
 		require(isDeDeContract[dede]);
 
-		_dede.transfer(msg.sender, receiver);
+		require(msg.sender == scs[dede]);
 
-		Transfer(_dede.scs(), receiver, _dede.issuer(), dede);
-	}*/
+		Transfer(scs[dede], receiver, issuer[dede], dede);
+
+		scs[dede] = receiver;
+	}
 }
 
 
 contract DeDeContract {
-	uint256 public validationTime;
 
 	address public masterContract;//master smart contract address
-	address public dip;
-	address public scs;
-	address public issuer;
 
-	address public targetAddress;//if address value is zero, this contract itself posesses ethereum as target.
-	address public bulletAddress;//if address value is zero, this contract itself gets ethereum as bullet.
-
-	uint256 public targetAmount;
-	uint256 public bulletAmount;
-
-	function DeDeContract(address _dip, address _scs, address _issuer, uint256 _targetAmount, uint256 _bulletAmount, address _targetAddress, address _bulletAddress, uint256 _validationTime) payable {
-		require(now < _validationTime);
-
+	function DeDeContract(address targetAddress, uint256 targetAmount) payable {
 		masterContract = msg.sender;
-
-		dip = _dip;
-		scs = _scs;
-		issuer = _issuer;
-
-		targetAddress = _targetAddress;
-		bulletAddress = _bulletAddress;
-		targetAmount = _targetAmount;
-		bulletAmount = _bulletAmount;
-
-		validationTime = _validationTime;
-	}
-
-	function activate(address sender) payable {
-		require(msg.sender == masterContract);
-		require(sender == scs);
-		require(now >= validationTime && now < validationTime + 1 days);
-
 		if(targetAddress != 0){
-			assert(ERC20Interface(targetAddress).transfer(scs, targetAmount)); // send target token to scs
-		}
-
-		if(bulletAddress == 0){
-			require(msg.value >= bulletAmount);
-			suicide(dip); // force send bullet ether to dip
-		}
-		else{
-			assert(ERC20Interface(bulletAddress).transferFrom(scs, dip, bulletAmount)); // send bullet token to dip
-			suicide(scs); // force send target or leftover ether to scs
+			assert(ERC20Interface(targetAddress).approve(msg.sender, targetAmount));
 		}
 	}
-	function nullify(address sender) {
-		require(msg.sender == masterContract);
-		require(now >= (validationTime + 1 days) && (sender == dip || sender == scs));
-	
-		if(targetAddress != 0){
-			assert(ERC20Interface(targetAddress).transfer(dip, targetAmount));
-		}
 
-		suicide(dip);
+	function activate(address destination) payable {
+		require(msg.sender == masterContract);
+
+		suicide(destination);
 	}
-
-	/*function transfer(address sender, address receiver) {
+	function nullify(address destination) {
 		require(msg.sender == masterContract);
-		require(sender == scs);
 
-		scs = receiver;
-	}*/
+		suicide(destination);
+	}
 }
