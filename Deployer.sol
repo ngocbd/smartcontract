@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x5ba12fa4941988e0ce19e0bbb11907ced19d3f0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x98f7d9405e9b973e51cd4d85a5b2327a9ca55359
 */
 pragma solidity ^0.4.17;
 
@@ -306,7 +306,7 @@ contract TokenToTokenSwap {
   * of the Oracle.
   */
   function Calculate() internal {
-    //require(now >= end_date + 86400);
+    require(now >= end_date + 86400);
     //Comment out above for testing purposes
     oracle = Oracle_Interface(oracle_address);
     uint start_value = oracle.RetrieveData(start_date);
@@ -321,7 +321,6 @@ contract TokenToTokenSwap {
       ratio = 0;
     else
       ratio = 100000;
-
     if (ratio == 100000) {
       share_long = share_short = ratio;
     } else if (ratio > 100000) {
@@ -467,6 +466,7 @@ contract TokenToTokenSwap {
     }
   }
 }
+
 
 //Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
 contract Deployer {
