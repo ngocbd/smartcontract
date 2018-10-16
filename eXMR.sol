@@ -1,85 +1,169 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXMR at 0x3bf050019c7ffe990c8a4667b40f246aee352e7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXMR at 0xc98e0639c6d2ec037a615341c369666b110e80e5
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+/* EXMR 'eXMR eMonero is tokenized (ERC20) Monero on the Ethereum blockchain' contract Version 2.0
+*Airdrop 100% Free for different tasks and support
+*Refer to our Official Sites and your Community: 
+*http://www.e-XMR.io/
+*https://twitter.com/eXMRCoin
+*https://medium.com/@eXMR
+*https://github.com/eXMRcoin/e-XMR/tree/master/eXMR-master
+*
+*We are looking for Moderator: Telegram, Slack, Reddit and Discord
+*https://t.me/joinEXMR 
+*exmr-workspace.slack.com
+*Discord Channel
+*https://www.reddit.com/user/exmrcoin
+*
+*Developer: eXMR (TM) 2017.
+*
+* The MIT License.
+*
+*/
 
-contract eXMR {
-    string public name;
-    string public symbol;
-    uint8 public decimals = 12;
-    uint256 public totalSupply;
+contract Ownable {
+  address public owner;
 
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    event Burn(address indexed from, uint256 value);
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function eXMR() public {
-        balanceOf[msg.sender] = 18400000000000000000;
-        totalSupply = 18400000000000000000;                      
-        name = "eMONERO";                                  
-        decimals = 12;                            
-        symbol = "eXMR";           
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+
+    var _allowance = allowed[_from][msg.sender];
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool) {
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval(address _spender, uint256 _addedValue) returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint256 _subtractedValue) returns (bool success) {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+}
+
+contract EXMR is StandardToken, Ownable {
+  string public constant name = "EXMR";
+  string public constant symbol = "EXMR";
+  uint8 public constant decimals = 8;
+  uint256 public constant INITIAL_SUPPLY = 15 * 10**6 * 10**8;
+
+  function EXMR() public {
+    totalSupply = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
+
+  function airdrop(uint256 amount, address[] addresses) onlyOwner {
+    for (uint i = 0; i < addresses.length; i++) {
+      balances[owner].sub(amount);
+      balances[addresses[i]].add(amount);
+      Transfer(owner, addresses[i], amount);
     }
-
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value); 
-        balanceOf[msg.sender] -= _value;           
-        totalSupply -= _value;                     
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                
-        require(_value <= allowance[_from][msg.sender]);    
-        balanceOf[_from] -= _value;                         
-        allowance[_from][msg.sender] -= _value;             
-        totalSupply -= _value;                              
-        Burn(_from, _value);
-        return true;
-    }
+  }
 }
