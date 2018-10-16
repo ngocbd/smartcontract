@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IADOWR at 0x2a64f85366861eb893cb7d60bc1a8f3a6ea83a1b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IADOWR at 0xc1e2097d788d33701ba3cc2773bf67155ec93fc4
 */
 pragma solidity ^0.4.16;
 
@@ -104,7 +104,7 @@ contract Token {
 contract IADOWR is owned, Token {
 	string public name = "IADOWR Coin";                                      
     string public symbol = "IAD";                                            
-    address public Test12Address = this;                                 
+    address public IADAddress = this;                                 
     uint8 public decimals = 18;                                          
     uint256 public initialSupply = 2000000000000000000000000000; 
 	uint256 public totalSupply = 2000000000000000000000000000;          
