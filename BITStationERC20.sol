@@ -1,170 +1,168 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITStationERC20 at 0xAbe3b958849C3516c9211e5335b775EB8175867E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITStationERC20 at 0x2f8472dd7ecf7ca760c8f6b45db20ca7cf52f8d7
 */
 pragma solidity ^0.4.16;
 
-//Base class of token-owner
-contract Ownable {
-	address public owner;														//owner's address
-
-	function Ownable() public 
-	{
-		owner = msg.sender;
-	}
-
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
-	/*
-	*	Funtion: Transfer owner's authority 
-	*	Type:Public and onlyOwner
-	*	Parameters:
-			@newOwner:	address of newOwner
-	*/
-	function transferOwnership(address newOwner) onlyOwner public{
-		if (newOwner != address(0)) {
-		owner = newOwner;
-		}
-	}
-	
-	function kill() onlyOwner public{
-		selfdestruct(owner);
-	}
+contract ERC20Token{
+    //ERC20 base standard
+    uint256 public totalSupply;
+    
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-//Announcement of an interface for recipient approving
-interface tokenRecipient { 
-	function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData)public; 
-}
+contract Owned{
+    address public owner;
+    address public newOwner;
 
+    event OwnerUpdate(address _prevOwner, address _newOwner);
 
-contract BITStationERC20 is Ownable{
-	
-	//===================public variables definition start==================
-    string public name;															//Name of your Token
-    string public symbol;														//Symbol of your Token
-    uint8 public decimals;														//Decimals of your Token
-    uint256 public totalSupply;													//Maximum amount of Token supplies
-
-    //define dictionaries of balance
-    mapping (address => uint256) public balanceOf;								//Announce the dictionary of account's balance
-    mapping (address => mapping (address => uint256)) public allowance;			//Announce the dictionary of account's available balance
-	//===================public variables definition end==================
-
-	
-	//===================events definition start==================    
-    event Transfer(address indexed from, address indexed to, uint256 value);	//Event on blockchain which notify client
-	//===================events definition end==================
-	
-	
-	//===================Contract Initialization Sequence Definition start===================
-    function BITStationERC20 () public {
-		decimals=7;															//Assignment of Token's decimals
-		totalSupply = 12000000000 * 10 ** uint256(decimals);  				//Assignment of Token's total supply with decimals
-        balanceOf[owner] = totalSupply;                					//Assignment of Token's creator initial tokens
-        name = "BitStation";                                   					//Set the name of Token
-        symbol = "BSTN";                               					//Set the symbol of  Token
-        
+    /**
+        @dev constructor
+    */
+    function Owned() {
+        owner = msg.sender;
     }
-	//===================Contract Initialization Sequence definition end===================
-	
-	//===================Contract behavior & funtions definition start===================
-	
-	/*
-	*	Funtion: Transfer funtions
-	*	Type:Internal
-	*	Parameters:
-			@_from:	address of sender's account
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
-    function _transfer(address _from, address _to, uint _value) internal {
-		//Fault-tolerant processing
-		require(_to != 0x0);						//
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
 
-        //Execute transaction
-		uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
+    // allows execution by the owner only
+    modifier onlyOwner {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still need to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = 0x0;
+    }
+}
+
+/*
+    Overflow protected math functions
+*/
+contract SafeMath {
+    /**
+        constructor
+    */
+    function SafeMath() {
+    }
+
+       // Check if it is safe to add two numbers
+    function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
+
+    // Check if it is safe to subtract two numbers
+    function safeSub(uint256 a, uint256 b) internal returns (uint256) {
+        uint c = a - b;
+        assert(b <= a && c <= a);
+        return c;
+    }
+
+    function safeMul(uint256 a, uint256 b) internal returns (uint256) {
+        uint c = a * b;
+        assert(a == 0 || (c / a) == b);
+        return c;
+    }
+
+}
+
+contract BITStationERC20 is SafeMath, ERC20Token, Owned {
+    string public constant name = 'BitStation';                              // Set the token name for display
+    string public constant symbol = 'BSTN';                                  // Set the token symbol for display
+    uint8 public constant decimals = 18;                                     // Set the number of decimals for display
+    uint256 public constant INITIAL_SUPPLY = 12000000000 * 10 ** uint256(decimals);
+    uint256 public totalSupply;
+    string public version = '1';
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    
+    modifier rejectTokensToContract(address _to) {
+        require(_to != address(this));
+        _;
+    }
+    
+    function BITStationERC20() public {
+        totalSupply = INITIAL_SUPPLY;                              // Set the total supply
+        balances[msg.sender] = INITIAL_SUPPLY;                     // Creator address is assigned all
+        Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    }
+    
+    function transfer(address _to, uint256 _value) rejectTokensToContract(_to) public returns (bool success) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) rejectTokensToContract(_to) public returns (bool success) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = safeSub(balances[_from],_value);
+        balances[_to] = safeAdd(balances[_to],_value);
+        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender],_value);
         Transfer(_from, _to, _value);
-		
-		//Verify transaction
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        return true;
     }
-	
-	
-	/*
-	*	Funtion: Transfer tokens
-	*	Type:Public
-	*	Parameters:
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
-    function transfer(address _to, uint256 _value) public {
-		
-        _transfer(msg.sender, _to, _value);
-    }	
-	
-	/*
-	*	Funtion: Transfer tokens from other address
-	*	Type:Public
-	*	Parameters:
-			@_from:	address of sender's account
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
 
-    function transferFrom(address _from, address _to, uint256 _value) public 
-	returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     					//Allowance verification
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
         return true;
     }
     
-	/*
-	*	Funtion: Approve usable amount for an account
-	*	Type:Public
-	*	Parameters:
-			@_spender:	address of spender's account
-			@_value:	approve amount
-	*/
-    function approve(address _spender, uint256 _value) public 
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-        }
-
-	/*
-	*	Funtion: Approve usable amount for other address and then notify the contract
-	*	Type:Public
-	*	Parameters:
-			@_spender:	address of other account
-			@_value:	approve amount
-			@_extraData:additional information to send to the approved contract
-	*/
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public 
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
-    /*
-	*	Funtion: Transfer owner's authority and account balance
-	*	Type:Public and onlyOwner
-	*	Parameters:
-			@newOwner:	address of newOwner
-	*/
-    function transferOwnershipWithBalance(address newOwner) onlyOwner public{
-		if (newOwner != address(0)) {
-		    _transfer(owner,newOwner,balanceOf[owner]);
-		    owner = newOwner;
-		}
-	}
-   //===================Contract behavior & funtions definition end===================
+    
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
+        return true;
+    }
+
+
 }
