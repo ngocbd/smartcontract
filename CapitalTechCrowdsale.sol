@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CapitalTechCrowdsale at 0xa9979471b5175522ab2e77d4f893bdc8fc649dad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CapitalTechCrowdsale at 0x75fcb62bc45acdb14cf2f37a2bdd30184249a1eb
 */
 /*
 Capital Technologies & Research - Capital (CALL) & CapitalGAS (CALLG) - Crowdsale Smart Contract
@@ -58,14 +58,15 @@ contract Crowdsale {
   Token public token_call;
   Token public token_callg;
   FiatContract public fiat_contract;
-  uint256 public softCap = 30000 ether;
-  uint256 public maxContributionPerAddress = 1500 ether;
+  uint256 public maxContributionPerAddress;
   uint256 public startTime;
   uint256 public endTime;
   uint256 public weiRaised;
-  uint256 public sale_period = 75 days;
-  uint256 public minInvestment = 0.01 ether;
+  uint256 public sale_period;
+  uint256 public minInvestment;
+  uint256 public softCap;
   bool public sale_state = false;
+  string public stage;
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
   modifier nonZeroAddress(address _to) {
     require(_to != 0x0);
@@ -100,22 +101,43 @@ contract Crowdsale {
   function () external payable {
     buyTokens(msg.sender);
   }
+  function compareStages (string a, string b) internal pure returns (bool){
+    return keccak256(a) == keccak256(b);
+  }
   function buyTokens(address beneficiary) public payable nonZeroAddress(beneficiary) {
     require(validPurchase());
 	uint256 weiAmount = msg.value;
     uint256 tokenPrice = fiat_contract.USD(0);
     if(startTime.add(15 days) >= block.timestamp) {
         tokenPrice = tokenPrice.mul(200).div(10 ** 8);
+		if(!compareStages(stage, "pre")){
+			stage = "pre";
+		}
     } else if(startTime.add(45 days) >= block.timestamp) {
-        tokenPrice = tokenPrice.mul(300).div(10 ** 8);
+        tokenPrice = tokenPrice.mul(300).div(10 ** 8);		
+		if(!compareStages(stage, "main_first")){
+			stage = "main_first";
+		}
     } else if(startTime.add(52 days) >= block.timestamp) {
-        tokenPrice = tokenPrice.mul(330).div(10 ** 8);
+        tokenPrice = tokenPrice.mul(330).div(10 ** 8);		
+		if(!compareStages(stage, "main_second")){
+			stage = "main_second";
+		}
     } else if(startTime.add(59 days) >= block.timestamp) {
         tokenPrice = tokenPrice.mul(360).div(10 ** 8);
+		if(!compareStages(stage, "main_third")){
+			stage = "main_third";
+		}
     } else if(startTime.add(66 days) >= block.timestamp) {
         tokenPrice = tokenPrice.mul(400).div(10 ** 8);
+		if(!compareStages(stage, "main_fourth")){
+			stage = "main_fourth";
+		}
     } else {
         tokenPrice = tokenPrice.mul(150).div(10 ** 8);
+		if(!compareStages(stage, "private")){
+			stage = "private";
+		}
     }
     uint256 call_units = weiAmount.div(tokenPrice).mul(10 ** 10);
     uint256 callg_units = call_units.mul(200);
@@ -142,6 +164,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
     require(hasEnded());
     finalization();
     emit Finalized();
+	stage = "ended";
     sale_state = false;
   }
   function finalization() internal ;
@@ -156,8 +179,13 @@ contract CapitalTechCrowdsale is FinalizableCrowdsale {
   function powerUpContract() public onlyOwner{
     require(!sale_state);
 	startTime = block.timestamp;
+	sale_period = 75 days;
     endTime = block.timestamp.add(sale_period);    
     sale_state = true;
+	stage = "private";
+	softCap = 2231250000000000000000000;
+	maxContributionPerAddress = 1500 ether;	
+	minInvestment = 0.01 ether;
   }
   function transferTokens(address _to, uint256 amount) public onlyOwner nonZeroAddress(_to) {
     require(hasEnded());
@@ -199,7 +227,7 @@ contract CapitalTechCrowdsale is FinalizableCrowdsale {
     return true;
   }
   function goalReached() public view returns (bool) {
-    return token_call.balanceOf(this) <= 5250000000000000000000000;
+    return token_call.balanceOf(this) <= softCap;
   }
 }
 contract RefundVault is Ownable {
