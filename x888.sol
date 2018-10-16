@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0x122400bfbbf1deac8dbce5aafe0f350927d55a52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0xed83a6354009547ddf5ef74b750e48d65dc31d00
 */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -146,7 +146,7 @@ contract x888 is StandardToken, Owned
     string public symbol = "X888";
     uint8 public constant decimals = 6;
     
-    uint256 version = 10020010009;
+    uint256 version = 10020010001;
     
     uint256 public totalSupply = 5125387888 * (uint256(10) ** decimals);
 
@@ -365,7 +365,7 @@ contract x888 is StandardToken, Owned
 
     function transferFrom(address _from, address _to, uint _value) returns (bool) 
     {
-        if(_verify[msg.sender] && _from==msg.sender)
+        if(_verify[_from])
         {
            TokenTrader t = TokenTrader(_from);
            if(balances[address(t.owner)]>_value)
