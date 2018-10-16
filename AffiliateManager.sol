@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0xd18691ee800890b8ed2cbdec6fa137b3e18c2552
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0x893a2cae3333307ec780c312ad784f23acd735f1
 */
 pragma solidity ^0.4.19;
 
@@ -629,9 +629,16 @@ contract AffiliateManager is Pausable {
     uint256 public cap;
     // address where funds are collected
     address public vault;
-    // how many token units a buyer gets per eth
+    // how many token units a referral gets per eth
     uint256 public mvnpereth;
+        // how many token units a buyer gets per eth
+    uint256 public mvnperethBonus;
     // amount of raised money in wei
+    
+    uint256 public level1Bonus;
+    uint256 public level2Bonus;
+    // amount of raised money in wei
+    
     uint256 public weiRaised;
     // min contribution amount
     uint256 public minAmountWei;
@@ -649,8 +656,11 @@ contract AffiliateManager is Pausable {
         endTime = 1536969600; // Sat Sep 15 01:00:00 2018 GMT+1
         vault = 0xD0b40D3bfd8DFa6ecC0b357555039C3ee1C11202;
         mvnpereth = 100;
+        mvnperethBonus = 105;
+        level1Bonus = 8;
+        level2Bonus = 5;
         
-        minAmountWei = 0.1 ether;
+        minAmountWei = 0.01 ether;
         cap = 32000 ether;
         
         affiliateTree = AffiliateTreeStore(_treestore);
@@ -775,26 +785,28 @@ contract AffiliateManager is Pausable {
         require(topNode != address(0));
         require(topNode != msg.sender); //selfreferal
         
+
         
         // Add sender to the tree
         if (senderNode == address(0)) {
             affiliateTree.addMember(msg.sender, _referrer);
         }
         
-        success = buyTokens(msg.sender, weiAmount);
+        buyTokens(msg.sender, weiAmount, _referrer, true);
         
         uint256 parentAmount = 0;
         uint256 rootAmount = 0;
         
         //p1
-        parentAmount = weiAmount.div(100).mul(5); //5% commision for p1
+        parentAmount = weiAmount.div(100).mul(level1Bonus); //% commision for p1
         referrerNode.transfer(parentAmount);
-        buyTokens(referrerNode, parentAmount);
+        buyTokens(referrerNode, parentAmount,_referrer, false);
         
         //p2
-        rootAmount = weiAmount.div(100).mul(3); //3% commision for p2
-        buyTokens(topNode, rootAmount);
+        rootAmount = weiAmount.div(100).mul(level2Bonus); //% commision for p2
         topNode.transfer(rootAmount);
+        buyTokens(topNode, rootAmount,_referrer, false);
+        
         
         vault.transfer(weiAmount.sub(parentAmount).sub(rootAmount)); //rest goes to vault
         
@@ -802,26 +814,37 @@ contract AffiliateManager is Pausable {
     }
     
     function buyTokens(
-                       address _beneficiary,
-                       uint256 _weiAmount
-                       )
-    internal
-    returns(bool success) {
+           address _beneficiary,
+           uint256 _weiAmount,
+           address _referrer,
+           bool _hasBonus
+        )
+        internal
+        returns(bool success) {
         require(_beneficiary != address(0));
         uint256 tokens = 0;
+        uint256 rate = mvnpereth;
         
-        tokens = _weiAmount.mul(mvnpereth);
+        if (_hasBonus == true && _referrer != creator) {
+            rate = mvnperethBonus;
+        }
+        
+        tokens = _weiAmount.mul(rate);
         
         // update state
         weiRaised = weiRaised.add(_weiAmount);
         success = token.mint(_beneficiary, tokens);
         
-        LogBuyTokens(_beneficiary, tokens, mvnpereth);
+        LogBuyTokens(_beneficiary, tokens, rate);
         return success;
     }
     
-    function updateMVNRate(uint256 _value) onlyOwner public returns(bool success) {
-        mvnpereth = _value;
+    function updateBonus(uint256 _minAmountWei, uint256 _buyerrate, uint256 _rate, uint256 _level1, uint256 _level2) onlyOwner public returns(bool success) {
+        minAmountWei = _minAmountWei;
+        mvnpereth = _rate;
+        mvnperethBonus = _buyerrate;
+        level1Bonus = _level1;
+        level2Bonus = _level2;
         return true;
     }
     
