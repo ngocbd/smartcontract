@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpController at 0xd1a2b2ab35b439456fb5c28ad7ff23f893a302c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpController at 0xe344757aea83ac838f22e757991489993e5d3760
 */
 pragma solidity ^0.4.19;
 
@@ -1164,23 +1164,19 @@ library BdpTransfer {
 contract BdpController is BdpBase {
 
 	function name() external pure returns (string) {
-		return "The Billion Dollar Picture";
-	}
-
-	function symbol() external pure returns (string) {
-		return "BDP";
+		return "CryptoPicture Block";
 	}
 
 	function tokenURI(uint256 _tokenId) external view returns (string _tokenURI) {
-		_tokenURI = "https://www.billiondollarpicture.com/#0000000";
+		_tokenURI = "https://cryptopicture.com/#0000000";
 		bytes memory tokenURIBytes = bytes(_tokenURI);
-		tokenURIBytes[34] = byte(48+(_tokenId / 1000000) % 10);
-		tokenURIBytes[35] = byte(48+(_tokenId / 100000) % 10);
-		tokenURIBytes[36] = byte(48+(_tokenId / 10000) % 10);
-		tokenURIBytes[37] = byte(48+(_tokenId / 1000) % 10);
-		tokenURIBytes[38] = byte(48+(_tokenId / 100) % 10);
-		tokenURIBytes[39] = byte(48+(_tokenId / 10) % 10);
-		tokenURIBytes[40] = byte(48+(_tokenId / 1) % 10);
+		tokenURIBytes[27] = byte(48+(_tokenId / 1000000) % 10);
+		tokenURIBytes[28] = byte(48+(_tokenId / 100000) % 10);
+		tokenURIBytes[29] = byte(48+(_tokenId / 10000) % 10);
+		tokenURIBytes[30] = byte(48+(_tokenId / 1000) % 10);
+		tokenURIBytes[31] = byte(48+(_tokenId / 100) % 10);
+		tokenURIBytes[32] = byte(48+(_tokenId / 10) % 10);
+		tokenURIBytes[33] = byte(48+(_tokenId / 1) % 10);
 	}
 
 
