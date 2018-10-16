@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xb72a0fa1e537c956dfca72711c468efd81270468
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorChanger at 0xf31619a15518dce0613a514e6672d1f84f6e7fe7
 */
 pragma solidity ^0.4.11;
 
@@ -358,7 +358,7 @@ contract ITokenChanger {
 */
 
 /*
-    Bancor Changer v0.2
+    Bancor Changer v0.3
 
     The Bancor version of the token changer, allows changing between a smart token and other ERC20 tokens and between different ERC20 tokens and themselves.
 
@@ -396,7 +396,7 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         bool isSet;                     // used to tell if the mapping element is defined
     }
 
-    string public version = '0.2';
+    string public version = '0.3';
     string public changerType = 'bancor';
 
     IBancorFormula public formula;                  // bancor calculation formula contract
@@ -798,8 +798,12 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         if (reserve.isVirtualBalanceEnabled)
             reserve.virtualBalance = safeAdd(reserve.virtualBalance, _depositAmount);
 
-        assert(_reserveToken.transferFrom(msg.sender, this, _depositAmount)); // transfer _depositAmount funds from the caller in the reserve token
-        token.issue(msg.sender, amount); // issue new funds to the caller in the smart token
+        // transfer _depositAmount funds from the caller in the reserve token
+        // note that there's no need to execute the transfer if the sender is the local contract
+        if (msg.sender != address(this))
+            assert(_reserveToken.transferFrom(msg.sender, this, _depositAmount));
+        // issue new funds to the caller in the smart token
+        token.issue(msg.sender, amount);
 
         // calculate the new price using the simple price formula
         // price = reserve balance / (supply * CRR)
@@ -840,9 +844,14 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         if (reserve.isVirtualBalanceEnabled)
             reserve.virtualBalance = safeSub(reserve.virtualBalance, amount);
 
-        token.destroy(msg.sender, _sellAmount); // destroy _sellAmount from the caller's balance in the smart token
-        assert(_reserveToken.transfer(msg.sender, amount)); // transfer funds to the caller in the reserve token
-                                                            // note that it might fail if the actual reserve balance is smaller than the virtual balance
+        // destroy _sellAmount from the caller's balance in the smart token
+        token.destroy(msg.sender, _sellAmount);
+        // transfer funds to the caller in the reserve token
+        // the transfer might fail if the actual reserve balance is smaller than the virtual balance
+        // note that there's no need to execute the transfer if the sender is the local contract
+        if (msg.sender != address(this))
+            assert(_reserveToken.transfer(msg.sender, amount));
+
         // calculate the new price using the simple price formula
         // price = reserve balance / (supply * CRR)
         // CRR is represented in ppm, so multiplying by 1000000
@@ -898,7 +907,8 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
             IEtherToken etherToken = IEtherToken(toToken);
             etherToken.withdrawTo(msg.sender, _amount);
         }
-        else {
+        // no need to transfer the tokens if the sender is the local contract
+        else if (msg.sender != address(this)) {
             // not ETH, transfer the tokens to the caller
             assert(toToken.transfer(msg.sender, _amount));
         }
@@ -917,19 +927,16 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
     function quickBuy(uint256 _minReturn) public payable returns (uint256 amount) {
         // ensure that the quick buy path was set
         assert(quickBuyPath.length > 0);
-        // we assume that the initial source in the quick buy path is always an ether token
-        IEtherToken etherToken = IEtherToken(quickBuyPath[0]);
+        // get the ether token
+        IEtherToken etherToken = getQuickBuyEtherToken();
         // deposit ETH in the ether token
         etherToken.deposit.value(msg.value)();
-        // get the initial changer in the path
-        ISmartToken smartToken = ISmartToken(quickBuyPath[1]);
-        BancorChanger changer = BancorChanger(smartToken.owner());
-        // approve allowance for the changer in the ether token
-        ensureAllowance(etherToken, changer, msg.value);
         // execute the change
-        uint256 returnAmount = changer.quickChange(quickBuyPath, msg.value, _minReturn);
+        uint256 returnAmount = this.quickChange(quickBuyPath, msg.value, _minReturn);
+        // get the target token
+        IERC20Token toToken = quickBuyPath[quickBuyPath.length - 1];
         // transfer the tokens to the caller
-        assert(token.transfer(msg.sender, returnAmount));
+        assert(toToken.transfer(msg.sender, returnAmount));
         return returnAmount;
     }
 
@@ -967,6 +974,10 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         @param _value   allowance amount
     */
     function ensureAllowance(IERC20Token _token, address _spender, uint256 _value) private {
+        // no need to set an allowance if the spender is the local contract
+        if (_spender == address(this))
+            return;
+
         // check if allowance for the given amount already exists
         if (_token.allowance(this, _spender) >= _value)
             return;
@@ -987,6 +998,10 @@ contract BancorChanger is ITokenChanger, SmartTokenController, Managed {
         @param _amount  amount to claim
     */
     function claimTokens(IERC20Token _token, address _from, uint256 _amount) private {
+        // no need to claim the tokens if the source is the local contract
+        if (_from == address(this))
+            return;
+
         // if the token is the smart token, no allowance is required - destroy the tokens from the caller and issue them to the local contract
         if (_token == token) {
             token.destroy(_from, _amount); // destroy _amount tokens from the caller's balance in the smart token
