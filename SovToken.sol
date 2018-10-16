@@ -1,6 +1,68 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SovToken at 0x2e65c144c92bf1ea0cf4a95b3d9e31cf9755d2ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SovToken at 0x5ab08341acdb5d79b21b5d2fb021ac9545b705b4
 */
+/*
+NOBLE NATION SOVEREIGN TOKEN - ISSUANCE POLICIES & TERMS OF SERVICE
+Background
+
+Noble Nation is a global social, economic and political movement based around a revolutionary new crypto-block-chain technology and platform called Chakra. This platform is a cohesive and self sustaining society, economy and a governance framework bound by universal moral principles. Our technology and principles have the potential to bring about enormous positive change in our world and correct many of its existing flaws.
+
+Purpose of this Initial Coin Offering
+
+The funds raised from this ICO is to be utilized for the furtherance of the goals and objectives of our movement as detailed in our program white paper. SVT Tokens are granted to you purely as a reward for contributing to our cause and also to encourage you to be an active participant in the Noble Society, Economy and Government. 
+
+What Sovereign Tokens (SVT) and Sovereigns (SOV) ARE and ARE NOT
+
+Ownership of Sovereign tokens or the Sovereign currency implies that the holder is a member of the Noble Nation’s society and has all rights and privileges to operate within the Noble Nation platform in accordance with the constitution of the Noble Nation, including:
+1. Participation in the noble society and the merit framework;
+2. Participation and trade in the noble economy;
+3. Participation in the direct democracy;
+4. Participation in all other frameworks of Noble Nation as may be applicable.
+
+The acquisition of Sovereign tokens or currency and/or the participation in any of the above activities implies that the individual has pledged to abide and uphold the principles and the constitution of Noble Nation.
+
+Ownership of Sovereign tokens or the Sovereign currency DOES NOT in any way grant the holder any:
+1. Ownership interest in any legal entity;
+2. Equity interest;
+3. Share of profits and/or losses, or assets and/or liabilities;
+4. Status as a creditor or lender;
+5. Claim in bankruptcy as equity interest holder or creditor;
+6. Repayment/refund obligation from the system or the legal entity issuer.
+
+The Inherent Risks of the Noble Nation Project
+
+While the founding members have committed their lives to the cause of Noble Nation and they will endeavor to the best of their human ability to fulfill this vision, it is not possible to make any guarantee as to the final outcome of our vision and goals.
+
+We do not make any guarantees or representations as to the Token’s/Sovereign’s tradeability, reliability or fitness for a financial transaction – these are all dependent on market conditions within and outside the Noble Nation and the technical maturity of the platform.
+
+In summary, your primary motivation for participating in this ICO should be to support the vision and mission of Noble Nation and to participate in the Noble Economy, Society and Government.
+
+Nationals from all Countries are Welcome to Participate in the Noble Nation ICO
+
+However, you should not participate in this ICO if you live in a country where basic political and economic expression is suppressed and the acquisition of these tokens may violate any laws or regulations you are subject to.
+
+We do not screen participants by nationality as we cannot practically be expected to keep track of regulations in over 200 national jurisdictions across the the world.
+
+Noble Nation Network is engaged in Social, Political and Economic action in conformance with the political and economic rights guaranteed by the universal declaration of human rights while adhering to very high standards of ethics, morality and natural justice. But you are responsible for making sure that you are in conformance with applicable laws in your jurisdiction.
+
+Converting Sovereign Tokens (SVT) to Sovereigns in the Noble Economy
+
+When the beta Noble Nation platform is functional, SVT token holders will be provided instructions on creating an Identity in the Noble Nation, and how to convert SVT tokens into Sovereigns. All trade within the Noble Nation platform will utilize the currency of the Noble Economy, the Sovereign.
+
+To create an identity on the Noble Nation platform, the token holder must agree to honor and uphold the principles of Noble Nation. Each human individual may hold only a single Identity in the Noble Nation. At this stage, they will be required to provide identity details conforming to generally accepted KYC/AML requirements. Unlike other platforms though these details will be cryptographically protected by the privacy framework backed by the 3rd root law of the Noble Nation. 
+
+By contributing to this ICO, all participants confirm that:
+
+1. You are 18 years or above at the date of contribution.
+2. You are not under any restrictions to use the website and participate in this ICO.
+3. You have never been engaged in any illegal activity including but not limited to money laundering, financing of terrorism or any other activity deemed illegal by applicable law.
+4. You further confirm that you will not be using this website, SVT Tokens or any other system or aspect of Noble Nation for any illegal activity whatsoever.
+5. You are the absolute owner of the ethereum address and/or the crypto currency wallet used to contribute to this ICO and have full control over the same.
+6. The address provided is a ERC-20 wallet (not an “exchange” wallet).
+
+Apart from the above, all participants are bound by the general Terms of Service (https://www.noblenation.net/tos) & Privacy Policy (https://www.noblenation.net/privacy-policy) of the Noble Nation Network.
+*/
+
 /* This file is a flattened version of OpenZeppelin (https://github.com/OpenZeppelin) 
  * SafeMath.sol so as to fix the code base and simplify compilation in Remix etc..
  * with no external dependencies.
@@ -303,22 +365,17 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract SovToken is MintableToken {
-  string public name = "Sovereign";
+  string public name = "Noble Nation Sovereign Token";
   string public symbol = "SVT";
   uint256 public decimals = 18;
 
-  uint256 private _tradeableDate = now;
+  uint256 private constant _tradeableDate = 1529776800; // 2018 23rd June 18:00h
   
   //please update the following addresses before deployment
   address private constant CONVERT_ADDRESS = 0x9376B2Ff3E68Be533bAD507D99aaDAe7180A8175; 
   address private constant POOL = 0xE06be458ad8E80d8b8f198579E0Aa0Ce5f571294;
   
   event Burn(address indexed burner, uint256 value);
-
-  function SovToken(uint256 tradeDate) public
-  {
-    _tradeableDate = tradeDate;
-  }
 
   function transfer(address _to, uint256 _value) public returns (bool) 
   {
@@ -346,208 +403,5 @@ contract SovToken is MintableToken {
         Transfer(msg.sender, _to, _value);
         return true;
     }
-  }
-}
-
-/* This file is a flattened version of OpenZeppelin (https://github.com/OpenZeppelin) 
- * Crowdsale.sol so as to fix the code base and simplify compilation in Remix etc..
- * with no external dependencies. 
- */
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive. The contract requires a MintableToken that will be
- * minted as contributions arrive, note that the crowdsale contract
- * must be owner of the token in order to be able to mint it.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  MintableToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, MintableToken _token) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_token != address(0));
-
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
-    token = _token;
-  }
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
-  // Override this method to have a way to add business logic to your crowdsale when buying
-  function getTokenAmount(uint256 weiAmount) internal view returns(uint256) {
-    return weiAmount.mul(rate);
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-}
-
-contract SovTokenCrowdsale is Crowdsale {
-  uint private constant TIME_UNIT = 86400;    // in seconds - set at 60 (1 min) for testing and change to 86400 (1 day) for release
-  uint private constant TOTAL_TIME = 91;
-  uint private constant RATE = 1000;
-  uint256 private constant START_TIME = 1519128000;
-  uint256 private constant HARD_CAP = 100000*1000000000000000000;    // in wei - 100K Eth
-  
-  //please update the following addresses before deployment
-  address private constant WALLET = 0x04Fb0BbC4f95F5681138502094f8FD570AA2CB9F;
-  address private constant POOL = 0xE06be458ad8E80d8b8f198579E0Aa0Ce5f571294;
-
-  function SovTokenCrowdsale() public
-        Crowdsale(START_TIME, START_TIME + (TIME_UNIT * TOTAL_TIME), RATE, WALLET, new SovToken(START_TIME + (TIME_UNIT * TOTAL_TIME)))
-  {    }
-  
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable 
-  {
-    require(beneficiary != address(0));
-    require(validPurchase());
-    
-    uint256 weiAmount = msg.value;
-
-    // validate if hardcap reached
-    require(weiRaised.add(weiAmount) < HARD_CAP);
-
-    // calculate token amount to be created
-    uint256 tokens = getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    // for every token given away, half a token is minted to the treasury pool
-    token.mint(POOL, tokens/2);
-
-    forwardFunds();
-  }
-
-  // Overriden to calculate bonuses
-  function getTokenAmount(uint256 weiAmount) internal view returns(uint256) 
-  {
-    uint256 tokens =  weiAmount.mul(rate);
-    uint256 bonus = 100;
-
-    // determine bonus according to pre-sale period age
-    if (now >= endTime)
-      bonus = 0;
-    else if (now <= startTime + (7 * TIME_UNIT))
-      bonus += 75;
-    else if (now <= startTime + (14 * TIME_UNIT))
-      bonus += 65;
-    else if (now <= startTime + (21 * TIME_UNIT))
-      bonus += 55;
-    else if (now <= startTime + (28 * TIME_UNIT))
-      bonus += 45;
-    else if (now <= startTime + (39 * TIME_UNIT))
-      bonus += 35;
-    else if (now <= startTime + (70 * TIME_UNIT))
-      bonus = 0;
-    else if (now <= startTime + (77 * TIME_UNIT))
-      bonus += 10;
-    else if (now <= startTime + (84 * TIME_UNIT))
-      bonus += 5;
-    else
-      bonus = 100;
-
-    tokens = tokens * bonus / 100;
-
-    bonus = 100;
-    
-    //determine applicable amount bonus
-    // 1 - 10 ETH 10%, >10 ETH 20%
-    if (weiAmount >= 1000000000000000000 && weiAmount < 10000000000000000000)
-      bonus += 10;
-    else if (weiAmount >= 10000000000000000000)
-      bonus += 20;
-
-    tokens = tokens * bonus / 100;
-      
-    return tokens;
-  }  
-  
-  
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) 
-  {
-      bool isPreSale = now >= startTime && now <= startTime + (39 * TIME_UNIT);
-      bool isIco = now > startTime + (70 * TIME_UNIT) && now <= endTime;
-      bool withinPeriod = isPreSale || isIco;
-      bool nonZeroPurchase = msg.value != 0;
-      return withinPeriod && nonZeroPurchase;
   }
 }
