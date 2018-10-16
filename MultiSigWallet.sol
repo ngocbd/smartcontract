@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xfb1a507782d6ad636f02bb80bc29f687027d582c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x0e416dd32359a7825ef580ff2527c3280c1e07fa
 */
-/**
- * Originally from https://github.com/ConsenSys/MultiSigWallet
- */
-
+pragma solidity ^0.4.13;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -39,49 +36,49 @@ contract MultiSigWallet {
 
     modifier onlyWallet() {
         if (msg.sender != address(this))
-            throw;
+            revert();
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
         if (isOwner[owner])
-            throw;
+            revert();
         _;
     }
 
     modifier ownerExists(address owner) {
         if (!isOwner[owner])
-            throw;
+            revert();
         _;
     }
 
     modifier transactionExists(uint transactionId) {
         if (transactions[transactionId].destination == 0)
-            throw;
+            revert();
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
         if (!confirmations[transactionId][owner])
-            throw;
+            revert();
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
         if (confirmations[transactionId][owner])
-            throw;
+            revert();
         _;
     }
 
     modifier notExecuted(uint transactionId) {
         if (transactions[transactionId].executed)
-            throw;
+            revert();
         _;
     }
 
     modifier notNull(address _address) {
         if (_address == 0)
-            throw;
+            revert();
         _;
     }
 
@@ -90,7 +87,14 @@ contract MultiSigWallet {
             || _required > ownerCount
             || _required == 0
             || ownerCount == 0)
-            throw;
+            revert();
+        _;
+    }
+
+    modifier notValidAddress(address _address)
+    {
+        if(_address == 0x0)
+            revert();
         _;
     }
 
@@ -114,7 +118,7 @@ contract MultiSigWallet {
     {
         for (uint i=0; i<_owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
+                revert();
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
