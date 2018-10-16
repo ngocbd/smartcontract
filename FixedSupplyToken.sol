@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x4401b7f94dd9a133055c1a3f3c20e7493c58d1a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x8d127d7d6262f7cafc19e0ebffffaed29aec0457
 */
 pragma solidity ^0.4.18;
 
@@ -117,12 +117,12 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     function FixedSupplyToken() public {
-        symbol = "HIT";
-        name = "HitCents";
+        symbol = "RCY";
+        name = "RatingAgency";
         decimals = 18;
-        _totalSupply = 1000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+        _totalSupply = 500000 * 10**uint(decimals);
+        balances[0xc08B8d37fCEa0a2A3cF3b7120995577B309ec33d] = _totalSupply;
+        Transfer(address(0), 0xc08B8d37fCEa0a2A3cF3b7120995577B309ec33d, _totalSupply);
     }
 
 
