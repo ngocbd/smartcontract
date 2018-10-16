@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIONEUM at 0x62ea72069c02e06c22da38f559218b25e878fe84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIONEUM at 0x3f9ef884433bdcbe10e6477e58be727bc4e6731a
 */
 pragma solidity ^0.4.11;
 	/**
@@ -170,7 +170,7 @@ contract BIONEUM is StandardToken, Ownable {
     uint256 public constant totalSupply = decVal(50000000);
 	
     // Address where funds are collected.
-    address public multisig = 0xFC8b6add05Dd6b5fd91F6559EFF84A20201fD86c;
+    address public multisig = 0x999bb65DBfc56742d6a65b1267cfdacf2afa5FBE;
     // Developer tokens.
 	address public developers = 0x8D9acc27005419E0a260B44d060F7427Cd9739B2;
     // Founder tokens.
@@ -184,8 +184,6 @@ contract BIONEUM is StandardToken, Ownable {
     uint256 public endDate;
     // Amount of raised money in wei.
     uint256 public weiRaised;
-    // Amount of raised money in ether.
-    uint256 public etherRaised;
     // Number of tokens sold.
 	uint256 public tokensSold;
     // Modifiers.
@@ -194,7 +192,7 @@ contract BIONEUM is StandardToken, Ownable {
         _;
     }    
 	function BIONEUM() {
-        startDate = now.add(5 hours);
+        startDate = now;
         endDate = startDate.add(30 days);
 		
         balances[founders] 	= decVal(5000000);
@@ -212,20 +210,20 @@ contract BIONEUM is StandardToken, Ownable {
     function supply() internal returns (uint256) {
         return balances[this];
     }
-    function getRateAt(uint256 at) constant returns (uint256) {
+    function getRateAt(uint256 at, uint256 amount) constant returns (uint256) {
         if (at < startDate) {
             return 0;
         } else if (at < startDate.add(7 days)) {
-            return decVal(130);
+            return decVal(1300);
         } else if (at < startDate.add(14 days)) {
-            return decVal(115);
+            return decVal(1150);
         } else if (at < startDate.add(21 days)) {
-            return decVal(105);
+            return decVal(1050);
         } else if (at < startDate.add(28 days) || at <= endDate) {
-            return decVal(100);
+            return decVal(1000);
         } else {
             return 0;
-        }    
+        }
 	}
 	function decVal(uint256 amount) internal returns(uint256){
 		return amount * 10 ** uint256(decimals);
@@ -236,35 +234,37 @@ contract BIONEUM is StandardToken, Ownable {
     }
     function buyTokens(address sender, uint256 value) internal {
         require(saleActive());
-        require(value >= 0.01 ether);
-
+        require(value >= 0.001 ether);
         uint256 weiAmount = value;
         uint256 updatedWeiRaised = weiRaised.add(weiAmount);
-
         // Calculate token amount to be purchased
-        uint256 actualRate = getRateAt(now);
+        uint256 actualRate = getRateAt(now, amount);
         uint256 amount = weiAmount.mul(actualRate).div(1 ether);
-
         // We have enough token to sell
         require(supply() >= amount);
-
         // Transfer tokens
         balances[this] = balances[this].sub(amount);
         balances[sender] = balances[sender].add(amount);
-		Transfer(0x0, sender, amount);
+		Transfer(this, sender, amount);
         // Update state.
         weiRaised = updatedWeiRaised;
-		etherRaised = weiRaised.div(1 ether);
 		tokensSold = tokensSold.add(amount);
-		
         // Forward the fund to fund collection wallet.
         multisig.transfer(msg.value);
     }
+	function internalSend(address recipient, uint256 bioAmount) onlyOwner{
+		// We have enough token to send
+		// Function used to provide tokens to users who participated in the 1.0 token sale
+        require(supply() >= bioAmount);
+        // Transfer tokens
+        balances[this] = balances[this].sub(bioAmount);
+        balances[recipient] = balances[recipient].add(bioAmount);
+		Transfer(this, recipient, bioAmount);
+	}
     function finalize() onlyOwner {
         require(!saleActive());
-        // Transfer the rest of token to Bioneum
-        balances[owner] = balances[owner].add(balances[this]);
-		Transfer(0x0, owner, balances[this]);
+		// Burn all unsold tokens at the end of the crowdsale
+		Transfer(this, 0x0, balances[this]);
         balances[this] = 0;
     }
     function saleActive() public constant returns (bool) {
