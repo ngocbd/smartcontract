@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockingContract at 0x1552168924fba0aa0a0e3587497d3865acb16f58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockingContract at 0xe42600D58F17a6D1cf0Ba4f65969083907a4DEC9
 */
 pragma solidity ^0.4.19;
 
@@ -141,9 +141,9 @@ contract LockingContract is Ownable {
     _;
   }
 
-  function LockingContract(ERC20 _tokenContract, uint256 _lockingDuration) public {
-    require(_lockingDuration > 0);
-    unlockTime = now.add(_lockingDuration);
+  function LockingContract(ERC20 _tokenContract, uint256 _unlockTime) public {
+    require(_unlockTime > 0);
+    unlockTime = _unlockTime;
     tokenContract = _tokenContract;
   }
 
