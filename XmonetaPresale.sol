@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmonetaPresale at 0x20f85983936d564e28b9cfb50b94e22ca854f8b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmonetaPresale at 0x23d80b407eb3e4d12d067eb718e290a0219fb355
 */
 pragma solidity ^0.4.19;
 
@@ -385,7 +385,7 @@ contract XmonetaPresale {
   // Crowdsale start timestamp - 01/25/2018 at 12:00pm (UTC)
   uint256 public startTime = 1516881600;
   // Crowdsale end timestamp - 02/15/2018 at 12:00pm (UTC)
-  uint256 public endTime = 1518696000;
+  uint256 public endTime = 1519560000;
   // Addresses where ETH are collected
   address public wallet1 = 0x36A3c000f8a3dC37FCD261D1844efAF851F81556;
   address public wallet2 = 0x8beDBE45Aa345938d70388E381E2B6199A15B3C3;
