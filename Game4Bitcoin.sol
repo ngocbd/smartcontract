@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game4Bitcoin at 0xe66a780ddc11cfdf47faf782b2f43e8b417f9553
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Game4Bitcoin at 0x7568807d20053230d259502d516ac0a75edea44a
 */
 pragma solidity ^0.4.18;
 
@@ -183,7 +183,7 @@ contract Game4Bitcoin is StandardToken {
 
   string public constant name = "Game 4 Bitcoin";
   string public constant symbol = "G4B";
-  uint8 public constant decimals = 2;
+  uint8 public constant decimals = 0;
 
   uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
 
