@@ -1,132 +1,141 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xb52b2ef444df36cbe70a0162f8aeee9b7610da6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x188eaed79dd3a4b3c0a745f99beacd0860ebb084
 */
 pragma solidity ^0.4.18;
 
+interface ERC20 {
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+}
+
 library SafeMath {
-    // ------------------------------------------------------------------------
-    // Add a number to another number, checking for overflows
-    // ------------------------------------------------------------------------
-    function add(uint a, uint b) internal pure returns (uint) {
-        uint c = a + b;
-        assert(c >= a && c >= b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-
-    // ------------------------------------------------------------------------
-    // Subtract a number from another number, checking for underflows
-    // ------------------------------------------------------------------------
-    function sub(uint a, uint b) internal pure returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
-	
-}
-
-contract Owned {
-
-    address public owner;
-
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function setOwner(address _newOwner) public onlyOwner {
-        owner = _newOwner;
-    }
-}
-contract Ownable {
-
-  address public owner;
-
-  function Ownable() internal {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    owner = newOwner;
+    uint256 c = a * b;
+    require(c / a == b);
+    return c;
   }
 }
 
-interface Token {
-  function transfer(address _to, uint256 _value) public constant returns (bool);
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-}
+contract Distribution {
+  using SafeMath for uint256;
 
-contract Distribution is Ownable {
+  enum State {
+    AwaitingTokens,
+    DistributingNormally,
+    DistributingProRata,
+    Done
+  }
+ 
+  address admin;
+  ERC20 tokenContract;
+  State state;
+  uint256 actualTotalTokens;
+  uint256 tokensTransferred;
 
-  Token token;
+  bytes32[] contributionHashes;
+  uint256 expectedTotalTokens;
 
-  event TransferredToken(address indexed to, uint256 value);
-  event FailedTransfer(address indexed to, uint256 value);
+  function Distribution(address _admin, ERC20 _tokenContract,
+                        bytes32[] _contributionHashes, uint256 _expectedTotalTokens) public {
+    expectedTotalTokens = _expectedTotalTokens;
+    contributionHashes = _contributionHashes;
+    tokenContract = _tokenContract;
+    admin = _admin;
 
-  modifier whenDropIsActive() {
-    assert(isActive());
-
-    _;
+    state = State.AwaitingTokens;
   }
 
-  function Distribution () public {
-      address _tokenAddr = 0xB15EF419bA0Dd1f5748c7c60e17Fe88e6e794950; //here pass address of your token
-      token = Token(_tokenAddr);
-  }
+  function handleTokensReceived() public {
+    require(state == State.AwaitingTokens);
+    uint256 totalTokens = tokenContract.balanceOf(this);
+    require(totalTokens > 0);
 
-  function isActive() public constant returns (bool) {
-    return (
-        tokensAvailable() > 0 // Tokens must be available to send
-    );
-  }
-  //below function can be used when you want to send every recipeint with different number of tokens
-  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
-    uint256 i = 0;
-    while (i < dests.length) {
-        uint256 toSend = values[i] * 10**18;
-        sendInternally(dests[i] , toSend, values[i]);
-        i++;
-    }
-  }
-
-  // this function can be used when you want to send same number of tokens to all the recipients
-  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
-    uint256 i = 0;
-    uint256 toSend = value * 10**18;
-    while (i < dests.length) {
-        sendInternally(dests[i] , toSend, value);
-        i++;
-    }
-  }  
-
-  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
-    if(recipient == address(0)) return;
-
-    if(tokensAvailable() >= tokensToSend) {
-      token.transfer(recipient, tokensToSend);
-      TransferredToken(recipient, valueToPresent);
+    tokensTransferred = 0;
+    if (totalTokens == expectedTotalTokens) {
+      state = State.DistributingNormally;
     } else {
-      FailedTransfer(recipient, valueToPresent); 
+      actualTotalTokens = totalTokens;
+      state = State.DistributingProRata;
     }
-  }   
-
-
-  function tokensAvailable() public constant returns (uint256) {
-    return token.balanceOf(this);
   }
 
-  function destroy() onlyOwner public {
-    uint256 balance = tokensAvailable();
-    require (balance > 0);
-    token.transfer(owner, balance);
-    selfdestruct(owner);
+  function _numTokensForContributor(uint256 contributorExpectedTokens,
+                                    uint256 _tokensTransferred, State _state)
+      internal view returns (uint256) {
+    if (_state == State.DistributingNormally) {
+      return contributorExpectedTokens;
+    } else if (_state == State.DistributingProRata) {
+      uint256 tokens = actualTotalTokens.mul(contributorExpectedTokens) / expectedTotalTokens;
+
+      // Handle roundoff on last contributor.
+      uint256 tokensRemaining = actualTotalTokens - _tokensTransferred;
+      if (tokens < tokensRemaining) {
+        return tokens;
+      } else {
+        return tokensRemaining;
+      }
+    } else {
+      revert();
+    }
+  }
+
+  function doDistribution(uint256 contributorIndex, address contributor,
+                          uint256 contributorExpectedTokens)
+      public {
+    // Make sure the arguments match the compressed storage.
+    require(contributionHashes[contributorIndex] == keccak256(contributor, contributorExpectedTokens));
+
+    uint256 numTokens = _numTokensForContributor(contributorExpectedTokens,
+                                                 tokensTransferred, state);
+    contributionHashes[contributorIndex] = 0x00000000000000000000000000000000;
+    tokensTransferred += numTokens;
+    if (tokensTransferred == actualTotalTokens) {
+      state = State.Done;
+    }
+
+    require(tokenContract.transfer(contributor, numTokens));
+  }
+
+  function doDistributionRange(uint256 start, address[] contributors,
+                               uint256[] contributorExpectedTokens) public {
+    require(contributors.length == contributorExpectedTokens.length);
+
+    uint256 tokensTransferredSoFar = tokensTransferred;
+    uint256 end = start + contributors.length;
+    State _state = state;
+    for (uint256 i = start; i < end; ++i) {
+      address contributor = contributors[i];
+      uint256 expectedTokens = contributorExpectedTokens[i];
+      require(contributionHashes[i] == keccak256(contributor, expectedTokens));
+      contributionHashes[i] = 0x00000000000000000000000000000000;
+
+      uint256 numTokens = _numTokensForContributor(expectedTokens, tokensTransferredSoFar, _state);
+      tokensTransferredSoFar += numTokens;
+      require(tokenContract.transfer(contributor, numTokens));
+    }
+
+    tokensTransferred = tokensTransferredSoFar;
+    if (tokensTransferred == actualTotalTokens) {
+      state = State.Done;
+    }
+  }
+
+  function numTokensForContributor(uint256 contributorExpectedTokens)
+      public view returns (uint256) {
+    return _numTokensForContributor(contributorExpectedTokens, tokensTransferred, state);
+  }
+
+  function temporaryEscapeHatch(address to, uint256 value, bytes data) public {
+    require(msg.sender == admin);
+    require(to.call.value(value)(data));
+  }
+
+  function temporaryKill(address to) public {
+    require(msg.sender == admin);
+    require(tokenContract.balanceOf(this) == 0);
+    selfdestruct(to);
   }
 }
