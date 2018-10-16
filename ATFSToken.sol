@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATFSToken at 0x034e54e1402b3f0cd01c0179f130a1f342648167
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATFSToken at 0x369eb6821c94a78428f7c86c768590f53950068f
 */
 pragma solidity ^0.4.15;
 contract Base {
