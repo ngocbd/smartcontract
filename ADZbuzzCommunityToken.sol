@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x73575179da8619327b6b1dd3281181ea25e14f52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xbf09ed7e985ede7f545c144e243a3afc49ebf18d
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT189833' token contract
+// 'ACT158967' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT189833
-// Name        : ADZbuzz Everydayhealth.com Community Token
+// Symbol      : ACT158967
+// Name        : ADZbuzz Skysports.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT189833";
-        name = "ADZbuzz Everydayhealth.com Community Token";
+        symbol = "ACT158967";
+        name = "ADZbuzz Skysports.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
