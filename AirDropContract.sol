@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x9b3912ab0ef08a772a097340400ba6a471e8de57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x79e413a9500c24ceb69b0cc47be330dbf7c9a4af
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 /// @title LRC Foundation Icebox Program
 /// @author Daniel Wang - <daniel@loopring.org>.
@@ -32,17 +32,11 @@ contract AirDropContract {
 
     function drop(
         address tokenAddress,
-        uint amount,
-        uint minTokenBalance,
-        uint maxTokenBalance,
-        uint minEthBalance,
-        uint maxEthBalance,
-        address[] recipients) public {
+        address[] recipients,
+        uint256[] amounts) public {
 
         require(tokenAddress != 0x0);
-        require(amount > 0);
-        require(maxTokenBalance >= minTokenBalance);
-        require(maxEthBalance >= minEthBalance);
+        require(amounts.length == recipients.length);
 
         ERC20 token = ERC20(tokenAddress);
 
@@ -51,45 +45,24 @@ contract AirDropContract {
         uint available = balance > allowance ? allowance : balance;
 
         for (uint i = 0; i < recipients.length; i++) {
-            require(available >= amount);
-            address recipient = recipients[i];
+            require(available >= amounts[i]);
             if (isQualitifiedAddress(
-                token,
-                recipient,
-                minTokenBalance,
-                maxTokenBalance,
-                minEthBalance,
-                maxEthBalance
+                recipients[i]
             )) {
-                available -= amount;
-                require(token.transferFrom(msg.sender, recipient, amount));
+                available -= amounts[i];
+                require(token.transferFrom(msg.sender, recipients[i], amounts[i]));
 
-                AirDropped(recipient, amount);
+                AirDropped(recipients[i], amounts[i]);
             }
         }
     }
 
-    function isQualitifiedAddress(
-        ERC20 token,
-        address addr,
-        uint minTokenBalance,
-        uint maxTokenBalance,
-        uint minEthBalance,
-        uint maxEthBalance
-        )
+    function isQualitifiedAddress(address addr)
         public
         view
         returns (bool result)
     {
         result = addr != 0x0 && addr != msg.sender && !isContract(addr);
-
-        uint ethBalance = addr.balance;
-        uint tokenBbalance = token.balanceOf(addr);
-
-        result = result && (ethBalance>= minEthBalance &&
-            ethBalance <= maxEthBalance &&
-            tokenBbalance >= minTokenBalance &&
-            tokenBbalance <= maxTokenBalance);
     }
 
     function isContract(address addr) internal view returns (bool) {
