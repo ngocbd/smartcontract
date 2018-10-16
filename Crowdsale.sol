@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xff7560b413945e602931dc71077a080d90feba68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0b38bcec2b7404490a16a9fbbd3a87e14dac0367
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ interface token {
 
 contract Crowdsale {
     address public owner;
-    uint public amountRaised;
+    uint public tokenRaised;
     uint public deadline;
     uint public rateOfEther;
     token public tokenReward;
@@ -50,32 +50,23 @@ function changeCrowdsale(bool isClose) public {
         crowdsaleClosed = isClose;
     }
 }
-
-
-  function finishPresale(uint value) public {
-    if(msg.sender == owner) {
-        if(owner.send(value)) {
-            FundTransfer(owner, value, false);
-        }
-    }
-  }
-
-    function buyToken() payable public {
-        require(!crowdsaleClosed);
-        require(now <= deadline);
-        uint amount = msg.value;
-        amountRaised += amount;
-        uint tokens = amount * rateOfEther;
-        balanceOf[msg.sender] += tokens;
-        tokenReward.transfer(msg.sender, tokens);
-        FundTransfer(msg.sender, tokens, true);
-    }
     /**
      * Fallback function
      *
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
     function () payable public {
-        buyToken();
+        require(!crowdsaleClosed);
+        require(now <= deadline);
+        uint amount = msg.value;
+        uint tokens = amount * rateOfEther;
+        require((tokenRaised + tokens) <= 100000000 * 1 ether);
+        balanceOf[msg.sender] += tokens;
+        tokenRaised += tokens;
+        tokenReward.transfer(msg.sender, tokens);
+        FundTransfer(msg.sender, tokens, true);
+        if(owner.send(amount)) {
+            FundTransfer(owner, amount, false);
+        }
     }
 }
