@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLayer at 0x96d0c2877b5d4fa1a476a8184326ff3efa0f95f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLayer at 0x887e1988f7d697df22aea1207a5e1831ad3065ef
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -193,7 +193,7 @@ contract TokenLayer is ERC721, Manageable {
     }
 
     function symbol() public pure returns (string) {
-        return "RegionToken";
+        return "JapanToken";
     }
 
     function approve(address _to, uint256 _tokenId, address _from) public onlySystem {
