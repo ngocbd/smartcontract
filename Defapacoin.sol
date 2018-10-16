@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Defapacoin at 0xbae3b1dc81ab264ca61353f21e0d9e14a75f6cb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Defapacoin at 0xae7bcd6673de31017fed61ca915ab36ef2556d24
 */
 pragma solidity ^0.4.19;
 
@@ -89,7 +89,7 @@ contract Defapacoin {
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.1 ether;
+    uint256 constant internal tokenPriceIncremental_ = 100 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
