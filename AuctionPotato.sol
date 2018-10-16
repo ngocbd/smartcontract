@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0x090ef763e44c0ee503e215ae4e2b302fb515d203
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0x100bc89aba480118bdb87c4d1635485fd23cf3e1
 */
 // based on Bryn Bellomy code
 // https://medium.com/@bryn.bellomy/solidity-tutorial-building-a-simple-auction-contract-fcc918b0878a
@@ -62,7 +62,6 @@ contract AuctionPotato {
     using SafeMath for uint256; 
     // static
     address public owner;
-    uint public bidIncrement;
     uint public startTime;
     uint public endTime;
     string public infoUrl;
@@ -73,6 +72,14 @@ contract AuctionPotato {
 
     // pototo
     uint public potato;
+    uint oldPotato;
+    uint oldHighestBindingBid;
+    
+    // transfer ownership
+    address creatureOwner;
+    address creature_newOwner;
+    event CreatureOwnershipTransferred(address indexed _from, address indexed _to);
+    
     
     // state
     bool public canceled;
@@ -80,24 +87,34 @@ contract AuctionPotato {
     uint public highestBindingBid;
     address public highestBidder;
     
+    // used to immidiately block placeBids
+    bool blockerPay;
+    bool blockerWithdraw;
+    
     mapping(address => uint256) public fundsByBidder;
     bool ownerHasWithdrawn;
 
-    event LogBid(address bidder, uint bid, address highestBidder, uint highestBindingBid);
+    event LogBid(address bidder, address highestBidder, uint oldHighestBindingBid, uint highestBindingBid);
     event LogWithdrawal(address withdrawer, address withdrawalAccount, uint amount);
     event LogCanceled();
     
     
     // initial settings on contract creation
     constructor() public {
-
+        
+        blockerWithdraw = false;
+        blockerPay = false;
+        
         owner = msg.sender;
-        // 0.01 ETH
-        bidIncrement = 10000000000000000;
+        creatureOwner = owner;
+        
+        // 0.002 ETH
+        highestBindingBid = 2000000000000000;
+        potato = 0;
         
         started = false;
         
-        name = "Lizard People";
+        name = "Stomper";
         infoUrl = "https://chibifighters.io";
         
     }
@@ -109,6 +126,9 @@ contract AuctionPotato {
         return fundsByBidder[highestBidder];
     }
     
+    // query remaining time
+    // this should not be used, query endTime once and then calculate it in your frontend
+    // it's helpful when you want to debug in remix
     function timeLeft() public view returns (uint time) {
         if (now >= endTime) return 0;
         return endTime - now;
@@ -118,10 +138,18 @@ contract AuctionPotato {
         return name;
     }
     
+    // calculates the next bid amount to you can have a oneclick buy button
     function nextBid() public view returns (uint _nextBid) {
-        return bidIncrement.add(highestBindingBid).add(potato);
+        return highestBindingBid.add(potato);
     }
     
+    // calculates the bid after the current bid so nifty hackers can skip the queue
+    // this is not in our frontend and no one knows if it actually works
+    function nextNextBid() public view returns (uint _nextBid) {
+        return highestBindingBid.add(potato).add((highestBindingBid.add(potato)).mul(4).div(9));
+    }
+    
+    // command to start the auction
     function startAuction(string _name, uint _duration_secs) public onlyOwner returns (bool success){
         require(started == false);
         
@@ -147,29 +175,32 @@ contract AuctionPotato {
         returns (bool success)
     {   
         // we are only allowing to increase in bidIncrements to make for true hot potato style
-        require(msg.value == highestBindingBid.add(bidIncrement).add(potato));
+        require(msg.value == highestBindingBid.add(potato));
         require(msg.sender != highestBidder);
         require(started == true);
+        require(blockerPay == false);
+        blockerPay = true;
         
         // calculate the user's total bid based on the current amount they've sent to the contract
         // plus whatever has been sent with this transaction
-        uint newBid = highestBindingBid.add(bidIncrement);
 
-        fundsByBidder[msg.sender] = fundsByBidder[msg.sender].add(newBid);
-        
+        fundsByBidder[msg.sender] = fundsByBidder[msg.sender].add(highestBindingBid);
         fundsByBidder[highestBidder] = fundsByBidder[highestBidder].add(potato);
+        
+        oldHighestBindingBid = highestBindingBid;
         
         // set new highest bidder
         highestBidder = msg.sender;
-        highestBindingBid = newBid;
+        highestBindingBid = highestBindingBid.add(potato);
         
-        // set new increment size
-        bidIncrement = bidIncrement.mul(5).div(4);
+        // 40% potato results in ~6% 2/7
+        // 44% potato results in ? 13% 4/9 
+        // 50% potato results in ~16% /2
+        oldPotato = potato;
+        potato = highestBindingBid.mul(4).div(9);
         
-        // 10% potato
-        potato = highestBindingBid.div(100).mul(20);
-        
-        emit LogBid(msg.sender, newBid, highestBidder, highestBindingBid);
+        emit LogBid(msg.sender, highestBidder, oldHighestBindingBid, highestBindingBid);
+        blockerPay = false;
         return true;
     }
 
@@ -188,6 +219,9 @@ contract AuctionPotato {
     // can withdraw once overbid
         returns (bool success)
     {
+        require(blockerWithdraw == false);
+        blockerWithdraw = true;
+        
         address withdrawalAccount;
         uint withdrawalAmount;
 
@@ -200,10 +234,9 @@ contract AuctionPotato {
         }
         
         // owner can withdraw once auction is cancelled or ended
-        //if (ownerHasWithdrawn == false && msg.sender == owner && (canceled == true || now > endTime)) {
-        if (msg.sender == owner) {
+        if (ownerHasWithdrawn == false && msg.sender == owner && (canceled == true || now > endTime)) {
             withdrawalAccount = owner;
-            withdrawalAmount = highestBindingBid;
+            withdrawalAmount = highestBindingBid.sub(oldPotato);
             ownerHasWithdrawn = true;
             
             // set funds to 0
@@ -219,23 +252,32 @@ contract AuctionPotato {
         }
 
         // highest bidder can withdraw leftovers if he didn't before
-        if (msg.sender == highestBidder && msg.sender != owner) {
+        if (!canceled && msg.sender == highestBidder && msg.sender != owner) {
             withdrawalAccount = msg.sender;
-            withdrawalAmount = fundsByBidder[withdrawalAccount].sub(highestBindingBid);
+            withdrawalAmount = fundsByBidder[withdrawalAccount].sub(oldHighestBindingBid);
             fundsByBidder[withdrawalAccount] = fundsByBidder[withdrawalAccount].sub(withdrawalAmount);
         }
 
         if (withdrawalAmount == 0) revert();
     
         // send the funds
-        if (!msg.sender.send(withdrawalAmount)) revert();
+        msg.sender.transfer(withdrawalAmount);
 
         emit LogWithdrawal(msg.sender, withdrawalAccount, withdrawalAmount);
-
+        blockerWithdraw = false;
         return true;
     }
     
+    // amount owner can withdraw after auction ended
+    // that way you can easily compare the contract balance with your amount
+    // if there is more in the contract than your balance someone didn't withdraw
+    // let them know that :)
+    function ownerCanWithdraw() public view returns (uint amount) {
+        return highestBindingBid.sub(oldPotato);
+    }
+    
     // just in case the contract is bust and can't pay
+    // should never be needed but who knows
     function fuelContract() public onlyOwner payable {
         
     }
@@ -245,12 +287,12 @@ contract AuctionPotato {
     }
 
     modifier onlyOwner {
-        if (msg.sender != owner) revert();
+        require(msg.sender == owner);
         _;
     }
 
     modifier onlyNotOwner {
-        if (msg.sender == owner) revert();
+        require(msg.sender != owner);
         _;
     }
 
@@ -268,4 +310,24 @@ contract AuctionPotato {
         if (canceled) revert();
         _;
     }
+    
+    // who owns the creature (not necessarily auction winner)
+    function queryCreatureOwner() public view returns (address _creatureOwner) {
+        return creatureOwner;
+    }
+    
+    // transfer ownership for auction winners in case they want to trade the creature before release
+    function transferCreatureOwnership(address _newOwner) public {
+        require(msg.sender == creatureOwner);
+        creature_newOwner = _newOwner;
+    }
+    
+    // buyer needs to confirm the transfer
+    function acceptCreatureOwnership() public {
+        require(msg.sender == creature_newOwner);
+        emit CreatureOwnershipTransferred(creatureOwner, creature_newOwner);
+        creatureOwner = creature_newOwner;
+        creature_newOwner = address(0);
+    }
+    
 }
