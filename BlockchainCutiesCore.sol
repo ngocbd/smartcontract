@@ -1,10 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesCore at 0x55d378a647fdc848b6f17384a69eeec15bd7ba1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesCore at 0xd73be539d6b2076bab83ca6ba62dfe189abc6bbe
 */
 pragma solidity ^0.4.20;
 
+/// BlockchainCuties: Collectible and breedable cuties on the Ethereum blockchain.
+/// https://blockchaincuties.co/
+
+
 /// @title defined the interface that will be referenced in main Cutie contract
-/// @author https://BlockChainArchitect.io
 contract GeneMixerInterface {
     /// @dev simply a boolean to indicate this is the contract we expect to be
     function isGeneMixer() external pure returns (bool);
@@ -20,7 +23,7 @@ contract GeneMixerInterface {
 
 
 
-/// @author https://BlockChainArchitect.io
+/// @author https://BlockChainArchitect.iocontract Bank is CutiePluginBase
 contract PluginInterface
 {
     /// @dev simply a boolean to indicate this is the contract we expect to be
@@ -65,6 +68,43 @@ contract MarketInterface
     function createAuction(uint40 _cutieId, uint128 _startPrice, uint128 _endPrice, uint40 _duration, address _seller) public payable;
 
     function bid(uint40 _cutieId) public payable;
+
+    function cancelActiveAuctionWhenPaused(uint40 _cutieId) public;
+
+	function getAuctionInfo(uint40 _cutieId)
+        public
+        view
+        returns
+    (
+        address seller,
+        uint128 startPrice,
+        uint128 endPrice,
+        uint40 duration,
+        uint40 startedAt,
+        uint128 featuringFee
+    );
+}
+
+
+
+/// @title BlockchainCuties: Collectible and breedable cuties on the Ethereum blockchain.
+/// @author https://BlockChainArchitect.io
+/// @dev This is the BlockchainCuties configuration. It can be changed redeploying another version.
+contract ConfigInterface
+{
+    function isConfig() public pure returns (bool);
+
+    function getCooldownIndexFromGeneration(uint16 _generation) public view returns (uint16);
+    
+    function getCooldownEndTimeFromIndex(uint16 _cooldownIndex) public view returns (uint40);
+
+    function getCooldownIndexCount() public view returns (uint256);
+    
+    function getBabyGen(uint16 _momGen, uint16 _dadGen) public pure returns (uint16);
+
+    function getTutorialBabyGen(uint16 _dadGen) public pure returns (uint16);
+
+    function getBreedingFee(uint40 _momId, uint40 _dadId) public pure returns (uint256);
 }
 
 
@@ -493,29 +533,23 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         return addressToApprovedAll[_owner] == _operator;
     }
 
-    /// @dev A lookup table that shows the cooldown duration after a successful
-    ///  breeding action, called "breeding cooldown". The cooldown roughly doubles each time
-    /// a cutie is bred, so that owners don't breed the same cutie continuously. Maximum cooldown is seven days.
-    uint32[14] public cooldowns = [
-        uint32(1 minutes),
-        uint32(2 minutes),
-        uint32(5 minutes),
-        uint32(10 minutes),
-        uint32(30 minutes),
-        uint32(1 hours),
-        uint32(2 hours),
-        uint32(4 hours),
-        uint32(8 hours),
-        uint32(16 hours),
-        uint32(1 days),
-        uint32(2 days),
-        uint32(4 days),
-        uint32(7 days)
-    ];
+    ConfigInterface public config;
 
-    function setCooldown(uint16 index, uint32 newCooldown) public onlyOwner
+    /// @dev Update the address of the config contract.
+    /// @param _address An address of a ConfigInterface contract instance to be used from this point forward.
+    function setConfigAddress(address _address) public onlyOwner
     {
-        cooldowns[index] = newCooldown;
+        ConfigInterface candidateContract = ConfigInterface(_address);
+
+        require(candidateContract.isConfig());
+
+        // Set the new contract address
+        config = candidateContract;
+    }
+
+    function getCooldownIndexFromGeneration(uint16 _generation) internal view returns (uint16)
+    {
+        return config.getCooldownIndexFromGeneration(_generation);
     }
 
     /// @dev An internal method that creates a new cutie and stores it. This
@@ -531,6 +565,7 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         uint40 _momId,
         uint40 _dadId,
         uint16 _generation,
+        uint16 _cooldownIndex,
         uint256 _genes,
         address _owner,
         uint40 _birthTime
@@ -538,19 +573,13 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         internal
         returns (uint40)
     {
-        // New cutie starts with the same cooldown as parent gen/2
-        uint16 cooldownIndex = uint16(_generation / 2);
-        if (cooldownIndex > cooldowns.length) {
-            cooldownIndex = uint16(cooldowns.length - 1);
-        }
-
         Cutie memory _cutie = Cutie({
             genes: _genes, 
             birthTime: _birthTime, 
             cooldownEndTime: 0, 
             momId: _momId, 
             dadId: _dadId, 
-            cooldownIndex: cooldownIndex, 
+            cooldownIndex: _cooldownIndex, 
             generation: _generation,
             optional: 0
         });
@@ -1027,7 +1056,7 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         operatorAddress = msg.sender;
 
         // start with the mythical cutie 0 - so there are no generation-0 parent issues
-        _createCutie(0, 0, 0, uint256(-1), address(0), 0);
+        _createCutie(0, 0, 0, 0, uint256(-1), address(0), 0);
     }
 
     event ContractUpgrade(address newContract);
@@ -1042,6 +1071,68 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         require(_newAddress != address(0));
         upgradedContractAddress = _newAddress;
         emit ContractUpgrade(upgradedContractAddress);
+    }
+
+    /// @dev Import cuties from previous version of Core contract.
+    /// @param _oldAddress Old core contract address
+    /// @param _fromIndex (inclusive)
+    /// @param _toIndex (inclusive)
+    function migrate(address _oldAddress, uint40 _fromIndex, uint40 _toIndex) public onlyOwner whenPaused
+    {
+        require(_totalSupply() + 1 == _fromIndex);
+
+        BlockchainCutiesCore old = BlockchainCutiesCore(_oldAddress);
+
+        for (uint40 i = _fromIndex; i <= _toIndex; i++)
+        {
+            uint256 genes;
+            uint40 birthTime;
+            uint40 cooldownEndTime;
+            uint40 momId;
+            uint40 dadId;
+            uint16 cooldownIndex;
+            uint16 generation;            
+            (genes, birthTime, cooldownEndTime, momId, dadId, cooldownIndex, generation) = old.getCutie(i);
+
+            Cutie memory _cutie = Cutie({
+                genes: genes, 
+                birthTime: birthTime, 
+                cooldownEndTime: cooldownEndTime, 
+                momId: momId, 
+                dadId: dadId, 
+                cooldownIndex: cooldownIndex, 
+                generation: generation,
+                optional: 0
+            });
+            cuties.push(_cutie);
+        }
+    }
+
+    /// @dev Import cuties from previous version of Core contract (part 2).
+    /// @param _oldAddress Old core contract address
+    /// @param _fromIndex (inclusive)
+    /// @param _toIndex (inclusive)
+    function migrate2(address _oldAddress, uint40 _fromIndex, uint40 _toIndex, address saleAddress, address breedingAddress) public onlyOwner whenPaused
+    {
+        BlockchainCutiesCore old = BlockchainCutiesCore(_oldAddress);
+        MarketInterface oldSaleMarket = MarketInterface(saleAddress);
+        MarketInterface oldBreedingMarket = MarketInterface(breedingAddress);
+
+        for (uint40 i = _fromIndex; i <= _toIndex; i++)
+        {
+            address owner = old.ownerOf(i);
+
+            if (owner == saleAddress)
+            {
+                (owner,,,,,) = oldSaleMarket.getAuctionInfo(i);
+            }
+
+            if (owner == breedingAddress)
+            {
+                (owner,,,,,) = oldBreedingMarket.getAuctionInfo(i);
+            }
+            _transfer(0, owner, i);
+        }
     }
 
     /// @dev Override unpause so it requires upgradedContractAddress not set, because then the contract was upgraded.
@@ -1063,7 +1154,7 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
     function createGen0Auction(uint256 _genes, uint128 startPrice, uint128 endPrice, uint40 duration) public onlyOperator
     {
         require(gen0CutieCreatedCount < gen0Limit);
-        uint40 cutieId = _createCutie(0, 0, 0, _genes, address(this), uint40(now));
+        uint40 cutieId = _createCutie(0, 0, 0, 0, _genes, address(this), uint40(now));
         _approve(cutieId, saleMarket);
 
         saleMarket.createAuction(
@@ -1085,7 +1176,7 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         }
         promoCutieCreatedCount++;
         gen0CutieCreatedCount++;
-        _createCutie(0, 0, 0, _genes, _owner, uint40(now));
+        _createCutie(0, 0, 0, 0, _genes, _owner, uint40(now));
     }
 
     /// @dev Put a cutie up for auction to be dad.
@@ -1149,9 +1240,12 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         require(_isOwner(msg.sender, _momId));
         require(canBreed(_momId));
         require(_canMateViaMarketplace(_momId, _dadId));
+        // Take breeding fee
+        uint256 fee = getBreedingFee(_momId, _dadId);
+        require(msg.value >= fee);
 
         // breeding auction will throw if the bid fails.
-        breedingMarket.bid.value(msg.value)(_dadId);
+        breedingMarket.bid.value(msg.value - fee)(_dadId);
         return _breedWith(_momId, _dadId);
     }
 
@@ -1238,11 +1332,11 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
     {
         // Compute the end of the cooldown time, based on current cooldownIndex
         uint40 oldValue = _cutie.cooldownIndex;
-        _cutie.cooldownEndTime = uint40(now + cooldowns[_cutie.cooldownIndex]);
+        _cutie.cooldownEndTime = config.getCooldownEndTimeFromIndex(_cutie.cooldownIndex);
         emit CooldownEndTimeChanged(_cutieId, oldValue, _cutie.cooldownEndTime);
 
         // Increment the breeding count.
-        if (_cutie.cooldownIndex + 1 < cooldowns.length) {
+        if (_cutie.cooldownIndex + 1 < config.getCooldownIndexCount()) {
             uint16 oldValue2 = _cutie.cooldownIndex;
             _cutie.cooldownIndex++;
             emit CooldownIndexChanged(_cutieId, oldValue2, _cutie.cooldownIndex);
@@ -1351,12 +1445,25 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         return _canPairMate(mom, _momId, dad, _dadId);
     }
 
+    function getBreedingFee(uint40 _momId, uint40 _dadId)
+        public
+        view
+        returns (uint256)
+    {
+        return config.getBreedingFee(_momId, _dadId);
+    }
+
+
     /// @notice Breed cuties that you own, or for which you
     ///  have previously been given Breeding approval. Will either make your cutie give birth, or will
     ///  fail.
     /// @param _momId The ID of the Cutie acting as mom (will end up give birth if successful)
     /// @param _dadId The ID of the Cutie acting as dad (will begin its breeding cooldown if successful)
-    function breedWith(uint40 _momId, uint40 _dadId) public whenNotPaused returns (uint40)
+    function breedWith(uint40 _momId, uint40 _dadId) 
+        public
+        whenNotPaused
+        payable
+        returns (uint40)
     {
         // Caller must own the mom.
         require(_isOwner(msg.sender, _momId));
@@ -1376,6 +1483,9 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         // has given breeding permission to caller (i.e. mom's owner).
         // Will fail for _dadId = 0
         require(_isBreedingPermitted(_dadId, _momId));
+
+        // Check breeding fee
+        require(getBreedingFee(_momId, _dadId) <= msg.value);
 
         // Grab a reference to the potential mom
         Cutie storage mom = cuties[_momId];
@@ -1420,17 +1530,14 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         require(mom.birthTime != 0);
 
         // Determine the higher generation number of the two parents
-        uint16 parentGen = mom.generation;
-        if (dad.generation > mom.generation) {
-            parentGen = dad.generation;
-        }
+        uint16 babyGen = config.getBabyGen(mom.generation, dad.generation);
 
         // Call the gene mixing operation.
         uint256 childGenes = geneMixer.mixGenes(mom.genes, dad.genes);
 
         // Make the new cutie
         address owner = cutieIndexToOwner[_momId];
-        uint40 cutieId = _createCutie(_momId, _dadId, parentGen + 1, childGenes, owner, mom.cooldownEndTime);
+        uint40 cutieId = _createCutie(_momId, _dadId, babyGen, getCooldownIndexFromGeneration(babyGen), childGenes, owner, mom.cooldownEndTime);
 
         // return the new cutie's ID
         return cutieId;
@@ -1451,8 +1558,12 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
     {
         require(isTutorialPetUsed[msg.sender] == 0);
 
+        // Take breeding fee
+        uint256 fee = getBreedingFee(0, _dadId);
+        require(msg.value >= fee);
+
         // breeding auction will throw if the bid fails.
-        breedingMarket.bid.value(msg.value)(_dadId);
+        breedingMarket.bid.value(msg.value - fee)(_dadId);
 
         // Grab a reference to the Cuties from storage.
         Cutie storage dad = cuties[_dadId];
@@ -1463,17 +1574,13 @@ contract BlockchainCutiesCore /*is ERC721, CutieCoreInterface*/
         // Clear breeding permission for parent.
         delete sireAllowedToAddress[_dadId];
 
-        // Tutorial pet gen is 26
-        uint16 parentGen = 26;
-        if (dad.generation > parentGen) {
-            parentGen = dad.generation;
-        }
+        uint16 babyGen = config.getTutorialBabyGen(dad.generation);
 
         // tutorial pet genome is zero
         uint256 childGenes = geneMixer.mixGenes(0x0, dad.genes);
 
         // tutorial pet id is zero
-        uint40 cutieId = _createCutie(0, _dadId, parentGen + 1, childGenes, msg.sender, 12);
+        uint40 cutieId = _createCutie(0, _dadId, babyGen, getCooldownIndexFromGeneration(babyGen), childGenes, msg.sender, 12);
 
         isTutorialPetUsed[msg.sender] = cutieId;
 
