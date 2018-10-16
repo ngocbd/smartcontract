@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PodCoin at 0x62191e09fa1f0ebcad7e10dab011c2393d7315aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PodCoin at 0x90e56ba8b857101e85de23845d9954f49ed68077
 */
 pragma solidity ^0.4.4;
 
-// ? P o d C o i n 
-//
-// By Mr. 1 50 1 100
-//
-// Learn more at PodCoin.info
+//?????????????????????????????????????
+//?                                   ?
+//?           P o d C o i n           ?
+//?                                   ?
+//?     Created by Mr. 1 50 1 100     ?
+//?                                   ?
+//? Visit PodCoin.info to learn more. ?
+//?                                   ?
+//?????????????????????????????????????
 
 contract Token {
 
@@ -50,6 +54,10 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -59,6 +67,8 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -89,48 +99,59 @@ contract StandardToken is Token {
 
 contract PodCoin is StandardToken {
 
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';           
-    address public fundsWallet;           
+    /* Public variables of the token */
 
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   // Token Name
+    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
+    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
+    address public fundsWallet;           // Where should the raised ETH go?
 
+    // This is a constructor function 
+    // which means the following function name has to match the contract name declared above
     function PodCoin() {
-        balances[msg.sender] = 10000000000000000000000000;     
-        totalSupply = 10000000000000000000000000;                    
+        balances[msg.sender] = 10000000000000;               
+        totalSupply = 10000000000000;                        
         name = "PodCoin";                                   
-        decimals = 18;                                               
-        symbol = "P?D";                                                                              
+        decimals = 5;                                               
+        symbol = "POD";                                          
+        unitsOneEthCanBuy = 1000;                                      
         fundsWallet = msg.sender;                                    
     }
-    
-    /*This function just serves to answer requests for P?D, not actual payment.*/
-    
+
     function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
         if (balances[fundsWallet] < amount) {
             return;
         }
-        
-        uint256 amount = 0;
-        
-        //Set 10,000 sent to requester unless they have any PodCoin Already
-        if(balances[msg.sender] == 0){
-            amount = 10000000000000000000000;
-            balances[fundsWallet] = balances[fundsWallet] - amount;
-            balances[msg.sender] = balances[msg.sender] + amount;
-        }
 
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain                             
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
     }
-
 
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
         return true;
     }
 }
