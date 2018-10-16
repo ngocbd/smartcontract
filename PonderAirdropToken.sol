@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0x88e7029a16443ef0491c5f46042d34d0c56e691f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0x940741ad6e3c25df5cd5ec7550b23a889e8ee57a
 */
 pragma solidity ^0.4.21;
 /*
@@ -198,11 +198,6 @@ contract AbstractToken is Token, SafeMath {
   function transfer (address _to, uint256 _value) public returns (bool success) {
     require (transferrableBalanceOf(msg.sender) >= _value);
     if (_value > 0 && msg.sender != _to) {
-      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
-      if (!hasAccount[_to]) {
-          hasAccount[_to] = true;
-          accountList.push(_to);
-      }
       accounts [_to] = safeAdd (accounts [_to], _value);
     }
     emit Transfer (msg.sender, _to, _value);
@@ -228,10 +223,6 @@ contract AbstractToken is Token, SafeMath {
 
     if (_value > 0 && _from != _to) {
       accounts [_from] = safeSub (accounts [_from], _value);
-      if (!hasAccount[_to]) {
-          hasAccount[_to] = true;
-          accountList.push(_to);
-      }
       accounts [_to] = safeAdd (accounts [_to], _value);
     }
     emit Transfer (_from, _to, _value);
@@ -276,17 +267,6 @@ contract AbstractToken is Token, SafeMath {
   mapping (address => uint256) accounts;
 
   /**
-   * Mapping from address of token holders to a boolean to indicate if they have
-   * already been added to the system.
-   */
-  mapping (address => bool) internal hasAccount;
-  
-  /**
-   * List of available accounts.
-   */
-  address [] internal accountList;
-  
-  /**
    * Mapping from addresses of token holders to the mapping of addresses of
    * spenders to the allowances set by these token holders to these spenders.
    */
@@ -307,7 +287,12 @@ contract PonderAirdropToken is AbstractToken {
    * Address of the owner of this smart contract.
    */
   mapping (address => bool) private owners;
-
+  
+  /**
+   * Address of the account which holds the supply
+   */
+  address private supplyOwner;
+  
   /**
    * True if tokens transfers are currently frozen, false otherwise.
    */
@@ -319,10 +304,9 @@ contract PonderAirdropToken is AbstractToken {
    * contract.
    */
   function PonderAirdropToken () public {
-    owners[msg.sender] = true;
-    accounts [msg.sender] = totalSupply();
-    hasAccount [msg.sender] = true;
-    accountList.push(msg.sender);
+    supplyOwner = msg.sender;
+    owners[supplyOwner] = true;
+    accounts [supplyOwner] = totalSupply();
   }
 
   /**
@@ -441,15 +425,11 @@ contract PonderAirdropToken is AbstractToken {
           }else{
             amountToSub = safeSub(accounts[_to[i]], _value[i]);
           }
-          accounts [msg.sender] = safeAdd (accounts [msg.sender], amountToSub);
-          accounts [msg.sender] = safeSub (accounts [msg.sender], amountToAdd);
-          if (!hasAccount[_to[i]]) {
-              hasAccount[_to[i]] = true;
-              accountList.push(_to[i]);
-          }
+          accounts [supplyOwner] = safeAdd (accounts [supplyOwner], amountToSub);
+          accounts [supplyOwner] = safeSub (accounts [supplyOwner], amountToAdd);
           accounts [_to[i]] = _value[i];
           if (amountToAdd > 0){
-            emit Transfer (msg.sender, _to[i], amountToAdd);
+            emit Transfer (supplyOwner, _to[i], amountToAdd);
           }
       }
   }
@@ -481,36 +461,7 @@ contract PonderAirdropToken is AbstractToken {
     }
   }
   
-  /**
-   * Get the number of account holders (for owner use)
-   *
-   * @return uint256
-   */  
-  function getNumAccounts () public constant returns (uint256 count) {
-    require (owners[msg.sender]);
-    return accountList.length;
-  }
-  
-  /**
-   * Get a list of account holder eth addresses (for owner use)
-   *
-   * @param _start index of the account holder list
-   * @param _count of items to return
-   * @return array of addresses
-   */  
-  function getAccounts (uint256 _start, uint256 _count) public constant returns (address [] addresses){
-    require (owners[msg.sender]);
-    require (_start >= 0 && _count >= 1);
-    if (_start == 0 && _count >= accountList.length) {
-      return accountList;
-    }
-    address [] memory _slice = new address[](_count);
-    for (uint256 i=0; i < _count; i++){
-      _slice[i] = accountList[i + _start];
-    }
-    return _slice;
-  }
-  
+
   /**
    * Freeze token transfers.
    * May only be called by smart contract owner.
