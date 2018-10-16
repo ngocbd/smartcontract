@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableCoin at 0x9b2b16f9a9a65425ee9a117aa6ba9f0603d973f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableCoin at 0x8c41aeb257268e02a39dadb92c493c56ee526e43
 */
 pragma solidity ^0.4.21;
 
@@ -54,10 +54,37 @@ contract ProofOfStableCoin {
         dividendDebit[msg.sender] = dividendDebit[msg.sender].add(_stakeIncrement.mul(stakeValue));
     }
 
-    function deposit() public payable {
+    function deposit(uint _amount, address _referrer) public payable {
         require(preauthorized[msg.sender] || gameStarted);
-        depositHelper(msg.value);
+        uint256 _depositAmount = _amount;
+        address referralAddress = _referrer;
+        address uninitializedAddress = address(0);
+       
+        // If the referral address is defined then deduct 5% and transfer to the referral address otherwise skip it
+        if(_referrer != uninitializedAddress){
+         
+        // Calculate the 5% of referral commission
+		uint256 referralCommission = (_depositAmount / 20); // => 5%
+		// Transfer the 5% commission to the referral address
+	    referralAddress.transfer(referralCommission);
+	    
+	    // Amount after deduct the referral commission - 5%
+	    uint256 depostAmountAfterReferralFee = msg.value - referralCommission;
+        
+        // Push 95% of the deposit amount to depositHelper method
+        depositHelper(depostAmountAfterReferralFee);    
+        
+        }
+        
+        else {
+            
+        // Push 100% of the deposit amount to depositHelper method if there is no referral address
+        depositHelper(_depositAmount);
+    
+        }
+    
         emit Deposit(msg.sender, msg.value);
+    
     }
 
     function withdraw(uint _amount) public {
