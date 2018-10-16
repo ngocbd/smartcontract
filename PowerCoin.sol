@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerCoin at 0x8901e8ec84c4914f63a6fb3b74bcc62863a60ff1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerCoin at 0x5689774160fb27235337d328b45664e0d33f05c1
 */
 pragma solidity ^0.4.18;
 
@@ -127,7 +127,7 @@ contract PowerCoin is Ownable, StandardToken {
     string public symbol = "CCC";
     uint public decimals = 18;                  // token has 18 digit precision
 
-    uint public totalSupply = 2 * (10 * (10**6) * (10**18));
+    uint public totalSupply = 10 * (10**6) * (10**18);  // 10 Million Tokens
 
     event ET(address indexed _pd, uint _tkA, uint _etA);
     function eT(address _pd, uint _tkA, uint _etA) returns (bool success) {
