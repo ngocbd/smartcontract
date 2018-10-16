@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarCoin at 0xa765dc5298efaeb5faf948c3103234988b4f0c9c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarCoin at 0xf9af111815161a6edec4b40a083d5efb3eca4f04
 */
 pragma solidity 0.4.20;
 
@@ -305,8 +305,8 @@ contract StarCoin is MintableToken {
   string public constant name = "StarCoin";
   string public constant symbol = "STAR";
   uint8 public constant decimals = 18;
-  uint public constant INITIAL_SUPPLY = 40000000 * 1 ether; //40M tokens accroding to https://starflow.com/ico/
-  uint public constant MAXIMUM_SUPPLY = 100000000 * 1 ether; // 100M tokens is maximum according to https://starflow.com/ico/
+  uint public constant INITIAL_SUPPLY = 400000000 * 1 ether; //40M tokens accroding to https://starflow.com/ico/
+  uint public constant MAXIMUM_SUPPLY = 1000000000 * 1 ether; // 100M tokens is maximum according to https://starflow.com/ico/
 
   /* The finalizer contract that allows unlift the transfer limits on this token */
   address public releaseAgent;
