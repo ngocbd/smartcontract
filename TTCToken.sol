@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTCToken at 0xf394f7d76b8efce4cdb80c7f919c9dcd1d33cec6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTCToken at 0x53e28b07e0795869b727ee4d585b3c025b016952
 */
 pragma solidity ^0.4.18;
 
@@ -300,7 +300,6 @@ contract TTCToken is StandardToken, BurnableToken, Ownable {
     string  public constant name = "Tabs Tracking Chain";
     string  public constant symbol = "TTC";
     uint8   public constant decimals = 18;
-    string  public constant website = "www.ttchain.io"; 
     uint256 public constant INITIAL_SUPPLY      =  600000000 * (10 ** uint256(decimals));
     uint256 public constant CROWDSALE_ALLOWANCE =  480000000 * (10 ** uint256(decimals));
     uint256 public constant ADMIN_ALLOWANCE     =  120000000 * (10 ** uint256(decimals));
