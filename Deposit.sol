@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xe16068dd81dba6f5f809e7b34a6b8322b7a5c887
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xd2b0f13a721232199751314b7af32b4034d7c705
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.4;
 
 contract Deposit {
 
     address public owner;
-    Withdraw[] public withdraws;
 
     // constructor
     function Deposit() public {
@@ -15,20 +14,11 @@ contract Deposit {
 
     // transfer ether to owner when receive ether
     function() public payable {
-        // transfer ether to owner
-        owner.transfer(msg.value);
-        // create withdraw contract
-        withdraws.push(new Withdraw(msg.sender));
-    }
-}
-
-contract Withdraw {
-
-    address public owner;
-
-    // constructor
-    function Withdraw(address _owner) public {
-        owner = _owner;
+        _transter(msg.value);
     }
 
+    // transfer
+    function _transter(uint balance) internal {
+        owner.transfer(balance);
+    }
 }
