@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x693399aae96a88b966b05394774cfb7b880355b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x911d71eed45dbc20059004f8476fe149105bf1dc
 */
 pragma solidity ^0.4.8;
 
@@ -16,16 +16,7 @@ contract testingToken {
 		balanceOf[msg.sender] = 100000;
 	}
 	
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	
-	function totalSupply() constant returns (uint256 totalSupply) {
-	    return 10000;
-	}
-	function balanceOf(address _owner) constant returns (uint256 balance) {
-	    return balanceOf[_owner];
-	}
-	
-	function transfer(address _to, uint256 _value) returns (bool success) { //give tokens to someone
+	function send(address _to, uint256 _value) { //give tokens to someone
 		if (balanceOf[msg.sender]<_value) throw;
 		if (balanceOf[_to]+_value<balanceOf[_to]) throw;
 		if (_value<0) throw;
@@ -34,33 +25,6 @@ contract testingToken {
 		balanceOf[bank] += (_value*tokenTaxRate)/100;
 		//now check for rounding down which would result in permanent loss of coins
 		if ((_value*tokenTaxRate)%100 != 0) balanceOf[bank]+=1;
-		Transfer(msg.sender,_to,_value);
-		return true;
-	}
-	
-	mapping (address => mapping (address=>uint256)) approvalList;
-	function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-		if (balanceOf[_from]<_value) throw;
-		if (balanceOf[_to]+_value<balanceOf[_to]) throw;
-		if (_value<0) throw;
-		if (approvalList[_from][msg.sender]<_value) throw;
-		approvalList[_from][msg.sender]-=_value;
-		balanceOf[_from] -= _value;
-		balanceOf[_to] += (_value*(100-tokenTaxRate))/100;
-		balanceOf[bank] += (_value*tokenTaxRate)/100;
-		//now check for rounding down which would result in permanent loss of coins
-		if ((_value*tokenTaxRate)%100 != 0) balanceOf[bank]+=1;
-		Transfer(_from,_to,_value);
-		return true;
-	}
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-	function approve(address _spender, uint256 _value) returns (bool success) {
-	    approvalList[msg.sender][_spender]=_value;
-	    Approval(msg.sender,_spender,_value);
-	    return true;
-	}
-	function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-	    return approvalList[_owner][_spender];
 	}
 	
 	function offerTrade(uint256 _weiWanted, uint256 _tokensOffered) { //offer the amt of ether you want and the amt of tokens youd give
@@ -77,7 +41,6 @@ contract testingToken {
 	    balanceOf[msg.sender] += (tokensOfferedOf[_from]*(100-tokenTaxRate))/100;
 		balanceOf[bank] += (tokensOfferedOf[_from]*tokenTaxRate)/100;
 		tradeActive[_from] = false;
-		Transfer(_from,msg.sender,tokensOfferedOf[_from]);
 		//now check for rounding down which would result in permanent loss of coins
 		if ((tokensOfferedOf[_from]*tokenTaxRate)%100 != 0) balanceOf[bank]+=1;
 	}
