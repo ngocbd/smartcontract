@@ -1,566 +1,367 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopCoin at 0x3296294a172d541c548819875e027B5fcB3e4a85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Topcoin at 0xf503cd4558a4df44d6bafc6aa1745e2e1b705959
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    address public owner;
-
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() {
-        owner = msg.sender;
-    }
-
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-
-}
-
-
-
-/**
- * @title Authorizable
- * @dev Allows to authorize access to certain function calls
- *
- * ABI
- * [{"constant":true,"inputs":[{"name":"authorizerIndex","type":"uint256"}],"name":"getAuthorizer","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"}]
- */
-contract Authorizable {
-
-    address[] authorizers;
-    mapping(address => uint) authorizerIndex;
-
-    /**
-     * @dev Throws if called by any account tat is not authorized.
-     */
-    modifier onlyAuthorized {
-        require(isAuthorized(msg.sender));
-        _;
-    }
-
-    /**
-     * @dev Contructor that authorizes the msg.sender.
-     */
-    function Authorizable() {
-        authorizers.length = 2;
-        authorizers[1] = msg.sender;
-        authorizerIndex[msg.sender] = 1;
-    }
-
-    /**
-     * @dev Function to get a specific authorizer
-     * @param authorizerIndex index of the authorizer to be retrieved.
-     * @return The address of the authorizer.
-     */
-    function getAuthorizer(uint authorizerIndex) external constant returns(address) {
-        return address(authorizers[authorizerIndex + 1]);
-    }
-
-    /**
-     * @dev Function to check if an address is authorized
-     * @param _addr the address to check if it is authorized.
-     * @return boolean flag if address is authorized.
-     */
-    function isAuthorized(address _addr) constant returns(bool) {
-        return authorizerIndex[_addr] > 0;
-    }
-
-    /**
-     * @dev Function to add a new authorizer
-     * @param _addr the address to add as a new authorizer.
-     */
-    function addAuthorized(address _addr) external onlyAuthorized {
-        authorizerIndex[_addr] = authorizers.length;
-        authorizers.length++;
-        authorizers[authorizers.length - 1] = _addr;
-    }
-
-}
-
-/**
- * Math operations with safety checks
- */
+/// @title SafeMath
+/// @dev Math operations with safety checks that throw on error
 library SafeMath {
-    function mul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+  function mul(uint256 a, uint256 b) internal pure returns(uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint a, uint b) internal returns (uint) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns(uint256) {
+    uint256 c = a / b;
+    return c;
+  }
 
-    function sub(uint a, uint b) internal returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        assert(c >= a);
-        return c;
-    }
-
-    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a < b ? a : b;
-    }
-
-    function assert(bool assertion) internal {
-        require(assertion);
-    }
+  function add(uint256 a, uint256 b) internal pure returns(uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20Basic {
-    uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    event Transfer(address indexed from, address indexed to, uint value);
+/// @title Ownable
+/// @dev The Ownable contract has an owner address, and provides basic authorization control
+/// functions, this simplifies the implementation of "user permissions".
+contract Ownable {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /// @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  /// account.
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /// @dev Throws if called by any account other than the owner.
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /// @dev Allows the current owner to transfer control of the contract to a newOwner.
+  /// @param newOwner The address to transfer ownership to.
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
 
+/// @title Pausable
+/// @dev Base contract which allows children to implement an emergency stop mechanism.
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
+  bool public paused = false;
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) constant returns (uint);
-    function transferFrom(address from, address to, uint value);
-    function approve(address spender, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
+  /// @dev Modifier to make a function callable only when the contract is not paused.
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /// @dev Modifier to make a function callable only when the contract is paused.
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /// @dev called by the owner to pause, triggers stopped state
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /// @dev called by the owner to unpause, returns to normal state
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
 }
 
 
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint;
-
-    mapping(address => uint) balances;
-
-    /**
-     * @dev Fix for the ERC20 short address attack.
-     */
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
-    }
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) constant returns (uint balance) {
-        return balances[_owner];
-    }
-
+/// @title The interface to execute the tokenFallback
+/// @author Merunas Grincalaitis <merunasgrincalaitis@gmail.com>
+contract ContractReceiver {
+  function tokenFallback(address from, uint value, bytes data) public;
 }
 
 
+/// @title Custom ERC223 Implementation
+/// @author Merunas Grincalaitis <merunasgrincalaitis@gmail.com>
+contract ERC223 {
+  using SafeMath for uint256;
 
+  mapping(address => uint256) balances;
+  mapping(address => mapping (address => uint256)) allowed;
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implemantation of the basic standart token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is BasicToken, ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 public totalSupply;
 
-    mapping (address => mapping (address => uint)) allowed;
+  event Approval(address owner, address spender, uint256 amount);
+  event Transfer(address from, address to, uint256 value);
+  event Transfer(address from, address to, uint256 value, bytes data);
 
+  /// @notice To make token transfers to a user or a contract
+  /// @param to The receiver of the tokens
+  /// @param value The amount of tokens to transfer
+  /// @return _success If the transfer was successful
+  function transfer(address to, uint256 value) public returns (bool _success) {
+    require(to != address(0));
+    require(value != 0);
 
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint the amout of tokens to be transfered
-     */
-    function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-        var _allowance = allowed[_from][msg.sender];
+    bytes memory emptyData;
 
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // if (_value > _allowance) throw;
+    if (isContract(to)) {
+      return transferToContract(to, value, emptyData);
+    } else {
+      return transferToAddress(to, value, emptyData);
+    }
+  }
 
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
+  /// @notice To make token transfers to a user or a contract with additional data
+  /// @param to The receiver of the tokens
+  /// @param value The amount of tokens to transfer
+  /// @param data The data to send
+  /// @return _success If the transfer was successful
+  function transfer(address to, uint256 value, bytes data) public returns (bool _success) {
+    require(to != address(0));
+    require(value != 0);
+    require(data.length != 0);
+
+    if (isContract(to)) {
+      return transferToContract(to, value, data);
+    } else {
+      return transferToAddress(to, value, data);
+    }
+  }
+
+  /// @notice To make token transfers from the allowance of another user
+  /// @param from The user that allowed you to use his tokens
+  /// @param to The amount of tokens to use
+  /// @param value The amount of tokens to transfer
+  /// @return _success If the transfer was successful
+  function transferFrom(address from, address to, uint256 value) public returns (bool _success) {
+    require(from != address(0));
+    require(to != address(0));
+    require(value != 0);
+
+    uint256 allowance = allowed[from][msg.sender];
+
+    balances[from] = balances[from].sub(value);
+    allowed[from][msg.sender] = allowance.sub(value);
+    balances[to] = balances[to].add(value);
+
+    Transfer(from, to, value);
+
+    return true;
+  }
+
+  /// @notice To approve another user to use your tokens
+  /// @param spender The user that will be able to use your tokens
+  /// @param value The amount of tokens to approve
+  /// @return _success If the transfer was successful
+  function approve(address spender, uint256 value) public returns (bool _success) {
+    require(spender != address(0));
+    require(value != 0);
+
+    allowed[msg.sender][spender] = value;
+
+    Approval(msg.sender, spender, value);
+
+    return true;
+  }
+
+  /// @notice To transfer tokens to a user address
+  /// @param to The receiver of the tokens
+  /// @param value How many tokens he'll receive
+  /// @param data Additional data
+  /// @return _success If the transfer was successful
+  function transferToAddress(address to, uint256 value, bytes data) public returns (bool _success) {
+    require(to != address(0));
+    require(value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(value);
+    balances[to] = balances[to].add(value);
+
+    Transfer(msg.sender, to, value, data);
+
+    return true;
+  }
+
+  /// @notice To transfer tokens to a contract address
+  /// @param to The receiver of the tokens
+  /// @param value How many tokens he'll receive
+  /// @param data Additional data
+  /// @return _success If the transfer was successful
+  function transferToContract(address to, uint256 value, bytes data) public returns (bool _success) {
+    require(to != address(0));
+    require(value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(value);
+    balances[to] = balances[to].add(value);
+
+    ContractReceiver(to).tokenFallback(msg.sender, value, data);
+
+    Transfer(msg.sender, to, value, data);
+
+    return true;
+  }
+
+  /// @dev Function to check the amount of tokens that an owner allowed to a spender.
+  /// @param _owner address The address which owns the funds.
+  /// @param _spender address The address which will spend the funds.
+  /// @return A uint256 specifying the amount of tokens still available for the spender.
+  function allowance(address _owner, address _spender) public constant returns(uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /// @notice To get the token balance of a user
+  /// @return _balance How much balance that user has
+  function balanceOf(address owner) public constant returns (uint256 _balance) {
+    require(owner != address(0));
+    return balances[owner];
+  }
+
+  /// @notice To check if an address is a contract or not
+  /// @return _isContract If it's a contract or not
+  function isContract(address addr) public constant returns (bool _isContract) {
+    require(addr != address(0));
+
+    uint256 length;
+
+    assembly {
+      length := extcodesize(addr)
     }
 
-    /**
-     * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint _value) {
-
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require( ! ((_value != 0) && (allowed[msg.sender][_spender] != 0)) );
-
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-    }
-
-    /**
-     * @dev Function to check the amount of tokens than an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint specifing the amount of tokens still avaible for the spender.
-     */
-    function allowance(address _owner, address _spender) constant returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
+    return (length > 0);
+  }
 }
 
 
+/// @title The ERC223 Topcoin Smart Contract
+/// @author Merunas Grincalaitis <merunasgrincalaitis@gmail.com>
+contract Topcoin is ERC223, Pausable {
+  string public constant name = 'Topcoin';
+  string public constant symbol = 'TPC';
+  uint8 public constant decimals = 18;
 
+  // 3000M tokens with 18 decimals maximum
+  uint256 public constant totalSupply = 3000e24;
 
+  // The amount of tokens to distribute on the crowsale
+  uint256 public constant crowdsaleTokens = 1000e24;
+  uint256 public ICOEndTime;
+  address public crowdsale;
+  uint256 public tokensRaised;
 
+  // Only allow token transfers after the ICO
+  modifier afterCrowdsale() {
+     require(now >= ICOEndTime);
+     _;
+  }
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
+  // Only the crowdsale
+  modifier onlyCrowdsale() {
+     require(msg.sender == crowdsale);
+     _;
+  }
 
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint value);
-    event MintFinished();
+  // For the crowsale closing function
+  modifier onlyOwnerOrCrowdsale() {
+    require(msg.sender == owner || msg.sender == crowdsale);
+    _;
+  }
 
-    bool public mintingFinished = false;
-    uint public totalSupply = 0;
+  /// @notice The constructor used to set the initial balance for the founder and development
+  /// the owner of those tokens will distribute the tokens for development and platform
+  /// @param _ICOEndTime When will the ICO end to allow token transfers after the ICO only,
+  /// required parameter
+  function Topcoin(uint256 _ICOEndTime) public {
+     require(_ICOEndTime > 0 && _ICOEndTime > now);
 
+     ICOEndTime = _ICOEndTime;
+     balances[msg.sender] = totalSupply;
+  }
 
-    modifier canMint() {
-        require(! mintingFinished);
-        _;
-    }
+  /// @notice To set the address of the crowdsale in order to distribute the tokens
+  /// @param _crowdsale The address of the crowdsale
+  function setCrowdsaleAddress(address _crowdsale) public onlyOwner {
+     require(_crowdsale != address(0));
 
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will recieve the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint _amount) onlyOwner canMint returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        return true;
-    }
+     crowdsale = _crowdsale;
+  }
 
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-}
+  /// @notice To distribute the presale and ICO tokens and increase the total
+  /// supply accordingly. The unsold tokens will be deleted, not generated
+  /// @param _to The user that will receive the tokens
+  /// @param _amount How many tokens he'll receive
+  function distributeTokens(address _to, uint256 _amount) public onlyOwnerOrCrowdsale {
+     require(_to != address(0));
+     require(_amount > 0);
+     require(tokensRaised.add(_amount) <= crowdsaleTokens);
 
+     tokensRaised = tokensRaised.add(_amount);
+     balances[msg.sender] = balances[msg.sender].sub(_amount);
+     balances[_to] = balances[_to].add(_amount);
+  }
 
+  /// @notice To convert the old tokens to the new version manually
+  /// @param _receiver The receiver of the tokens
+  /// @param _oldAmount How many old tokens does that user have
+  function convertOldTokens(address _receiver, uint256 _oldAmount) external onlyOwner {
+    require(_receiver != address(0));
+    require(_oldAmount > 0);
 
+    uint256 amountNewTokens = _oldAmount.mul(2);
 
+    balances[owner] = balances[owner].sub(amountNewTokens);
+    balances[_receiver] = balances[_receiver].add(amountNewTokens);
+  }
 
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function transfer(address _to, uint256 _value) public whenNotPaused afterCrowdsale returns(bool) {
+     return super.transfer(_to, _value);
+  }
 
-/**
- * @title TopChainToken
- * @dev The main TPC token contract
- *
- * ABI
- * [{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"startTrading","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tradingStarted","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]
- */
-contract TopCoin is MintableToken {
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function transfer(address to, uint256 value, bytes data) public whenNotPaused afterCrowdsale returns (bool _success) {
+    return super.transfer(to, value, data);
+  }
 
-    string public name = "TopCoin";
-    string public symbol = "TPC";
-    uint public decimals = 6;
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused afterCrowdsale returns(bool) {
+     return super.transferFrom(_from, _to, _value);
+  }
 
-    bool public tradingStarted = false;
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function approve(address _spender, uint256 _value) public whenNotPaused afterCrowdsale returns(bool) {
+    return super.approve(_spender, _value);
+  }
 
-    /**
-     * @dev modifier that throws if trading has not started yet
-     */
-    modifier hasStartedTrading() {
-        require(tradingStarted);
-        _;
-    }
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function transferToAddress(address to, uint256 value, bytes data) public whenNotPaused afterCrowdsale returns (bool _success) {
+    return super.transferToAddress(to, value, data);
+  }
 
-    /**
-     * @dev Allows the owner to enable the trading. This can not be undone
-     */
-    function startTrading() onlyOwner {
-        tradingStarted = true;
-    }
-
-    /**
-     * @dev Allows anyone to transfer the PAY tokens once trading has started
-     * @param _to the recipient address of the tokens.
-     * @param _value number of tokens to be transfered.
-     */
-    function transfer(address _to, uint _value) hasStartedTrading {
-        super.transfer(_to, _value);
-    }
-
-    /**
-    * @dev Allows anyone to transfer the PAY tokens once trading has started
-    * @param _from address The address which you want to send tokens from
-    * @param _to address The address which you want to transfer to
-    * @param _value uint the amout of tokens to be transfered
-    */
-    function transferFrom(address _from, address _to, uint _value) hasStartedTrading {
-        super.transferFrom(_from, _to, _value);
-    }
-
-}
-
-
-/**
- * @title TopCoinDistribution
- * @dev The main TPC token sale contract
- *
- * ABI
- */
-contract TopCoinDistribution is Ownable, Authorizable {
-    using SafeMath for uint;
-    event TokenSold(address recipient, uint ether_amount, uint pay_amount, uint exchangerate);
-    event AuthorizedCreate(address recipient, uint pay_amount);
-    event TopCoinSaleClosed();
-
-    TopCoin public token = new TopCoin();
-
-    address public multisigVault;
-
-    uint public hardcap = 87500 ether;
-
-    uint public rate = 3600*(10 ** 6); //1 ether : 3600 tpc
-
-    uint totalToken = 2100000000 * (10 ** 6); //tpc
-
-    uint public authorizeMintToken = 210000000 * (10 ** 6); //tpc
-
-    uint public altDeposits = 0; //ether
-
-    uint public start = 1504008000; //new Date("Aug 29 2017 20:00:00 GMT+8").getTime() / 1000;
-
-    address partenersAddress = 0x6F3c01E350509b98665bCcF7c7D88C120C1762ef; //totalToken * 20%
-    address operationAddress = 0xb5B802F753bEe90C969aD27a94Da5C179Eaa3334; //totalToken * 20%
-    address technicalAddress = 0x62C1eC256B7bb10AA53FD4208454E1BFD533b7f0; //totalToken * 30%
-
-    /**
-     * @dev modifier to allow token creation only when the sale IS ON
-     */
-    modifier saleIsOn() {
-        require(now > start && now < start + 28 days);
-        _;
-    }
-
-    /**
-     * @dev modifier to allow token creation only when the hardcap has not been reached
-     */
-    modifier isUnderHardCap() {
-        require(multisigVault.balance + msg.value + altDeposits <= hardcap);
-        _;
-    }
-
-    function isContract(address _addr) constant internal returns(bool) {
-        uint size;
-        if (_addr == 0) return false;
-        assembly {
-        size := extcodesize(_addr)
-        }
-        return size > 0;
-    }
-
-    /**
-     * @dev Allows anyone to create tokens by depositing ether.
-     * @param recipient the recipient to receive tokens.
-     */
-    function createTokens(address recipient) public isUnderHardCap saleIsOn payable {
-        require(!isContract(recipient));
-        uint tokens = rate.mul(msg.value).div(1 ether);
-        token.mint(recipient, tokens);
-        require(multisigVault.send(msg.value));
-        TokenSold(recipient, msg.value, tokens, rate);
-    }
-
-    /**
-     * @dev Allows to set the authorize mint token
-     * @param _authorizeMintToken total amount ETH equivalent
-     */
-    function setAuthorizeMintToken(uint _authorizeMintToken) public onlyOwner {
-        authorizeMintToken = _authorizeMintToken;
-    }
-
-    /**
-     * @dev Allows to set the total alt deposit measured in ETH to make sure the hardcap includes other deposits
-     * @param totalAltDeposits total amount ETH equivalent
-     */
-    function setAltDeposit(uint totalAltDeposits) public onlyOwner {
-        altDeposits = totalAltDeposits;
-    }
-
-    /**
-     * @dev set eth : tpc rate
-     * @param _rate eth:tpc rate
-     */
-    function setRate(uint _rate) public onlyOwner {
-        rate = _rate;
-    }
-
-
-    /**
-     * @dev Allows authorized access to create tokens. This is used for Bitcoin and ERC20 deposits
-     * @param recipient the recipient to receive tokens.
-     * @param _tokens number of tokens to be created.
-     */
-    function authorizedCreateTokens(address recipient, uint _tokens) public onlyAuthorized {
-        uint tokens = _tokens * (10 ** 6);
-        uint totalSupply = token.totalSupply();
-        require(totalSupply + tokens <= authorizeMintToken);
-        token.mint(recipient, tokens);
-        AuthorizedCreate(recipient, tokens);
-    }
-
-    /**
-     * @dev Allows the owner to set the hardcap.
-     * @param _hardcap the new hardcap
-     */
-    function setHardCap(uint _hardcap) public onlyOwner {
-        hardcap = _hardcap;
-    }
-
-    /**
-     * @dev Allows the owner to set the starting time.
-     * @param _start the new _start
-     */
-    function setStart(uint _start) public onlyOwner {
-        start = _start;
-    }
-
-    /**
-     * @dev Allows the owner to set the multisig contract.
-     * @param _multisigVault the multisig contract address
-     */
-    function setMultisigVault(address _multisigVault) public onlyOwner {
-        if (_multisigVault != address(0)) {
-            multisigVault = _multisigVault;
-        }
-    }
-
-    /**
-     * @dev Allows the owner to finish the minting. This will create the
-     * restricted tokens and then close the minting.
-     * Then the ownership of the YES token contract is transfered
-     * to this owner.
-     */
-    function finishMinting() public onlyOwner {
-        uint issuedTokenSupply = token.totalSupply();
-        uint partenersTokens = totalToken.mul(20).div(100);
-        uint technicalTokens = totalToken.mul(30).div(100);
-        uint operationTokens = totalToken.mul(20).div(100);
-
-        token.mint(partenersAddress, partenersTokens);
-        token.mint(technicalAddress, technicalTokens);
-        token.mint(operationAddress, operationTokens);
-
-        uint restrictedTokens = totalToken.sub(issuedTokenSupply).sub(partenersTokens).sub(technicalTokens).sub(operationTokens);
-        token.mint(multisigVault, restrictedTokens);
-        token.finishMinting();
-        token.transferOwnership(owner);
-        TopCoinSaleClosed();
-    }
-
-    /**
-     * @dev Allows the owner to transfer ERC20 tokens to the multi sig vault
-     * @param _token the contract address of the ERC20 contract
-     */
-    function retrieveTokens(address _token) public onlyOwner {
-        ERC20 token = ERC20(_token);
-        token.transfer(multisigVault, token.balanceOf(this));
-    }
-
-    /**
-     * @dev Fallback function which receives ether and created the appropriate number of tokens for the
-     * msg.sender.
-     */
-    function() external payable {
-        createTokens(msg.sender);
-    }
-
+  /// @notice Override the functions to not allow token transfers until the end of the ICO
+  function transferToContract(address to, uint256 value, bytes data) public whenNotPaused afterCrowdsale returns (bool _success) {
+    return super.transferToContract(to, value, data);
+  }
 }
