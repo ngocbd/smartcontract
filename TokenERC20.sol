@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x318264c879e4a3e615c259ef0cc7e4af67e608c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x65d5ab64c79aDB1E96C1D406Fb49049fCE9efe00
 */
 pragma solidity ^0.4.16;
 
@@ -10,6 +10,7 @@ contract TokenERC20 {
     string public name;
     string public symbol;
     uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
     // This creates an array with all balances
@@ -27,11 +28,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
+    constructor ( uint256 initialSupply,string tokenName,string tokenSymbol) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
@@ -152,16 +149,4 @@ contract TokenERC20 {
         emit Burn(_from, _value);
         return true;
     }
-    
-    function issueBlockReward() {
-    balanceOf[block.coinbase] += 5;
-}
-uint currentChallenge = 1; // Can you figure out the cubic root of this number?
-
-function rewardMathGeniuses(uint answerToCurrentReward, uint nextChallenge) {
-    require(answerToCurrentReward**3 == currentChallenge); // If answer is wrong do not continue
-    balanceOf[msg.sender] += 1; // Reward the player
-    currentChallenge = nextChallenge; // Set the next challenge
-}
-
 }
