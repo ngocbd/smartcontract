@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4870e705a3def9dda6da7a953d1cd3ccedd08573
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc75dca81f8688ab022e9ee902fb9fe430517239c
 */
 pragma solidity ^0.4.11;
 
@@ -153,7 +153,7 @@ contract Ownable {
 /// @title Moeda Loaylty Points token contract
 contract MoedaToken is StandardToken, Ownable {
     string public constant name = "Moeda Loyalty Points";
-    string public constant symbol = "MDA";
+    string public constant symbol = "MLO";
     uint8 public constant decimals = 18;
 
     // don't allow creation of more than this number of tokens
