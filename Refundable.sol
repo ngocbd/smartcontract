@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x61a623299fd551862d9600fa53e3e9d04ae9beaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x602454de8fffae1ad6bdcd58f2a6e98f92bc63ec
 */
 pragma solidity ^0.4.23;
 
@@ -152,13 +152,13 @@ contract KYCCrowdsale is Ownable{
 
     function disableKYC() external onlyOwner {
         require(isKYCRequired); // kyc is enabled
-        isKYCRequired = false;
+        isKYCRequired = false; 
     }
 
     //TODO: handle single address can be whiteListed multiple time using unique signed hashes
-    function isWhitelistedAddress(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public returns (bool){
+        function isWhitelistedAddress(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public returns (bool){
         assert( whiteListed[hash] == address(0x0)); // verify hash is unique
-        require(address(0x20D73ef8eBF344b2930d242DA5DeC79d9dD9A92a) == ecrecover(hash, v, r, s));
+        require(owner == ecrecover(hash, v, r, s));
         whiteListed[hash] = msg.sender;
         return true;
     }
@@ -191,16 +191,16 @@ contract Crowdsale is Pausable, KYCCrowdsale{
   // token rate in wei
   uint256 public rate;
   
-  uint256 private roundOneRate;
-  uint256 private roundTwoRate;
-  uint256 private defaultBonussRate;
+  uint256 public roundOneRate;
+  uint256 public roundTwoRate;
+  uint256 public defaultBonussRate;
 
   // amount of raised money in wei
   uint256 public weiRaised;
 
   uint256 public tokensSold;
 
-  uint256 public constant forSale = 16250000;
+  uint256 public constant forSale = 16250000 ether;
 
   /**
    * event for token purchase logging
@@ -230,17 +230,19 @@ contract Crowdsale is Pausable, KYCCrowdsale{
 
   constructor() public
    {
-    owner = 0xe46d0049D4a4642bC875164bd9293a05dBa523f1;
+    owner = address(0xe46d0049D4a4642bC875164bd9293a05dBa523f1);
+    
     startTime = now;
     endTime = 1527811199; //GMT: Thursday, May 31, 2018 11:59:59 PM
     rate = 500000000000000;                     // 1 Token price: 0.0005 Ether == $0.35 @ Ether prie $700
     roundOneRate = (rate.mul(6)).div(10);       // price at 40% discount
-    roundTwoRate = (rate.mul(75)).div(100);     // price at 35% discount
+    roundTwoRate = (rate.mul(65)).div(100);     // price at 35% discount
     defaultBonussRate = (rate.mul(8)).div(10);  // price at 20% discount
     
-    wallet =  0xccB84A750f386bf5A4FC8C29611ad59057968605;
-    token = ERC20(0x1b0cD7c0DC07418296585313a816e0Cb953DEa96);
-    tokenWallet =  0xccB84A750f386bf5A4FC8C29611ad59057968605;
+    wallet =  address(0xccB84A750f386bf5A4FC8C29611ad59057968605);
+    token = ERC20(0xE6FF2834b6Cf56DC23282A5444B297fAcCcA1b28);
+    tokenWallet =  address(0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4);
+    
   }
 
   // fallback function can be used to buy tokens
@@ -262,11 +264,13 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     // update state
     weiRaised = weiRaised.add(weiAmount);
     tokensSold = tokensSold.add(tokens);
+
+    balances[beneficiary] = balances[beneficiary].add(tokens);
     deposited[msg.sender] = deposited[msg.sender].add(weiAmount);
-    // updateRoundLimits(tokens);
-   
-    uint256 lockedFor = assignTokens(beneficiary, tokens);
-    emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens, lockedFor);
+    
+    updateRoundLimits(tokens);
+    
+    emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens, releaseTime);
 
     forwardFunds();
   }
@@ -292,15 +296,13 @@ contract Crowdsale is Pausable, KYCCrowdsale{
       roundTwoLimit = roundTwoLimit.sub(_amount);
   }
 
-  function getTokenAmount(uint256 weiAmount) private view returns(uint256) {
+  function getTokenAmount(uint256 weiAmount) public view returns(uint256) {
   
       uint256 buffer = 0;
       uint256 tokens = 0;
       if(weiAmount < 1 ether)
       
-        // 20% disount = $0.28 EQUI Price , default category
-        // 1 ETH = 2400 EQUI
-        return (weiAmount.div(defaultBonussRate)).mul(1 ether);
+        return (weiAmount.mul(1 ether)).div(defaultBonussRate);
 
       else if(weiAmount >= 1 ether) {
           
@@ -311,21 +313,20 @@ contract Crowdsale is Pausable, KYCCrowdsale{
               
               if (weiAmount > amount){
                   buffer = weiAmount - amount;
-                  tokens =  (amount.div(roundOneRate)).mul(1 ether);
+                  tokens =  (amount.mul(1 ether)).div(roundOneRate);
               }else{
-                  // 40% disount = $0.21 EQUI Price , round one bonuss category
-                  // 1 ETH = 3333
-                  return (weiAmount.div(roundOneRate)).mul(1 ether);
+                  
+                  return (weiAmount.mul(1 ether)).div(roundOneRate);
               }
         
           }
           
           if(buffer > 0){
-              
-              return (buffer.div(roundTwoRate)).mul(1 ether);
+              uint256 roundTwo = (buffer.mul(1 ether)).div(roundTwoRate);
+              return tokens + roundTwo;
           }
           
-          return (weiAmount.div(roundTwoRate)).mul(1 ether);
+          return (weiAmount.mul(1 ether)).div(roundTwoRate);
       }
   }
 
@@ -337,7 +338,6 @@ contract Crowdsale is Pausable, KYCCrowdsale{
   // @return true if the transaction can buy tokens
   function validPurchase() internal view {
     require(msg.value != 0);
-    require(remainingTokens() > 0,"contract doesn't have tokens");
     require(now >= startTime && now <= endTime);
   }
 
@@ -352,30 +352,15 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     assert((1 ether) % weiAmount == 0);
     emit EQUIPriceUpdated(rate, weiAmount);
     rate = weiAmount;
-    roundOneRate = (rate.mul(6)).div(10);       // price at 40% discount
-    roundTwoRate = (rate.mul(75)).div(100);     // price at 35% discount
-    defaultBonussRate = (rate.mul(8)).div(10);    // price at 20% discount
+    roundOneRate = (weiAmount.mul(6)).div(10);       // price at 40% discount
+    roundTwoRate = (weiAmount.mul(65)).div(100);     // price at 35% discount
+    defaultBonussRate = (weiAmount.mul(8)).div(10);    // price at 20% discount
   }
 
   mapping(address => uint256) balances;
   mapping(address => uint256) internal deposited;
-
-  struct account{
-      uint256[] releaseTime;
-      mapping(uint256 => uint256) balance;
-  }
-  mapping(address => account) ledger;
-
-
-  function assignTokens(address beneficiary, uint256 amount) private returns(uint256 lockedFor){
-      lockedFor = 1526278800; //September 30, 2018 11:59:59 PM
-
-      balances[beneficiary] = balances[beneficiary].add(amount);
-
-      ledger[beneficiary].releaseTime.push(lockedFor);
-      ledger[beneficiary].balance[lockedFor] = amount;
-  }
-
+  
+  uint256 public releaseTime = 1538351999; //September 30, 2018 11:59:59 PM
   /**
   * @dev Gets the balance of the specified address.
   * @param _owner The address to query the the balance of.
@@ -385,55 +370,44 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     return balances[_owner];
   }
 
-  function unlockedBalance(address _owner) public view returns (uint256 amount) {
-    for(uint256 i = 0 ; i < ledger[_owner].releaseTime.length; i++){
-        uint256 time = ledger[_owner].releaseTime[i];
-        if(now >= time) amount +=  ledger[_owner].balance[time];
-    }
-  }
-
   /**
    * @notice Transfers tokens held by timelock to beneficiary.
    */
   function releaseEQUITokens(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public whenNotPaused {
+    require(now >= releaseTime);
+    
     require(balances[msg.sender] > 0);
+    uint256 amount = balances[msg.sender];
+    balances[msg.sender] = 0;
 
-    uint256 amount = 0;
-    for(uint8 i = 0 ; i < ledger[msg.sender].releaseTime.length; i++){
-        uint256 time = ledger[msg.sender].releaseTime[i];
-        if(now >= time && ledger[msg.sender].balance[time] > 0){
-            amount = ledger[msg.sender].balance[time];
-            ledger[msg.sender].balance[time] = 0;
-            continue;
-        }
-    }
-
-    if(amount <= 0 || balances[msg.sender] < amount){
+   require(isWhitelistedAddress(hash, v, r, s));
+    if(!token.transferFrom(tokenWallet,msg.sender,amount)){
         revert();
     }
+    emit TokenReleased(msg.sender,amount);
+   
+  }
+  
+  function releaseEQUIWihtoutKYC() public whenNotPaused {
+    require(now >= releaseTime);
+    require(isKYCRequired == false);
+    require(balances[msg.sender] > 0);
+    
+    uint256 amount = balances[msg.sender];
+    balances[msg.sender] = 0;
 
-    if(isKYCRequired){
-        require(isWhitelistedAddress(hash, v, r, s));
-        balances[msg.sender] = balances[msg.sender].sub(amount);
-        if(!token.transferFrom(tokenWallet,msg.sender,amount)){
-            revert();
-        }
-        emit TokenReleased(msg.sender,amount);
-    } else {
-
-        balances[msg.sender] = balances[msg.sender].sub(amount);
-        if(!token.transferFrom(tokenWallet,msg.sender,amount)){
-            revert();
-        }
-        emit TokenReleased(msg.sender,amount);
+    if(!token.transferFrom(tokenWallet,msg.sender,amount)){
+        revert();
     }
+    emit TokenReleased(msg.sender,amount);
+    
   }
 
    /**
    * @dev Checks the amount of tokens left in the allowance.
    * @return Amount of tokens left in the allowance
    */
-  function remainingTokens() public view returns (uint256) {
+  function allowanceBalance() public view returns (uint256) {
     return token.allowance(tokenWallet, this);
   }
 }
@@ -446,7 +420,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
  */
 contract Refundable is Crowdsale {
 
-  uint256 public available; 
+  uint256 public availableBalance; 
   bool public refunding = false;
 
   event RefundStatusUpdated();
@@ -455,10 +429,10 @@ contract Refundable is Crowdsale {
   event Refunded(address indexed beneficiary, uint256 weiAmount);
   
   function deposit() onlyOwner public payable {
-    available.add(msg.value);
+    availableBalance = availableBalance.add(msg.value);
     emit Deposited();
   }
-
+  
   function tweakRefundStatus() onlyOwner public {
     refunding = !refunding;
     emit RefundStatusUpdated();
@@ -474,10 +448,10 @@ contract Refundable is Crowdsale {
   }
   
   function withDrawBack() onlyOwner public{
-      owner.transfer(this.balance);
+      owner.transfer(contractbalance());
   }
   
-  function Contractbalance() view external returns( uint256){
-      return this.balance;
+  function contractbalance() view public returns( uint256){
+      return address(this).balance;
   }
 }
