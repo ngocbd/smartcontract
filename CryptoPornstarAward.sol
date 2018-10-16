@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoPornstarAward at 0x51430fbd23a8aef3d82e4240152ba379ff84016b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoPornstarAward at 0x972f04fe0927445c5821b1c368b2ed29821271b7
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -84,7 +84,7 @@ contract PornSceneToken is ERC721 {
   address public cooAddress;
 
   PornstarsInterface pornstarsContract;
-  uint currentAwardWinner;
+  uint currentAwardWinner = 85; //Initiat the award. Award Holder from Previous Contract
 
   uint256 public promoCreatedCount;
 
@@ -246,13 +246,13 @@ contract PornSceneToken is ERC721 {
     // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
+      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 80);
     } else if (sellingPrice < secondStepLimit) {
       // second stage
-      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
+      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 80);
     } else {
       // third stage
-      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
+      sceneIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 80);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
