@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x01293cd77f68341635814c35299ed30ae212789e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x7dbe2567998b3f3ee6868804ba578cab91d1c0b4
 */
 pragma solidity ^0.4.18;
 
@@ -45,20 +45,24 @@ contract NBACrypto {
        return(isPaused);
     }
 
-
+    /*
+    This function allows players to purchase countries from other players.
+    The price is automatically multiplied by 2 after each purchase.
+    Players can purchase multiple coutries
+    */
 	function purchaseCountry(uint _countryId) public payable {
 		require(msg.value == teams[_countryId].curPrice);
 		require(isPaused == false);
 
-
+		// Calculate the 5% value
 		uint256 commission5percent = (msg.value / 10);
 
-
+		// Calculate the owner commission on this sale & transfer the commission to the owner.
 		uint256 commissionOwner = msg.value - commission5percent; // => 95%
 		teams[_countryId].ownerAddress.transfer(commissionOwner);
 
-
-		cfoAddress.transfer(commission5percent);
+		// Transfer the 5% commission to the developer
+		cfoAddress.transfer(commission5percent); // => 5% (25% remains in the Jackpot)
 
 		// Update the team owner and set the new price
 		teams[_countryId].ownerAddress = msg.sender;
@@ -77,12 +81,14 @@ contract NBACrypto {
 
     uint256 afterDevCut = msg.value - commissionDev;
 
+    uint256 teamId;
 
+    players[_playerId].realTeamId = teamId;
 
 		// Calculate the owner commission on this sale & transfer the commission to the owner.
 		uint256 commissionOwner = afterDevCut - commisionTeam; //
 		players[_playerId].ownerAddress.transfer(commissionOwner);
-    teams[players[_playerId].realTeamId].ownerAddress.transfer(commisionTeam);
+        teams[teamId].ownerAddress.transfer(commisionTeam);
 
 		// Transfer fee to Dev
 		cfoAddress.transfer(commissionDev);
@@ -184,7 +190,7 @@ contract NBACrypto {
 		 teams.push(Team("Spurs", 0x183febd8828a9ac6c70c0e27fbf441b93004fc05, 3200000000000000000));
 		 teams.push(Team("Wizards", 0xaec539a116fa75e8bdcf016d3c146a25bc1af93b, 3200000000000000000));
 		 teams.push(Team("Timberwolves", 0xef764bac8a438e7e498c2e5fccf0f174c3e3f8db, 3200000000000000000));
-		 teams.push(Team("Pacers", 0x8e668a4582d0465accf66b4e4ab6d817f6c5b2dc, 3200000000000000000));
+		 teams.push(Team("Pacers", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 1600000000000000000));
 		 teams.push(Team("Thunder", 0x7d757e571bd545008a95cd0c48d2bb164faa72e3, 3200000000000000000));
 		 teams.push(Team("Bucks", 0x1edb4c7b145cef7e46d5b5c256cedcd5c45f2ece, 3200000000000000000));
 		 teams.push(Team("Lakers", 0xa2381223639181689cd6c46d38a1a4884bb6d83c, 3200000000000000000));
@@ -208,8 +214,8 @@ contract NBACrypto {
 		 teams.push(Team("Suns", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
 	}
 
-    function addPlayer(string name, address address1, uint256 price, uint256 realTeamId) public onlyCeo {
-        players.push(Player(name,address1,price,realTeamId));
+    function addPlayer(string name, address address1, uint256 price, uint256 teamId) public onlyCeo {
+        players.push(Player(name,address1,price,teamId));
     }
 
 
