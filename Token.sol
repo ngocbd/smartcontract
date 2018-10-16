@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x19fc174fe7143193cc4612d34730ea117c8a93bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x8ea0ffcae512143cb38c17696591025d0a756655
 */
 pragma solidity ^0.4.18;
 
@@ -158,7 +158,7 @@ contract Token is TokenI {
     uint256 public minFunding = 1 ether;  //??????
     uint256 public airdropQty=0;//??????????
     uint256 public airdropTotalQty=0;//???????????
-    uint256 public tokensPerEther = 9000;//1eth??????
+    uint256 public tokensPerEther = 10000;//1eth??????
     address private vaultAddress;//????ETH???
     uint256 public totalCollected = 0;//????ETH????
 
@@ -424,15 +424,15 @@ contract Token is TokenI {
             require(msg.value >= minFunding);//????
             require(msg.value % 1 ether==0);//??????eth
             totalCollected +=msg.value;
-            require(vaultAddress.send(msg.value));//?eth??????
+            require(vaultAddress.send(msg.value));//Send the ether to the vault
             tokenValue = (msg.value/1 ether)*(tokensPerEther*10 ** uint256(decimals));
             require(_generateTokens(_user, tokenValue));
-            //??30%?????????6?????35%?1?????????SPM
-            //
-            require(_freeze(_user, tokenValue*35/100, 0));
-            _freeze(_user, tokenValue*35/100, 1);
+            uint256 lock1 = tokenValue / 5;
+            require(_freeze(_user, lock1, 0));
+            _freeze(_user, lock1, 1);
+            _freeze(_user, lock1, 2);
+            _freeze(_user, lock1, 3);
             Payment(_user, msg.value, tokenValue);
-
         }
     }
 }
