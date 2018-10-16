@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriChainMasterContract at 0x0bd78821368ca2d679e2d3a792b194465b3d0c28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriChainMasterContract at 0x2cdb2107e94104e69f1592ebe1e45781cfcf9962
 */
-pragma solidity ^0.4.10; 
-//v.1609rev17032301 Ezlab 2016 all-rights reseved support@ezlab.it
-//special purpose contract for CantinaVolpone further info https://agrichain.it/d/0x160564d346f6e9fb3d93c034f207ecf9791b7739
+pragma solidity ^0.4.18; 
+//v.1609rev1801 Ezlab 2016-2018 all-rights reseved support@ezlab.it
+//special purpose contract for  further info use case  https://agrichain.it/d/v1801
 
 //common base contract
 contract BaseAgriChainContract {
