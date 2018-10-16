@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x0248f089a622b74cebaa62573605af9a44966bf1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9A3dA065e1100a5613dc15b594f0F6193B419E96
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.0;
 
 contract Ethraffle {
     struct Contestant {
@@ -13,8 +13,9 @@ contract Ethraffle {
         uint indexed raffleId,
         uint winningNumber,
         address winningAddress,
+        address blockCoinbase,
+        address txOrigin,
         uint remainingGas,
-        uint gasPrice,
         bytes32 sha
     );
 
@@ -90,13 +91,10 @@ contract Ethraffle {
     function chooseWinner() private {
         // Pseudorandom number generator
         uint remainingGas = msg.gas;
-        uint gasPrice = tx.gasprice;
-
         bytes32 sha = sha3(
             block.coinbase,
-            msg.sender,
-            remainingGas,
-            gasPrice
+            tx.origin,
+            remainingGas
         );
 
         uint winningNumber = (uint(sha) % totalTickets) + 1;
@@ -105,8 +103,9 @@ contract Ethraffle {
             raffleId,
             winningNumber,
             winningAddress,
+            block.coinbase,
+            tx.origin,
             remainingGas,
-            gasPrice,
             sha
         );
 
@@ -146,7 +145,7 @@ contract Ethraffle {
                 }
             }
 
-            RaffleResult(raffleId, 0, address(0), 0, 0, 0);
+            RaffleResult(raffleId, 0, address(0), address(0), address(0), 0, 0);
             raffleId++;
             nextTicket = 1;
             gaps.length = 0;
