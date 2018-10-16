@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CambodieJunket at 0x22e35298085d2108662a4aefbbf4cffb728f62f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CambodieJunket at 0x51f81b3a45afaab25258ae4123602e201d2e80b1
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
 library SafeMath {
 
@@ -60,7 +60,9 @@ contract CambodieJunket{
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  uint256 public previousWithdrawal = 0;
+  uint256 public unlocked = 0;
+  
+  bool public withdrawalsInitiated = false;
   
   uint256 public year = 365 days; // equivalent to one year
 
@@ -75,21 +77,25 @@ contract CambodieJunket{
   /**
    * @notice Transfers tokens held by timelock to beneficiary.
    */
-  function release() public {
+  function release(uint256 _amount) public {
     
-    uint256 amount = token.balanceOf(address(this));
-    require(amount > 0);
-
-    if(previousWithdrawal == 0){
-        // calculate 50% of existing amount
-        amount = amount.div(2);
-    }else{
-        assert(now >= releaseTime);
+    uint256 balance = token.balanceOf(address(this));
+    require(balance > 0);
+    
+    if(!withdrawalsInitiated){
+        // unlock 50% of existing balance
+        unlocked = balance.div(2);
+        withdrawalsInitiated = true;
     }
     
-    previousWithdrawal = amount;
+    if(now >= releaseTime){
+        unlocked = balance;
+    }
     
-    token.safeTransfer(beneficiary, amount);
+    require(_amount <= unlocked);
+    unlocked = unlocked.sub(_amount);
+    
+    token.safeTransfer(beneficiary, _amount);
     
   }
   
