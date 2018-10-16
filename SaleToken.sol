@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleToken at 0x58aA8050d56A3cc49bf37B54474174a81e4b2A24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleToken at 0xfff18893bc6c430741b3c5ad483391a5e21220bb
 */
 pragma solidity ^0.4.13;
 
@@ -292,12 +292,12 @@ contract BurnableToken is StandardToken {
 contract SaleToken is MintableToken, BurnableToken {
     using SafeMath for uint256;
 
-    uint256 public price = 300000000000000000;
-    string public constant symbol = "BST";
-    string public constant name = "BlockShow Token";
+    uint256 public price = 400000000000000;
+    string public constant symbol = "VVC";
+    string public constant name = "VivaCoin";
     uint8 public constant decimals = 18;
     uint256 constant level = 10 ** uint256(decimals);
-    uint256 public totalSupply = 10000 * level;
+    uint256 public totalSupply = 1000000 * level;
 
     event Payment(uint256 _give, uint256 _get);
 
