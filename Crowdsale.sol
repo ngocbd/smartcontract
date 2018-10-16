@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x631b4cea5064e2577cdb73c37ed2de00c30ee14a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x88aa2aa27cabfbf2245448d368fd336641477f0e
 */
 pragma solidity ^0.4.11;
 
@@ -71,15 +71,22 @@ contract Crowdsale {
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
 
-  function Crowdsale(address _wallet,address _tokenAddress) {
-    wallet = _wallet;
+  function Crowdsale() {
+    wallet = 0x4a81247CE8E94d6f1F0d6065BC62d3eB76904aFD;
     // durationInMinutes = _durationInMinutes;
-    addressOfTokenUsedAsReward = _tokenAddress;
+    addressOfTokenUsedAsReward = 0x452B8B085CED1968b6faDE6C2Dcf608c5c297F31;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
-    startTime = now + 6234 * 1 minutes;
-    endTime = startTime + 38*24*60 * 1 minutes;
+  }
+
+  bool public started = false;
+
+  function startSale(uint256 delay){
+    if (msg.sender != wallet || started) throw;
+    startTime = now + delay * 1 minutes;
+    endTime = startTime + 60 * 24 * 60 * 1 minutes;
+    started = true;
   }
 
   // fallback function can be used to buy tokens
@@ -95,19 +102,7 @@ contract Crowdsale {
     uint256 weiAmount = msg.value;
 
     // calculate token amount to be sent
-    uint256 tokens = (weiAmount / 10000000000) * 300;
-
-    if(now < startTime + 1*7*24*60* 1 minutes){
-      tokens += (tokens * 100) / 100;
-    }else if(now < startTime + 2*7*24*60* 1 minutes){
-      tokens += (tokens * 60) / 100;
-    }else if(now < startTime + 3*7*24*60* 1 minutes){
-      tokens += (tokens * 40) / 100;
-    }else if(now < startTime + 4*7*24*60* 1 minutes){
-      tokens += (tokens * 20) / 100;
-    }else{
-      tokens += (tokens * 10) / 100;
-    }
+    uint256 tokens = (weiAmount / 10000000000) * 70;
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
