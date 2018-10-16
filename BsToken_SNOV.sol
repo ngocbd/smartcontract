@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsToken_SNOV at 0x38bca9e1cebc427d31118d1665cbf0e8e8304083
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsToken_SNOV at 0xbdc5bac39dbe132b1e030e898ae3830017d7d969
 */
 pragma solidity ^0.4.11;
 
@@ -157,8 +157,8 @@ contract MultiOwnable {
     mapping (address => bool) ownerMap;
     address[] public owners;
 
-    event OwnerAdded(address indexed newOwner);
-    event OwnerRemoved(address indexed oldOwner);
+    event OwnerAdded(address indexed _newOwner);
+    event OwnerRemoved(address indexed _oldOwner);
 
     modifier onlyOwner() {
         if (!isOwner(msg.sender)) throw;
@@ -170,6 +170,10 @@ contract MultiOwnable {
         address owner = msg.sender;
         ownerMap[owner] = true;
         owners.push(owner);
+    }
+
+    function ownerCount() constant returns (uint256) {
+        return owners.length;
     }
 
     function isOwner(address owner) constant returns (bool) {
@@ -222,23 +226,28 @@ contract BsToken is StandardToken, MultiOwnable {
     uint256 public tokensSold;
     uint256 public totalSales;
 
-    event Sell(address indexed seller, address indexed buyer, uint256 value);
-    event SellerChanged(address indexed oldSeller, address indexed newSeller);
+    event Sell(address indexed _seller, address indexed _buyer, uint256 _value);
+    event SellerChanged(address indexed _oldSeller, address indexed _newSeller);
 
     modifier onlyUnlocked() {
         if (!isOwner(msg.sender) && locked) throw;
         _;
     }
 
-    function BsToken(string _name, string _symbol, uint256 _totalSupply, address _seller) MultiOwnable() {
+    function BsToken(string _name, string _symbol, uint256 _totalSupplyNoDecimals, address _seller) MultiOwnable() {
+
+        // Lock the transfer function during the presale/crowdsale to prevent speculations.
+        locked = true;
+
         creator = msg.sender;
         seller = _seller;
 
         name = _name;
         symbol = _symbol;
-        totalSupply = _totalSupply;
+        totalSupply = _totalSupplyNoDecimals * 1e18;
 
         balances[seller] = totalSupply;
+        Transfer(0x0, seller, totalSupply);
     }
 
     function changeSeller(address newSeller) onlyOwner returns (bool) {
@@ -249,16 +258,23 @@ contract BsToken is StandardToken, MultiOwnable {
         uint256 unsoldTokens = balances[oldSeller];
         balances[oldSeller] = 0;
         balances[newSeller] = safeAdd(balances[newSeller], unsoldTokens);
+        Transfer(oldSeller, newSeller, unsoldTokens);
 
         seller = newSeller;
         SellerChanged(oldSeller, newSeller);
         return true;
     }
 
+    function sellNoDecimals(address _to, uint256 _value) returns (bool) {
+        return sell(_to, _value * 1e18);
+    }
+
     function sell(address _to, uint256 _value) onlyOwner returns (bool) {
         if (balances[seller] >= _value && _value > 0) {
             balances[seller] = safeSub(balances[seller], _value);
             balances[_to] = safeAdd(balances[_to], _value);
+            Transfer(seller, _to, _value);
+
             tokensSold = safeAdd(tokensSold, _value);
             totalSales = safeAdd(totalSales, 1);
             Sell(seller, _to, _value);
@@ -306,7 +322,7 @@ contract BsToken_SNOV is BsToken {
         BsToken(
             'Snovio',
             'SNOV',
-            2500000000 * 1e18,
-            0x0697ec0e4F90E7D7c92E7eDD1c039f442d7F1d1D
+            2500000000,
+            0xDaE3f1D824127754Aca9Eb5E5bFBAC22d8A04A52
         ) { }
 }
