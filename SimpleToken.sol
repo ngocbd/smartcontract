@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xf919b7ecc22a21424515c8db9e7ac24b7029ea18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xf48062e68eb6082b9c7f85c2e40700f09f1eca1b
 */
 pragma solidity ^0.4.18;
 
@@ -233,7 +233,7 @@ contract StandardToken is ERC20, BasicToken {
 contract SimpleToken is StandardToken {
 
   string public constant name = "BTZ001"; // solium-disable-line uppercase
-  string public constant symbol = "BTZ1"; // solium-disable-line uppercase
+  string public constant symbol = "BTZ"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
   uint256 public constant INITIAL_SUPPLY = 200000000 * (10 ** uint256(decimals));
