@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x1dce4fa03639b7f0c38ee5bb6065045edcf9819a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x1d921eed55a6a9ccaa9c79b1a4f7b25556e44365
 */
 /*
  * ERC20 interface
