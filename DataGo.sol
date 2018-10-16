@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataGo at 0x8a011b5dfbee4a35d414c748aaf634e7429c4cf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataGo at 0x05d199c8a245d03c30b0b920e64dba76ea6d9710
 */
 pragma solidity ^0.4.18;
 
@@ -119,7 +119,7 @@ contract DataGo is ERC20Interface, Owned, SafeMath {
         symbol = "DGO";
         name = "DataGo";
         decimals = 18;
-        _totalSupply = 100000000000000000000000000;
+        _totalSupply = 100000000;
         balances[0x3dc7b4CdFd990df8B81A155e5dc66f6c7fE948A0] = _totalSupply;
         Transfer(address(0), 0x3dc7b4CdFd990df8B81A155e5dc66f6c7fE948A0, _totalSupply);
     }
