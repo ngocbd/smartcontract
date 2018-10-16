@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGames at 0xd2cbca4449adb54ecddb3a65faf204b5e1790c3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGames at 0xe2e2808d9635f6e8e7aa4ea933dcb9d78a00d1b2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.18; // solhint-disable-line
 
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
 /// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
@@ -44,7 +44,7 @@ contract EtherGames is ERC721 {
 
   /// @notice Name and symbol of the non fungible token, as defined in ERC721.
   string public constant NAME = "EtherGames"; // solhint-disable-line
-  string public constant SYMBOL = "MetaToken"; // solhint-disable-line
+  string public constant SYMBOL = "GameToken"; // solhint-disable-line
 
   uint256 private startingPrice = 0.001 ether;
   uint256 private firstStepLimit =  0.053613 ether;
@@ -116,7 +116,8 @@ contract EtherGames is ERC721 {
   function approve(
     address _to,
     uint256 _tokenId
-  ) public {
+  ) public
+  {
     // Caller must own token.
     require(_owns(msg.sender, _tokenId));
 
@@ -133,8 +134,8 @@ contract EtherGames is ERC721 {
   }
 
   /// @dev Creates a new Game with the given name.
-  function createContractGame(string _name) public onlyCLevel {
-    _createGame(_name, address(this), startingPrice);
+  function createContractGame(string _name, uint256 _price) public onlyCOO {
+    _createGame(_name, ceoAddress, _price);
   }
 
   /// @notice Returns all the relevant information about a specific game.
@@ -191,19 +192,19 @@ contract EtherGames is ERC721 {
     // Making sure sent amount is greater than or equal to the sellingPrice
     require(msg.value >= sellingPrice);
 
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 90), 100));
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
     uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
 
     // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 90);
+      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 92);
     } else if (sellingPrice < secondStepLimit) {
       // second stage
-      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 90);
+      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 92);
     } else {
       // third stage
-      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 90);
+      gameIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 92);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
@@ -333,7 +334,7 @@ contract EtherGames is ERC721 {
     return gameIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating Games
+  /// For creating Game
   function _createGame(string _name, address _owner, uint256 _price) private {
     Game memory _game = Game({
       name: _name
