@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0xfa1274ed52885408fdc3eedf40e749425bcd4087
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0xd18691ee800890b8ed2cbdec6fa137b3e18c2552
 */
 pragma solidity ^0.4.19;
 
@@ -650,7 +650,7 @@ contract AffiliateManager is Pausable {
         vault = 0xD0b40D3bfd8DFa6ecC0b357555039C3ee1C11202;
         mvnpereth = 100;
         
-        minAmountWei = 0.01 ether;
+        minAmountWei = 0.1 ether;
         cap = 32000 ether;
         
         affiliateTree = AffiliateTreeStore(_treestore);
@@ -822,11 +822,6 @@ contract AffiliateManager is Pausable {
     
     function updateMVNRate(uint256 _value) onlyOwner public returns(bool success) {
         mvnpereth = _value;
-        return true;
-    }
-    
-    function updateMinAmountWei(uint256 _value) onlyOwner public returns(bool success) {
-        minAmountWei = _value;
         return true;
     }
     
