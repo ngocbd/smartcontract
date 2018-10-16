@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x631b905bca1114ab736e270c1f02a0555130cc5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xc02a152f5f5448e47624ca30f41b6540be30008f
 */
-pragma solidity ^0.4.17;
+pragma solidity 0.4.19;
 
 contract Migrations {
   address public owner;
@@ -15,7 +15,6 @@ contract Migrations {
     owner = msg.sender;
   }
 
-// set completed butts
   function setCompleted(uint completed) public restricted {
     last_completed_migration = completed;
   }
