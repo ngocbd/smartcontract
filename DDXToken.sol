@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDXToken at 0xccb3a8d6d5f78c3fec21088db01964706e9ebe6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDXToken at 0x08d7748dfeac4c3bf41cadc675d1853919dfaa4b
 */
 pragma solidity ^0.4.18;
 
@@ -27,10 +27,10 @@ contract DDXToken {
         symbol = "DDX";
         decimals = 18;
         totalSupply = 200000000 ether;
-
+        
         locked = true;
-        creator = msg.sender;
         balances[msg.sender] = totalSupply;
+        creator = msg.sender;
     }
 
     // Don't let people randomly send ETH to contract
@@ -45,6 +45,7 @@ contract DDXToken {
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(!locked);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
@@ -53,9 +54,6 @@ contract DDXToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        // Token must be unlocked to enable transferFrom
-        // transferFrom is used in public sales (i.e. Decentralized Exchanges)
-        // this mitigates risk of users selling the token to the public before proper disclosure/paperwork is in order
         require(!locked);
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
