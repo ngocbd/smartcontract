@@ -1,54 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0x7edd4379da08a0e4d64c9fb4c04c72a138a66916
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNY at 0xd951d22dd38c4a70c447e51357e366d8c0e35a02
 */
+pragma solidity ^0.4.21;
+
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
 }
 
+contract Target {
+    function transfer(address _to, uint _value);
+}
+
 contract MNY {
-    string public name = "Monkey";
+
+    string public name = "MNY by Monkey Capital";
     uint8 public decimals = 18;
     string public symbol = "MNY";
 
-    address public _owner;
-    address public _dev = 0xC96CfB18C39DC02FBa229B6EA698b1AD5576DF4c;
-    address public _devFeesAddr;
-    uint256 public _tokePerEth = 4877000000000000000000;
-    bool public _coldStorage = true;
-    bool public _receiveEth = false;
+    address public owner;
+    address public exchangeAdmin;
 
-    // fees vars - added for future extensibility purposes only
-    bool _feesEnabled = false;
-    bool _payFees = false;
-    uint256 _fees;  // the calculation expects % * 100 (so 10% is 1000)
-    uint256 _lifeVal = 0;
-    uint256 _feeLimit = 0;
-    uint256 _devFees = 0;
+    uint256[] tierTokens = [
+        5.33696E18,
+        7.69493333E18,
+        4.75684324E18,
+        6.30846753E18,
+        6.21620513E18,
+        5.63157219E18,
+        5.80023669E18,
+        5.04458667E18,
+        4.58042767E18,
+        5E18
+    ];
 
-    uint256 public _totalSupply = 1000000928 * 1 ether;
-    uint256 public _circulatingSupply = 0;
-    uint256 public _frozenTokens = 0;
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Exchanged(address indexed _from, address indexed _to, uint _value);
+    uint256[] costPerToken = [
+        9E16,
+        9E16,
+        8E16,
+        7E16,
+        8E16,
+        5E16,
+        6E16,
+        5E16,
+        5E16,
+        6E16
+    ];
+
+    // used to store list of contracts MNY holds tokens in
+    address[] contracts = [0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0];
+
+    uint tierLevel = 0;
+    uint maxTier = 9;
+    uint256 totalSupply = 21000000000000000000000000;
+    uint256 circulatingSupply = 0;
+    uint contractCount = 1;
+
+    // flags
+    bool public receiveEth = true;
+    bool swap = false;
+    bool allSwapped = false;
+    bool distributionCalculated = false;
 
     // Storage
     mapping (address => uint256) public balances;
+    mapping (address => uint256) public tokenBalances;
+    mapping (address => uint256) public tokenShare;
+    mapping (address => uint256) public exchangeRates; // balance and rate in cents (where $1 = 1*10^18)
 
-    // list of contract addresses that this contract can request tokens from
-    // use add/remove functions
-    mapping (address => bool) public exchangePartners;
-
-    // permitted exch partners and associated token rates
-    // rate is X target tokens per Y incoming so newTokens = Tokens/Rate
-    mapping (address => uint256) public exchangeRates;
+    // events
+    event Transfer(address indexed _from, address indexed _to, uint _value);
 
     function MNY() {
-        _owner = msg.sender;
-        preMine();
-    }
-
-    function preMine() internal {
-
+        owner = msg.sender;
     }
 
     function transfer(address _to, uint _value, bytes _data) public {
@@ -56,29 +79,32 @@ contract MNY {
         require(balances[msg.sender] >= _value);
 
         if(_to == address(this)) {
-            // WARNING: if you transfer tokens back to the contract you will lose them
-            // use the exchange function to exchange with approved partner contracts
-            _totalSupply = add(_totalSupply, _value);
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-            Transfer(msg.sender, _to, _value);
-        }
-        else {
-            uint codeLength;
-
-            assembly {
-                codeLength := extcodesize(_to)
-            }
-
-            if(codeLength != 0) {
-                // only allow transfer to exchange partner contracts - this is handled by another function
-            exchange(_to, _value);
-            }
-            else {
+            if(swap == false) {
+                // WARNING: if you transfer tokens back to the contract outside of the swap you will lose them
+                // use the exchange function to exchange for tokens with approved partner contracts
+                totalSupply = add(totalSupply, _value);
+                circulatingSupply = sub(circulatingSupply, _value);
+                if(circulatingSupply == 0) allSwapped = true;
+                tierTokens[maxTier] = add(tierTokens[maxTier], _value);
                 balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-                balances[_to] = add(balances[_to], _value);
-
                 Transfer(msg.sender, _to, _value);
             }
+            else {
+                require(div(_value, 1 ether) > 0);   // whole tokens only in for swap
+                if(distributionCalculated = false) {
+                    calculateHeldTokenDistribution();
+                }
+                balances[msg.sender] = sub(balances[msg.sender], _value);
+                shareStoredTokens(msg.sender, div(_value, 1 ether));
+            }
+        }
+        else {
+            // WARNING: if you transfer tokens to a contract address they will be lost unless the contract
+            // has been designed to handle incoming/holding tokens in other contracts
+            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+            balances[_to] = add(balances[_to], _value);
+
+            Transfer(msg.sender, _to, _value);
         }
     }
 
@@ -87,158 +113,81 @@ contract MNY {
         require(balances[msg.sender] >= _value);
 
         if(_to == address(this)) {
-            // WARNING: if you transfer tokens back to the contract you will lose them
-            // use the exchange function to exchange for tokens with approved partner contracts
-            _totalSupply = add(_totalSupply, _value);
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-            Transfer(msg.sender, _to, _value);
-        }
-        else {
-            uint codeLength;
-
-            assembly {
-                codeLength := extcodesize(_to)
-            }
-
-            if(codeLength != 0) {
-                // only allow transfer to exchange partner contracts - this is handled by another function
-            exchange(_to, _value);
-            }
-            else {
+            if(swap == false) {
+                // WARNING: if you transfer tokens back to the contract outside of the swap you will lose them
+                // use the exchange function to exchange for tokens with approved partner contracts
+                totalSupply = add(totalSupply, _value);
+                circulatingSupply = sub(circulatingSupply, _value);
+                if(circulatingSupply == 0) allSwapped = true;
+                tierTokens[maxTier] = add(tierTokens[maxTier], _value);
                 balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-                balances[_to] = add(balances[_to], _value);
-
                 Transfer(msg.sender, _to, _value);
             }
-        }
-    }
-
-    function exchange(address _partner, uint _amount) internal {
-        require(exchangePartners[_partner]);
-        require(requestTokensFromOtherContract(_partner, this, msg.sender, _amount));
-
-        if(_coldStorage) {
-            // put the tokens from this contract into cold storage if we need to
-            // (NB: if these are in reality to be burnt, we just never defrost them)
-            _frozenTokens = add(_frozenTokens, _amount);
+            else {
+                if(distributionCalculated = false) {
+                    calculateHeldTokenDistribution();
+                }
+                balances[msg.sender] = sub(balances[msg.sender], _value);
+                shareStoredTokens(msg.sender, div(_value, 1 ether));
+            }
         }
         else {
-            // or return them to the available supply if not
-            _totalSupply = add(_totalSupply, _amount);
-        }
+            // WARNING: if you transfer tokens to a contract address they will be lost unless the contract
+            // has been designed to handle incoming/holding tokens in other contracts
+            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+            balances[_to] = add(balances[_to], _value);
 
-        balances[msg.sender] = sub(balanceOf(msg.sender), _amount);
-        _circulatingSupply = sub(_circulatingSupply, _amount);
-        Exchanged(msg.sender, _partner, _amount);
-        Transfer(msg.sender, this, _amount);
-    }
-
-    // fallback to receive ETH into contract and send tokens back based on current exchange rate
-    function () payable public {
-        require((msg.value > 0) && (_receiveEth));
-        uint256 _tokens = div(mul(msg.value,_tokePerEth), 1 ether);
-        require(_totalSupply >= _tokens);//, "Insufficient tokens available at current exchange rate");
-        _totalSupply = sub(_totalSupply, _tokens);
-        balances[msg.sender] = add(balances[msg.sender], _tokens);
-        _circulatingSupply = add(_circulatingSupply, _tokens);
-        Transfer(this, msg.sender, _tokens);
-        _lifeVal = add(_lifeVal, msg.value);
-
-        if(_feesEnabled) {
-            if(!_payFees) {
-                // then check whether fees are due and set _payFees accordingly
-                if(_lifeVal >= _feeLimit) _payFees = true;
-            }
-
-            if(_payFees) {
-                _devFees = add(_devFees, ((msg.value * _fees) / 10000));
-            }
+            Transfer(msg.sender, _to, _value);
         }
     }
 
-    function requestTokensFromOtherContract(address _targetContract, address _sourceContract, address _recipient, uint256 _value) internal returns (bool){
-        Partner p = Partner(_targetContract);
-        p.exchangeTokensFromOtherContract(_sourceContract, _recipient, _value);
-        return true;
+    function allocateTokens(uint256 _submitted, address _recipient) internal {
+        uint256 _availableInTier = mul(tierTokens[tierLevel], costPerToken[tierLevel]);
+        uint256 _allocation = 0;
+
+        if(_submitted >= _availableInTier) {
+            _allocation = tierTokens[tierLevel];
+            tierTokens[tierLevel] = 0;
+            tierLevel++;
+            if(tierLevel > maxTier) {
+                swap = true;
+            }
+            _submitted = sub(_submitted, _availableInTier);
+        }
+        else {
+            uint256 stepOne = mul(_submitted, 1 ether);
+            uint256 stepTwo = div(stepOne, costPerToken[tierLevel]);
+            uint256 _tokens = stepTwo;
+            _allocation = add(_allocation, _tokens);
+            tierTokens[tierLevel] = sub(tierTokens[tierLevel], _tokens);
+            _submitted = sub(_submitted, _availableInTier);
+        }
+
+        // transfer tokens allocated so far to wallet address from contract
+        balances[_recipient] = add(balances[_recipient],_allocation);
+        circulatingSupply = add(circulatingSupply, _allocation);
+        totalSupply = sub(totalSupply, _allocation);
+
+        if((_submitted != 0) && (tierLevel <= maxTier)) {
+            allocateTokens(_submitted, _recipient);
+        }
+        else {
+            // emit transfer event
+            Transfer(this, _recipient, balances[_recipient]);
+        }
     }
 
-    function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _incomingTokens) public {
+    function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _sentTokens) public {
+
         require(exchangeRates[msg.sender] > 0);
-        uint256 _exchanged = mul(_incomingTokens, exchangeRates[_source]);
-        require(_exchanged <= _totalSupply);
-        balances[_recipient] = add(balances[_recipient],_exchanged);
-        _totalSupply = sub(_totalSupply, _exchanged);
-        _circulatingSupply = add(_circulatingSupply, _exchanged);
-        Exchanged(_source, _recipient, _exchanged);
-        Transfer(this, _recipient, _exchanged);
-    }
+        uint256 _exchanged = mul(_sentTokens, exchangeRates[_source]);
 
-    function changePayRate(uint256 _newRate) public {
-        require(((msg.sender == _owner) || (msg.sender == _dev)) && (_newRate >= 0));
-        _tokePerEth = _newRate;
-    }
-
-    function safeWithdrawal(address _receiver, uint256 _value) public {
-        require((msg.sender == _owner));
-
-        // if fees are enabled send the dev fees
-        if(_feesEnabled) {
-            if(_payFees) _devFeesAddr.transfer(_devFees);
-            _devFees = 0;
-        }
-
-        // check balance before transferring
-        require(_value <= this.balance);
-        _receiver.transfer(_value);
-    }
-
-    function balanceOf(address _receiver) public constant returns (uint balance) {
-        return balances[_receiver];
-    }
-
-    function changeOwner(address _receiver) public {
-        require(msg.sender == _owner);
-        _dev = _receiver;
-    }
-
-    function changeDev(address _receiver) public {
-        require(msg.sender == _dev);
-        _owner = _receiver;
-    }
-
-    function changeDevFeesAddr(address _receiver) public {
-        require(msg.sender == _dev);
-        _devFeesAddr = _receiver;
-    }
-
-    function toggleReceiveEth() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(!_receiveEth) {
-            _receiveEth = true;
-        }
-        else {
-            _receiveEth = false;
-        }
-    }
-
-    function toggleFreezeTokensFlag() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(!_coldStorage) {
-            _coldStorage = true;
-        }
-        else {
-            _coldStorage = false;
-        }
-    }
-
-    function defrostFrozenTokens() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        _totalSupply = add(_totalSupply, _frozenTokens);
-        _frozenTokens = 0;
+        require(_exchanged <= mul(totalSupply, 1 ether));
+        allocateTokens(_exchanged, _recipient);
     }
 
     function addExchangePartnerAddressAndRate(address _partner, uint256 _rate) {
-        require((msg.sender == _dev) || (msg.sender == _owner));
+        require(msg.sender == owner);
         // check that _partner is a contract address
         uint codeLength;
         assembly {
@@ -246,64 +195,109 @@ contract MNY {
         }
         require(codeLength > 0);
         exchangeRates[_partner] = _rate;
+
+        bool isContract = existingContract(_partner);
+        if(isContract == false) {
+            contractCount++;
+            contracts[contractCount] = _partner;
+        }
     }
 
-    function addExchangePartnerTargetAddress(address _partner) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        exchangePartners[_partner] = true;
-    }
-
-    function removeExchangePartnerTargetAddress(address _partner) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        exchangePartners[_partner] = false;
-    }
-
-    function canExchange(address _targetContract) public constant returns (bool) {
-        return exchangePartners[_targetContract];
-    }
-
-    function contractExchangeRate(address _exchangingContract) public constant returns (uint256) {
-        return exchangeRates[_exchangingContract];
-    }
-
-    function totalSupply() public constant returns (uint256) {
-        return _totalSupply;
-    }
-
-    function getBalance() public constant returns (uint256) {
-        return this.balance;
-    }
-
-    function getLifeVal() public constant returns (uint256) {
-        require((msg.sender == _owner) || (msg.sender == _dev));
-        return _lifeVal;
+    // public data retrieval funcs
+    function getTotalSupply() public constant returns (uint256) {
+        return totalSupply;
     }
 
     function getCirculatingSupply() public constant returns (uint256) {
-        return _circulatingSupply;
+        return circulatingSupply;
     }
 
-    function payFeesToggle() {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(_payFees) {
-            _payFees = false;
+    function balanceOf(address _receiver) public constant returns (uint256) {
+        return balances[_receiver];
+    }
+
+    function balanceInTier() public constant returns (uint256) {
+        return tierTokens[tierLevel];
+    }
+
+    function balanceInSpecificTier(uint tier) public constant returns (uint256) {
+        return tierTokens[tier];
+    }
+
+    function currentTier() public constant returns (uint256) {
+        return tierLevel;
+    }
+
+    // admin functions
+    function convertTransferredTokensToMny(uint256 _value, address _recipient, address _source, uint256 _originalAmount) public {
+        // allows tokens transferred in for exchange to be converted to MNY and distributed
+        // COE is able to interact directly with contract - other exchange partners cannot
+        require((msg.sender == owner) || (msg.sender == exchangeAdmin));
+        require(exchangeRates[_source] > 0);
+        maintainExternalContractTokenBalance(_source, _originalAmount);
+        allocateTokens(_value, _recipient);
+    }
+
+    function changeOwner(address _newOwner) public {
+        require(msg.sender == owner);
+        owner = _newOwner;
+    }
+
+    function changeExchangeAdmin(address _newAdmin) public {
+        require(msg.sender == owner);
+        exchangeAdmin = _newAdmin;
+    }
+
+    function maintainExternalContractTokenBalance(address _contract, uint256 _tokens) internal {
+        tokenBalances[_contract] = add(tokenBalances[_contract], _tokens);
+    }
+
+    function getTokenBalance(address _contract) public constant returns (uint256) {
+        return tokenBalances[_contract];
+    }
+
+    function calculateHeldTokenDistribution() public {
+        require(swap = true);
+        for(uint i=0; i<contractCount; i++) {
+//            tokenShare[contracts[i]] = div(tokenBalances[contracts[i]], div(add(totalSupply, circulatingSupply), 1 ether));
+            tokenShare[contracts[i]] = div(tokenBalances[contracts[i]], circulatingSupply);
         }
-        else {
-            _payFees = true;
+        distributionCalculated = true;
+    }
+
+    function tokenShare(address _contract) public constant returns (uint256) {
+        return tokenShare[_contract];
+    }
+
+    function shareStoredTokens(address _recipient, uint256 mny) internal {
+        Target t;
+        uint256 share = 0;
+        for(uint i=0; i<contractCount; i++) {
+            share = mul(mny, tokenShare[contracts[i]]);
+
+            t = Target(contracts[i]);
+            t.transfer(_recipient, share);
         }
     }
 
-    // enables fee update - must be between 0 and 100 (%)
-    function updateFeeAmount(uint _newFee) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        require((_newFee >= 0) && (_newFee <= 100));
-        _fees = _newFee * 100;
+    function distributeMnyAfterSwap(address _recipient, uint256 _tokens) public {
+        require(msg.sender == owner);
+        require(totalSupply <= _tokens);
+        balances[_recipient] = add(balances[_recipient], _tokens);
+        Transfer(this, _recipient, _tokens);
+        totalSupply = sub(totalSupply, _tokens);
+        circulatingSupply = add(circulatingSupply, _tokens);
     }
 
-    function withdrawDevFees() public {
-        require(_payFees);
-        _devFeesAddr.transfer(_devFees);
-        _devFees = 0;
+    function existingContract(address _contract) internal returns (bool) {
+        for(uint i=0; i<contractCount; i++) {
+            if(contracts[i] == _contract) return true;
+        }
+        return false;
+    }
+
+    function contractExchangeRate(address _contract) public constant returns (uint256) {
+        return exchangeRates[_contract];
     }
 
     function mul(uint a, uint b) internal pure returns (uint) {
