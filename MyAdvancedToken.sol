@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x6c2083d788a3955ca059f6361b2423ba879c1163
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x3eaf3b77d37c681a7109301e985e5ce3b2efb5ce
 */
 pragma solidity 0.4.12;
 contract owned {
@@ -131,7 +131,7 @@ contract MyAdvancedToken is owned, token {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
-    
+   
     function unfreezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = !freeze;
         FrozenFunds(target, !freeze);
