@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUV_Crowdsale at 0x58849d4a250bBB9d47d6cD93c7ab39Ab1e06AEDA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUV_Crowdsale at 0x24102059abd9183f81613040030d2040dfa36b58
 */
 pragma solidity ^0.4.15;
 
@@ -137,8 +137,8 @@ contract LUVTOKEN is StandardToken {
 
     function LUVTOKEN(
         ) {
-        decimals = 0; 
-        totalSupply = 200000000;                        // Update total supply (100000 for example)
+        decimals = 18; 
+        totalSupply = 200000000 * (10 ** uint256(decimals));                        // Update total supply (100000 for example)
         balances[msg.sender] = totalSupply;               // Give the creator all initial tokens (100000 for example)
         name = "LUVTOKEN";                                   // Set the name for display purposes
         symbol = "LUV";                               // Set the symbol for display purposes
@@ -211,7 +211,7 @@ contract Ownable {
 
 /**
  * @title LUV_Crowdsale
- * @dev HDK_Crowdsale is a base contract for managing a token crowdsale.
+ * @dev LUV_Crowdsale is a base contract for managing a token crowdsale.
  * Crowdsales have a start and end timestamps, where investors can make
  * token purchases and the crowdsale will assign them tokens based
  * on a token per ETH rate. Funds collected are forwarded to a wallet
@@ -226,7 +226,7 @@ contract LUV_Crowdsale is Ownable {
   // start and end timestamps where investments are allowed (both inclusive)
 
 
-  uint256 public startTime = 1523750400;
+  uint256 public startTime = now;
   uint256 public phase_1_Time = 1526342400 ;
   uint256 public phase_2_Time = 1529020800;
   uint256 public endTime = 1531612800;
