@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0xf184279e6d4654890b4410cf300ed55600f018be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x0f170120733474c6ec7daf6ae6aeeeb8b645e92c
 */
 pragma solidity ^0.4.6;
 
@@ -23,7 +23,6 @@ contract RES {
 
     event Bought(address from, uint amount);
     event Sold(address from, uint amount);
-    event BoughtViaJohan(address from, uint amount);
 
     /* Initializes contract with name, symbol and decimals */
 
@@ -38,8 +37,6 @@ contract RES {
       totalSupply += msg.value;
       Bought(msg.sender, msg.value);
     }  
-
-
 
 }
 
@@ -90,20 +87,7 @@ contract SwarmRedistribution is RES {
       JohanNygren = _newAddress;
     }
 
-    function buyViaJohan() public payable {
-      balanceOf[msg.sender] = msg.value;
-      totalSupply += msg.value;  
-
-      /* Create the dividend pathway */
-      dividendPathways[msg.sender].push(dividendPathway({
-                                      from: JohanNygren, 
-                                      amount:  msg.value,
-                                      timeStamp: now
-                                    }));
-
-      BoughtViaJohan(msg.sender, msg.value);
-    }
-
+    
     function sell(uint256 _value) public {
       if(balanceOf[msg.sender] < _value) throw;
       balanceOf[msg.sender] -= _value;
