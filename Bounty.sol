@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x427e6460df1d9624f4e266f3dcc0c860fe5a6319
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0xc3f2b61da3c3797930caf9e9ff174c2d70b2e8a5
 */
 pragma solidity ^0.4.15;
 
@@ -23,8 +23,6 @@ contract Bounty {
     uint256 public votes_for = 0;
     uint256 public votes_against = 0;
 
-    bytes32 hash_pwd = 0x1a78e83f94c1bc28c54cfed1fe337e04c31732614ec822978d804283ef6a60c3;
-
     modifier onlyDonor {
         require(!bounty_paid);
         require(has_donated[msg.sender]);
@@ -34,8 +32,7 @@ contract Bounty {
 
 
     // Paying the tipper.
-    function payout(string _password) {
-        require(keccak256(_password) == hash_pwd);
+    function payout() {
         require(!bounty_paid);
         require(proposed_beneficiary != 0x0);
         // To change, maybe. Find a way to use a ratio.
