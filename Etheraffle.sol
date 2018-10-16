@@ -1,7 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheraffle at 0x4251139bf01d46884c95b27666c9e317df68b876
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheraffle at 0x45c58bbd535b8661110ef5296e6987573d0c8276
 */
-pragma solidity^0.4.15;
+/*
+ *      Welcome to the ?????????? Smart-Contract!
+ *      The ???? decentralized, charitable blockchain lottery!
+ *      
+ *      ##########################################
+ *      ##########################################
+ *      ###                                    ###
+ *      ###          ???? & ??? ?????          ###
+ *      ###                 at                 ###
+ *      ###          ??????????.???          ###
+ *      ###                                    ###
+ *      ##########################################
+ *      ##########################################
+ *
+ *      Etheraffle is designed to give ???? ?????? to 
+ *      players, sustainable ??? ????????? to ??? token 
+ *      holders, and ????-???????? ??????? to charities.
+ *
+ *      Learn more & get involved at ??????????.???/??? to become a
+ *      ??? token holder today! Holding ??? tokens automatically  
+ *      makes you a part of the decentralized, autonomous organisation  
+ *      that ???? Etheraffle. Take your place in this decentralized, 
+ *      altruistic vision of the future!
+ *
+ *      If you want to chat to us you have loads of options:
+ *      On ???????? @ ?????://?.??/??????????
+ *      Or on ??????? @ ?????://???????.???/??????????
+ *      Or on ?????? @ ?????://??????????.??????.???
+ *
+ */
+ 
+pragma solidity^0.4.21;
+
 /*
  * @title String & slice utility library for Solidity contracts.
  * @author Nick Johnson <arachnid@notdot.net>
@@ -1765,20 +1797,21 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-contract FreeLOTInterface {
-    function balanceOf(address who) constant public returns (uint) {}
-    function destroy(address _from, uint _amt) external {}
+contract ReceiverInterface {
+    function receiveEther() external payable {}
 }
 
 contract EtheraffleUpgrade {
     function addToPrizePool() payable external {}
 }
 
-contract ReceiverInterface {
-    function receiveEther() external payable {}
+contract FreeLOTInterface {
+    function mint(address _to, uint _amt) external {}
+    function destroy(address _from, uint _amt) external {}
+    function balanceOf(address who) constant public returns (uint) {}
 }
 
-contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, usingOraclize {
+contract Etheraffle is usingOraclize {
     using strings for *;
 
     uint    public week;
@@ -1789,25 +1822,26 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
     address public etheraffle;
     address public upgradeAddr;
     address public disburseAddr;
-    uint    public take         = 150;//ppt
+    uint    public take         = 150; // ppt
     uint    public gasAmt       = 500000;
-    uint    public gasPrc       = 20000000000;//20 gwei
-    uint    public rafEnd       = 500400;//7:00pm Saturdays
-    uint    public tktPrice     = 2000000000000000;
-    uint    public oracCost     = 1500000000000000;//$1 @ $700
-    uint    public wdrawBfr     = 6048000;
-    uint[]  public pctOfPool    = [520, 114, 47, 319];//ppt...
     uint    public resultsDelay = 3600;
     uint    public matchesDelay = 3600;
-    uint  constant weekDur      = 604800;
-    uint  constant birthday     = 1500249600;//Etheraffle's birthday <3
+    uint    public rafEnd       = 500400; // 7:00pm Saturdays
+    uint    public wdrawBfr     = 6048000;
+    uint    public gasPrc       = 20000000000; // 20 gwei
+    uint    public tktPrice     = 2000000000000000;
+    uint    public oracCost     = 1500000000000000; // $1 @ $700
+    uint[]  public pctOfPool    = [520, 114, 47, 319]; // ppt...
+    uint[]  public odds         = [56, 1032, 54200, 13983816]; // Rounded down to nearest whole 
+    uint  constant WEEKDUR      = 604800;
+    uint  constant BIRTHDAY     = 1500249600;//Etheraffle's birthday <3
 
     FreeLOTInterface freeLOT;
 
     string randomStr1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"data\", \"serialNumber\"]','\\n{\"jsonrpc\": \"2.0\",\"method\":\"generateSignedIntegers\",\"id\":\"";
-    string randomStr2 = "\",\"params\":{\"n\":\"6\",\"min\":1,\"max\":49,\"replacement\":false,\"base\":10,\"apiKey\":${[decrypt] BOxU9jP2laZmGPe29WvCh5HY57objD14TTuYv1Y1p7M43mHS8rDupPiIjIq8DNPGm4A8OtbBmBxUZant/WqG0eGgfzb5STSsb44VzOIRrSk2A8r10SxTE5Ysl2HahYHZO18LZmWYCnqjVJ7UTmCBxwRpb5OVIVcp9A==}}']";
-    string apiStr1 = "[URL] ['json(https://etheraffle.com/api/a).m','{\"r\":\"";
-    string apiStr2 = "\",\"k\":${[decrypt] BLQNU9ZQxS6ardpB9gmUfVKwKhxSF2MmyB7sh2gmQFH49VewFs52EgaYId5KVEkYuNCP0S2ppzDmiN/5JUzHGTPpkPuTAZdx/ydBCcRMcuuqxg4lSpvtG3oB6zvXfTcCVjGMPbep}}']";
+    string randomStr2 = "\",\"params\":{\"n\":\"6\",\"min\":1,\"max\":49,\"replacement\":false,\"base\":10,\"apiKey\":${[decrypt] BIaCXRwykpLeDE9h1dQaAUi0LPTD4Jz0kwh6SVTftO+zromdgBhmdQhFwPsaLEGDHHn8bhQA8ksyjOZJpjDzKcVWlkBx5C07udHFtMnvG9g9VITYGxoMOhpFCTnoIKTBlIbNe5D1rIgl9OYUVX4ibTT8fCEE8TkWqQ==}}']";
+    string apiStr1    = "[URL] ['json(https://etheraffle.com/api/a).m','{\"r\":\"";
+    string apiStr2    = "\",\"k\":${[decrypt] BDzj/WPcHzGWYRL2cXvMNvInBxhutESn6Xj8pVzUUH+oEeWBoyycp23B7FSjqKJww6uH5AxvD4srlX0D/Rhl678YcKSNX2oMJJ47ciZrCnj6+28GHCLBV+XiA/1GDis9p5Q9NIKI}}']";
 
     mapping (uint => rafStruct) public raffle;
     struct rafStruct {
@@ -1849,7 +1883,8 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
     event LogReclaim(uint indexed fromRaffle, uint amount, uint atTime);
     event LogUpgrade(address newContract, uint ethTransferred, uint atTime);
     event LogPrizePoolAddition(address fromWhom, uint howMuch, uint atTime);
-    event LogOraclizeCallback(bytes32 queryID, string result, uint indexed forRaffle, uint atTime);
+    event LogFreeLOTWin(uint indexed forRaffle, address toWhom, uint entryNumber, uint amount, uint atTime);
+    event LogOraclizeCallback(address functionCaller, bytes32 queryID, string result, uint indexed forRaffle, uint atTime);
     event LogFundsDisbursed(uint indexed forRaffle, uint oraclizeTotal, uint amount, address indexed toAddress, uint atTime);
     event LogWithdraw(uint indexed forRaffle, address indexed toWhom, uint forEntryNumber, uint matches, uint amountWon, uint atTime);
     event LogWinningNumbers(uint indexed forRaffle, uint numberOfEntries, uint[] wNumbers, uint currentPrizePool, uint randomSerialNo, uint atTime);
@@ -1876,20 +1911,20 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         disburseAddr = _dsbrs;
         ethRelief    = _ethRelief;
         freeLOT      = FreeLOTInterface(_freeLOT);
-        uint delay   = (week * weekDur) + birthday + rafEnd + resultsDelay;
-        raffle[week].timeStamp = (week * weekDur) + birthday;
+        uint delay   = (week * WEEKDUR) + BIRTHDAY + rafEnd + resultsDelay;
+        raffle[week].timeStamp = (week * WEEKDUR) + BIRTHDAY;
         bytes32 query = oraclize_query(delay, "nested", strConcat(randomStr1, uint2str(getWeek()), randomStr2), gasAmt);
         qID[query].weekNo = week;
         qID[query].isRandom = true;
-        LogQuerySent(query, delay, now);
+        emit LogQuerySent(query, delay, now);
     }
     /**
      * @dev   Function using Etheraffle's birthday to calculate the
      *        week number since then.
      */
     function getWeek() public constant returns (uint) {
-        uint curWeek = (now - birthday) / weekDur;
-        if (now - ((curWeek * weekDur) + birthday) > rafEnd) {
+        uint curWeek = (now - BIRTHDAY) / WEEKDUR;
+        if (now - ((curWeek * WEEKDUR) + BIRTHDAY) > rafEnd) {
             curWeek++;
         }
         return curWeek;
@@ -1903,12 +1938,12 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function newRaffle() internal {
         uint newWeek = getWeek();
-        if(newWeek == week) {
+        if (newWeek == week) {
             pauseContract(4);
             return;
         } else {//? new raffle...
             week = newWeek;
-            raffle[newWeek].timeStamp = birthday + (newWeek * weekDur);
+            raffle[newWeek].timeStamp = BIRTHDAY + (newWeek * WEEKDUR);
         }
     }
     /**
@@ -1919,7 +1954,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function pauseContract(uint _id) internal {
       paused = true;
-      LogFunctionsPaused(_id, now);
+      emit LogFunctionsPaused(_id, now);
     }
     /**
      * @dev  Function to enter the raffle. Requires the caller to send ether
@@ -1931,6 +1966,19 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
     function enterRaffle(uint[] _cNums, uint _affID) payable external onlyIfNotPaused {
         require(msg.value >= tktPrice);
         buyTicket(_cNums, msg.sender, msg.value, _affID);
+    }
+    /**
+     * @dev  Function to enter the raffle on behalf of another address. Requires the 
+     *       caller to send ether of amount greater than or equal to the ticket price.
+     *       In the event of a win, only the onBehalfOf address can claim it.
+     *
+     * @param _cNums        Ordered array of entrant's six selected numbers.
+     * @param _affID        Affiliate ID of the source of this entry.
+     * @param _onBehalfOf   The address to be entered on behalf of.
+     */
+    function enterOnBehalfOf(uint[] _cNums, uint _affID, address _onBehalfOf) payable external onlyIfNotPaused {
+        require(msg.value >= tktPrice);
+        buyTicket(_cNums, _onBehalfOf, msg.value, _affID);
     }
     /**
      * @dev  Function to enter the raffle for free. Requires the caller's
@@ -1988,7 +2036,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         raffle[week].numEntries++;
         prizePool += _value;
         raffle[week].entries[_entrant].push(_cNums);
-        LogTicketBought(week, raffle[week].numEntries, _entrant, _cNums, raffle[week].entries[_entrant].length, _value, now, _affID);
+        emit LogTicketBought(week, raffle[week].numEntries, _entrant, _cNums, raffle[week].entries[_entrant].length, _value, now, _affID);
     }
     /**
      * @dev Withdraw Winnings function. User calls this function in order to withdraw
@@ -2002,29 +2050,38 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         require
         (
             raffle[_week].timeStamp > 0 &&
-            now - raffle[_week].timeStamp > weekDur - (weekDur / 7) &&
+            now - raffle[_week].timeStamp > WEEKDUR - (WEEKDUR / 7) &&
             now - raffle[_week].timeStamp < wdrawBfr &&
             raffle[_week].wdrawOpen == true &&
             raffle[_week].entries[msg.sender][_entryNum - 1].length == 6
         );
         uint matches = getMatches(_week, msg.sender, _entryNum);
+        if (matches == 2) return winFreeGo(_week, _entryNum);
         require
         (
             matches >= 3 &&
             raffle[_week].winAmts[matches - 3] > 0 &&
             raffle[_week].winAmts[matches - 3] <= this.balance
         );
-        raffle[_week].entries[msg.sender][_entryNum - 1].push(0);
-        if(raffle[_week].winAmts[matches - 3] <= raffle[_week].unclaimed) {
+        raffle[_week].entries[msg.sender][_entryNum - 1].push(1);
+        if (raffle[_week].winAmts[matches - 3] <= raffle[_week].unclaimed) {
             raffle[_week].unclaimed -= raffle[_week].winAmts[matches - 3];
         } else {
             raffle[_week].unclaimed = 0;
             pauseContract(5);
         }
         msg.sender.transfer(raffle[_week].winAmts[matches - 3]);
-        LogWithdraw(_week, msg.sender, _entryNum, matches, raffle[_week].winAmts[matches - 3], now);
+        emit LogWithdraw(_week, msg.sender, _entryNum, matches, raffle[_week].winAmts[matches - 3], now);
     }
-
+    /*
+     * @dev     Mints a FreeLOT coupon to a two match winner allowing them 
+     *          a free entry to Etheraffle. Function pausable by pause toggle.
+     */
+    function winFreeGo(uint _week, uint _entryNum) onlyIfNotPaused internal {
+        raffle[_week].entries[msg.sender][_entryNum - 1].push(1);
+        freeLOT.mint(msg.sender, 1);
+        emit LogFreeLOTWin(_week, msg.sender, _entryNum, 1, now);
+    }
     /**
      * @dev    Called by the weekly oraclize callback. Checks raffle 10
      *         weeks older than current raffle for any unclaimed prize
@@ -2034,7 +2091,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
     function reclaimUnclaimed() internal {
         uint old = getWeek() - 11;
         prizePool += raffle[old].unclaimed;
-        LogReclaim(old, raffle[old].unclaimed, now);
+        emit LogReclaim(old, raffle[old].unclaimed, now);
     }
     /**
      * @dev  Function totals up oraclize cost for the raffle, subtracts
@@ -2047,24 +2104,20 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function disburseFunds(uint _week) internal {
         uint oracTot = 2 * ((gasAmt * gasPrc) + oracCost);//2 queries per draw...
-        if(oracTot > prizePool) {
-          pauseContract(1);
-          return;
-        }
+        if (oracTot > prizePool) return pauseContract(1);
         prizePool -= oracTot;
         uint profit;
-        if(raffle[_week].numEntries > 0) {
+        if (raffle[_week].numEntries > 0) {
             profit = ((raffle[_week].numEntries - raffle[_week].freeEntries) * tktPrice * take) / 1000;
             prizePool -= profit;
             uint half = profit / 2;
             ReceiverInterface(disburseAddr).receiveEther.value(half)();
             ReceiverInterface(ethRelief).receiveEther.value(profit - half)();
-            LogFundsDisbursed(_week, oracTot, profit - half, ethRelief, now);
-            LogFundsDisbursed(_week, oracTot, half, disburseAddr, now);
+            emit LogFundsDisbursed(_week, oracTot, profit - half, ethRelief, now);
+            emit LogFundsDisbursed(_week, oracTot, half, disburseAddr, now);
             return;
         }
-        LogFundsDisbursed(_week, oracTot, profit, 0, now);
-        return;
+        emit LogFundsDisbursed(_week, oracTot, profit, 0, now);
     }
     /**
      * @dev   The Oralize call back function. The oracalize api calls are
@@ -2087,25 +2140,25 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      * @param _result   string - The result of the api call.
      */
     function __callback(bytes32 _myID, string _result) onlyIfNotPaused {
-        require(msg.sender == oraclize_cbAddress());
-        LogOraclizeCallback(_myID, _result, qID[_myID].weekNo, now);
-        if(qID[_myID].isRandom == true){//is random callback...
+        require(msg.sender == oraclize_cbAddress() || msg.sender == etheraffle);
+        emit LogOraclizeCallback(msg.sender, _myID, _result, qID[_myID].weekNo, now);
+        if (qID[_myID].isRandom == true) {
             reclaimUnclaimed();
             disburseFunds(qID[_myID].weekNo);
             setWinningNumbers(qID[_myID].weekNo, _result);
-            if(qID[_myID].isManual == true) { return; }
+            if (qID[_myID].isManual == true) return;
             bytes32 query = oraclize_query(matchesDelay, "nested", strConcat(apiStr1, uint2str(qID[_myID].weekNo), apiStr2), gasAmt);
             qID[query].weekNo = qID[_myID].weekNo;
-            LogQuerySent(query, matchesDelay + now, now);
-        } else {//is api callback
+            emit LogQuerySent(query, matchesDelay + now, now);
+        } else {
             newRaffle();
             setPayOuts(qID[_myID].weekNo, _result);
-            if(qID[_myID].isManual == true) { return; }
-            uint delay = (getWeek() * weekDur) + birthday + rafEnd + resultsDelay;
+            if (qID[_myID].isManual == true) return;
+            uint delay = (getWeek() * WEEKDUR) + BIRTHDAY + rafEnd + resultsDelay;
             query = oraclize_query(delay, "nested", strConcat(randomStr1, uint2str(getWeek()), randomStr2), gasAmt);
             qID[query].weekNo = getWeek();
             qID[query].isRandom = true;
-            LogQuerySent(query, delay, now);
+            emit LogQuerySent(query, delay, now);
         }
     }
     /**
@@ -2118,7 +2171,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         var str    = _string.toSlice();
         var delim  = ",".toSlice();
         var parts  = new string[](str.count(delim) + 1);
-        for(uint i = 0; i < parts.length; i++) {
+        for (uint i = 0; i < parts.length; i++) {
             parts[i] = str.split(delim).toString();
         }
         return parts;
@@ -2136,13 +2189,47 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function setWinningNumbers(uint _week, string _result) internal {
         string[] memory arr = stringToArray(_result);
-        for(uint i = 0; i < arr.length; i++){
+        for (uint i = 0; i < arr.length; i++){
             raffle[_week].winNums.push(parseInt(arr[i]));
         }
         uint serialNo = parseInt(arr[6]);
-        LogWinningNumbers(_week, raffle[_week].numEntries, raffle[_week].winNums, prizePool, serialNo, now);
+        emit LogWinningNumbers(_week, raffle[_week].numEntries, raffle[_week].winNums, prizePool, serialNo, now);
     }
-
+    /*  
+     * @dev     Returns TOTAL payout per tier when calculated using the odds method.
+     *
+     * @param _numWinners       Number of X match winners
+     * @param _matchesIndex     Index of matches array (? 3 match win, 4 match win etc)
+     */
+    function oddsTotal(uint _numWinners, uint _matchesIndex) internal view returns (uint) {
+        return oddsSingle(_matchesIndex) * _numWinners;
+    }
+    /*
+     * @dev     Returns TOTAL payout per tier when calculated using the splits method.
+     *
+     * @param _numWinners       Number of X match winners
+     * @param _matchesIndex     Index of matches array (? 3 match win, 4 match win etc)
+     */
+    function splitsTotal(uint _numWinners, uint _matchesIndex) internal view returns (uint) {
+        return splitsSingle(_numWinners, _matchesIndex) * _numWinners;
+    }
+    /*
+     * @dev     Returns single payout when calculated using the odds method.
+     *
+     * @param _matchesIndex     Index of matches array (? 3 match win, 4 match win etc)
+     */
+    function oddsSingle(uint _matchesIndex) internal view returns (uint) {
+        return tktPrice * odds[_matchesIndex];
+    }
+    /*
+     * @dev     Returns a single payout when calculated using the splits method.
+     *
+     * @param _numWinners       Number of X match winners
+     * @param _matchesIndex     Index of matches array (? 3 match win, 4 match win etc)
+     */
+    function splitsSingle(uint _numWinners, uint _matchesIndex) internal view returns (uint) {
+        return (prizePool * pctOfPool[_matchesIndex]) / (_numWinners * 1000);
+    }
     /**
      * @dev   Takes the results of the oraclize Etheraffle api call back
      *        and uses them to calculate the prizes due to each tier
@@ -2159,33 +2246,30 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function setPayOuts(uint _week, string _result) internal {
         string[] memory numWinnersStr = stringToArray(_result);
-        if(numWinnersStr.length < 4) {
-          pauseContract(2);
-          return;
-        }
+        if (numWinnersStr.length < 4) return pauseContract(2);
         uint[] memory numWinnersInt = new uint[](4);
         for (uint i = 0; i < 4; i++) {
             numWinnersInt[i] = parseInt(numWinnersStr[i]);
         }
         uint[] memory payOuts = new uint[](4);
         uint total;
-        for(i = 0; i < 4; i++) {
-            if(numWinnersInt[i] != 0) {
-                payOuts[i] = (prizePool * pctOfPool[i]) / (numWinnersInt[i] * 1000);
+        for (i = 0; i < 4; i++) {
+            if (numWinnersInt[i] != 0) {
+                uint amt = oddsTotal(numWinnersInt[i], i) <= splitsTotal(numWinnersInt[i], i) 
+                         ? oddsSingle(i) 
+                         : splitsSingle(numWinnersInt[i], i); 
+                payOuts[i] = amt;
                 total += payOuts[i] * numWinnersInt[i];
             }
         }
         raffle[_week].unclaimed = total;
-        if(raffle[_week].unclaimed > prizePool) {
-          pauseContract(3);
-          return;
-        }
+        if (raffle[_week].unclaimed > prizePool) return pauseContract(3);
         prizePool -= raffle[_week].unclaimed;
-        for(i = 0; i < payOuts.length; i++) {
+        for (i = 0; i < payOuts.length; i++) {
             raffle[_week].winAmts.push(payOuts[i]);
         }
         raffle[_week].wdrawOpen = true;
-        LogPrizePoolsUpdated(prizePool, _week, raffle[_week].unclaimed, payOuts[0], payOuts[1], payOuts[2], payOuts[3], now);
+        emit LogPrizePoolsUpdated(prizePool, _week, raffle[_week].unclaimed, payOuts[0], payOuts[1], payOuts[2], payOuts[3], now);
     }
     /**
      * @dev   Function compares array of entrant's 6 chosen numbers to
@@ -2198,9 +2282,9 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      */
     function getMatches(uint _week, address _entrant, uint _entryNum) constant internal returns (uint) {
         uint matches;
-        for(uint i = 0; i < 6; i++) {
-            for(uint j = 0; j < 6; j++) {
-                if(raffle[_week].entries[_entrant][_entryNum - 1][i] == raffle[_week].winNums[j]) {
+        for (uint i = 0; i < 6; i++) {
+            for (uint j = 0; j < 6; j++) {
+                if (raffle[_week].entries[_entrant][_entryNum - 1][i] == raffle[_week].winNums[j]) {
                     matches++;
                     break;
                 }
@@ -2229,12 +2313,14 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         uint _week,
         uint _delay,
         bool _isRandom,
-        bool _isManual
+        bool _isManual,
+        bool _status
     )
         onlyEtheraffle external
     {
+        paused = _status;
         string memory weekNumStr = uint2str(_week);
-        if(_isRandom == true){
+        if (_isRandom == true){
             bytes32 query = oraclize_query(_delay, "nested", strConcat(randomStr1, weekNumStr, randomStr2), gasAmt);
             qID[query].weekNo   = _week;
             qID[query].isRandom = true;
@@ -2243,32 +2329,6 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
             query = oraclize_query(_delay, "nested", strConcat(apiStr1, weekNumStr, apiStr2), gasAmt);
             qID[query].weekNo   = _week;
             qID[query].isManual = _isManual;
-        }
-    }
-    /**
-     * @dev Set the gas relevant price parameters for the Oraclize calls, in case
-     *      of future needs for higher gas prices for adequate transaction times,
-     *      or incase of Oraclize price hikes. Only callable be the Etheraffle
-     *      address.
-     *
-     * @param _newAmt    uint - new allowed gas amount for Oraclize.
-     * @param _newPrice  uint - new gas price for Oraclize.
-     * @param _newCost   uint - new cose of Oraclize service.
-     *
-     */
-    function setGasForOraclize
-    (
-        uint _newAmt,
-        uint _newCost,
-        uint _newPrice
-    )
-        onlyEtheraffle external
-    {
-        gasAmt   = _newAmt;
-        oracCost = _newCost;
-        if(_newPrice > 0) {
-            oraclize_setCustomGasPrice(_newPrice);
-            gasPrc = _newPrice;
         }
     }
     /**
@@ -2453,14 +2513,14 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
         uint amt    = prizePool;
         upgradeAddr = _newAddr;
         upgraded    = now;
-        week        = 0;//no struct for this raffle ? no timestamp ? no entry possible
+        week        = 0;
         prizePool   = 0;
-        gasAmt      = 0;//will arrest the oraclize recursive callbacks
+        gasAmt      = 0;
         apiStr1     = "";
         randomStr1  = "";
         require(this.balance >= amt);
         EtheraffleUpgrade(_newAddr).addToPrizePool.value(amt)();
-        LogUpgrade(_newAddr, amt, upgraded);
+        emit LogUpgrade(_newAddr, amt, upgraded);
     }
     /**
      * @dev     Self destruct contract. Only callable by Etheraffle address.
@@ -2472,7 +2532,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
      *          frame.
      */
     function selfDestruct() onlyEtheraffle external {
-        require(now - upgraded > weekDur * 10);
+        require(now - upgraded > WEEKDUR * 10);
         selfdestruct(ethRelief);
     }
     /**
@@ -2482,7 +2542,7 @@ contract Etheraffle is EtheraffleUpgrade, FreeLOTInterface, ReceiverInterface, u
     function addToPrizePool() payable external {
         require(msg.value > 0);
         prizePool += msg.value;
-        LogPrizePoolAddition(msg.sender, msg.value, now);
+        emit LogPrizePoolAddition(msg.sender, msg.value, now);
     }
     /**
      * @dev   Fallback function.
