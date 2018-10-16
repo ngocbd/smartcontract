@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeonyToken at 0x76b969cdcd7b03f76aed454d0e4a57421a8229e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeonyToken at 0xdd2b28602e0a31b82e25c75e065d2e2e8247e9ec
 */
 /**
 *?????????BitPeony?????????Bitcaps.club?????????????
@@ -66,6 +66,10 @@ contract Ownable {
   }
 }
 
+contract PeonyRecord {
+    function record(address from, address to) public returns (bool);
+}
+
 /**
 * @title Basic token
 * @dev Basic version of ERC20 Standard
@@ -82,6 +86,10 @@ contract PeonyToken is Ownable, ERC20 {
   mapping(address => uint256) balances;
   uint256 public totalSupply;
   uint256 public totalSupplyLimit;
+
+  address public recordAddress;
+  PeonyRecord record;
+  bool enabledRecord = false;
 
   /**
   * @dev Basic version of ERC20 Standard
@@ -185,6 +193,8 @@ contract PeonyToken is Ownable, ERC20 {
     balances[_to] = balances[_to].add(_value);
 
     Transfer(msg.sender, _to, _value);
+    toRecord(msg.sender, _to, _value);
+
     return true;
   }
 
@@ -201,6 +211,8 @@ contract PeonyToken is Ownable, ERC20 {
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
+    toRecord(_from, _to, _value);
+
     return true;
   }
 
@@ -236,6 +248,32 @@ contract PeonyToken is Ownable, ERC20 {
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
+  }
+
+  function setRecordAddress(address _address) onlyOwner returns (bool) {
+    require(_address != 0x0);
+
+    record = PeonyRecord(_address);
+    recordAddress = _address;
+
+    return true;
+  }
+
+  function setEnableRecord(bool _enable) onlyOwner returns (bool) {
+    enabledRecord = _enable;
+
+    return _enable;
+  }
+
+  function toRecord(address _from, address _to, uint256 _value) internal {
+    if (enabledRecord != true || recordAddress == 0x0) {
+      return;
+    }
+
+    uint256 count = _value.div(10**decimals);
+    for (uint256 i = 0; i < count; i++) {
+      record.record(_from, _to);
+    }
   }
 }
 
