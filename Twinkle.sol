@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Twinkle at 0xfbd0d1c77b501796a35d86cf91d65d9778eee695
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Twinkle at 0x39c6cccc9abf27b7769bb0a438a24fc23e75543e
 */
 pragma solidity ^0.4.18;
 
@@ -195,9 +195,9 @@ contract Twinkle is StandardToken {
 
   string public constant name = "Twinkle";
   string public constant symbol = "TWNKL";
-  uint8 public constant decimals = 3;
+  uint8 public constant decimals = 8;
 
-  uint256 public constant INITIAL_SUPPLY = 100000000000000;
+  uint256 public constant INITIAL_SUPPLY = 10000000000000000000;
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
