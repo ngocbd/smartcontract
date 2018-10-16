@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackDao at 0x5c430fa24f782cf8156ca97208c42127b17b0494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackDao at 0xcd3e727275bc2f511822dc9a26bd7b0bbf161784
 */
 /* 
 http://platform.dao.casino 
+For questions contact noxon i448539@gmail.com
 */
 
 pragma solidity ^0.4.8;
@@ -327,13 +328,13 @@ contract HackDao is usingOraclize {
   
    struct Game {
 	    address player;
-	    string results;
+	    bool results;
 	    uint betsvalue;
 	    uint betslevel;
 	}
 	
   mapping (bytes32 => address) bets;
-  mapping (bytes32 => uint8) public results; 
+  mapping (bytes32 => bool) public results; 
   mapping (bytes32 => uint) betsvalue;
   mapping (bytes32 => uint) betslevel;
   address public owner;
@@ -357,7 +358,7 @@ contract HackDao is usingOraclize {
   event LogS(string s);
   event LogI(uint s);
     
-  function game (uint level) payable returns (bytes32) {
+	  function game (uint level) payable returns (bytes32) {
 	   
 	   if (msg.value <= 0) throw;
 	   if (level > 10) throw;
@@ -382,35 +383,48 @@ contract HackDao is usingOraclize {
 	   
   	   uint random_number;
   	   
-	   bytes32 myid = oraclize_query("WolframAlpha", "random integer number between 1 and 10");
+	   if (msg.value < 5 ether) {
+    	    myid = bytes32(keccak256(msg.sender, block.blockhash(block.number - 1)));
+    	    random_number = uint(block.blockhash(block.number-1))%10 + 1;
+	   } else {
+	        bytes32 myid = oraclize_query("WolframAlpha", "random integer number between 1 and 10");
+	   }
   	   
   	   bets[myid] = msg.sender;
-  	   betsvalue[myid] = msg.value;
+  	   betsvalue[myid] = msg.value; //-10000000000000000 ?????? ?? ??????? ???????? ?? ??????? ~0.01 eth
   	   betslevel[myid] = level;
+  	   
+  	   if (random_number > 0) __callback(myid, uint2str(random_number),true);
   	  
   	   LogB(myid);
+  	   
   	   
   	   return myid;
 	  }
 	 
-
+	  function get_return_by_level(uint level) {
+	      
+	  }
 	  
-	   
+
 	  function __callback(bytes32 myid, string result) {
+	      __callback(myid, result, false);
+	  }
+	   
+	  function __callback(bytes32 myid, string result, bool ishashranodm) {
         LogS('callback');
+        if (msg.sender != oraclize_cbAddress() && ishashranodm == false) throw;
+       
+        //log0(result);
+      
+        //TODO alex bash
+
         
-        if (msg.sender != oraclize_cbAddress()) throw; //check this is oraclize ?
-        if (parseInt(result) > 10) throw;
-        
-		if (results[myid] == 2 || results[myid] == 1) throw; //this game already run?
-		
         LogB(myid);
-         
         
         if (parseInt(result) > betslevel[myid]) {
             LogS("win");
             LogI(betslevel[myid]);
-            
             uint koef;
             if (betslevel[myid] == 1) koef = 109; //90
             if (betslevel[myid] == 2) koef = 122; //80
@@ -421,19 +435,17 @@ contract HackDao is usingOraclize {
             if (betslevel[myid] == 7) koef = 326;
             if (betslevel[myid] == 8) koef = 490;
             if (betslevel[myid] == 9) koef = 980;
-            results[myid]=2;
+            
             if (!bets[myid].send(betsvalue[myid]*koef/100)) {LogS("bug! bet to winner was not sent!");} else {
-               
+                //LogI();
               }
+            results[myid] = true;
         } else {
-            results[myid]=1;
+                
             LogS("lose");
+            results[myid] = false;
         }
         
-        delete bets[myid];
-        delete results[myid];
-        delete betslevel[myid];
-        delete betsvalue[myid];
       }
       
       
@@ -441,8 +453,8 @@ contract HackDao is usingOraclize {
         
       }
       
-      function ownerWithdrawl(uint amount) onlyOwner  {
-        owner.send(amount);
+      function ownerWithdrawl() onlyOwner  {
+        owner.send(this.balance);
       }
     
 }
