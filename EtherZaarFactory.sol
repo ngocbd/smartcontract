@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0x7c65b7638f8550943b8dbf56461600451bcbecd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0xa2d4b157dfe6f00817fdc071bf7926e0710024a1
 */
 pragma solidity ^0.4.18;
 
@@ -30,18 +30,20 @@ contract ERC20 is ERC20Interface {
     string public name;
     uint8 public decimals;
     string public symbol;
-
+    
     function ERC20(
+        address _initialOwner,
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
         string _tokenSymbol
     ) public {
-        balances[msg.sender] = _initialAmount;
-        totalSupply = _initialAmount;
-        name = _tokenName;
-        decimals = _decimalUnits;
-        symbol = _tokenSymbol;
+        balances[_initialOwner] = _initialAmount;               
+        totalSupply = _initialAmount;                        
+        name = _tokenName;                                   
+        decimals = _decimalUnits;                            
+        symbol = _tokenSymbol;   
+        emit Transfer(_initialOwner, _initialOwner, _initialAmount);
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -78,51 +80,18 @@ contract ERC20 is ERC20Interface {
         return allowed[_owner][_spender];
     }   
 }
-
 contract EtherZaarFactory {
 
-    mapping(address => address[]) public created;
-    mapping(address => bool) public isERC20;
-    bytes public ERC20ByteCode;
-
     function EtherZaarFactory() public {
-        address verifiedToken = createERC20(100, "Verification Tokens", 0, "EtherZaar");
-        ERC20ByteCode = codeAt(verifiedToken);
     }
 
-    function verifyERC20(address _tokenContract) public view returns (bool) {
-        bytes memory fetchedTokenByteCode = codeAt(_tokenContract);
-
-        if (fetchedTokenByteCode.length != ERC20ByteCode.length) {
-            return false;
-        }
-
-        for (uint i = 0; i < fetchedTokenByteCode.length; i++) {
-            if (fetchedTokenByteCode[i] != ERC20ByteCode[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    function createERC20(uint256 _initialAmount, string _name, uint8 _decimals, string _symbol) 
+    function createERC20(address _initialOwner, uint256 _initialAmount, string _name, uint8 _decimals, string _symbol) 
         public 
     returns (address) {
 
-        ERC20 newToken = (new ERC20(_initialAmount, _name, _decimals, _symbol));
-        created[msg.sender].push(address(newToken));
-        isERC20[address(newToken)] = true;
-        newToken.transfer(msg.sender, _initialAmount); 
+        ERC20 newToken = (new ERC20(_initialOwner, _initialAmount, _name, _decimals, _symbol));
+
         return address(newToken);
     }
 
-    function codeAt(address _addr) internal view returns (bytes outputCode) {
-        assembly { 
-            let size := extcodesize(_addr)
-            outputCode := mload(0x40)
-            mstore(0x40, add(outputCode, and(add(add(size, 0x20), 0x1f), not(0x1f))))
-            mstore(outputCode, size)
-            extcodecopy(_addr, add(outputCode, 0x20), 0, size)
-        }
-    }
 }
