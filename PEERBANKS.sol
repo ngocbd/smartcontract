@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEERBANKS at 0x2a434a3c1fd28a334b982cd19a973ea412e7f294
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEERBANKS at 0xcb73cef85b5d50a23a580919e72818fd2264c0f5
 */
 pragma solidity ^0.4.4;
 
@@ -8,11 +8,11 @@ of the differents countries retirement savings, holding nearly one quarter of
 all retirement plan assets in the nation.
 *https://peerbanks.org
 *https://t.me/peerbanks
-*https://peerbanks.slack.com
-*https://www.reddit.com/r/PeerbanksIRA
 https://twitter.com/peerbanks
 *https://medium.com/@PeerBanks
 *https://github.com/peerbanks
+*https://peerbanks.slack.com
+*https://www.reddit.com/r/PeerbanksIRA
 *
 */
 
@@ -132,9 +132,9 @@ contract PEERBANKS is StandardToken {
 
     function PEERBANKS (
         ) {
-        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000;                        // Update total supply (100000 for example)
-        name = "Peerbanks";                                   // Set the name for display purposes
+        balances[msg.sender] = 100000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000;                        // Update total supply (100000 for example)
+        name = "PEERBANKS";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "IRA";                               // Set the symbol for display purposes
     }
