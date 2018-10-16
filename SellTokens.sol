@@ -1,79 +1,199 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SellTokens at 0xe3B6638F0C1C0FA37282FAb6eF9457e457A1E9a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SellTokens at 0xacdbf2fa08ee1fb95f1e3366c8a56edb96cdf630
 */
-/*
+pragma solidity ^0.4.21;
 
-Author: psdev
 
-p@psdev.io
+// If your investment is less than 300 ETHs. Send ETH here, this contract will
+// transfer VNETs to you automatically. And I just make a small profit.
+//
+// And you can get more details via etherscan.io - "Read Contract"
 
-0x13370CA2e8426a82BcfcCE21C97817A243c521Cf
 
-*/
-
-contract TokenInterface {
-  function balanceOf(address _owner) constant returns (uint256 balance);
-  function transfer(address _to, uint256 _amount) returns (bool success);
-  function receiveEther() returns(bool);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address _who) public view returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
-contract SellTokens {
-    address constant THE_DAO_ADDRESS = 0xbb9bc244d798123fde783fcc1c72d3bb8c189413;
 
-    TokenInterface public theDao;
-    mapping (address => uint) public allowedFreeExchanges;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
 
-    event TransferEvent(address _from, address _to, uint256 _value);
-    event ReturnEvent(uint256 _value);
-    event NotEnoughEthErrorEvent(uint trySend, uint available);
-    event NotEnoughDaoErrorEvent(uint trySend, uint available);
 
-    function SellTokens(){
-        theDao = TokenInterface(THE_DAO_ADDRESS);
-        populateAllowedFreeExchanges();
+    event OwnershipTransferred(address indexed _previousOwner, address indexed _newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
     }
 
-    function requestTokensBack() {
-        if (msg.value != 0 || allowedFreeExchanges[msg.sender] == 0) throw;
-        if (!theDao.transfer(msg.sender, allowedFreeExchanges[msg.sender])) throw;
-        allowedFreeExchanges[msg.sender] = 0;
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-    function buy100DaoFor1Eth(){
-        var tokens_to_send = msg.value;
-        uint daoBalance = theDao.balanceOf(this);
-        if (tokens_to_send > daoBalance) {
-            NotEnoughDaoErrorEvent(tokens_to_send, daoBalance);
-            throw;
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+
+    /**
+     * @dev Rescue compatible ERC20Basic Token
+     *
+     * @param _token ERC20Basic The address of the token contract
+     */
+    function rescueTokens(ERC20Basic _token) external onlyOwner {
+        uint256 balance = _token.balanceOf(this);
+        assert(_token.transfer(owner, balance));
+    }
+
+    /**
+     * @dev Withdraw Ether
+     */
+    function withdrawEther() external onlyOwner {
+        owner.transfer(address(this).balance);
+    }
+}
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    /**
+     * @dev Multiplies two numbers, throws on overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
         }
-        if (msg.value > this.balance) {
-            NotEnoughEthErrorEvent(msg.value, this.balance);
-            throw;
-        }
-
-        // send tokens back to buyer
-        if (!theDao.transfer(msg.sender, tokens_to_send)) throw;
-        TransferEvent(this, msg.sender, tokens_to_send);
-        // send eth from buyer to dao
-        if (!theDao.receiveEther.value(msg.value)()) throw;
-        ReturnEvent(msg.value);
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
 
-    // accounts and amounts sent to dao, rounded down & only txn > 100 tokens
-    function populateAllowedFreeExchanges() internal {
-        // from etherscan
-        allowedFreeExchanges[address(0x900b1d91f8931e3e1de3076341accb2f6011214f)] = 4000000000000000000;
-        allowedFreeExchanges[address(0x8b3b3b624c3c0397d3da8fd861512393d51dcbac)] = 31560000000000000000;
-        allowedFreeExchanges[address(0x0a869d79a7052c7f1b55a8ebabbea3420f0d1e13)] = 9900000000000000000;
-        allowedFreeExchanges[address(0x8b3b3b624c3c0397d3da8fd861512393d51dcbac)] = 1040000000000000000;
-        allowedFreeExchanges[address(0x8b3b3b624c3c0397d3da8fd861512393d51dcbac)] = 90000000000000000000;
-        allowedFreeExchanges[address(0xdf21fa922215b1a56f5a6d6294e6e36c85a0acfb)] = 49990000000000000000;
-        allowedFreeExchanges[address(0x0a9de66f5fda96a5b40d1ca9cd18bfb298c67d1c)] = 16440000000000000000;
-        allowedFreeExchanges[address(0x946c555081313c5e0986c6cd5f6978257a406237)] = 1000000000000000000;
-        allowedFreeExchanges[address(0x0a869d79a7052c7f1b55a8ebabbea3420f0d1e13)] = 295510000000000000000;
+    /**
+     * @dev Integer division of two numbers, truncating the quotient.
+     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
     }
 
+    /**
+     * @dev Adds two numbers, throws on overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    /**
+     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+     */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+}
 
 
+/**
+ * @title Sell Tokens
+ */
+contract SellTokens is Ownable {
+    using SafeMath for uint256;
 
+    ERC20Basic public token;
+
+    uint256 decimalDiff;
+    uint256 public rate;
+    string public description;
+    string public telegram;
+
+
+    /**
+     * @dev Constructor
+     */
+    constructor(ERC20Basic _token, uint256 _tokenDecimals, uint256 _rate, string _description, string _telegram) public {
+        uint256 etherDecimals = 18;
+
+        token = _token;
+        decimalDiff = etherDecimals.sub(_tokenDecimals);
+        rate = _rate;
+        description = _description;
+        telegram = _telegram;
+    }
+
+    /**
+     * @dev receive ETH and send tokens
+     */
+    function () public payable {
+        uint256 weiAmount = msg.value;
+        uint256 tokenAmount = weiAmount.mul(rate).div(10 ** decimalDiff);
+        
+        require(tokenAmount > 0);
+        
+        assert(token.transfer(msg.sender, tokenAmount));
+        owner.transfer(address(this).balance);
+    }
+
+    /**
+     * @dev Set Rate
+     * 
+     * @param _rate uint256
+     */
+    function setRate(uint256 _rate) external onlyOwner returns (bool) {
+        rate = _rate;
+        return true;
+    }
+
+    /**
+     * @dev Set Description
+     * 
+     * @param _description string
+     */
+    function setDescription(string _description) external onlyOwner returns (bool) {
+        description = _description;
+        return true;
+    }
+
+    /**
+     * @dev Set Telegram
+     * 
+     * @param _telegram string
+     */
+    function setTelegram(string _telegram) external onlyOwner returns (bool) {
+        telegram = _telegram;
+        return true;
+    }
 }
