@@ -1,72 +1,91 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medcash at 0x047BE01729131132D47e54c95cA1F3E14044DFBf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medcash at 0x8b8e0b7f0fbd26f605dbc4c2bf8b2d64e340e234
 */
-pragma solidity ^ 0.4.11;
-library SafeMath {
-function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-uint256 c = a * b;
-assert(a == 0 || c / a == b);
-return c;
-}
-function div(uint256 a, uint256 b) internal constant returns(uint256) {
-uint256 c = a / b;
-return c;
-}
-function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-assert(b <= a);
-return a - b;
-}
-function add(uint256 a, uint256 b) internal constant returns(uint256) {
-uint256 c = a + b;
-assert(c >= a);
-return c;
-}
-}
+pragma solidity ^0.4.17;
+
 contract Medcash {
-using SafeMath
-for uint256;
-mapping(address => mapping(address => uint256)) allowed;
-mapping(address => uint256) balances;
-uint256 public totalSupply;
-uint256 public decimals;
-address public owner;
-bytes32 public symbol;
-event Transfer(address indexed from, address indexed to, uint256 value);
-event Approval(address indexed _owner, address indexed spender, uint256 value);
-function Medcash() {
-totalSupply = 200000000;
-symbol = 'MEDCASH';
-owner = 0xBD0Ca8b86497a41C04c6a4fb8752370B480994bd;
-balances[owner] = totalSupply;
-decimals = 8;
-}
-function balanceOf(address _owner) constant returns(uint256 balance) {
-return balances[_owner];
-}
-function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-return allowed[_owner][_spender];
-}
-function transfer(address _to, uint256 _value) returns(bool) {
-balances[msg.sender] = balances[msg.sender].sub(_value);
-balances[_to] = balances[_to].add(_value);
-Transfer(msg.sender, _to, _value);
-return true;
-}
-function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
-var _allowance = allowed[_from][msg.sender];
-balances[_to] = balances[_to].add(_value);
-balances[_from] = balances[_from].sub(_value);
-allowed[_from][msg.sender] = _allowance.sub(_value);
-Transfer(_from, _to, _value);
-return true;
-}
-function approve(address _spender, uint256 _value) returns(bool) {
-require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-allowed[msg.sender][_spender] = _value;
-Approval(msg.sender, _spender, _value);
-return true;
-}
-function() {
-revert();
-}
+
+    string public name = "Medcash";      //  token name
+    string public symbol = "MEDCASH";           //  token symbol
+    uint256 public decimals = 8;            //  token digit
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    uint256 public totalSupply = 0;
+    bool public stopped = false;
+
+    uint256 constant valueFounder = 20000000000000000;
+    address owner = 0x0;
+
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
+    }
+
+    modifier isRunning {
+        assert (!stopped);
+        _;
+    }
+
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    function Medcash(address _addressFounder) {
+        owner = msg.sender;
+        totalSupply = valueFounder;
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
+    }
+
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function stop() isOwner {
+        stopped = true;
+    }
+
+    function start() isOwner {
+        stopped = false;
+    }
+
+    function setName(string _name) isOwner {
+        name = _name;
+    }
+
+    function burn(uint256 _value) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[0x0] += _value;
+        Transfer(msg.sender, 0x0, _value);
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
