@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCCToken at 0x350791c10c94cbf154c6d1edfd14e09bb46edff5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCCToken at 0xf6183de7f0e997a47f58a3a49470b71bf0c25263
 */
 pragma solidity ^0.4.13;
 
@@ -39,7 +39,7 @@ contract YCCToken {
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
+        require (balanceOf[_from] >= _value);                // Check if the sender has enough
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                            // Add the same to the recipient
@@ -58,7 +58,7 @@ contract YCCToken {
     /// @param _to The address of the recipient
     /// @param _value the amount to send
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require (_value < allowance[_from][msg.sender]);     // Check allowance
+        require (_value <= allowance[_from][msg.sender]);     // Check allowance
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
@@ -89,7 +89,7 @@ contract YCCToken {
     /// @notice Remove `_value` tokens from the system irreversibly
     /// @param _value the amount of money to burn
     function burn(uint256 _value) returns (bool success) {
-        require (balanceOf[msg.sender] > _value);            // Check if the sender has enough
+        require (balanceOf[msg.sender] >= _value);            // Check if the sender has enough
         balanceOf[msg.sender] -= _value;                      // Subtract from the sender
         totalSupply -= _value;                                // Updates totalSupply
         Burn(msg.sender, _value);
