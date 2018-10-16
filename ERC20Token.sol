@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdd1736b49c39d81c27d9d3e397e89bfb98df47d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xdb5db59ab52c30fdba0086ece9668bfdae40c2fe
 */
 contract Token {
 
@@ -119,9 +119,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 10000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 10000000000000000;                        // Update total supply (100000 for example)
-        name = "OKMcoin";                                   // Set the name for display purposes
+        name = "TravelNationCoins";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "OKM";                               // Set the symbol for display purposes
+        symbol = "TLN";                               // Set the symbol for display purposes
         
     }
         
