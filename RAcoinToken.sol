@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RAcoinToken at 0x12d618a6f26105efb017ddd360c05d8aed4b00f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RAcoinToken at 0xea8c9db193996bbc3f6a9afbdbea2b3b62c11253
 */
 pragma solidity ^0.4.23;
 
@@ -72,8 +72,14 @@ contract RAcoinToken is Ownable, ERC20Interface {
      ====== JACKPOT IMPLEMENTATION ====== 
      */
 
-    // Percentage for jackpot reserving during tokens transfer
-    uint public reservingPercentage = 1;
+    // Percentage for jackpot reserving during tokens transfer, 1% is default
+    uint public reservingPercentage = 100;
+    
+    // Minimum allowed variable percentage for jackpot reserving during tokens transfer, 0.01% is default
+    uint public minAllowedReservingPercentage = 1;
+    
+    // Maximu, allowed variable percentage for jackpot reserving during tokens transfer, 10% is default
+    uint public maxAllowedReservingPercentage = 1000;
     
     // Minimum amount of jackpot, before reaching it jackpot cannot be distributed. 
     // Default value is 100,000 RAC
@@ -103,16 +109,36 @@ contract RAcoinToken is Ownable, ERC20Interface {
     address[] private jackpotParticipants; 
 
     event SetReservingPercentage(uint _value);
+    event SetMinAllowedReservingPercentage(uint _value);
+    event SetMaxAllowedReservingPercentage(uint _value);
     event SetReservingStep(uint _value);
     event SetJackpotMinimumAmount(uint _value);
     event AddAddressToJackpotParticipants(address indexed _sender, uint _times);
     
     //Setting the reservingPercentage value, allowed only for owner
     function setReservingPercentage(uint _value) public onlyOwner returns (bool success) {
-        assert(_value > 0 && _value < 100);
+        assert(_value > 0 && _value < 10000);
         
         reservingPercentage = _value;
         emit SetReservingPercentage(_value);
+        return true;
+    }
+    
+    //Setting the minAllowedReservingPercentage value, allowed only for owner
+    function setMinAllowedReservingPercentage(uint _value) public onlyOwner returns (bool success) {
+        assert(_value > 0 && _value < 10000);
+        
+        minAllowedReservingPercentage = _value;
+        emit SetMinAllowedReservingPercentage(_value);
+        return true;
+    }
+    
+    //Setting the maxAllowedReservingPercentage value, allowed only for owner
+    function setMaxAllowedReservingPercentage(uint _value) public onlyOwner returns (bool success) {
+        assert(_value > 0 && _value < 10000);
+        
+        minAllowedReservingPercentage = _value;
+        emit SetMaxAllowedReservingPercentage(_value);
         return true;
     }
     
@@ -146,7 +172,7 @@ contract RAcoinToken is Ownable, ERC20Interface {
     // Using this function a user transfers tokens and participates in operating jackpot 
     // User sets the total transfer amount that includes the Jackpot reserving deposit
     function transferWithReserving(address _to, uint _totalTransfer) public returns (bool success) {
-        uint netTransfer = _totalTransfer * (100 - reservingPercentage) / 100; 
+        uint netTransfer = _totalTransfer * (10000 - reservingPercentage) / 10000; 
         require(balances[msg.sender] >= _totalTransfer && (_totalTransfer > netTransfer));
         
         if (transferMain(msg.sender, _to, netTransfer) && (_totalTransfer >= reservingStep)) {
@@ -158,7 +184,33 @@ contract RAcoinToken is Ownable, ERC20Interface {
     // Using this function a user transfers tokens and participates in operating jackpot 
     // User sets the net value of transfer without the Jackpot reserving deposit amount 
     function transferWithReservingNet(address _to, uint _netTransfer) public returns (bool success) {
-        uint totalTransfer = _netTransfer * (100 + reservingPercentage) / 100; 
+        uint totalTransfer = _netTransfer * (10000 + reservingPercentage) / 10000; 
+        require(balances[msg.sender] >= totalTransfer && (totalTransfer > _netTransfer));
+        
+        if (transferMain(msg.sender, _to, _netTransfer) && (totalTransfer >= reservingStep)) {
+            processJackpotDeposit(totalTransfer, _netTransfer, msg.sender);
+        }
+        return true;
+    }
+    
+    // Using this function a user transfers tokens and participates in operating jackpot 
+    // User sets the total transfer amount that includes the Jackpot reserving deposit and custom reserving percentage
+    function transferWithCustomReserving(address _to, uint _totalTransfer, uint _customReservingPercentage) public returns (bool success) {
+        require(_customReservingPercentage > minAllowedReservingPercentage && _customReservingPercentage < maxAllowedReservingPercentage);
+        uint netTransfer = _totalTransfer * (10000 - _customReservingPercentage) / 10000; 
+        require(balances[msg.sender] >= _totalTransfer && (_totalTransfer > netTransfer));
+        
+        if (transferMain(msg.sender, _to, netTransfer) && (_totalTransfer >= reservingStep)) {
+            processJackpotDeposit(_totalTransfer, netTransfer, msg.sender);
+        }
+        return true;
+    }
+    
+    // Using this function a user transfers tokens and participates in operating jackpot 
+    // User sets the net value of transfer without the Jackpot reserving deposit amount and custom reserving percentage
+    function transferWithCustomReservingNet(address _to, uint _netTransfer, uint _customReservingPercentage) public returns (bool success) {
+        require(_customReservingPercentage > minAllowedReservingPercentage && _customReservingPercentage < maxAllowedReservingPercentage);
+        uint totalTransfer = _netTransfer * (10000 + _customReservingPercentage) / 10000; 
         require(balances[msg.sender] >= totalTransfer && (totalTransfer > _netTransfer));
         
         if (transferMain(msg.sender, _to, _netTransfer) && (totalTransfer >= reservingStep)) {
@@ -170,7 +222,7 @@ contract RAcoinToken is Ownable, ERC20Interface {
     // Using this function a spender transfers tokens and make an owner of funds a participant of the operating Jackpot 
     // User sets the total transfer amount that includes the Jackpot reserving deposit
     function transferFromWithReserving(address _from, address _to, uint _totalTransfer) public returns (bool success) {
-        uint netTransfer = _totalTransfer * (100 - reservingPercentage) / 100; 
+        uint netTransfer = _totalTransfer * (10000 - reservingPercentage) / 10000; 
         require(balances[_from] >= _totalTransfer && (_totalTransfer > netTransfer));
         
         if (transferFrom(_from, _to, netTransfer) && (_totalTransfer >= reservingStep)) {
@@ -182,7 +234,7 @@ contract RAcoinToken is Ownable, ERC20Interface {
     // Using this function a spender transfers tokens and make an owner of funds a participatants of the operating Jackpot 
     // User set the net value of transfer without the Jackpot reserving deposit amount 
     function transferFromWithReservingNet(address _from, address _to, uint _netTransfer) public returns (bool success) {
-        uint totalTransfer = _netTransfer * (100 + reservingPercentage) / 100; 
+        uint totalTransfer = _netTransfer * (10000 + reservingPercentage) / 10000; 
         require(balances[_from] >= totalTransfer && (totalTransfer > _netTransfer));
 
         if (transferFrom(_from, _to, _netTransfer) && (totalTransfer >= reservingStep)) {
@@ -191,6 +243,33 @@ contract RAcoinToken is Ownable, ERC20Interface {
         return true;
     }
 
+
+    // Using this function a spender transfers tokens and make an owner of funds a participant of the operating Jackpot 
+    // User sets the total transfer amount that includes the Jackpot reserving deposit
+    function transferFromWithCustomReserving(address _from, address _to, uint _totalTransfer, uint _customReservingPercentage) public returns (bool success) {
+        require(_customReservingPercentage > minAllowedReservingPercentage && _customReservingPercentage < maxAllowedReservingPercentage);
+        uint netTransfer = _totalTransfer * (10000 - _customReservingPercentage) / 10000; 
+        require(balances[_from] >= _totalTransfer && (_totalTransfer > netTransfer));
+        
+        if (transferFrom(_from, _to, netTransfer) && (_totalTransfer >= reservingStep)) {
+            processJackpotDeposit(_totalTransfer, netTransfer, _from);
+        }
+        return true;
+    }
+
+    // Using this function a spender transfers tokens and make an owner of funds a participatants of the operating Jackpot 
+    // User set the net value of transfer without the Jackpot reserving deposit amount and custom reserving percentage
+    function transferFromWithCustomReservingNet(address _from, address _to, uint _netTransfer, uint _customReservingPercentage) public returns (bool success) {
+        require(_customReservingPercentage > minAllowedReservingPercentage && _customReservingPercentage < maxAllowedReservingPercentage);
+        uint totalTransfer = _netTransfer * (10000 + _customReservingPercentage) / 10000; 
+        require(balances[_from] >= totalTransfer && (totalTransfer > _netTransfer));
+
+        if (transferFrom(_from, _to, _netTransfer) && (totalTransfer >= reservingStep)) {
+            processJackpotDeposit(totalTransfer, _netTransfer, _from);
+        }
+        return true;
+    }
+    
     // Withdraw deposit of Jackpot amount and add address to Jackpot Participants List according to transaction amount
     function processJackpotDeposit(uint _totalTransfer, uint _netTransfer, address _participant) private returns (bool success) {
         addAddressToJackpotParticipants(_participant, _totalTransfer);
