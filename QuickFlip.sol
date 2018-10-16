@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuickFlip at 0x4aef06aa244438f28fd60c710a1cdf825374bcbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuickFlip at 0xc006c3cf9141b5b15ce1a3162dda95435d212e61
 */
 pragma solidity ^0.4.18;
 
@@ -10,32 +10,49 @@ contract QuickFlip {
   address private cardOwner;
   uint256 public cardPrice;
   uint256 public startTime = 1520899200;
-  uint256 public purchaseRound;
 
-  uint256 public constant STARTING_PRICE = 0.025 ether;
+  uint256 public constant PRIMARY_START_PRICE = 0.05 ether;
+  uint256 public constant STARTING_PRICE = 0.005 ether;
+
+  Card[] public cards;
+
+  struct Card {
+    address owner;
+    uint256 price;
+    uint256 purchaseRound;
+  }
 
   function QuickFlip() public {
     owner = msg.sender;
-    cardOwner = msg.sender;
-    cardPrice = STARTING_PRICE;
+    cards.push(Card({ owner: owner, price: PRIMARY_START_PRICE, purchaseRound: 0 }));
+    cards.push(Card({ owner: owner, price: STARTING_PRICE, purchaseRound: 0 }));
+    cards.push(Card({ owner: owner, price: STARTING_PRICE, purchaseRound: 0 }));
+    cards.push(Card({ owner: owner, price: STARTING_PRICE, purchaseRound: 0 }));
   }
 
-  function buy() public payable {
+  function buy(uint256 _cardId) public payable {
+    require(_cardId >= 0 && _cardId <= 3);
+
     uint256 price;
     address oldOwner;
 
-    (price, oldOwner) = getCard();
+    (price, oldOwner) = getCard(_cardId);
 
     require(msg.value >= price);
 
     address newOwner = msg.sender;
     uint256 purchaseExcess = msg.value - price;
 
-    cardOwner = msg.sender;
-    cardPrice = price.mul(12).div(10); // increase by 20%
-    purchaseRound = currentRound();
+    Card storage card = cards[_cardId];
+    card.owner = msg.sender;
+    card.price = price.mul(13).div(10); // increase by 30%
+    card.purchaseRound = currentRound();
 
-    oldOwner.transfer(price);
+    uint256 fee = price.mul(5).div(100);
+    uint256 profit = price.sub(fee);
+
+    cards[0].owner.transfer(fee);
+    oldOwner.transfer(profit);
     newOwner.transfer(purchaseExcess);
   }
 
@@ -43,13 +60,20 @@ contract QuickFlip {
     return now.sub(startTime).div(1 days);
   }
 
-  function getCard() public view returns (uint256 _price, address _owner) {
-    if (currentRound() > purchaseRound) {
-      _price = STARTING_PRICE;
-      _owner = owner;
+  function getCard(uint256 _cardId) public view returns (uint256 _price, address _owner) {
+    Card memory card = cards[_cardId];
+
+    if (currentRound() > card.purchaseRound) {
+      if (_cardId == 0) {
+        _price = PRIMARY_START_PRICE;
+        _owner = owner;
+      } else {
+        _price = STARTING_PRICE;
+        _owner = owner;
+      }
     } else {
-      _price = cardPrice;
-      _owner = cardOwner;
+      _price = card.price;
+      _owner = card.owner;
     }
   }
 }
