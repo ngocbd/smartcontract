@@ -1,17 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xd81Fe2C11edD560C4d44fdD4F651f3608452BeEd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x1b1c789fccdfc6a7b1fef651a1464043f0a38ada
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
 //
-pragma solidity ^0.4.11;
-
-// minimum token interface
-contract Token {
-    function transfer(address to, uint amount) public returns (bool);
-}
+pragma solidity ^0.4.17;
 
 contract Ownable {
     address Owner = msg.sender;
@@ -19,10 +14,21 @@ contract Ownable {
     function transferOwnership(address to) public onlyOwner { Owner = to; }
 }
 
+contract Token {
+    function balanceOf(address who) constant public returns (uint256);
+    function transfer(address to, uint amount) constant public returns (bool);
+}
+
 // tokens are withdrawable
 contract TokenVault is Ownable {
-    function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
-        return Token(token).transfer(to, amount);
+    event TokenTransfer(address indexed to, address token, uint amount);
+    function withdrawTokenTo(address token, address to) public onlyOwner returns (bool) {
+        uint amount = Token(token).balanceOf(address(this));
+        if (amount > 0) {
+            TokenTransfer(to, token, amount);
+            return Token(token).transfer(to, amount);
+        }
+        return false;
     }
 }
 
@@ -40,7 +46,7 @@ contract Vault is TokenVault {
 
     function init() payable open {
         Owner = msg.sender;
-        minDeposit = 1 ether;
+        minDeposit = 0.5 ether;
         Locked = false;
         deposit();
     }
