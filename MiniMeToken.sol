@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0x58f9ee4e1a804d4ec04d2ee0710a824188c134ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeToken at 0xd556caf704e39fc728058557a113b226207d2212
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.13;
 
 /*
     Copyright 2016, Jordi Baylina
@@ -19,6 +19,56 @@ pragma solidity ^0.4.6;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+
+contract ERC20Token {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
 
 /// @title MiniMeToken Contract
 /// @author Jordi Baylina
@@ -68,6 +118,10 @@ contract Controlled {
     function changeController(address _newController) onlyController {
         controller = _newController;
     }
+}
+
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -207,6 +261,8 @@ contract MiniMeToken is Controlled {
                return true;
            }
 
+           if (parentSnapShotBlock >= block.number) throw;
+
            // Do not allow transfer to 0x0 or the token contract itself
            if ((_to == 0) || (_to == address(this))) throw;
 
@@ -230,6 +286,7 @@ contract MiniMeToken is Controlled {
            // Then update the balance array with the new value for the address
            //  receiving the tokens
            var previousBalanceTo = balanceOfAt(_to, block.number);
+           if (previousBalanceTo + _amount < previousBalanceTo) throw; // Check for overflow
            updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 
            // An event to make the transfer easy to find on the blockchain
@@ -253,7 +310,7 @@ contract MiniMeToken is Controlled {
     function approve(address _spender, uint256 _amount) returns (bool success) {
         if (!transfersEnabled) throw;
 
-        // To change the approve amount you first have to reduce the addresses´
+        // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(_spender,0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
@@ -289,23 +346,15 @@ contract MiniMeToken is Controlled {
     /// @return True if the function call was successful
     function approveAndCall(address _spender, uint256 _amount, bytes _extraData
     ) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+        if (!approve(_spender, _amount)) throw;
 
-        // This portion is copied from ConsenSys's Standard Token Contract. It
-        //  calls the receiveApproval function that is part of the contract that
-        //  is being approved (`_spender`). The function should look like:
-        //  `receiveApproval(address _from, uint256 _amount, address
-        //  _tokenContract, bytes _extraData)` It is assumed that the call
-        //  *should* succeed, otherwise the plain vanilla approve would be used
-        if(!_spender.call(
-            bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))),
+        ApproveAndCallFallBack(_spender).receiveApproval(
             msg.sender,
             _amount,
             this,
             _extraData
-            )) { throw;
-        }
+        );
+
         return true;
     }
 
@@ -327,20 +376,15 @@ contract MiniMeToken is Controlled {
     function balanceOfAt(address _owner, uint _blockNumber) constant
         returns (uint) {
 
-        // If the `_blockNumber` requested is before the genesis block for the
-        //  the token being queried, the value returned is 0
-        if (_blockNumber < creationBlock) {
-            return 0;
-
         // These next few lines are used when the balance of the token is
         //  requested before a check point was ever created for this token, it
         //  requires that the `parentToken.balanceOfAt` be queried at the
         //  genesis block for that token as this contains initial balance of
         //  this token
-        } else if ((balances[_owner].length == 0)
+        if ((balances[_owner].length == 0)
             || (balances[_owner][0].fromBlock > _blockNumber)) {
             if (address(parentToken) != 0) {
-                return parentToken.balanceOfAt(_owner, parentSnapShotBlock);
+                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
             } else {
                 // Has no parent
                 return 0;
@@ -350,7 +394,6 @@ contract MiniMeToken is Controlled {
         } else {
             return getValueAt(balances[_owner], _blockNumber);
         }
-
     }
 
     /// @notice Total amount of tokens at a specific `_blockNumber`.
@@ -358,20 +401,15 @@ contract MiniMeToken is Controlled {
     /// @return The total amount of tokens at `_blockNumber`
     function totalSupplyAt(uint _blockNumber) constant returns(uint) {
 
-        // If the `_blockNumber` requested is before the genesis block for the
-        //  the token being queried, the value returned is 0
-        if (_blockNumber < creationBlock) {
-            return 0;
-
         // These next few lines are used when the totalSupply of the token is
         //  requested before a check point was ever created for this token, it
         //  requires that the `parentToken.totalSupplyAt` be queried at the
         //  genesis block for this token as that contains totalSupply of this
         //  token at this block number.
-        } else if ((totalSupplyHistory.length == 0)
+        if ((totalSupplyHistory.length == 0)
             || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
             if (address(parentToken) != 0) {
-                return parentToken.totalSupplyAt(parentSnapShotBlock);
+                return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
             } else {
                 return 0;
             }
@@ -393,7 +431,7 @@ contract MiniMeToken is Controlled {
     /// @param _cloneTokenSymbol Symbol of the clone token
     /// @param _snapshotBlock Block when the distribution of the parent token is
     ///  copied to set the initial distribution of the new clone token;
-    ///  if the block is higher than the actual block, the current block is used
+    ///  if the block is zero than the actual block, the current block is used
     /// @param _transfersEnabled True if transfers are allowed in the clone
     /// @return The address of the new MiniMeToken Contract
     function createCloneToken(
@@ -403,7 +441,7 @@ contract MiniMeToken is Controlled {
         uint _snapshotBlock,
         bool _transfersEnabled
         ) returns(address) {
-        if (_snapshotBlock > block.number) _snapshotBlock = block.number;
+        if (_snapshotBlock == 0) _snapshotBlock = block.number;
         MiniMeToken cloneToken = tokenFactory.createCloneToken(
             this,
             _snapshotBlock,
@@ -431,8 +469,10 @@ contract MiniMeToken is Controlled {
     function generateTokens(address _owner, uint _amount
     ) onlyController returns (bool) {
         uint curTotalSupply = getValueAt(totalSupplyHistory, block.number);
+        if (curTotalSupply + _amount < curTotalSupply) throw; // Check for overflow
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
         var previousBalanceTo = balanceOf(_owner);
+        if (previousBalanceTo + _amount < previousBalanceTo) throw; // Check for overflow
         updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
         Transfer(0, _owner, _amount);
         return true;
@@ -526,6 +566,11 @@ contract MiniMeToken is Controlled {
         return size>0;
     }
 
+    /// @dev Helper function to return a min betwen the two uints
+    function min(uint a, uint b) internal returns (uint) {
+        return a < b ? a : b;
+    }
+
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
@@ -538,10 +583,27 @@ contract MiniMeToken is Controlled {
         }
     }
 
+    /// @notice This method can be used by the controller to extract mistakenly
+    ///  sent tokens to this contract.
+    /// @param _token The address of the token contract that you want to recover
+    ///  set to 0 in case you want to extract ether.
+    function claimTokens(address _token) onlyController {
+        if (_token == 0x0) {
+            controller.transfer(this.balance);
+            return;
+        }
+
+        ERC20Token token = ERC20Token(_token);
+        uint balance = token.balanceOf(this);
+        token.transfer(controller, balance);
+        ClaimedTokens(_token, controller, balance);
+    }
+
 
 ////////////////
 // Events
 ////////////////
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
     event Transfer(address indexed _from, address indexed _to, uint256 _amount);
     event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
     event Approval(
@@ -593,4 +655,197 @@ contract MiniMeTokenFactory {
         newToken.changeController(msg.sender);
         return newToken;
     }
+}
+
+
+/// @dev `Owned` is a base level contract that assigns an `owner` that can be
+///  later changed
+contract Owned {
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner { if (msg.sender != owner) throw; _; }
+
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() { owner = msg.sender;}
+
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeOwner(address _newOwner) onlyOwner {
+        owner = _newOwner;
+    }
+}
+
+
+/// @dev This is designed to control the issuance of a MiniMe Token for a
+///  non-profit Campaign. This contract effectively dictates the terms of the
+///  funding round.
+
+contract GivethCampaign is TokenController, Owned {
+
+    uint public startFundingTime;       // In UNIX Time Format
+    uint public endFundingTime;         // In UNIX Time Format
+    uint public maximumFunding;         // In wei
+    uint public totalCollected;         // In wei
+    MiniMeToken public tokenContract;   // The new token for this Campaign
+    address public vaultAddress;        // The address to hold the funds donated
+
+/// @notice 'GivethCampaign()' initiates the Campaign by setting its funding
+/// parameters
+/// @dev There are several checks to make sure the parameters are acceptable
+/// @param _startFundingTime The UNIX time that the Campaign will be able to
+/// start receiving funds
+/// @param _endFundingTime The UNIX time that the Campaign will stop being able
+/// to receive funds
+/// @param _maximumFunding In wei, the Maximum amount that the Campaign can
+/// receive (currently the max is set at 10,000 ETH for the beta)
+/// @param _vaultAddress The address that will store the donated funds
+/// @param _tokenAddress Address of the token contract this contract controls
+
+    function GivethCampaign(
+        uint _startFundingTime,
+        uint _endFundingTime,
+        uint _maximumFunding,
+        address _vaultAddress,
+        address _tokenAddress
+
+    ) {
+        if ((_endFundingTime < now) ||                // Cannot end in the past
+            (_endFundingTime <= _startFundingTime) ||
+            (_maximumFunding > 10000 ether) ||        // The Beta is limited
+            (_vaultAddress == 0))                     // To prevent burning ETH
+            {
+            throw;
+            }
+        startFundingTime = _startFundingTime;
+        endFundingTime = _endFundingTime;
+        maximumFunding = _maximumFunding;
+        tokenContract = MiniMeToken(_tokenAddress);// The Deployed Token Contract
+        vaultAddress = _vaultAddress;
+    }
+
+/// @dev The fallback function is called when ether is sent to the contract, it
+/// simply calls `doPayment()` with the address that sent the ether as the
+/// `_owner`. Payable is a required solidity modifier for functions to receive
+/// ether, without this modifier functions will throw if ether is sent to them
+
+    function ()  payable {
+        doPayment(msg.sender);
+    }
+
+/////////////////
+// TokenController interface
+/////////////////
+
+/// @notice `proxyPayment()` allows the caller to send ether to the Campaign and
+/// have the tokens created in an address of their choosing
+/// @param _owner The address that will hold the newly created tokens
+
+    function proxyPayment(address _owner) payable returns(bool) {
+        doPayment(_owner);
+        return true;
+    }
+
+/// @notice Notifies the controller about a transfer, for this Campaign all
+///  transfers are allowed by default and no extra notifications are needed
+/// @param _from The origin of the transfer
+/// @param _to The destination of the transfer
+/// @param _amount The amount of the transfer
+/// @return False if the controller does not authorize the transfer
+    function onTransfer(address _from, address _to, uint _amount) returns(bool) {
+        return true;
+    }
+
+/// @notice Notifies the controller about an approval, for this Campaign all
+///  approvals are allowed by default and no extra notifications are needed
+/// @param _owner The address that calls `approve()`
+/// @param _spender The spender in the `approve()` call
+/// @param _amount The amount in the `approve()` call
+/// @return False if the controller does not authorize the approval
+    function onApprove(address _owner, address _spender, uint _amount)
+        returns(bool)
+    {
+        return true;
+    }
+
+
+/// @dev `doPayment()` is an internal function that sends the ether that this
+///  contract receives to the `vault` and creates tokens in the address of the
+///  `_owner` assuming the Campaign is still accepting funds
+/// @param _owner The address that will hold the newly created tokens
+
+    function doPayment(address _owner) internal {
+
+// First check that the Campaign is allowed to receive this donation
+        if ((now<startFundingTime) ||
+            (now>endFundingTime) ||
+            (tokenContract.controller() == 0) ||           // Extra check
+            (msg.value == 0) ||
+            (totalCollected + msg.value > maximumFunding))
+        {
+            throw;
+        }
+
+//Track how much the Campaign has collected
+        totalCollected += msg.value;
+
+//Send the ether to the vault
+        if (!vaultAddress.send(msg.value)) {
+            throw;
+        }
+
+// Creates an equal amount of tokens as ether sent. The new tokens are created
+//  in the `_owner` address
+        if (!tokenContract.generateTokens(_owner, msg.value)) {
+            throw;
+        }
+
+        return;
+    }
+
+/// @notice `finalizeFunding()` ends the Campaign by calling setting the
+///  controller to 0, thereby ending the issuance of new tokens and stopping the
+///  Campaign from receiving more ether
+/// @dev `finalizeFunding()` can only be called after the end of the funding period.
+
+    function finalizeFunding() {
+        if (now < endFundingTime) throw;
+        tokenContract.changeController(0);
+    }
+
+
+/// @notice `onlyOwner` changes the location that ether is sent
+/// @param _newVaultAddress The address that will receive the ether sent to this
+///  Campaign
+    function setVault(address _newVaultAddress) onlyOwner {
+        vaultAddress = _newVaultAddress;
+    }
+
+    //////////
+    // Safety Methods
+    //////////
+
+    /// @notice This method can be used by the controller to extract mistakenly
+    ///  sent tokens to this contract.
+    /// @param _token The address of the token contract that you want to recover
+    ///  set to 0 in case you want to extract ether.
+    function claimTokens(address _token) public onlyOwner {
+        if (tokenContract.controller() == address(this)) {
+            tokenContract.claimTokens(_token);
+        }
+        if (_token == 0x0) {
+            owner.transfer(this.balance);
+            return;
+        }
+
+        ERC20Token token = ERC20Token(_token);
+        uint256 balance = token.balanceOf(this);
+        token.transfer(owner, balance);
+        ClaimedTokens(_token, owner, balance);
+    }
+
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+
 }
