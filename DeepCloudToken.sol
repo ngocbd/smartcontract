@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepCloudToken at 0x087c72a040ad5a48b1ec83d14e0aab43252c3fb0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepCloudToken at 0xefe9708dff609bde726b0efd6a731a78dc23a13b
 */
 pragma solidity ^0.4.22;
 // File: contracts/zeppelin/math/SafeMath.sol
@@ -226,13 +226,30 @@ contract DeepCloudToken is StandardToken { //ERC - 20 token contract
   string public constant name = "DeepCloud";
 
   uint8 public constant decimals = 18;
-  uint256 totalSupply_ = 200000000 ether;
-
+  
   address public tokenHolder = 0x8f9294A3187942B40d805962058b81974bC77146;
 
   constructor () public {
-    balances[tokenHolder] = totalSupply_;
     // balances[msg.sender] = totalSupply_; //test param
+    totalSupply_ = 200000000 ether;
+    emit Transfer(address(this), tokenHolder, totalSupply_);
+    
+    balances[0xAFa6552fde8eaa29f8941A4578ac95a64de4A1f9] = 40000000 ether;
+    emit Transfer(tokenHolder, 0xAFa6552fde8eaa29f8941A4578ac95a64de4A1f9, 40000000 ether);
+
+    balances[0xFAeE73F6aBC8f67d5e03E0eC7D2fAb893c72E869] = 30000000 ether;
+    emit Transfer(tokenHolder, 0xFAeE73F6aBC8f67d5e03E0eC7D2fAb893c72E869, 30000000 ether);
+
+    balances[0x98dF271112907A9c812F9B0a2335bd23565BF8f6] = 24000000 ether;
+    emit Transfer(tokenHolder, 0x98dF271112907A9c812F9B0a2335bd23565BF8f6, 24000000 ether);
+    
+    balances[0xf34Ef789204C990E4eC296aD6AF2FA3205747523] = 16000000 ether;
+    emit Transfer(tokenHolder, 0xf34Ef789204C990E4eC296aD6AF2FA3205747523, 16000000 ether);
+
+    balances[0x5288f8627137D3B0d0454A7bBA08692e0fBC7BB7] = 10000000 ether;
+    emit Transfer(tokenHolder, 0x5288f8627137D3B0d0454A7bBA08692e0fBC7BB7, 10000000 ether);
+
+    balances[tokenHolder] = 80000000 ether;
   }
 
   event Burn(address indexed burner, uint256 value);
