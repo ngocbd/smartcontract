@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PMCoin at 0x5c7bbbb83325785c88b44124eb137100aa91ab11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PMCoin at 0xff46586fe46b814eb86e60320e1b0a29b78d4757
 */
 pragma solidity ^0.4.18;
 
@@ -252,11 +252,11 @@ contract PMCoin is StandardToken, Ownable {
   bytes32 public name;
   bytes32 public symbol;
   uint256 public decimals = 2;
-  uint256 public initialBalance = 100000000; 
+  uint256 public initialBalance = 10000000000; 
 
   function PMCoin() public {
     owner = msg.sender;
-    balances[owner] = initialBalance;
+    balances[msg.sender] = initialBalance;
     totalSupply_ = initialBalance;
     name = "PMCOIN";
     symbol = "PCC";
