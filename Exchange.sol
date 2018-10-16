@@ -1,109 +1,96 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x66158309d118b797882c27ee40cb803c7e49173a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0xe90fc6c4d8f7ef88a0e990f4e75eb01cdf443155
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.16;
 
-contract IBancorConverter {
-    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns (uint256);
+contract Token {
+    bytes32 public standard;
+    bytes32 public name;
+    bytes32 public symbol;
+    uint256 public totalSupply;
+    uint8 public decimals;
+    bool public allowTransactions;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 }
 
-contract IExchange {
-    function ethToTokens(uint _ethAmount) public view returns(uint);
-    function tokenToEth(uint _amountOfTokens) public view returns(uint);
-    function tokenToEthRate() public view returns(uint);
-    function ethToTokenRate() public view returns(uint);
-}
+ 
+contract Exchange {
 
-contract Owned {
-    address public owner;
-    address public newOwner;
+  address public owner;
+  mapping (address => uint256) public invalidOrder;
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    constructor() public {
-        owner = msg.sender;
-    }
+  mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  mapping (address => bool) public admins;
+  mapping (address => uint256) public lastActiveTransaction;
+  mapping (bytes32 => uint256) public orderFills;
+  address public feeAccount;
+  uint256 public inactivityReleasePeriod;
+  mapping (bytes32 => bool) public traded;
+  mapping (bytes32 => bool) public withdrawn;
+  event Order(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Trade(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, address get, address give);
+  event Deposit(address token, address user, uint256 amount, uint256 balance);
+  event Withdraw(address token, address user, uint256 amount, uint256 balance);
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
+  function setInactivityReleasePeriod(uint256 expiry)  returns (bool success) {
+    if (expiry > 1000000) throw;
+    inactivityReleasePeriod = expiry;
+    return true;
+  }
 
-contract Exchange is Owned, IExchange {
-    using SafeMath for uint;
 
-    IBancorConverter public bntConverter;
-    IBancorConverter public tokenConverter;
 
-    address public ethToken;
-    address public bntToken;
-    address public token;
+  function Exchange(address feeAccount_) {
+    owner = msg.sender;
+    feeAccount = feeAccount_;
+    inactivityReleasePeriod = 100000;
+  }
 
-    event Initialized(address _bntConverter, address _tokenConverter, address _ethToken, address _bntToken, address _token);
 
-    constructor() public { 
-    }
+  function assert(bool assertion) {
+    if (!assertion) throw;
+  }
+  function safeMul(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function initialize(address _bntConverter, address _tokenConverter, address _ethToken, address _bntToken, address _token) external onlyOwner {
-       bntConverter = IBancorConverter(_bntConverter);
-       tokenConverter = IBancorConverter(_tokenConverter);
+  function safeSub(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-       ethToken = _ethToken;
-       bntToken = _bntToken;
-       token = _token;
+  function safeAdd(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
 
-       emit Initialized(_bntConverter, _tokenConverter, _ethToken, _bntToken, _token);
-    }
 
-    function ethToTokens(uint _ethAmount) public view returns(uint) {
-        uint bnt = bntConverter.getReturn(ethToken, bntToken, _ethAmount);
-        uint amountOfTokens = tokenConverter.getReturn(bntToken, token, bnt);
-        return amountOfTokens;
-    }
+  function depositToken(address token, uint256 amount) {
+    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    lastActiveTransaction[msg.sender] = block.number;
+    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
 
-    function tokenToEth(uint _amountOfTokens) public view returns(uint) {
-        uint bnt = tokenConverter.getReturn(token, bntToken, _amountOfTokens);
-        uint eth = bntConverter.getReturn(bntToken, ethToken, bnt);
-        return eth;
-    }
 
-    function tokenToEthRate() public view returns(uint) {
-        uint eth = tokenToEth(1 ether);
-        return eth;
-    }
 
-    function ethToTokenRate() public view returns(uint) {
-        uint tkn = ethToTokens(1 ether);
-        return tkn;
-    }
-}
+  function deposit() payable {
+    tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
+    lastActiveTransaction[msg.sender] = block.number;
+    Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender]);
+  }
 
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
+
+
 }
