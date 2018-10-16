@@ -1,180 +1,246 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x23e9df412683993de3275ac04dd9714b118d808b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x38321bbb97a3541bb3913c12201b35d504f7af39
 */
-// Lottery Source code
+pragma solidity ^0.4.20;
 
-pragma solidity ^0.4.21;
+ 
 
+contract Lottery{
 
-/// @title A base contract to control ownership
-/// @author cuilichen
-contract OwnerBase {
+     /*=================================
+    =            MODIFIERS            =
+    =================================*/
 
-    // The addresses of the accounts that can execute actions within each roles.
-    address public ceoAddress;
-    address public cfoAddress;
-    address public cooAddress;
-
-    // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
-    bool public paused = false;
-    
-    /// constructor
-    function OwnerBase() public {
-       ceoAddress = msg.sender;
-       cfoAddress = msg.sender;
-       cooAddress = msg.sender;
-    }
-
-    /// @dev Access modifier for CEO-only functionality
-    modifier onlyCEO() {
-        require(msg.sender == ceoAddress);
+   // Only owner allowed.
+    modifier onlyOwner()
+    {
+        require(msg.sender == owner);
         _;
     }
 
-    /// @dev Access modifier for CFO-only functionality
-    modifier onlyCFO() {
-        require(msg.sender == cfoAddress);
-        _;
-    }
-    
-    /// @dev Access modifier for COO-only functionality
-    modifier onlyCOO() {
-        require(msg.sender == cooAddress);
+   // The tokens can never be stolen.
+    modifier notPooh(address aContract)
+    {
+        require(aContract != address(revContract));
         _;
     }
 
-    /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
-    /// @param _newCEO The address of the new CEO
-    function setCEO(address _newCEO) external onlyCEO {
-        require(_newCEO != address(0));
-
-        ceoAddress = _newCEO;
-    }
-
-
-    /// @dev Assigns a new address to act as the COO. Only available to the current CEO.
-    /// @param _newCFO The address of the new COO
-    function setCFO(address _newCFO) external onlyCEO {
-        require(_newCFO != address(0));
-
-        cfoAddress = _newCFO;
-    }
-    
-    /// @dev Assigns a new address to act as the COO. Only available to the current CEO.
-    /// @param _newCOO The address of the new COO
-    function setCOO(address _newCOO) external onlyCEO {
-        require(_newCOO != address(0));
-
-        cooAddress = _newCOO;
-    }
-
-    /// @dev Modifier to allow actions only when the contract IS NOT paused
-    modifier whenNotPaused() {
-        require(!paused);
+    modifier isOpenToPublic()
+    {
+        require(openToPublic);
         _;
     }
 
-    /// @dev Modifier to allow actions only when the contract IS paused
-    modifier whenPaused {
-        require(paused);
-        _;
+
+    /*==============================
+    =            EVENTS            =
+    ==============================*/
+
+
+    event Deposit(
+        uint256 amount,
+        address depositer
+    );
+
+    event WinnerPaid(
+        uint256 amount,
+        address winner
+    );
+
+
+    /*=====================================
+    =            CONFIGURABLES            =
+    =====================================*/
+
+    REV revContract;  //a reference to the REV contract
+    address owner;
+    bool openToPublic = false; //Is this lottery open for public use
+    uint256 ticketNumber = 0; //Starting ticket number
+    uint256 winningNumber; //The randomly generated winning ticket
+
+
+    /*=======================================
+    =            PUBLIC FUNCTIONS            =
+    =======================================*/
+
+    constructor() public
+    {
+        revContract = REV(0x05215FCE25902366480696F38C3093e31DBCE69A);
+        openToPublic = false;
+        owner = 0xc42559F88481e1Df90f64e5E9f7d7C6A34da5691;
     }
 
-    /// @dev Called by any "C-level" role to pause the contract. Used only when
-    ///  a bug or exploit is detected and we need to limit damage.
-    function pause() external onlyCOO whenNotPaused {
-        paused = true;
-    }
 
-    /// @dev Unpauses the smart contract. Can only be called by the CEO, since
-    ///  one reason we may pause the contract is when CFO or COO accounts are
-    ///  compromised.
-    /// @notice This is public rather than external so it can be called by
-    ///  derived contracts.
-    function unpause() public onlyCOO whenPaused {
-        // can't unpause if contract was upgraded
-        paused = false;
-    }
-    
-    
-    /// @dev check wether target address is a contract or not
-    function isNormalUser(address addr) internal view returns (bool) {
-        if (addr == address(0)) {
-            return false;
+  /* Fallback function allows anyone to send money for the cost of gas which
+     goes into the pool. Used by withdraw/dividend payouts.*/
+    function() payable public { }
+
+
+    function deposit()
+       isOpenToPublic()
+     payable public
+     {
+        //You have to send more than 0.01 ETH
+        require(msg.value >= 10000000000000000);
+        address customerAddress = msg.sender;
+
+        //Use deposit to purchase REV tokens
+        revContract.buy.value(msg.value)(customerAddress);
+        emit Deposit(msg.value, msg.sender);
+
+        //if entry more than 0.01 ETH
+        if(msg.value > 10000000000000000)
+        {
+            uint extraTickets = SafeMath.div(msg.value, 10000000000000000); //each additional entry is 0.01 ETH
+            
+            //Compute how many positions they get by how many REV they transferred in.
+            ticketNumber += extraTickets;
         }
-        uint size = 0;
-        assembly { 
-            size := extcodesize(addr) 
-        } 
-        return size == 0;
+
+         //if when we have a winner...
+        if(ticketNumber >= winningNumber)
+        {
+            //sell all tokens and cash out earned dividends
+            revContract.exit();
+
+            //lotteryFee
+            payDev(owner);
+
+            //payout winner
+            payWinner(customerAddress);
+
+            //rinse and repea
+            resetLottery();
+        }
+        else
+        {
+            ticketNumber++;
+        }
     }
+
+    //Number of REV tokens currently in the Lottery pool
+    function myTokens() public view returns(uint256)
+    {
+        return revContract.myTokens();
+    }
+
+
+     //Lottery's divs
+    function myDividends() public view returns(uint256)
+    {
+        return revContract.myDividends(true);
+    }
+
+   //Lottery's ETH balance
+    function ethBalance() public view returns (uint256)
+    {
+        return address(this).balance;
+    }
+
+
+     /*======================================
+     =          OWNER ONLY FUNCTIONS        =
+     ======================================*/
+
+    //give the people access to play
+    function openToThePublic()
+       onlyOwner()
+        public
+    {
+        openToPublic = true;
+        resetLottery();
+    }
+
+    //If this doesn't work as expected, cash out and send to owner to disperse ETH back to players
+    function emergencyStop()
+        onlyOwner()
+        public
+    {
+       // cash out token pool and send to owner to distribute back to players
+        revContract.exit();
+        uint balance = address(this).balance;
+        owner.transfer(balance);
+
+        //make lottery closed to public
+        openToPublic = false;
+    }
+
+
+     /* A trap door for when someone sends tokens other than the intended ones so the overseers
+      can decide where to send them. (credit: Doublr Contract) */
+    function returnAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens)
+
+    public
+    onlyOwner()
+    notPooh(tokenAddress)
+    returns (bool success)
+    {
+        return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
+    }
+
+
+     /*======================================
+     =          INTERNAL FUNCTIONS          =
+     ======================================*/
+
+
+     //pay winner
+    function payWinner(address winner) internal
+    {
+        uint balance = address(this).balance;
+        winner.transfer(balance);
+
+        emit WinnerPaid(balance, winner);
+    }
+
+    //donate to dev
+    function payDev(address dev) internal
+    {
+        uint balance = SafeMath.div(address(this).balance, 10);
+        dev.transfer(balance);
+    }
+
+    function resetLottery() internal
+    {
+        ticketNumber = 1;
+        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
+    }
+
+    function resetLotteryManually() public
+    onlyOwner()
+    {
+        ticketNumber = 1;
+        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
+    }
+
+
 }
 
 
-contract Lottery is OwnerBase {
+//Need to ensure this contract can send tokens to people
+contract ERC20Interface
+{
+    function transfer(address to, uint256 tokens) public returns (bool success);
+}
 
-    event Winner( address indexed account,uint indexed id, uint indexed sn );
-    
-    uint public price = 1 finney;
-    
-    uint public reward = 10 finney;
-    
-    uint public sn = 1;
-    
-    uint private seed = 0;
-    
-    
-    /// @dev constructor of contract, create a seed
-    function Lottery() public {
-        ceoAddress = msg.sender;
-        cooAddress = msg.sender;
-        cfoAddress = msg.sender;
-        seed = now;
-    }
-    
-    /// @dev set seed by coo
-    function setSeed( uint val) public onlyCOO {
-        seed = val;
-    }
-    
-    
-    function() public payable {
-        // get ether, maybe from coo.
-    }
-        
-    
-    
-    /// @dev buy lottery
-    function buy(uint id) payable public {
-        require(isNormalUser(msg.sender));
-        require(msg.value >= price);
-        uint back = msg.value - price;  
-        
-        sn++;
-        uint sum = seed + sn + now + uint(msg.sender);
-        uint ran = uint16(keccak256(sum));
-        if (ran * 10000 < 880 * 0xffff) { // win the reward 
-            back = reward + back;
-            emit Winner(msg.sender, id, sn);
-        }else{
-            emit Winner(msg.sender, id, 0);
-        }
-        
-        if (back > 1 finney) {
-            msg.sender.transfer(back);
-        }
-    }
-    
-    
+//Need to ensure the Lottery contract knows what a REV token is
+contract REV
+{
+    function buy(address) public payable returns(uint256);
+    function exit() public;
+    function myTokens() public view returns(uint256);
+    function myDividends(bool) public view returns(uint256);
+}
 
-    // @dev Allows the cfo to capture the balance.
-    function cfoWithdraw( uint remain) external onlyCFO {
-        address myself = address(this);
-        require(myself.balance > remain);
-        cfoAddress.transfer(myself.balance - remain);
+library SafeMath {
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
     }
-    
-    
-    
-    
 }
