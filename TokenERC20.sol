@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xC9c2702FF66a314B3eA6452cBB6Df5158b8bc772
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x31a4b0e204cd8f6f26b3112cf9e89a5c2a24a174
 */
 pragma solidity ^0.4.16;
 
@@ -37,6 +37,7 @@ contract TokenERC20 {
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
+        emit Transfer(address(this), msg.sender, totalSupply);
     }
 
     /**
@@ -48,7 +49,7 @@ contract TokenERC20 {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
