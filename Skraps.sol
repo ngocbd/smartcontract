@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0xa0911769e217a9f4d679114c64c9cd2e2a548df3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Skraps at 0x6e34d8d84764d40f6d7b39cd569fd017bf53177d
 */
 pragma solidity 0.4.19;
 
@@ -7,12 +7,11 @@ contract Owned {
     address public owner;
     address public candidate;
 
-    // The one who sent Rexpax the contract to the blockchain, will automatically become the owner of the contract
     function Owned() internal {
         owner = msg.sender;
     }
-
-    // The function containing this modifier can only call the owner of the contract
+    
+    // A functions uses the modifier can be invoked only by the owner of the contract
     modifier onlyOwner {
         require(owner == msg.sender);
         _;
@@ -66,7 +65,7 @@ contract Skraps is ERC20, Owned {
     string public symbol = "SKRP";
     uint8 public decimals = 18;
     uint public totalSupply;
-    
+
     uint private endOfFreeze = 1518912000; // Sun, 18 Feb 2018 00:00:00 GMT
 
     mapping (address => uint) private balances;
