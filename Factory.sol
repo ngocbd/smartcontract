@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x83e5203cd3e372c9c926ccec510e612b8bbc739c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x4344595470de5fdeffd02cfe2fc73a307c654cef
 */
 pragma solidity ^0.4.18;
  
@@ -486,6 +486,9 @@ contract Factory {
   //Maps the pyramid creator's address to his contract's address. One contract per address;
   mapping (address => address) contractPurchaseRecord;
 
+  //Check if a pyramid was created in this contract
+  mapping (address => bool) contractCheck;
+
   function Factory() public {
     admin = msg.sender;      
   }
@@ -501,13 +504,17 @@ contract Factory {
     contractPurchaseRecord[msg.sender] = address(pyramid);      
   }
 
-  function checkContractAddress(address creator) external view returns(address) {
-    return contractPurchaseRecord[creator];  
+  function checkPurchaseRecord(address _contract) external view returns(address) {
+    return contractPurchaseRecord[_contract];
   }
   
-  //Donations
+  function checkIfContractCreatedHere(address _contract) external view returns(bool) {
+    return contractCheck[_contract];
+  }
+
+  //Money sent to this contract will be considered a donation.
   function() external payable {
-     admin.transfer(msg.value);      
-  }  
- 
+    this.transfer(msg.value);
+  }
+
 }
