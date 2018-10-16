@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAHT at 0x0d7613cd6b6681928ade30c4fd3ebcc2c2f68621
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAHT at 0x6af8e29f5799ddbbb8cb6b54af21f15da06c900f
 */
 pragma solidity ^0.4.4;
 
@@ -88,10 +88,10 @@ contract BAHT is StandardToken {
 
     function BAHT(
         ) {
-        balances[msg.sender] = 1378942500000000;               
-        totalSupply = 3141592653589800;                        
-        name = "BAHT";                                   
-        decimals = 2;                            
+        balances[msg.sender] = 168000000000000;               
+        totalSupply = 314159265358980;                        
+        name = "BAHT GENESIS";                                   
+        decimals = 14;                            
         symbol = "Baht";                               
     }
 
