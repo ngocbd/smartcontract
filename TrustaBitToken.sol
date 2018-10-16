@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0x4ddaf983302f451a5a6dc95af102335bf280d9a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0x5d77f2c7bb0f60e62370d1774bb170c41a20ac1a
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 // File: src/Token/FallbackToken.sol
 
