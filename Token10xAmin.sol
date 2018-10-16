@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token10xAmin at 0xa646f0866f00c31da966fd7c18035ad2156bfdc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token10xAmin at 0x9bdf84b97c7eb4d61f3bd424d685bd54e83b61dd
 */
 pragma solidity ^0.4.17;
 
@@ -68,7 +68,7 @@ contract Token10xAmin is ERC223Interface, ERC20Interface {
         ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
         receiver.tokenFallback(msg.sender, _value, empty);
     }
-    Transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value, empty);
     return true;
   }
 
