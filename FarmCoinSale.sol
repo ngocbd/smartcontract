@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0x9a31c2c7b5f0f5a41ad923fd0bea73ece3361575
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FarmCoinSale at 0xE4A3192659bfe56C740B0ed64570a4156Cf2bCb3
 */
 pragma solidity ^0.4.16;
 
@@ -138,12 +138,6 @@ address public creator;
     return token.balanceOf(this);
   }
 
-  function destroy() onlyOwner {
-    uint256 balance = tokensAvailable();
-    require (balance > 0);
-    token.transfer(owner, balance);
-    selfdestruct(owner);
-  }
 }
 contract Claimable is Ownable {
     address public pendingOwner;
@@ -226,11 +220,6 @@ function setPrice(uint _price)
     uint price;
     price = _price;
 }
-
-function giveReward(address _payer,uint _payment) public payable returns (bool _success){
-        uint tokenamount = _payment / price;
-        return transfer(_payer,tokenamount);
-    }    
 }
 
 contract PayToken is EtherToFARM {
@@ -238,9 +227,14 @@ contract PayToken is EtherToFARM {
          if(msg.sender!=owner)
        giveReward(msg.sender,msg.value);
 }
+
+ function giveReward(address _payer,uint _payment) public payable returns (bool _success){
+        uint tokenamount = _payment / price;
+        return transfer(_payer,tokenamount);
+    }     
 }
 
-contract Token is EtherToFARM {
+contract Token is EtherToFARM, PayToken {
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -276,7 +270,6 @@ contract Token is EtherToFARM {
 }
 
 
-
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
@@ -292,17 +285,30 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+   
+uint constant MAX_UINT = 2**256 - 1;
+
+/// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited allowance.
+/// @param _from Address to transfer from.
+/// @param _to Address to transfer to.
+/// @param _value Amount to transfer.
+/// @return Success of transfer.
+function transferFrom(address _from, address _to, uint _value)
+    public
+    returns (bool)
+{
+    uint allowance = allowed[_from][msg.sender];
+    require(balances[_from] >= _value
+            && allowance >= _value
+            && balances[_to] + _value >= balances[_to]);
+    balances[_to] += _value;
+    balances[_from] -= _value;
+    if (allowance < MAX_UINT) {
+        allowed[_from][msg.sender] -= _value;
     }
+    Transfer(_from, _to, _value);
+    return true;
+}
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
@@ -337,9 +343,9 @@ contract FarmCoin is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = 'FarmCoin';                   //fancy name: eg Simon Bucks
-    uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol = 'FARM';                 //An identifier: eg SBX
+    string public name = 'WorldFarmCoin';                   //fancy name: eg Simon Bucks
+    uint8 public decimals = 0;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol = 'WFARM';                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
@@ -350,11 +356,11 @@ contract FarmCoin is StandardToken {
 
     function FarmCoin(
         ) {
-        balances[msg.sender] = 5000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 5000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "FarmCoin";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "FARM";                               // Set the symbol for display purposes
+        balances[msg.sender] = 5000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 5000000;                        // Update total supply (100000 for example)
+        name = "WorldFarmCoin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "WFARM";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -372,13 +378,15 @@ contract FarmCoin is StandardToken {
 
 
 contract FarmCoinSale is FarmCoin {
-
+ using SafeMath for uint256;
     uint256 public maxMintable;
     uint256 public totalMinted;
-    uint256 public decimals = 18;
+    uint256 totalTokens;
+    uint256 public decimals = 0;
     uint public endBlock;
     uint public startBlock;
     uint256 public exchangeRate;
+    
     uint public startTime;
     bool public isFunding;
     address public ETHWallet;
@@ -400,25 +408,58 @@ contract FarmCoinSale is FarmCoin {
 // @return the rate in FARM per 1 ETH according to the time of the tx and the FARM pricing program.
     // @Override
   function getRate() constant returns (uint256 rate) {
-    if      (now < START)            return rate = 840; // presale, 40% bonus
-    else if (now <= START +  6 days) return rate = 810; // day 1 to 6, 35% bonus
-    else if (now <= START + 13 days) return rate = 780; // day 7 to 13, 30% bonus
-    else if (now <= START + 20 days) return rate = 750; // day 14 to 20, 25% bonus
-    else if (now <= START + 28 days) return rate = 720; // day 21 to 28, 20% bonus
-    return rate = 600; // no bonus
+    if      (now < START)            return rate = 1190476190476200; // presale, 40% bonus
+    else if (now <= START +  6 days) return rate = 1234567900000000 ; // day 1 to 6, 35% bonus
+    else if (now <= START + 13 days) return rate = 1282051300000000 ; // day 7 to 13, 30% bonus
+    else if (now <= START + 20 days) return rate = 1333333300000000 ; // day 14 to 20, 25% bonus
+    else if (now <= START + 28 days) return rate = 1388888900000000 ; // day 21 to 28, 20% bonus
+    return rate = 1666666700000000; // no bonus
+ 
   }
+  
 
+ mapping (address => uint256) balance;
+ mapping (address => mapping (address => uint256)) allowed;
 
+ 
+    function buy() payable returns (bool success) {
+	if (!isFunding) {return true;} 
+	else {
+	var buyPrice = getRate();
+	buyPrice;
+	uint amount = msg.value / buyPrice;                
+        totalTokens += amount;                          
+        balance[msg.sender] += amount;                   
+        Transfer(this, msg.sender, amount); 
+	return true; }            
+    }
+
+    function fund (uint256 amount) onlyOwner {
+        if (!msg.sender.send(amount)) {                      		
+          revert;                                         
+        }           
+    }
+
+    function () payable {
+    var buyPrice = getRate();
+	buyPrice;
+	uint amount = msg.value / buyPrice;                
+        totalTokens += amount;                          
+        balance[msg.sender] += amount;                   
+        Transfer(this, msg.sender, amount); 
+	 }               
+    
     function FarmCoinSale() {
         startBlock = block.number;
-        maxMintable = 5000000000000000000000000; // 3 million max sellable (18 decimals)
+        maxMintable = 5000000; // 3 million max sellable (18 decimals)
         ETHWallet = 0x3b444fC8c2C45DCa5e6610E49dC54423c5Dcd86E;
         isFunding = true;
         
         creator = msg.sender;
         createHeldCoins();
         startTime = 1517461200000;
-        exchangeRate= 600;
+        var buyPrice = getRate();
+	    buyPrice;
         }
 
  
@@ -455,8 +496,6 @@ contract FarmCoinSale is FarmCoin {
     }
     function register(address sender) payable {
     }
-    function () payable {
-    }
   
     function create(address _beneficiary) payable{
     uint256 amount = msg.value;
@@ -480,7 +519,7 @@ contract FarmCoinSale is FarmCoin {
         creator = _creator;
     }
 
-    // change transfer status for FarmCoin token
+    // change transfer status for WorldFarmCoin token
     function changeTransferStats(bool _allowed) external {
         require(msg.sender==creator);
      }
@@ -489,9 +528,9 @@ contract FarmCoinSale is FarmCoin {
     // only ran 1 time on initialization
     function createHeldCoins() internal {
         // TOTAL SUPPLY = 5,000,000
-        createHoldToken(msg.sender, 1000);
-        createHoldToken(0xd9710D829fa7c36E025011b801664009E4e7c69D, 100000000000000000000000);
-        createHoldToken(0xd9710D829fa7c36E025011b801664009E4e7c69D, 100000000000000000000000);
+        createHoldToken(msg.sender, 0);
+        createHoldToken(0xd9710D829fa7c36E025011b801664009E4e7c69D, 1000000);
+        createHoldToken(0xd9710D829fa7c36E025011b801664009E4e7c69D, 1000000);
     }
 
     // function to create held tokens for developer
