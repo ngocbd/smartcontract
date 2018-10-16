@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEF at 0x467a1ada0c8f82eac9999f0f439cc316d2162f24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEF at 0xfa9b1a80421dc6cb4dbe2ec7cbefbcc6aabf9809
 */
 pragma solidity ^0.4.18;
 
 
 contract owned {
     address public owner;
-    address private ownerCandidate;
+    address public ownerCandidate;
 
     function owned() public {
         owner = msg.sender;
@@ -28,6 +28,7 @@ contract owned {
 
     function acceptOwnership() external onlyOwnerCandidate {
         owner = ownerCandidate;
+        ownerCandidate = 0x0;
     }
 }
 
@@ -70,7 +71,6 @@ contract PEF is SafeMath, owned {
 
     uint public totalSupply = 0;
 
-    address public owner = 0x0;
 
     // ????
     address private addressTeam = 0xa011fddeF6c8814eC1D0e1554688BCa03D80086d;
@@ -168,14 +168,14 @@ contract PEF is SafeMath, owned {
         balanceOf[this] = valueSale;
         Transfer(0x0, this, valueSale);
 
-        // Simu 
+        // Simu
         balanceOf[addressVip] = valueVip;
         Transfer(0x0, addressVip, valueVip);
 
-        // Found 
+        // Found
         balanceOf[addressFund] = valueFund;
         Transfer(0x0, addressFund, valueFund);
-        
+
         // valuePopular
         balanceOf[addressPopular] = valuePopular;
         Transfer(0x0, addressPopular, valuePopular);
