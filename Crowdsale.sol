@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xecd2f5afcf2a987e3f1c8ae7f4c1b1a60358a6ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x288e65d9e8608683976404eec5bb4434f933f6fb
 */
 pragma solidity 0.4.21;
 
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
     /**
@@ -88,7 +92,6 @@ contract Ownable {
 }
 
 
-
 contract CryptoRoboticsToken {
     uint256 public totalSupply;
     function balanceOf(address who) public view returns (uint256);
@@ -102,8 +105,59 @@ contract CryptoRoboticsToken {
 }
 
 
-contract ICOContract {
-    function setTokenCountFromPreIco(uint256 value) public;
+contract RefundVault is Ownable {
+    using SafeMath for uint256;
+
+    enum State { Active, Refunding, Closed }
+
+    mapping (address => uint256) public deposited;
+    address public wallet;
+    State public state;
+
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+    /**
+     * @param _wallet Vault address
+     */
+    function RefundVault(address _wallet) public {
+        require(_wallet != address(0));
+        wallet = _wallet;
+        state = State.Active;
+    }
+
+    /**
+     * @param investor Investor address
+     */
+    function deposit(address investor) onlyOwner public payable {
+        require(state == State.Active);
+        deposited[investor] = deposited[investor].add(msg.value);
+    }
+
+    function close() onlyOwner public {
+        require(state == State.Active);
+        state = State.Closed;
+        emit Closed();
+        wallet.transfer(address(this).balance);
+    }
+
+    function enableRefunds() onlyOwner public {
+        require(state == State.Active);
+        state = State.Refunding;
+        emit RefundsEnabled();
+    }
+
+    /**
+     * @param investor Investor address
+     */
+    function refund(address investor) public {
+        require(state == State.Refunding);
+        uint256 depositedValue = deposited[investor];
+        deposited[investor] = 0;
+        investor.transfer(depositedValue);
+        emit Refunded(investor, depositedValue);
+    }
 }
 
 
@@ -112,7 +166,9 @@ contract Crowdsale is Ownable {
 
     // The token being sold
     CryptoRoboticsToken public token;
-    ICOContract ico;
+    //MAKE APPROVAL TO Crowdsale
+    address public reserve_fund = 0x7C88C296B9042946f821F5456bd00EA92a13B3BB;
+    address preico;
 
     // Address where funds are collected
     address public wallet;
@@ -125,16 +181,50 @@ contract Crowdsale is Ownable {
 
     bool public isFinalized = false;
 
-    uint public tokenPriceInWei = 105 szabo;
+    uint public currentStage = 0;
 
-    uint256 public cap = 1008 ether;
+    uint256 public goal = 1000 ether;
+    uint256 public cap  = 6840  ether;
 
+    RefundVault public vault;
+
+
+
+    //price in wei for stage
+    uint[4] public stagePrices = [
+    127500000000000 wei,     //0.000085 - ICO Stage 1
+    135 szabo,     //0.000090 - ICO Stage 2
+    142500000000000 wei,     //0.000095 - ICO Stage 3
+    150 szabo     //0.0001 - ICO Stage 4
+    ];
+
+    //limit in wei for stage 612 + 1296 + 2052 + 2880
+    uint[4] internal stageLimits = [
+    612 ether,    //4800000 tokens 10% of ICO tokens (ICO token 40% of all (48 000 000) )
+    1296 ether,    //9600000 tokens 20% of ICO tokens
+    2052 ether,   //14400000 tokens 30% of ICO tokens
+    2880 ether    //19200000 tokens 40% of ICO tokens
+    ];
+
+    mapping(address => bool) public referrals;
+    mapping(address => uint) public reservedTokens;
+    mapping(address => uint) public reservedRefsTokens;
+    uint public amountReservedTokens;
+    uint public amountReservedRefsTokens;
 
     event Finalized();
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenReserved(address indexed beneficiary, uint256 value, uint256 amount, address referral);
+
 
     modifier onlyWhileOpen {
         require(now >= openingTime && now <= closingTime);
+        _;
+    }
+
+
+    modifier onlyPreIco {
+        require(msg.sender == preico);
         _;
     }
 
@@ -143,49 +233,46 @@ contract Crowdsale is Ownable {
     {
         require(_token != address(0));
 
-
-        wallet = 0xc17324BA51303105cCF7cb8850d1e1B4a6e6f064;
+        wallet = 0xB46Abb598A9F40c6b633881EAFfcf5F675773d77;
         token = _token;
-        openingTime = now;
-        closingTime = 1526601600;
+        openingTime = 1526774400;
+        closingTime = 1532044800;
+        vault = new RefundVault(wallet);
     }
 
 
     function () external payable {
-        buyTokens(msg.sender);
+        buyTokens(msg.sender, address(0));
     }
 
 
-    function buyTokens(address _beneficiary) public payable {
-
+    function buyTokens(address _beneficiary, address _ref) public payable {
         uint256 weiAmount = msg.value;
         _preValidatePurchase(_beneficiary, weiAmount);
-
-        // calculate token amount to be created
-        uint256 tokens = _getTokenAmount(weiAmount);
-
-        uint _diff =  weiAmount % tokenPriceInWei;
-
-        if (_diff > 0) {
-            msg.sender.transfer(_diff);
-            weiAmount = weiAmount.sub(_diff);
-        }
-
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-
-        _processPurchase(_beneficiary, tokens);
-        emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+        _getTokenAmount(weiAmount,true,_beneficiary,_ref);
+    }
 
 
-        _forwardFunds(weiAmount);
+    function reserveTokens(address _ref) public payable {
+        uint256 weiAmount = msg.value;
+        _preValidateReserve(msg.sender, weiAmount, _ref);
+        _getTokenAmount(weiAmount, false,msg.sender,_ref);
     }
 
 
     function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal view onlyWhileOpen {
-        require(_beneficiary != address(0));
         require(weiRaised.add(_weiAmount) <= cap);
-        require(_weiAmount >= 20 ether);
+        require(_weiAmount >= stagePrices[currentStage]);
+        require(_beneficiary != address(0));
+
+    }
+
+    function _preValidateReserve(address _beneficiary, uint256 _weiAmount, address _ref) internal view {
+        require(now < openingTime);
+        require(referrals[_ref]);
+        require(weiRaised.add(_weiAmount) <= cap);
+        require(_weiAmount >= stagePrices[currentStage]);
+        require(_beneficiary != address(0));
     }
 
 
@@ -194,20 +281,126 @@ contract Crowdsale is Ownable {
     }
 
 
-    function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    function _processPurchase(address _beneficiary, uint256 _tokenAmount, address _ref) internal {
         _tokenAmount = _tokenAmount * 1 ether;
         _deliverTokens(_beneficiary, _tokenAmount);
+        if (referrals[_ref]) {
+            uint _refTokens = valueFromPercent(_tokenAmount,10);
+            token.transferFrom(reserve_fund, _ref, _refTokens);
+        }
     }
 
 
-    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-        uint _tokens = _weiAmount.div(tokenPriceInWei);
-        return _tokens;
+    function _processReserve(address _beneficiary, uint256 _tokenAmount, address _ref) internal {
+        _tokenAmount = _tokenAmount * 1 ether;
+        _reserveTokens(_beneficiary, _tokenAmount);
+        uint _refTokens = valueFromPercent(_tokenAmount,10);
+        _reserveRefTokens(_ref, _refTokens);
+    }
+
+
+    function _reserveTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        reservedTokens[_beneficiary] = reservedTokens[_beneficiary].add(_tokenAmount);
+        amountReservedTokens = amountReservedTokens.add(_tokenAmount);
+    }
+
+
+    function _reserveRefTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        reservedRefsTokens[_beneficiary] = reservedRefsTokens[_beneficiary].add(_tokenAmount);
+        amountReservedRefsTokens = amountReservedRefsTokens.add(_tokenAmount);
+    }
+
+
+    function getReservedTokens() public {
+        require(now >= openingTime);
+        require(reservedTokens[msg.sender] > 0);
+        amountReservedTokens = amountReservedTokens.sub(reservedTokens[msg.sender]);
+        reservedTokens[msg.sender] = 0;
+        token.transfer(msg.sender, reservedTokens[msg.sender]);
+    }
+
+
+    function getRefReservedTokens() public {
+        require(now >= openingTime);
+        require(reservedRefsTokens[msg.sender] > 0);
+        amountReservedRefsTokens = amountReservedRefsTokens.sub(reservedRefsTokens[msg.sender]);
+        reservedRefsTokens[msg.sender] = 0;
+        token.transferFrom(reserve_fund, msg.sender, reservedRefsTokens[msg.sender]);
+    }
+
+
+    function valueFromPercent(uint _value, uint _percent) internal pure returns(uint amount)    {
+        uint _amount = _value.mul(_percent).div(100);
+        return (_amount);
+    }
+
+
+    function _getTokenAmount(uint256 _weiAmount, bool _buy, address _beneficiary, address _ref) internal {
+        uint256 weiAmount = _weiAmount;
+        uint _tokens = 0;
+        uint _tokens_price = 0;
+        uint _current_tokens = 0;
+
+        for (uint p = currentStage; p < 4 && _weiAmount >= stagePrices[p]; p++) {
+            if (stageLimits[p] > 0 ) {
+                //???? ????? ?????? ??? _weiAmount, ????? ??????? ??? ?? ??????? ??? ??????????? ? ?????
+                //? ??????? ?? ?????
+                if (stageLimits[p] > _weiAmount) {
+                    //?????????? ??????? ?? ???????? ?????? (????????? ??????? ???? ????????  ?????? ??? ?? ?????? ?????????? ?????)
+                    _current_tokens = _weiAmount.div(stagePrices[p]);
+                    //???? ???? ?????, ????? ?????????? ??????? ????????????????? wei
+                    _tokens_price = _current_tokens.mul(stagePrices[p]);
+                    //???????? ???????
+                    _weiAmount = _weiAmount.sub(_tokens_price);
+                    //????????? ?????? ???????? ??????? ? ?????? ??????????
+                    _tokens = _tokens.add(_current_tokens);
+                    //????????? ??????
+                    stageLimits[p] = stageLimits[p].sub(_tokens_price);
+                    break;
+                } else { //????? ?????? ??? ?????????? wei
+                    //???????? ??? ?????????? ?????? ? ???????
+                    _current_tokens = stageLimits[p].div(stagePrices[p]);
+                    _weiAmount = _weiAmount.sub(stageLimits[p]);
+                    _tokens = _tokens.add(_current_tokens);
+                    stageLimits[p] = 0;
+                    _updateStage();
+                }
+
+            }
+        }
+
+        weiAmount = weiAmount.sub(_weiAmount);
+        weiRaised = weiRaised.add(weiAmount);
+
+        if (_buy) {
+            _processPurchase(_beneficiary, _tokens, _ref);
+            emit TokenPurchase(msg.sender, _beneficiary, weiAmount, _tokens);
+        } else {
+            _processReserve(msg.sender, _tokens, _ref);
+            emit TokenReserved(msg.sender, weiAmount, _tokens, _ref);
+        }
+
+        //?????????? ??????? ????????????????? ???????
+        if (_weiAmount > 0) {
+            msg.sender.transfer(_weiAmount);
+        }
+
+        // update state
+
+
+        _forwardFunds(weiAmount);
+    }
+
+
+    function _updateStage() internal {
+        if ((stageLimits[currentStage] == 0) && currentStage < 3) {
+            currentStage++;
+        }
     }
 
 
     function _forwardFunds(uint _weiAmount) internal {
-        wallet.transfer(_weiAmount);
+        vault.deposit.value(_weiAmount)(msg.sender);
     }
 
 
@@ -215,14 +408,17 @@ contract Crowdsale is Ownable {
         return now > closingTime;
     }
 
+
     function capReached() public view returns (bool) {
         return weiRaised >= cap;
     }
 
-    /**
-     * @dev Must be called after crowdsale ends, to do some extra finalization
-     * work. Calls the contract's finalization function.
-     */
+
+    function goalReached() public view returns (bool) {
+        return weiRaised >= goal;
+    }
+
+
     function finalize() onlyOwner public {
         require(!isFinalized);
         require(hasClosed() || capReached());
@@ -234,16 +430,48 @@ contract Crowdsale is Ownable {
     }
 
 
-    function setIco(address _ico) onlyOwner public {
-        ico = ICOContract(_ico);
-    }
-
-
     function finalization() internal {
-        uint _balance = token.balanceOf(this);
-        if (_balance > 0) {
-            token.transfer(address(ico), _balance);
-            ico.setTokenCountFromPreIco(_balance);
+        if (goalReached()) {
+            vault.close();
+        } else {
+            vault.enableRefunds();
         }
+
+        uint token_balace = token.balanceOf(this);
+        token_balace = token_balace.sub(amountReservedTokens);//
+        token.burn(token_balace);
     }
+
+
+    function addReferral(address _ref) external onlyOwner {
+        referrals[_ref] = true;
+    }
+
+
+    function removeReferral(address _ref) external onlyOwner {
+        referrals[_ref] = false;
+    }
+
+
+    function setPreIco(address _preico) onlyOwner public {
+        preico = _preico;
+    }
+
+
+    function setTokenCountFromPreIco(uint _value) onlyPreIco public{
+        _value = _value.div(1 ether);
+        uint weis = _value.mul(stagePrices[3]);
+        stageLimits[3] = stageLimits[3].add(weis);
+        cap = cap.add(weis);
+
+    }
+
+
+    function claimRefund() public {
+        require(isFinalized);
+        require(!goalReached());
+
+        vault.refund(msg.sender);
+    }
+
 }
