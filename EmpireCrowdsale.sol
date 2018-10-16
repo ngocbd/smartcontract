@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmpireCrowdsale at 0xc936a131b1f1576ccadb8196d91ecbf108d11d01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmpireCrowdsale at 0x516b55c0fdff1ff787c31ee5b8456bd9147de0ee
 */
 pragma solidity ^0.4.13;
 
@@ -377,10 +377,11 @@ contract EmpireCrowdsale is Ownable, Pausable {
    */ 
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-  function EmpireCrowdsale(uint256 _start, uint256 _end, address _wallet, uint256 _presaleCap, uint256 _softCap, uint256 _graceCap) payable {
+  function EmpireCrowdsale(uint256 _start, uint256 _end, address _wallet, address _token, uint256 _presaleCap, uint256 _softCap, uint256 _graceCap) payable {
     require(_start >= now);
     require(_end >= _start);
     require(_wallet != 0x0);
+    require(_token != 0x0);
     require(_presaleCap > 0);
     require(_softCap > 0);
     require(_graceCap > 0);
@@ -388,7 +389,7 @@ contract EmpireCrowdsale is Ownable, Pausable {
     start = _start;
     end = _end;
     wallet = _wallet;
-    token = new EmpireToken();
+    token = EmpireToken(_token);
     presaleCap = _presaleCap;   // in Ether
     softCap = _softCap;         // in Ether
     gracePeriodCap = _graceCap; // in Ether
