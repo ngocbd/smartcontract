@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOH at 0x09dda2f08d69a200647712f32f642a5d10d547be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOH at 0x4C29d75cc423E8Adaa3839892feb66977e295829
 */
 pragma solidity ^0.4.20;
 
@@ -124,7 +124,7 @@ contract POOH {
     string public name = "POOH";
     string public symbol = "POOH";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 5;
+    uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -134,8 +134,8 @@ contract POOH {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 2 ether;
+    uint256 constant internal ambassadorQuota_ = 3 ether;
     
     
     
@@ -172,11 +172,11 @@ contract POOH {
         administrators[0xcd93345332dcaccf0b5b19db1714ee83265566d76060294d65956ac78c134882] = true; //K
 
         // add the ambassadors here. 
-        ambassadors_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = true; //Kenny
-        ambassadors_[0x87A7e71D145187eE9aAdc86954d39cf0e9446751] = true; //Jason
-        ambassadors_[0xe40D29ef2d7a578e70B75D057C78c60Dc95fCb47] = true; //Mike
-        ambassadors_[0x5138240E96360ad64010C27eB0c685A8b2eDE4F2] = true; //Bobby
-        ambassadors_[0x35F101B9F23dB673B7FdA066F1ae86C14eBEf85D] = true; //Jon
+        ambassadors_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = true; //K
+        ambassadors_[0x87A7e71D145187eE9aAdc86954d39cf0e9446751] = true; //J
+        ambassadors_[0xe40D29ef2d7a578e70B75D057C78c60Dc95fCb47] = true; //M
+        ambassadors_[0x5138240E96360ad64010C27eB0c685A8b2eDE4F2] = true; //B
+        ambassadors_[0x35F101B9F23dB673B7FdA066F1ae86C14eBEf85D] = true; //J
 
     }
     
