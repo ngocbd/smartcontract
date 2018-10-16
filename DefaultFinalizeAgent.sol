@@ -1,6 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefaultFinalizeAgent at 0xd2ee82eaf419e71dfca38b524aab589a0800acf8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefaultFinalizeAgent at 0x47820c26a40d22c0e9c9f25e4466fd040248cb4b
 */
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
 /**
  * Safe unsigned safe math.
  *
@@ -30,38 +51,51 @@ library SafeMathLib {
     return c;
   }
 
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
 }
 
-
-
-
-/*
- * Ownable
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
   address public owner;
 
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
   function Ownable() {
     owner = msg.sender;
   }
 
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
+    require(msg.sender == owner);
     _;
   }
 
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
   function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+    require(newOwner != address(0));      
+    owner = newOwner;
   }
 
 }
@@ -80,12 +114,17 @@ contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    require(!halted);
+    _;
+  }
+
+  modifier stopNonOwnersInEmergency {
+    require(!halted || msg.sender == owner);
     _;
   }
 
   modifier onlyInEmergency {
-    if (!halted) throw;
+    require(halted);
     _;
   }
 
@@ -100,6 +139,12 @@ contract Haltable is Ownable {
   }
 
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 /**
@@ -121,18 +166,33 @@ contract PricingStrategy {
   }
 
   /**
+   * @dev Pricing tells if this is a presale purchase or not.
+     @param purchaser Address of the purchaser
+     @return False by default, true if a presale purchaser
+   */
+  function isPresalePurchase(address purchaser) public constant returns (bool) {
+    return false;
+  }
+
+  /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
    *
    *
    * @param value - What is the value of the transaction send in as wei
    * @param tokensSold - how much tokens have been sold this far
-   * @param weiRaised - how much money has been raised this far
+   * @param weiRaised - how much money has been raised this far in the main token sale - this number excludes presale
    * @param msgSender - who is the investor of this transaction
    * @param decimals - how many decimal units the token has
    * @return Amount of tokens the investor receives
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 /**
@@ -160,23 +220,40 @@ contract FinalizeAgent {
 
 }
 
-
-
-
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+
+
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -237,6 +314,9 @@ contract Crowdsale is Haltable {
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
 
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
+
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
 
@@ -250,13 +330,13 @@ contract Crowdsale is Haltable {
   bool public finalized;
 
   /* Do we need to have unique contributor id for each customer */
-  bool public requireCustomerId = false;
+  bool public requireCustomerId;
 
   /**
     * Do we verify that contributor has been cleared on the server side (accredited investors only).
     * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
     */
-  bool public requiredSignedAddress = false;
+  bool public requiredSignedAddress;
 
   /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
   address public signerAddress;
@@ -292,16 +372,21 @@ contract Crowdsale is Haltable {
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
 
-  // Crowdsale start/end time has been changed
-  event EndsAtChanged(uint endsAt);
-  event StartsAtChanged(uint startsAt);
+  // Crowdsale end time has been changed
+  event EndsAtChanged(uint newEndsAt);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+
+    require(_multisigWallet != 0);
+    require(_start != 0 && _end != 0);
+
+    // Don't mess the dates
+    require(_start < _end);
 
     owner = msg.sender;
 
@@ -310,36 +395,19 @@ contract Crowdsale is Haltable {
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
-    if(multisigWallet == 0) {
-        throw;
-    }
-
-    if(_start == 0) {
-        throw;
-    }
-
     startsAt = _start;
 
-    if(_end == 0) {
-        throw;
-    }
-
     endsAt = _end;
-
-    // Don't mess the dates
-    if(startsAt >= endsAt) {
-        throw;
-    }
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
   }
 
   /**
-   * Don't expect to just send in money and get tokens.
+   * Do expect to just send in money and get tokens.
    */
   function() payable {
-    throw;
+    buy();
   }
 
   /**
@@ -355,28 +423,25 @@ contract Crowdsale is Haltable {
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
 
     // Determine if it's a good time to accept investment from this participant
-    State state = getState();
-    if (state == State.Funding) {
-      // Retail participants can only come in when the crowdsale is running
-    } else if (state == State.PreFunding) {
+    if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      if (!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
+    } else if(getState() == State.Funding) {
+      // Retail participants can only come in when the crowdsale is running
+      // pass
     } else {
       // Unwanted state
-      throw;
+      assert(false);
     }
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
-    if (tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    // Account presale sales separately, so that they do not count against pricing tranches
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
-    if (investedAmountOf[receiver] == 0) {
+    require(tokenAmount != 0); // Dust transaction
+
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
@@ -389,15 +454,17 @@ contract Crowdsale is Haltable {
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
 
-    // Check that we did not bust the cap
-    if (isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
+
+    // Check that we did not bust the cap
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
 
     // Pocket the money
-    if (!multisigWallet.send(weiAmount)) throw;
+    require(multisigWallet.send(weiAmount));
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
@@ -414,26 +481,25 @@ contract Crowdsale is Haltable {
    *
    * No money is exchanged, as the crowdsale team already have received the payment.
    *
-   * @param tokenAmount Tokens (in "atomic units") allocated to the contributor
-   * @param weiAmount Contribution in wei
+   * @param fullTokens tokens as full tokens - decimal places added internally
+   * @param weiPrice Price of a single full token in wei
    *
    */
-  function preallocate(address receiver, uint tokenAmount, uint weiAmount) public onlyOwner {
-    // Free pre-allocations don't count as "sold tokens"
-    if (weiAmount == 0) {
-      tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-      assignTokens(receiver, tokenAmount);
-    } else {
-      weiRaised = weiRaised.plus(weiAmount);
-      tokensSold = tokensSold.plus(tokenAmount);
-      investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-      tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-      investorCount++;
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
 
-      assignTokens(receiver, tokenAmount);
+    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
 
-      Invested(receiver, weiAmount, tokenAmount, 0);
-    }
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
+    assignTokens(receiver, tokenAmount);
+
+    // Tell us invest was success
+    Invested(receiver, weiAmount, tokenAmount, 0);
   }
 
   /**
@@ -441,8 +507,8 @@ contract Crowdsale is Haltable {
    */
   function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
      bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
+     require(ecrecover(hash, v, r, s) == signerAddress);
+     require(customerId != 0);  // UUIDv4 sanity check
      investInternal(addr, customerId);
   }
 
@@ -450,8 +516,8 @@ contract Crowdsale is Haltable {
    * Track who is the customer making the payment so we can send thank you email.
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if(customerId == 0) throw;  // UUIDv4 sanity check
+    require(!requiredSignedAddress); // Crowdsale allows only server-side signed participants
+    require(customerId != 0);  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -459,8 +525,8 @@ contract Crowdsale is Haltable {
    * Allow anonymous contributions to this crowdsale.
    */
   function invest(address addr) public payable {
-    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    require(!requireCustomerId); // Crowdsale needs to track participants for thank you email
+    require(!requiredSignedAddress); // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
   }
 
@@ -497,9 +563,7 @@ contract Crowdsale is Haltable {
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
-    if(finalized) {
-      throw;
-    }
+    require(!finalized);
 
     // Finalizing is optional. We only call it if we are given a finalizing agent.
     if(address(finalizeAgent) != 0) {
@@ -515,12 +579,10 @@ contract Crowdsale is Haltable {
    * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
-    finalizeAgent = addr;
 
     // Don't allow setting bad agent
-    if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
-    }
+    require(addr.isFinalizeAgent());
+    finalizeAgent = addr;
   }
 
   /**
@@ -546,28 +608,12 @@ contract Crowdsale is Haltable {
 
   /**
    * Allow addresses to do early participation.
+   *
+   * TODO: Fix spelling error in the name
    */
-  function setEarlyParticipantWhitelist(address addr, bool status) onlyOwner {
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
     earlyParticipantWhitelist[addr] = status;
     Whitelisted(addr, status);
-  }
-
-  /**
-   * Allow crowdsale owner to postpone the start of the crowdsale
-   */
-  function setStartsAt(uint time) onlyOwner {
-
-    // Don't put into past
-    if (time < now) { throw; }
-
-    // Change endsAt first...
-    if (time > endsAt) { throw; }
-
-    // If crowdsale has already started, the start can't be postponed anymore
-    if (startsAt < now) { throw; }
-
-    startsAt = time;
-    StartsAtChanged(endsAt);
   }
 
   /**
@@ -582,9 +628,7 @@ contract Crowdsale is Haltable {
    */
   function setEndsAt(uint time) onlyOwner {
 
-    if (now > time) {
-      throw; // Don't change past
-    }
+    require(now <= time); // Don't change past
 
     endsAt = time;
     EndsAtChanged(endsAt);
@@ -596,12 +640,10 @@ contract Crowdsale is Haltable {
    * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
    */
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
-    pricingStrategy = _pricingStrategy;
 
     // Don't allow setting bad agent
-    if(!pricingStrategy.isPricingStrategy()) {
-      throw;
-    }
+    require(_pricingStrategy.isPricingStrategy());
+    pricingStrategy = _pricingStrategy;
   }
 
   /**
@@ -614,9 +656,7 @@ contract Crowdsale is Haltable {
   function setMultisig(address addr) public onlyOwner {
 
     // Change
-    if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
-      throw;
-    }
+    require(investorCount <= MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE);
 
     multisigWallet = addr;
   }
@@ -627,7 +667,7 @@ contract Crowdsale is Haltable {
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
    */
   function loadRefund() public payable inState(State.Failure) {
-    if(msg.value == 0) throw;
+    require(msg.value != 0);
     loadedRefund = loadedRefund.plus(msg.value);
   }
 
@@ -639,11 +679,11 @@ contract Crowdsale is Haltable {
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
-    if (weiValue == 0) throw;
+    require(weiValue != 0);
     investedAmountOf[msg.sender] = 0;
     weiRefunded = weiRefunded.plus(weiValue);
     Refund(msg.sender, weiValue);
-    if (!msg.sender.send(weiValue)) throw;
+    require(msg.sender.send(weiValue));
   }
 
   /**
@@ -700,7 +740,7 @@ contract Crowdsale is Haltable {
 
   /** Modified allowing execution only if the crowdsale is currently running.  */
   modifier inState(State state) {
-    if(getState() != state) throw;
+    require(getState() == state);
     _;
   }
 
@@ -737,6 +777,12 @@ contract Crowdsale is Haltable {
   function assignTokens(address receiver, uint tokenAmount) private;
 }
 
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 
 
 
@@ -761,13 +807,7 @@ contract ReleasableToken is ERC20, Ownable {
    *
    */
   modifier canTransfer(address _sender) {
-
-    if(!released) {
-        if(!transferAgents[_sender]) {
-            throw;
-        }
-    }
-
+    require(released || transferAgents[_sender]);
     _;
   }
 
@@ -800,17 +840,13 @@ contract ReleasableToken is ERC20, Ownable {
 
   /** The function can be called only before or after the tokens have been releasesd */
   modifier inReleaseState(bool releaseState) {
-    if(releaseState != released) {
-        throw;
-    }
+    require(releaseState == released);
     _;
   }
 
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyReleaseAgent() {
-    if(msg.sender != releaseAgent) {
-        throw;
-    }
+    require(msg.sender == releaseAgent);
     _;
   }
 
@@ -825,6 +861,7 @@ contract ReleasableToken is ERC20, Ownable {
   }
 
 }
+
 
 
 /**
@@ -849,9 +886,7 @@ contract DefaultFinalizeAgent is FinalizeAgent {
 
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale() public {
-    if(msg.sender != address(crowdsale)) {
-      throw;
-    }
+    require(msg.sender == address(crowdsale));
     token.releaseTokenTransfer();
   }
 
