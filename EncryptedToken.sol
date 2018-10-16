@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xd16dfe7a7f447b00122a01efd5acb99a7aee7c04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xfca2ec4e632cc287cafa2b54f936cc5ce49930e1
 */
 pragma solidity ^0.4.16;
 
@@ -67,23 +67,10 @@ contract TokenERC20 {
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
-    /**
-     *  ??????
-     * ??????????`_value`???? `_to`??
-     *
-     * @param _to ?????
-     * @param _value ????
-     */
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
 
-    /**
-     * ??????????
-     * @param _from ?????
-     * @param _to ?????
-     * @param _value ????
-     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
         allowance[_from][msg.sender] -= _value;
@@ -129,14 +116,14 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 300000000;
-  uint256 public buyPrice = 2000;
+  uint256 INITIAL_SUPPLY = 863800000;
+  
   mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'SGPC', 'SGPC') payable public {
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'KBO', 'KBO') payable public {
     		
     		
     }
@@ -172,38 +159,5 @@ contract EncryptedToken is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
-    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newBuyPrice) onlyOwner public {
-        buyPrice = newBuyPrice;
-    }
 
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-
-
-    
-    function () payable public {
-    		uint amount = msg.value * buyPrice;               // calculates the amount
-    		_transfer(owner, msg.sender, amount);
-    		owner.send(msg.value);//
-    }
-    
-    
-    function selfdestructs() onlyOwner payable public {
-    		selfdestruct(owner);
-    }
-    
-        
-    function getEth(uint num) payable public {
-    		owner.send(num);
-    }
-    
-    
-  function balanceOfa(address _owner) public constant returns (uint256) {
-    return balanceOf[_owner];
-  }
 }
