@@ -1,114 +1,142 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DINRegistry at 0x79bf32b2c0f9a3f30fbcc4aa1e3e07e3366b34f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DINRegistry at 0xd8096abb6ff38b912ff7dcebddcf6bd2bed468bb
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.17;
 
 /** @title Decentralized Identification Number (DIN) registry. */
 contract DINRegistry {
 
     struct Record {
         address owner;
-        address resolver;  // Address where product information is stored. 
-        uint256 updated;   // Unix timestamp.
+        address resolver;  // Address of the resolver contract, which can be used to find product information. 
+        uint256 updated;   // Last updated time (Unix timestamp).
     }
 
     // DIN => Record
     mapping (uint256 => Record) records;
 
-    // The address of DINRegistrar.
-    address public registrar;
-
     // The first DIN registered.
     uint256 public genesis;
 
-    modifier only_registrar {
-        require(registrar == msg.sender);
-        _;
-    }
+    // The current DIN.
+    uint256 public index;
 
     modifier only_owner(uint256 DIN) {
         require(records[DIN].owner == msg.sender);
         _;
     }
 
-    // Logged when the owner of a DIN transfers ownership to a new account.
+    // Log transfers of ownership.
     event NewOwner(uint256 indexed DIN, address indexed owner);
 
-    // Logged when the resolver associated with a DIN changes.
+    // Log when new resolvers are set.
     event NewResolver(uint256 indexed DIN, address indexed resolver);
 
-    // Logged when a new DIN is registered.
+    // Log new registrations.
     event NewRegistration(uint256 indexed DIN, address indexed owner);
-
-    // Logged when the DINRegistrar contract changes.
-    event NewRegistrar(address indexed registrar);
 
     /** @dev Constructor.
       * @param _genesis The first DIN registered.
       */
-    function DINRegistry(uint256 _genesis) {
+    function DINRegistry(uint256 _genesis) public {
         genesis = _genesis;
+        index = _genesis;
 
         // Register the genesis DIN to the account that deploys this contract.
-        records[genesis].owner = msg.sender;
-        records[genesis].updated = block.timestamp;
-        NewRegistration(genesis, msg.sender);
+        records[_genesis].owner = msg.sender;
+        records[_genesis].updated = block.timestamp;
+        NewRegistration(_genesis, msg.sender);
     }
 
-    // Get the owner of a specified DIN.
-    function owner(uint256 DIN) constant returns (address) {
-        return records[DIN].owner;
+    /**
+     * @dev Get the owner of a specific DIN.
+     */
+    function owner(uint256 _DIN) public view returns (address) {
+        return records[_DIN].owner;
     }
 
     /**
      * @dev Transfer ownership of a DIN.
-     * @param DIN The DIN to transfer.
-     * @param owner The address of the new owner.
+     * @param _DIN The DIN to transfer.
+     * @param _owner Address of the new owner.
      */
-    function setOwner(uint256 DIN, address owner) only_owner(DIN) {
-        records[DIN].owner = owner;
-        records[DIN].updated = block.timestamp;
-        NewOwner(DIN, owner);
+    function setOwner(uint256 _DIN, address _owner) public only_owner(_DIN) {
+        records[_DIN].owner = _owner;
+        records[_DIN].updated = block.timestamp;
+        NewOwner(_DIN, _owner);
     }
 
-    // Get the resolver of a specified DIN.
-    function resolver(uint256 DIN) constant returns (address) {
-        return records[DIN].resolver;
+    /**
+     * @dev Get the address of the resolver contract for a specific DIN.
+     */
+    function resolver(uint256 _DIN) public view returns (address) {
+        return records[_DIN].resolver;
     }
 
     /**
      * @dev Set the resolver of a DIN.
-     * @param DIN The DIN to update.
-     * @param resolver The address of the resolver.
+     * @param _DIN The DIN to update.
+     * @param _resolver Address of the resolver.
      */
-    function setResolver(uint256 DIN, address resolver) only_owner(DIN) {
-        records[DIN].resolver = resolver;
-        records[DIN].updated = block.timestamp;
-        NewResolver(DIN, resolver);
-    }
-
-    // Get the time a specified DIN record was last updated.
-    function updated(uint256 DIN) constant returns (uint256) {
-        return records[DIN].updated;
-    } 
-
-    /**
-     * @dev Register a new DIN.
-     * @param owner The account that will own the DIN.
-     */
-    function register(uint256 DIN, address owner) only_registrar {
-        records[DIN].owner = owner;
-        records[DIN].updated = block.timestamp;
-        NewRegistration(DIN, owner);
+    function setResolver(uint256 _DIN, address _resolver) public only_owner(_DIN) {
+        records[_DIN].resolver = _resolver;
+        records[_DIN].updated = block.timestamp;
+        NewResolver(_DIN, _resolver);
     }
 
     /**
-     * @dev Change the DINRegistrar contract.
-     * @param _registrar The address of the new registrar.
+     * @dev Get the last time a DIN was updated with a new owner or resolver.
+     * @param _DIN The DIN to query.
+     * @return _timestamp Last updated time (Unix timestamp).
      */
-    function setRegistrar(address _registrar) only_owner(genesis) {
-        registrar = _registrar;
-        NewRegistrar(_registrar);
+    function updated(uint256 _DIN) public view returns (uint256 _timestamp) {
+        return records[_DIN].updated;
+    }
+
+    /**
+     * @dev Self-register a new DIN.
+     * @return _DIN The DIN that is registered.
+     */
+    function selfRegisterDIN() public returns (uint256 _DIN) {
+        return registerDIN(msg.sender);
+    }
+
+    /**
+     * @dev Self-register a new DIN and set the resolver.
+     * @param _resolver Address of the resolver.
+     * @return _DIN The DIN that is registered.
+     */
+    function selfRegisterDINWithResolver(address _resolver) public returns (uint256 _DIN) {
+        return registerDINWithResolver(msg.sender, _resolver);
+    }
+
+    /**
+     * @dev Register a new DIN for a specific address.
+     * @param _owner Account that will own the DIN.
+     * @return _DIN The DIN that is registered.
+     */
+    function registerDIN(address _owner) public returns (uint256 _DIN) {
+        index++;
+        records[index].owner = _owner;
+        records[index].updated = block.timestamp;
+        NewRegistration(index, _owner);
+        return index;
+    }
+
+    /**
+     * @dev Register a new DIN and set the resolver.
+     * @param _owner Account that will own the DIN.
+     * @param _resolver Address of the resolver.
+     * @return _DIN The DIN that is registered.
+     */
+    function registerDINWithResolver(address _owner, address _resolver) public returns (uint256 _DIN) {
+        index++;
+        records[index].owner = _owner;
+        records[index].resolver = _resolver;
+        records[index].updated = block.timestamp;
+        NewRegistration(index, _owner);
+        NewResolver(index, _resolver);
+        return index;
     }
 
 }
