@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PathPublicPresale at 0xdd886b80cd1882eb83fc3b827321be620ad2444a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PathPublicPresale at 0x2f707010e498b60455b5e69205455f59c128b08b
 */
 pragma solidity ^0.4.13;
 
@@ -514,7 +514,7 @@ contract PATH is MintableToken, BurnableToken, SafePayloadChecker {
     onlyWhenTransferEnabled
     public
   {
-    // require(_value <= allowed[_from][msg.sender]);
+    require(_value <= allowed[_from][msg.sender]);
     require(_value <= balances[_from]);
 
     balances[_from] = balances[_from].sub(_value);
