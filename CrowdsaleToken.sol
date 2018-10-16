@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x896c70fd54faf0ff67e94f3ee618e51b9108616a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x3e7ed6ba88c4e44940612c76d5abc973d153305b
 */
 pragma solidity ^0.4.23;
 
@@ -239,7 +239,7 @@ contract CrowdsaleToken is StandardToken {
     address public owner;
     
     string public constant symbol = "DHP";
-    string public constant name = "Diamond Horse Performance";
+    string public constant name = "Diamond Horse Performance Token";
     uint8 public constant decimals = 18;
     
     
