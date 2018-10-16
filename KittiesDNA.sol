@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittiesDNA at 0x74947f5aa38e170048bc4c84825fc58d9a1ed58a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittiesDNA at 0x97627feb93986187b308b7c3198c34b0045bf518
 */
 pragma solidity ^0.4.18;
 
@@ -21,7 +21,7 @@ contract KittiesDNA {
         geneScience = GeneScienceInterface(0xf97e0A5b616dfFC913e72455Fde9eA8bBe946a2B);
     }
     
-    function mixGenes(uint256 matronGenes, uint256 sireGenes, uint256 targetBlock) public returns (uint256) {
+    function mixGenes(uint256 matronGenes, uint256 sireGenes, uint256 targetBlock) public constant returns (uint256) {
         return geneScience.mixGenes(matronGenes, sireGenes, targetBlock);
     }
 }
