@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAsset at 0xfc07251450048bf4e9fa60b856c1e0abd1574d1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAsset at 0xb2c0782ae4a299f7358758b2d15da9bf29e1dd99
 */
 pragma solidity ^0.4.18;
 
@@ -260,9 +260,34 @@ contract EtheremonAsset is BasicAccessControl, ERC721 {
         return obj.trainer;
     }
     
-    function approve(address _to, uint256 _tokenId) isActive external {
-        require(msg.sender == ownerOf(_tokenId));
+    function isApprovable(address _owner, uint256 _tokenId) public constant requireDataContract requireBattleContract requireTradeContract returns(bool) {
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        MonsterObjAcc memory obj;
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_tokenId));
+        if (obj.monsterId != uint64(_tokenId))
+            return false;
+        if (obj.trainer != _owner)
+            return false;
+        // check battle & trade contract 
+        EtheremonBattle battle = EtheremonBattle(battleContract);
+        EtheremonTradeInterface trade = EtheremonTradeInterface(tradeContract);
+        return (!battle.isOnBattle(obj.monsterId) && !trade.isOnTrading(obj.monsterId));
+    }
+    
+    function approve(address _to, uint256 _tokenId) requireBattleContract requireTradeContract isActive external {
+        EtheremonDataBase data = EtheremonDataBase(dataContract);
+        MonsterObjAcc memory obj;
+        (obj.monsterId, obj.classId, obj.trainer, obj.exp, obj.createIndex, obj.lastClaimIndex, obj.createTime) = data.getMonsterObj(uint64(_tokenId));
+        require(obj.monsterId == uint64(_tokenId));
+        require(msg.sender == obj.trainer);
         require(msg.sender != _to);
+        
+        // check battle & trade contract 
+        EtheremonBattle battle = EtheremonBattle(battleContract);
+        EtheremonTradeInterface trade = EtheremonTradeInterface(tradeContract);
+        if (battle.isOnBattle(obj.monsterId) || trade.isOnTrading(obj.monsterId))
+            revert();
+        
         allowed[msg.sender][_tokenId] = _to;
         Approval(msg.sender, _to, _tokenId);
     }
@@ -314,7 +339,7 @@ contract EtheremonAsset is BasicAccessControl, ERC721 {
         
         // transfer owner
         data.removeMonsterIdMapping(obj.trainer, obj.monsterId);
-        data.addMonsterIdMapping(msg.sender, obj.monsterId);
+        data.addMonsterIdMapping(_to, obj.monsterId);
         
         Transfer(obj.trainer, _to, _tokenId);
     }
