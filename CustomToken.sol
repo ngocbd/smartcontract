@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x43c2b372cc7a9bd16a8e1ebcd5a3e56a820ecd22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6761661c41774cdec8c4b38198ced63c7e7d3bc0
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 5000000000000000000000000000;
-        name = '????';
-        symbol = 'SGCC';
+        totalSupply = 9600000000000000000000000000;
+        name = 'KaiDaCoin';
+        symbol = 'KAD';
         decimals = 18;
-        balanceOf[0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7] = totalSupply;
-        Transfer(address(0), 0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7, totalSupply);
+        balanceOf[0xbc2e13668385cbc0a1fab00ac79d32befffdcf82] = totalSupply;
+        Transfer(address(0), 0xbc2e13668385cbc0a1fab00ac79d32befffdcf82, totalSupply);
     }
 }
