@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xeb247c925222732aa1df3a4cd76025bfa3a54ff6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xad14e61e0c450f525429861b1e482eedf914a541
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,88 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
+
+    mapping (address => uint32) public airCountOf;
+
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+    }
+}
+
+contract LockToken is BaseToken {
+    struct LockMeta {
+        uint256 amount;
+        uint256 endtime;
+    }
+    
+    mapping (address => LockMeta) public lockedAddresses;
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(balanceOf[_from] >= _value);
+        LockMeta storage meta = lockedAddresses[_from];
+        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
+        super._transfer(_from, _to, _value);
+    }
+}
+
+contract CustomToken is BaseToken, BurnToken, AirdropToken, LockToken {
     function CustomToken() public {
-        totalSupply = 68000000000000000000000000;
-        name = 'Valuechain';
-        symbol = 'VIC';
+        totalSupply = 100000000000000000000000000;
+        name = 'EthLinkerToken';
+        symbol = 'ELT';
         decimals = 18;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
+        balanceOf[0x0926a20aca505b82f7cb7864e1246894eac27ea0] = totalSupply;
+        Transfer(address(0), 0x0926a20aca505b82f7cb7864e1246894eac27ea0, totalSupply);
+
+        airAmount = 66000000000000000000;
+        airBegintime = 1523095200;
+        airEndtime = 1617789600;
+        airSender = 0x8888888888888888888888888888888888888888;
+        airLimitCount = 1;
+
+        lockedAddresses[0xf60340e79829061f1ab918ee92c064dbe06ff168] = LockMeta({amount: 10000000000000000000000000, endtime: 1554652800});
+        lockedAddresses[0x0b03316fe4949c15b3677d67293d3ed359889aac] = LockMeta({amount: 10000000000000000000000000, endtime: 1586275200});
+        lockedAddresses[0x139a911a9086522d84ac54f992a9243e8fedeb95] = LockMeta({amount: 10000000000000000000000000, endtime: 1617811200});
+    }
+
+    function() public payable {
+        airdrop();
     }
 }
