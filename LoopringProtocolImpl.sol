@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xbddecfaa1f67d414039523498a6d73369d239a86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x4019440bbe5882915db9f2cae972a518db346c62
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
 /// @title Utility Functions for uint8
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
@@ -136,6 +136,35 @@ library MathBytes32 {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
+/// @title Utility Functions for address
+/// @author Daniel Wang - <daniel@loopring.org>
+library AddressUtil {
+    function isContract(address addr)
+        internal
+        view
+        returns (bool)
+    {
+        if (addr == 0x0) {
+            return false;
+        } else {
+            uint size;
+            assembly { size := extcodesize(addr) }
+            return size > 0;
+        }
+    }
+}
+/*
+  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -152,9 +181,6 @@ library MathBytes32 {
 /// @dev see https://github.com/ethereum/EIPs/issues/20
 /// @author Daniel Wang - <daniel@loopring.org>
 contract ERC20 {
-    uint public totalSupply;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
     function balanceOf(address who) view public returns (uint256);
     function allowance(address owner, address spender) view public returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
@@ -363,7 +389,7 @@ contract NameRegistry {
         nameInfoMap[msg.sender] = NameInfo(nameBytes, new uint[](0));
         ownerMap[nameBytes] = msg.sender;
         nameMap[msg.sender] = name;
-        NameRegistered(name, msg.sender);
+        emit NameRegistered(name, msg.sender);
     }
     function unregisterName(string name)
         external
@@ -372,13 +398,13 @@ contract NameRegistry {
         uint[] storage participantIds = nameInfo.participantIds;
         bytes12 nameBytes = stringToBytes12(name);
         require(nameInfo.name == nameBytes);
-        for (uint i = participantIds.length - 1; i >= 0; i--) {
+        for (uint i = 0; i < participantIds.length; i++) {
             delete participantMap[participantIds[i]];
         }
         delete nameInfoMap[msg.sender];
         delete nameMap[msg.sender];
         delete ownerMap[nameBytes];
-        NameUnregistered(name, msg.sender);
+        emit NameUnregistered(name, msg.sender);
     }
     function transferOwnership(address newOwner)
         external
@@ -396,7 +422,7 @@ contract NameRegistry {
         delete nameMap[msg.sender];
         nameInfoMap[newOwner] = nameInfo;
         nameMap[newOwner] = name;
-        OwnershipTransfered(nameInfo.name, msg.sender, newOwner);
+        emit OwnershipTransfered(nameInfo.name, msg.sender, newOwner);
     }
     /* function addParticipant(address feeRecipient) */
     /*     external */
@@ -424,7 +450,7 @@ contract NameRegistry {
         uint participantId = ++nextId;
         participantMap[participantId] = participant;
         nameInfo.participantIds.push(participantId);
-        ParticipantRegistered(
+        emit ParticipantRegistered(
             name,
             msg.sender,
             participantId,
@@ -447,7 +473,7 @@ contract NameRegistry {
                 participantIds.length -= 1;
             }
         }
-        ParticipantUnregistered(participantId, msg.sender);
+        emit ParticipantUnregistered(participantId, msg.sender);
     }
     function getParticipantById(uint id)
         external
@@ -579,7 +605,7 @@ contract Ownable {
     /// @param newOwner The address to transfer ownership to.
     function transferOwnership(address newOwner) onlyOwner public {
         require(newOwner != 0x0);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
@@ -601,7 +627,7 @@ contract Claimable is Ownable {
     }
     /// @dev Allows the pendingOwner address to finalize the transfer.
     function claimOwnership() onlyPendingOwner public {
-        OwnershipTransferred(owner, pendingOwner);
+        emit OwnershipTransferred(owner, pendingOwner);
         owner = pendingOwner;
         pendingOwner = 0x0;
     }
@@ -611,6 +637,8 @@ contract Claimable is Ownable {
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenRegistry is Claimable {
+    using AddressUtil for address;
+    address tokenMintAddr;
     address[] public addresses;
     mapping (address => TokenInfo) addressMap;
     mapping (string => address) symbolMap;
@@ -634,6 +662,11 @@ contract TokenRegistry is Claimable {
     function () payable public {
         revert();
     }
+    function TokenRegistry(address _tokenMintAddr) public
+    {
+        require(_tokenMintAddr.isContract());
+        tokenMintAddr = _tokenMintAddr;
+    }
     function registerToken(
         address addr,
         string  symbol
@@ -641,14 +674,16 @@ contract TokenRegistry is Claimable {
         external
         onlyOwner
     {
-        require(0x0 != addr);
-        require(bytes(symbol).length > 0);
-        require(0x0 == symbolMap[symbol]);
-        require(0 == addressMap[addr].pos);
-        addresses.push(addr);
-        symbolMap[symbol] = addr;
-        addressMap[addr] = TokenInfo(addresses.length, symbol);
-        TokenRegistered(addr, symbol);
+        registerTokenInternal(addr, symbol);
+    }
+    function registerMintedToken(
+        address addr,
+        string  symbol
+        )
+        external
+    {
+        require(msg.sender == tokenMintAddr);
+        registerTokenInternal(addr, symbol);
     }
     function unregisterToken(
         address addr,
@@ -673,7 +708,7 @@ contract TokenRegistry is Claimable {
             addressMap[lastToken].pos = pos;
         }
         addresses.length--;
-        TokenUnregistered(addr, symbol);
+        emit TokenUnregistered(addr, symbol);
     }
     function areAllTokensRegistered(address[] addressList)
         external
@@ -731,6 +766,21 @@ contract TokenRegistry is Claimable {
         for (uint i = start; i < end; i++) {
             addressList[i - start] = addresses[i];
         }
+    }
+    function registerTokenInternal(
+        address addr,
+        string  symbol
+        )
+        internal
+    {
+        require(0x0 != addr);
+        require(bytes(symbol).length > 0);
+        require(0x0 == symbolMap[symbol]);
+        require(0 == addressMap[addr].pos);
+        addresses.push(addr);
+        symbolMap[symbol] = addr;
+        addressMap[addr] = TokenInfo(addresses.length, symbol);
+        emit TokenRegistered(addr, symbol);
     }
 }
 /*
@@ -793,7 +843,7 @@ contract TokenTransferDelegate is Claimable {
         if (addrInfo.index != 0) { // existing
             if (addrInfo.authorized == false) { // re-authorize
                 addrInfo.authorized = true;
-                AddressAuthorized(addr, addrInfo.index);
+                emit AddressAuthorized(addr, addrInfo.index);
             }
         } else {
             address prev = latestAddress;
@@ -806,7 +856,7 @@ contract TokenTransferDelegate is Claimable {
             }
             addrInfo.authorized = true;
             latestAddress = addr;
-            AddressAuthorized(addr, addrInfo.index);
+            emit AddressAuthorized(addr, addrInfo.index);
         }
     }
     /// @dev Remove a Loopring protocol address.
@@ -818,7 +868,7 @@ contract TokenTransferDelegate is Claimable {
         uint32 index = addressInfos[addr].index;
         if (index != 0) {
             addressInfos[addr].authorized = false;
-            AddressDeauthorized(addr, index);
+            emit AddressDeauthorized(addr, index);
         }
     }
     function getLatestAuthorizedAddresses(uint max)
@@ -969,18 +1019,19 @@ contract TokenTransferDelegate is Claimable {
 ///     https://github.com/BenjaminPrice
 ///     https://github.com/jonasshen
 contract LoopringProtocolImpl is LoopringProtocol {
+    using AddressUtil   for address;
     using MathBytes32   for bytes32[];
     using MathUint      for uint;
     using MathUint8     for uint8[];
     ////////////////////////////////////////////////////////////////////////////
     /// Variables                                                            ///
     ////////////////////////////////////////////////////////////////////////////
-    address public constant lrcTokenAddress       = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
-    address public constant tokenRegistryAddress  = 0xa21c1f2AE7f721aE77b1204A4f0811c642638da9;
-    address public constant delegateAddress       = 0x7b126ab811f278f288bf1d62d47334351dA20d1d;
-    address public constant nameRegistryAddress   = 0xf16af7F69697465f92fF469a837A2B4a82C77423;
-    uint64  public ringIndex                      = 0;
-    uint8   public constant walletSplitPercentage = 20;
+    address public  lrcTokenAddress             = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
+    address public  tokenRegistryAddress        = 0xaD3407deDc56A1F69389Edc191b770F0c935Ea37;
+    address public  delegateAddress             = 0x7b126ab811f278f288bf1d62d47334351dA20d1d;
+    address public  nameRegistryAddress         = 0xC897816C1A6DB4A2923b7D75d9B812e2f62cF504;
+    uint64  public  ringIndex                   = 0;
+    uint8   public  walletSplitPercentage       = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
     // to buy or bought.
     //
@@ -991,9 +1042,10 @@ contract LoopringProtocolImpl is LoopringProtocol {
     // smaller than 2.5%, for an example , rateRatioCVSThreshold should be:
     //     `(0.025 * RATE_RATIO_SCALE)^2` or 62500.
     uint    public constant rateRatioCVSThreshold        = 62500;
-    uint    public constant MAX_RING_SIZE                = 16;
-    uint    public constant RATE_RATIO_SCALE             = 10000;
-    uint64  public constant ENTERED_MASK                 = 1 << 63;
+
+    uint    public constant MAX_RING_SIZE       = 16;
+    uint    public constant RATE_RATIO_SCALE    = 10000;
+    uint64  public constant ENTERED_MASK        = 1 << 63;
     // The following map is used to keep trace of order fill and cancellation
     // history.
     mapping (bytes32 => uint) public cancelledOrFilled;
@@ -1135,7 +1187,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         );
         cancelled[orderHash] = cancelled[orderHash].add(cancelAmount);
         cancelledOrFilled[orderHash] = cancelledOrFilled[orderHash].add(cancelAmount);
-        OrderCancelled(orderHash, cancelAmount);
+        emit OrderCancelled(orderHash, cancelAmount);
     }
     function cancelAllOrdersByTradingPair(
         address token1,
@@ -1148,7 +1200,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         bytes20 tokenPair = bytes20(token1) ^ bytes20(token2);
         require(tradingPairCutoffs[msg.sender][tokenPair] < t); // "attempted to set cutoff to a smaller value"
         tradingPairCutoffs[msg.sender][tokenPair] = t;
-        OrdersCancelled(
+        emit OrdersCancelled(
             msg.sender,
             token1,
             token2,
@@ -1161,7 +1213,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         uint t = (cutoff == 0 || cutoff >= block.timestamp) ? block.timestamp : cutoff;
         require(cutoffs[msg.sender] < t); // "attempted to set cutoff to a smaller value"
         cutoffs[msg.sender] = t;
-        AllOrdersCancelled(msg.sender, t);
+        emit AllOrdersCancelled(msg.sender, t);
     }
     function submitRing(
         address[3][]  addressList,
@@ -1326,14 +1378,16 @@ contract LoopringProtocolImpl is LoopringProtocol {
             _lrcTokenAddress
         );
         /// Make transfers.
-        var (orderHashList, amountsList) = settleRing(
+        bytes32[] memory orderHashList;
+        uint[6][] memory amountsList;
+        (orderHashList, amountsList) = settleRing(
             delegate,
             params.ringSize,
             orders,
             params.feeRecipient,
             _lrcTokenAddress
         );
-        RingMined(
+        emit RingMined(
             _ringIndex,
             params.ringHash,
             params.ringMiner,
@@ -1350,11 +1404,11 @@ contract LoopringProtocolImpl is LoopringProtocol {
         address       _lrcTokenAddress
         )
         private
-        returns(
+        returns (
         bytes32[] memory orderHashList,
         uint[6][] memory amountsList)
     {
-        bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts)
+        bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts + walletAddrress)
         orderHashList = new bytes32[](ringSize);
         amountsList = new uint[6][](ringSize);
         uint p = 0;
