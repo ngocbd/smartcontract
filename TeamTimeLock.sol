@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTimeLock at 0xe605fd0341f4252ba769a2f0bc986af87ca044fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTimeLock at 0x6d52f43e5958b8cdf10c91f71cd95cd8d31aa52c
 */
 pragma solidity ^0.4.19;
 
@@ -29,7 +29,7 @@ contract TeamTimeLock {
 
   function TeamTimeLock() public {
 
-    owner = 0xCB0075388E78E2f4Cd94ABBe7543cD3197FA077b;  //Kremena
+    owner = 0x96017B01EFF27FC443EEe594A1D186643ed61C03;  //Atanas
     startTime = now;
     tokenAddress = exToken(0x08d32b0da63e2C3bcF8019c9c5d849d7a9d791e6);
   }
