@@ -1,9 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x14839bf22810F09fb163AF69BD21Bd5476F445Cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x071e805c3efb273f88c5352ad8c8db2bb6bdb6a7
 */
 pragma solidity ^0.4.11;
 
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -53,6 +56,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -98,7 +102,7 @@ contract BasicToken is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+  mapping (address => mapping (address => uint256)) allowed;
 
 
   /**
@@ -107,29 +111,34 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
     require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -141,23 +150,25 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
   /**
    * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * allowed value is better to use this function to avoid 2 calls (and wait until 
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+  function increaseApproval (address _spender, uint _addedValue) 
+    returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+  function decreaseApproval (address _spender, uint _subtractedValue) 
+    returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -178,11 +189,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "Confido Token";
-  string public constant symbol = "CFD";
+  string public constant name = "TATSUMO";
+  string public constant symbol = "TTM";
   uint8 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 15000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
