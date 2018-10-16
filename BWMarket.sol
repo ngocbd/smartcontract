@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWMarket at 0x480681811ef8fd44eb6c7601e4867c4a25ff2ced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BWMarket at 0x0cd7107299fb0b4c7d4b89f48b638d6c814d99a1
 */
 pragma solidity ^0.4.21;
 
@@ -46,6 +46,13 @@ library BWUtility {
         }
     }
 }
+
+
+
+
+
+
+
 
 contract BWData {
     address public owner;
@@ -315,313 +322,425 @@ contract BWData {
         tiles[_tileId].sellPrice = 0;  //testrpc cannot estimate gas when delete is used.
     }
 }
+
+
+
+interface ERC20I {
+    function transfer(address _recipient, uint256 _amount) external returns (bool);
+    function balanceOf(address _holder) external view returns (uint256);
+}
+
+
+contract BWService {
+    using SafeMath for uint256;
+    address private owner;
+    address private bw;
+    address private bwMarket;
+    BWData private bwData;
+    uint private seed = 42;
+    uint private WITHDRAW_FEE = 5; // 5%
+    uint private ATTACK_FEE = 5; // 5%
+    uint private ATTACK_BOOST_CAP = 300; // 300%
+    uint private DEFEND_BOOST_CAP = 300; // 300%
+    uint private ATTACK_BOOST_MULTIPLIER = 100; // 100%
+    uint private DEFEND_BOOST_MULTIPLIER = 100; // 100%
+    mapping (uint16 => address) private localGames;
     
-    
-    interface ERC20I {
-        function transfer(address _recipient, uint256 _amount) external returns (bool);
-        function balanceOf(address _holder) external view returns (uint256);
-    }
-    
-    
-    contract BWService {
-        address private owner;
-        address private bw;
-        address private bwMarket;
-        BWData private bwData;
-        uint private seed = 42;
-        uint private WITHDRAW_FEE = 20; //1/20 = 5%
-        
-        modifier isOwner {
-            if (msg.sender != owner) {
-                revert();
-            }
-            _;
-        }  
-    
-        modifier isValidCaller {
-            if (msg.sender != bw && msg.sender != bwMarket) {
-                revert();
-            }
-            _;
-        }
-    
-        event TileClaimed(uint16 tileId, address newClaimer, uint priceInWei, uint creationTime);
-        event TileFortified(uint16 tileId, address claimer, uint addedValueInWei, uint priceInWei, uint fortifyTime); // Sent when a user fortifies an existing claim by bumping its value.
-        event TileAttackedSuccessfully(uint16 tileId, address attacker, uint attackAmount, uint totalAttackAmount, address defender, uint defendAmount, uint totalDefendAmount, uint attackRoll, uint attackTime); // Sent when a user successfully attacks a tile.    
-        event TileDefendedSuccessfully(uint16 tileId, address attacker, uint attackAmount, uint totalAttackAmount, address defender, uint defendAmount, uint totalDefendAmount, uint attackRoll, uint defendTime); // Sent when a user successfully defends a tile when attacked.    
-        event BlockValueMoved(uint16 sourceTileId, uint16 destTileId, address owner, uint movedBlockValue, uint postSourceValue, uint postDestValue, uint moveTime); // Sent when a user buys a tile from another user, by accepting a tile offer
-        event UserBattleValueUpdated(address userAddress, uint battleValue, bool isWithdraw);
-    
-        // Constructor.
-        constructor(address _bwData) public {
-            bwData = BWData(_bwData);
-            owner = msg.sender;
-        }
-    
-        // Can't send funds straight to this contract. Avoid people sending by mistake.
-        function () payable public {
+    modifier isOwner {
+        if (msg.sender != owner) {
             revert();
         }
-    
-        // OWNER-ONLY FUNCTIONS
-        function kill() public isOwner {
-            selfdestruct(owner);
+        _;
+    }  
+
+    modifier isValidCaller {
+        if (msg.sender != bw && msg.sender != bwMarket) {
+            revert();
         }
+        _;
+    }
+
+    event TileClaimed(uint16 tileId, address newClaimer, uint priceInWei, uint creationTime);
+    event TileFortified(uint16 tileId, address claimer, uint addedValueInWei, uint priceInWei, uint fortifyTime); // Sent when a user fortifies an existing claim by bumping its value.
+    event TileAttackedSuccessfully(uint16 tileId, address attacker, uint attackAmount, uint totalAttackAmount, address defender, uint defendAmount, uint totalDefendAmount, uint attackRoll, uint attackTime); // Sent when a user successfully attacks a tile.    
+    event TileDefendedSuccessfully(uint16 tileId, address attacker, uint attackAmount, uint totalAttackAmount, address defender, uint defendAmount, uint totalDefendAmount, uint attackRoll, uint defendTime); // Sent when a user successfully defends a tile when attacked.    
+    event BlockValueMoved(uint16 sourceTileId, uint16 destTileId, address owner, uint movedBlockValue, uint postSourceValue, uint postDestValue, uint moveTime); // Sent when a user buys a tile from another user, by accepting a tile offer
+    event UserBattleValueUpdated(address userAddress, uint battleValue, bool isWithdraw);
+
+    // Constructor.
+    constructor(address _bwData) public {
+        bwData = BWData(_bwData);
+        owner = msg.sender;
+    }
+
+    // Can't send funds straight to this contract. Avoid people sending by mistake.
+    function () payable public {
+        revert();
+    }
+
+    // OWNER-ONLY FUNCTIONS
+    function kill() public isOwner {
+        selfdestruct(owner);
+    }
+
+    function setValidBwCaller(address _bw) public isOwner {
+        bw = _bw;
+    }
     
-        function setValidBwCaller(address _bw) public isOwner {
-            bw = _bw;
+    function setValidBwMarketCaller(address _bwMarket) public isOwner {
+        bwMarket = _bwMarket;
+    }
+
+    function setWithdrawFee(uint _feePercentage) public isOwner {
+        WITHDRAW_FEE = _feePercentage;
+    }
+
+    function setAttackFee(uint _feePercentage) public isOwner {
+        ATTACK_FEE = _feePercentage;
+    }
+
+    function setAttackBoostMultipler(uint _multiplierPercentage) public isOwner {
+        ATTACK_BOOST_MULTIPLIER = _multiplierPercentage;
+    }
+
+    function setDefendBoostMultiplier(uint _multiplierPercentage) public isOwner {
+        DEFEND_BOOST_MULTIPLIER = _multiplierPercentage;
+    }
+
+    function setAttackBoostCap(uint _capPercentage) public isOwner {
+        ATTACK_BOOST_CAP = _capPercentage;
+    }
+
+    function setDefendBoostCap(uint _capPercentage) public isOwner {
+        DEFEND_BOOST_CAP = _capPercentage;
+    }
+
+    // TILE-RELATED FUNCTIONS
+    // This function claims multiple previously unclaimed tiles in a single transaction.
+    // The value assigned to each tile is the msg.value divided by the number of tiles claimed.
+    // The msg.value is required to be an even multiple of the number of tiles claimed.
+    function storeInitialClaim(address _msgSender, uint16[] _claimedTileIds, uint _claimAmount, bool _useBattleValue) public isValidCaller {
+        uint tileCount = _claimedTileIds.length;
+        require(tileCount > 0);
+        require(_claimAmount >= 1 finney * tileCount); // ensure enough funds paid for all tiles
+        require(_claimAmount % tileCount == 0); // ensure payment is an even multiple of number of tiles claimed
+
+        uint valuePerBlockInWei = _claimAmount.div(tileCount); // Due to requires above this is guaranteed to be an even number
+        require(valuePerBlockInWei >= 5 finney);
+
+        if (_useBattleValue) {
+            subUserBattleValue(_msgSender, _claimAmount, false);  
         }
-        
-        function setValidBwMarketCaller(address _bwMarket) public isOwner {
-            bwMarket = _bwMarket;
-        }
-    
-    
-        // TILE-RELATED FUNCTIONS
-        // This function claims multiple previously unclaimed tiles in a single transaction.
-        // The value assigned to each tile is the msg.value divided by the number of tiles claimed.
-        // The msg.value is required to be an even multiple of the number of tiles claimed.
-        function storeInitialClaim(address _msgSender, uint16[] _claimedTileIds, uint _claimAmount, bool _useBattleValue) public isValidCaller {
-            uint tileCount = _claimedTileIds.length;
-            require(tileCount > 0);
-            require(_claimAmount >= 1 finney * tileCount); // ensure enough funds paid for all tiles
-            require(_claimAmount % tileCount == 0); // ensure payment is an even multiple of number of tiles claimed
-    
-            uint valuePerBlockInWei = _claimAmount / tileCount; // Due to requires above this is guaranteed to be an even number
-    
-            if (_useBattleValue) {
-                subUserBattleValue(_msgSender, _claimAmount, false);  
-            }
-    
-            addGlobalBlockValueBalance(_claimAmount);
-    
-            uint16 tileId;
-            bool isNewTile;
-            for (uint16 i = 0; i < tileCount; i++) {
-                tileId = _claimedTileIds[i];
-                isNewTile = bwData.isNewTile(tileId); // Is length 0 if first time purchased
-                require(isNewTile); // Can only claim previously unclaimed tiles.
-    
-                // Send claim event
-                emit TileClaimed(tileId, _msgSender, valuePerBlockInWei, block.timestamp);
-    
-                // Update contract state with new tile ownership.
-                bwData.storeClaim(tileId, _msgSender, valuePerBlockInWei);
-            }
-        }
-    
-        function fortifyClaims(address _msgSender, uint16[] _claimedTileIds, uint _fortifyAmount, bool _useBattleValue) public isValidCaller {
-            uint tileCount = _claimedTileIds.length;
-            require(tileCount > 0);
-    
-            uint balance = address(this).balance;
-            require(balance + _fortifyAmount > balance); // prevent overflow
-            require(_fortifyAmount % tileCount == 0); // ensure payment is an even multiple of number of tiles fortified
-            uint addedValuePerTileInWei = _fortifyAmount / tileCount; // Due to requires above this is guaranteed to be an even number
-            require(_fortifyAmount >= 1 finney * tileCount); // ensure enough funds paid for all tiles
-    
-            address claimer;
-            uint blockValue;
-            for (uint16 i = 0; i < tileCount; i++) {
-                (claimer, blockValue) = bwData.getTileClaimerAndBlockValue(_claimedTileIds[i]);
-                require(claimer != 0); // Can't do this on never-owned tiles
-                require(claimer == _msgSender); // Only current claimer can fortify claim
-    
-                if (_useBattleValue) {
-                    subUserBattleValue(_msgSender, addedValuePerTileInWei, false);
-                }
-                
-                fortifyClaim(_msgSender, _claimedTileIds[i], addedValuePerTileInWei);
-            }
-        }
-    
-        function fortifyClaim(address _msgSender, uint16 _claimedTileId, uint _fortifyAmount) private {
-            uint blockValue;
-            uint sellPrice;
-            (blockValue, sellPrice) = bwData.getCurrentBlockValueAndSellPriceForTile(_claimedTileId);
-            uint updatedBlockValue = blockValue + _fortifyAmount;
-            // Send fortify event
-            emit TileFortified(_claimedTileId, _msgSender, _fortifyAmount, updatedBlockValue, block.timestamp);
-            
-            // Update tile value. The tile has been fortified by bumping up its value.
-            bwData.updateTileBlockValue(_claimedTileId, updatedBlockValue);
-    
-            // Track addition to global block value
-            addGlobalBlockValueBalance(_fortifyAmount);
-        }
-    
-        // Return a pseudo random number between lower and upper bounds
-        // given the number of previous blocks it should hash.
-        // Random function copied from https://github.com/axiomzen/eth-random/blob/master/contracts/Random.sol.
-        // Changed sha3 to keccak256.
-        // Changed random range from uint64 to uint (=uint256).
-        function random(uint _upper) private returns (uint)  {
-            seed = uint(keccak256(keccak256(blockhash(block.number), seed), now));
-            return seed % _upper;
-        }
-    
-        // A user tries to claim a tile that's already owned by another user. A battle ensues.
-        // A random roll is done with % based on attacking vs defending amounts.
-        function attackTile(address _msgSender, uint16 _tileId, uint _attackAmount, bool _useBattleValue, bool _autoFortify) public isValidCaller {
-            require(_attackAmount >= 1 finney);         // Don't allow attacking with less than one base tile price.
-            require(_attackAmount % 1 finney == 0);
-    
-            address claimer;
-            uint blockValue;
-            (claimer, blockValue) = bwData.getTileClaimerAndBlockValue(_tileId);
-            
-            require(claimer != 0); // Can't do this on never-owned tiles
-            require(claimer != _msgSender); // Can't attack one's own tiles
-            require(claimer != owner); // Can't attack owner's tiles because it is used for raffle.
-    
-            // Calculate boosted amounts for attacker and defender
-            // The base attack amount is sent in the by the user.
-            // The base defend amount is the attacked tile's current blockValue.
-            uint attackBoost;
-            uint defendBoost;
-            (attackBoost, defendBoost) = bwData.calculateBattleBoost(_tileId, _msgSender, claimer);
-            uint totalAttackAmount = _attackAmount + attackBoost;
-            uint totalDefendAmount = blockValue + defendBoost;
-            require(totalAttackAmount >= _attackAmount); // prevent overflow
-            require(totalDefendAmount >= blockValue); // prevent overflow
-            require(totalAttackAmount + totalDefendAmount > totalAttackAmount && totalAttackAmount + totalDefendAmount > totalDefendAmount); // Prevent overflow
-    
-            // Verify that attack odds are within allowed range.
-            require(totalAttackAmount / 10 <= blockValue); // Disallow attacks with more than 1000% of defendAmount
-            require(totalAttackAmount >= blockValue / 10); // Disallow attacks with less than 10% of defendAmount
-    
-            // The battle considers boosts.
-            uint attackRoll = random(totalAttackAmount + totalDefendAmount); // This is where the excitement happens!
-            if (attackRoll > totalDefendAmount) {
-                // Send update event
-                emit TileAttackedSuccessfully(_tileId, _msgSender, _attackAmount, totalAttackAmount, claimer, blockValue, totalDefendAmount, attackRoll, block.timestamp);
-    
-                // Change block owner but keep same block value (attacker got battlevalue instead)
-                bwData.setClaimerForTile(_tileId, _msgSender);
-    
-                // Tile successfully attacked!
-                if (_useBattleValue) {
-                    if (_autoFortify) {
-                        // Fortify the won tile using battle value
-                        fortifyClaim(_msgSender, _tileId, _attackAmount);
-                        subUserBattleValue(_msgSender, _attackAmount, false);
-                    } else {
-                        // No reason to withdraw followed by deposit of same amount
-                    }
-                } else {
-                    if (_autoFortify) {
-                        // Fortify the won tile using attack amount
-                        fortifyClaim(_msgSender, _tileId, _attackAmount);
-                    } else {
-                        addUserBattleValue(_msgSender, _attackAmount); // Don't include boost here!
-                    }
-                }
-            } else {
-                // Tile successfully defended!
-                if (_useBattleValue) {
-                    subUserBattleValue(_msgSender, _attackAmount, false); // Don't include boost here!
-                }
-                addUserBattleValue(claimer, _attackAmount); // Don't include boost here!
-    
-                // Send update event
-                emit TileDefendedSuccessfully(_tileId, _msgSender, _attackAmount, totalAttackAmount, claimer, blockValue, totalDefendAmount, attackRoll, block.timestamp);
-    
-                // Update the timestamp for the defended block.
-                bwData.updateTileTimeStamp(_tileId);
-            }
-        }
-    
-        function moveBlockValue(address _msgSender, uint8 _xSource, uint8 _ySource, uint8 _xDest, uint8 _yDest, uint _moveAmount) public isValidCaller {
-            uint16 sourceTileId = BWUtility.toTileId(_xSource, _ySource);
-            uint16 destTileId = BWUtility.toTileId(_xDest, _yDest);
-    
-            address sourceTileClaimer;
-            address destTileClaimer;
-            uint sourceTileBlockValue;
-            uint destTileBlockValue;
-            (sourceTileClaimer, sourceTileBlockValue) = bwData.getTileClaimerAndBlockValue(sourceTileId);
-            (destTileClaimer, destTileBlockValue) = bwData.getTileClaimerAndBlockValue(destTileId);
-    
-            require(sourceTileClaimer == _msgSender);
-            require(destTileClaimer == _msgSender);
-            require(_moveAmount >= 1 finney); // Can't be less
-            require(_moveAmount % 1 finney == 0); // Move amount must be in multiples of 1 finney
-            // require(sourceTile.blockValue - _moveAmount >= BASE_TILE_PRICE_WEI); // Must always leave some at source
-            
-            require(sourceTileBlockValue - _moveAmount < sourceTileBlockValue); // Prevent overflow
-            require(destTileBlockValue + _moveAmount > destTileBlockValue); // Prevent overflow
-            require(BWUtility.isAdjacent(_xSource, _ySource, _xDest, _yDest));
-    
-            sourceTileBlockValue -= _moveAmount;
-            destTileBlockValue += _moveAmount;
-    
-            // If ALL block value was moved away from the source tile, we lose our claim to it. It becomes ownerless.
-            if (sourceTileBlockValue == 0) {
-                bwData.deleteTile(sourceTileId);
-            } else {
-                bwData.updateTileBlockValue(sourceTileId, sourceTileBlockValue);
-                bwData.deleteOffer(sourceTileId); // Offer invalid since block value has changed
-            }
-    
-            bwData.updateTileBlockValue(destTileId, destTileBlockValue);
-            bwData.deleteOffer(destTileId);   // Offer invalid since block value has changed
-            emit BlockValueMoved(sourceTileId, destTileId, _msgSender, _moveAmount, sourceTileBlockValue, destTileBlockValue, block.timestamp);        
-        }
-    
-    
-        // BATTLE VALUE FUNCTIONS
-        function withdrawBattleValue(address msgSender, uint _battleValueInWei) public isValidCaller returns (uint) {
-            require(bwData.hasUser(msgSender));
-            require(_battleValueInWei % 1 finney == 0); // Must be divisible by 1 finney
-            uint fee = _battleValueInWei / WITHDRAW_FEE; // Since we divide by 20 we can never create infinite fractions, so we'll always count in whole wei amounts.
-            require(_battleValueInWei - fee < _battleValueInWei); // prevent underflow
-    
-            uint amountToWithdraw = _battleValueInWei - fee;
-            uint feeBalance = bwData.getFeeBalance();
-            require(feeBalance + fee >= feeBalance); // prevent overflow
-            feeBalance += fee;
-            bwData.setFeeBalance(feeBalance);
-            subUserBattleValue(msgSender, _battleValueInWei, true);
-            return amountToWithdraw;
-        }
-    
-        function addUserBattleValue(address _userId, uint _amount) public isValidCaller {
-            uint userBattleValue = bwData.getUserBattleValue(_userId);
-            require(userBattleValue + _amount > userBattleValue); // prevent overflow
-            uint newBattleValue = userBattleValue + _amount;
-            bwData.setUserBattleValue(_userId, newBattleValue); // Don't include boost here!
-            emit UserBattleValueUpdated(_userId, newBattleValue, false);
-        }
-        
-        function subUserBattleValue(address _userId, uint _amount, bool _isWithdraw) public isValidCaller {
-            uint userBattleValue = bwData.getUserBattleValue(_userId);
-            require(_amount <= userBattleValue); // Must be less than user's battle value - also implicitly checks that underflow isn't possible
-            uint newBattleValue = userBattleValue - _amount;
-            bwData.setUserBattleValue(_userId, newBattleValue); // Don't include boost here!
-            emit UserBattleValueUpdated(_userId, newBattleValue, _isWithdraw);
-        }
-    
-        function addGlobalBlockValueBalance(uint _amount) public isValidCaller {
-            // Track addition to global block value.
-            uint blockValueBalance = bwData.getBlockValueBalance();
-            require(blockValueBalance + _amount > blockValueBalance); // Prevent overflow
-            bwData.setBlockValueBalance(blockValueBalance + _amount);
-        }
-    
-        // Allow us to transfer out airdropped tokens if we ever receive any
-        function transferTokens(address _tokenAddress, address _recipient) public isOwner {
-            ERC20I token = ERC20I(_tokenAddress);
-            require(token.transfer(_recipient, token.balanceOf(this)));
+
+        addGlobalBlockValueBalance(_claimAmount);
+
+        uint16 tileId;
+        bool isNewTile;
+        for (uint16 i = 0; i < tileCount; i++) {
+            tileId = _claimedTileIds[i];
+            isNewTile = bwData.isNewTile(tileId); // Is length 0 if first time purchased
+            require(isNewTile); // Can only claim previously unclaimed tiles.
+
+            // Send claim event
+            emit TileClaimed(tileId, _msgSender, valuePerBlockInWei, block.timestamp);
+
+            // Update contract state with new tile ownership.
+            bwData.storeClaim(tileId, _msgSender, valuePerBlockInWei);
         }
     }
 
+    function fortifyClaims(address _msgSender, uint16[] _claimedTileIds, uint _fortifyAmount, bool _useBattleValue) public isValidCaller {
+        uint tileCount = _claimedTileIds.length;
+        require(tileCount > 0);
+
+        address(this).balance.add(_fortifyAmount); // prevent overflow with SafeMath
+        require(_fortifyAmount % tileCount == 0); // ensure payment is an even multiple of number of tiles fortified
+        uint addedValuePerTileInWei = _fortifyAmount.div(tileCount); // Due to requires above this is guaranteed to be an even number
+        require(_fortifyAmount >= 1 finney * tileCount); // ensure enough funds paid for all tiles
+
+        address claimer;
+        uint blockValue;
+        for (uint16 i = 0; i < tileCount; i++) {
+            (claimer, blockValue) = bwData.getTileClaimerAndBlockValue(_claimedTileIds[i]);
+            require(claimer != 0); // Can't do this on never-owned tiles
+            require(claimer == _msgSender); // Only current claimer can fortify claim
+
+            if (_useBattleValue) {
+                subUserBattleValue(_msgSender, addedValuePerTileInWei, false);
+            }
+            
+            fortifyClaim(_msgSender, _claimedTileIds[i], addedValuePerTileInWei);
+        }
+    }
+
+    function fortifyClaim(address _msgSender, uint16 _claimedTileId, uint _fortifyAmount) private {
+        uint blockValue;
+        uint sellPrice;
+        (blockValue, sellPrice) = bwData.getCurrentBlockValueAndSellPriceForTile(_claimedTileId);
+        uint updatedBlockValue = blockValue.add(_fortifyAmount);
+        // Send fortify event
+        emit TileFortified(_claimedTileId, _msgSender, _fortifyAmount, updatedBlockValue, block.timestamp);
+        
+        // Update tile value. The tile has been fortified by bumping up its value.
+        bwData.updateTileBlockValue(_claimedTileId, updatedBlockValue);
+
+        // Track addition to global block value
+        addGlobalBlockValueBalance(_fortifyAmount);
+    }
+
+    // Return a pseudo random number between lower and upper bounds
+    // given the number of previous blocks it should hash.
+    // Random function copied from https://github.com/axiomzen/eth-random/blob/master/contracts/Random.sol.
+    // Changed sha3 to keccak256, then modified.
+    // Changed random range from uint64 to uint (=uint256).
+    function random(uint _upper) private returns (uint)  {
+        seed = uint(keccak256(blockhash(block.number - 1), block.coinbase, block.timestamp, seed, address(0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE).balance));
+        return seed % _upper;
+    }
+
+    // A user tries to claim a tile that's already owned by another user. A battle ensues.
+    // A random roll is done with % based on attacking vs defending amounts.
+    function attackTile(address _msgSender, uint16 _tileId, uint _attackAmount, bool _useBattleValue) public isValidCaller {
+        require(_attackAmount >= 1 finney);         // Don't allow attacking with less than one base tile price.
+        require(_attackAmount % 1 finney == 0);
+
+        address claimer;
+        uint blockValue;
+        (claimer, blockValue) = bwData.getTileClaimerAndBlockValue(_tileId);
+        
+        require(claimer != 0); // Can't do this on never-owned tiles
+        require(claimer != _msgSender); // Can't attack one's own tiles
+        require(claimer != owner); // Can't attack owner's tiles because it is used for raffle.
+
+        // Calculate boosted amounts for attacker and defender
+        // The base attack amount is sent in the by the user.
+        // The base defend amount is the attacked tile's current blockValue.
+        uint attackBoost;
+        uint defendBoost;
+        (attackBoost, defendBoost) = bwData.calculateBattleBoost(_tileId, _msgSender, claimer);
+
+        // Adjust boost to optimize game strategy
+        attackBoost = attackBoost.mul(ATTACK_BOOST_MULTIPLIER).div(100);
+        defendBoost = defendBoost.mul(DEFEND_BOOST_MULTIPLIER).div(100);
+        
+        // Cap the boost to minimize its impact (prevents whales somehow)
+        if (attackBoost > _attackAmount.mul(ATTACK_BOOST_CAP).div(100)) {
+            attackBoost = _attackAmount.mul(ATTACK_BOOST_CAP).div(100);
+        }
+        if (defendBoost > blockValue.mul(DEFEND_BOOST_CAP).div(100)) {
+            defendBoost = blockValue.mul(DEFEND_BOOST_CAP).div(100);
+        }
+
+        uint totalAttackAmount = _attackAmount.add(attackBoost);
+        uint totalDefendAmount = blockValue.add(defendBoost);
+
+        // Verify that attack odds are within allowed range.
+        require(totalAttackAmount.div(10) <= totalDefendAmount); // Disallow attacks with more than 1000% of defendAmount
+        require(totalAttackAmount >= totalDefendAmount.div(10)); // Disallow attacks with less than 10% of defendAmount
+
+        uint attackFeeAmount = _attackAmount.mul(ATTACK_FEE).div(100);
+        uint attackAmountAfterFee = _attackAmount.sub(attackFeeAmount);
+        
+        updateFeeBalance(attackFeeAmount);
+
+        // The battle considers boosts.
+        uint attackRoll = random(totalAttackAmount.add(totalDefendAmount)); // This is where the excitement happens!
+
+        //gas cost of attack branch is higher than denfense branch solving MSB1
+        if (attackRoll > totalDefendAmount) {
+            // Change block owner but keep same block value (attacker got battlevalue instead)
+            bwData.setClaimerForTile(_tileId, _msgSender);
+
+            // Tile successfully attacked!
+            if (_useBattleValue) {
+                // Withdraw followed by deposit of same amount to prevent MSB1
+                addUserBattleValue(_msgSender, attackAmountAfterFee); // Don't include boost here!
+                subUserBattleValue(_msgSender, attackAmountAfterFee, false);
+            } else {
+                addUserBattleValue(_msgSender, attackAmountAfterFee); // Don't include boost here!
+            }
+            addUserBattleValue(claimer, 0);
+
+            bwData.updateTileTimeStamp(_tileId);
+            // Send update event
+            emit TileAttackedSuccessfully(_tileId, _msgSender, attackAmountAfterFee, totalAttackAmount, claimer, blockValue, totalDefendAmount, attackRoll, block.timestamp);
+        } else {
+            bwData.setClaimerForTile(_tileId, claimer); //should be old owner
+            // Tile successfully defended!
+            if (_useBattleValue) {
+                subUserBattleValue(_msgSender, attackAmountAfterFee, false); // Don't include boost here!
+            }
+            addUserBattleValue(claimer, attackAmountAfterFee); // Don't include boost here!
+            
+            // Send update event
+            emit TileDefendedSuccessfully(_tileId, _msgSender, attackAmountAfterFee, totalAttackAmount, claimer, blockValue, totalDefendAmount, attackRoll, block.timestamp);
+        }
+    }
+
+    function updateFeeBalance(uint attackFeeAmount) private {
+        uint feeBalance = bwData.getFeeBalance();
+        feeBalance = feeBalance.add(attackFeeAmount);
+        bwData.setFeeBalance(feeBalance);
+    }
+
+    function moveBlockValue(address _msgSender, uint8 _xSource, uint8 _ySource, uint8 _xDest, uint8 _yDest, uint _moveAmount) public isValidCaller {
+        uint16 sourceTileId = BWUtility.toTileId(_xSource, _ySource);
+        uint16 destTileId = BWUtility.toTileId(_xDest, _yDest);
+
+        address sourceTileClaimer;
+        address destTileClaimer;
+        uint sourceTileBlockValue;
+        uint destTileBlockValue;
+        (sourceTileClaimer, sourceTileBlockValue) = bwData.getTileClaimerAndBlockValue(sourceTileId);
+        (destTileClaimer, destTileBlockValue) = bwData.getTileClaimerAndBlockValue(destTileId);
+
+        uint newBlockValue = sourceTileBlockValue.sub(_moveAmount);
+        // Must transfer the entire block value or leave at least 5
+        require(newBlockValue == 0 || newBlockValue >= 5 finney);
+
+        require(sourceTileClaimer == _msgSender);
+        require(destTileClaimer == _msgSender);
+        require(_moveAmount >= 1 finney); // Can't be less
+        require(_moveAmount % 1 finney == 0); // Move amount must be in multiples of 1 finney
+        // require(sourceTile.blockValue - _moveAmount >= BASE_TILE_PRICE_WEI); // Must always leave some at source
+        
+        require(BWUtility.isAdjacent(_xSource, _ySource, _xDest, _yDest));
+
+        sourceTileBlockValue = sourceTileBlockValue.sub(_moveAmount);
+        destTileBlockValue = destTileBlockValue.add(_moveAmount);
+
+        // If ALL block value was moved away from the source tile, we lose our claim to it. It becomes ownerless.
+        if (sourceTileBlockValue == 0) {
+            bwData.deleteTile(sourceTileId);
+        } else {
+            bwData.updateTileBlockValue(sourceTileId, sourceTileBlockValue);
+            bwData.deleteOffer(sourceTileId); // Offer invalid since block value has changed
+        }
+
+        bwData.updateTileBlockValue(destTileId, destTileBlockValue);
+        bwData.deleteOffer(destTileId);   // Offer invalid since block value has changed
+        emit BlockValueMoved(sourceTileId, destTileId, _msgSender, _moveAmount, sourceTileBlockValue, destTileBlockValue, block.timestamp);        
+    }
+
+    function verifyAmount(address _msgSender, uint _msgValue, uint _amount, bool _useBattleValue) view public isValidCaller {
+        if (_useBattleValue) {
+            require(_msgValue == 0);
+            require(bwData.getUserBattleValue(_msgSender) >= _amount);
+        } else {
+            require(_amount == _msgValue);
+        }
+    }
+
+    function setLocalGame(uint16 _tileId, address localGameAddress) public isOwner {
+        localGames[_tileId] = localGameAddress;
+    }
+
+    function getLocalGame(uint16 _tileId) view public isValidCaller returns (address) {
+        return localGames[_tileId];
+    }
+
+    // BATTLE VALUE FUNCTIONS
+    function withdrawBattleValue(address msgSender, uint _battleValueInWei) public isValidCaller returns (uint) {
+        //require(_battleValueInWei % 1 finney == 0); // Must be divisible by 1 finney
+        uint fee = _battleValueInWei.mul(WITHDRAW_FEE).div(100); // Since we divide by 20 we can never create infinite fractions, so we'll always count in whole wei amounts.
+        uint amountToWithdraw = _battleValueInWei.sub(fee);
+        uint feeBalance = bwData.getFeeBalance();
+        feeBalance = feeBalance.add(fee);
+        bwData.setFeeBalance(feeBalance);
+        subUserBattleValue(msgSender, _battleValueInWei, true);
+        return amountToWithdraw;
+    }
+
+    function addUserBattleValue(address _userId, uint _amount) public isValidCaller {
+        uint userBattleValue = bwData.getUserBattleValue(_userId);
+        uint newBattleValue = userBattleValue.add(_amount);
+        bwData.setUserBattleValue(_userId, newBattleValue); // Don't include boost here!
+        emit UserBattleValueUpdated(_userId, newBattleValue, false);
+    }
+    
+    function subUserBattleValue(address _userId, uint _amount, bool _isWithdraw) public isValidCaller {
+        uint userBattleValue = bwData.getUserBattleValue(_userId);
+        require(_amount <= userBattleValue); // Must be less than user's battle value - also implicitly checks that underflow isn't possible
+        uint newBattleValue = userBattleValue.sub(_amount);
+        bwData.setUserBattleValue(_userId, newBattleValue); // Don't include boost here!
+        emit UserBattleValueUpdated(_userId, newBattleValue, _isWithdraw);
+    }
+
+    function addGlobalBlockValueBalance(uint _amount) public isValidCaller {
+        // Track addition to global block value.
+        uint blockValueBalance = bwData.getBlockValueBalance();
+        bwData.setBlockValueBalance(blockValueBalance.add(_amount));
+    }
+
+    function subGlobalBlockValueBalance(uint _amount) public isValidCaller {
+        // Track addition to global block value.
+        uint blockValueBalance = bwData.getBlockValueBalance();
+        bwData.setBlockValueBalance(blockValueBalance.sub(_amount));
+    }
+
+    // Allow us to transfer out airdropped tokens if we ever receive any
+    function transferTokens(address _tokenAddress, address _recipient) public isOwner {
+        ERC20I token = ERC20I(_tokenAddress);
+        require(token.transfer(_recipient, token.balanceOf(this)));
+    }
+}
+
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 contract BWMarket {
+    using SafeMath for uint256;
     address private owner;
     BWService private bwService;
     BWData private bwData;
     bool private allowMarketplace = true;
     bool public paused = false;
+    uint private MARKETPLACE_FEE = 5; // 5%
     
     modifier isOwner {
         if (msg.sender != owner) {
@@ -666,6 +785,10 @@ contract BWMarket {
     function setAllowMarketplace(bool _allowMarketplace) public isOwner {
         allowMarketplace = _allowMarketplace;
     }
+
+    function setMarketplaceFee(uint _feePercentage) public isOwner {
+        MARKETPLACE_FEE = _feePercentage;
+    }
     
     // Lets a tile owner offer a tile for sale.
     function createOffer(uint16 _tileId, uint _offerInWei) public isMarketplaceEnabled isNotContractCaller {
@@ -691,14 +814,13 @@ contract BWMarket {
     }
 
     function acceptOffer(uint16 _tileId, uint _acceptedBlockValue) payable public isMarketplaceEnabled isNotContractCaller {
-        uint balance = address(this).balance;
-        require(balance + msg.value > balance);    // prevent overflow
+        uint balance = address(this).balance.add(msg.value);
         
-        address claimer;
+        address seller;
         uint blockValue;
         uint creationTime;
         uint sellPrice;
-        (claimer, blockValue, creationTime, sellPrice) = bwData.getTile(_tileId);
+        (seller, blockValue, creationTime, sellPrice) = bwData.getTile(_tileId);
         // We don't check if buyer is not the seller to save gas
         require(creationTime > 0); // Can't do this on never-owned tiles
         require(sellPrice != 0); // Verify that there is an offer for this tile
@@ -712,18 +834,20 @@ contract BWMarket {
         require(balance >= sellPrice); // Ensure contract has funds to send to users.
 
         // Send offer accepted event
-        emit TileOfferAccepted(_tileId, claimer, msg.sender, sellPrice, block.timestamp); // Sent when a user buys a tile from another user, by accepting a tile offer
+        emit TileOfferAccepted(_tileId, seller, msg.sender, sellPrice, block.timestamp); // Sent when a user buys a tile from another user, by accepting a tile offer
 
-        // Save some values required for transfering funds
-        uint amountToSend = sellPrice;
-        address seller = claimer;
+        uint fee = sellPrice.mul(MARKETPLACE_FEE).div(100);
+        uint userAmount = sellPrice.sub(fee);
+        uint feeBalance = bwData.getFeeBalance();
+        feeBalance = feeBalance.add(fee);
+        bwData.setFeeBalance(feeBalance);
 
         // Update storage
         bwData.deleteOffer(_tileId); // Must zero this before transfer() is called to avoid re-entrancy attacks.
         bwData.setClaimerForTile(_tileId, msg.sender); // Update contract state with new tile ownership. Note that this changes the tile.claimer variable!
 
         // Send funds AFTER updating storage and AFTER zeroing sellPrice.
-        seller.transfer(amountToSend);
+        seller.transfer(userAmount);
     }
 
     function cancelOffer(uint16 _tileId) public isMarketplaceEnabled isNotContractCaller {
