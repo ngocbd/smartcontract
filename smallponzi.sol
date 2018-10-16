@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract smallponzi at 0x1aFd952269873FE009C7BDFF5f07Fd91605a7227
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract smallponzi at 0x9D5BdAa9d82782c03402dD5c675aE3E45B3102e2
 */
 contract smallponzi {
 
@@ -51,10 +51,10 @@ contract smallponzi {
  
     
     if (idx != 0) {
-      collectedFees += amount / 33;
+      collectedFees += amount / 3;
 	  owner.send(collectedFees);
 	  collectedFees = 0;
-      balance += amount - amount / 33;
+      balance += amount - amount / 3;
     } 
     else {
       balance += amount;
