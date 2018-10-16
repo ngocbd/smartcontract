@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypteloPublicSale at 0xc16055e49fb6dba0bed226c5f5c7caac50ec82c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypteloPublicSale at 0xe9ed43a15c47b4dfe2fb2e2731e438237b483890
 */
 pragma solidity ^0.4.0;
 
@@ -33,7 +33,7 @@ contract CrypteloPublicSale{
     
     
     uint ICOstartTime = 0; 
-    uint ICOendTime = now + 30 days;
+    uint ICOendTime = now + 46 days;
     
     //first 7 days bonus 25%
     uint firstDiscountStartTime = ICOstartTime;
