@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kujira at 0x6767b7f6f0ceabdd442d4914ec5f65ffc9466282
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kujira at 0x5f5521192f99b5d158d056fdbe3d5ea040e02765
 */
 pragma solidity ^0.4.4;
 
@@ -44,6 +44,10 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -94,13 +98,15 @@ contract Kujira is StandardToken {
     uint256 public totalEthInWei;         // Total ETH Raised 
     address public fundsWallet;           // ICO Raised Funds Address
 
+    // This is a constructor function 
+    // which means the following function name has to match the contract name declared above
     function Kujira() {
-        balances[msg.sender] = 10000000000000000000000000;               // Starting supply
-        totalSupply = 10000000000000000000000000;                        // Total supply
+        balances[msg.sender] = 10000000000000000000000000000;               // Starting supply
+        totalSupply = 10000000000000000000000000000;                        // Total supply
         name = "Kujira";                                   // Token Display Name
         decimals = 18;                                               // Decimals
-        symbol = "KUJI";                                             // Token Symbol
-        unitsOneEthCanBuy = 13;                                      // ICO Price
+        symbol = "KUJ";                                             // Token Symbol
+        unitsOneEthCanBuy = 750;                                      // ICO Price
         fundsWallet = msg.sender;                                    // ETH in return for KUJ token during ICO
     }
 
