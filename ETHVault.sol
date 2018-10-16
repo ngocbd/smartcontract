@@ -1,36 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHVault at 0xf1aAB4171Ceb49B6a276975347e3c1D4D5650e5A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHVault at 0x96050da7c01bbd4891ed766720a5c1c79b824163
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.12;
 
 contract Owned {
     address public Owner;
     function Owned() { Owner = msg.sender; }
-    modifier onlyOwner { require( msg.sender == Owner ); _; }
+    modifier onlyOwner { if( msg.sender == Owner ) _; }
 }
 
 contract ETHVault is Owned {
     address public Owner;
-    mapping (address=>uint) public deposits;
+    mapping (address => uint) public Deposits;
     
-    function init() { Owner = msg.sender; }
+    function init() payable { Owner = msg.sender; deposit(); }
     
     function() payable { deposit(); }
     
     function deposit() payable {
-        if( msg.value >= 0.25 ether )
-            deposits[msg.sender] += msg.value;
-        else throw;
+        if (!isContract(msg.sender))
+            if (msg.value >= 0.25 ether)
+                if (Deposits[msg.sender] + msg.value >= Deposits[msg.sender])
+                    Deposits[msg.sender] += msg.value;
     }
     
-    function withdraw(uint amount) onlyOwner {
-        uint depo = deposits[msg.sender];
-        if( amount <= depo && depo > 0 )
-            msg.sender.send(amount);
+    function withdraw(uint amount) payable onlyOwner {
+        if (Deposits[msg.sender] > 0 && amount <= Deposits[msg.sender])
+            msg.sender.transfer(amount);
+    }
+    
+    function isContract(address addr) payable returns (bool) {
+        uint size;
+        assembly { size := extcodesize(addr) }
+        return size > 0;
     }
 
-    function kill() onlyOwner {
+    function kill() payable onlyOwner {
         require(this.balance == 0);
-        suicide(msg.sender);
-	}
+        selfdestruct(msg.sender);
+    }
 }
