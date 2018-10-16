@@ -1,7 +1,119 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CurrencyFactory at 0x21851f9970e333cbc253ba2c7ef953219c479ab7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CurrencyFactory at 0xe3e3bed21fc39d0915f66509ed0aac05db6d6454
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
+
+// File: contracts/Ownable.sol
+
+/// @title Ownable
+/// @dev The Ownable contract has an owner address, and provides basic authorization control functions,
+/// this simplifies the implementation of "user permissions".
+/// @dev Based on OpenZeppelin's Ownable.
+
+contract Ownable {
+    address public owner;
+    address public newOwnerCandidate;
+
+    event OwnershipRequested(address indexed by, address indexed to);
+    event OwnershipTransferred(address indexed from, address indexed to);
+
+    /// @dev Constructor sets the original `owner` of the contract to the sender account.
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /// @dev Reverts if called by any account other than the owner.
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyOwnerCandidate() {
+        require(msg.sender == newOwnerCandidate);
+        _;
+    }
+
+    /// @dev Proposes to transfer control of the contract to a newOwnerCandidate.
+    /// @param _newOwnerCandidate address The address to transfer ownership to.
+    function requestOwnershipTransfer(address _newOwnerCandidate) external onlyOwner {
+        require(_newOwnerCandidate != address(0));
+
+        newOwnerCandidate = _newOwnerCandidate;
+
+        OwnershipRequested(msg.sender, newOwnerCandidate);
+    }
+
+    /// @dev Accept ownership transfer. This method needs to be called by the perviously proposed owner.
+    function acceptOwnership() external onlyOwnerCandidate {
+        address previousOwner = owner;
+
+        owner = newOwnerCandidate;
+        newOwnerCandidate = address(0);
+
+        OwnershipTransferred(previousOwner, owner);
+    }
+}
+
+// File: contracts/SafeMath.sol
+
+/// @title Math operations with safety checks
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // require(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // require(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function toPower2(uint256 a) internal pure returns (uint256) {
+        return mul(a, a);
+    }
+
+    function sqrt(uint256 a) internal pure returns (uint256) {
+        uint256 c = (a + 1) / 2;
+        uint256 b = a;
+        while (c < b) {
+            b = c;
+            c = (a / c + c) / 2;
+        }
+        return b;
+    }
+}
+
+// File: contracts/ERC20.sol
 
 /// @title ERC Token Standard #20 Interface (https://github.com/ethereum/EIPs/issues/20)
 contract ERC20 {
@@ -15,8 +127,7 @@ contract ERC20 {
     event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-
-
+// File: contracts/BasicToken.sol
 
 /// @title Basic ERC20 token contract implementation.
 /// @dev Based on OpenZeppelin's StandardToken.
@@ -81,7 +192,7 @@ contract BasicToken is ERC20 {
     /// @param _value uint256 the amount of tokens to be transferred.
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
-        var _allowance = allowed[_from][msg.sender];
+        uint256 _allowance = allowed[_from][msg.sender];
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -94,8 +205,15 @@ contract BasicToken is ERC20 {
     }
 }
 
+// File: contracts/ERC223Receiver.sol
 
+/// @title ERC223Receiver Interface
+/// @dev Based on the specs form: https://github.com/ethereum/EIPs/issues/223
+contract ERC223Receiver {
+    function tokenFallback(address _sender, uint _value, bytes _data) external returns (bool ok);
+}
 
+// File: contracts/ERC677.sol
 
 /// @title ERC Token Standard #677 Interface (https://github.com/ethereum/EIPs/issues/677)
 contract ERC677 is ERC20 {
@@ -104,66 +222,7 @@ contract ERC677 is ERC20 {
     event TransferAndCall(address indexed from, address indexed to, uint value, bytes data);
 }
 
-/// @title Math operations with safety checks
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // require(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // require(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a);
-        return c;
-    }
-
-    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
-
-    function toPower2(uint256 a) internal pure returns (uint256) {
-        return mul(a, a);
-    }
-
-    function sqrt(uint256 a) internal pure returns (uint256) {
-        uint256 c = (a + 1) / 2;
-        uint256 b = a;
-        while (c < b) {
-            b = c;
-            c = (a / c + c) / 2;
-        }
-        return b;
-    }
-}
-
-
-
-
+// File: contracts/Standard677Token.sol
 
 /// @title Standard677Token implentation, base on https://github.com/ethereum/EIPs/issues/677
 
@@ -202,58 +261,7 @@ contract Standard677Token is ERC677, BasicToken {
   }
 }
 
-
-/// @title Ownable
-/// @dev The Ownable contract has an owner address, and provides basic authorization control functions,
-/// this simplifies the implementation of "user permissions".
-/// @dev Based on OpenZeppelin's Ownable.
-
-contract Ownable {
-    address public owner;
-    address public newOwnerCandidate;
-
-    event OwnershipRequested(address indexed _by, address indexed _to);
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    /// @dev Constructor sets the original `owner` of the contract to the sender account.
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    /// @dev Reverts if called by any account other than the owner.
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyOwnerCandidate() {
-        require(msg.sender == newOwnerCandidate);
-        _;
-    }
-
-    /// @dev Proposes to transfer control of the contract to a newOwnerCandidate.
-    /// @param _newOwnerCandidate address The address to transfer ownership to.
-    function requestOwnershipTransfer(address _newOwnerCandidate) external onlyOwner {
-        require(_newOwnerCandidate != address(0));
-
-        newOwnerCandidate = _newOwnerCandidate;
-
-        OwnershipRequested(msg.sender, newOwnerCandidate);
-    }
-
-    /// @dev Accept ownership transfer. This method needs to be called by the perviously proposed owner.
-    function acceptOwnership() external onlyOwnerCandidate {
-        address previousOwner = owner;
-
-        owner = newOwnerCandidate;
-        newOwnerCandidate = address(0);
-
-        OwnershipTransferred(previousOwner, owner);
-    }
-}
-
-
-
+// File: contracts/TokenHolder.sol
 
 /// @title Token holder contract.
 contract TokenHolder is Ownable {
@@ -265,10 +273,7 @@ contract TokenHolder is Ownable {
     }
 }
 
-
-
-
-
+// File: contracts/ColuLocalCurrency.sol
 
 /// @title Colu Local Currency contract.
 /// @author Rotem Lev.
@@ -277,14 +282,18 @@ contract ColuLocalCurrency is Ownable, Standard677Token, TokenHolder {
     string public name;
     string public symbol;
     uint8 public decimals;
-   
+    string public tokenURI;
+
+    event TokenURIChanged(string newTokenURI);
+
     /// @dev cotract to use when issuing a CC (Local Currency)
     /// @param _name string name for CC token that is created.
     /// @param _symbol string symbol for CC token that is created.
     /// @param _decimals uint8 percison for CC token that is created.
-    /// @param _totalSupply uint256 total supply of the CC token that is created. 
-    function ColuLocalCurrency(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
-        require(_totalSupply != 0);     
+    /// @param _totalSupply uint256 total supply of the CC token that is created.
+    /// @param _tokenURI string the URI may point to a JSON file that conforms to the "Metadata JSON Schema".
+    function ColuLocalCurrency(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply, string _tokenURI) public {
+        require(_totalSupply != 0);
         require(bytes(_name).length != 0);
         require(bytes(_symbol).length != 0);
 
@@ -292,19 +301,21 @@ contract ColuLocalCurrency is Ownable, Standard677Token, TokenHolder {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        tokenURI = _tokenURI;
         balances[msg.sender] = totalSupply;
+    }
+
+    /// @dev Sets the tokenURI field, can be called by the owner only
+    /// @param _tokenURI string the URI may point to a JSON file that conforms to the "Metadata JSON Schema".
+    function setTokenURI(string _tokenURI) public onlyOwner {
+      tokenURI = _tokenURI;
+      TokenURIChanged(_tokenURI);
     }
 }
 
-/// @title ERC223Receiver Interface
-/// @dev Based on the specs form: https://github.com/ethereum/EIPs/issues/223
-contract ERC223Receiver {
-    function tokenFallback(address _sender, uint _value, bytes _data) external returns (bool ok);
-}
+// File: contracts/Standard223Receiver.sol
 
-
-
- /// @title Standard ERC223 Token Receiver implementing tokenFallback function and tokenPayable modifier
+/// @title Standard ERC223 Token Receiver implementing tokenFallback function and tokenPayable modifier
 
 contract Standard223Receiver is ERC223Receiver {
   Tkn tkn;
@@ -349,9 +360,7 @@ contract Standard223Receiver is ERC223Receiver {
   function supportsToken(address token) public constant returns (bool);
 }
 
-
-
-
+// File: contracts/TokenOwnable.sol
 
 /// @title TokenOwnable
 /// @dev The TokenOwnable contract adds a onlyTokenOwner modifier as a tokenReceiver with ownable addaptation
@@ -364,27 +373,7 @@ contract TokenOwnable is Standard223Receiver, Ownable {
     }
 }
 
-
-
-/// @title Market Maker Interface.
-/// @author Tal Beja.
-contract MarketMaker is ERC223Receiver {
-
-  function getCurrentPrice() public constant returns (uint _price);
-  function change(address _fromToken, uint _amount, address _toToken) public returns (uint _returnAmount);
-  function change(address _fromToken, uint _amount, address _toToken, uint _minReturn) public returns (uint _returnAmount);
-  function change(address _toToken) public returns (uint _returnAmount);
-  function change(address _toToken, uint _minReturn) public returns (uint _returnAmount);
-  function quote(address _fromToken, uint _amount, address _toToken) public constant returns (uint _returnAmount);
-  function openForPublicTrade() public returns (bool success);
-  function isOpenForPublic() public returns (bool success);
-
-  event Change(address indexed fromToken, uint inAmount, address indexed toToken, uint returnAmount, address indexed account);
-}
-
-
-
-
+// File: contracts/EllipseMarketMaker.sol
 
 /// @title Ellipse Market Maker contract.
 /// @dev market maker, using ellipse equation.
@@ -460,9 +449,25 @@ contract EllipseMarketMaker is TokenOwnable {
   }
 }
 
+// File: contracts/MarketMaker.sol
 
+/// @title Market Maker Interface.
+/// @author Tal Beja.
+contract MarketMaker is ERC223Receiver {
 
+  function getCurrentPrice() public constant returns (uint _price);
+  function change(address _fromToken, uint _amount, address _toToken) public returns (uint _returnAmount);
+  function change(address _fromToken, uint _amount, address _toToken, uint _minReturn) public returns (uint _returnAmount);
+  function change(address _toToken) public returns (uint _returnAmount);
+  function change(address _toToken, uint _minReturn) public returns (uint _returnAmount);
+  function quote(address _fromToken, uint _amount, address _toToken) public constant returns (uint _returnAmount);
+  function openForPublicTrade() public returns (bool success);
+  function isOpenForPublic() public returns (bool success);
 
+  event Change(address indexed fromToken, uint inAmount, address indexed toToken, uint returnAmount, address indexed account);
+}
+
+// File: contracts/IEllipseMarketMaker.sol
 
 /// @title Ellipse Market Maker Interfase
 /// @author Tal Beja
@@ -505,13 +510,7 @@ contract IEllipseMarketMaker is MarketMaker {
     function getPrice(uint256 _R1, uint256 _R2, uint256 _S1, uint256 _S2) public constant returns (uint256);
 }
 
-
-
-
-
-
-
-
+// File: contracts/CurrencyFactory.sol
 
 /// @title Colu Local Currency + Market Maker factory contract.
 /// @author Rotem Lev.
@@ -549,6 +548,20 @@ contract CurrencyFactory is Standard223Receiver, TokenHolder {
     _;
   }
 
+  /// @dev checks if the instance of market maker contract is closed for public
+  /// @param _token address address of the CC token.
+  modifier marketClosed(address _token) {
+  	require(!MarketMaker(currencyMap[_token].mmAddress).isOpenForPublic());
+  	_;
+  }
+
+  /// @dev checks if the instance of market maker contract is open for public
+  /// @param _token address address of the CC token.
+  modifier marketOpen(address _token) {
+    require(MarketMaker(currencyMap[_token].mmAddress).isOpenForPublic());
+    _;
+  }
+
   /// @dev constructor only reuires the address of the CLN token which must use the ERC20 interface
   /// @param _mmLib address for the deployed market maker elipse contract
   /// @param _clnAddress address for the deployed ERC20 CLN token
@@ -564,13 +577,15 @@ contract CurrencyFactory is Standard223Receiver, TokenHolder {
   /// @param _symbol string symbol for CC token that is created.
   /// @param _decimals uint8 percison for CC token that is created.
   /// @param _totalSupply uint256 total supply of the CC token that is created.
+  /// @param _tokenURI string the URI may point to a JSON file that conforms to the "Metadata JSON Schema".
   function createCurrency(string _name,
                           string _symbol,
                           uint8 _decimals,
-                          uint256 _totalSupply) public
+                          uint256 _totalSupply,
+                          string _tokenURI) public
                           returns (address) {
 
-  	ColuLocalCurrency subToken = new ColuLocalCurrency(_name, _symbol, _decimals, _totalSupply);
+  	ColuLocalCurrency subToken = new ColuLocalCurrency(_name, _symbol, _decimals, _totalSupply, _tokenURI);
   	EllipseMarketMaker newMarketMaker = new EllipseMarketMaker(mmLibAddress, clnAddress, subToken);
   	//set allowance
   	require(subToken.transfer(newMarketMaker, _totalSupply));
@@ -579,6 +594,19 @@ contract CurrencyFactory is Standard223Receiver, TokenHolder {
     tokens.push(subToken);
   	TokenCreated(subToken, msg.sender);
   	return subToken;
+  }
+
+  /// @dev create the MarketMaker and the CC token put all the CC token in the Market Maker reserve
+  /// @param _name string name for CC token that is created.
+  /// @param _symbol string symbol for CC token that is created.
+  /// @param _decimals uint8 percison for CC token that is created.
+  /// @param _totalSupply uint256 total supply of the CC token that is created.
+  function createCurrency(string _name,
+                          string _symbol,
+                          uint8 _decimals,
+                          uint256 _totalSupply) public
+                          returns (address) {
+    return createCurrency(_name, _symbol, _decimals, _totalSupply, '');
   }
 
   /// @dev normal send cln to the market maker contract, sender must approve() before calling method. can only be called by owner
@@ -647,6 +675,7 @@ contract CurrencyFactory is Standard223Receiver, TokenHolder {
   	address marketMakerAddress = getMarketMakerAddressFromToken(_token);
   	require(MarketMaker(marketMakerAddress).openForPublicTrade());
   	Ownable(marketMakerAddress).requestOwnershipTransfer(msg.sender);
+    Ownable(_token).requestOwnershipTransfer(msg.sender);
   	MarketOpen(marketMakerAddress);
   	return true;
   }
@@ -655,6 +684,17 @@ contract CurrencyFactory is Standard223Receiver, TokenHolder {
   /// @param _token address of the token used with transferAndCall.
   function supportsToken(address _token) public constant returns (bool) {
   	return (clnAddress == _token || currencyMap[_token].totalSupply > 0);
+  }
+
+  /// @dev sets tokenURI for the given currency, can be used during the sell only
+  /// @param _token address address of the token to update
+  /// @param _tokenURI string the URI may point to a JSON file that conforms to the "Metadata JSON Schema".
+  function setTokenURI(address _token, string _tokenURI) public
+                              tokenIssuerOnly(_token, msg.sender)
+                              marketClosed(_token)
+                              returns (bool) {
+    ColuLocalCurrency(_token).setTokenURI(_tokenURI);
+    return true;
   }
 
   /// @dev helper function to get the market maker address form token
