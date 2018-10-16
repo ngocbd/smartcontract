@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pricer at 0x252216295017bef7594f0f27121dac1f7190ec1b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pricer at 0xd64ed2c8c24081e540cd7ed2b6297828a57ecd19
 */
 pragma solidity ^0.4.16;
+
+//User interface at http://www.staticoin.com
+//Full source code at https://github.com/genkifs/staticoin
 
 /** @title owned. */
 contract owned  {
@@ -388,6 +391,6 @@ contract Pricer is I_Pricer,
         bytes32 TrasID;
         TrasID=oraclize_query(DELAY, "URL", sURL);
         RevTransaction[TrasID]=_actionID;
-		return _TrasID;
+		_TrasID=uint(TrasID);
     }
 }
