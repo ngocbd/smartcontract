@@ -1,48 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RootsToken at 0xbded2cb645b5591761f7d6b05b92cb067d2967ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RootsToken at 0xb39573edc34b3da6c836a59fe6375155d804e492
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+// File: contracts/ERC223/ERC223_receiving_contract.sol
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+* @title Contract that will work with ERC223 tokens.
+*/
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ERC223ReceivingContract {
+    /**
+     * @dev Standard ERC223 function that will handle incoming token transfers.
+     *
+     * @param _from  Token sender address.
+     * @param _value Amount of tokens.
+     * @param _data  Transaction metadata.
+     */
+    function tokenFallback(address _from, uint _value, bytes _data);
 }
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
@@ -264,6 +239,125 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+// File: contracts/ERC223/ERC223.sol
+
+/**
+ * @title Reference implementation of the ERC223 standard token.
+ */
+contract ERC223 is StandardToken {
+
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint _value) public returns (bool) {
+        bytes memory empty;
+        return transfer(_to, _value, empty);
+    }
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    * @param _data Optional metadata.
+    */
+    function transfer(address _to, uint _value, bytes _data) public returns (bool) {
+        super.transfer(_to, _value);
+
+        if (isContract(_to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
+            Transfer(msg.sender, _to, _value, _data);
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
+        bytes memory empty;
+        return transferFrom(_from, _to, _value, empty);
+    }
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint the amount of tokens to be transferred
+     * @param _data Optional metadata.
+     */
+    function transferFrom(address _from, address _to, uint _value, bytes _data) public returns (bool) {
+        super.transferFrom(_from, _to, _value);
+
+        if (isContract(_to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(_from, _value, _data);
+        }
+
+        Transfer(_from, _to, _value, _data);
+        return true;
+    }
+
+    function isContract(address _addr) private view returns (bool) {
+        uint length;
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+        }
+        return (length>0);
+    }
+}
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
 // File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
@@ -340,13 +434,13 @@ contract CappedToken is MintableToken {
 
 // File: contracts/RootsToken.sol
 
-contract RootsToken is CappedToken {
+contract RootsToken is CappedToken, ERC223 {
 
     string constant public name = "ROOTS Token";
     string constant public symbol = "ROOTS";
     uint constant public decimals = 18;
 
-    function RootsToken() public CappedToken(1e9 * 1e18) {}
+    function RootsToken() public CappedToken(1e10 * 1e18) {}
 
     function mintlist(address[] _to, uint256[] _amount) onlyOwner canMint public {
         require(_to.length == _amount.length);
@@ -355,5 +449,4 @@ contract RootsToken is CappedToken {
             mint(_to[i], _amount[i]);
         }
     }
-
 }
