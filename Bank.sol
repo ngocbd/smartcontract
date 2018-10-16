@@ -1,87 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0x36770ff967bd05248b1c4c899ffb70caa3391b84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0xfb950d858dab0594f4cffb77201215ee46d8b304
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-// zeppelin-solidity: 1.5.0
+//contract by Adam Skrodzki
+//
+contract BankAccount {
+    Bank parent;
+    function() payable public{
+        address mainAdr = parent.GetMainAddress();
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+        mainAdr.transfer(msg.value);
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function BankAccount (address _bankAddress) public {
+        parent = Bank(_bankAddress);
+    }
+    
+    function transferTokens(address _tokenAdr) public {
+        address mainAdr = parent.GetMainAddress();
+        Token t = Token(_tokenAdr);
+        t.transfer(mainAdr,t.balanceOf(this));
+    }
+}
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract Token {
+    function balanceOf(address a) constant returns(uint256);
+    function transfer(address to,uint256 value);
 }
 
 contract Bank {
-  using SafeMath for *;
 
-  uint public totalShares = 0;
-  uint public totalReleased = 0;
+    address private _mainAddress;
+    address public owner ;
+    address private operator ;
+    BankAccount[] private availableAddresses;
+    Token[] private tokens;
+    mapping(uint256 => address) private assignments ;
 
-  mapping(address => uint) public shares;
-  mapping(address => uint) public released;
-  address[] public payees;
+    uint256 public firstFreeAddressIndex = 0;
 
-  function Bank(address[] _payees, uint[] _shares) public payable {
-    require(_payees.length == _shares.length);
 
-    for (uint i = 0; i < _payees.length; i++) {
-      addPayee(_payees[i], _shares[i]);
+    function ChangeMainAccount(address mainAddress) public{
+        if(msg.sender==owner){
+            _mainAddress = mainAddress;
+        }
     }
-  }
+    
+    function ChangeOperatorAccount(address addr) public{
+        if(msg.sender==owner){
+            operator = addr;
+        }
+    }
+    
+    function GetNextWithFunds(uint256 startAcc,uint256 startTok) constant returns(uint256,uint256,bool){
+            uint256 i = startAcc;
+            uint256 j = startTok;
+            if(j==0) j=1;
+            uint256 counter =0;
+            for(i;i<availableAddresses.length && counter<100;i++){
+                for(j;j<tokens.length && counter<100;j++){
+                    counter++;
+                    if(tokens[j].balanceOf(availableAddresses[i])>0){
+                        return (i,j,true);
+                    }
+                }
+                j=1;
+            }
+            if(i==availableAddresses.length){
+                return(0,0,false);
+            }
+            else{
+                return(i,j,false);
+            }
+    }
+    function TransferFunds(uint256 addrIdx,uint256 tokIdx) public{
+        if(msg.sender==owner || msg.sender==operator){
+            availableAddresses[addrIdx].transferTokens.gas(250000)(tokens[tokIdx]);
+        }
+        else{
+          revert();   
+        
+        }
+    }
+    function GetMainAddress() public constant returns (address){
+        return(_mainAddress);
+    }
+    function ChangeOwner(address newOwner) public{
+        if(msg.sender==owner){
+            owner = newOwner;
+        }
+        else{
+          revert();   
+        
+        }
+    }
+    function AddToken(address _adr)public {
+        if(msg.sender==owner || msg.sender==operator){
+            tokens.push(Token(_adr));
+        }
+        else{
+          revert();   
+        
+        }
+    }
+    function Bank(address mainAddress) public{
+        tokens.push(Token(0));
+        owner = msg.sender;
+        _mainAddress = mainAddress;
+    }
+    function CreateNewAccount() public{
+        var a = new BankAccount(this);
+        availableAddresses.push(a);
+    }
+    function GetAvailableAddressesCount() private constant returns(uint256){
+        return availableAddresses.length-firstFreeAddressIndex;
+    }
 
-  function addPayee(address _payee, uint _shares) internal {
-    require(_payee != address(0));
-    require(_shares > 0);
-    require(shares[_payee] == 0);
+    function AssignAddress(uint256 holderId) public{
+        if(msg.sender==owner || msg.sender==operator){
+            if(assignments[holderId]!=0){ // nie mo?na stworzy? 2 adresów dla jednego klienta
+    
+            }
+            else{
+                if(GetAvailableAddressesCount()==0){
+                        CreateNewAccount();
+                }
+                assignments[holderId] = availableAddresses[firstFreeAddressIndex];
+                firstFreeAddressIndex = firstFreeAddressIndex+1;
+            }
+        }
+        else{
+          revert();   
+        
+        }
 
-    payees.push(_payee);
-    shares[_payee] = _shares;
-    totalShares = totalShares.add(_shares);
-  }
+    }
 
-  function claim() public {
-    address payee = msg.sender;
+    function GetAssignedAddress(uint256 holderId) public constant returns(address){
+         return assignments[holderId];
+    }
 
-    require(shares[payee] > 0);
 
-    uint totalReceived = this.balance.add(totalReleased);
-    uint payment = totalReceived.mul(shares[payee]).div(totalShares).sub(released[payee]);
-
-    require(payment != 0);
-    require(this.balance >= payment);
-
-    released[payee] = released[payee].add(payment);
-    totalReleased = totalReleased.add(payment);
-
-    payee.transfer(payment);
-  }
-
-  function () public payable {}
 }
