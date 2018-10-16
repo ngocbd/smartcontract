@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GimmerPreSale at 0xBfD9A5911a655729660048bD8f91511b09A439A3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GimmerPreSale at 0xaedc52e5b37d77049204fec38fbf039c63415456
 */
 pragma solidity ^0.4.17;
-
-
 
 /**
  * @title SafeMath
@@ -137,7 +135,7 @@ contract ERC20Basic {
     uint256 public totalSupply;
     mapping(address => uint256) balances;
     function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
-    // Transfer is disabled for users, as these are PreSale tokens
+    // Transfer is disabled for users, as this contract is just a proof of purchase (valueless)
     //function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
@@ -164,9 +162,10 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public tokensSold;      // How many tokens sold in PreSale
     uint256 public weiRaised;       // amount of raised money in wei
 
+    // Reference value
     uint256 public constant ONE_MILLION = 1000000;
     // Maximum amount that can be sold during the Pre Sale period
-    uint256 public constant PRE_SALE_GMRP_TOKEN_CAP = 15 * ONE_MILLION * 1 ether; //15 Million GMRP Tokens
+    uint256 public constant PRE_SALE_GMRP_TOKEN_CAP = 15 * ONE_MILLION * 1 ether; // 15 Million GMRP Tokens
 
     /* Allowed Contribution in Ether */
     uint256 public constant PRE_SALE_30_ETH     = 30 ether;  // Minimum 30 Ether to get 25% Bonus Tokens
@@ -174,13 +173,14 @@ contract GimmerPreSale is ERC20Basic, Pausable {
     uint256 public constant PRE_SALE_3000_ETH   = 3000 ether;// Minimum 3000 Ether to get 40% Bonus Tokens
 
     /* Bonus Tokens based on the ETH Contributed in single transaction */
-    uint256 public constant TOKEN_RATE_25_PERCENT_BONUS = 1250; // 25% Bonus Tokens, when >= 30 ETH & < 300 ETH
-    uint256 public constant TOKEN_RATE_30_PERCENT_BONUS = 1300; // 30% Bonus Tokens, when >= 300 ETH & < 3000 ETH
-    uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 1400; // 40% Bonus Tokens, when >= 3000 ETH
+    uint256 public constant TOKEN_RATE_BASE_RATE = 2500; // Base Price for reference only
+    uint256 public constant TOKEN_RATE_25_PERCENT_BONUS = 3125; // 25% Bonus Tokens, when >= 30 ETH & < 300 ETH
+    uint256 public constant TOKEN_RATE_30_PERCENT_BONUS = 3250; // 30% Bonus Tokens, when >= 300 ETH & < 3000 ETH
+    uint256 public constant TOKEN_RATE_40_PERCENT_BONUS = 3500; // 40% Bonus Tokens, when >= 3000 ETH
 
     /* start and end timestamps where investments are allowed (both inclusive) */
-    uint256 public constant START_TIME  = 1511524800;   //GMT: Friday, 24 November 2017 12:00:00
-    uint256 public constant END_TIME    = 1514894400;   //GMT: Tuesday, 2 January  2018 12:00:00
+    uint256 public constant START_TIME = 1511524800; // GMT: Friday, 24 November 2017 12:00:00
+    uint256 public constant END_TIME = 1514894400; // GMT: Tuesday, 2 January  2018 12:00:00
 
     /* Token metadata */
     string public constant name = "GimmerPreSale Token";
