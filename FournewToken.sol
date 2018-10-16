@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FournewToken at 0x7498cbb06c9e045651092b87c0409abce6e7c690
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FournewToken at 0x463dbe9371c262ab32e443d721c2df3687ec3fb7
 */
 /**
  * This smart contract is modified 2017 by 4new.co.uk to assemble code for creation of 4NEW Token with
