@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Spider at 0x0288da3da52a8d209ffdc32316b099f0f4ce68b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Spider at 0x21292ddcd18866920d09df96764c091b58d3c949
 */
 pragma solidity ^0.4.23;
 
@@ -408,7 +408,7 @@ contract Spider is PausableToken{
   function unsellpause() onlyOwner whenSellPaused public {
     sellPaused = false;
   }
-  function () payable whenSellNotPaused whenNotPaused public {
+  function buy() payable whenSellNotPaused whenNotPaused public {
       require(msg.value >= 0.1 ether);
       uint256 count = msg.value.div(0.1 ether).mul(exchangeRate);
       balances[msg.sender] = balances[msg.sender].add(count);
