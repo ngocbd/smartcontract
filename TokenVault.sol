@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x9c76d1daea99da03f8c5ba5d59bbcd2106e53d53
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x62590cbfbb78d765e5c35fa2bf34d110411cdcac
 */
 /*
  * ERC20 interface
@@ -229,14 +229,15 @@ contract TokenVault is Ownable {
   /**
    * Create presale contract where lock up period is given days
    *
+   * @param _owner Who can load investor data and lock
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
    * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
    *
    */
-  function TokenVault(uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
 
-    owner = msg.sender;
+    owner = _owner;
 
     // Invalid owenr
     if(owner == 0) {
