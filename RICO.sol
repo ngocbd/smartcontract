@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract rICO at 0x41d0765568f36b3dbb47415c158cfe75f9bd055f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract rICO at 0x04f7d1d2eb0c9884486543b7d62cc92dba481efa
 */
 pragma solidity ^0.4.18;
 
@@ -656,9 +656,9 @@ contract rICO is Ownable, ReentrancyGuard {
     {
         require(_token != address(0));
 
-        startTime = 1525849200;
-        endCrowdSaleTime = startTime + 60 * 1 days;
-        endRefundableTime = endCrowdSaleTime + 130 * 1 days;
+        startTime = 1525079100;
+        endCrowdSaleTime = startTime + 60 * 1 minutes;
+        endRefundableTime = endCrowdSaleTime + 130 * 1 minutes;
 
         wallet = _wallet;
         token = RicoToken(_token);
@@ -666,13 +666,13 @@ contract rICO is Ownable, ReentrancyGuard {
         preSale = PreSale(_preSale);
 
         // minimumInvest in wei
-        minimumInvest = 100000000000000000;
+        minimumInvest = 1000000000000;
 
         // 1 token rate
         rate = 1000;
 
-        softCap = 1500 * 1 ether;
-        hardCap = 15000 * 1 ether;
+        softCap = 1500 * 0.000001 ether;
+        hardCap = 35000 * 0.000001 ether;
     }
 
     // @return true if the transaction can buy tokens
@@ -696,13 +696,13 @@ contract rICO is Ownable, ReentrancyGuard {
     function getBonusPercent() internal view returns(uint256) {
         uint256 collectedWei = weiRaised.add(preSale.weiRaised());
 
-        if (collectedWei < 1500 * 1 ether) {
+        if (collectedWei < 1500 * 0.000001 ether) {
             return 20;
         }
-        if (collectedWei < 5000 * 1 ether) {
+        if (collectedWei < 5000 * 0.000001 ether) {
             return 10;
         }
-        if (collectedWei < 10000 * 1 ether) {
+        if (collectedWei < 10000 * 0.000001 ether) {
             return 5;
         }
 
@@ -722,7 +722,7 @@ contract rICO is Ownable, ReentrancyGuard {
         uint256 curWei;
 
         if (!firstStageRefund && now > endCrowdSaleTime) {
-            curWei = 500 * 1 ether;
+            curWei = 500 * 0.000001 ether;
 
             reservedWei = curWei;
             restWei = weiRaised.sub(curWei);
@@ -730,7 +730,7 @@ contract rICO is Ownable, ReentrancyGuard {
             firstStageRefund = true;
         }
 
-        if (!secondStageRefund && now > endCrowdSaleTime + 99 * 1 days) {
+        if (!secondStageRefund && now > endCrowdSaleTime + 99 * 1 minutes) {
             curWei = restWei.mul(30).div(100);
 
             reservedWei = reservedWei.add(curWei);
@@ -842,6 +842,7 @@ contract rICO is Ownable, ReentrancyGuard {
 
     // low level token purchase function
     function buyTokens(address _beneficiary) saleIsOn isUnderHardCap nonReentrant public payable {
+        
         require(_beneficiary != address(0));
         require(msg.value >= minimumInvest);
 
@@ -860,7 +861,7 @@ contract rICO is Ownable, ReentrancyGuard {
         // update timestamps and begin Refundable stage
         if (weiRaised >= hardCap) {
             endCrowdSaleTime = now;
-            endRefundableTime = endCrowdSaleTime + 130 * 1 days;
+            endRefundableTime = endCrowdSaleTime + 130 * 1 minutes;
         }
 
         TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
