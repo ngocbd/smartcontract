@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HFConditionalTransfer at 0xf428b0641a4c1ce1d2f360e46180015a5bcc2346
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HFConditionalTransfer at 0xb671c3883307cf05bb3dff77a9754e87b4347195
 */
 contract HFConditionalTransfer {
     function transferIfHF(address to) {
