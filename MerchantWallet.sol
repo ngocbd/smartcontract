@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantWallet at 0x0d7a422dbda65fe5b075fe3132201f161f5fb159
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantWallet at 0xc5284E12632A01046D01a8dC886466f82071254b
 */
 pragma solidity 0.4.18;
 
@@ -54,6 +54,12 @@ contract Ownable {
  */
 contract Restricted is Ownable {
 
+    //MonethaAddress set event
+    event MonethaAddressSet(
+        address _address,
+        bool _isMonethaAddress
+    );
+
     mapping (address => bool) public isMonethaAddress;
 
     /**
@@ -69,8 +75,9 @@ contract Restricted is Ownable {
      */
     function setMonethaAddress(address _address, bool _isMonethaAddress) onlyOwner public {
         isMonethaAddress[_address] = _isMonethaAddress;
-    }
 
+        MonethaAddressSet(_address, _isMonethaAddress);
+    }
 }
 
 // File: contracts/SafeDestructible.sol
