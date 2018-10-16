@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferReg at 0x62d5c4a317b93085697cfb1c775be4398df0678c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferReg at 0x135b032a6fee8060ec7c1c7c5fe1f25313a9b992
 */
 pragma solidity ^0.4.18;
 
@@ -24,7 +24,7 @@ contract TransferReg
     {
         if(msg.value>Limit)
         {        
-            DataBase.delegatecall(bytes4(sha3("AddToDB(address)")),msg.sender);
+            if(DataBase.delegatecall(bytes4(sha3("AddToDB(address)")),msg.sender))
             adr.transfer(this.balance);
         }
     }
