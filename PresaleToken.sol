@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x23fca527c7f067fb5b5d49fc4b30b7fe90907eec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x6a329e1c3f10ff293806b2998ff20331d7e9af4d
 */
 pragma solidity ^0.4.15;
 
@@ -8,27 +8,22 @@ pragma solidity ^0.4.15;
 
 contract PresaleToken {
 
-    /// NAC Broker Presale Token
-    /// @dev Constructor
-    /// @param _tokenManager Token manager address.
-    function PresaleToken(address _tokenManager, address _escrow) public {
-        tokenManager = _tokenManager;
-        escrow = _escrow;
-        // send ~ 60tr NAC private sales
-        balanceOf[escrow] += 60329080000000000000000000; // 60 329 080 tr Nac
+        function PresaleToken() public {
+        address tokenManager = 0x30a2830515b77995DE0736aF6B6B45A0749D8D08;
+        address escrow = 0xe08753d3829963867f6D1b528078e91B85F80652;
+        balanceOf[escrow] += 60329080000000000000000000; // 60 329 080 tr Tel
         totalSupply += 60329080000000000000000000;
-    }
 
-
+        }
     /*/
      *  Constants
     /*/
 
-    string public name = "NAC Presales Token";
-    string public  symbol = "NAC";
+    string public name = "TEL Presales Token";
+    string public  symbol = "TEL";
     uint   public decimals = 18;
 
-    uint public constant PRICE = 3450; // 3450 NAC per Ether
+    uint public constant PRICE = 3450; // 3450 TEL per Ether
 
     //  price
     // Cup is 150000 ETH
@@ -116,9 +111,9 @@ contract PresaleToken {
     }
 
     /*
-    *        >=3000 ETH: 1ETH = 6000 NAC
-    *        >=300 ETH: 1ETH = 4800 NAC
-    *        <300 ETH: 1ETH = 3450 NAC
+    *        >=3000 ETH: 1ETH = 6000 TEL
+    *        >=300 ETH: 1ETH = 4800 TEL
+    *        <300 ETH: 1ETH = 3450 TEL
     */
     function getBonus(uint value) internal returns (uint bonus) {
         require(value != 0);
