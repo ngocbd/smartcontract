@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBooksAirdrop at 0xdbdc91423ef9f7b9da9bf3a12fb2eadc77af072d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBooksAirdrop at 0xc5cfbad9210cedc3109b532d4fe1a4ef268af2f1
 */
 pragma solidity ^0.4.13;
 
@@ -85,7 +85,6 @@ library SafeMath {
 contract TokenBooksAirdrop is Ownable{
 	using SafeMath for uint256;
 
-	mapping (address => uint) public airdropSupplyMap;
 	function TokenBooksAirdrop(){
 	}
 
@@ -93,7 +92,7 @@ contract TokenBooksAirdrop is Ownable{
     function withdrawCoinToOwner(address tokenAddress ,uint256 _value) external
 		onlyOwner
 	{
-		processFunding(tokenAddress,msg.sender,_value,1);
+		processFunding(tokenAddress,msg.sender,_value);
 	}
 	//??
     function airdrop(address tokenAddress,address [] _holders,uint256 paySize) external
@@ -103,16 +102,14 @@ contract TokenBooksAirdrop is Ownable{
         uint256 count = _holders.length;
         assert(paySize.mul(count) <= token.balanceOf(this));
         for (uint256 i = 0; i < count; i++) {
-			processFunding(tokenAddress,_holders [i],paySize,1);
-			airdropSupplyMap[tokenAddress] = airdropSupplyMap[tokenAddress].add(paySize); 
+			processFunding(tokenAddress,_holders [i],paySize);
         }
     }
-	function processFunding(address tokenAddress,address receiver,uint256 _value,uint256 _rate) internal
+	function processFunding(address tokenAddress,address receiver,uint256 _value) internal
 	{
 		ERC20 token = ERC20(tokenAddress);
-		uint256 amount=_value.mul(_rate);
-		require(amount<=token.balanceOf(this));
-		if(!token.transfer(receiver,amount)){
+		require(_value<=token.balanceOf(this));
+		if(!token.transfer(receiver,_value)){
 			revert();
 		}
 	}
