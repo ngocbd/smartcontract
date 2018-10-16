@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRND at 0xb113cc51d01dc3318d2bfce9abee4f6deff83656
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRND at 0x3a9c0090e0d8d26f5eb83cacbc6361c2d305a500
 */
 pragma solidity ^0.4.23;
 
@@ -433,30 +433,30 @@ contract TRND is Ownable, MintableToken, BurnableByOwner {
   
   address public addressPrivateSale;
   address public addressAirdrop;
-  address public addressPremineBounty;
-  address public addressPartnerships;
+  address public addressFoundersShare;
+  address public addressPartnershipsAndExchanges;
 
   uint256 public summPrivateSale;
   uint256 public summAirdrop;
-  uint256 public summPremineBounty;
-  uint256 public summPartnerships;
+  uint256 public summFoundersShare;
+  uint256 public summPartnershipsAndExchanges;
  // uint256 public totalSupply;
 
   function TRND() public {
     addressPrivateSale   = 0x6701DdeDBeb3155B8c908D0D12985A699B9d2272;
+    addressFoundersShare = 0x441B2B781a6b411f1988084a597e2ED4e0A7C352;
+    addressPartnershipsAndExchanges  = 0x5317709Ffae188eF4ed3BC3434a4EC629778721f; 
     addressAirdrop       = 0xd176131235B5B8dC314202a8B348CC71798B0874;
-    addressPremineBounty = 0xd176131235B5B8dC314202a8B348CC71798B0874;
-    addressPartnerships  = 0x441B2B781a6b411f1988084a597e2ED4e0A7C352; 
 	
     summPrivateSale   = 5000000 * (10 ** uint256(decimals)); 
-    summAirdrop       = 4500000 * (10 ** uint256(decimals));  
-    summPremineBounty = 1000000 * (10 ** uint256(decimals));  
-    summPartnerships  = 2500000 * (10 ** uint256(decimals));  		    
+    summFoundersShare = 5000000 * (10 ** uint256(decimals));  
+    summPartnershipsAndExchanges  = 7500000 * (10 ** uint256(decimals));  		    
+    summAirdrop       = 2500000 * (10 ** uint256(decimals));  
     // Founders and supporters initial Allocations
     mint(addressPrivateSale, summPrivateSale);
     mint(addressAirdrop, summAirdrop);
-    mint(addressPremineBounty, summPremineBounty);
-    mint(addressPartnerships, summPartnerships);
+    mint(addressFoundersShare, summFoundersShare);
+    mint(addressPartnershipsAndExchanges, summPartnershipsAndExchanges);
   }
 }
 
@@ -494,7 +494,6 @@ contract Crowdsale is Ownable {
 
   uint256 public totalSoldTokens;
   uint256 minPurchasePreICO;     
-  uint256 minPurchaseMainSale;   
   
   // how many token units a Contributor gets per wei
   uint256 public rateIcoPreICO;
@@ -521,11 +520,10 @@ contract Crowdsale is Ownable {
     //soft cap in tokens
     softcap            = 20000000 * 1 ether; 
     hardcapPreICO      =  5000000 * 1 ether; 
-    hardcapMainSale    = 80000000 * 1 ether; 
+    hardcapMainSale    = 75000000 * 1 ether; 
 	
     //min Purchase in wei = 0.1 ETH
     minPurchasePreICO      = 100000000000000000;
-    minPurchaseMainSale    = 100000000000000000;
     // start and end timestamps where investments are allowed
     //ico
     //start/end 
@@ -632,7 +630,6 @@ contract Crowdsale is Ownable {
     //icoMainSale  
     hardCap = hardcapMainSale.add(hardcapPreICO);
     if (now >= startIcoMainSale  && now < endIcoMainSale  && totalSoldTokens < hardCap){
-	  require(weiAmount >= minPurchaseMainSale);
       tokens = weiAmount.mul(rate);
       if (hardCap.sub(totalSoldTokens) < tokens){
         tokens = hardCap.sub(totalSoldTokens); 
