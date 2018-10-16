@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x48b4cb193b587c6f2dab1a9123a7bd5e7d490ced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x6467687d8aaacd7239ee639c8808624013997b92
 */
 contract SimpleStorage {
   uint storedData;
