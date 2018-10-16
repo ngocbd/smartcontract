@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TalkCrypto at 0x2315fc2e9be70d69c5d1cfb4766a56890980efce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TalkCrypto at 0x724674c596e8763c3462070fe570f1c3f5f713cd
 */
 pragma solidity ^0.4.4;
 
@@ -156,7 +156,7 @@ contract TalkCrypto is owned,StandardToken { // CHANGE THIS. Update the contract
         name = "TalkCrypto";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "TCO";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 100000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
