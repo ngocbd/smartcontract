@@ -1,8 +1,600 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoColors at 0x94cac9b8a8e597e5a934b91c0e5a06fe863bde13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoColors at 0xc70afb5612b16d36d2204052f81932064fd084c5
 */
-pragma solidity ^0.4.18; // solhint-disable-line
+pragma solidity ^0.4.20;
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+contract MintableToken {
+  event Mint(address indexed to, uint256 amount);
+  function leave() public;
+  function mint(address _to, uint256 _amount) public returns (bool);
+}
+
+contract CryptoColors is Pausable {
+  using SafeMath for uint256;
+
+  // CONSTANT
+
+  string public constant name = "Pixinch Color";
+  string public constant symbol = "PCLR";
+  uint public constant totalSupply = 16777216;
+
+  // PUBLIC VARs
+  // the total number of colors bought
+  uint256 public totalBoughtColor;
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
+  
+  // address where funds are collected
+  address public wallet;
+  // price for a color
+  uint256 public colorPrice;
+  // nb token supply when a color is bought
+  uint public supplyPerColor;
+  // the part on the supply that is collected by Pixinch
+  uint8 public ownerPart;
+
+  uint8 public bonusStep;
+  uint public nextBonusStepLimit = 500000;
+
+  // MODIFIER
+  
+  /**
+  * @dev Guarantees msg.sender is owner of the given token
+  * @param _index uint256 Index of the token to validate its ownership belongs to msg.sender
+  */
+  modifier onlyOwnerOf(uint _index) {
+    require(tree[_index].owner == msg.sender);
+    _;
+  }
+
+  /**
+  * @dev Garantee index and token are valid value
+  */
+  modifier isValid(uint _tokenId, uint _index) {
+    require(_validToken(_tokenId) && _validIndex(_index));
+    _;
+  }
+
+  /**
+  * @dev Guarantees all color have been sold
+  */
+  modifier whenActive() {
+    require(isCrowdSaleActive());
+    _;
+  }
+
+  /**
+  * @dev Guarantees all color have been sold
+  */
+  modifier whenGameActive() {
+    require(isGameActivated());
+    _;
+  }
+
+  // EVENTS
+  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+  event ColorPurchased(address indexed from, address indexed to, uint256 color, uint256 value);
+  event ColorReserved(address indexed to, uint256 qty);
+
+
+  // PRIVATE
+  // amount of raised money in wei and cap in wei
+  uint256 weiRaised;
+  uint256 cap;
+  // part of mint token for the wallet
+  uint8 walletPart;
+  // address of the mintable token
+  MintableToken token;
+  // starting color price
+  uint startPrice = 10 finney;
+
+  struct BlockRange {
+    uint start;
+    uint end;
+    uint next;
+    address owner;
+    uint price;
+  }
+
+  BlockRange[totalSupply+1] tree;
+  // minId available in the tree
+  uint minId = 1;
+  // min block index available in the tree;
+  uint lastBlockId = 0;
+  // mapping of owner and range index in the tree
+  mapping(address => uint256[]) ownerRangeIndex;
+  // Mapping from token ID to approved address
+  mapping (uint256 => address) tokenApprovals;
+  // pending payments
+  mapping(address => uint) private payments;
+  // mapping owner balance
+  mapping(address => uint) private ownerBalance;
+  
+
+  // CONSTRUCTOR
+
+  function CryptoColors(uint256 _startTime, uint256 _endTime, address _token, address _wallet) public {
+    require(_token != address(0));
+    require(_wallet != address(0));
+    require(_startTime > 0);
+    require(_endTime > now);
+
+    owner = msg.sender;
+    
+    colorPrice = 0.001 ether;
+    supplyPerColor = 4;
+    ownerPart = 50;
+    walletPart = 50;
+
+    startTime = _startTime;
+    endTime = _endTime;
+    cap = 98000 ether;
+    
+    token = MintableToken(_token);
+    wallet = _wallet;
+    
+    // booked for airdrop and rewards
+    reserveRange(owner, 167770);
+  }
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buy();
+  }
+
+  // VIEWS
+  
+  function myPendingPayment() public view returns (uint) {
+    return payments[msg.sender];
+  }
+
+  function isGameActivated() public view returns (bool) {
+    return totalSupply == totalBoughtColor || now > endTime;
+  }
+
+  function isCrowdSaleActive() public view returns (bool) {
+    return now < endTime && now >= startTime && weiRaised < cap;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return ownerBalance[_owner];
+  }
+
+  function ownerOf(uint256 _tokenId) whenGameActive public view returns (address owner) {
+    require(_validToken(_tokenId));
+    uint index = lookupIndex(_tokenId);
+    return tree[index].owner;
+  }
+
+  // return tokens index own by address (including history)
+  function tokensIndexOf(address _owner, bool _withHistory) whenGameActive public view returns (uint[] result) {
+    require(_owner != address(0));
+    if (_withHistory) {
+      return ownerRangeIndex[_owner];
+    } else {
+      uint[] memory indexes = ownerRangeIndex[_owner];
+      result = new uint[](indexes.length);
+      uint i = 0;
+      for (uint index = 0; index < indexes.length; index++) {
+        BlockRange storage br = tree[indexes[index]];
+        if (br.owner == _owner) {
+          result[i] = indexes[index];
+          i++;
+        }
+      }
+      return;
+    }
+  }
+
+  function approvedFor(uint256 _tokenId) whenGameActive public view returns (address) {
+    require(_validToken(_tokenId));
+    return tokenApprovals[_tokenId];
+  }
+
+  /**
+  * @dev Gets the range store at the specified index.
+  * @param _index The index to query the tree of.
+  * @return An Array of value is this order: start, end, owner, next, price.
+  */
+  function getRange(uint _index) public view returns (uint, uint, address, uint, uint) {
+    BlockRange storage range = tree[_index];
+    require(range.owner != address(0));
+    return (range.start, range.end, range.owner, range.next, range.price);
+  }
+
+  function lookupIndex(uint _tokenId) public view returns (uint index) {
+    return lookupIndex(_tokenId, 1);
+  }
+
+  function lookupIndex(uint _tokenId, uint _start) public view returns (uint index) {
+    if (_tokenId > totalSupply || _tokenId > minId) {
+      return 0;
+    }
+    BlockRange storage startBlock = tree[_tokenId];
+    if (startBlock.owner != address(0)) {
+      return _tokenId;
+    }
+    index = _start;
+    startBlock = tree[index];
+    require(startBlock.owner != address(0));
+    while (startBlock.end < _tokenId && startBlock.next != 0 ) {
+      index = startBlock.next;
+      startBlock = tree[index];
+    }
+    return;
+  }
+
+  // PAYABLE
+
+  function buy() public payable whenActive whenNotPaused returns (string thanks) {
+    require(msg.sender != address(0));
+    require(msg.value.div(colorPrice) > 0);
+    uint _nbColors = 0;
+    uint value = msg.value;
+    if (totalSupply > totalBoughtColor) {
+      (_nbColors, value) = buyColors(msg.sender, value);
+    }
+    if (totalSupply == totalBoughtColor) {
+      // require(value >= colorPrice && weiRaised.add(value) <= cap);
+      if (weiRaised.add(value) > cap) {
+        value = cap.sub(weiRaised);
+      }
+      _nbColors = _nbColors.add(value.div(colorPrice));
+      mintPin(msg.sender, _nbColors);
+      if (weiRaised == cap ) {
+        endTime = now;
+        token.leave();
+      }
+    }
+    forwardFunds(value);
+    return "thank you for your participation.";
+  }
+
+  function purchase(uint _tokenId) public payable whenGameActive {
+    uint _index = lookupIndex(_tokenId);
+    return purchaseWithIndex(_tokenId, _index);
+  }
+  
+  function purchaseWithIndex(uint _tokenId, uint _index) public payable whenGameActive isValid(_tokenId, _index) {
+    require(msg.sender != address(0));
+
+    BlockRange storage bRange = tree[_index];
+    require(bRange.start <= _tokenId && _tokenId <= bRange.end);
+    if (bRange.start < bRange.end) {
+      // split and update index;
+      _index = splitRange(_index, _tokenId, _tokenId);
+      bRange = tree[_index];
+    }
+
+    uint price = bRange.price;
+    address prevOwner = bRange.owner;
+    require(msg.value >= price && prevOwner != msg.sender);
+    if (prevOwner != address(0)) {
+      payments[prevOwner] = payments[prevOwner].add(price);
+      ownerBalance[prevOwner]--;
+    }
+    // add is less expensive than mul
+    bRange.price = bRange.price.add(bRange.price);
+    bRange.owner = msg.sender;
+
+    // update ownedColors
+    ownerRangeIndex[msg.sender].push(_index);
+    ownerBalance[msg.sender]++;
+
+    ColorPurchased(prevOwner, msg.sender, _tokenId, price);
+    msg.sender.transfer(msg.value.sub(price));
+  }
+
+  // PUBLIC
+
+  function updateToken(address _token) onlyOwner public {
+    require(_token != address(0));
+    token = MintableToken(_token);
+  }
+
+  function updateWallet(address _wallet) onlyOwner public {
+    require(_wallet != address(0));
+    wallet = _wallet;
+  }
+
+  function withdrawPayment() public whenGameActive {
+    uint refund = payments[msg.sender];
+    payments[msg.sender] = 0;
+    msg.sender.transfer(refund);
+  }
+
+  function transfer(address _to, uint256 _tokenId) public {
+    uint _index = lookupIndex(_tokenId);
+    return transferWithIndex(_to, _tokenId, _index);
+  }
+  
+  function transferWithIndex(address _to, uint256 _tokenId, uint _index) public isValid(_tokenId, _index) onlyOwnerOf(_index) {
+    BlockRange storage bRange = tree[_index];
+    if (bRange.start > _tokenId || _tokenId > bRange.end) {
+      _index = lookupIndex(_tokenId, _index);
+      require(_index > 0);
+      bRange = tree[_index];
+    }
+    if (bRange.start < bRange.end) {
+      _index = splitRange(_index, _tokenId, _tokenId);
+      bRange = tree[_index];
+    }
+    require(_to != address(0) && bRange.owner != _to);
+    bRange.owner = _to;
+    ownerRangeIndex[msg.sender].push(_index);
+    Transfer(msg.sender, _to, _tokenId);
+    ownerBalance[_to]++;
+    ownerBalance[msg.sender]--;
+  }
+
+  function approve(address _to, uint256 _tokenId) public {
+    uint _index = lookupIndex(_tokenId);
+    return approveWithIndex(_to, _tokenId, _index);
+  }
+  
+  function approveWithIndex(address _to, uint256 _tokenId, uint _index) public isValid(_tokenId, _index) onlyOwnerOf(_index) {
+    require(_to != address(0));
+    BlockRange storage bRange = tree[_index];
+    if (bRange.start > _tokenId || _tokenId > bRange.end) {
+      _index = lookupIndex(_tokenId, _index);
+      require(_index > 0);
+      bRange = tree[_index];
+    }
+    require(_to != bRange.owner);
+    if (bRange.start < bRange.end) {
+      splitRange(_index, _tokenId, _tokenId);
+    }
+    tokenApprovals[_tokenId] = _to;
+    Approval(msg.sender, _to, _tokenId);
+  }
+
+  function takeOwnership(uint256 _tokenId) public {
+    uint index = lookupIndex(_tokenId);
+    return takeOwnershipWithIndex(_tokenId, index);
+  }
+
+  function takeOwnershipWithIndex(uint256 _tokenId, uint _index) public isValid(_tokenId, _index) {
+    require(tokenApprovals[_tokenId] == msg.sender);
+    BlockRange storage bRange = tree[_index];
+    require(bRange.start <= _tokenId && _tokenId <= bRange.end);
+    ownerBalance[bRange.owner]--;
+    bRange.owner = msg.sender;
+    ownerRangeIndex[msg.sender].push(_index); 
+    ownerBalance[msg.sender]++;
+    Transfer(bRange.owner, msg.sender, _tokenId);
+    delete tokenApprovals[_tokenId];
+  }
+
+
+  // INTERNAL
+  function forwardFunds(uint256 value) private {
+    wallet.transfer(value);
+    weiRaised = weiRaised.add(value);
+    msg.sender.transfer(msg.value.sub(value));
+  }
+
+  function mintPin(address _to, uint _nbColors) private {
+    uint _supply = supplyPerColor.mul(_nbColors);
+    if (_supply == 0) {
+      return;
+    }
+    uint _ownerPart = _supply.mul(ownerPart)/100;
+    token.mint(_to, uint256(_ownerPart.mul(100000000)));
+    uint _walletPart = _supply.mul(walletPart)/100;
+    token.mint(wallet, uint256(_walletPart.mul(100000000)));
+  }
+
+  function buyColors(address _to, uint256 value) private returns (uint _nbColors, uint valueRest) {
+    _nbColors = value.div(colorPrice);
+    if (bonusStep < 3 && totalBoughtColor.add(_nbColors) > nextBonusStepLimit) {
+      uint max = nextBonusStepLimit.sub(totalBoughtColor);
+      uint val = max.mul(colorPrice);
+      if (max == 0 || val > value) {
+        return (0, value);
+      }
+      valueRest = value.sub(val);
+      reserveColors(_to, max);
+      uint _c;
+      uint _v;
+      (_c, _v) = buyColors(_to, valueRest);
+      return (_c.add(max), _v.add(val));
+    }
+    reserveColors(_to, _nbColors);
+    return (_nbColors, value);
+  }
+
+  function reserveColors(address _to, uint _nbColors) private returns (uint) {
+    if (_nbColors > totalSupply - totalBoughtColor) {
+      _nbColors = totalSupply - totalBoughtColor;
+    }
+    if (_nbColors == 0) {
+      return;
+    }
+    reserveRange(_to, _nbColors);
+    ColorReserved(_to, _nbColors);
+    mintPin(_to, _nbColors);
+    checkForSteps();
+    return _nbColors;
+  }
+
+  function checkForSteps() private {
+    if (bonusStep < 3 && totalBoughtColor >= nextBonusStepLimit) {
+      if ( bonusStep == 0) {
+        colorPrice = colorPrice + colorPrice;
+      } else {
+        colorPrice = colorPrice + colorPrice - (1 * 0.001 finney);
+      }
+      bonusStep = bonusStep + 1;
+      nextBonusStepLimit = nextBonusStepLimit + (50000 + (bonusStep+1) * 100000);
+    }
+    if (isGameActivated()) {
+      colorPrice = 1 finney;
+      ownerPart = 70;
+      walletPart = 30;
+      endTime = now.add(120 hours);
+    }
+  }
+
+  function _validIndex(uint _index) internal view returns (bool) {
+    return _index > 0 && _index < tree.length;
+  }
+
+  function _validToken(uint _tokenId) internal pure returns (bool) {
+    return _tokenId > 0 && _tokenId <= totalSupply;
+  }
+
+  function reserveRange(address _to, uint _nbTokens) internal {
+    require(_nbTokens <= totalSupply);
+    BlockRange storage rblock = tree[minId];
+    rblock.start = minId;
+    rblock.end = minId.add(_nbTokens).sub(1);
+    rblock.owner = _to;
+    rblock.price = startPrice;
+    
+    rblock = tree[lastBlockId];
+    rblock.next = minId;
+    
+    lastBlockId = minId;
+    ownerRangeIndex[_to].push(minId);
+    
+    ownerBalance[_to] = ownerBalance[_to].add(_nbTokens);
+    minId = minId.add(_nbTokens);
+    totalBoughtColor = totalBoughtColor.add(_nbTokens);
+  }
+
+  function splitRange(uint index, uint start, uint end) internal returns (uint) {
+    require(index > 0);
+    require(start <= end);
+    BlockRange storage startBlock = tree[index];
+    require(startBlock.start < startBlock.end && startBlock.start <= start && startBlock.end >= end);
+
+    BlockRange memory rblockUnique = tree[start];
+    rblockUnique.start = start;
+    rblockUnique.end = end;
+    rblockUnique.owner = startBlock.owner;
+    rblockUnique.price = startBlock.price;
+    
+    uint nextStart = end.add(1);
+    if (nextStart <= totalSupply) {
+      rblockUnique.next = nextStart;
+
+      BlockRange storage rblockEnd = tree[nextStart];
+      rblockEnd.start = nextStart;
+      rblockEnd.end = startBlock.end;
+      rblockEnd.owner = startBlock.owner;
+      rblockEnd.next = startBlock.next;
+      rblockEnd.price = startBlock.price;
+    }
+
+    if (startBlock.start < start) {
+      startBlock.end = start.sub(1);
+    } else {
+      startBlock.end = start;
+    }
+    startBlock.next = start;
+    tree[start] = rblockUnique;
+    // update own color
+    if (rblockUnique.next != startBlock.next) {
+      ownerRangeIndex[startBlock.owner].push(startBlock.next);
+    }
+    if (rblockUnique.next != 0) {
+      ownerRangeIndex[startBlock.owner].push(rblockUnique.next);
+    }
+    
+    return startBlock.next;
+  }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -42,435 +634,5 @@ library SafeMath {
     uint256 c = a + b;
     assert(c >= a);
     return c;
-  }
-}
-
-contract CryptoColors {
-  using SafeMath for uint256;
-
-  /*** EVENTS ***/
-
-  /// @dev The Birth event is fired whenever a new token comes into existence.
-  event Birth(uint256 tokenId, string name, address owner);
-
-  /// @dev The TokenSold event is fired whenever a token is sold.
-  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name);
-
-  /// @dev Referrer payout completed
-  event Payout(address referrer, uint256 balance);
-
-  /// @dev Referrer registered
-  event ReferrerRegistered(address referrer, address referral);
-
-  /// @dev Transfer event as defined in current draft of ERC721.
-  ///  ownership is assigned, including births.
-  event Transfer(address from, address to, uint256 tokenId);
-
-  event Approval(address indexed owner, address indexed approved, uint256 tokenId);
-
-  /*** CONSTANTS ***/
-
-  /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-  string public constant NAME = "CryptoColors"; // solhint-disable-line
-  string public constant SYMBOL = "CLRS"; // solhint-disable-line
-
-  uint256 private startingPrice = 0.001 ether;
-  uint256 private firstStepLimit =  0.02 ether;
-  uint256 private secondStepLimit = 0.5 ether;
-  uint256 private thirdStepLimit = 2 ether;
-  uint256 private forthStepLimit = 5 ether;
-
-  /*** STORAGE ***/
-
-  /// @dev A mapping from token IDs to the address that owns them. All tokens have
-  ///  some valid owner address.
-  mapping (uint256 => address) public tokenIndexToOwner;
-
-  /// @dev A mapping from owner address to count of tokens that address owns.
-  /// Used internally inside balanceOf() to resolve ownership count.
-  mapping (address => uint256) private ownershipTokenCount;
-
-  /// @dev A mapping from TokenIDs to an address that has been approved to call
-  /// transferFrom(). Each Token can only have one approved address for transfer
-  ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public tokenIndexToApproved;
-
-  /// @dev A mapping from TokenIDs to the price of the token.
-  mapping (uint256 => uint256) private tokenIndexToPrice;
-
-  /// @dev Current referrer balance
-  mapping (address => uint256) private referrerBalance;
-
-  /// @dev A mapping from a token buyer to their referrer
-  mapping (address => address) private referralToRefferer;
-
-  /// The addresses of the accounts (or contracts) that can execute actions within each roles.
-  address public ceoAddress;
-  address public cooAddress;
-
-  /*** DATATYPES ***/
-  struct Token {
-    string name;
-  }
-
-  Token[] private tokens;
-
-  /*** ACCESS MODIFIERS ***/
-  /// @dev Access modifier for CEO-only functionality
-  modifier onlyCEO() {
-    require(msg.sender == ceoAddress);
-    _;
-  }
-
-  /// @dev Access modifier for COO-only functionality
-  modifier onlyCOO() {
-    require(msg.sender == cooAddress);
-    _;
-  }
-
-  /// Access modifier for contract owner only functionality
-  modifier onlyCLevel() {
-    require(
-      msg.sender == ceoAddress ||
-      msg.sender == cooAddress
-    );
-    _;
-  }
-
-  /*** CONSTRUCTOR ***/
-  function CryptoColors() public {
-    ceoAddress = msg.sender;
-    cooAddress = msg.sender;
-  }
-
-  /*** PUBLIC FUNCTIONS ***/
-  /// @notice Grant another address the right to transfer token via takeOwnership() and transferFrom().
-  /// @param _to The address to be granted transfer approval. Pass address(0) to
-  ///  clear all approvals.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function approve(
-    address _to,
-    uint256 _tokenId
-  )
-  public
-  {
-    // Caller must own token.
-    require(_owns(msg.sender, _tokenId));
-
-    tokenIndexToApproved[_tokenId] = _to;
-
-    Approval(msg.sender, _to, _tokenId);
-  }
-
-  /// For querying balance of a particular account
-  /// @param _owner The address for balance query
-  /// @dev Required for ERC-721 compliance.
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return ownershipTokenCount[_owner];
-  }
-
-  /// @dev Returns next token price
-  function _calculateNextPrice(uint256 _sellingPrice) private view returns (uint256 price) {
-    if (_sellingPrice < firstStepLimit) {
-      // first stage
-      return _sellingPrice.mul(200).div(100);
-    } else if (_sellingPrice < secondStepLimit) {
-      // second stage
-     return _sellingPrice.mul(135).div(100);
-    } else if (_sellingPrice < thirdStepLimit) {
-      // third stage
-      return _sellingPrice.mul(125).div(100);
-    } else if (_sellingPrice < forthStepLimit) {
-      // forth stage
-      return _sellingPrice.mul(120).div(100);
-    } else {
-      // fifth stage
-      return _sellingPrice.mul(115).div(100);
-    }
-  }
-
-  /// @dev Creates a new Token with the given name.
-  function createContractToken(string _name) public onlyCLevel {
-    _createToken(_name, address(this), startingPrice);
-  }
-
-  /// @notice Returns all the relevant information about a specific token.
-  /// @param _tokenId The tokenId of the token of interest.
-  function getToken(uint256 _tokenId) public view returns (
-    string tokenName,
-    uint256 sellingPrice,
-    address owner
-  ) {
-    Token storage token = tokens[_tokenId];
-    tokenName = token.name;
-    sellingPrice = tokenIndexToPrice[_tokenId];
-    owner = tokenIndexToOwner[_tokenId];
-  }
-
-  /// @dev Get buyer referrer.
-  function getReferrer(address _address) public view returns (address referrerAddress) {
-    return referralToRefferer[_address];
-  }
-
-  /// @dev Get referrer balance.
-  function getReferrerBalance(address _address) public view returns (uint256 totalAmount) {
-    return referrerBalance[_address];
-  }
-  
-
-  function implementsERC721() public pure returns (bool) {
-    return true;
-  }
-
-  /// @dev Required for ERC-721 compliance.
-  function name() public pure returns (string) {
-    return NAME;
-  }
-
-  /// For querying owner of token
-  /// @param _tokenId The tokenID for owner inquiry
-  /// @dev Required for ERC-721 compliance.
-  function ownerOf(uint256 _tokenId)
-    public
-    view
-    returns (address owner)
-  {
-    owner = tokenIndexToOwner[_tokenId];
-    require(owner != address(0));
-  }
-
-  function payout(address _to) public onlyCLevel {
-    _payout(_to);
-  }
-
-  function payoutToReferrer() public payable {
-    address referrer = msg.sender;
-    uint256 totalAmount = referrerBalance[referrer];
-    if (totalAmount > 0) {
-      msg.sender.transfer(totalAmount);
-      referrerBalance[referrer] = 0;
-      Payout(referrer, totalAmount);
-    }
-  }
-
-  function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    return tokenIndexToPrice[_tokenId];
-  }
-
-    // Purchase token and increse referrer payout
-  function purchase(uint256 _tokenId, address _referrer) public payable {
-    address newOwner = msg.sender;
-    address oldOwner = tokenIndexToOwner[_tokenId];
-    uint256 sellingPrice = tokenIndexToPrice[_tokenId];
-
-    // Making sure token owner is not sending to self
-    require(oldOwner != newOwner);
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_addressNotNull(newOwner));
-    // Making sure sent amount is greater than or equal to the sellingPrice
-    require(msg.value >= sellingPrice);
-
-    uint256 payment = sellingPrice.mul(95).div(100);
-    uint256 purchaseExcess = msg.value.sub(sellingPrice);
-    // Calculate 15% ref bonus
-    uint256 referrerPayout = sellingPrice.sub(payment).mul(15).div(100);   
-    address storedReferrer = getReferrer(newOwner);
-
-    // If a referrer is registered
-    if (_addressNotNull(storedReferrer)) {
-      // Increase referrer balance
-      referrerBalance[storedReferrer] += referrerPayout;
-    } else if (_addressNotNull(_referrer)) {
-      // Associate a referral with the referrer
-      referralToRefferer[newOwner] = _referrer;
-      // Notify subscribers about new referrer
-      ReferrerRegistered(_referrer, newOwner);
-      referrerBalance[_referrer] += referrerPayout;      
-    } 
-
-    // Update prices
-    tokenIndexToPrice[_tokenId] = _calculateNextPrice(sellingPrice);
-
-    _transfer(oldOwner, newOwner, _tokenId);
-
-    // Pay previous tokenOwner if owner is not contract
-    if (oldOwner != address(this)) {
-      oldOwner.transfer(payment);
-    }
-
-    TokenSold(_tokenId, sellingPrice, tokenIndexToPrice[_tokenId], oldOwner, newOwner, tokens[_tokenId].name);
-
-    // Transfer excess back to owner
-    if (purchaseExcess > 0) {
-      msg.sender.transfer(purchaseExcess);
-    }
-  }
-
-  /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
-  /// @param _newCEO The address of the new CEO
-  function setCEO(address _newCEO) public onlyCEO {
-    require(_newCEO != address(0));
-
-    ceoAddress = _newCEO;
-  }
-
-  /// @dev Assigns a new address to act as the COO. Only available to the current COO.
-  /// @param _newCOO The address of the new COO
-  function setCOO(address _newCOO) public onlyCEO {
-    require(_newCOO != address(0));
-
-    cooAddress = _newCOO;
-  }
-
-  /// @dev Required for ERC-721 compliance.
-  function symbol() public pure returns (string) {
-    return SYMBOL;
-  }
-
-  /// @notice Allow pre-approved user to take ownership of a token
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function takeOwnership(uint256 _tokenId) public {
-    address newOwner = msg.sender;
-    address oldOwner = tokenIndexToOwner[_tokenId];
-
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_addressNotNull(newOwner));
-
-    // Making sure transfer is approved
-    require(_approved(newOwner, _tokenId));
-
-    _transfer(oldOwner, newOwner, _tokenId);
-  }
-
-  /// @param _owner The owner whose tokens we are interested in.
-  /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-  ///  expensive (it walks the entire Tokens array looking for tokens belonging to owner),
-  ///  but it also returns a dynamic array, which is only supported for web3 calls, and
-  ///  not contract-to-contract calls.
-  function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
-    uint256 tokenCount = balanceOf(_owner);
-    if (tokenCount == 0) {
-        // Return an empty array
-      return new uint256[](0);
-    } else {
-      uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalTokens = totalSupply();
-      uint256 resultIndex = 0;
-
-      uint256 tokenId;
-      for (tokenId = 0; tokenId <= totalTokens; tokenId++) {
-        if (tokenIndexToOwner[tokenId] == _owner) {
-          result[resultIndex] = tokenId;
-          resultIndex++;
-        }
-      }
-      return result;
-    }
-  }
-
-  /// For querying totalSupply of token
-  /// @dev Required for ERC-721 compliance.
-  function totalSupply() public view returns (uint256 total) {
-    return tokens.length;
-  }
-
-  /// Owner initates the transfer of the token to another account
-  /// @param _to The address for the token to be transferred to.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function transfer(
-    address _to,
-    uint256 _tokenId
-  )
-  public
-  {
-    require(_owns(msg.sender, _tokenId));
-    require(_addressNotNull(_to));
-
-    _transfer(msg.sender, _to, _tokenId);
-  }
-
-  /// Third-party initiates transfer of token from address _from to address _to
-  /// @param _from The address for the token to be transferred from.
-  /// @param _to The address for the token to be transferred to.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId
-  )
-  public
-  {
-    require(_owns(_from, _tokenId));
-    require(_approved(_to, _tokenId));
-    require(_addressNotNull(_to));
-
-    _transfer(_from, _to, _tokenId);
-  }
-
-  /*** PRIVATE FUNCTIONS ***/
-  /// Safety check on _to address to prevent against an unexpected 0x0 default.
-  function _addressNotNull(address _to) private pure returns (bool) {
-    return _to != address(0);
-  }
-
-  /// For checking approval of transfer for address _to
-  function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return tokenIndexToApproved[_tokenId] == _to;
-  }
-
-  /// For creating Token
-  function _createToken(string _name, address _owner, uint256 _price) private {
-    Token memory _token = Token({
-      name: _name
-    });
-    uint256 newTokenId = tokens.push(_token) - 1;
-
-    // It's probably never going to happen, 4 billion tokens are A LOT, but
-    // let's just be 100% sure we never let this happen.
-    require(newTokenId == uint256(uint32(newTokenId)));
-
-    Birth(newTokenId, _name, _owner);
-
-    tokenIndexToPrice[newTokenId] = _price;
-
-    // This will assign ownership, and also emit the Transfer event as
-    // per ERC721 draft
-    _transfer(address(0), _owner, newTokenId);
-  }
-
-  /// Check for token ownership
-  function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == tokenIndexToOwner[_tokenId];
-  }
-
-  /// For paying out balance on contract
-  function _payout(address _to) private {
-    if (_to == address(0)) {
-      ceoAddress.transfer(this.balance);
-    } else {
-      _to.transfer(this.balance);
-    }
-  }
-
-  /// @dev Assigns ownership of a specific Token to an address.
-  function _transfer(address _from, address _to, uint256 _tokenId) private {
-    // Since the number of tokens is capped to 2^32 we can't overflow this
-    ownershipTokenCount[_to]++;
-    //transfer ownership
-    tokenIndexToOwner[_tokenId] = _to;
-
-    // When creating new tokens _from is 0x0, but we can't account that address.
-    if (_from != address(0)) {
-      ownershipTokenCount[_from]--;
-      // clear any previously approved ownership exchange
-      delete tokenIndexToApproved[_tokenId];
-    }
-
-    // Emit the transfer event.
-    Transfer(_from, _to, _tokenId);
   }
 }
