@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0xf3a8f103574bc64358e372ed68e95db0b2bb0936
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonTransform at 0xa6ff73743b2fd8dedfacea4067a51ef86d249491
 */
 pragma solidity ^0.4.16;
 
@@ -38,7 +38,7 @@ contract BasicAccessControl {
     // address[] public moderators;
     uint16 public totalModerators = 0;
     mapping (address => bool) public moderators;
-    bool public isMaintaining = true;
+    bool public isMaintaining = false;
 
     function BasicAccessControl() public {
         owner = msg.sender;
@@ -251,10 +251,8 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
     address public tradeContract;
     
     // events
+    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
     event EventLayEgg(address indexed trainer, uint64 objId, uint64 eggId);
-    event EventHatchEgg(address indexed trainer, uint64 eggId, uint64 objId);
-    event EventTransform(address indexed trainer, uint64 oldObjId, uint64 newObjId);
-    event EventRelease(address indexed trainer, uint64 objId);
     
     // modifier
     
@@ -592,7 +590,8 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         
         uint64 objId = addNewObj(msg.sender, egg.classId);
         transformData.setHatchedEgg(egg.eggId, objId);
-        EventHatchEgg(msg.sender, egg.eggId, objId);
+        
+        Transfer(address(0), msg.sender, objId);
     }
     
     function removeHatchingTime() isActive requireDataContract requireTransformDataContract external payable  {
@@ -693,7 +692,9 @@ contract EtheremonTransform is EtheremonEnum, BasicAccessControl, SafeMath {
         // remove old one
         data.removeMonsterIdMapping(msg.sender, _objId);
         transformData.setTranformed(_objId, newObjId);
-        EventTransform(msg.sender, _objId, newObjId);
+        
+        Transfer(msg.sender, address(0), _objId);
+        Transfer(address(0), msg.sender, newObjId);
     }
     
     function buyEgg() isActive requireDataContract requireTransformDataContract external payable {
