@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Tokens at 0x1e9eedb83f89c2724d76715a0edabd43549b83ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRB_Tokens at 0xf4c88b85e10221f889ca7dd9e300fc9b9c74a3ba
 */
 pragma solidity ^0.4.14;
 
@@ -50,7 +50,7 @@ contract WhiteListAccess {
 // ----------------------------------------------------------------------------
 contract NRB_Common is WhiteListAccess {
     
-    // Ownership    
+    string public name;             // contract's name
     bool _init;
     
     function NRB_Common() public { ETH_address = 0x1; }
@@ -104,6 +104,7 @@ contract NRB_Tokens is NRB_Common {
     }
 
     function NRB_Tokens() public {
+        name = "NRB_Tokens";
         tokenlenth = 1;
         registerAndValidateToken(ETH_address, "Ethereum", "ETH", 18, 7812500000000000);
     }
@@ -189,4 +190,16 @@ contract NRB_Tokens is NRB_Common {
         return (flc, next);
     }
 
+    // recover tokens sent accidentally
+    function _withdrawal(address _token) public {
+        uint _balance =  ERC20Interface(_token).balanceOf(address(this));
+        if (_balance > 0) {
+            ERC20Interface(_token).transfer(owner, _balance);
+        }
+    }
+    
+    // Don't accept ETH
+    function () public payable {
+        revert();
+    }
 }
