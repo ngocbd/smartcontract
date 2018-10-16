@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumDice at 0x33A8eA1c8C6294C9F65f3DAd7CA7f037BD09F951
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumDice at 0x566c1023aaF10180B4EB9533050fbf91D7792aF1
 */
 //***********************************Ether Dice Game
 //
@@ -50,7 +50,7 @@ contract EthereumDice {
 //********************************************ENTER
 
   function enter() {
-    if (msg.value >10 finney) {
+    if (msg.value >= MinDeposit) {
 
     uint amount=msg.value;
     uint payout;
@@ -78,35 +78,32 @@ contract EthereumDice {
       Jackpot += amount;               	//remaining to the jackpot
 
 
-    // payout fees to the owner
+    // payout Fees to the owner
      if (Fees != 0) 
      {
       	owner.send(Fees);		//send fee to owner
 	Total_Payouts+=Fees;        //update paid out amount
      }
  
-    if (msg.value >= MinDeposit) 
-     {
-	     
+
    //payout to participants	
      if(list_length%40==0 && Jackpot > 0)   				//every 40th player wins the jackpot if  it's not 0
 	{
 	gamblerlist[list_length].etherAddress.send(Jackpot);         //send pay out to participant
 	Total_Payouts += Jackpot;               					//update paid out amount   
-	Jackpot=0;									//jackpot update
+	Jackpot=0;									//Jackpot update
 	}
      else   											//you either win the jackpot or the balance, but not both in 1 round
 	if(uint(sha3(gamblerlist[list_length].etherAddress)) % 2==0 && list_length % 2==0 && Bankroll > 0) 	//if the hashed length of your address is even, 
 	{ 												   								//which is a 25% chance, then you get paid out all balance!
 	gamblerlist[list_length].etherAddress.send(Bankroll);        //send pay out to participant
 	Total_Payouts += Bankroll;               					//update paid out amount
-	Bankroll = 0;                      						//bankroll update
+	Bankroll = 0;                      						//Bankroll update
 	}
     
     
     
     //enter function ends
-	}
     }
   }
 
