@@ -1,13 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EROSCOIN at 0x7f62ffa6b311b5cedec75e198b0d2f0ed3acf3a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EROSCOIN at 0x245fc6d0c59e5b9e6118088b48465e3757b31804
 */
 pragma solidity ^0.4.16;
-// EROSCOIN Alpha contract based on the full ERC 20 Token standard
+// EROSCOIN Token contract based on the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
+// Smartcontract for EROSCOIN, for more information visit https://eroscoin.org
 // Symbol: ERO
 // Status: ERC20 Verified
 
-contract EROSToken { 
+contract EROSCOINToken { 
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
     is replaced with:
@@ -54,7 +55,7 @@ contract EROSToken {
 
 
 /**
- * EROSToken Math operations with safety checks to avoid unnecessary conflicts
+ * EROSCOINToken Math operations with safety checks to avoid unnecessary conflicts
  */
 
 library EROMaths {
@@ -122,7 +123,7 @@ contract Ownable {
 }
 
 
-contract EroStandardToken is EROSToken, Ownable {
+contract EroStandardToken is EROSCOINToken, Ownable {
     
     using EROMaths for uint256;
     mapping (address => uint256) balances;
@@ -143,11 +144,12 @@ contract EroStandardToken is EROSToken, Ownable {
     function transfer(address _to, uint256 _value) returns (bool success) {
         if (frozenAccount[msg.sender]) return false;
         require(
-            (balances[msg.sender] >= _value)
-            && (_value > 0)
-            && (_to != address(0))
-            && (balances[_to].add(_value) >= balances[_to])
-            && (msg.data.length >= (2 * 32) + 4));
+            (balances[msg.sender] >= _value) // Check if the sender has enough
+            && (_value > 0) // Don't allow 0value transfer
+            && (_to != address(0)) // Prevent transfer to 0x0 address
+            && (balances[_to].add(_value) >= balances[_to]) // Check for overflows
+            && (msg.data.length >= (2 * 32) + 4)); //mitigates the ERC20 short address attack
+            //most of these things are not necesary
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -158,12 +160,13 @@ contract EroStandardToken is EROSToken, Ownable {
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         if (frozenAccount[msg.sender]) return false;
         require(
-            (allowed[_from][msg.sender] >= _value) 
-            && (balances[_from] >= _value) 
-            && (_value > 0) 
-            && (_to != address(0)) 
-            && (balances[_to].add(_value) >= balances[_to])
-            && (msg.data.length >= (2 * 32) + 4) 
+            (allowed[_from][msg.sender] >= _value) // Check allowance
+            && (balances[_from] >= _value) // Check if the sender has enough
+            && (_value > 0) // Don't allow 0value transfer
+            && (_to != address(0)) // Prevent transfer to 0x0 address
+            && (balances[_to].add(_value) >= balances[_to]) // Check for overflows
+            && (msg.data.length >= (2 * 32) + 4) //mitigates the ERC20 short address attack
+            //most of these things are not necesary
         );
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -201,11 +204,11 @@ contract EROSCOIN is EroStandardToken {
     Some wallets/interfaces might not even bother to look at this information.
     */
     
-    uint256 constant public decimals = 8; //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 TTC = 980 base units. It's like comparing 1 wei to 1 ether.
-    uint256 public totalSupply = 240 * (10**7) * 10**8 ; // 2.4 billion tokens, 8 decimal places
-    string constant public name = "EROSCOIN"; //fancy name: eg EROSCOIN Alpha
+    uint256 constant public decimals = 8; //How many decimals to show.
+    uint256 public totalSupply = 24 * (10**7) * 10**8 ; // 240 million tokens, 8 decimal places
+    string constant public name = "EROSCOIN"; //fancy name: eg EROSCOIN
     string constant public symbol = "ERO"; //An identifier: eg ERO
-    string constant public version = "v1.1.3";       //Version 0.1.6 standard. Just an arbitrary versioning scheme.
+    string constant public version = "v1.3";       //Version 1.1.5 standard. Just an arbitrary versioning scheme.
     
     function EROSCOIN(){
         balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
