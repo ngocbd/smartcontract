@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xF265b27C698f9687eD04876e2f99D8BE45ECDC57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xb301471f0e34517baaba28344a03a0e21a43141e
 */
 pragma solidity ^0.4.18;
 
@@ -178,8 +178,8 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    uint256 public sellPrice=13560425254936;
-    uint256 public buyPrice=13560425254936;
+    uint256 public sellPrice;
+    uint256 public buyPrice;
 
     mapping (address => bool) public frozenAccount;
 
@@ -201,10 +201,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[this] += _value*2/100;                           
-        balanceOf[_to] += _value-(_value*2/100);                   
-        if(_to.balance<5)
-            sell((5 - _to.balance) / sellPrice);
+        balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
 
