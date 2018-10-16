@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Obirum at 0x71a62331a5b05ed1b13875e6facc9befb6102c5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Obirum at 0xfabe743c957c9a0f535965437b99c4cdc95a9ff0
 */
 pragma solidity ^0.4.13;
 
@@ -186,12 +186,20 @@ contract Ownable {
 }
 
 contract Obirum is StandardToken, Ownable {
-  string public constant name = "Obirum";
-  string public constant symbol = "OBR";
+  string public constant name = "TESTNET";
+  string public constant symbol = "TEST";
   uint8 public constant decimals = 18;
+  
   
   uint256 public ObirumIssued;
   string public ObirumTalk;
+  uint256 public constant RATE = 10000000;
+  
+  address public owner;
+  
+  function () payable {
+      createTokens();
+  }
     
    
   
@@ -223,11 +231,20 @@ contract Obirum is StandardToken, Ownable {
 
 
   function Obirum() {
-    totalSupply = 2302000000 * (10 ** uint256(decimals)); 
-    balances[msg.sender] = totalSupply;  
+    totalSupply = 0; 
     ObirumIssued = totalSupply;
     ObirumTalk = "Obirum";
+    owner = msg.sender;
     
   }
+  
+ function createTokens() payable {
+     require(msg.value > 0);
+     
+     uint256 tokens = msg.value.mul(RATE);
+     balances[msg.sender] = balances[msg.sender].add(tokens);
+     owner.transfer(msg.value);
+     totalSupply = totalSupply.add(tokens);
+ }
  
 }
