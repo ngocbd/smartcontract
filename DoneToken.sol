@@ -1,222 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoneToken at 0x2a6b4bedadd639c31429949836481963933bb59d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoneToken at 0x91126cfa7db2983527b0b749cc8a61fdeffedc28
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.14;
 
-/* 
-`* is owned
-*/
-contract owned {
-
-    address public owner;
-
-    function owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) revert();
-        _;
-    }
-
-    function ownerTransferOwnership(address newOwner)
-        onlyOwner
-    {
-        owner = newOwner;
-    }
-
+contract ForeignToken {
+    function balanceOf(address _owner) constant returns (uint256);
+    function transfer(address _to, uint256 _value) returns (bool);
 }
 
-/* 
-* safe math
-*/
-contract DSSafeAddSub {
 
-    function safeToAdd(uint a, uint b) internal returns (bool) {
-        return (a + b >= a);
+
+
+
+contract DoneToken {
+    
+    address owner = msg.sender;
+ 
+ 
+    bool public purchasingAllowed = false;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+
+    uint256 public totalContribution = 0;
+
+    uint256 public totalSupply = 0;
+
+    uint256 constant September1 = 1504274400; //2 PM GMT 9/1/2017
+    uint256 constant August25 = 1503669600; //2 PM GMT 8/25/2017
+    uint256 constant testtime = 1502003216; //20 minutes
+
+    function name() constant returns (string) { return "Donation Efficiency Token"; }
+    function symbol() constant returns (string) { return "DONE"; }
+    function decimals() constant returns (uint8) { return 16; }
+    
+    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
+    
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if(msg.data.length < (2 * 32) + 4) { throw; }
+
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[msg.sender];
+
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+        
+        if (sufficientFunds && !overflowed) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
     
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        if (!safeToAdd(a, b)) revert();
-        return a + b;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if(msg.data.length < (3 * 32) + 4) { throw; }
+
+        if (_value == 0) { return false; }
+        
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
+
+        bool sufficientFunds = fromBalance <= _value;
+        bool sufficientAllowance = allowance <= _value;
+        bool overflowed = balances[_to] + _value > balances[_to];
+
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            
+            allowed[_from][msg.sender] -= _value;
+            
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+    
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        
+        allowed[msg.sender][_spender] = _value;
+        
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant returns (uint256) {
+        return allowed[_owner][_spender];
     }
 
-    function safeToSubtract(uint a, uint b) internal returns (bool) {
-        return (b <= a);
-    }
-
-    function safeSub(uint a, uint b) internal returns (uint) {
-        if (!safeToSubtract(a, b)) revert();
-        return a - b;
-    } 
-
-}
-
-
-/**
- *
- * @title  DoneToken
- * 
- * The official token powering Donation Efficiency.
- * DoneToken is a ERC.20 standard token with some custom functionality
- *
- */ 
-
-
-contract DoneToken is owned, DSSafeAddSub {
-
-    /* check address */
-    modifier onlyBy(address _account) {
-        if (msg.sender != _account) revert();
-        _;
-    }    
-
-    /* vars */
-    string public standard = 'Token 1.0';
-    string public name = "DONE";
-    string public symbol = "DET";
-    uint8 public decimals = 16;
-    uint public totalSupply = 150000000000000000000000; 
-
-    address public priviledgedAddress;  
-    bool public tokensFrozen;
-    uint public crowdfundDeadline = now + 1 hours;       
-    uint public nextFreeze = now + 2 hours;
-    uint public nextThaw = now + 3 hours;
-   
-
-    /* map balances */
-    mapping (address => uint) public balanceOf;
-    mapping (address => mapping (address => uint)) public allowance;  
-
-    /* events */
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event LogTokensFrozen(bool indexed Frozen);    
 
-    /*
-    *  @notice sends all tokens to msg.sender on init    
-    */  
-    function DoneToken(){
-        /* send creator all initial tokens 25,000,000 */
-        balanceOf[msg.sender] = 150000000000000000000000;
-        /* tokens are not frozen */  
-        tokensFrozen = false;                                      
-
-    }  
-
-    /*
-    *  @notice public function    
-    *  @param _to address to send tokens to   
-    *  @param _value number of tokens to transfer 
-    *  @returns boolean success         
-    */     
-    function transfer(address _to, uint _value) public
-        returns (bool success)    
-    {
-        if(tokensFrozen && msg.sender != priviledgedAddress) return false;  /* transfer only by priviledgedAddress during crowdfund or reward phases */
-        if (balanceOf[msg.sender] < _value) return false;                   /* check if the sender has enough */
-        if (balanceOf[_to] + _value < balanceOf[_to]) return false;         /* check for overflows */              
-        balanceOf[msg.sender] -=  _value;                                   /* subtract from the sender */
-        balanceOf[_to] += _value;                                           /* add the same to the recipient */
-        Transfer(msg.sender, _to, _value);                                  /* notify anyone listening that this transfer took place */
-        return true;
-    }      
-
-    /*
-    *  @notice public function    
-    *  @param _from address to send tokens from 
-    *  @param _to address to send tokens to   
-    *  @param _value number of tokens to transfer     
-    *  @returns boolean success      
-    *  another contract attempts to spend tokens on your behalf
-    */       
-    function transferFrom(address _from, address _to, uint _value) public
-        returns (bool success) 
-    {                
-        if(tokensFrozen && msg.sender != priviledgedAddress) return false;  /* transfer only by priviledgedAddress during crowdfund or reward phases */
-        if (balanceOf[_from] < _value) return false;                        /* check if the sender has enough */
-        if (balanceOf[_to] + _value < balanceOf[_to]) return false;         /* check for overflows */                
-        if (_value > allowance[_from][msg.sender]) return false;            /* check allowance */
-        balanceOf[_from] -= _value;                                         /* subtract from the sender */
-        balanceOf[_to] += _value;                                           /* add the same to the recipient */
-        allowance[_from][msg.sender] -= _value;                             /* reduce allowance */
-        Transfer(_from, _to, _value);                                       /* notify anyone listening that this transfer took place */
-        return true;
-    }        
- 
-    /*
-    *  @notice public function    
-    *  @param _spender address being granted approval to spend on behalf of msg.sender
-    *  @param _value number of tokens granted approval for _spender to spend on behalf of msg.sender    
-    *  @returns boolean success      
-    *  approves another contract to spend some tokens on your behalf
-    */      
-    function approve(address _spender, uint _value) public
-        returns (bool success)
-    {
-        /* set allowance for _spender on behalf of msg.sender */
-        allowance[msg.sender][_spender] = _value;
-
-        /* log event about transaction */
-        Approval(msg.sender, _spender, _value);        
-        return true;
-    } 
-  
-    /*
-    *  @notice address restricted function 
-    *  crowdfund contract calls this to burn its unsold coins 
-    */     
-    function priviledgedAddressBurnUnsoldCoins() public
-        /* only crowdfund contract can call this */
-        onlyBy(priviledgedAddress)
-    {
-        /* totalSupply should equal total tokens in circulation */
-        totalSupply = safeSub(totalSupply, balanceOf[priviledgedAddress]); 
-        /* burns unsold tokens from crowdfund address */
-        balanceOf[priviledgedAddress] = 0;
+    function enablePurchasing() {
+        if (msg.sender != owner) { throw; }
+        
+        if (totalContribution > 1000000000000000000000) {throw;} //purchasing cannot be re-enabled
+                                  
+        purchasingAllowed = true;
     }
 
-    /*
-    *  @notice public function 
-    *  locks/unlocks tokens on a recurring cycle
-    */         
-    function updateTokenStatus() public
-    {
+    function disablePurchasing() {
+        if (msg.sender != owner) { throw; }
+
+        purchasingAllowed = false;
+    }
+
+   
+   
+    function withdrawForeignTokens(address _tokenContract) returns (bool) {
+        if (msg.sender != owner) { throw; }
+
+        ForeignToken token = ForeignToken(_tokenContract);
+
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+
+    function getStats() constant returns (uint256, uint256, bool) {
+        return (totalContribution, totalSupply, purchasingAllowed);
+    }
+
+    function() payable {
+        if (!purchasingAllowed) { throw; }
         
-        /* locks tokens during initial crowdfund period */
-        if(now < crowdfundDeadline){                       
-            tokensFrozen = true;         
-            LogTokensFrozen(tokensFrozen);  
-        }  
+        if (msg.value == 0) { return; }
 
-        /* locks tokens */
-        if(now >= nextFreeze){          
-            tokensFrozen = true;
-            LogTokensFrozen(tokensFrozen);  
+        owner.transfer(msg.value);
+        totalContribution += msg.value;
+        
+        if (block.timestamp > August25){
+        
+        uint256 tokensIssued = (msg.value * 5);
         }
-
-        /* unlocks tokens */
-        if(now >= nextThaw){         
-            tokensFrozen = false;
-            nextFreeze = now + 2 hours;
-            nextThaw = now + 3 hours;              
-            LogTokensFrozen(tokensFrozen);  
-        }        
-      
-    }                              
-
-    /*
-    *  @notice owner restricted function
-    *  @param _newPriviledgedAddress the address
-    *  only this address can burn unsold tokens
-    *  transfer tokens only by priviledgedAddress during crowdfund or reward phases
-    */      
-    function ownerSetPriviledgedAddress(address _newPriviledgedAddress) public 
-        onlyOwner
-    {
-        priviledgedAddress = _newPriviledgedAddress;
-    }   
-                    
-    
+        else tokensIssued = (msg.value * 10);
+        
+        totalSupply += tokensIssued;
+        balances[msg.sender] += tokensIssued;
+        
+        Transfer(address(this), msg.sender, tokensIssued);
+    }
 }
