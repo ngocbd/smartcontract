@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x6b279f9ef6047a21052b5563fd249fe0fdaa7e58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x7F5a7A6A25E06dDc94901cF596f9234f7D190BED
 */
 pragma solidity ^0.4.18;
 
@@ -120,16 +120,22 @@ contract Pausable is Ownable {
 
 contract ERC20Basic {
     uint256 public totalSupply;
+
     function balanceOf(address who) public view returns (uint256);
+
     function transfer(address to, uint256 value) public returns (bool);
+
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
 contract ERC20 is ERC20Basic {
     function allowance(address owner, address spender) public view returns (uint256);
+
     function transferFrom(address from, address to, uint256 value) public returns (bool);
+
     function approve(address spender, uint256 value) public returns (bool);
+
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -167,7 +173,7 @@ contract BasicToken is ERC20Basic {
 
 contract StandardToken is ERC20, BasicToken {
 
-    mapping (address => mapping (address => uint256)) internal allowed;
+    mapping(address => mapping(address => uint256)) internal allowed;
 
 
     /**
@@ -262,93 +268,146 @@ contract PausableToken is StandardToken, Pausable {
     }
 }
 
-contract MintableToken is PausableToken {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
 
-    bool public mintingFinished = false;
-
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-}
-
-contract TokenImpl is MintableToken {
+contract TokenImpl is PausableToken {
     string public name;
     string public symbol;
 
-    // how many token units a buyer gets per ether
-    uint256 public rate;
-
-    uint256 public decimals = 5;
+    uint8 public decimals = 5;
     uint256 private decimal_num = 100000;
+
+
+    // cap of money in eth * decimal_num
+    uint256 public cap;
 
     // the target token
     ERC20Basic public targetToken;
+    // how many token units a buyer gets per ether
+    uint16 public exchangeRate;
 
-    uint256 public exchangedNum;
+    // the freeze token
+    mapping(address => uint256) frozenTokens;
+    uint16 public frozenRate;
 
-    event Exchanged(address _owner, uint256 _value);
+    bool public canBuy = true;
+    bool public projectFailed = false;
+    uint16 public backEthRatio = 10000;
 
-    function TokenImpl(string _name, string _symbol, uint256 _decimals) public {
+
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value);
+    event UpdateTargetToken(address _target, uint16 _exchangeRate, uint16 _freezeRate);
+    event IncreaseCap(uint256 cap);
+    event ProjectFailed(uint16 _fee);
+    event PauseBuy();
+    event UnPauseBuy();
+
+
+    function TokenImpl(string _name, string _symbol, uint256 _cap) public {
+        require(_cap > 0);
         name = _name;
         symbol = _symbol;
-        decimals = _decimals;
-        decimal_num = 10 ** decimals;
+        cap = _cap.mul(decimal_num);
         paused = true;
     }
+
+    // fallback function can be used to buy tokens
+    function() external payable {
+        buyTokens(msg.sender);
+    }
+
+    // low level token purchase function
+    function buyTokens(address beneficiary) public payable {
+        require(canBuy && msg.value >= (0.00001 ether));
+        require(beneficiary != address(0));
+
+        uint256 _amount = msg.value.mul(decimal_num).div(1 ether);
+        totalSupply = totalSupply.add(_amount);
+        require(totalSupply <= cap);
+        balances[beneficiary] = balances[beneficiary].add(_amount);
+        TokenPurchase(msg.sender, beneficiary, _amount);
+
+        forwardFunds();
+    }
+
+    // send ether to the fund collection wallet
+    function forwardFunds() internal {
+        if(!projectFailed){
+            owner.transfer(msg.value);
+        }
+    }
+
+
     /**
       * @dev exchange tokens of _exchanger.
       */
     function exchange(address _exchanger, uint256 _value) internal {
-        require(canExchange());
-        uint256 _tokens = (_value.mul(rate)).div(decimal_num);
-        targetToken.transfer(_exchanger, _tokens);
-        exchangedNum = exchangedNum.add(_value);
-        Exchanged(_exchanger, _tokens);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        if (_to == address(this) || _to == owner) {
-            exchange(msg.sender, _value);
+        if (projectFailed) {
+            _exchanger.transfer(_value.mul(1 ether).mul(backEthRatio).div(10000).div(decimal_num));
+        } else {
+            require(targetToken != address(0) && exchangeRate > 0);
+            uint256 _tokens = _value.mul(exchangeRate).div(decimal_num);
+            targetToken.transfer(_exchanger, _tokens);
         }
-        return super.transferFrom(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        if (_to == address(this) || _to == owner) {
-            exchange(msg.sender, _value);
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused
+    returns (bool) {
+        updateFrozenToken(_from);
+        require(_to != address(0));
+        require(_value.add(frozenTokens[_from]) <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        updateFrozenToken(msg.sender);
+        if (_to == address(this)) {
+            if (frozenRate == 0 || projectFailed) {
+                exchange(msg.sender, _value);
+                return super.transferFrom(_from, _to, _value);
+            }
+            uint256 tokens = _value.mul(10000 - frozenRate).div(10000);
+            uint256 fTokens = _value.sub(tokens);
+            balances[_from] = balances[_from].sub(_value);
+            balances[_to] = balances[_to].add(tokens);
+            balances[msg.sender] = balances[msg.sender].add(fTokens);
+            frozenTokens[msg.sender] = frozenTokens[msg.sender].add(fTokens);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+            Transfer(_from, _to, _value);
+            exchange(msg.sender, tokens);
+            return true;
+        } else {
+            return super.transferFrom(_from, _to, _value);
         }
-        return super.transfer(_to, _value);
     }
 
-    function balanceOfTarget(address _owner) public view returns (uint256 targetBalance) {
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        require(_to != address(0));
+        updateFrozenToken(msg.sender);
+        require(_value.add(frozenTokens[msg.sender]) <= balances[msg.sender]);
+
+        uint256 tokens = _value;
+        if (_to == address(this)) {
+            if (frozenRate > 0 && !projectFailed) {
+                tokens = _value.mul(10000 - frozenRate).div(10000);
+                uint256 fTokens = _value.sub(tokens);
+                frozenTokens[msg.sender] = frozenTokens[msg.sender].add(fTokens);
+            }
+            exchange(msg.sender, tokens);
+        }
+        return super.transfer(_to, tokens);
+    }
+
+    function updateFrozenToken(address _owner) internal {
+        if (frozenRate == 0 && frozenTokens[_owner] > 0) {
+            frozenTokens[_owner] = 0;
+        }
+    }
+
+    function balanceOfFrozen(address _owner) public view returns (uint256) {
+        if (frozenRate == 0) {
+            return 0;
+        }
+        return frozenTokens[_owner];
+    }
+
+    function balanceOfTarget(address _owner) public view returns (uint256) {
         if (targetToken != address(0)) {
             return targetToken.balanceOf(_owner);
         } else {
@@ -356,23 +415,78 @@ contract TokenImpl is MintableToken {
         }
     }
 
+    function saleRatio() public view returns (uint256 ratio) {
+        if (cap == 0) {
+            return 0;
+        } else {
+            return totalSupply.mul(10000).div(cap);
+        }
+    }
+
+
     function canExchangeNum() public view returns (uint256) {
-        if (canExchange()) {
+        if (targetToken != address(0) && exchangeRate > 0) {
             uint256 _tokens = targetToken.balanceOf(this);
-            return (decimal_num.mul(_tokens)).div(rate);
+            return decimal_num.mul(_tokens).div(exchangeRate);
         } else {
             return 0;
         }
     }
 
-    function updateTargetToken(address _target, uint256 _rate) onlyOwner public {
-        rate = _rate;
-        targetToken = ERC20Basic(_target);
+    function pauseBuy() onlyOwner public {
+        canBuy = false;
+        PauseBuy();
     }
 
-    function canExchange() public view returns (bool) {
-        return targetToken != address(0) && rate > 0;
+    function unPauseBuy() onlyOwner public {
+        canBuy = true;
+        UnPauseBuy();
     }
 
+    // increase the amount of eth
+    function increaseCap(int256 _cap_inc) onlyOwner public {
+        require(_cap_inc != 0);
+        if (_cap_inc > 0) {
+            cap = cap.add(decimal_num.mul(uint256(_cap_inc)));
+        } else {
+            uint256 _dec = uint256(- 1 * _cap_inc);
+            uint256 cap_dec = decimal_num.mul(_dec);
+            if (cap_dec >= cap - totalSupply) {
+                cap = totalSupply;
+            } else {
+                cap = cap.sub(cap_dec);
+            }
+        }
+        IncreaseCap(cap);
+    }
+
+
+    function projectFailed(uint16 _fee) onlyOwner public {
+        require(!projectFailed && _fee >= 0 && _fee <= 10000);
+        projectFailed = true;
+        backEthRatio = 10000 - _fee;
+        frozenRate = 0;
+        ProjectFailed(_fee);
+    }
+
+
+    function updateTargetToken(address _target, uint16 _exchangeRate, uint16 _freezeRate) onlyOwner public {
+        require(_freezeRate > 0 || _exchangeRate > 0);
+
+        if (_exchangeRate > 0) {
+            require(_target != address(0));
+            exchangeRate = _exchangeRate;
+            targetToken = ERC20Basic(_target);
+        }
+        if (_freezeRate > 0) {
+            frozenRate = _freezeRate;
+        }
+        UpdateTargetToken(_target, _exchangeRate, _freezeRate);
+    }
+
+
+    function destroy() onlyOwner public {
+        selfdestruct(owner);
+    }
 
 }
