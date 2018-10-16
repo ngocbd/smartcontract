@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BXXToken at 0x53562419e435cbae65d73e7eae2723a43e6cd887
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BXXToken at 0x5e017df6389237197cc8c26719940512a7df6e04
 */
 pragma solidity ^0.4.16;
 
 contract BXXToken {
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 2;
     uint256 public totalSupply;
 
     mapping (address => uint256) public balanceOf;
