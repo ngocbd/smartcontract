@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtraFinalizeAgent at 0x726b4fa1ca1f6eb3df4e6cab54ec9726ff73ee00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtraFinalizeAgent at 0x26e9e47b35c180c748ca0021bf26557205a1f026
 */
 /*
  * ERC20 interface
