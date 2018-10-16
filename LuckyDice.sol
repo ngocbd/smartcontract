@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyDice at 0x85d3addef1a2b104edb5c1e9475b6d5496fd5138
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyDice at 0xec987914ade432ce9806f418787a4ed0b0e77000
 */
 pragma solidity ^0.4.18;
 
@@ -94,13 +94,13 @@ contract LuckyDice is DSSafeAddSub {
 
     // JP
     uint public jackpot = 0;
-    uint public jpPercentage = 40; // = 4%
+    uint public jpPercentage = 9; // = 0.9%
     uint public jpPercentageDivisor = 1000;
     uint public jpMinBet = 10000000000000000; // = 0.01 Eth
 
     // TEMP
     uint tempDiceSum;
-    bool tempJp;
+    uint tempJpCounter;
     uint tempDiceValue;
     bytes tempRollResult;
     uint tempFullprofit;
@@ -154,8 +154,8 @@ contract LuckyDice is DSSafeAddSub {
         owner = msg.sender;
         casino = msg.sender;
 
-        /* init 960 = 96% (4% houseEdge)*/
-        ownerSetHouseEdge(960);
+        /* init 990 = 99% (1% houseEdge)*/
+        ownerSetHouseEdge(990);
 
         /* 0.5 ether  */
         ownerSetMaxProfit(500000000000000000);
@@ -183,9 +183,12 @@ contract LuckyDice is DSSafeAddSub {
 
         tempFullprofit = getFullProfit(msg.value, minRollLimit, maxRollLimit);
         playerProfit[diceRollHash] = getProfit(msg.value, tempFullprofit);
-        playerToJackpot[diceRollHash] = getToJackpot(msg.value, tempFullprofit);
-        if (playerProfit[diceRollHash] - playerToJackpot[diceRollHash] > maxProfit)
+        if (playerProfit[diceRollHash] > maxProfit)
             throw;
+
+        playerToJackpot[diceRollHash] = getToJackpot(msg.value);
+        jackpot = safeAdd(jackpot, playerToJackpot[diceRollHash]);
+        contractBalance = safeSub(contractBalance, playerToJackpot[diceRollHash]);
 
         /* map bet id to serverSeedHash */
         playerBetDiceRollHash[diceRollHash] = diceRollHash;
@@ -223,8 +226,8 @@ contract LuckyDice is DSSafeAddSub {
         return (fullProfit + _betSize) * houseEdge / houseEdgeDivisor - _betSize;
     }
 
-    function getToJackpot(uint _betSize, uint fullProfit) internal returns (uint){
-        return (fullProfit + _betSize) * jpPercentage / jpPercentageDivisor;
+    function getToJackpot(uint _betSize) internal returns (uint){
+        return _betSize * jpPercentage / jpPercentageDivisor;
     }
 
     function withdraw(bytes32 diceRollHash, string rollResult, string salt) public
@@ -262,22 +265,22 @@ contract LuckyDice is DSSafeAddSub {
         totalWeiWagered += playerTempBetValue[diceRollHash];
 
         tempDiceSum = 0;
-        tempJp = true;
+        tempJpCounter = 0;
         tempRollResult = bytes(rollResult);
         for (uint i = 0; i < 5; i++) {
             tempDiceValue = uint(tempRollResult[i]) - 48;
             tempDiceSum += tempDiceValue;
             playerRollResult[diceRollHash] = playerRollResult[diceRollHash] * 10 + tempDiceValue;
 
-            if (tempRollResult[i] != tempRollResult[1]) {
-                tempJp = false;
+            if (tempDiceValue == 5) {
+                tempJpCounter++;
             }
         }
 
         /*
         * CONGRATULATIONS!!! SOMEBODY WON JP!
         */
-        if (playerTempBetValue[diceRollHash] >= jpMinBet && tempJp) {
+        if (playerTempBetValue[diceRollHash] >= jpMinBet && tempJpCounter >= 4) {
             LogJpPayment(playerBetDiceRollHash[diceRollHash], playerTempAddress[diceRollHash],
                 playerRollResult[diceRollHash], jackpot, 0);
 
@@ -306,10 +309,6 @@ contract LuckyDice is DSSafeAddSub {
 
             /* update total wei won */
             totalWeiWon = safeAdd(totalWeiWon, playerTempReward[diceRollHash]);
-
-            // adding JP percentage
-            playerTempReward[diceRollHash] = safeSub(playerTempReward[diceRollHash], playerToJackpot[diceRollHash]);
-            jackpot = safeAdd(jackpot, playerToJackpot[diceRollHash]);
 
             /* safely calculate payout via profit plus original wager */
             playerTempReward[diceRollHash] = safeAdd(playerTempReward[diceRollHash], playerTempBetValue[diceRollHash]);
