@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JOT at 0xc001111832a4b5c61bae8080f2000335285efc69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JOT at 0xdb455c71C1bC2de4e80cA451184041Ef32054001
 */
 pragma solidity ^0.4.15;
 
@@ -160,6 +160,7 @@ contract JOT is ERC20 {
     {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
+        Transfer(msg.sender, _to, _amount);
         return true;
     }
 
