@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0xf515c78ea440443021fd2abdccbf01afcaae3e65
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0x67904341f60e48ae44a4aaaa1845800a0d49c7b5
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 // File: zeppelin-solidity\contracts\ownership\Ownable.sol
 
@@ -14,7 +14,11 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
@@ -43,6 +47,13 @@ contract Ownable {
     owner = newOwner;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 }
 
 // File: zeppelin-solidity\contracts\lifecycle\Pausable.sol
@@ -206,10 +217,18 @@ contract BasicToken is ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 // File: zeppelin-solidity\contracts\token\ERC20\StandardToken.sol
@@ -232,7 +251,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -266,7 +292,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
@@ -280,8 +313,15 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
@@ -296,7 +336,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -329,13 +375,26 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
+  modifier hasMintPermission() {
+    require(msg.sender == owner);
+    _;
+  }
+
   /**
    * @dev Function to mint tokens
    * @param _to The address that will receive the minted tokens.
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    hasMintPermission
+    canMint
+    public
+    returns (bool)
+  {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     emit Mint(_to, _amount);
@@ -354,217 +413,16 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-// File: contracts\lib\PreSignedContract.sol
+// File: contracts\lib\ApprovalAndCallFallBack.sol
 
-contract PreSignedContract is Ownable {
-  mapping (uint8 => bytes) internal _prefixPreSignedFirst;
-  mapping (uint8 => bytes) internal _prefixPreSignedSecond;
-
-  function upgradePrefixPreSignedFirst(uint8 _version, bytes _prefix) public onlyOwner {
-    _prefixPreSignedFirst[_version] = _prefix;
-  }
-
-  function upgradePrefixPreSignedSecond(uint8 _version, bytes _prefix) public onlyOwner {
-    _prefixPreSignedSecond[_version] = _prefix;
-  }
-
-  /**
-   * @dev Recover signer address from a message by using their signature
-   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
-   * @param sig bytes signature, the signature is generated using web3.eth.sign()
-   */
-  function recover(bytes32 hash, bytes sig) public pure returns (address) {
-    bytes32 r;
-    bytes32 s;
-    uint8 v;
-
-    // Check the signature length
-    if (sig.length != 65) {
-      return (address(0));
-    }
-
-    // Divide the signature in r, s and v variables
-    // ecrecover takes the signature parameters, and the only way to get them
-    // currently is to use assembly.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly {
-      r := mload(add(sig, 32))
-      s := mload(add(sig, 64))
-      v := byte(0, mload(add(sig, 96)))
-    }
-
-    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-    if (v < 27) {
-      v += 27;
-    }
-
-    // If the version is correct return the signer address
-    if (v != 27 && v != 28) {
-      return (address(0));
-    } else {
-      // solium-disable-next-line arg-overflow
-      return ecrecover(hash, v, r, s);
-    }
-  }
-
-  function messagePreSignedHashing(
-    bytes8 _mode,
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version
-  ) public view returns (bytes32 hash) {
-    if (_version <= 2) {
-      hash = keccak256(
-        _mode,
-        _token,
-        _to,
-        _value,
-        _fee,
-        _nonce
-      );
-    } else {
-      // Support SignTypedData flexibly
-      hash = keccak256(
-        _prefixPreSignedFirst[_version],
-        _mode,
-        _token,
-        _to,
-        _value,
-        _fee,
-        _nonce
-      );
-    }
-  }
-
-  function preSignedHashing(
-    bytes8 _mode,
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version
-  ) public view returns (bytes32) {
-    bytes32 hash = messagePreSignedHashing(
-      _mode,
-      _token,
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version
-    );
-
-    if (_version <= 2) {
-      if (_version == 0) {
-        return hash;
-      } else if (_version == 1) {
-        return keccak256(
-          '\x19Ethereum Signed Message:\n32',
-          hash
-        );
-      } else {
-        // Support Standard Prefix (Trezor)
-        return keccak256(
-          '\x19Ethereum Signed Message:\n\x20',
-          hash
-        );
-      }
-    } else {
-      // Support SignTypedData flexibly
-      if (_prefixPreSignedSecond[_version].length > 0) {
-        return keccak256(
-          _prefixPreSignedSecond[_version],
-          hash
-        );
-      } else {
-        return hash;
-      }
-    }
-  }
-
-  function preSignedCheck(
-    bytes8 _mode,
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  ) public view returns (address) {
-    bytes32 hash = preSignedHashing(
-      _mode,
-      _token,
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version
-    );
-
-    address _from = recover(hash, _sig);
-    require(_from != address(0));
-
-    return _from;
-  }
-
-  function transferPreSignedCheck(
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  ) external view returns (address) {
-    return preSignedCheck('Transfer', _token, _to, _value, _fee, _nonce, _version, _sig);
-  }
-
-  function approvePreSignedCheck(
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  ) external view returns (address) {
-    return preSignedCheck('Approval', _token, _to, _value, _fee, _nonce, _version, _sig);
-  }
-
-  function increaseApprovalPreSignedCheck(
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  ) external view returns (address) {
-    return preSignedCheck('IncApprv', _token, _to, _value, _fee, _nonce, _version, _sig);
-  }
-
-  function decreaseApprovalPreSignedCheck(
-    address _token,
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  ) external view returns (address) {
-    return preSignedCheck('DecApprv', _token, _to, _value, _fee, _nonce, _version, _sig);
-  }
+contract ApprovalAndCallFallBack {
+  function receiveApproval(address _owner, uint256 _amount, address _token, bytes _data) public returns (bool);
 }
 
 // File: contracts\token\MuzikaCoin.sol
 
 contract MuzikaCoin is MintableToken, Pausable {
-  string public name = 'MUZIKA COIN';
+  string public name = 'Muzika';
   string public symbol = 'MZK';
   uint8 public decimals = 18;
 
@@ -573,26 +431,7 @@ contract MuzikaCoin is MintableToken, Pausable {
   event FreezeAddress(address indexed target);
   event UnfreezeAddress(address indexed target);
 
-  event TransferPreSigned(
-    address indexed from,
-    address indexed to,
-    address indexed delegate,
-    uint256 value,
-    uint256 fee
-  );
-  event ApprovalPreSigned(
-    address indexed owner,
-    address indexed spender,
-    address indexed delegate,
-    uint256 value,
-    uint256 fee
-  );
-
   mapping (address => bool) public frozenAddress;
-
-  mapping (bytes => bool) internal _signatures;
-
-  PreSignedContract internal _preSignedContract = PreSignedContract(0xE55b5f4fAd5cD3923C392e736F58dEF35d7657b8);
 
   modifier onlyNotFrozenAddress(address _target) {
     require(!frozenAddress[_target]);
@@ -721,186 +560,26 @@ contract MuzikaCoin is MintableToken, Pausable {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
 
-  /**
-   * @dev Be careful to use delegateTransfer.
-   * @dev If attacker whose balance is less than sum of fee and amount
-   * @dev requests constantly transferring using delegateTransfer/delegateApprove to someone,
-   * @dev he or she may lose all ether to process these requests.
-   */
-  function transferPreSigned(
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
+  function increaseApprovalAndCall(
+    address _spender,
+    uint _addedValue,
+    bytes _data
   )
     public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
     returns (bool)
   {
-    require(_to != address(0));
-    require(_signatures[_sig] == false);
+    require(_spender != address(this));
 
-    address _from = _preSignedContract.transferPreSignedCheck(
-      address(this),
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version,
-      _sig
+    increaseApproval(_spender, _addedValue);
+
+    require(
+      ApprovalAndCallFallBack(_spender).receiveApproval(
+        msg.sender,
+        allowed[msg.sender][_spender],
+        address(this),
+        _data
+      )
     );
-    require(!frozenAddress[_from]);
-
-    uint256 _burden = _value.add(_fee);
-    require(_burden <= balances[_from]);
-
-    balances[_from] = balances[_from].sub(_burden);
-    balances[_to] = balances[_to].add(_value);
-    balances[msg.sender] = balances[msg.sender].add(_fee);
-    emit Transfer(_from, _to, _value);
-    emit Transfer(_from, msg.sender, _fee);
-
-    _signatures[_sig] = true;
-    emit TransferPreSigned(_from, _to, msg.sender, _value, _fee);
-
-    return true;
-  }
-
-  function approvePreSigned(
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    require(_signatures[_sig] == false);
-
-    address _from = _preSignedContract.approvePreSignedCheck(
-      address(this),
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version,
-      _sig
-    );
-
-    require(!frozenAddress[_from]);
-    require(_fee <= balances[_from]);
-
-    allowed[_from][_to] = _value;
-    emit Approval(_from, _to, _value);
-
-    if (_fee > 0) {
-      balances[_from] = balances[_from].sub(_fee);
-      balances[msg.sender] = balances[msg.sender].add(_fee);
-      emit Transfer(_from, msg.sender, _fee);
-    }
-
-    _signatures[_sig] = true;
-    emit ApprovalPreSigned(_from, _to, msg.sender, _value, _fee);
-
-    return true;
-  }
-
-  function increaseApprovalPreSigned(
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    require(_signatures[_sig] == false);
-
-    address _from = _preSignedContract.increaseApprovalPreSignedCheck(
-      address(this),
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version,
-      _sig
-    );
-
-    require(!frozenAddress[_from]);
-    require(_fee <= balances[_from]);
-
-    allowed[_from][_to] = allowed[_from][_to].add(_value);
-    emit Approval(_from, _to, allowed[_from][_to]);
-
-    if (_fee > 0) {
-      balances[_from] = balances[_from].sub(_fee);
-      balances[msg.sender] = balances[msg.sender].add(_fee);
-      emit Transfer(_from, msg.sender, _fee);
-    }
-
-    _signatures[_sig] = true;
-    emit ApprovalPreSigned(_from, _to, msg.sender, allowed[_from][_to], _fee);
-
-    return true;
-  }
-
-  function decreaseApprovalPreSigned(
-    address _to,
-    uint256 _value,
-    uint256 _fee,
-    uint256 _nonce,
-    uint8 _version,
-    bytes _sig
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    require(_signatures[_sig] == false);
-
-    address _from = _preSignedContract.decreaseApprovalPreSignedCheck(
-      address(this),
-      _to,
-      _value,
-      _fee,
-      _nonce,
-      _version,
-      _sig
-    );
-    require(!frozenAddress[_from]);
-
-    require(_fee <= balances[_from]);
-
-    uint256 oldValue = allowed[_from][_to];
-    if (_value > oldValue) {
-      oldValue = 0;
-    } else {
-      oldValue = oldValue.sub(_value);
-    }
-
-    allowed[_from][_to] = oldValue;
-    emit Approval(_from, _to, oldValue);
-
-    if (_fee > 0) {
-      balances[_from] = balances[_from].sub(_fee);
-      balances[msg.sender] = balances[msg.sender].add(_fee);
-      emit Transfer(_from, msg.sender, _fee);
-    }
-
-    _signatures[_sig] = true;
-    emit ApprovalPreSigned(_from, _to, msg.sender, oldValue, _fee);
 
     return true;
   }
