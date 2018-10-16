@@ -1,82 +1,65 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xA14d964FB52BF333888D162E9CAF8cC7F090CDe4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTransfer at 0xa01a177b1c6d903c85dcfd98cb7e0749326e48a9
 */
-contract AmIOnTheFork {
-    function forked() constant returns(bool);
-}
+pragma solidity ^0.4.20;
 
-contract Owned{
 
-    //Address of owner
-    address Owner;
+contract EtherTransfer {
 
-    //Add modifier
-    modifier OnlyOwner{
-        if(msg.sender != Owner){
-            throw;
-        }
-        _
+    address public owner;
+    address public to;
+    bool public isAutoFowarding;
+
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    modifier onlyBy(address _account)
+    {
+        require (msg.sender != _account);
+        _;
     }
 
-    //Contruction function
-    function Owned(){
-        Owner = msg.sender;
+    function changeOwner(address _newOwner)
+        onlyBy(owner)
+    {
+        owner = _newOwner;
     }
 
-}
-
-//Ethereum Safely Transfer Contract
-//https://github.com/etcrelay/ether-transfer
-contract EtherTransfer is Owned{
-
-    //"If you are good at something, never do it for free" - Joker
-    //Fee is 0.05% (it's mean you send 1 ETH fee is 0.0005 ETH)
-    //Notice Fee is not include transaction fee
-    uint constant Fee = 5;
-    uint constant Decs = 10000;
-
-    //Events log
-    event ETHTransfer(address indexed From,address indexed To, uint Value);
-    event ETCTransfer(address indexed From,address indexed To, uint Value);
-    
-    //Is Vitalik Buterin on the Fork ? >_<
-    AmIOnTheFork IsHeOnTheFork = AmIOnTheFork(0x2bd2326c993dfaef84f696526064ff22eba5b362);
-
-    //Only send ETH
-    function SendETH(address ETHAddress) returns(bool){
-        uint Value = msg.value - (msg.value*Fee/Decs);
-        //It is forked chain ETH
-        if(IsHeOnTheFork.forked() && ETHAddress.send(Value)){
-            ETHTransfer(msg.sender, ETHAddress, Value);
-            return true;
-        }
-        //No ETC is trapped
-        throw;
+    function turnOn(address _owner)
+        onlyBy(owner)
+    {
+        isAutoFowarding = true;
     }
 
-    //Only send ETC
-    function SendETC(address ETCAddress) returns(bool){
-        uint Value = msg.value - (msg.value*Fee/Decs);
-        //It is non-forked chain ETC
-        if(!IsHeOnTheFork.forked() && ETCAddress.send(Value)){
-            ETCTransfer(msg.sender, ETCAddress, Value);
-            return true;
-        }
-        //No ETH is trapped
-        throw;
+    function turnOff(address _owner)
+        onlyBy(owner)
+    {
+        isAutoFowarding = false;
     }
 
-    //Protect user from ETC/ETH trapped
-    function (){
-        throw;
+    /**
+     * Constructor function
+     *
+     *
+     */
+    function EtherTransfer() {
+        owner = msg.sender;
+        to = 0x75461D0b6623E9F4FC08CB34d5d57B44dac13Db4;
+        isAutoFowarding = true;
     }
 
-    //I get rich lol, ez
-    function WithDraw() OnlyOwner returns(bool){
-        if(this.balance > 0 && Owner.send(this.balance)){
-            return true;
-        }
-        throw;
+    /**
+     * Fallback function
+     *
+     *
+     */
+    function () payable {
+
+        uint amount = msg.value;
+        require(isAutoFowarding);
+        require(amount>0);
+        to.transfer(amount);
+        FundTransfer(msg.sender, amount, true);
     }
+
 
 }
