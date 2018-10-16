@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x40316c0d0a888c169cddb82bf2db22dca9d36b45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x00bef2b6b0948de9e97e2038a1dd87af0b1bcf14
 */
 pragma solidity ^0.4.18;
 
@@ -563,14 +563,14 @@ contract Deployer is Ownable {
     presale.setBountyTokensPercent(4);
     presale.setAdvisorsTokensPercent(2);
     presale.setDevTokensPercent(10);
-    presale.setSoftcap(45000000000000000000);
+    presale.setSoftcap(40000000000000000000);
     presale.setHardcap(50000000000000000000000);
     presale.addBonus(7,50);
     presale.addBonus(7,40);
     presale.addBonus(100,35);
     presale.setStart(1511571600);
     presale.setEnd(1514156400);    
-    presale.setDevLimit(45000000000000000000);
+    presale.setDevLimit(6000000000000000000);
     presale.setWallet(0x4bB656423f5476FeC4AA729aB7B4EE0fc4d0B314);
     presale.setBountyTokensWallet(0xcACBE5d8Fb017407907026804Fe8BE64B08511f4);
     presale.setDevTokensWallet(0xa20C62282bEC52F9dA240dB8cFFc5B2fc8586652);
@@ -588,7 +588,7 @@ contract Deployer is Ownable {
 
     ico.setHardcap(206000000000000000000000);
     ico.addBonus(7,25);
-    ico.addBonus(14,10);
+    ico.addBonus(7,10);
     ico.setStart(1514163600);
     ico.setEnd(1517356800);
     ico.setWallet(0x65954fb8f45b40c9A60dffF3c8f4F39839Bf3596);
