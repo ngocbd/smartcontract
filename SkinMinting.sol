@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0x8e48f1fd56abd20d86bfb995f4b7ef1eb4f32d1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0xe75e8cf3e820f1f8af1e2f7c679cacf57aaf7f73
 */
 pragma solidity ^0.4.18;
 
