@@ -1,37 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlackBox at 0x0f690a76ad438222ce694d84b2902b0ee2270e69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlackBox at 0xf937b0e645f789aac4c75749fb291c9bc37a92b2
 */
 pragma solidity ^0.4.18;
 
-/** 
- * BlackBox - Secure Ether Storage
- * Proof Of Concept - Lock ether with a proof set derived off-chain.  The proof
- * encodes a blinded receiver to accept funds once the correct caller executes 
- * the unlockAmount() function with the correct seed.
-*/ 
+// BlackBox2.0 - Secure Ether & Token Storage
+// Rinkeby test contract: 0x21ED89693fF7e91c757DbDD9Aa30448415aa8156
 
-contract Secure {
+// token interface
+contract Token {
+    function balanceOf(address _owner) constant public returns (uint balance);
+    function allowance(address _user, address _spender) constant public returns (uint amount);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+}
+
+// owned by contract creator
+contract Owned {
+    address public owner = msg.sender;
+    bool public restricted = true;
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    // restrict external contract calls
+    modifier onlyCompliant {
+        if (restricted) require(tx.origin == msg.sender);
+        _;
+    }
+    
+    function transferOwnership(address newOwner) public onlyOwner {
+        owner = newOwner;
+    }
+    
+    function changeRestrictions() public onlyOwner {
+        restricted = !restricted;
+    }
+    
+    function kill() public onlyOwner {
+        selfdestruct(owner);
+    }
+}
+
+// helper functions for hashing
+contract Encoder {
     enum Algorithm { sha, keccak }
 
-    // function for off-chain proof derivation.  Use the return values as input for the 
-    // lockAmount() function.  Execute unlockAmount() with the correct caller 
-    // and seed to transfer funds to an encoded recipient.
-    function generateProof(
+    /// @dev generateProofSet - function for off-chain proof derivation
+    /// @param seed Secret used to secure the proof-set
+    /// @param caller Address of the caller, or account that verifies the proof-set
+    /// @param receiver Address of the encoded recepient
+    /// @param tokenAddress Address of the token to transfer from the caller
+    /// @param algorithm Hash algorithm to use for generating proof-set
+    function generateProofSet(
         string seed,
-        address caller, 
+        address caller,
         address receiver,
+        address tokenAddress,
         Algorithm algorithm
-    ) pure public returns(bytes32 hash, bytes32 operator, bytes32 check, address check_receiver, bool valid) {
-        (hash, operator, check) = _escrow(seed, caller, receiver, algorithm);
-        check_receiver = address(hash_data(hash_seed(seed, algorithm), algorithm)^operator);
-        valid = (receiver == check_receiver);
+    ) pure public returns(bytes32 hash, bytes32 operator, bytes32 check, address check_receiver, address check_token) {
+        (hash, operator, check) = _escrow(seed, caller, receiver, tokenAddress, algorithm);
+        bytes32 key = hash_seed(seed, algorithm);
+        check_receiver = address(hash_data(key, algorithm)^operator);
         if (check_receiver == 0) check_receiver = caller;
+        if (tokenAddress != 0) check_token = address(check^key^blind(receiver, algorithm));
     }
 
+    // internal function for generating the proof-set
     function _escrow(
         string seed, 
-        address caller, 
+        address caller,
         address receiver,
+        address tokenAddress,
         Algorithm algorithm
     ) pure internal returns(bytes32 index, bytes32 operator, bytes32 check) {
         require(caller != receiver && caller != 0);
@@ -45,6 +86,9 @@ contract Secure {
             operator = keccak256(x)^bytes32(receiver);
             check = x^keccak256(receiver);
         }
+        if (tokenAddress != 0) {
+            check ^= bytes32(tokenAddress);
+        }
     }
     
     // internal function for hashing the seed
@@ -52,11 +96,8 @@ contract Secure {
         string seed, 
         Algorithm algorithm
     ) pure internal returns(bytes32) {
-        if (algorithm == Algorithm.sha) {
-            return sha256(seed);
-        } else {
-            return keccak256(seed);
-        }
+        if (algorithm == Algorithm.sha) return sha256(seed);
+        else return keccak256(seed);
     }
     
    // internal function for hashing bytes
@@ -64,11 +105,8 @@ contract Secure {
         bytes32 key, 
         Algorithm algorithm
     ) pure internal returns(bytes32) {
-        if (algorithm == Algorithm.sha) {
-            return sha256(key);
-        } else {
-            return keccak256(key);
-        }
+        if (algorithm == Algorithm.sha) return sha256(key);
+        else return keccak256(key);
     }
     
     // internal function for hashing an address
@@ -76,109 +114,130 @@ contract Secure {
         address addr,
         Algorithm algorithm
     ) pure internal returns(bytes32) {
-        if (algorithm == Algorithm.sha) {
-            return sha256(addr);
-        } else {
-            return keccak256(addr);
-        }
+        if (algorithm == Algorithm.sha) return sha256(addr);
+        else return keccak256(addr);
     }
     
 }
 
 
-contract BlackBox is Secure {
-    address public owner;
+contract BlackBox is Owned, Encoder {
 
-    // stored proof info
+    // struct of proof set
     struct Proof {
         uint256 balance;
         bytes32 operator;
         bytes32 check;
     }
     
+    // mappings
     mapping(bytes32 => Proof) public proofs;
     mapping(bytes32 => bool) public used;
-    mapping(address => uint256) private donations;
+    mapping(address => uint) private deposits;
 
-    // events for audit purposes
-    event Unlocked(string _key, bytes32 _hash, address _receiver);
+    // events
+    event ProofVerified(string _key, address _prover, uint _value);
     event Locked(bytes32 _hash, bytes32 _operator, bytes32 _check);
-    event Donation(address _from, uint256 value);
-    
-    function BlackBox() public {
-        owner = msg.sender;
-    }
+    event WithdrawTokens(address _token, address _to, uint _value);
+    event ClearedDeposit(address _to, uint value);
+    event TokenTransfer(address _token, address _from, address _to, uint _value);
 
-    /// @dev lockAmount - Lock ether with a proof
-    /// @param hash Hash Key used to index the proof
-    /// @param operator A derived operator to encode the intended recipient
-    /// @param check A derived operator to check the operation
-    function lockAmount(
-        bytes32 hash,
-        bytes32 operator,
-        bytes32 check
+    /// @dev lock - store a proof-set
+    /// @param _hash Hash Key used to index the proof
+    /// @param _operator A derived operator to encode the intended recipient
+    /// @param _check A derived operator to check recipient, or a decode the token address
+    function lock(
+        bytes32 _hash,
+        bytes32 _operator,
+        bytes32 _check
     ) public payable {
         // protect invalid entries on value transfer
         if (msg.value > 0) {
-            require(hash != 0 && operator != 0 && check != 0);
+            require(_hash != 0 && _operator != 0 && _check != 0);
         }
         // check existence
-        require(!used[hash]);
+        require(!used[_hash]);
         // lock the ether
-        proofs[hash].balance = msg.value;
-        proofs[hash].operator = operator;
-        proofs[hash].check = check;
+        proofs[_hash].balance = msg.value;
+        proofs[_hash].operator = _operator;
+        proofs[_hash].check = _check;
         // track unique keys
-        used[hash] = true;
-        Locked(hash, operator, check);
+        used[_hash] = true;
+        Locked(_hash, _operator, _check);
     }
 
-    /// @dev unlockAmount - Verify a proof to transfer the locked funds
-    /// @param seed Secret used to derive the proof set
-    /// @param algorithm Hash algorithm type
-    function unlockAmount(
-        string seed,
-        Algorithm algorithm
-    ) public payable {
-        require(msg.value == 0);
-        bytes32 hash = 0x0;
-        bytes32 operator = 0x0;
-        bytes32 check = 0x0;
+    /// @dev unlock - verify a proof to transfer the locked funds
+    /// @param _seed Secret used to derive the proof set
+    /// @param _value Optional token value to transfer if the proof-set maps to a token transfer
+    /// @param _algo Hash algorithm type
+    function unlock(
+        string _seed,
+        uint _value,
+        Algorithm _algo
+    ) public onlyCompliant {
+        bytes32 hash = 0;
+        bytes32 operator = 0;
+        bytes32 check = 0;
         // calculate the proof
-        (hash, operator, check) = _escrow(seed, msg.sender, 0, algorithm);
-        // check existence
+        (hash, operator, check) = _escrow(_seed, msg.sender, 0, 0, _algo);
         require(used[hash]);
-        // calculate the receiver and transfer
+        // get balance to send to decoded receiver
+        uint balance = proofs[hash].balance;
         address receiver = address(proofs[hash].operator^operator);
-        // verify integrity of operation
-        require(proofs[hash].check^hash_seed(seed, algorithm) == blind(receiver, algorithm));
-        // check for valid transfer
-        if (receiver == address(this) || receiver == 0) receiver = msg.sender;
-        // get locked balance to avoid recursive attacks
-        uint bal = proofs[hash].balance;
-        // owner collecting donations
-        if (donations[msg.sender] > 0) {
-            bal += donations[msg.sender];
-            delete donations[msg.sender];
-        }
-        // delete the entry to free up memory
+        address _token = address(proofs[hash].check^hash_seed(_seed, _algo)^blind(receiver, _algo));
         delete proofs[hash];
-        // check the balance to send to the receiver
-        if (bal <= this.balance && bal > 0) {
-            // transfer to receiver 
-            // this could fail if receiver is another contract, so fallback
-            if(!receiver.send(bal)){
-                require(msg.sender.send(bal));
+        if (receiver == 0) receiver = msg.sender;
+        // send balance and deposits
+        clearDeposits(receiver, balance);
+        ProofVerified(_seed, msg.sender, balance);
+
+        // check for token transfer
+        if (_token != 0) {
+            Token token = Token(_token);
+            uint tokenBalance = token.balanceOf(msg.sender);
+            uint allowance = token.allowance(msg.sender, this);
+            // check the balance to send to the receiver
+            if (_value == 0 || _value > tokenBalance) _value = tokenBalance;
+            if (allowance > 0 && _value > 0) {
+                if (_value > allowance) _value = allowance;
+                TokenTransfer(_token, msg.sender, receiver, _value);
+                require(token.transferFrom(msg.sender, receiver, _value));
             }
         }
-        Unlocked(seed, hash, receiver);
     }
     
-    // deposits get stored for the owner
+    /// @dev withdrawTokens - withdraw tokens from contract
+    /// @param _token Address of token that this contract holds
+    function withdrawTokens(address _token) public onlyOwner {
+        Token token = Token(_token);
+        uint256 value = token.balanceOf(this);
+        require(token.transfer(msg.sender, value));
+        WithdrawTokens(_token, msg.sender, value);
+    }
+    
+    /// @dev clearDeposits - internal function to send ether
+    /// @param _for Address of recipient
+    /// @param _value Value of proof balance
+    function clearDeposits(address _for, uint _value) internal {
+        uint deposit = deposits[msg.sender];
+        if (deposit > 0) delete deposits[msg.sender];
+        if (deposit + _value > 0) {
+            if (!_for.send(deposit+_value)) {
+                require(msg.sender.send(deposit+_value));
+            }
+            ClearedDeposit(_for, deposit+_value);
+        }
+    }
+    
+    function allowance(address _token, address _from) public view returns(uint _allowance) {
+        Token token = Token(_token);
+        _allowance = token.allowance(_from, this);
+    }
+    
+    // store deposits for msg.sender
     function() public payable {
         require(msg.value > 0);
-        donations[owner] += msg.value;
-        Donation(msg.sender, msg.value);
+        deposits[msg.sender] += msg.value;
     }
     
 }
