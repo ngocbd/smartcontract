@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0x5ab80540efb902cd7a0daedd044779c5af3c3c81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AeaToken at 0xdd607b5e9ac8ba51da2d8c99a9f69d3ba8d4846d
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.8;
 
-contract Token {
+contract ERC20Basic {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
     is replaced with:
@@ -17,7 +17,8 @@ contract Token {
     */
     /// total amount of tokens
     uint256 public totalSupply;
-    address public targer;
+    address public target;
+    uint256 public totalCount;
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -51,7 +52,7 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract StandardToken is Token {
+contract StandardToken is ERC20Basic {
 
     uint256 constant MAX_UINT256 = 2**256 - 1;
 
@@ -114,27 +115,32 @@ contract AeaToken is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
+    bool public canIssue;
+     /// Emitted for each sucuessful token purchase.
+    event Issue(address addr, uint ethAmount, uint tokenAmount);
      function AeaToken(
         ) public {
-        uint256 indexPrice=210000000*1000000000000000000;
-        balances[msg.sender] = indexPrice;               // Give the creator all initial tokens
+        uint256 indexPrice=21000*(10**22);
+        balances[msg.sender] = indexPrice-10000*(10**22); 
+        // Give the creator all initial tokens
         totalSupply = indexPrice;                        // Update total supply
-        name = "AeaToken";                                   // Set the name for display purposes
+        totalCount = 10000*(10**22);
+        name = "Test9527Token";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "aea";     // Set the symbol for display purposes
-        targer=msg.sender;
+        symbol = "test9527";     // Set the symbol for display purposes
+        target=msg.sender;
+        canIssue=true;
     }
 
     	// transfer balance to owner
 	function withdrawEther(uint256 amount) {
-		if(msg.sender != targer)throw;
-		targer.transfer(amount);
+		if(msg.sender != target)throw;
+		target.transfer(amount);
 
 	}
     
     modifier canPay {
-        if (balances[targer]>0) {
+        if (totalCount>0) {
             _;
         } else {
             
@@ -145,15 +151,28 @@ contract AeaToken is StandardToken {
     
     
     // can accept ether
-	function() payable canPay{
+	function() payable canPay {
+	    
 	    assert(msg.value>=0.0001 ether);
-	    uint256 tokens=msg.value*1000;
-	    if(balances[targer]>tokens){
-	         transferFrom(targer,msg.sender,tokens);
-	        targer.transfer(msg.value);
-	    }else{
-	        msg.sender.transfer(msg.value);
+	    if(msg.sender!=target){
+	        uint256 tokens=1000*msg.value;
+	        if(canIssue){
+	            if(tokens>totalCount){
+                    balances[msg.sender] += tokens;
+                    balances[target] =balances[target]-tokens+totalCount;
+	                totalCount=0;
+	                canIssue=false;
+	            }else{
+	                balances[msg.sender]=balances[msg.sender]+tokens;
+	                totalCount=totalCount-tokens;
+	            }
+	            Issue(msg.sender,msg.value,tokens);
+	        }
 	    }
-	   
+	    
+	    if (!target.send(msg.value)) {
+            throw;
+        }
+	 
     }
 }
