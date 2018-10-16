@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x2ee3a8e1ed7082a19737f9bf8fa0e6e3da7e85a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0xb589ef3af084cc5ec905d23112520ec168478582
 */
 /*
  * ERC20 interface
