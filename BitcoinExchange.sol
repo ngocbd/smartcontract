@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinExchange at 0x6268bd88aced86b4a491734b9af8af57fcc7b1a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinExchange at 0x0e8c10d2bb028633684a145c0a6ac39ec63b4bad
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'BitcoinExchange' token contract
+// 'Bitcoin Exchange' token contract
 //
 // Deployed to : 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9
-// Symbol      : BTCE
-// Name        : BitcoinExchange
+// Symbol      : BEX
+// Name        : Bitcoin Exchange
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -116,10 +116,10 @@ contract BitcoinExchange is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function BitcoinExchange() public {
-        symbol = "BTCE";
-        name = "BitcoinExchange ";
+        symbol = "BEX";
+        name = "Bitcoin Exchange ";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
+        _totalSupply = 210000000000000000000000000;
         balances[0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9] = _totalSupply;
         Transfer(address(0), 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9, _totalSupply);
     }
