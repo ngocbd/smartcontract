@@ -1,88 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x965757249ED04f11F3180170dC5Edf4341189DE7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x0f63aad989e402e06f361e7df51116732d3efa1b
 */
-pragma solidity 0.4.11;
+pragma solidity ^0.4.16;
 
+contract Storage {
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+   address owner = 0xb697a802a93c9ef958ec93ddf4d5800c5a01f7d4; // <= define the address you control (have the private key to)
 
+   bytes32[] storageContainer;
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
+   function pushByte(bytes32 b) {
+      storageContainer.push(b);
+   }
 
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-pragma solidity 0.4.11;
-
-contract Storage is Ownable {
-    struct Crate {
-        mapping(bytes32 => uint256) uints;
-        mapping(bytes32 => address) addresses;
-        mapping(bytes32 => bool) bools;
-        mapping(address => uint256) bals;
-    }
-
-    mapping(bytes32 => Crate) crates;
-
-    function setUInt(bytes32 _crate, bytes32 _key, uint256 _value) onlyOwner {
-        crates[_crate].uints[_key] = _value;
-    }
-
-    function getUInt(bytes32 _crate, bytes32 _key) constant returns(uint256) {
-        return crates[_crate].uints[_key];
-    }
-
-    function setAddress(bytes32 _crate, bytes32 _key, address _value) onlyOwner {
-        crates[_crate].addresses[_key] = _value;
-    }
-
-    function getAddress(bytes32 _crate, bytes32 _key) constant returns(address) {
-        return crates[_crate].addresses[_key];
-    }
-
-    function setBool(bytes32 _crate, bytes32 _key, bool _value) onlyOwner {
-        crates[_crate].bools[_key] = _value;
-    }
-
-    function getBool(bytes32 _crate, bytes32 _key) constant returns(bool) {
-        return crates[_crate].bools[_key];
-    }
-
-    function setBal(bytes32 _crate, address _key, uint256 _value) onlyOwner {
-        crates[_crate].bals[_key] = _value;
-    }
-
-    function getBal(bytes32 _crate, address _key) constant returns(uint256) {
-        return crates[_crate].bals[_key];
-    }
 }
