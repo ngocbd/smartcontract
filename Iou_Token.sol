@@ -1,10 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Iou_Token at 0x218d2456a72dbe92e089aa7b438639212a441f78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Iou_Token at 0xdd57115129fb4a4da7d5e49d32d8e36d183ca8ef
 */
 // ----------------------------------------------------------------------------------------------
-// Developer Nechesov Andrey: Facebook.com/Nechesov   
-// Enjoy. (c) PRCR.org ICO Business Platform 2017. The PRCR Licence.
-// Eth address: 0x788C45Dd60aE4dBE5055b5Ac02384D5dc84677b0
+// Developer Nechesov Andrey & ObjectMicro, Inc 
 // ----------------------------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
