@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQToken at 0x2bd1f12269c1ff80042c8d354bba4c1ca52e2061
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQToken at 0x5c3a228510d246b78a3765c20221cbf3082b44a4
 */
 pragma solidity 0.4.15;
-
 
 /**
  * @title ERC20Basic
@@ -47,7 +46,6 @@ library SafeMath {
 }
 
 
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances. 
@@ -80,7 +78,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -91,6 +88,7 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 
 
 /**
@@ -155,7 +153,6 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-
 /// @title StandardToken which circulation can be delayed and started by another contract.
 /// @dev To be used as a mixin contract.
 /// The contract is created in disabled state: circulation is disabled.
@@ -201,20 +198,6 @@ contract CirculatingToken is StandardToken {
     /// @notice are the circulation started?
     bool public m_isCirculating;
 }
-
-
-// Code taken from https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol
-// Audit, refactoring and improvements by github.com/Eenae
-
-// @authors:
-// Gav Wood <g@ethdev.com>
-// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
-// single, or, crucially, each of a number of, designated owners.
-// usage:
-// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
-// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
-// interior is executed.
-
 
 /// note: during any ownership changes all pending operations (waiting for more signatures) are cancelled
 // TODO acceptOwnership
@@ -319,7 +302,9 @@ contract multiowned {
         assertOwnersAreConsistent();
     }
 
-    // Replaces an owner `_from` with another `_to`.
+    /// @notice replaces an owner `_from` with another `_to`.
+    /// @param _from address of owner to replace
+    /// @param _to address of new owner
     // All pending operations will be canceled!
     function changeOwner(address _from, address _to)
         external
@@ -339,6 +324,8 @@ contract multiowned {
         OwnerChanged(_from, _to);
     }
 
+    /// @notice adds an owner
+    /// @param _owner address of new owner
     // All pending operations will be canceled!
     function addOwner(address _owner)
         external
@@ -357,6 +344,8 @@ contract multiowned {
         OwnerAdded(_owner);
     }
 
+    /// @notice removes an owner
+    /// @param _owner address of owner to remove
     // All pending operations will be canceled!
     function removeOwner(address _owner)
         external
@@ -378,6 +367,8 @@ contract multiowned {
         OwnerRemoved(_owner);
     }
 
+    /// @notice changes the required number of owner signatures
+    /// @param _newRequired new number of signatures required
     // All pending operations will be canceled!
     function changeRequirement(uint _newRequired)
         external
@@ -389,11 +380,14 @@ contract multiowned {
         RequirementChanged(_newRequired);
     }
 
-    // Gets an owner by 0-indexed position
+    /// @notice Gets an owner by 0-indexed position
+    /// @param ownerIndex 0-indexed owner position
     function getOwner(uint ownerIndex) public constant returns (address) {
         return m_owners[ownerIndex + 1];
     }
 
+    /// @notice Gets owners
+    /// @return memory array of owners
     function getOwners() public constant returns (address[]) {
         address[] memory result = new address[](m_numOwners);
         for (uint i = 0; i < m_numOwners; i++)
@@ -402,18 +396,23 @@ contract multiowned {
         return result;
     }
 
+    /// @notice checks if provided address is an owner address
+    /// @param _addr address to check
+    /// @return true if it's an owner
     function isOwner(address _addr) public constant returns (bool) {
         return m_ownerIndex[_addr] > 0;
     }
 
-    // Tests ownership of the current caller.
+    /// @notice Tests ownership of the current caller.
+    /// @return true if it's an owner
     // It's advisable to call it by new owner to make sure that the same erroneous address is not copy-pasted to
     // addOwner/changeOwner and to isOwner.
     function amIOwner() external constant onlyowner returns (bool) {
         return true;
     }
 
-    // Revokes a prior confirmation of the given operation
+    /// @notice Revokes a prior confirmation of the given operation
+    /// @param _operation operation value, typically sha3(msg.data)
     function revoke(bytes32 _operation)
         external
         multiOwnedOperationIsActive(_operation)
@@ -432,6 +431,9 @@ contract multiowned {
         Revoke(msg.sender, _operation);
     }
 
+    /// @notice Checks if owner confirmed given operation
+    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _owner an owner address
     function hasConfirmed(bytes32 _operation, address _owner)
         external
         constant
@@ -610,13 +612,13 @@ contract MultiownedControlled is multiowned {
         ControllerSet(m_controller);
     }
 
-    /// @notice sets the controller
+    /// @dev sets the controller
     function setController(address _controller) external onlymanyowners(sha3(msg.data)) {
         m_controller = _controller;
         ControllerSet(m_controller);
     }
 
-    /// @notice ability for controller to step down
+    /// @dev ability for controller to step down
     function detachController() external onlyController {
         address was = m_controller;
         m_controller = address(0);
@@ -725,6 +727,7 @@ contract MintableMultiownedToken is MultiownedControlled, StandardToken {
     function mintInternal(address _to, uint256 _amount) internal {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
+        Transfer(this, _to, _amount);
         Mint(_to, _amount);
     }
 
@@ -737,6 +740,7 @@ contract MintableMultiownedToken is MultiownedControlled, StandardToken {
         if (0 != dividends) {
             balances[dividendsPool] = balances[dividendsPool].sub(dividends);
             balances[_to] = balances[_to].add(dividends);
+            Transfer(dividendsPool, _to, dividends);
         }
         m_lastAccountEmission[_to] = getLastEmissionNum();
     }
@@ -803,7 +807,7 @@ contract STQToken is CirculatingToken, MintableMultiownedToken {
         require(3 == _owners.length);
     }
 
-    /// @notice Allows token transfers
+    /// @dev Allows token transfers
     function startCirculation() external onlyController {
         assert(enableCirculation());    // must be called once
     }
