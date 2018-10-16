@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheNextBlock at 0xcf70f36f8fd04713b33900bab530fd2f63ed9ae0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheNextBlock at 0x5ee4c95b0547afbeba683805301eab291ad28f45
 */
 pragma solidity ^0.4.19;
 
@@ -60,18 +60,18 @@ contract TheNextBlock {
     * If bet is less than this amount, transaction is reverted.
     * If moore, contract will send excess amout back to player.
     */
-    uint256 public allowedBetAmount = 5000000000000000; // 0.005 ETH
+    uint256 constant public allowedBetAmount = 5000000000000000; // 0.005 ETH
     /**
     * You need to guess requiredPoints times in a row to win jackpot.
     */
-    uint256 public requiredPoints = 3;
+    uint256 constant public requiredPoints = 3;
     /**
     * Every bet is split: 10% to owner, 70% to prize pool
     * we preserve 20% for next prize pool
     */
-    uint256 public ownerProfitPercent = 10;
-    uint256 public nextPrizePoolPercent = 20;
-    uint256 public prizePoolPercent = 70; 
+    uint256 constant public ownerProfitPercent = 10;
+    uint256 constant public nextPrizePoolPercent = 20;
+    uint256 constant public prizePoolPercent = 70; 
     uint256 public prizePool = 0;
     uint256 public nextPrizePool = 0;
     uint256 public totalBetCount = 0;
@@ -83,6 +83,16 @@ contract TheNextBlock {
     
     mapping(address => Player) public playersStorage;
     mapping(address => uint256) public playersPoints;
+
+
+    modifier notContract(address sender)  {
+      uint32 size;
+      assembly {
+        size := extcodesize(sender)
+      }
+      require (size == 0);
+      _;
+    }
     
     modifier onlyOwner() {
         require(msg.sender == owner.addr);
@@ -128,6 +138,7 @@ contract TheNextBlock {
     function placeBet(address _miner) 
         public
         payable
+        notContract(msg.sender)
         notLess
         notMore
         onlyOnce {
@@ -141,7 +152,7 @@ contract TheNextBlock {
 
             if(_miner == block.coinbase) {
                 
-                playersPoints[msg.sender] = playersPoints[msg.sender].add(1);
+                playersPoints[msg.sender]++;
 
                 if(playersPoints[msg.sender] == requiredPoints) {
                     
@@ -152,7 +163,6 @@ contract TheNextBlock {
                         nextPrizePool = 0;
                         playersPoints[msg.sender] = 0;
                     } else {
-                        Jackpot(msg.sender, 0);
                         playersPoints[msg.sender]--;
                     }
                 }
