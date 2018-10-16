@@ -1,297 +1,313 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PATToken at 0xa7288921a0373190904b2132b45f204f6b5b734c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PATToken at 0xbb1fa4fdeb3459733bf67ebc6f893003fa976a82
 */
+/*
+ * ERC-20 Standard Token Smart Contract Interface.
+ * Copyright © 2016–2017 by ABDK Consulting.
+ * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
+ */
 pragma solidity ^0.4.16;
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
+contract Token {
   /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * Get total number of tokens in circulation.
    *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
+   * @return total number of tokens in circulation
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+  function totalSupply () constant returns (uint256 supply);
+
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf (address _owner) constant returns (uint256 balance);
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer (address _to, uint256 _value) returns (bool success);
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom (address _from, address _to, uint256 _value)
+  returns (bool success);
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   *
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value) returns (bool success);
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance (address _owner, address _spender) constant
+  returns (uint256 remaining);
+
+  /**
+   * Logged when tokens were transferred from one owner to another.
+   *
+   * @param _from address of the owner, tokens were transferred from
+   * @param _to address of the owner, tokens were transferred to
+   * @param _value number of tokens transferred
+   */
+  event Transfer (address indexed _from, address indexed _to, uint256 _value);
+
+  /**
+   * Logged when owner approved his tokens to be transferred by some spender.
+   *
+   * @param _owner owner who approved his tokens to be transferred
+   * @param _spender spender who were allowed to transfer the tokens belonging
+   *        to the owner
+   * @param _value number of tokens belonging to the owner, approved to be
+   *        transferred by the spender
+   */
+  event Approval (
+    address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+/**
+ * Provides methods to safely add, subtract and multiply uint256 numbers.
+ */
+contract SafeMath {
+  uint256 constant private MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+  /**
+   * Add two uint256 values, throw in case of overflow.
+   *
+   * @param x first value to add
+   * @param y second value to add
+   * @return x + y
+   */
+  function safeAdd (uint256 x, uint256 y)
+  constant internal
+  returns (uint256 z) {
+    assert (x <= MAX_UINT256 - y);
+    return x + y;
+  }
+
+  /**
+   * Subtract one uint256 value from another, throw in case of underflow.
+   *
+   * @param x value to subtract from
+   * @param y value to subtract
+   * @return x - y
+   */
+  function safeSub (uint256 x, uint256 y)
+  constant internal
+  returns (uint256 z) {
+    assert (x >= y);
+    return x - y;
+  }
+
+  /**
+   * Multiply two uint256 values, throw in case of overflow.
+   *
+   * @param x first value to multiply
+   * @param y second value to multiply
+   * @return x * y
+   */
+  function safeMul (uint256 x, uint256 y)
+  constant internal
+  returns (uint256 z) {
+    if (y == 0) return 0; // Prevent division by zero at the next line
+    assert (x <= MAX_UINT256 / y);
+    return x * y;
+  }
+}
+
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () {
+    // Do nothing
+  }
+
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf (address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer (address _to, uint256 _value) returns (bool success) {
+    uint256 fromBalance = accounts [msg.sender];
+    if (fromBalance < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (fromBalance, _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (msg.sender, _to, _value);
     return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-}
+  function transferFrom (address _from, address _to, uint256 _value)
+  returns (bool success) {
+    uint256 spenderAllowance = allowances [_from][msg.sender];
+    if (spenderAllowance < _value) return false;
+    uint256 fromBalance = accounts [_from];
+    if (fromBalance < _value) return false;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+    allowances [_from][msg.sender] =
+      safeSub (spenderAllowance, _value);
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-/**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
-
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-}
-
-/**
- * @title PAT Token
- *
- * @dev Implementation of PAT Token based on the basic standard token.
- */
-contract PATToken is PausableToken {
-
-    function () {
-      //if ether is sent to this address, send it back.
-        revert();
+    if (_value > 0 && _from != _to) {
+      accounts [_from] = safeSub (fromBalance, _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
     }
+    Transfer (_from, _to, _value);
+    return true;
+  }
 
-    /**
-    * Public variables of the token
-    * The following variables are OPTIONAL vanities. One does not have to include them.
-    * They allow one to customise the token contract & in no way influences the core functionality.
-    * Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    string public version = '1.0.0';
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   *
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
 
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _totalSupply total supply of the token.
-     * @param _name token name e.g PAT Token.
-     * @param _symbol token symbol e.g PAT.
-     * @param _decimals amount of decimals.
-     */
-    function PATToken(uint256 _totalSupply, string _name, string _symbol, uint8 _decimals) {
-        balances[msg.sender] = _totalSupply;    // Give the creator all initial tokens
-        totalSupply = _totalSupply;
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
+    return true;
+  }
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance (address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+}
+
+/**
+ * PAT Token Smart Contract.
+ */
+contract PATToken is AbstractToken {
+  uint256 constant internal TOKENS_COUNT = 42000000000e18;
+
+  /**
+   * Create PAT Token smart contract with given central bank address.
+   *
+   * @param _centralBank central bank address
+   */
+  function PATToken (address _centralBank)
+    AbstractToken () {
+    accounts [_centralBank] = TOKENS_COUNT; // Limit emission to 42G
+  }
+
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply () constant returns (uint256 supply) {
+    return TOKENS_COUNT;
+  }
+
+  /**
+   * Get name of this token.
+   *
+   * @return name of this token
+   */
+  function name () public pure returns (string) {
+    return "Pangea Arbitration Token";
+  }
+
+  /**
+   * Get symbol of this token.
+   *
+   * @return symbol of this token
+   */
+  function symbol () public pure returns (string) {
+    return "PAT";
+  }
+
+  /**
+   * Get number of decimals for this token.
+   *
+   * @return number of decimals for this token
+   */
+  function decimals () public pure returns (uint8) {
+    return 18;
+  }
 }
