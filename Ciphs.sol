@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ciphs at 0xeb2b6b3f3fa0ea711ceb2ed77a23baeaf5ac0796
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ciphs at 0x08c1a513a230f4cfc219896713b4dbe22b433e16
 */
 pragma solidity ^0.4.15;
 
@@ -147,7 +147,6 @@ contract Ownable {
     return owner;
   }
   
-
 }
 
 contract Standard223Receiver is ERC223Receiver {
@@ -272,13 +271,11 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
   event Votes(address indexed owner, uint256 value);
   event Burn(address indexed burner, uint256 value);
   event Mint(uint256 value);
-
   
   function Ciphs() public {
     _totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
-
 
   function initialize_proposal() public {
 
@@ -351,7 +348,7 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
 
   function support_proposal() public returns (bool) {
     if(!propose || votes[msg.sender] == 1) throw;
-    //first check balance to be more than 10 Ciphs
+    //first check balance to be more than 100 Ciphs
     if(balances[msg.sender] > 100e18)
     {
         //only vote once
@@ -370,7 +367,7 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
 
   function against_proposal() public returns (bool) {
     if(!propose || votes[msg.sender] == 1) throw;
-    //first check balance to be more than 10 Ciphs
+    //first check balance to be more than 100 Ciphs
     if(balances[msg.sender] > 100e18)
     {
         //only vote once
@@ -487,8 +484,7 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
     buyTokens();
 
   }
-  
-  
+   
   function buyTokens() public payable {
       
     //require(propose);
@@ -516,7 +512,6 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
       return investors;
   }
 
-  
   function setRate(uint256 _rate) public onlyOwner{
       rate = _rate;
   }
@@ -537,9 +532,12 @@ contract Ciphs is Standard223Receiver, Standard223Token, Ownable {
         last_seen[msg.sender] = now;
   }
   
+   function sendEtherToOwner() public onlyOwner {                       
+      owner.transfer(this.balance);
+  }
+
   function destroy() public onlyOwner {
     selfdestruct(owner);
   }
-
 
 }
