@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WineCoin at 0xa9fabd661046b5104d22f4594b890a57630219b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WineCoin at 0x85f16d4e2811579aea56da207cc44608e69fd590
 */
 pragma solidity ^0.4.18;
 
@@ -9,8 +9,8 @@ pragma solidity ^0.4.18;
 // Deployed to :0xc6aabe58E582cf1C97457984C01B92bc6f641AF4
 // Symbol      : VIN
 // Name        : Wine Coin
-// Total supply: 100,000,000
-// Decimals    : 2
+// Total supply: 76,000,000
+// Decimals    : 16
 //
 // Enjoy.
 //
@@ -118,8 +118,8 @@ contract WineCoin is ERC20Interface, Owned, SafeMath {
     function WineCoin() public {
         symbol = "VIN";
         name = "Wine Coin";
-        decimals = 2;
-        _totalSupply = 10000000000;
+        decimals = 16;
+        _totalSupply = 76000000;
         balances[0xc6aabe58E582cf1C97457984C01B92bc6f641AF4] = _totalSupply;
         Transfer(address(0), 0xc6aabe58E582cf1C97457984C01B92bc6f641AF4, _totalSupply);
     }
