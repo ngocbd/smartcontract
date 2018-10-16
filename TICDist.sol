@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TICDist at 0x665ea5718cbf769fad18ecce17a8b5d8fb6a49ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TICDist at 0x39e8082b00c9f19ebf553e40feb7cf8459acc693
 */
 pragma solidity ^0.4.13;
 
@@ -355,6 +355,7 @@ contract TICDist is DSAuth, DSMath {
     bool public isLockedConfig = false;     // ?????????
     
     bool public bTest = true;               // ???????????1%?????
+    uint public testUnlockedDay = 0;        // ???????
     
     struct Detail {  
         uint distPercent;   // ????????????
@@ -478,30 +479,39 @@ contract TICDist is DSAuth, DSMath {
     function checkLockedToken() public {
         // ?????
         assert(distDay != 0);
-        // ?????????
-        assert(founders[msg.sender].lockedDay > 0);
         // ?????
-        assert(founders[msg.sender].lockedToken > 0);
         if (bTest){
-            // ?????????
-            uint unlock_percent = today() - distDay;
-            if(unlock_percent > founders[msg.sender].lockedPercent){
-                unlock_percent = founders[msg.sender].lockedPercent;
+            // ??????????
+            assert(today() > testUnlockedDay);
+            // ??????1%
+            uint unlock_percent = 1;
+            // ????????????? TODO
+            uint i = 0;
+            for(i=0; i<founderList.length; ++i){
+                // ????????? ?? ?????
+                if (founders[founderList[i]].lockedDay > 0 && founders[founderList[i]].lockedToken > 0){
+                    // ??????
+                    uint256 all_token_num = TIC.totalSupply()*founders[founderList[i]].distPercent/100;
+                    // ???????
+                    uint256 locked_token_num = all_token_num*founders[founderList[i]].lockedPercent/100;
+                    // ??????
+                    uint256 unlock_token_num = locked_token_num*unlock_percent/founders[founderList[i]].lockedPercent;
+                    if (unlock_token_num > founders[founderList[i]].lockedToken){
+                        unlock_token_num = founders[founderList[i]].lockedToken;
+                    }
+                    // ???? token
+                    TIC.push(founderList[i], unlock_token_num);
+                    // ??token????
+                    founders[founderList[i]].lockedToken -= unlock_token_num;
+                }
             }
             // ??????
-            uint256 all_token_num = TIC.totalSupply()*founders[msg.sender].distPercent/100;
-            // ???????
-            uint256 locked_token_num = all_token_num*founders[msg.sender].lockedPercent/100;
-            // ??????
-            uint256 unlock_token_num = locked_token_num*unlock_percent/founders[msg.sender].lockedPercent;
-            if (unlock_token_num > founders[msg.sender].lockedToken){
-                unlock_token_num = founders[msg.sender].lockedToken;
-            }
-            // ???? token
-            TIC.push(msg.sender, unlock_token_num);
-            // ??token????
-            founders[msg.sender].lockedToken -= unlock_token_num;
+            testUnlockedDay = today();            
         } else {
+            // ?????????
+            assert(founders[msg.sender].lockedDay > 0);
+            // ?????
+            assert(founders[msg.sender].lockedToken > 0);
             // ?????????
             assert(today() > founders[msg.sender].lockedDay);
             // ???? token
