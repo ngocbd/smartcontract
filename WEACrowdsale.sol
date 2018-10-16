@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEACrowdsale at 0x6ab7b3236a7df8e6b28f2310199edd0b5c228c17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEACrowdsale at 0xb5042a8e68402c244e49ea936f31edc4f699903b
 */
 pragma solidity ^0.4.16;
 
@@ -26,7 +26,7 @@ contract WEACrowdsale {
         startDate = 1515970800;     // 15/01/2018
         endDate = 1518735600;       // 15/02/2018
         price = 30;
-        token = Token(0x4916f730A7B60C56Bcfc8B79Dd29bA1c0f244228);
+        token = Token(0x1dD0497C6a7E90d4e88cBB0aDF9c8326B83097D9);
         active = true;
     }
 
