@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrderChain at 0xaa1623f45f1f3830d543501e244c80f40cb43676
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrderChain at 0x04b14c31c9fe219a16c62686cac58b4f702ce73f
 */
 pragma solidity ^0.4.4;
 
@@ -123,7 +123,7 @@ contract OrderChain is StandardToken {
         name = "OrderChain";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "ORD";                               // Set the symbol for display purposes
-		totalSupply = 1000000000 * 10 ** uint(decimals);                        // Update total supply (100000 for example)
+		totalSupply = 1000000000 ** uint(decimals);                        // Update total supply (100000 for example)
     }
 
     /* Approves and then calls the receiving contract */
