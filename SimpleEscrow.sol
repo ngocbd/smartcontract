@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleEscrow at 0x34451639027d2a4e4ef42de0efc74073a4212a20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleEscrow at 0x29e577a56e32cb79442efb8c9275b46e6616951d
 */
 pragma solidity ^0.4.18;
 
 contract SimpleEscrow {
     
-    uint public PERIOD = 12 days;
+    uint public PERIOD = 21 days;
     
     uint public SAFE_PERIOD = 5 days;
     
