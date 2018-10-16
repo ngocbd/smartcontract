@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x152705988c801c92E7df97615DE03bEe2355b78f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x41F1dcb0D41Bf1e143461fAf42C577a9219da415
 */
 pragma solidity ^0.4.8;
 
@@ -77,11 +77,11 @@ contract ERC20Interface {
 
 contract FixedSupplyToken is ERC20Interface {
 
-    string public constant symbol = "MEWB";
+    string public constant symbol = "SPCD";
 
-    string public constant name = "MeowMeowBeenz";
+    string public constant name = "Space Dollars";
 
-    uint8 public constant decimals = 18;
+    uint8 public constant decimals = 4;
 
     uint256 _totalSupply = 1000000000;
 
