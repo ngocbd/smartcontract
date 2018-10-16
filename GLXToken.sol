@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0xadb90bb3dc1615cbc2ec9cd5e0b0b7e5149bfec4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0x72d592c595175cc747243c311f9e5ec21703787f
 */
 pragma solidity ^0.4.23;
 // ----------------------------------------------------------------------------
 // 'GLX' token contract
 //
-// Deployed to : 0xf27853F957e796A546A301846114F89cDd376965
+// Deployed to : 0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C
 // Symbol      : GLXT
 // Name        : Golix Token
 // Total supply: 1274240097
@@ -105,7 +105,7 @@ contract Owned {
 // ----------------------------------------------------------------------------
 contract GLXToken is ERC20Interface, Owned, SafeMath {
     string public symbol = "GLXT";
-    string public name = "Golix Token";
+    string public name = "GolixToken";
     uint8 public decimals = 18;
     uint public _totalSupply;
     bool internal deployed = false;
@@ -127,8 +127,8 @@ contract GLXToken is ERC20Interface, Owned, SafeMath {
     function deployGLX() public onlyOwner {
         if(deployed) revert();
         _totalSupply = 1274240097000000000000000000;
-        balances[0xf27853F957e796A546A301846114F89cDd376965] = _totalSupply;
-        emit Transfer(address(0), 0xf27853F957e796A546A301846114F89cDd376965, _totalSupply);
+        balances[0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C] = _totalSupply;
+        emit Transfer(address(0), 0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C, _totalSupply);
         deployed = true;
     }
 
