@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeBankToken at 0x7eba66ae4aa6f60c9fe00a39883e60e4e6a59323
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeBankToken at 0x14798b51fe34812502dfff1a26942fd232f5e454
 */
 pragma solidity ^0.4.21;
-
 
 contract EIP20Interface {
     function name() public view returns (string);
@@ -45,7 +44,6 @@ contract EIP20Interface {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
 
 contract EIP20 is EIP20Interface {
 
@@ -127,8 +125,6 @@ contract EIP20 is EIP20Interface {
     }
 }
 
-
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -175,7 +171,6 @@ library SafeMath {
   }
 }
 
-
 contract TimeBankToken is EIP20 {
   using SafeMath for uint;
 
@@ -209,7 +204,7 @@ contract TimeBankToken is EIP20 {
   }
 
   // 1 with 28 zeros
-  constructor(address _master, address[] _managers, uint _majorityThreshold, uint _managementThreshold) EIP20(10000000000000000000000000000, "Time Bank Token", 18, "TB") public {
+  constructor(address _master, address[] _managers, uint _majorityThreshold, uint _managementThreshold) EIP20(10000000000000000000000000000, "Time Bank Token", 18, "TBT") public {
     require(checkAddress(_master));
     require(_managers.length >= _majorityThreshold);
     require(_managers.length >= _managementThreshold);
