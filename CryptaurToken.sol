@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptaurToken at 0x827de8cb5bf8da8f16093505c58b5677122cdcec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptaurToken at 0x88d50b466be55222019d71f9e8fae17f5f45fca1
 */
 /*
 This file is part of the Cryptaur Contract.
@@ -28,7 +28,7 @@ contract owned {
     function owned() payable public {
         owner = msg.sender;
     }
-
+    
     modifier onlyOwner {
         require(owner == msg.sender);
         _;
@@ -37,7 +37,7 @@ contract owned {
     function changeOwner(address _owner) onlyOwner public {
         candidate = _owner;
     }
-
+    
     function confirmOwner() public {
         require(candidate == msg.sender);
         owner = candidate;
@@ -75,7 +75,7 @@ contract CryptaurToken is owned {
     function changeBackend(address _cryptaurBackend) public onlyOwner {
         cryptaurBackend = _cryptaurBackend;
     }
-
+    
     function mintTokens(address _minter, uint _tokens, uint8 _originalCoinType, bytes32 _originalTxHash) public {
         require(msg.sender == cryptaurBackend);
         require(!crowdsaleFinished);
@@ -84,7 +84,7 @@ contract CryptaurToken is owned {
         Transfer(this, _minter, _tokens);
         Mint(_minter, _tokens, _originalCoinType, _originalTxHash);
     }
-
+    
     function finishCrowdsale() onlyOwner public {
         crowdsaleFinished = true;
     }
@@ -97,7 +97,7 @@ contract CryptaurToken is owned {
         balanceOf[_to] += _value;
         Transfer(msg.sender, _to, _value);
     }
-
+    
     function transferFrom(address _from, address _to, uint _value)
         public onlyPayloadSize(3 * 32) {
         require(balanceOf[_from] >= _value);
