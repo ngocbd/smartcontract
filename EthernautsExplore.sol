@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsExplore at 0x43a65ba72a91c18bb16e3aa4cdf150ced9657645
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsExplore at 0x85b2949cea65add49c69dac77fb052596bc5ddd4
 */
 pragma solidity ^0.4.19;
 
@@ -1350,7 +1350,7 @@ contract EthernautsExplore is EthernautsLogic {
         int256 minExplore = (minToExplore - MIN_TIME_EXPLORE);
 
         minToExplore -= fraction(minExplore, int256(minRange), int256(scaledRange));
-        minToExplore += fraction(minToExplore, (_sectorSize - 10), 10);
+        minToExplore += fraction(minToExplore, int256(_sectorSize) - int256(10), 10);
         minToExplore = SafeMath.max(minToExplore, MIN_TIME_EXPLORE);
 
         return minToExplore;
