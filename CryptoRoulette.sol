@@ -1,13 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x6f952d7acaa2dffaecfe34d064ed5b46fcc59664
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x652eB151869C2E8fA354F29321BA192D5d9F84DC
 */
 pragma solidity ^0.4.19;
 
 // CryptoRoulette
 //
 // Guess the number secretly stored in the blockchain and win the whole contract balance!
+// A new number is randomly chosen after each try.
 //
-// To play, call the play() method with the guessed number.  Bet price: 0.1 ether
+// To play, call the play() method with the guessed number (1-10).  Bet price: 0.1 ether
 
 contract CryptoRoulette {
 
@@ -28,12 +29,12 @@ contract CryptoRoulette {
     }
 
     function shuffle() internal {
-        // initialize secretNumber with a value between 0 and 15
-        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 16;
+        // randomly set secretNumber with a value between 1 and 10
+        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 10 + 1;
     }
 
     function play(uint256 number) payable public {
-        require(msg.value >= betPrice && number < 16);
+        require(msg.value >= betPrice && number <= 10);
 
         Game game;
         game.player = msg.sender;
@@ -48,7 +49,6 @@ contract CryptoRoulette {
         shuffle();
         lastPlayed = now;
     }
-
     function kill() public {
         if (msg.sender == ownerAddr && now > lastPlayed + 1 days) {
             suicide(msg.sender);
