@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenexiToken at 0xbcfdaeb22ab6e10dfb99546e6240155edc1084f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenexiToken at 0x87a5d8afe7ae47b1261a3b7e31e4b026f644b4a2
 */
 pragma solidity ^0.4.21;
 
@@ -133,7 +133,7 @@ contract GenexiToken is ERC20Token, Owned {
     uint32 public constant decimals = 18;
 
     // SET current initial token supply
-    uint256 public initialSupply = 12000000000;
+    uint256 public initialSupply = 7000000000;
     // 
     bool public fundingEnabled = true;
     // The maximum tokens available for sale
