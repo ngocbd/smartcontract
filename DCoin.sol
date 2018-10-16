@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCoin at 0xaba4fa934ef1c33fab46e88827acd9cc0bd8f9ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DCoin at 0x1a86b24ca84aa7049a974bb6db83f0bd80c60713
 */
 pragma solidity ^0.4.16;
 
@@ -37,10 +37,10 @@ contract TokenERC20 {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  
-        balanceOf[msg.sender] = totalSupply;                
-        name = tokenName;                                   
-        symbol = tokenSymbol;                               
+        totalSupply = initialSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = tokenName;
+        symbol = tokenSymbol;
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
@@ -59,7 +59,7 @@ contract TokenERC20 {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     
+        require(_value <= allowance[_from][msg.sender]);
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
@@ -82,19 +82,19 @@ contract TokenERC20 {
     }
 
     function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   
-        balanceOf[msg.sender] -= _value;            
-        totalSupply -= _value;                      
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
         Burn(msg.sender, _value);
         return true;
     }
 
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                
-        require(_value <= allowance[_from][msg.sender]);    
-        balanceOf[_from] -= _value;                         
-        allowance[_from][msg.sender] -= _value;             
-        totalSupply -= _value;                              
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
         Burn(_from, _value);
         return true;
     }
@@ -109,6 +109,7 @@ contract DCoin is owned, TokenERC20 {
     uint256 public sellPrice;
     uint256 public buyPrice;
     mapping (address => bool) public frozenAccount;
+
     event FrozenFunds(address target, bool frozen);
 
     function DCoin(
@@ -118,13 +119,13 @@ contract DCoin is owned, TokenERC20 {
     ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               
-        require (balanceOf[_from] > _value);                
-        require (balanceOf[_to] + _value > balanceOf[_to]); 
-        require(!frozenAccount[_from]);                     
-        require(!frozenAccount[_to]);                       
-        balanceOf[_from] -= _value;                         
-        balanceOf[_to] += _value;                           
+        require (_to != 0x0);
+        require (balanceOf[_from] >= _value);
+        require (balanceOf[_to] + _value > balanceOf[_to]);
+        require(!frozenAccount[_from]);
+        require(!frozenAccount[_to]);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
     }
 
@@ -146,13 +147,13 @@ contract DCoin is owned, TokenERC20 {
     }
 
     function buy() payable public {
-        uint amount = msg.value / buyPrice;               
-        _transfer(this, msg.sender, amount);              
+        uint amount = msg.value / buyPrice;
+        _transfer(this, msg.sender, amount);
     }
 
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      
-        _transfer(msg.sender, this, amount);              
-        msg.sender.transfer(amount * sellPrice);          
+        require(this.balance >= amount * sellPrice);
+        _transfer(msg.sender, this, amount);
+        msg.sender.transfer(amount * sellPrice);
     }
 }
