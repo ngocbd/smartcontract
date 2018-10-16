@@ -1,67 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponseeTokenModelSolaCoin at 0xeb12a9c5dbcf7fbb6deb1f85cdf84e66de4cc300
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponseeTokenModelSolaCoin at 0x6dd5b09acda78b05d0356483fe05eb0768352945
 */
 pragma solidity ^0.4.13;
 
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      revert();
-    }
-    _;
-  }
-}
-
-contract RBInformationStore is Ownable {
-    address public profitContainerAddress;
-    address public companyWalletAddress;
-    uint public etherRatioForOwner;
-    address public multisig;
-
-    function RBInformationStore(address _profitContainerAddress, address _companyWalletAddress, uint _etherRatioForOwner, address _multisig) {
-        profitContainerAddress = _profitContainerAddress;
-        companyWalletAddress = _companyWalletAddress;
-        etherRatioForOwner = _etherRatioForOwner;
-        multisig = _multisig;
-    }
-
-    function setProfitContainerAddress(address _address)  {
-        require(multisig == msg.sender);
-        if(_address != 0x0) {
-            profitContainerAddress = _address;
-        }
-    }
-
-    function setCompanyWalletAddress(address _address)  {
-        require(multisig == msg.sender);
-        if(_address != 0x0) {
-            companyWalletAddress = _address;
-        }
-    }
-
-    function setEtherRatioForOwner(uint _value)  {
-        require(multisig == msg.sender);
-        if(_value != 0) {
-            etherRatioForOwner = _value;
-        }
-    }
-
-    function changeMultiSig(address newAddress){
-        require(multisig == msg.sender);
-        multisig = newAddress;
-    }
-
-    function changeOwner(address newOwner){
-        require(multisig == msg.sender);
-        owner = newOwner;
-    }
-}
 
 /**
  * Math operations with safety checks
@@ -199,17 +140,88 @@ contract StandardToken is BasicToken, ERC20 {
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
   }
-
 }
+
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert();
+    }
+    _;
+  }
+}
+
+
+contract RBInformationStore is Ownable {
+    address public profitContainerAddress;
+    address public companyWalletAddress;
+    uint public etherRatioForOwner;
+    address public multiSigAddress;
+    address public accountAddressForSponsee;
+    bool public isPayableEnabledForAll = true;
+
+    modifier onlyMultiSig() {
+        require(multiSigAddress == msg.sender);
+        _;
+    }
+
+    function RBInformationStore
+    (
+        address _profitContainerAddress,
+        address _companyWalletAddress,
+        uint _etherRatioForOwner,
+        address _multiSigAddress,
+        address _accountAddressForSponsee
+    ) {
+        profitContainerAddress = _profitContainerAddress;
+        companyWalletAddress = _companyWalletAddress;
+        etherRatioForOwner = _etherRatioForOwner;
+        multiSigAddress = _multiSigAddress;
+        accountAddressForSponsee = _accountAddressForSponsee;
+    }
+
+    function changeProfitContainerAddress(address _address) onlyMultiSig {
+        profitContainerAddress = _address;
+    }
+
+    function changeCompanyWalletAddress(address _address) onlyMultiSig {
+        companyWalletAddress = _address;
+    }
+
+    function changeEtherRatioForOwner(uint _value) onlyMultiSig {
+        etherRatioForOwner = _value;
+    }
+
+    function changeMultiSigAddress(address _address) onlyMultiSig {
+        multiSigAddress = _address;
+    }
+
+    function changeOwner(address _address) onlyMultiSig {
+        owner = _address;
+    }
+
+    function changeAccountAddressForSponsee(address _address) onlyMultiSig {
+        accountAddressForSponsee = _address;
+    }
+
+    function changeIsPayableEnabledForAll() onlyMultiSig {
+        isPayableEnabledForAll = !isPayableEnabledForAll;
+    }
+}
+
 
 contract Rate {
     uint public ETH_USD_rate;
     RBInformationStore public rbInformationStore;
 
     modifier onlyOwner() {
-        if (msg.sender != rbInformationStore.owner()) {
-            revert();
-        }
+        require(msg.sender == rbInformationStore.owner());
         _;
     }
 
@@ -225,26 +237,22 @@ contract Rate {
 
 /**
 @title SponseeTokenModelSolaCoin
-@dev TODO add contract code of three contract above when deploy to mainnet
 */
 contract SponseeTokenModelSolaCoin is StandardToken {
 
     string public name = "SOLA COIN";
-    uint8 public decimals = 18;
     string public symbol = "SLC";
+    uint8 public decimals = 18;
     uint public totalSupply = 500000000 * (10 ** uint256(decimals));
     uint public cap = 1000000000 * (10 ** uint256(decimals)); // maximum cap = 10 000 000 $ = 1 000 000 000 tokens
-    RBInformationStore public rbInformationStore;
-    Rate public rate;
     uint public minimumSupport = 500; // minimum support is 5$
     uint public etherRatioForInvestor = 10; // etherRatio (10%) to send ether to investor
     address public sponseeAddress;
-    address public multiSigAddress; // account controls transfer ether/token and change multisig address
-    address public accountAddressForSponseeAddress; // account controls sponsee address to receive ether
-    bool public isPayableEnabled = false;
+    bool public isPayableEnabled = true;
+    RBInformationStore public rbInformationStore;
+    Rate public rate;
 
     event LogReceivedEther(address indexed from, address indexed to, uint etherValue, string tokenName);
-    event LogTransferFromOwner(address indexed from, address indexed to, uint tokenValue, uint etherValue, uint rateUSDETH);
     event LogBuy(address indexed from, address indexed to, uint indexed value, uint paymentId);
     event LogRollbackTransfer(address indexed from, address indexed to, uint value);
     event LogExchange(address indexed from, address indexed token, uint value);
@@ -254,15 +262,16 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     event LogSetName(string name);
     event LogSetSymbol(string symbol);
     event LogMint(address indexed to, uint value);
-    event LogChangeMultiSigAddress(address indexed to);
-    event LogChangeAccountAddressForSponseeAddress(address indexed to);
     event LogChangeSponseeAddress(address indexed to);
-    event LogChangeIsPayableEnabled();
+    event LogChangeIsPayableEnabled(bool flag);
 
-    modifier onlyOwner() {
-        if (msg.sender != rbInformationStore.owner()) {
-            revert();
-        }
+    modifier onlyAccountAddressForSponsee() {
+        require(rbInformationStore.accountAddressForSponsee() == msg.sender);
+        _;
+    }
+
+    modifier onlyMultiSig() {
+        require(rbInformationStore.multiSigAddress() == msg.sender);
         _;
     }
 
@@ -271,15 +280,11 @@ contract SponseeTokenModelSolaCoin is StandardToken {
         address _rbInformationStoreAddress,
         address _rateAddress,
         address _sponsee,
-        address _multiSig,
-        address _accountForSponseeAddress,
         address _to
     ) {
         rbInformationStore = RBInformationStore(_rbInformationStoreAddress);
         rate = Rate(_rateAddress);
         sponseeAddress = _sponsee;
-        multiSigAddress = _multiSig;
-        accountAddressForSponseeAddress = _accountForSponseeAddress;
         balances[_to] = totalSupply;
     }
 
@@ -290,16 +295,17 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     The other is an sponseeAddress which is address of owner of this contract.
     */
     function() payable {
+
         // check condition
-        require(isPayableEnabled);
+        require(isPayableEnabled && rbInformationStore.isPayableEnabledForAll());
 
         // check validation
-        if(msg.value <= 0) { revert(); }
+        if (msg.value <= 0) { revert(); }
 
         // calculate support amount in USD
         uint supportedAmount = msg.value.mul(rate.ETH_USD_rate()).div(10**18);
         // if support is less than minimum => return money to supporter
-        if(supportedAmount < minimumSupport) { revert(); }
+        if (supportedAmount < minimumSupport) { revert(); }
 
         // calculate the ratio of Ether for distribution
         uint etherRatioForOwner = rbInformationStore.etherRatioForOwner();
@@ -316,9 +322,9 @@ contract SponseeTokenModelSolaCoin is StandardToken {
         address companyWalletAddress = rbInformationStore.companyWalletAddress();
 
         // send Ether
-        if(!profitContainerAddress.send(etherForInvestor)) { revert(); }
-        if(!companyWalletAddress.send(etherForOwner)) { revert(); }
-        if(!sponseeAddress.send(etherForSponsee)) { revert(); }
+        if (!profitContainerAddress.send(etherForInvestor)) { revert(); }
+        if (!companyWalletAddress.send(etherForOwner)) { revert(); }
+        if (!sponseeAddress.send(etherForSponsee)) { revert(); }
 
         // token amount is transfered to sender
         // 1.0 token = 1 cent, 1 usd = 100 cents
@@ -332,15 +338,11 @@ contract SponseeTokenModelSolaCoin is StandardToken {
         totalSupply = totalSupply.add(tokenAmount);
 
         // check cap
-        if(totalSupply > cap) { revert(); }
-
-        // send exchange event
-        LogExchange(msg.sender, this, tokenAmount);
+        if (totalSupply > cap) { revert(); }
 
         // send Event
         LogReceivedEther(msg.sender, this, msg.value, name);
-
-        // tranfer event
+        LogExchange(msg.sender, this, tokenAmount);
         Transfer(address(0x0), msg.sender, tokenAmount);
     }
 
@@ -348,12 +350,11 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @notice Change rbInformationStoreAddress.
     @param _address The address of new rbInformationStore
     */
-    function setRBInformationStoreAddress(address _address) {
-        // check sender is multisig address
-        require(multiSigAddress == msg.sender);
+    function setRBInformationStoreAddress(address _address) onlyMultiSig {
 
         rbInformationStore = RBInformationStore(_address);
 
+        // send Event
         LogSetRBInformationStoreAddress(_address);
     }
 
@@ -361,9 +362,11 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @notice Change name.
     @param _name The new name of token
     */
-    function setName(string _name) onlyOwner {
+    function setName(string _name) onlyAccountAddressForSponsee {
+
         name = _name;
 
+        // send Event
         LogSetName(_name);
     }
 
@@ -371,9 +374,11 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @notice Change symbol.
     @param _symbol The new symbol of token
     */
-    function setSymbol(string _symbol) onlyOwner {
+    function setSymbol(string _symbol) onlyAccountAddressForSponsee {
+
         symbol = _symbol;
 
+        // send Event
         LogSetSymbol(_symbol);
     }
 
@@ -382,10 +387,7 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @param _address The address that new token amount is added
     @param _value The new amount of token
     */
-    function mint(address _address, uint _value) {
-
-        // check sender is multisig address
-        require(accountAddressForSponseeAddress == msg.sender);
+    function mint(address _address, uint _value) onlyAccountAddressForSponsee {
 
         // add tokens
         balances[_address] = balances[_address].add(_value);
@@ -394,11 +396,10 @@ contract SponseeTokenModelSolaCoin is StandardToken {
         totalSupply = totalSupply.add(_value);
 
         // check cap
-        if(totalSupply > cap) { revert(); }
+        if (totalSupply > cap) { revert(); }
 
+        // send Event
         LogMint(_address, _value);
-
-        // tranfer event
         Transfer(address(0x0), _address, _value);
     }
 
@@ -406,10 +407,12 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @notice Increase cap.
     @param _value The amount of token that should be increased
     */
-    function increaseCap(uint _value) onlyOwner {
+    function increaseCap(uint _value) onlyAccountAddressForSponsee {
+
         // change cap here
         cap = cap.add(_value);
 
+        // send Event
         LogIncreaseCap(_value);
     }
 
@@ -417,12 +420,15 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @notice Decrease cap.
     @param _value The amount of token that should be decreased
     */
-    function decreaseCap(uint _value) onlyOwner {
+    function decreaseCap(uint _value) onlyAccountAddressForSponsee {
+
         // check whether cap is lower than totalSupply or not
-        if(totalSupply > cap.sub(_value)) { revert(); }
+        if (totalSupply > cap.sub(_value)) { revert(); }
+
         // change cap here
         cap = cap.sub(_value);
 
+        // send Event
         LogDecreaseCap(_value);
     }
 
@@ -432,16 +438,13 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @param _to The EOA address for rollback transfer
     @param _value The number of token for rollback transfer
     */
-    function rollbackTransfer(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-        // check sender is multisig address
-        require(multiSigAddress == msg.sender);
+    function rollbackTransfer(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) onlyMultiSig {
 
         balances[_to] = balances[_to].sub(_value);
         balances[_from] = balances[_from].add(_value);
 
+        // send Event
         LogRollbackTransfer(_from, _to, _value);
-
-        // tranfer event
         Transfer(_from, _to, _value);
     }
 
@@ -452,49 +455,22 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     @param _paymentId The id of content which msg.sender want to buy
     */
     function buy(address _to, uint _value, uint _paymentId) {
+
         transfer(_to, _value);
 
+        // send Event
         LogBuy(msg.sender, _to, _value, _paymentId);
-    }
-
-    /**
-    @notice This method will change old multi signature address with new one.
-    @param _newAddress new address is set
-    */
-    function changeMultiSigAddress(address _newAddress) {
-        // check sender is multisig address
-        require(multiSigAddress == msg.sender);
-
-        multiSigAddress = _newAddress;
-
-        LogChangeMultiSigAddress(_newAddress);
-
-    }
-
-    /**
-    @notice This method will change old multi signature for sponsee address with new one.
-    @param _newAddress new address is set
-    */
-    function changeAccountAddressForSponseeAddress(address _newAddress) {
-        // check sender is account for changing sponsee address
-        require(accountAddressForSponseeAddress == msg.sender);
-
-        accountAddressForSponseeAddress = _newAddress;
-
-        LogChangeAccountAddressForSponseeAddress(_newAddress);
-
     }
 
     /**
     @notice This method will change old sponsee address with new one.
     @param _newAddress new address is set
     */
-    function changeSponseeAddress(address _newAddress) {
-        // check sender is account for changing sponsee address
-        require(accountAddressForSponseeAddress == msg.sender);
+    function changeSponseeAddress(address _newAddress) onlyAccountAddressForSponsee {
 
         sponseeAddress = _newAddress;
 
+        // send Event
         LogChangeSponseeAddress(_newAddress);
 
     }
@@ -502,13 +478,12 @@ contract SponseeTokenModelSolaCoin is StandardToken {
     /**
     @notice This method will change isPayableEnabled flag.
     */
-    function changeIsPayableEnabled() {
-        // check sender is multisig address
-        require(multiSigAddress == msg.sender);
+    function changeIsPayableEnabled() onlyMultiSig {
 
         isPayableEnabled = !isPayableEnabled;
 
-        LogChangeIsPayableEnabled();
+        // send Event
+        LogChangeIsPayableEnabled(isPayableEnabled);
 
     }
 }
