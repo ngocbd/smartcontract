@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRRsale at 0x95a3ef92b212c7e3ba66e513148a5cb77d84aea7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRRsale at 0xb8f35a92d4df97b7647aebf99da7627064371e1a
 */
 pragma solidity ^0.4.18;
 
@@ -103,12 +103,12 @@ contract XRRsale is Ownable {
     uint PreSaleEnd = 1522886400;
 
 
-    //  Crowd sale Launch 12th - May 9th
+    //  Crowd sale Launch 12th - 09 Jun 2018 00:00:00 UTC 
     uint ICO1 = 1523491200;
     uint ICO2 = 1524096000;
     uint ICO3 = 1524700800;
     uint ICO4 = 1525305600;
-    uint ICOend = 1525910400;
+    uint ICOend = 1528502400;
 
     function XRRsale() public {
 
