@@ -1,496 +1,317 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x1f24dbc4140d74eec3d15644f5e28da66960dab9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x896d335daf43b01931bcacaa4cb24fc5e095cea2
 */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract ERC827 is ERC20 {
-  function approveAndCall( address _spender, uint256 _value, bytes _data) public payable returns (bool);
-  function transferAndCall( address _to, uint256 _value, bytes _data) public payable returns (bool);
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-   * @dev Addition to ERC20 token methods. It allows to
-   * @dev approve the transfer of value and execute a call with the sent data.
-   *
-   * @dev Beware that changing an allowance with this method brings the risk that
-   * @dev someone may use both the old and the new allowance by unfortunate
-   * @dev transaction ordering. One possible solution to mitigate this race condition
-   * @dev is to first reduce the spender's allowance to 0 and set the desired value
-   * @dev afterwards:
-   * @dev https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   * @param _spender The address that will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function approveAndCall(address _spender, uint256 _value, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-   * @dev address and execute a call with the sent data on the same transaction
-   *
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-   * @dev another and make a contract call on the same transaction
-   *
-   * @param _from The address which you want to send tokens from
-   * @param _to The address which you want to transfer to
-   * @param _value The amout of tokens to be transferred
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public payable returns (bool)
-  {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To increment
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApprovalAndCall(address _spender, uint _addedValue, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To decrement
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApprovalAndCall(address _spender, uint _subtractedValue, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-}
+pragma solidity ^0.4.23;
 
 contract Ownable {
-  address public owner;
+    address public owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract Controller is ERC827Token, MintableToken, PausableToken {
-  address public thisAddr; // matches delegation slot in proxy
-  uint256 public cap;      // the max cap of this token
-  string public constant name = "LifeTask"; // solium-disable-line uppercase
-  string public constant symbol = "LTS"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
-
-  /**
-   * @dev Function to initialize storage, only callable from proxy.
-   * @param _controller The address where code is loaded from through delegatecall
-   * @param _cap The cap that should be set for the token
-   */
-  function initialize(address _controller, uint256 _cap) onlyOwner public {
-    require(cap == 0);
-    require(_cap > 0);
-    require(thisAddr == _controller);
-    cap = _cap;
-    totalSupply_ = 0;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-  	require(cap > 0);
-    require(totalSupply_.add(_amount) <= cap);
-    return super.mint(_to, _amount);
-  }
-}
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
+    constructor() public {
+        owner = msg.sender; 
+    }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+        @dev Transfers the ownership of the contract.
 
+        @param _owner Address of the new owner
+    */
+    function setOwner(address _owner) public onlyOwner returns (bool) {
+        require(_owner != address(0));
+        owner = _owner;
+        return true;
+    } 
+}
+
+interface TokenHandler {
+    function handleTokens(Token _token) public returns (bool);
+}
+
+contract HasWorkers is Ownable {
+    mapping(address => uint256) private workerToIndex;    
+    address[] private workers;
+
+    event AddedWorker(address _worker);
+    event RemovedWorker(address _worker);
+
+    constructor() public {
+        workers.length++;
+    }
+
+    modifier onlyWorker() {
+        require(isWorker(msg.sender));
+        _;
+    }
+
+    modifier workerOrOwner() {
+        require(isWorker(msg.sender) || msg.sender == owner);
+        _;
+    }
+
+    function isWorker(address _worker) public view returns (bool) {
+        return workerToIndex[_worker] != 0;
+    }
+
+    function allWorkers() public view returns (address[] memory result) {
+        result = new address[](workers.length - 1);
+        for (uint256 i = 1; i < workers.length; i++) {
+            result[i - 1] = workers[i];
+        }
+    }
+
+    function addWorker(address _worker) public onlyOwner returns (bool) {
+        require(!isWorker(_worker));
+        uint256 index = workers.push(_worker) - 1;
+        workerToIndex[_worker] = index;
+        emit AddedWorker(_worker);
+        return true;
+    }
+
+    function removeWorker(address _worker) public onlyOwner returns (bool) {
+        require(isWorker(_worker));
+        uint256 index = workerToIndex[_worker];
+        address lastWorker = workers[workers.length - 1];
+        workerToIndex[lastWorker] = index;
+        workers[index] = lastWorker;
+        workers.length--;
+        delete workerToIndex[_worker];
+        emit RemovedWorker(_worker);
+        return true;
+    }
+}
+
+contract ControllerStorage {
+    address public walletsDelegate;
+    address public controllerDelegate;
+    address public forward;
+    uint256 public createdWallets;
+    mapping(bytes32 => bytes32) public gStorage;
+}
+
+contract WalletStorage {
+    address public owner;
+}
+
+contract DelegateProxy {
   /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
+   * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)
+   * @param _dst Destination address to perform the delegatecall
+   * @param _calldata Calldata for the delegatecall
+   */
+  function delegatedFwd(address _dst, bytes _calldata) internal {
+    assembly {
+      let result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
+      let size := returndatasize
+
+      let ptr := mload(0x40)
+      returndatacopy(ptr, 0, size)
+
+      // revert instead of invalid() bc if the underlying call failed with invalid() it already wasted gas.
+      // if the call returned error data, forward it
+      switch result case 0 { revert(ptr, size) }
+      default { return(ptr, size) }
+    }
   }
+}
+
+contract DelegateProvider {
+    function getDelegate() public view returns (address delegate);
+}
+
+contract ControllerProxy is ControllerStorage, Ownable, HasWorkers, DelegateProvider, DelegateProxy {
+    function getDelegate() public view returns (address delegate) {
+        delegate = walletsDelegate;
+    }
+
+    function setWalletsDelegate(address _delegate) public onlyOwner returns (bool) {
+        walletsDelegate = _delegate;
+        return true;
+    }
+
+    function setControllerDelegate(address _delegate) public onlyOwner returns (bool) {
+        controllerDelegate = _delegate;
+        return true;
+    }
+
+    function() public payable {
+        if (gasleft() > 2400) {
+            delegatedFwd(controllerDelegate, msg.data);
+        }
+    }
+}
+
+contract Token {
+    function transfer(address _to, uint _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+}
+
+contract WalletProxy is WalletStorage, DelegateProxy {
+    event ReceivedETH(address from, uint256 amount);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    function() public payable {
+        if (msg.value > 0) {
+            emit ReceivedETH(msg.sender, msg.value);
+        }
+        if (gasleft() > 2400) {
+            delegatedFwd(DelegateProvider(owner).getDelegate(), msg.data);
+        }
+    }
+}
+
+contract Wallet is WalletStorage {
+    function transferERC20Token(Token token, address to, uint256 amount) public returns (bool) {
+        require(msg.sender == owner);
+        return token.transfer(to, amount);
+    }
+    
+    function transferEther(address to, uint256 amount) public returns (bool) {
+        require(msg.sender == owner);
+        return to.call.value(amount)();
+    }
+
+    function() public payable {}
+}
+
+contract Controller is ControllerStorage, Ownable, HasWorkers {
+    event CreatedUserWallet(address _wallet);
+
+    // Withdraw events
+    event WithdrawEth(address _wallet, address _to, uint256 _amount);
+    event WithdrawToken(address _token, address _wallet, address _to, uint256 _amount);
+    event ChangedForward(address _old, address _new, address _operator);
+
+    constructor() public {
+        setForward(msg.sender);
+    }
+
+    /*
+        @notice Executes any transaction
+    */
+    function executeTransaction(address destination, uint256 value, bytes memory _bytes) public onlyOwner returns (bool) {
+        return destination.call.value(value)(_bytes);
+    }
+
+    /*
+        @notice Changes the address to forward all the funds
+
+        @param _forward New forward address
+    */
+    function setForward(address _forward) public onlyOwner returns (bool) {
+        emit ChangedForward(forward, _forward, msg.sender);
+        forward = _forward;
+        return true;
+    }
+
+    /*
+        @notice Creates a number of user wallets
+
+        @param number Amount of user wallets
+    */
+    function createWallets(uint256 number) public onlyWorker returns (bool) {
+        for (uint256 i = 0; i < number; i++) {
+            emit CreatedUserWallet(new WalletProxy());
+        }
+
+        createdWallets += number;
+        return true;
+    }
+
+    /*
+        @notice Withdraws all ETH from a wallet and sends it to the
+            forward address
+
+        @param wallet Address of the wallet
+    */
+    function withdrawEth(Wallet wallet) public onlyWorker returns (bool result) {
+        uint256 balance = address(wallet).balance;
+        result = wallet.transferEther(forward, balance);
+        
+        if (result) {
+            emit WithdrawEth(wallet, forward, balance);
+        }
+    }
+
+    /*
+        @notice Withdraws all ETH from a list of wallets and sends 
+            all the funds to the forward address
+
+        @param wallets Address list of the wallets
+    */
+    function withdrawEthBatch(Wallet[] wallets) public onlyWorker returns (bool) {
+        uint256 size = wallets.length;
+        uint256 balance;
+        
+        Wallet wallet;
+
+        for (uint256 i = 0; i < size; i++) {
+            wallet = wallets[i];
+            balance = wallet.balance;
+            
+            if (wallet.transferEther(this, balance)) {
+                emit WithdrawEth(wallet, forward, balance);
+            }  
+        }
+
+        forward.call.value(address(this).balance)();
+
+        return true;
+    }
+
+    /*
+        @notice Withdraws all tokens from a wallet and sends it to the
+            forward address
+
+        @param token Token to withdraw
+        @param wallet Address of the wallet
+    */
+    function withdrawERC20(Token token, Wallet wallet) public onlyWorker returns (bool result) {
+        uint256 balance = token.balanceOf(wallet);
+        result = wallet.transferERC20Token(token, forward, balance);
+        
+        if (result) {
+            emit WithdrawToken(token, wallet, forward, balance);
+        }
+
+        TokenHandler(forward).handleTokens(token);
+    }
+
+    /*
+        @notice Withdraws all tokens from a list of wallets and sends 
+            all the funds to the forward address
+
+        @param token Token to withdraw
+        @param wallets Address list of the wallets
+    */
+    function withdrawERC20Batch(Token token, Wallet[] wallets) public onlyWorker returns (bool) {
+        uint256 size = wallets.length;
+        uint256 balance;
+        Wallet wallet;
+
+        for (uint256 i = 0; i < size; i++) {
+            wallet = wallets[i];
+            balance = token.balanceOf(wallet);
+            
+            if (wallet.transferERC20Token(token, forward, balance)) {
+                emit WithdrawToken(token, wallet, forward, balance);
+            }
+        }
+
+        TokenHandler(forward).handleTokens(token);
+
+        return true;
+    }
+
+    function() public payable {}
 }
