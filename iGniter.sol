@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGniter at 0xa70f4fecbe032135ad970dceeb9e5076a5be8b1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGniter at 0x9e2419c8fc0a7c2f2b22cc8de9ac484ad00d1f57
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 contract SafeMath {
     uint256 constant public MAX_UINT256 =
@@ -53,6 +53,7 @@ contract iGniter is SafeMath {
 
   struct serPayment {
     uint256 unlockedBlockNumber;
+    uint256 unlockedTime;
   }
 
   struct dividends {
@@ -79,6 +80,13 @@ contract iGniter is SafeMath {
     uint256 hodlPayout;
     uint256 _hodlReg;
     uint256 _hodlBlocks;
+    uint256 INRpayout;
+    uint256 INR_lastbal;
+    uint256 INRpaid;
+    uint256 INRtransfers;
+    uint256 INRbalance;
+    uint256 transDiff;
+    uint256 individualRewards;
   }
 
     string public name;
@@ -100,11 +108,8 @@ contract iGniter is SafeMath {
     uint256 private availableAmount;
     uint256 private burnt;
     uint256 private inrSessions;
-    uint256 private availableBalance;
     uint256 private initialSupply;
     uint256 public currentCost;
-    uint256 private startBounty;
-    uint256 private finishBounty;
     uint256 private blockStats;
     uint256 private blockAverage;
     uint256 private blockAvgDiff;
@@ -140,6 +145,7 @@ contract iGniter is SafeMath {
     uint256 private _tier5AvgDiff;
     uint256 private _tier5Rewards;
     uint256 private _hodlAvg;
+
     uint256 private _hodlAvgDiff;
     uint256 private _hodlRewards;
 
@@ -163,7 +169,9 @@ contract iGniter is SafeMath {
     mapping(address => serPayment) inrPayments;
     mapping(address => dividends) INRdividends;
 
-    address private _Owner;
+    address private _Owner1;
+    address private _Owner2;
+    address private _Owner3;
 
     event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -172,24 +180,29 @@ contract iGniter is SafeMath {
 
     modifier isOwner() {
 
-      require(msg.sender == _Owner);
+      require(msg.sender == _Owner1 || msg.sender == _Owner2 || msg.sender == _Owner3);
       _;
     }
 
     function iGniter() {
 
         initialSupplyPerAddress = 10000000000; //10000 INR
-        initialBlockCount = 5100000;
+        initialBlockCount = 5150000;
         dividendsPerBlockPerAddress = 7;
         hodlersDividendsPerBlockPerAddress = 9000;
-        T1DividendsPerBlockPerAddress = 70;
-        T2DividendsPerBlockPerAddress = 300;
-        T3DividendsPerBlockPerAddress = 3500;
-        T4DividendsPerBlockPerAddress = 40000;
-        T5DividendsPerBlockPerAddress = 500000;
+        T1DividendsPerBlockPerAddress = 30;
+        T2DividendsPerBlockPerAddress = 360;
+        T3DividendsPerBlockPerAddress = 4200;
+        T4DividendsPerBlockPerAddress = 60000;
+        T5DividendsPerBlockPerAddress = 1200000;
         totalInitialAddresses = 5000;
         initialSupply = initialSupplyPerAddress * totalInitialAddresses;
-        _Owner = msg.sender;
+        minedBlocks = block.number - initialBlockCount;
+        availableAmount = dividendsPerBlockPerAddress * minedBlocks;
+        iGniting = availableAmount * totalInitialAddresses;
+        _Owner1 = 0x4804D96B17B03B2f5F65a4AaA4b5DB360e22909A;
+        _Owner2 = 0x16C890b06FE52e27ed514e7086378a355F1aB28a;
+        _Owner3 = 0xa4F78852c7F854b4585491a55FE1594913C2C05D;
     }
 
     function currentBlock() constant returns (uint256 blockNumber)
@@ -208,41 +221,7 @@ contract iGniter is SafeMath {
         {
           for (uint i = 0; i < _address.length; i++)
           {
-            balanceOf[_address[i]] = initialSupplyPerAddress;
-            initialAddress[_address[i]] = true;
-          }
-
-          return true;
-        }
-        return false;
-    }
-
-    function assignBountyAddresses(address[] _address) isOwner public returns (bool success)
-    {
-      startBounty = 2500000000;
-
-        if (block.number < 10000000)
-        {
-          for (uint i = 0; i < _address.length; i++)
-          {
-            balanceOf[_address[i]] = startBounty;
-            initialAddress[_address[i]] = true;
-          }
-
-          return true;
-        }
-        return false;
-    }
-
-    function completeBountyAddresses(address[] _address) isOwner public returns (bool success)
-    {
-      finishBounty = 7500000000;
-
-        if (block.number < 10000000)
-        {
-          for (uint i = 0; i < _address.length; i++)
-          {
-            balanceOf[_address[i]] = balanceOf[_address[i]] + finishBounty;
+            balanceOf[_address[i]] = balanceOf[_address[i]] + initialSupplyPerAddress;
             initialAddress[_address[i]] = true;
           }
 
@@ -253,74 +232,31 @@ contract iGniter is SafeMath {
 
     function balanceOf(address _address) constant returns (uint256 Balance)
     {
-
-        if(dividendAddress[_address] == true)
+        if((qualifiedAddress[_address]) == true || (initialAddress[_address]) == true)
         {
-          INRdividends[_address].diviBlocks = block.number - INRdividends[_address].diviReg;
-          INRdividends[_address].diviPayout = dividendsPerBlockPerAddress * INRdividends[_address].diviBlocks;
-        }
-
-        if(TierStarterDividendAddress[_address] == true)
-        {
-          INRdividends[_address]._tier1Blocks = block.number - INRdividends[_address]._tier1Reg;
-          INRdividends[_address]._tier1Payout = T1DividendsPerBlockPerAddress * INRdividends[_address]._tier1Blocks;
-        }
-
-        if(TierBasicDividendAddress[_address] == true)
-        {
-          INRdividends[_address]._tier2Blocks = block.number - INRdividends[_address]._tier2Reg;
-          INRdividends[_address]._tier2Payout = T2DividendsPerBlockPerAddress * INRdividends[_address]._tier2Blocks;
-        }
-
-        if(TierClassicDividendAddress[_address] == true)
-        {
-          INRdividends[_address]._tier3Blocks = block.number - INRdividends[_address]._tier3Reg;
-          INRdividends[_address]._tier3Payout = T3DividendsPerBlockPerAddress * INRdividends[_address]._tier3Blocks;
-        }
-
-        if(TierWildcatDividendAddress[_address] == true)
-        {
-          INRdividends[_address]._tier4Blocks = block.number - INRdividends[_address]._tier4Reg;
-          INRdividends[_address]._tier4Payout = T4DividendsPerBlockPerAddress * INRdividends[_address]._tier4Blocks;
-        }
-
-        if(TierRainmakerDividendAddress[_address] == true)
-        {
-          INRdividends[_address]._tier5Blocks = block.number - INRdividends[_address]._tier5Reg;
-          INRdividends[_address]._tier5Payout = T5DividendsPerBlockPerAddress * INRdividends[_address]._tier5Blocks;
-        }
-
-        if ((balanceOf[_address]) >= 100000000000 && (HODLERAddress[_address] == true)) { //100000INR
-          INRdividends[_address]._hodlBlocks = block.number - INRdividends[_address]._hodlReg;
-          INRdividends[_address].hodlPayout = hodlersDividendsPerBlockPerAddress * INRdividends[_address]._hodlBlocks;
-        }
-
-        minedBlocks = block.number - initialBlockCount;
-        INRdividends[_address]._tierPayouts = INRdividends[_address]._tier1Payout + INRdividends[_address]._tier2Payout +
-                                              INRdividends[_address]._tier3Payout + INRdividends[_address]._tier4Payout
-                                              + INRdividends[_address]._tier5Payout;
-
-        if ((initialAddress[_address]) == true) {
-
             if (minedBlocks > 105120000) return balanceOf[_address]; //app. 2058
 
-            availableAmount = dividendsPerBlockPerAddress * minedBlocks;
-            availableBalance = balanceOf[_address] + availableAmount + INRdividends[_address]._tierPayouts + INRdividends[_address].diviPayout + INRdividends[_address].hodlPayout;
+            INRdividends[_address].INRpayout = dividendRewards(_address);
 
-            return availableBalance;
+            if (INRdividends[_address].INRpayout < INRdividends[_address].INRtransfers)
+            {
+                INRdividends[_address].INRpaid = 0;
+            }
+
+            if (INRdividends[_address].INRpayout >= INRdividends[_address].INRtransfers)
+            {
+                INRdividends[_address].transDiff = INRdividends[_address].INRpayout - INRdividends[_address].INRtransfers;
+                INRdividends[_address].INRpaid = INRdividends[_address].transDiff;
+            }
+
+            INRdividends[_address].INRbalance = balanceOf[_address] + INRdividends[_address].INRpaid;
+
+            return INRdividends[_address].INRbalance;
         }
 
-        if ((qualifiedAddress[_address]) == true){
-
-          if (minedBlocks > 105120000) return balanceOf[_address]; //app. 2058
-
-           availableBalance = balanceOf[_address] + INRdividends[_address]._tierPayouts + INRdividends[_address].diviPayout + INRdividends[_address].hodlPayout;
-            return availableBalance;
-          }
-
         else {
-            return balanceOf[_address];
-          }
+            return balanceOf[_address] + INRdividends[_address].INRpaid;
+        }
     }
 
     function name() constant returns (string _name)
@@ -343,10 +279,6 @@ contract iGniter is SafeMath {
 
     function totalSupply() constant returns (uint256 totalSupply)
     {
-        minedBlocks = block.number - initialBlockCount;
-        availableAmount = dividendsPerBlockPerAddress * minedBlocks;
-        iGniting = availableAmount * totalInitialAddresses;
-
         if(t1active == true)
         {
           _tier1Avg = Tier1blocks/Tier1Amt;
@@ -390,7 +322,8 @@ contract iGniter is SafeMath {
         blockAvgDiff = block.number - blockAverage;
         divRewards = blockAvgDiff * dividendsPerBlockPerAddress * diviClaims;
 
-        totalRewards = _tier1Rewards + _tier2Rewards + _tier3Rewards + _tier4Rewards + _tier5Rewards + _hodlRewards + divRewards;
+        totalRewards = _tier1Rewards + _tier2Rewards + _tier3Rewards + _tier4Rewards + _tier5Rewards
+                       + _hodlRewards + divRewards;
 
         return initialSupply + iGniting + totalRewards - burnt;
     }
@@ -408,6 +341,7 @@ contract iGniter is SafeMath {
         if (_value > 0 && _value <= balanceOf[msg.sender] && !isContract(_to)) {
             balanceOf[msg.sender] -= _value;
             balanceOf[_to] += _value;
+            INRdividends[msg.sender].INRtransfers += _value;
             Transfer(msg.sender, _to, _value);
             return true;
         }
@@ -418,6 +352,7 @@ contract iGniter is SafeMath {
         if (_value > 0 && _value <= balanceOf[msg.sender] && isContract(_to)) {
             balanceOf[msg.sender] -= _value;
             balanceOf[_to] += _value;
+            INRdividends[msg.sender].INRtransfers += _value;
             ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
                 _contract.tokenFallback(msg.sender, _value, _data);
             Transfer(msg.sender, _to, _value, _data);
@@ -439,6 +374,7 @@ contract iGniter is SafeMath {
             balanceOf[_from] >= _value) {
             balanceOf[_from] -= _value;
             balanceOf[_to] += _value;
+            INRdividends[msg.sender].INRtransfers += _value;
             _allowances[_from][msg.sender] -= _value;
             Transfer(_from, _to, _value);
             return true;
@@ -459,6 +395,11 @@ contract iGniter is SafeMath {
     function PaymentStatusBlockNum(address _address) constant returns (uint256 blockno) {
 
       return inrPayments[_address].unlockedBlockNumber;
+    }
+
+    function PaymentStatusTimeStamp(address _address) constant returns (uint256 ut) {
+
+      return inrPayments[_address].unlockedTime;
     }
 
     function updateCost(uint256 _currCost) isOwner public {
@@ -482,24 +423,39 @@ contract iGniter is SafeMath {
     function withdrawal(uint quantity) isOwner returns(bool) {
 
            require(quantity <= this.balance);
-           _Owner.transfer(quantity);
+
+           if(msg.sender == _Owner1)
+           {
+             _Owner1.transfer(quantity);
+           }
+
+           if(msg.sender == _Owner2)
+           {
+             _Owner2.transfer(quantity);
+           }
+
+           if(msg.sender == _Owner3)
+           {
+             _Owner3.transfer(quantity);
+           }
 
            return true;
-       }
+   }
 
-    function claimDividends() public {
+    function dividendRegistration() public {
 
-      if (dividendAddress[msg.sender] == false)
-      {
-        INRdividends[msg.sender].diviReg = block.number;
-        dividendAddress[msg.sender] = true;
-        qualifiedAddress[msg.sender] = true;
-        blockStats += block.number;
-        diviClaims++;
-      }
+      require (dividendAddress[msg.sender] == false);
+
+      INRdividends[msg.sender].diviReg = block.number;
+      dividendAddress[msg.sender] = true;
+      qualifiedAddress[msg.sender] = true;
+      blockStats += block.number;
+      diviClaims++;
     }
 
     function HODLRegistration() public {
+
+      require (HODLERAddress[msg.sender] == false);
 
           INRdividends[msg.sender]._hodlReg = block.number;
           HODLERAddress[msg.sender] = true;
@@ -508,9 +464,9 @@ contract iGniter is SafeMath {
           hodlAmt++;
     }
 
-    function Tier_Starter() public payable {
+    function Tier_Starter_Registration() public payable {
 
-      require(msg.value == 0.02 ether);
+      require(msg.value == 0.01 ether);
 
       INRdividends[msg.sender]._tier1Reg = block.number;
       TierStarterDividendAddress[msg.sender] = true;
@@ -520,9 +476,9 @@ contract iGniter is SafeMath {
       t1active = true;
     }
 
-    function Tier_Basic() public payable {
+    function Tier_Basic_Registration() public payable {
 
-      require(msg.value == 0.05 ether);
+      require(msg.value >= 0.1 ether);
 
       INRdividends[msg.sender]._tier2Reg = block.number;
       TierBasicDividendAddress[msg.sender] = true;
@@ -532,9 +488,9 @@ contract iGniter is SafeMath {
       t2active = true;
     }
 
-    function Tier_Classic() public payable {
+    function Tier_Classic_Registration() public payable {
 
-      require(msg.value == 0.5 ether);
+      require(msg.value >= 1 ether);
 
       INRdividends[msg.sender]._tier3Reg = block.number;
       TierClassicDividendAddress[msg.sender] = true;
@@ -544,9 +500,9 @@ contract iGniter is SafeMath {
       t3active = true;
     }
 
-    function Tier_Wildcat() public payable {
+    function Tier_Wildcat_Registration() public payable {
 
-      require(msg.value == 5 ether);
+      require(msg.value >= 10 ether);
 
       INRdividends[msg.sender]._tier4Reg = block.number;
       TierWildcatDividendAddress[msg.sender] = true;
@@ -556,9 +512,9 @@ contract iGniter is SafeMath {
       t4active = true;
     }
 
-    function Tier_Rainmaker() public payable {
+    function Tier_Rainmaker_Registration() public payable {
 
-      require(msg.value == 50 ether);
+      require(msg.value >= 100 ether);
 
       INRdividends[msg.sender]._tier5Reg = block.number;
       TierRainmakerDividendAddress[msg.sender] = true;
@@ -566,5 +522,86 @@ contract iGniter is SafeMath {
       Tier5blocks += block.number;
       Tier5Amt++;
       t5active = true;
+    }
+
+    function claimINRDividends() public
+    {
+        INRdividends[msg.sender].INRpayout = dividendRewards(msg.sender);
+
+        if (INRdividends[msg.sender].INRpayout < INRdividends[msg.sender].INRtransfers)
+        {
+            INRdividends[msg.sender].INRpaid = 0;
+        }
+
+        if (INRdividends[msg.sender].INRpayout >= INRdividends[msg.sender].INRtransfers)
+        {
+            INRdividends[msg.sender].transDiff = INRdividends[msg.sender].INRpayout - INRdividends[msg.sender].INRtransfers;
+            INRdividends[msg.sender].INRpaid = INRdividends[msg.sender].transDiff;
+        }
+
+        balanceOf[msg.sender] += INRdividends[msg.sender].INRpaid;
+    }
+
+    function dividendRewards(address _address) constant returns (uint)
+    {
+        if(dividendAddress[_address] == true)
+        {
+          INRdividends[_address].diviBlocks = block.number - INRdividends[_address].diviReg;
+          INRdividends[_address].diviPayout = dividendsPerBlockPerAddress * INRdividends[_address].diviBlocks;
+        }
+
+        if(TierStarterDividendAddress[_address] == true)
+        {
+          INRdividends[_address]._tier1Blocks = block.number - INRdividends[_address]._tier1Reg;
+          INRdividends[_address]._tier1Payout = T1DividendsPerBlockPerAddress * INRdividends[_address]._tier1Blocks;
+        }
+
+        if(TierBasicDividendAddress[_address] == true)
+        {
+          INRdividends[_address]._tier2Blocks = block.number - INRdividends[_address]._tier2Reg;
+          INRdividends[_address]._tier2Payout = T2DividendsPerBlockPerAddress * INRdividends[_address]._tier2Blocks;
+        }
+
+        if(TierClassicDividendAddress[_address] == true)
+        {
+          INRdividends[_address]._tier3Blocks = block.number - INRdividends[_address]._tier3Reg;
+          INRdividends[_address]._tier3Payout = T3DividendsPerBlockPerAddress * INRdividends[_address]._tier3Blocks;
+        }
+
+        if(TierWildcatDividendAddress[_address] == true)
+        {
+          INRdividends[_address]._tier4Blocks = block.number - INRdividends[_address]._tier4Reg;
+          INRdividends[_address]._tier4Payout = T4DividendsPerBlockPerAddress * INRdividends[_address]._tier4Blocks;
+        }
+
+        if(TierRainmakerDividendAddress[_address] == true)
+        {
+          INRdividends[_address]._tier5Blocks = block.number - INRdividends[_address]._tier5Reg;
+          INRdividends[_address]._tier5Payout = T5DividendsPerBlockPerAddress * INRdividends[_address]._tier5Blocks;
+        }
+
+        if ((balanceOf[_address]) >= 100000000000 && (HODLERAddress[_address] == true)) { //100000INR
+          INRdividends[_address]._hodlBlocks = block.number - INRdividends[_address]._hodlReg;
+          INRdividends[_address].hodlPayout = hodlersDividendsPerBlockPerAddress * INRdividends[_address]._hodlBlocks;
+        }
+
+        INRdividends[_address]._tierPayouts = INRdividends[_address]._tier1Payout + INRdividends[_address]._tier2Payout +
+                                              INRdividends[_address]._tier3Payout + INRdividends[_address]._tier4Payout +
+                                              INRdividends[_address]._tier5Payout + INRdividends[_address].hodlPayout +
+                                              INRdividends[_address].diviPayout;
+
+        if ((initialAddress[_address]) == true)
+        {
+            INRdividends[_address].individualRewards = availableAmount + INRdividends[_address]._tierPayouts;
+
+            return INRdividends[_address].individualRewards;
+        }
+
+        if ((qualifiedAddress[_address]) == true)
+        {
+            INRdividends[_address].individualRewards = INRdividends[_address]._tierPayouts;
+
+            return INRdividends[_address].individualRewards;
+        }
     }
 }
