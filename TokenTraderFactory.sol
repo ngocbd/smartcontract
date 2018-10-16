@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x3cd9b53eab1f941ac39b7a5689d9f516d82f28a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x21ca8ee818f008692d3a6abd1a1beda5aaecf0e3
 */
 pragma solidity ^0.4.4;
 
@@ -80,7 +80,7 @@ contract TokenTrader is Owned {
     event MakerTransferredEther(address toTokenTrader, uint256 ethers);
     event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
         uint256 ethersReturned, uint256 tokensBought);
-    event TakerSoldAsset(address indexed seller, uint256 amountOfTokensToSell,
+    event TakerSoldAsset(address indexed seller, uint256 etherValueOfTokensToSell,
         uint256 tokensSold, uint256 etherValueOfTokensSold);
 
     // Constructor - only to be called by the TokenTraderFactory contract
@@ -289,22 +289,22 @@ contract TokenTrader is Owned {
     //                        by the taker
     //
     // The TakerSoldAsset() event is logged with the following parameters
-    //   seller                  is the seller's address
-    //   amountOfTokensToSell    is the amount of the asset tokens being
-    //                           sold by the taker
-    //   tokensSold              is the number of the asset tokens sold
-    //   etherValueOfTokensSold  is the ether value of the asset tokens sold
+    //   seller                    is the seller's address
+    //   etherValueOfTokensToSell  is the ether value of the asset tokens being
+    //                             sold by the taker
+    //   tokensSold                is the number of the asset tokens sold
+    //   etherValueOfTokensSold    is the ether value of the asset tokens sold
     //
     // This method was called sell() in the old version
     //
-    function takerSellAsset(uint256 amountOfTokensToSell) {
+    function takerSellAsset(uint256 etherValueOfTokensToSell) {
         if (buysTokens || msg.sender == owner) {
             // Maximum number of token the contract can buy
             // Note that buyPrice has already been validated as > 0
             uint256 can_buy = this.balance / buyPrice;
             // Token lots available
             // Note that units has already been validated as > 0
-            uint256 order = amountOfTokensToSell / units;
+            uint256 order = etherValueOfTokensToSell / units;
             // Adjust order for funds available
             if (order > can_buy) order = can_buy;
             if (order > 0) {
@@ -313,7 +313,7 @@ contract TokenTrader is Owned {
                 // Pay user
                 if (!msg.sender.send(order * buyPrice)) throw;
             }
-            TakerSoldAsset(msg.sender, amountOfTokensToSell, order * units, order * buyPrice);
+            TakerSoldAsset(msg.sender, etherValueOfTokensToSell, order * units, order * buyPrice);
         }
     }
 
@@ -418,12 +418,6 @@ contract TokenTraderFactory is Owned {
         if (buyPrice >= sellPrice) throw;
         // Cannot buy or sell zero or negative units
         if (units <= 0) throw;
-        // Check for ERC20 allowance function
-        // This will throw an error if the allowance function
-        // is undefined to prevent GNTs from being used
-        // with this factory
-        uint256 allowance = ERC20(asset).allowance(msg.sender, this);
-
         trader = new TokenTrader(
             asset,
             buyPrice,
