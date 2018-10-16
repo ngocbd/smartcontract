@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LegendsToken at 0xb939ef33629bba211688724e401d4f6400c0ee6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LegendsToken at 0x3695e178d6f2ec3bc9039667dc560e378b4c228a
 */
 pragma solidity ^0.4.9;
 
@@ -123,7 +123,7 @@ contract LegendsCrowdfund {
         totalETH += msg.value;
 
         // Calculate VIP amount.
-        uint VIP = msg.value * 12;  // $1 / VIP based on $10 / ETH value.
+        uint VIP = msg.value * 10;  // $1 / VIP based on $10 / ETH value.
 
         // Are we in the pre-sale?
         if (block.timestamp - start < 2 weeks) {
