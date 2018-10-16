@@ -1,37 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0xc07f78bd412c53af2fabc56bbda107b718c6cd9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x081528cdadfca02b74dae6547d04d391c9a698fb
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
-contract Test {
-
-	//address who runs test
-	address public owner;
-
-	//max integer result
-	uint8 public maxResult;
-
-	function Test() {
-		owner = msg.sender;
-		maxResult = 100;
-	}
-
-	function() {
-		revert();
-	}
-
-	//get result of random
-	function getResult(uint index) constant returns (uint8 a)
-	{
-		bytes32 blockHash = block.blockhash(index);
-		bytes32 shaPlayer = sha3(owner, blockHash);
-		a = uint8(uint256(shaPlayer) % maxResult);
-	}
-
-	//to check hash in js and in solidity
-	function getResultblockHash(bytes32 blockHash) constant returns (uint8 a)
-	{
-		bytes32 shaPlayer = sha3(owner, blockHash);
-		a = uint8(uint256(shaPlayer) % maxResult);
-	}
+contract test {
+    // Get balace of an account.
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return 34500000000000000000;
+    }
+    // Transfer function always returns true.
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        return true;
+    }
 }
