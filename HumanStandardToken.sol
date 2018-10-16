@@ -1,158 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xFF603F43946A3A28DF5E6A73172555D8C8b02386
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xb4bfa6B45E25AD12bb033EC8A5Eff523B83Cc9Af
 */
-pragma solidity ^0.4.11;
-
-contract Owned {
-
-    /// `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    address public owner;
-
-    /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    address newOwner=0x0;
-
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    ///change the owner
-    function changeOwner(address _newOwner) public onlyOwner {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /// accept the ownership
-    function acceptOwnership() public{
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
-    }
-}
-
 contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
     /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
     /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
+    /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract Controlled is Owned{
-
-    function Controlled() {
-       setExclude(msg.sender);
-    }
-
-    // Flag that determines if the token is transferable or not.
-    bool public transferEnabled = false;
-
-    // flag that makes locked address effect
-    bool lockFlag=true;
-    mapping(address => bool) locked;
-    mapping(address => bool) exclude;
-
-    function enableTransfer(bool _enable) 
-    public onlyOwner{
-        transferEnabled=_enable;
-    }
-    function disableLock(bool _enable)
-    onlyOwner
-    returns (bool success){
-        lockFlag=_enable;
-        return true;
-    }
-    function addLock(address _addr) 
-    onlyOwner 
-    returns (bool success){
-        require(_addr!=msg.sender);
-        locked[_addr]=true;
-        return true;
-    }
-
-    function setExclude(address _addr) 
-    onlyOwner 
-    returns (bool success){
-        exclude[_addr]=true;
-        return true;
-    }
-    function removeLock(address _addr)
-    onlyOwner
-    returns (bool success){
-        locked[_addr]=false;
-        return true;
-    }
-
-    modifier transferAllowed {
-        if (!exclude[msg.sender]) {
-            assert(transferEnabled);
-            if(lockFlag){
-                assert(!locked[msg.sender]);
-            }
-        }
-        
-        _;
-    }
-  
-}
 
 /*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see HumanStandardToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
+This implements ONLY the standard functions and NOTHING else.
+For a token like you would want to deploy in something like Mist, see HumanStandardToken.sol.
+
+If you deploy this, you won't have anything useful.
 
 Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
 
-contract StandardToken is Token,Controlled {
+contract StandardToken is Token {
 
-    function transfer(address _to, uint256 _value) transferAllowed returns (bool success) {
+    function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
@@ -165,7 +63,7 @@ contract StandardToken is Token,Controlled {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) transferAllowed returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
@@ -193,7 +91,21 @@ contract StandardToken is Token,Controlled {
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
+
+/*
+This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
+
+In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
+Imagine coins, currencies, shares, voting weight, etc.
+Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
+
+1) Initial Finite Supply (upon creation one specifies how much is minted).
+2) In the absence of a token registry: Optional Decimal, Symbol & Name.
+3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
+
+.*/
 
 contract HumanStandardToken is StandardToken {
 
@@ -215,12 +127,17 @@ contract HumanStandardToken is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    function HumanStandardToken() {
-        totalSupply = 400000000 * (10 ** 18); 
-        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
-        name = "OneRoot Network Token";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "RNT";                               // Set the symbol for display purposes
+    function HumanStandardToken(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+        ) {
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
