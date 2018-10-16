@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UacCrowdsale at 0x520e217685b93Ea7f5A281485462C67d28704E8E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UacCrowdsale at 0xfa6764B049f5E64Cd8C364142fa07C51cF3Ed302
 */
 //File: node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 pragma solidity ^0.4.18;
@@ -474,7 +474,7 @@ contract CrowdsaleBase is Pausable, CanReclaimToken, ICOEngineInterface, KYCBase
 
     /*** CONSTANTS ***/
     uint256 public constant USD_PER_TOKEN = 2;                        //
-    uint256 public constant USD_PER_ETHER = 795;                      // 
+    uint256 public constant USD_PER_ETHER = 1000;                      // 
 
     uint256 public start;                                             // ICOEngineInterface
     uint256 public end;                                               // ICOEngineInterface
