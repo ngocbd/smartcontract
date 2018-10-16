@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CollectibleToken at 0xed56861c2e17c63b4d0b1b6fa408bcea56a652cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CollectibleToken at 0xA97fF44CFf7101FaC76aF172F088f400F28cb4E9
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -32,7 +32,7 @@ contract CollectibleToken is ERC721 {
 
   /*** EVENTS ***/
 
-  /// @dev The Birth event is fired whenever a new person comes into existence.
+  /// @dev The Birth event is fired whenever a new collectible comes into existence.
   event Birth(uint256 tokenId, uint256 startPrice, uint256 totalSupply);
 
   /// @dev The TokenSold event is fired whenever a token is sold.
@@ -45,8 +45,8 @@ contract CollectibleToken is ERC721 {
   /*** CONSTANTS ***/
 
   /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-  string public constant NAME = "pornstars-youCollect"; // solhint-disable-line
-  string public constant SYMBOL = "PYC"; // solhint-disable-line
+  string public constant NAME = "crypto-youCollect"; // solhint-disable-line
+  string public constant SYMBOL = "CYC"; // solhint-disable-line
   uint256 private startingPrice = 0.001 ether;
   uint256 private constant PROMO_CREATION_LIMIT = 5000;
   uint256 private firstStepLimit =  0.053613 ether;
@@ -55,21 +55,21 @@ contract CollectibleToken is ERC721 {
 
   /*** STORAGE ***/
 
-  /// @dev A mapping from person IDs to the address that owns them. All persons have
+  /// @dev A mapping from collectible IDs to the address that owns them. All collectibles have
   ///  some valid owner address.
-  mapping (uint256 => address) public personIndexToOwner;
+  mapping (uint256 => address) public collectibleIndexToOwner;
 
   // @dev A mapping from owner address to count of tokens that address owns.
   //  Used internally inside balanceOf() to resolve ownership count.
   mapping (address => uint256) private ownershipTokenCount;
 
-  /// @dev A mapping from PersonIDs to an address that has been approved to call
-  ///  transferFrom(). Each Person can only have one approved address for transfer
+  /// @dev A mapping from CollectibleIDs to an address that has been approved to call
+  ///  transferFrom(). Each Collectible can only have one approved address for transfer
   ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public personIndexToApproved;
+  mapping (uint256 => address) public collectibleIndexToApproved;
 
-  // @dev A mapping from PersonIDs to the price of the token.
-  mapping (uint256 => uint256) private personIndexToPrice;
+  // @dev A mapping from CollectibleIDs to the price of the token.
+  mapping (uint256 => uint256) private collectibleIndexToPrice;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
   address public ceoAddress;
@@ -118,7 +118,7 @@ contract CollectibleToken is ERC721 {
     // Caller must own token.
     require(_owns(msg.sender, _tokenId));
 
-    personIndexToApproved[_tokenId] = _to;
+    collectibleIndexToApproved[_tokenId] = _to;
 
     Approval(msg.sender, _to, _tokenId);
   }
@@ -130,14 +130,14 @@ contract CollectibleToken is ERC721 {
     return ownershipTokenCount[_owner];
   }
 
-  /// @dev Creates a new promo Person with the given name, with given _price and assignes it to an address.
-  function createPromoPerson(uint256 tokenId, address _owner, uint256 _price) public onlyCOO {
-    require(personIndexToOwner[tokenId]==address(0));
+  /// @dev Creates a new promo collectible with the given name, with given _price and assignes it to an address.
+  function createPromoCollectible(uint256 tokenId, address _owner, uint256 _price) public onlyCOO {
+    require(collectibleIndexToOwner[tokenId]==address(0));
     require(promoCreatedCount < PROMO_CREATION_LIMIT);
 
-    address personOwner = _owner;
-    if (personOwner == address(0)) {
-      personOwner = cooAddress;
+    address collectibleOwner = _owner;
+    if (collectibleOwner == address(0)) {
+      collectibleOwner = cooAddress;
     }
 
     if (_price <= 0) {
@@ -145,23 +145,23 @@ contract CollectibleToken is ERC721 {
     }
 
     promoCreatedCount++;
-    _createPerson(tokenId, _price);
+    _createCollectible(tokenId, _price);
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
-    _transfer(address(0), personOwner, tokenId);
+    _transfer(address(0), collectibleOwner, tokenId);
 
   }
 
-  /// @notice Returns all the relevant information about a specific person.
-  /// @param _tokenId The tokenId of the person of interest.
-  function getPerson(uint256 _tokenId) public view returns (uint256 tokenId,
+  /// @notice Returns all the relevant information about a specific collectible.
+  /// @param _tokenId The tokenId of the collectible of interest.
+  function getCollectible(uint256 _tokenId) public view returns (uint256 tokenId,
     uint256 sellingPrice,
     address owner,
     uint256 nextSellingPrice
   ) {
     tokenId = _tokenId;
-    sellingPrice = personIndexToPrice[_tokenId];
-    owner = personIndexToOwner[_tokenId];
+    sellingPrice = collectibleIndexToPrice[_tokenId];
+    owner = collectibleIndexToOwner[_tokenId];
 
     if (sellingPrice == 0)
       sellingPrice = startingPrice;
@@ -191,7 +191,7 @@ contract CollectibleToken is ERC721 {
     view
     returns (address owner)
   {
-    owner = personIndexToOwner[_tokenId];
+    owner = collectibleIndexToOwner[_tokenId];
     require(owner != address(0));
   }
 
@@ -201,13 +201,13 @@ contract CollectibleToken is ERC721 {
 
   // Allows someone to send ether and obtain the token
   function purchase(uint256 _tokenId) public payable {
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = collectibleIndexToOwner[_tokenId];
     address newOwner = msg.sender;
 
-    uint256 sellingPrice = personIndexToPrice[_tokenId];
+    uint256 sellingPrice = collectibleIndexToPrice[_tokenId];
     if (sellingPrice == 0) {
       sellingPrice = startingPrice;
-      _createPerson(_tokenId, sellingPrice);
+      _createCollectible(_tokenId, sellingPrice);
     }
 
     // Safety check to prevent against an unexpected 0x0 default.
@@ -222,29 +222,29 @@ contract CollectibleToken is ERC721 {
     // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
+      collectibleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
     } else if (sellingPrice < secondStepLimit) {
       // second stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
+      collectibleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
     } else {
       // third stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
+      collectibleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
+    TokenSold(_tokenId, sellingPrice, collectibleIndexToPrice[_tokenId], oldOwner, newOwner);
 
     // Pay previous tokenOwner if owner is not contract
     if (oldOwner != address(this) && oldOwner != address(0)) {
       oldOwner.transfer(payment); //(1-0.06)
     }
 
-    TokenSold(_tokenId, sellingPrice, personIndexToPrice[_tokenId], oldOwner, newOwner);
 
     msg.sender.transfer(purchaseExcess);
   }
 
   function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    price = personIndexToPrice[_tokenId];
+    price = collectibleIndexToPrice[_tokenId];
     if (price == 0)
       price = startingPrice;
   }
@@ -275,7 +275,7 @@ contract CollectibleToken is ERC721 {
   /// @dev Required for ERC-721 compliance.
   function takeOwnership(uint256 _tokenId) public {
     address newOwner = msg.sender;
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = collectibleIndexToOwner[_tokenId];
 
     // Safety check to prevent against an unexpected 0x0 default.
     require(_addressNotNull(newOwner));
@@ -325,19 +325,19 @@ contract CollectibleToken is ERC721 {
 
   /// For checking approval of transfer for address _to
   function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return personIndexToApproved[_tokenId] == _to;
+    return collectibleIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating Person
-  function _createPerson(uint256 tokenId, uint256 _price) private {
-    personIndexToPrice[tokenId] = _price;
+  /// For creating Collectible
+  function _createCollectible(uint256 tokenId, uint256 _price) private {
+    collectibleIndexToPrice[tokenId] = _price;
     totalSupply++;
     Birth(tokenId, _price, totalSupply);
   }
 
   /// Check for token ownership
   function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == personIndexToOwner[_tokenId];
+    return claimant == collectibleIndexToOwner[_tokenId];
   }
 
   /// For paying out balance on contract
@@ -349,18 +349,18 @@ contract CollectibleToken is ERC721 {
     }
   }
 
-  /// @dev Assigns ownership of a specific Person to an address.
+  /// @dev Assigns ownership of a specific Collectible to an address.
   function _transfer(address _from, address _to, uint256 _tokenId) private {
-    // Since the number of persons is capped to 2^32 we can't overflow this
+    // Since the number of collectibles is capped to 2^32 we can't overflow this
     ownershipTokenCount[_to]++;
     //transfer ownership
-    personIndexToOwner[_tokenId] = _to;
+    collectibleIndexToOwner[_tokenId] = _to;
 
-    // When creating new persons _from is 0x0, but we can't account that address.
+    // When creating new collectibles _from is 0x0, but we can't account that address.
     if (_from != address(0)) {
       ownershipTokenCount[_from]--;
       // clear any previously approved ownership exchange
-      delete personIndexToApproved[_tokenId];
+      delete collectibleIndexToApproved[_tokenId];
     }
 
     // Emit the transfer event.
