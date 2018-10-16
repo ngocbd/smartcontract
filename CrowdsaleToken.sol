@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xc2921ea1c150405ef952f73952f37fa2746168d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x095ed2e7cb9686aa4fb415e96dc2f6673fb4dba3
 */
 /*
  * ERC20 interface
