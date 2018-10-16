@@ -1,130 +1,193 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x5b7a5c531159e94f608d2eaa3c6616c505918d2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x8b26a81522747bc66be1261eaac3091c6fff0d6d
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.13;
 
-interface ERC20 {
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-}
+contract Ownable {
+  address public owner;
 
-interface ERC223ReceivingContract {
-    function tokenFallback(address _from, uint _value, bytes _data) public;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
     uint256 c = a * b;
-    require(c / a == b);
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
 }
 
-contract Distribution {
-  using SafeMath for uint256;
+contract Distribution is Ownable {
+    using SafeMath for uint256;
 
-  enum State {
-    AwaitingTokens,
-    DistributingNormally,
-    DistributingProRata,
-    Done
-  }
- 
-  address admin;
-  ERC20 tokenContract;
-  State public state;
-  uint256 actualTotalTokens;
-  uint256 tokensTransferred;
-
-  bytes32[] contributionHashes;
-  uint256 expectedTotalTokens;
-
-  function Distribution(address _admin, ERC20 _tokenContract,
-                        bytes32[] _contributionHashes, uint256 _expectedTotalTokens) public {
-    expectedTotalTokens = _expectedTotalTokens;
-    contributionHashes = _contributionHashes;
-    tokenContract = _tokenContract;
-    admin = _admin;
-
-    state = State.AwaitingTokens;
-  }
-
-  function _handleTokensReceived(uint256 totalTokens) internal {
-    require(state == State.AwaitingTokens);
-    require(totalTokens > 0);
-
-    tokensTransferred = 0;
-    if (totalTokens == expectedTotalTokens) {
-      state = State.DistributingNormally;
-    } else {
-      actualTotalTokens = totalTokens;
-      state = State.DistributingProRata;
-    }
-  }
-
-  function handleTokensReceived() public {
-    _handleTokensReceived(tokenContract.balanceOf(this));
-  }
-
-  function tokenFallback(address /*_from*/, uint _value, bytes /*_data*/) public {
-    require(msg.sender == address(tokenContract));
-    _handleTokensReceived(_value);
-  }
-
-  function _numTokensForContributor(uint256 contributorExpectedTokens,
-                                    uint256 _tokensTransferred, State _state)
-      internal view returns (uint256) {
-    if (_state == State.DistributingNormally) {
-      return contributorExpectedTokens;
-    } else if (_state == State.DistributingProRata) {
-      uint256 tokens = actualTotalTokens.mul(contributorExpectedTokens) / expectedTotalTokens;
-
-      // Handle roundoff on last contributor.
-      uint256 tokensRemaining = actualTotalTokens - _tokensTransferred;
-      if (tokens < tokensRemaining) {
-        return tokens;
-      } else {
-        return tokensRemaining;
-      }
-    } else {
-      revert();
-    }
-  }
-
-  function doDistributionRange(uint256 start, address[] contributors,
-                               uint256[] contributorExpectedTokens) public {
-    require(contributors.length == contributorExpectedTokens.length);
-
-    uint256 tokensTransferredSoFar = tokensTransferred;
-    uint256 end = start + contributors.length;
-    State _state = state;
-    for (uint256 i = start; i < end; ++i) {
-      address contributor = contributors[i];
-      uint256 expectedTokens = contributorExpectedTokens[i];
-      require(contributionHashes[i] == keccak256(contributor, expectedTokens));
-      contributionHashes[i] = 0x00000000000000000000000000000000;
-
-      uint256 numTokens = _numTokensForContributor(expectedTokens, tokensTransferredSoFar, _state);
-      tokensTransferredSoFar += numTokens;
-      require(tokenContract.transfer(contributor, numTokens));
+    struct Recipient {
+        address addr;
+        uint256 share;
+        uint256 balance;
+        uint256 received;
     }
 
-    tokensTransferred = tokensTransferredSoFar;
-    if (tokensTransferred == actualTotalTokens) {
-      state = State.Done;
+    uint256 sharesSum;
+    uint8 constant maxRecsAmount = 12;
+    mapping(address => Recipient) public recs;
+    address[maxRecsAmount] public recsLookUpTable; //to iterate
+
+    event Payment(address indexed to, uint256 value);
+    event AddShare(address to, uint256 value);
+    event ChangeShare(address to, uint256 value);
+    event DeleteShare(address to);
+    event ChangeAddessShare(address newAddress);
+    event FoundsReceived(uint256 value);
+
+    function Distribution() public {
+        sharesSum = 0;
     }
-  }
 
-  function numTokensForContributor(uint256 contributorExpectedTokens)
-      public view returns (uint256) {
-    return _numTokensForContributor(contributorExpectedTokens, tokensTransferred, state);
-  }
+    function receiveFunds() public payable {
+        emit FoundsReceived(msg.value);
+        for (uint8 i = 0; i < maxRecsAmount; i++) {
+            Recipient storage rec = recs[recsLookUpTable[i]];
+            uint ethAmount = (rec.share.mul(msg.value)).div(sharesSum);
+            rec.balance = rec.balance + ethAmount;
+        }
+    }
 
-  function temporaryEscapeHatch(address to, uint256 value, bytes data) public {
-    require(msg.sender == admin);
-    require(to.call.value(value)(data));
-  }
+    modifier onlyMembers(){
+        require(recs[msg.sender].addr != address(0));
+        _;
+    }
+
+    function doPayments() public {
+        Recipient storage rec = recs[msg.sender];
+        require(rec.balance >= 1e12);
+        rec.addr.transfer(rec.balance);
+        emit Payment(rec.addr, rec.balance);
+        rec.received = (rec.received).add(rec.balance);
+        rec.balance = 0;
+    }
+
+    function addShare(address _rec, uint256 share) public onlyOwner {
+        require(_rec != address(0));
+        require(share > 0);
+        require(recs[_rec].addr == address(0));
+        recs[_rec].addr = _rec;
+        recs[_rec].share = share;
+        recs[_rec].received = 0;
+        for(uint8 i = 0; i < maxRecsAmount; i++ ) {
+            if (recsLookUpTable[i] == address(0)) {
+                recsLookUpTable[i] = _rec;
+                break;
+            }
+        }
+        sharesSum = sharesSum.add(share);
+        emit AddShare(_rec, share);
+    }
+
+    function changeShare(address _rec, uint share) public onlyOwner {
+        require(_rec != address(0));
+        require(share > 0);
+        require(recs[_rec].addr != address(0));
+        Recipient storage rec = recs[_rec];
+        sharesSum = sharesSum.sub(rec.share).add(share);
+        rec.share = share;
+        emit ChangeShare(_rec, share);
+    }
+
+    function deleteShare(address _rec) public onlyOwner {
+        require(_rec != address(0));
+        require(recs[_rec].addr != address(0));
+        sharesSum = sharesSum.sub(recs[_rec].share);
+        for(uint8 i = 0; i < maxRecsAmount; i++ ) {
+            if (recsLookUpTable[i] == recs[_rec].addr) {
+                recsLookUpTable[i] = address(0);
+                break;
+            }
+        }
+        delete recs[_rec];
+        emit DeleteShare(msg.sender);
+    }
+
+    function changeRecipientAddress(address _newRec) public {
+        require(msg.sender != address(0));
+        require(_newRec != address(0));
+        require(recs[msg.sender].addr != address(0));
+        require(recs[_newRec].addr == address(0));
+        require(recs[msg.sender].addr != _newRec);
+
+        Recipient storage rec = recs[msg.sender];
+        uint256 prevBalance = rec.balance;
+        addShare(_newRec, rec.share);
+        emit ChangeAddessShare(_newRec);
+        deleteShare(msg.sender);
+        recs[_newRec].balance = prevBalance;
+        emit DeleteShare(msg.sender);
+
+    }
+
+    function getMyBalance() public view returns(uint256) {
+        return recs[msg.sender].balance;
+    }
 }
