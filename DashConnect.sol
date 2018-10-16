@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DashConnect at 0xaacb7f3d04434fcf058354ecb9874e77f197b3b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DashConnect at 0xdaa0cce5aa255afae7d85e34d3223ad64897d0e4
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -38,7 +38,7 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
 }
 
 
@@ -100,30 +100,19 @@ contract DashConnect is StandardToken {
 
     /* Public variables of the token */
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = 'H1.0';
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function DashConnect(
         ) {
-        balances[msg.sender] = 1000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000;                        // Update total supply (100000 for example)
-        name = "DashConnect";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "DHCC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 30000000000000000000000000;
+        totalSupply = 30000000000000000000000000;
+        name = "DashConnect";
+        decimals = 18;
+        symbol = "DC";
     }
 
     /* Approves and then calls the receiving contract */
