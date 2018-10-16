@@ -1,145 +1,247 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrimasToken at 0xE3feDAeCD47aa8EAb6b23227b0eE56F092C967a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrimasToken at 0x642ff44e02ee4af05719362043f28e5b7eee9913
 */
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.23;
 
 
-// https://github.com/ethereum/wiki/wiki/Standardized_Contract_APIs#transferable-fungibles-see-erc-20-for-the-latest
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b > 0);
+        // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        assert(a == b * c);
+        return c;
+    }
 
-contract ERC20Token {
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    // Get the total token supply
-    function totalSupply() constant returns (uint256 supply);
-    
-    // Get the account `balance` of another account with address `_owner`
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a - b;
+        assert(b <= a);
+        assert(a == c + b);
+        return c;
+    }
 
-    // Send `_value` amount of tokens to address `_to`
-    function transfer(address _to, uint256 _value) returns (bool success);
-    
-    // Send `_value` amount of tokens from address `_from` to address `_to`
-    // The `transferFrom` method is used for a withdraw workflow, allowing contracts to send tokens on your behalf, 
-    // for example to "deposit" to a contract address and/or to charge fees in sub-currencies; 
-    // the command should fail unless the `_from` account has deliberately authorized the sender of the message 
-    // via some mechanism; we propose these standardized APIs for `approval`:
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _value) returns (bool success);
-    
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        assert(a == c - b);
+        return c;
+    }
 }
 
-contract PrimasToken is ERC20Token {
-    address public initialOwner;
-    uint256 public supply   = 100000000 * 10 ** 18;  // 100, 000, 000
-    string  public name     = 'Primas';
-    uint8   public decimals = 18;
-    string  public symbol   = 'PST';
-    string  public version  = 'v0.1';
-    bool    public transfersEnabled = true;
-    uint    public creationBlock;
-    uint    public creationTime;
-    
-    mapping (address => uint256) balance;
-    mapping (address => mapping (address => uint256)) m_allowance;
-    mapping (address => uint) jail;
+
+
+library Roles {
+    struct Role {
+        mapping(address => bool) bearer;
+    }
+
+    function add(Role storage role, address addr) internal {
+        role.bearer[addr] = true;
+    }
+
+    function remove(Role storage role, address addr) internal {
+        role.bearer[addr] = false;
+    }
+
+    function check(Role storage role, address addr) view internal {
+        require(has(role, addr));
+    }
+
+    function has(Role storage role, address addr) view internal returns (bool) {
+        return role.bearer[addr];
+    }
+}
+
+
+contract RBAC {
+
+    address initialOwner;
+
+    using Roles for Roles.Role;
+
+    mapping(string => Roles.Role) private roles;
+
+    event RoleAdded(address addr, string roleName);
+    event RoleRemoved(address addr, string roleName);
+
+    modifier onlyOwner() {
+        require(msg.sender == initialOwner);
+        _;
+    }
+
+    function checkRole(address addr, string roleName) view public {
+        roles[roleName].check(addr);
+    }
+
+    function hasRole(address addr, string roleName) view public returns (bool) {
+        return roles[roleName].has(addr);
+    }
+
+    function addRole(address addr, string roleName) public onlyOwner {
+        roles[roleName].add(addr);
+        emit RoleAdded(addr, roleName);
+    }
+
+    function removeRole(address addr, string roleName) public onlyOwner {
+        roles[roleName].remove(addr);
+        emit RoleRemoved(addr, roleName);
+    }
+
+    modifier onlyRole(string roleName) {
+        checkRole(msg.sender, roleName);
+        _;
+    }
+}
+
+
+contract PrimasToken is RBAC {
+
+    using SafeMath for uint256;
+
+    string public name;
+    uint256 public decimals;
+    string public symbol;
+    string public version;
+    uint256 public totalSupply;
+    uint256 initialAmount;
+    uint256 deployTime;
+    uint256 lastInflationDayStart;
+    uint256 incentivesPool;
+
+    mapping(address => uint256) private userLockedTokens;
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Lock(address userAddress, uint256 amount);
+    event Unlock(address userAddress,uint256 amount);
+    event Inflate (uint256 incentivesPoolValue);
 
-    function PrimasToken() {
-        initialOwner        = msg.sender;
-        balance[msg.sender] = supply;
-        creationBlock       = block.number;
-        creationTime        = block.timestamp;
+    constructor() public {
+        name = "Primas Token";
+        decimals = 18;
+        symbol = "PST";
+        version = "V2.0";
+        initialAmount = 100000000 * 10 ** decimals;
+        balances[msg.sender] = initialAmount;
+        totalSupply = initialAmount;
+        initialOwner = msg.sender;
+        deployTime = block.timestamp;
+        incentivesPool = 0;
+        lastInflationDayStart = 0;
+        emit Transfer(address(0), msg.sender, initialAmount);
     }
 
-    function balanceOf(address _account) constant returns (uint) {
-        return balance[_account];
-    }
-
-    function totalSupply() constant returns (uint) {
-        return supply;
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        // `revert()` | `throw`
-        //      http://solidity.readthedocs.io/en/develop/control-structures.html#error-handling-assert-require-revert-and-exceptions
-        //      https://ethereum.stackexchange.com/questions/20978/why-do-throw-and-revert-create-different-bytecodes/20981
-        if (!transfersEnabled) revert();
-        if ( jail[msg.sender] >= block.timestamp ) revert();
-        
-        return doTransfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-        if (!transfersEnabled) revert();
-        if ( jail[msg.sender] >= block.timestamp || jail[_to] >= block.timestamp || jail[_from] >= block.timestamp ) revert();
-            
-        if (allowance(_from, msg.sender) < _value) return false;
-        
-        m_allowance[_from][msg.sender] -= _value;
-        
-        if ( !(doTransfer(_from, _to, _value)) ) {
-            m_allowance[_from][msg.sender] += _value;
-            return false;
+    function inflate() public onlyRole("InflationOperator") returns (uint256)  {
+        uint256 currentTime = block.timestamp;
+        uint256 currentDayStart = currentTime / 1 days;
+        uint256 inflationAmount;
+        require(lastInflationDayStart != currentDayStart);
+        lastInflationDayStart = currentDayStart;
+        uint256 createDurationYears = (currentTime - deployTime) / 1 years;
+        if (createDurationYears < 1) {
+            inflationAmount = initialAmount / 10 / 365;
+        } else if (createDurationYears >= 20) {
+            inflationAmount = 0;
         } else {
-            return true;
+            inflationAmount = initialAmount * (100 - (5 * createDurationYears)) / 365 * 1000;
         }
+        incentivesPool = incentivesPool.add(inflationAmount);
+        totalSupply = totalSupply.add(inflationAmount);
+        emit Inflate(incentivesPool);
+        return incentivesPool;
     }
 
-    function doTransfer(address _from, address _to, uint _value) internal returns (bool success) {
-        if (balance[_from] >= _value && balance[_to] + _value >= balance[_to]) {
-            balance[_from] -= _value;
-            balance[_to] += _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
+    function getIncentivesPool() view public returns (uint256) {
+        return incentivesPool;
     }
-    
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        if (!transfersEnabled) revert();
-        if ( jail[msg.sender] >= block.timestamp || jail[_spender] >= block.timestamp ) revert();
 
-        // https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        if ( (_value != 0) && (allowance(msg.sender, _spender) != 0) ) revert();
-        
-        m_allowance[msg.sender][_spender] = _value;
-
-        Approval(msg.sender, _spender, _value);
-
+    function incentivesIn(address[] _users, uint256[] _values) public onlyRole("IncentivesCollector") returns (bool success) {
+        require(_users.length == _values.length);
+        for (uint256 i = 0; i < _users.length; i++) {
+            incentivesPool = incentivesPool.add(_values[i]);
+            balances[_users[i]] = balances[_users[i]].sub(_values[i]);
+            userLockedTokens[_users[i]] = userLockedTokens[_users[i]].sub(_values[i]);
+            emit Transfer(_users[i], address(0), _values[i]);
+        }
         return true;
     }
-    
-    function allowance(address _owner, address _spender) constant returns (uint256) {
-        if (!transfersEnabled) revert();
 
-        return m_allowance[_owner][_spender];
-    }
-    
-    function enableTransfers(bool _transfersEnabled) returns (bool) {
-        if (msg.sender != initialOwner) revert();
-        transfersEnabled = _transfersEnabled;
-        return transfersEnabled;
+    function incentivesOut(address[] _users, uint256[] _values) public onlyRole("IncentivesDistributor") returns (bool success) {
+        require(_users.length == _values.length);
+        for (uint256 i = 0; i < _users.length; i++) {
+            incentivesPool = incentivesPool.sub(_values[i]);
+            balances[_users[i]] = balances[_users[i]].add(_values[i]);
+            emit Transfer(address(0), _users[i], _values[i]);
+        }
+        return true;
     }
 
-    function catchYou(address _target, uint _timestamp) returns (uint) {
-        if (msg.sender != initialOwner) revert();
-        if (!transfersEnabled) revert();
-
-        jail[_target] = _timestamp;
-
-        return jail[_target];
+    function tokenLock(address _userAddress, uint256 _amount) public onlyRole("Locker") {
+        require(balanceOf(_userAddress) >= _amount);
+        userLockedTokens[_userAddress] = userLockedTokens[_userAddress].add(_amount);
+        emit Lock(_userAddress, _amount);
     }
 
+    function tokenUnlock(address _userAddress, uint256 _amount, address _to, uint256 _toAmount) public onlyRole("Unlocker") {
+        require(_amount >= _toAmount);
+        require(userLockedTokens[_userAddress] >= _amount);
+        userLockedTokens[_userAddress] = userLockedTokens[_userAddress].sub(_amount);
+        emit Unlock(_userAddress, _amount);
+        if (_to != address(0) && _toAmount != 0) {
+            balances[_userAddress] = balances[_userAddress].sub(_toAmount);
+            balances[_to] = balances[_to].add(_toAmount);
+            emit Transfer(_userAddress, _to, _toAmount);
+        }
+    }
+
+    function transferAndLock(address _userAddress, address _to, uint256 _amount) public onlyRole("Locker")  {
+        require(balanceOf(_userAddress) >= _amount);
+        balances[_userAddress] = balances[_userAddress].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        userLockedTokens[_to] = userLockedTokens[_to].add(_amount);
+        emit Transfer(_userAddress, _to, _amount);
+        emit Lock(_to, _amount);
+    }
+
+    function balanceOf(address _owner) view public returns (uint256 balance) {
+        return balances[_owner] - userLockedTokens[_owner];
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balanceOf(msg.sender) >= _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(balanceOf(_from) >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
