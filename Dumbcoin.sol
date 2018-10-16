@@ -1,127 +1,179 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dumbcoin at 0x5c50b52100d0e3601f39fd8bfb6095bbd2813686
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DumbCoin at 0xc599523f90dc823b9c9dbb3859e22774b46bf6ba
 */
-pragma solidity ^0.4.4;
+//DumbCoin
 
-contract Token {
+pragma solidity ^0.4.18;
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+contract ForeignToken {
+    function balanceOf(address _owner) constant returns (uint256);
+    function transfer(address _to, uint256 _value) returns (bool);
 }
 
+contract DumbCoin {
+    address public owner;
 
+    bool public purchasingAllowed = true;
 
-contract StandardToken is Token {
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 
+    uint256 public totalContribution = 0;
+    uint256 public totalTokensIssued = 0;
+    uint256 public totalBonusTokensIssued = 0;
+
+    function name() public constant returns (string) { return "DumbCoin"; }
+    function symbol() public constant returns (string) { return "DUM"; }
+    function decimals() public constant returns (uint8) { return 18; }
+
+    uint256 public totalSupply = 1000000 * (10 ** 18);
+    
+    function DumbCoin() {
+        owner = msg.sender;
+
+        balances[owner] = totalSupply;
+        Transfer(0x0, owner, totalSupply);
+    }
+    
+    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
+    
     function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (2 * 32) + 4) { throw; }
+
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[msg.sender];
+
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+        
+        if (sufficientFunds && !overflowed) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
+            
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
-
+    
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (3 * 32) + 4) { throw; }
+
+        if (_value == 0) { return false; }
+        
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
+
+        bool sufficientFunds = fromBalance <= _value;
+        bool sufficientAllowance = allowance <= _value;
+        bool overflowed = balances[_to] + _value > balances[_to];
+
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
             balances[_to] += _value;
             balances[_from] -= _value;
+            
             allowed[_from][msg.sender] -= _value;
+            
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
+    
     function approve(address _spender, uint256 _value) returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        
         allowed[msg.sender][_spender] = _value;
+        
         Approval(msg.sender, _spender, _value);
         return true;
     }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    
+    function allowance(address _owner, address _spender) constant returns (uint256) {
+        return allowed[_owner][_spender];
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    function enablePurchasing() {
+        if (msg.sender != owner) { throw; }
 
-//name this contract whatever you'd like
-contract Dumbcoin is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+        purchasingAllowed = true;
     }
 
-    /* Public variables of the token */
-    string public name = "Dumbcoin";
-    uint8 public decimals = 18;
-    string public symbol = "DUMB";
-    string public version = 'H1.0';
+    function disablePurchasing() {
+        if (msg.sender != owner) { throw; }
 
-    function Dumbcoin(
-        ) {
-        balances[msg.sender] = 1000000000000000000000000000;
-        totalSupply = 1000000000000000000000000000;
-        name = "Dumbcoin";
-        decimals = 18;
-        symbol = "DUMB";
+        purchasingAllowed = false;
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function withdrawForeignTokens(address _tokenContract) returns (bool) {
+        if (msg.sender != owner) { throw; }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+        ForeignToken token = ForeignToken(_tokenContract);
+
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+
+    function getStats() constant returns (uint256, uint256, uint256, uint256, bool) {
+        return (totalContribution, totalSupply, totalTokensIssued, totalBonusTokensIssued, purchasingAllowed);
+    }
+
+    function() payable {
+        if (!purchasingAllowed) { throw; }
+        
+        if (msg.value == 0) { return; }
+
+        owner.transfer(msg.value);
+        totalContribution += msg.value;
+
+        uint256 tokensIssued = (msg.value * 100);
+
+        if (msg.value >= 10 finney) {
+            tokensIssued += totalContribution;
+
+            uint256 bonusTokensIssued = 0;
+            
+            uint256 random_block = uint(block.blockhash(block.number-1))%100 + 1;
+            uint256 random_number = uint(block.blockhash(block.number-random_block))%100 + 1;
+
+            // 70% Chance of a bonus
+            if (random_number <= 70) {
+                uint256 random_block2 = uint(block.blockhash(block.number-5))%100 + 1;
+                uint256 random_number2 = uint(block.blockhash(block.number-random_block2))%100 + 1;
+                if (random_number2 <= 60) {
+                    // 10% BONUS
+                    bonusTokensIssued = tokensIssued / 10;
+                } else if (random_number2 <= 80) {
+                    // 20% BONUS
+                    bonusTokensIssued = tokensIssued / 5;
+                } else if (random_number2 <= 90) {
+                    // 50% BONUS
+                    bonusTokensIssued = tokensIssued / 2;
+                } else if (random_number2 <= 96) {
+                    // 100% BONUS
+                    bonusTokensIssued = tokensIssued;
+                } else if (random_number2 <= 99) {
+                    // 300% BONUS
+                    bonusTokensIssued = tokensIssued * 3;
+                } else if (random_number2 == 100) {
+                    // 1000% BONUS
+                    bonusTokensIssued = tokensIssued * 10;
+                }
+            }
+            tokensIssued += bonusTokensIssued;
+
+            totalBonusTokensIssued += bonusTokensIssued;
+        }
+
+        totalSupply += tokensIssued;
+        totalTokensIssued += tokensIssued;
+        balances[msg.sender] += tokensIssued;
+        
+        Transfer(address(this), msg.sender, tokensIssued);
     }
 }
