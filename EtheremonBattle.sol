@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0x10379ff6847e093657bdfe0fcd14d06d48e4ddac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0x78ef4844ab8589d860136d58c72b4911b5a0d8da
 */
 pragma solidity ^0.4.16;
 
@@ -178,7 +178,6 @@ contract EtheremonCastleContract is EtheremonEnum, BasicAccessControl{
         onlyModerators external returns(uint32 currentCastleId);
     function renameCastle(uint32 _castleId, string _name) onlyModerators external;
     function removeCastleFromActive(uint32 _castleId) onlyModerators external;
-    function deductTrainerBrick(address _trainer, uint32 _deductAmount) onlyModerators external returns(bool);
     
     function addBattleLog(uint32 _castleId, address _attacker, 
         uint8 _ran1, uint8 _ran2, uint8 _ran3, uint8 _result, uint32 _castleExp1, uint32 _castleExp2, uint32 _castleExp3) onlyModerators external returns(uint64);
@@ -762,7 +761,6 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         if (numberBrick < castleMinBrick) {
             revert();
         }
-        castle.deductTrainerBrick(msg.sender, castle.getTrainerBrick(msg.sender));
         totalEarn += msg.value;
         castleId = castle.addCastle(msg.sender, _name, _a1, _a2, _a3, _s1, _s2, _s3, numberBrick);
         EventCreateCastle(msg.sender, castleId);
