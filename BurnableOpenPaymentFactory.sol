@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0xbe5aaab7c745432724e001d6c464a7412a564f72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1e69c3cb4f08aba18bad6da03f5c5441014d4169
 */
 //A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
 //The recipient is not set when the contract is instantiated.
@@ -94,7 +94,8 @@ contract BurnableOpenPayment {
     }
     
     function getFullState()
-    public 
+    public
+    constant
     returns (State, string, address, string, uint, uint, uint, uint) {
         return (state, payerString, recipient, recipientString, amountDeposited, amountBurned, amountReleased, defaultTriggerTime);
     }
