@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlatoToken at 0x990da731331aE62c3e8f3f73cB4ebeb6F082Bc7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlatoToken at 0x0d6f4cef46f23877a930c2d782cc275c978bc1ee
 */
 pragma solidity ^0.4.13; 
 contract Owned { 
@@ -54,7 +54,7 @@ contract PlatoToken is Owned, ERC20Interface {
   string  public name = "Plato"; 
   string  public symbol = "PAT"; 
   uint8   public decimals = 8; 
-  uint256 public totalSupply = 10000000000000000;
+  uint256 public totalSupply = 100000000;
   mapping (address => uint256) public balanceOf;
   mapping (address => mapping (address => uint256)) public allowance;
 
@@ -72,7 +72,7 @@ contract PlatoToken is Owned, ERC20Interface {
       require (balanceOf[_from] > _value);                // Check if the sender has enough
       require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
       balanceOf[_from] -= _value;                         // Subtract from the sender
-      balanceOf[_to] += _value;                           // Add the same to the recipient
+      balanceOf[_to] += _value;                            // Add the same to the recipient
       Transfer(_from, _to, _value);
   }
 
