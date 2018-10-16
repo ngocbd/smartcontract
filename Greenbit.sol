@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Greenbit at 0x30b39581177d0c035e9f9ae0fa67f4d56493d8ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GREENBIT at 0x212a05de8cd285164aa8411a666a95ca73cf223a
 */
-contract Greenbit {
+contract GREENBIT{
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
@@ -16,12 +16,12 @@ contract Greenbit {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Greenbit() {
+    function GREENBIT() {
 
-         initialSupply = 333333333;
+         initialSupply = 3333333333;
          name ="greenbit";
-        decimals = 0;
-         symbol = "G";
+        decimals = 18;
+         symbol = "GBit";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
