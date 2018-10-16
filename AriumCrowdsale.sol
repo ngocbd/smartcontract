@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AriumCrowdsale at 0x58d712c408ac3a0e2e80a593b91512562a19897f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AriumCrowdsale at 0xd3cd638c5013b70b795dd0a171376b579fc76cbc
 */
 pragma solidity ^0.4.21;
  
@@ -217,7 +217,7 @@ contract AriumToken is BurnableToken {
    
   uint32 public constant decimals = 10;
  
-  uint256 public INITIAL_SUPPLY = 420000000000000000;        // supply 42 000 000
+  uint256 public INITIAL_SUPPLY = 400000000000000000;        // supply 40 000 000
  
  
   function AriumToken() {
@@ -248,17 +248,19 @@ contract AriumCrowdsale is Ownable {
   uint icostart;
  
   uint ico;
+  
+  bool hardcap = false;
  
   function AriumCrowdsale(AriumToken _token) {
     token=_token;
-    multisig = 0x661AD28e92d43Af07E1508e7A04f74E4a0D6728d;          // ether holder
-    restricted = 0xC357d4e9601B11BF0d63a718228bfc021360E05E;        // team holder
+    multisig = 0xA2Bfd3EE5ffdd78f7172edF03f31D1184eE627F3;          // ether holder
+    restricted = 0x8e7d40bb76BFf10DDe91D1757c4Ceb1A5385415B;        // team holder
     restrictedPercent = 13;             // percent to team
     rate = 10000000000000;
-    start = 1520496194;     //start pre ico
+    start = 1521849600;     //start pre ico 03.24.18 00.00.00 GMT
     preico = 30;        // pre ico period
-    icostart= 1537760157;       // ico start
-    ico = 60;           // ico period
+    icostart= 1528588800;       // ico start 06.10.18 00.00.00 GMT
+    ico = 67;           // ico period
    
    
   }
@@ -299,14 +301,20 @@ contract AriumCrowdsale is Ownable {
     token.transfer(restricted, restrictedTokens);
   }
  
-    function manualTransfer(address _to , uint ammount) saleIsOn onlyOwner payable{           //function for manual transfer(purchase with no ETH)
+    function ManualTransfer(address _to , uint ammount) saleIsOn onlyOwner payable{           //function for manual transfer(purchase with no ETH)
     token.transfer(_to, rate.div(1000).mul(ammount));                              
-    token.transfer(restricted, rate.div(100000).mul(restrictedPercent).mul(ammount));             // transfer 13% to team balance
     }
-   
+    
+
     function BurnUnsoldToken(uint _value) onlyOwner payable{                                // burn unsold token after
         token.burn(_value);
-       
+    }
+    
+    function setHardcupTrue() onlyOwner{
+        hardcap = true;
+    }
+    function setHardcupFalse() onlyOwner{
+        hardcap = false;
     }
  
   function() external payable {
