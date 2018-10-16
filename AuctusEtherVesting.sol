@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusEtherVesting at 0x0285d35508e1a1f833142eb5211adb858bd3323a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusEtherVesting at 0xb3cc085b5a56fdd47545a66ebd3dbd2a903d4565
 */
 pragma solidity ^0.4.21;
 
@@ -140,7 +140,7 @@ contract ContractReceiver {
 
 
 contract AuctusTokenVesting is AuctusStepVesting, ContractReceiver {
-	address public auctusTokenAddress = 0xfD89de68b246eB3e21B06e9B65450AC28D222488;
+	address public auctusTokenAddress = 0xc12d099be31567add4e4e4d0D45691C3F58f5663;
 
 	function AuctusTokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _steps) 
 		public 
