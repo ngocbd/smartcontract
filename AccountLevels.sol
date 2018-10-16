@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevels at 0xB0b33E9CE161B8A3aE801782Fa587592220306D2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccountLevels at 0xaac6e8a8ba4435b9ead7a637900481b196f9f8eb
 */
 pragma solidity ^0.4.9;
 
@@ -22,7 +22,7 @@ contract SafeMath {
   }
 
   function assert(bool assertion) internal {
-    if (!assertion) throw;
+    if (!assertion) assert;
   }
 }
 
@@ -62,7 +62,7 @@ contract Token {
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
   uint public decimals;
-  string public name = "black";
+  string public name;
 }
 
 contract StandardToken is Token {
@@ -115,17 +115,17 @@ contract StandardToken is Token {
 
 contract ReserveToken is StandardToken, SafeMath {
   address public minter;
-  function ReserveToken() {
+  constructor() {
     minter = msg.sender;
   }
   function create(address account, uint amount) {
-    if (msg.sender != minter) throw;
+    if (msg.sender != minter) return;
     balances[account] = safeAdd(balances[account], amount);
     totalSupply = safeAdd(totalSupply, amount);
   }
   function destroy(address account, uint amount) {
-    if (msg.sender != minter) throw;
-    if (balances[account] < amount) throw;
+    if (msg.sender != minter) return;
+    if (balances[account] < amount) return;
     balances[account] = safeSub(balances[account], amount);
     totalSupply = safeSub(totalSupply, amount);
   }
@@ -151,7 +151,7 @@ contract AccountLevelsTest is AccountLevels {
   }
 }
 
-contract EtherDelta is SafeMath {
+contract CoinbarGain is SafeMath {
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -168,7 +168,7 @@ contract EtherDelta is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  function EtherDelta(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  constructor(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
@@ -178,39 +178,39 @@ contract EtherDelta is SafeMath {
   }
 
   function() {
-    throw;
+    return;
   }
 
   function changeAdmin(address admin_) {
-    if (msg.sender != admin) throw;
+    if (msg.sender != admin) return;
     admin = admin_;
   }
 
   function changeAccountLevelsAddr(address accountLevelsAddr_) {
-    if (msg.sender != admin) throw;
+    if (msg.sender != admin) return;
     accountLevelsAddr = accountLevelsAddr_;
   }
 
   function changeFeeAccount(address feeAccount_) {
-    if (msg.sender != admin) throw;
+    if (msg.sender != admin) return;
     feeAccount = feeAccount_;
   }
 
   function changeFeeMake(uint feeMake_) {
-    if (msg.sender != admin) throw;
-    if (feeMake_ > feeMake) throw;
+    if (msg.sender != admin) return;
+    if (feeMake_ > feeMake) return;
     feeMake = feeMake_;
   }
 
   function changeFeeTake(uint feeTake_) {
-    if (msg.sender != admin) throw;
+    if (msg.sender != admin) return;
     if (feeTake_ > feeTake || feeTake_ < feeRebate) throw;
     feeTake = feeTake_;
   }
 
   function changeFeeRebate(uint feeRebate_) {
-    if (msg.sender != admin) throw;
-    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) throw;
+    if (msg.sender != admin) return;
+    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) return;
     feeRebate = feeRebate_;
   }
 
@@ -220,25 +220,25 @@ contract EtherDelta is SafeMath {
   }
 
   function withdraw(uint amount) {
-    if (tokens[0][msg.sender] < amount) throw;
+    if (tokens[0][msg.sender] < amount) return;
     tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
-    if (!msg.sender.call.value(amount)()) throw;
+    if (!msg.sender.call.value(amount)()) return;
     Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
   }
 
   function depositToken(address token, uint amount) {
     //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
-    if (token==0) throw;
-    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    if (token==0) return;
+    if (!Token(token).transferFrom(msg.sender, this, amount)) return;
     tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
     Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
   function withdrawToken(address token, uint amount) {
-    if (token==0) throw;
-    if (tokens[token][msg.sender] < amount) throw;
+    if (token==0) return;
+    if (tokens[token][msg.sender] < amount) return;
     tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
-    if (!Token(token).transfer(msg.sender, amount)) throw;
+    if (!Token(token).transfer(msg.sender, amount)) return;
     Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
   }
 
@@ -259,7 +259,7 @@ contract EtherDelta is SafeMath {
       (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
       block.number <= expires &&
       safeAdd(orderFills[user][hash], amount) <= amountGet
-    )) throw;
+    )) return;
     tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
     orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
     Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
