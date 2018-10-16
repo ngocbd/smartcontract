@@ -1,8 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xd1436f0a5e9b063733a67e5dc9abe45792a423fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x5bf4796c4e69204ca2cef6906cdde7be6761b372
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
 
+contract ZipperMultisigFactory
+{
+    address zipper;
+    
+    function ZipperMultisigFactory(address _zipper) public
+    {
+        zipper = _zipper;
+    }
+
+    function createMultisig() public returns (address _multisig)
+    {
+        address[] memory addys = new address[](2);
+        addys[0] = zipper;
+        addys[1] = msg.sender;
+        
+        MultiSigWallet a = new MultiSigWallet(addys, 2);
+        
+        MultisigCreated(address(a), msg.sender, zipper);
+        
+        return address(a);
+    }
+    
+    function changeZipper(address _newZipper) public
+    {
+        require(msg.sender == zipper);
+        zipper = _newZipper;
+    }
+
+    event MultisigCreated(address _multisig, address indexed _sender, address indexed _zipper);
+}
+
+// b7f01af8bd882501f6801eb1eea8b22aa2a4979e from https://github.com/gnosis/MultiSigWallet/blob/master/contracts/MultiSigWallet.sol
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
