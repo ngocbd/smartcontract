@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0xe109fa0fe69c2d1f382af82a0952b4a804893794
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x0aac73a7098578bcb34ed305e63a9bd4e9f9bb07
 */
 // <ORACLIZE_API>
 /*
@@ -1149,7 +1149,7 @@ contract EthFlip is usingOraclize {
     minBet = 100000000000000000;
     maxBet = 500000000000000000;
     houseFee = 29; // 2.9%
-    oraclizeGas = 500001;
+    oraclizeGas = 350000;
     oraclizeGasPrice = 3010000000;
     oraclize_setCustomGasPrice(oraclizeGasPrice);
     oraclize_setProof(proofType_Ledger);
