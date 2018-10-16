@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0x62a03c868c959386b2df7f266e79bc711fb92398
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0x84bd649fc3bdbd7f1c7cf3f8157ab48fedd4eda6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a * b;
@@ -83,9 +83,9 @@ contract Ownable {
 }
 
 interface Token {
-    function transfer(address _to, uint256 _value) public;
+    //function transfer(address _to, uint256 _value) public;
     function balanceOf(address _owner) public constant returns (uint256 balance);
-    //function transfer(address _to, uint256 _value) public returns (bool success);
+    function transfer(address _to, uint256 _value) public returns (bool success);
     //event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
@@ -134,7 +134,6 @@ contract BatchTransfer is Ownable {
         for(uint i = 0; i < _values.length; i++){
             total = total.add(_values[i]);
         }
-        require(total <= standardToken.balanceOf(msg.sender));
         for(uint j = 0; j < _recipients.length; j++){
             standardToken.transfer(_recipients[j], _values[j]);
             totalUserTransfered = totalUserTransfered.add(1);
@@ -143,4 +142,14 @@ contract BatchTransfer is Ownable {
         }
         return true;
     }
+
+    /**
+     * Peterson's Law Protection
+     * Claim tokens
+     */
+    function claimTokens(address _token) public onlyOwner returns(bool result) {
+        uint256 balances = standardToken.balanceOf(this);
+        result = standardToken.transfer(owner, balances);
+    }
+
 }
