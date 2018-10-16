@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuddhaCoin at 0xd9e3492da65886b9f77dce4fa1d769301ef622e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuddhaCoin at 0x3e193f7d2373a6996e807b54c86dfd0d022afa8b
 */
 pragma solidity ^0.4.4;
 
@@ -109,14 +109,14 @@ contract BuddhaCoin is StandardToken {
     string public name;                  
     uint8 public decimals;               
     string public symbol;                 
-    string public version = 'B1.0';       
+    string public version = 'H1.0';       
 
 
 
     function BuddhaCoin(
         ) {
-        balances[msg.sender] = 500000000;               
-        totalSupply = 500000000;                        
+        balances[msg.sender] = 36000000000000;               
+        totalSupply = 36000000000000;                        
         name = "Buddha Coin";                                   
         decimals = 0;                            
         symbol = "BUDDHA";                               
