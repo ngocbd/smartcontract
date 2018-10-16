@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StableICO at 0x2df0e612dad9ffe8141b3987f60608742db2feca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StableICO at 0xcebbfe09bab5493714a42de8c3a58fd385ce9c03
 */
 pragma solidity ^0.4.11;
 
@@ -79,7 +79,7 @@ contract SafeMath {
 }
 
 /**
-* STABLE Awareness Token - STA
+* Stable Awareness Token - STA
 */
 contract ERC223Token_STA is ERC223, SafeMath, Ownable {
     string public name;
@@ -88,7 +88,7 @@ contract ERC223Token_STA is ERC223, SafeMath, Ownable {
     uint256 public totalSupply;
     mapping(address => uint) balances;
     
-    // stable params:
+    // stable:
     uint256 public icoEndBlock;                              // last block number of ICO 
     uint256 public maxSupply;                                // maximum token supply
     uint256 public minedTokenCount;                          // counter of mined tokens
@@ -108,7 +108,7 @@ contract ERC223Token_STA is ERC223, SafeMath, Ownable {
         maxSupply = 10000000000;                             // Maximum possible supply == 100 STA
         name = "STABLE STA Token";                           // Set the name for display purposes
         symbol = "STA";                                      // Set the symbol for display purposes
-        icoEndBlock = 4332000;  // INIT                      // last block number for ICO
+        icoEndBlock = 4230150;  // INIT                      // last block number for ICO
         totalSupply = 0;                                     // Update total supply
         // balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
     }
@@ -132,11 +132,10 @@ contract ERC223Token_STA is ERC223, SafeMath, Ownable {
     } 
     
     function selfDestroy() onlyOwner {
-        // allow to suicide STA token after around 2 weeks (25s/block) from the end of ICO
-        if (block.number <= icoEndBlock+14*3456) throw;
+        if (block.number <= icoEndBlock+14*3456) throw;           // allow to suicide STA token after around 2 weeks (25s/block) from the end of ICO
         suicide(this); 
     }
-    // /stable params
+    // /stable
    
     // Function to access name of token .
     function name() constant returns (string _name) {
@@ -255,7 +254,7 @@ contract ERC223Token_STB is ERC223, SafeMath, Ownable {
     uint256 public totalSupply;
     mapping(address => uint) balances;
     
-    // stable params:
+    // stable:
     uint256 public maxSupply;
     uint256 public icoEndBlock;
     address public icoAddress;
@@ -266,7 +265,7 @@ contract ERC223Token_STB is ERC223, SafeMath, Ownable {
         name = "STABLE STB Token";                           // Set the name for display purposes
         decimals = 4;                                        // Amount of decimals for display purposes
         symbol = "STB";                                      // Set the symbol for display purposes
-        icoEndBlock = 4332000;  // INIT                      // last block number of ICO          
+        icoEndBlock = 4230150;  // INIT                      // last block number of ICO  // INIT PARAM             
         //balances[msg.sender] = totalSupply;                // Give the creator all initial tokens       
     }
     
@@ -274,7 +273,7 @@ contract ERC223Token_STB is ERC223, SafeMath, Ownable {
     function maxSupply() constant returns (uint256 _maxSupply) {
         return maxSupply;
     }
-    // /stable params
+    // /stable
   
     // Function to access name of token .
     function name() constant returns (string _name) {
@@ -372,13 +371,17 @@ contract ERC223Token_STB is ERC223, SafeMath, Ownable {
     /* mint new tokens */
     function mint(address _receiver, uint256 _amount) {
         if (icoAddress == address(0)) throw;
-        if (msg.sender != icoAddress && msg.sender != owner) throw;     // mint allowed only for ICO contract or owner
+        if (msg.sender != icoAddress && msg.sender != owner) throw;     // mint allowed only for ICO contract and owner
+        // if (block.number <= icoEndBlock) throw;                      // mint allowed only after ICO
         if (safeAdd(totalSupply, _amount) > maxSupply) throw;
         totalSupply = safeAdd(totalSupply, _amount); 
         balances[_receiver] = safeAdd(balances[_receiver], _amount);
         Transfer(0, _receiver, _amount, new bytes(0)); 
     }
     
+    function selfDestroy() onlyOwner { // TEST ONLY
+        suicide(this); 
+    }
 }
 
 /* main contract - ICO */
@@ -430,12 +433,12 @@ contract StableICO is Ownable, SafeMath {
   
     /* constructor */
     function StableICO() {
-        crowdfundingTarget = 750000000000000000000; // INIT
-        sta = ERC223Token_STA(0x164489AB676C578bED0515dDCF92Ef37aacF9a29);  // INIT
-        stb = ERC223Token_STB(0x09bca6ebab05ee2ae945be4eda51393d94bf7b99);  // INIT
-        beneficiary = 0xb2e7579f84a8ddafdb376f9872916b7fcb8dbec0;  // INIT
-        icoStartBlock = 4232000;  // INIT
-        icoEndBlock = 4332000;  // INIT
+        crowdfundingTarget = 200000000000000000; // INIT (test: 0.2 ETH)
+        sta = ERC223Token_STA(0xe1e8f9bd535384a345c2a7a29a15df8fc345ad9c);  // INIT
+        stb = ERC223Token_STB(0x1e46a3f0552c5acf8ced4fe21a789b412f0e792a);  // INIT
+        beneficiary = 0x29ef9329bc15b7c11d047217618186b52bb4c8ff;  // INIT
+        icoStartBlock = 4230000;  // INIT
+        icoEndBlock = 4230150;  // INIT
     }		
     
     /* trigger rewarding the miner with STA token */
@@ -464,7 +467,7 @@ contract StableICO is Ownable, SafeMath {
     /* Receiving ETH */
     function () payable {
 
-        if (msg.value < 100000000000000000) throw;  // minimum 0.1 ETH
+        if (msg.value < 10000000000000000) throw;  // minimum 0.1 ETH  TEST: 0.01ETH
 		
         // before ICO (pre-ico)
         if (block.number < icoStartBlock) {
@@ -628,5 +631,8 @@ contract StableICO is Ownable, SafeMath {
         refund(_from, _to);
     }
     /* /backup */
- 
+
+    function selfDestroy() onlyOwner { // TEST ONLY
+        suicide(this); 
+    }
 }
