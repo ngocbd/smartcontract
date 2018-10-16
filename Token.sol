@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf838f85d4f4fe492ed02764935b63af89820a55e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x51fdc3827865af9bde006a2ad6d593d4aca5e591
 */
 pragma solidity ^ 0.4.17;
 
@@ -67,9 +67,7 @@ contract Ownable {
 
 
 
-
-
-// The token
+// The ETHD Token 
 contract Token is ERC20,  Ownable {
 
     using SafeMath for uint;
@@ -106,10 +104,10 @@ contract Token is ERC20,  Ownable {
     // The Token 
     function Token(address _crowdSaleAddress) public {
         
-        locked = true;  // Lock the Crowdsale function during the crowdsale
-        totalSupply = 60000000e18; 
-        name = "Requitix"; // Set the name for display purposes
-        symbol = "RQX"; // Set the symbol for display purposes
+        locked = true;  // Lock the transfCrowdsaleer function during the crowdsale
+        totalSupply = 21000000e18; 
+        name = "Lottery Token"; // Set the name for display purposes
+        symbol = "ETHD"; // Set the symbol for display purposes
         decimals = 18; // Amount of decimals for display purposes
         crowdSaleAddress = _crowdSaleAddress;                                  
         balances[crowdSaleAddress] = totalSupply;
@@ -171,7 +169,7 @@ contract Token is ERC20,  Ownable {
     }
 
 
-    function allowance(address _owner, address _spender) public view returns(uint remaining) {
+    function allowance(address _owner, address _spender) public constant returns(uint remaining) {
         return allowed[_owner][_spender];
     }
 
