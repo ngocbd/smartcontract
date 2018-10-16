@@ -1,29 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0x5d77f2c7bb0f60e62370d1774bb170c41a20ac1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitToken at 0xb763f9a3f59a8d427de99fef07e7a9d78e856636
 */
 pragma solidity 0.4.18;
-
-// File: src/Token/FallbackToken.sol
-
-/**
- * @title FallbackToken token
- *
- * @dev add ERC223 standard ability
- **/
-contract FallbackToken {
-
-  function isContract(address _addr) internal view returns (bool) {
-    uint length;
-    _addr = _addr;
-    assembly {length := extcodesize(_addr)}
-    return (length > 0);
-  }
-}
-
-
-contract Receiver {
-  function tokenFallback(address from, uint value) public;
-}
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -306,7 +284,7 @@ contract MintableToken is StandardToken, Ownable {
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
-contract TrustaBitToken is MintableToken, FallbackToken {
+contract TrustaBitToken is MintableToken {
 
   string public constant name = "TrustaBits";
 
@@ -314,57 +292,27 @@ contract TrustaBitToken is MintableToken, FallbackToken {
 
   uint256 public constant decimals = 18;
 
-  bool public released = false;
-
-  event Release();
-
-  modifier isReleased () {
+  modifier isFinishedMinting () {
     require(mintingFinished);
-    require(released);
     _;
   }
-
-  /**
-    * Fix for the ERC20 short address attack
-    * http://vessenes.com/the-erc20-short-address-attack-explained/
-    */
-  modifier onlyPayloadSize(uint size) {
-    require(msg.data.length != size + 4);
-    _;
+  function transfer(address _to, uint256 _value) public isFinishedMinting returns (bool) {
+    return super.transfer(_to, _value);
   }
 
-  function release() onlyOwner public returns (bool) {
-    require(mintingFinished);
-    require(!released);
-    released = true;
-    Release();
-
-    return true;
-  }
-
-  function transfer(address _to, uint256 _value) public isReleased onlyPayloadSize(2 * 32) returns (bool) {
-    require(super.transfer(_to, _value));
-
-    if (isContract(_to)) {
-      Receiver(_to).tokenFallback(msg.sender, _value);
-    }
-
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public isReleased returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public isFinishedMinting returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function approve(address _spender, uint256 _value) public isReleased returns (bool) {
+  function approve(address _spender, uint256 _value) public isFinishedMinting returns (bool) {
     return super.approve(_spender, _value);
   }
 
-  function increaseApproval(address _spender, uint _addedValue) public isReleased onlyPayloadSize(2 * 32) returns (bool success) {
+  function increaseApproval(address _spender, uint _addedValue) public isFinishedMinting returns (bool success) {
     return super.increaseApproval(_spender, _addedValue);
   }
 
-  function decreaseApproval(address _spender, uint _subtractedValue) public isReleased returns (bool success) {
+  function decreaseApproval(address _spender, uint _subtractedValue) public isFinishedMinting returns (bool success) {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
 
