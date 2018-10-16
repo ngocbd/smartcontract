@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperEdge at 0x4ccc3759eb48faf1c6cfadad2619e7038db6b212
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperEdge at 0x72f03fbf90dcd37185556047d795264389108606
 */
 /*
 
@@ -74,7 +74,7 @@ contract SuperEdge is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 2000000000e8;
-    uint256 public totalDistributed = 1200000000e8;
+    uint256 public totalDistributed = 120000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value = 15000e8;
 
