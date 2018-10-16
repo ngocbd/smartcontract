@@ -1,184 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleToken at 0x2accaB9cb7a48c3E82286F0b2f8798D201F4eC3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleToken at 0x4daa9dc438a77bd59e8a43c6d46cbfe84cd04255
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-contract Owned {
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
 
-    address owner;
-    
-    function Owned() { owner = msg.sender; }
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-    modifier onlyOwner {
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 }
 
-contract TokenEIP20 {
 
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
+contract BattleToken is Ownable {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-}
 
-contract TokenNotifier {
+    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
+    uint256 public totalSupply;
+    string public name = "https://cryptobots.me/cbtb - CryptoBotsBattle";
+    uint8 public decimals = 0;
+    string public symbol = "CBTB";
 
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
-}
+    address public fights;
 
-library SafeMathLib {
-
-    uint constant WAD = 10 ** 18;
-    uint constant RAY = 10 ** 27;
-
-    function add(uint x, uint y) internal returns (uint z) {
-        require((z = x + y) >= x);
+    function setFightsAddress(address _fights) public onlyOwner {
+        fights = _fights;
     }
 
-    function sub(uint x, uint y) internal returns (uint z) {
-        require((z = x - y) <= x);
+    function create(uint _amount) public onlyOwner {
+        balances[msg.sender] = safeAdd(balances[msg.sender], _amount);
+        totalSupply = safeAdd(totalSupply, _amount);
     }
 
-    function mul(uint x, uint y) internal returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
-    }
-
-    function per(uint x, uint y) internal constant returns (uint z) {
-        return mul((x / 100), y);
-    }
-
-    function min(uint x, uint y) internal returns (uint z) {
-        return x <= y ? x : y;
-    }
-
-    function max(uint x, uint y) internal returns (uint z) {
-        return x >= y ? x : y;
-    }
-
-    function imin(int x, int y) internal returns (int z) {
-        return x <= y ? x : y;
-    }
-
-    function imax(int x, int y) internal returns (int z) {
-        return x >= y ? x : y;
-    }
-
-    function wmul(uint x, uint y) internal returns (uint z) {
-        z = add(mul(x, y), WAD / 2) / WAD;
-    }
-
-    function rmul(uint x, uint y) internal returns (uint z) {
-        z = add(mul(x, y), RAY / 2) / RAY;
-    }
-
-    function wdiv(uint x, uint y) internal returns (uint z) {
-        z = add(mul(x, WAD), y / 2) / y;
-    }
-
-    function rdiv(uint x, uint y) internal returns (uint z) {
-        z = add(mul(x, RAY), y / 2) / y;
-    }
-
-    function wper(uint x, uint y) internal constant returns (uint z) {
-        return wmul(wdiv(x, 100), y);
-    }
-
-    // This famous algorithm is called "exponentiation by squaring"
-    // and calculates x^n with x as fixed-point and n as regular unsigned.
-    //
-    // It's O(log n), instead of O(n) for naive repeated multiplication.
-    //
-    // These facts are why it works:
-    //
-    //  If n is even, then x^n = (x^2)^(n/2).
-    //  If n is odd,  then x^n = x * x^(n-1),
-    //   and applying the equation for even x gives
-    //    x^n = x * (x^2)^((n-1) / 2).
-    //
-    //  Also, EVM division is flooring and
-    //    floor[(n-1) / 2] = floor[n / 2].
-    //
-    function rpow(uint x, uint n) internal returns (uint z) {
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
-        }
-    }
-
-}
-
-contract BattleToken is Owned, TokenEIP20 {
-    using SafeMathLib for uint256;
-    
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    
-    string  public constant name        = "Battle";
-    string  public constant symbol      = "BTL";
-    uint256 public constant decimals    = 18;
-    uint256 public constant totalSupply = 1000000 * (10 ** decimals);
-
-    function BattleToken(address _battleAddress) {
-        balances[owner] = totalSupply;
-        require(approve(_battleAddress, totalSupply));
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] < _value) {
-            return false;
-        }
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        assert(balances[msg.sender] >= 0);
-        balances[_to] = balances[_to].add(_value);
-        assert(balances[_to] <= totalSupply);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] < _value || allowed[_from][msg.sender] < _value) {
-            return false;
+    function batchTransfer(address[] _to, uint _value) public {
+        balances[msg.sender] = safeSub(
+            balances[msg.sender], _to.length * _value
+        );
+        for (uint i = 0; i < _to.length; i++) {
+            balances[_to[i]] = safeAdd(balances[_to[i]], _value);
+            Transfer(msg.sender, _to[i], _value);
         }
-        balances[_from] = balances[_from].sub(_value);
-        assert(balances[_from] >= 0);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        assert(balances[_to] <= totalSupply);        
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        balances[_to] = safeAdd(balances[_to], _value);
+        balances[_from] = safeSub(balances[_from], _value);
+        if (_to != fights) {
+            allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
+        }
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        if (!approve(_spender, _value)) {
-            return false;
-        }
-        TokenNotifier(_spender).receiveApproval(msg.sender, _value, this, _extraData);
-        return true;
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
+    }
+
+    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 }
