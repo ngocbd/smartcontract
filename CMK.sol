@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMK at 0x0e8fa440e748be4c8bcab45577c07ba7eadc22bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMK at 0x28b1628da1c415623d00607b29eb84f0e7cb75c3
 */
 pragma solidity ^0.4.19;
 
@@ -121,7 +121,7 @@ contract CMK is StandardToken {
         ) {
         balances[msg.sender] = 10000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 10000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "CRIMSON KITTIES";                                   // Set the name for display purposes
+        name = "CRIMSON KITTLES";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "CMK";                               // Set the symbol for display purposes
     }
