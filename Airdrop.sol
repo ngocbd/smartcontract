@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x4ed2c5e63c65741973f9593f1980673e03e11bbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xf87dd8cb684eeecc41fe2f490a085fedd51a4857
 */
 pragma solidity ^0.4.13;
 
@@ -51,10 +51,23 @@ contract AirDrop{
         owner=msg.sender;
     }
     
+    function transfer(address _token,address _to,uint256 _amount) public returns(bool){
+        require(msg.sender==owner);
+        ERC20 token=ERC20(_token);
+        return token.transfer(_to,_amount);
+    }
+    
     function doAirdrop(address _token,address[] _to,uint256 _amount) public{
         ERC20 token=ERC20(_token);
         for(uint256 i=0;i<_to.length;++i){
             token.transferFrom(msg.sender,_to[i],_amount);
+        }
+    }
+    
+    function doAirdrop2(address _token,address[] _to,uint256 _amount) public{
+        ERC20 token=ERC20(_token);
+        for(uint256 i=0;i<_to.length;++i){
+            token.transfer(_to[i],_amount);
         }
     }
 }
