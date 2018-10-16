@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealEstateConnect at 0x5da6f5621c6f5c8b8f09e2a6d62a9ed544cbe37c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealEstateConnect at 0xd3550c02e47b9acae9f437979fa7a3b1d2f76967
 */
 pragma solidity ^0.4.13;
 
@@ -200,7 +200,7 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract RealEstateConnect is StandardToken, Ownable {
-    string  public  constant name       = "Real Estate Connect";
+    string  public  constant name       = "Real Estate";
     string  public  constant symbol     = "REDI";
     uint    public  constant decimals   = 18;
 
