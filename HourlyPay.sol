@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HourlyPay at 0xf42d496cffd4f4a00c64e3320375c34bb82bb4e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HourlyPay at 0x7772b70b870ac29501276a5fc8b19a375bc4f550
 */
 pragma experimental "v0.5.0";
 
@@ -263,7 +263,7 @@ contract HourlyPay {
         require(newEmployeeAddress != 0x0);                     // Protection from burning the ETH
 
         // Contract should be loaded with ETH for a minimum one day balance to perform Hire:
-        // require(address(this).balance >= newRatePerHourInWei * dailyHourLimit);
+        require(address(this).balance >= newRatePerHourInWei * dailyHourLimit);
         employeeAddress = newEmployeeAddress;
         ratePerHourInWei = newRatePerHourInWei;
         
@@ -285,7 +285,7 @@ contract HourlyPay {
         require(address(this).balance > earnings); // balance must be greater than earnings        
 
         // balance minus earnings must be sufficient for at least 1 day of work minus workedTodayInSeconds:
-        // require(address(this).balance - earnings >= ratePerHourInWei * (dailyHourLimit * 1 hours - workedTodayInSeconds) / 1 hours);
+        require(address(this).balance - earnings >= ratePerHourInWei * (dailyHourLimit * 1 hours - workedTodayInSeconds) / 1 hours);
         
         if (earnings == 0) lastPaydayTS = now; // reset the payday timer TS if this is the first time work starts after last payday
 
@@ -323,14 +323,7 @@ contract HourlyPay {
         }
         
         uint earned = (newWorkedTodayInSeconds - workedTodayInSeconds) * ratePerHourInWei / 1 hours;
-        uint newEarnings = earnings + earned; // add new earned ETH to earnings
-        
-        if (newEarnings > address(this).balance) {
-            earned = address(this).balance - earnings;
-            earnings = address(this).balance;
-        } else {
-            earnings = newEarnings;
-        }
+        earnings += earned; // add new earned ETH to earnings
         
         emit StoppedWork(now, newWorkedTodayInSeconds - workedTodayInSeconds, earned);
 
