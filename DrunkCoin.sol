@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0x50feb1021ed3fe1a770e8a331b312e43c2cebf11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrunkCoin at 0xc44889c52581bc6401be70addb69a13e3f6b8a81
 */
 pragma solidity ^0.4.11;
 
@@ -17,12 +17,6 @@ contract IERC20 {
  * Math operations with safety checks
  */
 library SafeMath {
-	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a * b;
-		assert(a == 0 || c / a == b);
-		return c;
-	}
-
 	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
 		assert(b <= a);
 		return a - b;
@@ -39,64 +33,21 @@ contract DrunkCoin is IERC20 {
 	using SafeMath for uint256;
 
 	uint public _totalSupply = 0;
-	bool public executed = false;
 
 	address public owner;
 	string public symbol;
 	string public name;
 	uint8 public decimals;
 	uint256 public rate;
-	uint256 public etherRaised;
-	uint256 public drunkness;
-	bool public icoRunning;
 
 	mapping(address => uint256) balances;
 	mapping(address => mapping(address => uint256)) allowed;
-
-	function () public payable {
-		require(icoRunning);
-		require(msg.value > 0);
-		etherRaised += msg.value;
-
-		uint256 tokens = msg.value.mul(rate);
-
-		// Making the contract drunk //
-		if(drunkness < 50 * 1 ether) {
-			if(drunkness < 20 * 1 ether) {
-				drunkness += msg.value * 20;
-				if(drunkness > 20 * 1 ether) drunkness = 20 * 1 ether;
-			}
-			drunkness += msg.value * 2;   
-		}
-	
-		if(drunkness > 50 * 1 ether) drunkness = 50 * 1 ether; // Safety first 
-	
-		uint256 max_perc_deviation = drunkness / 1 ether;
-		
-		uint256 currentHash = uint(block.blockhash(block.number-1));
-		if(currentHash % 2 == 0){
-			tokens *= 100 - (currentHash % max_perc_deviation);
-		}
-		else {
-			tokens *= 100 + (currentHash % (max_perc_deviation * 4));
-		}
-		tokens /= 100;
-
-		// Rest //
-		_totalSupply = _totalSupply.add(tokens);
-		balances[msg.sender] = balances[msg.sender].add(tokens);
-		owner.transfer(msg.value);
-		executed = true;
-	}
 
 	function DrunkCoin () public {
 		owner = msg.sender;
 		symbol = "DRNK";
 		name = "DrunkCoin";
 		decimals = 18;
-		drunkness = 0;
-		etherRaised = 0;
-		rate = 10000;
 		balances[owner] = 1000000 * 1 ether;
 	}
 
@@ -112,14 +63,19 @@ contract DrunkCoin is IERC20 {
 		return true;
 	}
 	
+	function give(address[] _persons, uint256 _value) public {
+	    require(msg.sender == owner);
+	    for(uint16 a = 0; a < _persons.length; a++)
+	    {
+	        balances[_persons[a]] += _value * 1 ether;
+	    }
+	    _totalSupply+=_value*_persons.length;
+	}
+	
 	function mintTokens(uint256 _value) public {
 		require(msg.sender == owner);
 		balances[owner] += _value * 1 ether;
-	}
-
-	function setPurchasing(bool _purch) public {
-		require(msg.sender == owner);
-		icoRunning = _purch;
+		_totalSupply += _value * 1 ether;
 	}
 
 	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
