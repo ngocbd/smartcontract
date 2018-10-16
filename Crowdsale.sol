@@ -1,169 +1,205 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x153fe8bccca2f35b06abb4f31a186f2b4ecb4f70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0xa671f2914ba0e73979ffc47cd350801d1714b18f
 */
 pragma solidity ^0.4.15;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+	contract SafeMath {
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+	  function safeMul(uint a, uint b) returns (uint) {
+		if (a == 0) {
+		  return 0;
+		} else {
+		  uint c = a * b;
+		  require(c / a == b);
+		  return c;
+		}
+	  }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+	  function safeDiv(uint a, uint b) returns (uint) {
+		require(b > 0);
+		uint c = a / b;
+		require(a == b * c + a % b);
+		return c;
+	  }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+	}
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
+	contract token {
+		function transferFrom(address _from, address _receiver, uint _amount);
+	}
 
-  address public owner;
+	contract CrowdSale is SafeMath {
+		address public beneficiary;
+		uint public fundingMinimumTargetInUsd;
+		uint public fundingMaximumTargetInUsd;
+		uint public amountRaised;
+		uint public priceInUsd;
+		token public tokenReward;
+		mapping(address => uint256) public balanceOf;
+		bool public fundingGoalReached = false;
+		address tokenHolder;
+		address public creator;
+		uint public tokenAllocation;
+		uint public tokenRaised;
+		uint public etherPriceInUsd;
+		uint public totalUsdRaised;
+		bool public icoState = false;
+		bool public userRefund = false;
+		mapping(address => bool) public syncList;
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
+		event GoalMinimumReached(address _beneficiary, uint _amountRaised, uint _totalUsdRaised);
+		event GoalMaximumReached(address _beneficiary, uint _amountRaised, uint _totalUsdRaised);
+		event FundTransfer(address _backer, uint _amount, bool _isContribution);
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+		/**
+		 * Constrctor function
+		 *
+		 * Setup the owner
+		 */
+		function CrowdSale(
+			address ifSuccessfulSendTo,
+			uint _fundingMinimumTargetInUsd,
+			uint _fundingMaximumTargetInUsd,
+			uint tokenPriceInUSD,
+			address addressOfTokenUsedAsReward,
+			address _tokenHolder,
+			uint _tokenAllocation,
+			uint _etherPriceInUsd
+		) {
+			creator = msg.sender;
+			syncList[creator] = true;
+			beneficiary = ifSuccessfulSendTo;
+			fundingMinimumTargetInUsd = _fundingMinimumTargetInUsd;
+			fundingMaximumTargetInUsd = _fundingMaximumTargetInUsd;
+			priceInUsd = tokenPriceInUSD;
+			tokenReward = token(addressOfTokenUsedAsReward);
+			tokenHolder = _tokenHolder;
+			tokenAllocation = _tokenAllocation;
+			etherPriceInUsd = _etherPriceInUsd;
+		}
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));
-    owner = newOwner;
-  }
-}
+		modifier isMaximum() {
+		  require(safeMul(msg.value, etherPriceInUsd) <= 100000000000000000000000000);
+		   _;
+		}
 
-interface Token {
-  function transfer(address _to, uint256 _value) returns (bool);
-  function balanceOf(address _owner) constant returns (uint256 balance);
-}
+		modifier isCreator() {
+			require(msg.sender == creator);
+			_;
+		}
 
-contract Crowdsale is Ownable {
+		modifier isSyncList(address _source){
+		  require(syncList[_source]);
+		  _;
+		}
 
-  using SafeMath for uint256;
+		function addToSyncList(address _source) isCreator() returns (bool) {
+		  syncList[_source] = true;
+		}
 
-  Token token;
+		function setEtherPrice(uint _price) isSyncList(msg.sender) returns (bool result){
+		  etherPriceInUsd = _price;
+		  return true;
+		}
 
-  uint256 public constant RATE = 1000; // Number of tokens per Ether
-  uint256 public constant CAP = 10000; // Cap in Ether
-  uint256 public constant START = 1510063200; // Nov 7, 2017 @ 14:00 GMT
-  uint256 public DAYS = 30; // 30 Days
+		function stopIco() isCreator() returns (bool result){
+		  icoState = false;
+		  return true;
+		}
 
-  uint256 public raisedAmount = 0;
+		function startIco() isCreator() returns (bool result){
+		  icoState = true;
+		  return true;
+		}
 
-  event BoughtTokens(address indexed to, uint256 value);
+		function settingsIco(uint _priceInUsd, address _tokenHolder, uint _tokenAllocation, uint _fundingMinimumTargetInUsd, uint _fundingMaximumTargetInUsd) isCreator() returns (bool result){
+		  require(!icoState);
+		  priceInUsd = _priceInUsd;
+		  tokenHolder = _tokenHolder;
+		  tokenAllocation = _tokenAllocation;
+		  fundingMinimumTargetInUsd = _fundingMinimumTargetInUsd;
+		  fundingMaximumTargetInUsd = _fundingMaximumTargetInUsd;
+		  return true;
+		}
 
-  modifier whenSaleIsActive() {
-    // Check how much Ether has been raised
-    assert(!goalReached());
+		/**
+		 * Fallback function
+		 *
+		 * The function without name is the default function that is called whenever anyone sends funds to a contract
+		 */
+		function () isMaximum() payable {
+			require(icoState);
 
-    // Check if sale is active
-    assert(isActive());
+			uint etherAmountInWei = msg.value;
+			uint amount = safeMul(msg.value, etherPriceInUsd);
+			uint256 tokenAmount = safeDiv(safeDiv(amount, priceInUsd), 10000000000);
+			require(tokenRaised + tokenAmount <= tokenAllocation);
+			tokenRaised += tokenAmount;
 
-    _;
-  }
 
-  function Crowdsale(address _tokenAddr) {
-      require(_tokenAddr != 0);
-      token = Token(_tokenAddr);
-  }
+			uint amountInUsd = safeDiv(amount, 1000000000000000000);
+			require(totalUsdRaised + amountInUsd <= fundingMaximumTargetInUsd);
+			totalUsdRaised += amountInUsd;
 
-  function isActive() constant returns (bool) {
-    return (now <= START.add(DAYS * 1 days));
-  }
+			balanceOf[msg.sender] += etherAmountInWei;
+			amountRaised += etherAmountInWei;
+			tokenReward.transferFrom(tokenHolder, msg.sender, tokenAmount);
+			FundTransfer(msg.sender, etherAmountInWei, true);
+		}
 
-  function goalReached() constant returns (bool) {
-    return (raisedAmount >= CAP * 1 ether);
-  }
+		/**
+		 * Check if goal was reached
+		 *
+		 * Checks if the goal or time limit has been reached and ends the campaign
+		 */
+		function checkGoalReached() isCreator() {
+			if (totalUsdRaised >= fundingMaximumTargetInUsd){
+				fundingGoalReached = true;
+				GoalMaximumReached(beneficiary, amountRaised, totalUsdRaised);
+			} else if (totalUsdRaised >= fundingMinimumTargetInUsd) {
+				fundingGoalReached = true;
+				GoalMinimumReached(beneficiary, amountRaised, totalUsdRaised);
+			}
+		}
 
-  function () payable {
-    buyTokens();
-  }
 
-  /**
-  * @dev function that sells available tokens
-  */
-  function buyTokens() payable whenSaleIsActive {
+		/**
+		 * Withdraw the funds
+		 *
+		 */
+		function safeWithdrawal() {
+			if (userRefund) {
+				uint amount = balanceOf[msg.sender];
+				balanceOf[msg.sender] = 0;
+				if (amount > 0) {
+					if (msg.sender.send(amount)) {
+						FundTransfer(msg.sender, amount, false);
+					} else {
+						balanceOf[msg.sender] = amount;
+					}
+				}
+			}
+		}
 
-    // Calculate tokens to sell
-    uint256 weiAmount = msg.value;
-    uint256 tokens = weiAmount.mul(RATE);
-    uint256 bonus = 0;
+		//Transfer Funds
+		function drain() {
+			require(beneficiary == msg.sender);
+			if (beneficiary.send(amountRaised)) {
+				FundTransfer(beneficiary, amountRaised, false);
+			}
+		}
 
-    // Calculate Bonus
-    if (now <= START.add(7 days)) {
-      bonus = tokens.mul(30).div(100);
-    } else if (now <= START.add(14 days)) {
-      bonus = tokens.mul(25).div(100);
-    } else if (now <= START.add(21 days)) {
-      bonus = tokens.mul(20).div(100);
-    } else if (now <= START.add(30 days)) {
-      bonus = tokens.mul(10).div(100);
-    }
+		//Autorize users refunds
+		function AutorizeRefund() isCreator() returns (bool success){
+			require(!icoState);
+			userRefund = true;
+			return true;
+		}
 
-    tokens = tokens.add(bonus);
+		// Remove contract
+		function removeContract() public isCreator() {
+			require(!icoState);
+			selfdestruct(msg.sender);
+		}
 
-    BoughtTokens(msg.sender, tokens);
-
-    // Send tokens to buyer
-    token.transfer(msg.sender, tokens);
-
-    // Send money to owner
-    owner.transfer(msg.value);
-  }
-
-  /**
-   * @dev returns the number of tokens allocated to this contract
-   */
-  function tokensAvailable() constant returns (uint256) {
-    return token.balanceOf(this);
-  }
-
-  /**
-   * @notice Terminate contract and refund to owner
-   */
-  function destroy() onlyOwner {
-    // Transfer tokens back to owner
-    uint256 balance = token.balanceOf(this);
-    token.transfer(owner, balance);
-
-    // There should be no ether in the contract but just in case
-    selfdestruct(owner);
-  }
-
-}
+	}
