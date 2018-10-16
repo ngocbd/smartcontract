@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNDToken at 0x641281d2b40f6fe34d7635c4ea8fada1bf45ff15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNDToken at 0xf944d7740c0caf725bf26cf29e3facf6748189ac
 */
 pragma solidity ^0.4.23;
 /**
@@ -170,18 +170,18 @@ contract TokenERC20 {
 }
 
 /******************************************/
-/*       BND TOKEN STARTS HERE       */
+/*  Bind Network TOKEN STARTS HERE       */
 /******************************************/
 
 contract BNDToken is owned, TokenERC20 {
 
-    string public name = "Bind Token";
+    string public name = "Bind Network";
     string public symbol = "BND";
     uint8 public decimals = 18;
     
     
     uint256 public buyPrice;
-    uint256 public totalSupply = 100000000000e18;  
+    uint256 public totalSupply = 149000000e18;  
     
     
     mapping (address => bool) public frozenAccount;
