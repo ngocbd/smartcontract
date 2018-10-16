@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0x6172AFC8c00c46E0D07ce3AF203828198194620a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0x9708ac13652a70dd64d7aa848cce0e5e89414a51
 */
 pragma solidity 0.4.18;
 
@@ -1621,7 +1621,5 @@ contract Wrapper is Utils {
                                                  0,
                                                  block.number);
         }
-
-return (rates,sanityRate);
     }
 }
