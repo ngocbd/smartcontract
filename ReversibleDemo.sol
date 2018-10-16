@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReversibleDemo at 0xfbd9986b21fbc0d718d3999a640fe41391b5694d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReversibleDemo at 0x826786a70387f29d7e578ffb12cf560841019b9c
 */
 // `interface` would make a nice keyword ;)
 contract TheDaoHardForkOracle {
