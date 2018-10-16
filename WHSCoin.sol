@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x5a36e5a750d0ba0b3b2c7d6c83c1bc0f90fbed0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x2a44e16ba435f53666f8a39fa08ffd01c9f2ab2f
 */
 pragma solidity ^0.4.16;
-
 
 /**
  * White Stone Coin
@@ -16,7 +15,6 @@ pragma solidity ^0.4.16;
  * 
  * Visit https://whscoin.com for more information and tokenholder benefits. 
  */
-
 
 /**
  * @title ERC20Basic
@@ -372,6 +370,17 @@ contract WHSCoin is StandardToken, Ownable {
     balances[receiver] += tokens;
     totalSupply += tokens;
     Transfer(address(0x0), receiver, tokens);
+
+    uint256 bonus = calcBonus(tokens);
+    if (bonus > 0) {
+      sendBonus(receiver, bonus);
+    }
+  }
+
+  function sendBonus(address receiver, uint256 bonus) public onlyAdmin {
+    Transfer(companyWallet, receiver, bonus);
+    balances[companyWallet] = balances[companyWallet].sub(bonus);
+    balances[receiver] = balances[receiver].add(bonus);
   }
 
 }
