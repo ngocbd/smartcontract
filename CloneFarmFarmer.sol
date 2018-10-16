@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneFarmFarmer at 0x7c0f10bc53c0958e0edccef87a088f52c55843db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneFarmFarmer at 0x3ab4a46beae2a0b025eeed54db05819814ff287a
 */
 pragma solidity ^0.4.24;
 
@@ -28,7 +28,10 @@ contract CloneFarmFarmer {
     event NorsefireSwitch(
         address from,
         address to,
-        uint price
+        uint price,
+        uint a,
+        uint b,
+        uint c
     );
     
     event ClonesDeployed(
@@ -67,29 +70,32 @@ contract CloneFarmFarmer {
     constructor () public {
         initialized      = false;
         norsefirePrice   = 0.1 ether;
-        currentNorsefire = 0x1337eaD98EaDcE2E04B1cfBf57E111479854D29A;
+        currentNorsefire = 0x4F4eBF556CFDc21c3424F85ff6572C77c514Fcae;
     }
     
     function becomeNorsefire() public payable {
         require(initialized);
         address oldNorseAddr = currentNorsefire;
-        uint oldNorsePrice   = norsefirePrice;
+        uint oldNorsePrice   = norsefirePrice.mul(100).div(110);
         
         // Did you actually send enough?
         require(msg.value >= norsefirePrice);
         
-        uint excess          = msg.value.sub(oldNorsePrice);
-        norsefirePrice       = oldNorsePrice.add(oldNorsePrice.div(10));
+        uint excess          = msg.value.sub(norsefirePrice);
         uint diffFivePct     = (norsefirePrice.sub(oldNorsePrice)).div(20);
+        norsefirePrice       = norsefirePrice.add(norsefirePrice.div(10));
         uint flipPrize       = diffFivePct.mul(10);
         uint marketBoost     = diffFivePct.mul(9);
         address _newNorse    = msg.sender;
-        uint    _toRefund    = (oldNorsePrice.add(flipPrize)).add(excess);
+        uint    _toRefund    = (oldNorsePrice.add(flipPrize));
         currentNorsefire     = _newNorse;
         oldNorseAddr.send(_toRefund);
         actualNorse.send(diffFivePct);
+        if (excess > 0){
+            msg.sender.send(excess);
+        }
         boostCloneMarket(marketBoost);
-        emit NorsefireSwitch(oldNorseAddr, _newNorse, norsefirePrice);
+        emit NorsefireSwitch(oldNorseAddr, _newNorse, norsefirePrice, _toRefund, flipPrize, diffFivePct);
     }
     
     function boostCloneMarket(uint _eth) public payable {
