@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMash at 0x452ee11eb4ed8e709c510659f31c4942c14ff608
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMash at 0x46ee746d396bb2808e8fa41dc658036aee51d857
 */
 pragma solidity ^0.4.23;
 
@@ -8,42 +8,54 @@ contract EthMash {
     address public owner;
     mapping (address => uint) public balances;
 
-    address public leader;
+    address[6] public leaders;
+    uint[6] public buyins;
 
-    event Log(address challenger, address defender, bool success);
+    event Challenge(uint buyin, uint draw, address challenger, address defender, bool success);
+    event Withdraw(address player, uint amount);
 
     constructor() public {
         owner = msg.sender;
-        leader = owner;
+        leaders = [owner, owner, owner, owner, owner, owner];
+        buyins = [20 finney, 60 finney, 100 finney, 200 finney, 600 finney, 1000 finney];   
     }
 
     function publicGetBalance(address player) view public returns (uint) {
         return balances[player];
     }
 
-    function publicGetState() view public returns (address) {
-        return leader;
+    function publicGetState() view public returns (address[6]) {
+        return leaders;
+    }
+
+    function ownerChange(uint index, address holder) public {
+        require(msg.sender == owner);
+        require(leaders[index] == owner);
+        leaders[index] = holder;
     }
 
     function userWithdraw() public {
         require(balances[msg.sender] > 0);
         uint amount = balances[msg.sender];
         balances[msg.sender] = 0;
+        emit Withdraw(msg.sender, amount);
         msg.sender.transfer(amount);
     }
 
-    function userChallenge() public payable {
-        require(msg.value == 100 finney);
+    function userChallenge(uint index) public payable {
+        require(index >= 0 && index < 6);
+        require(msg.value == buyins[index]);
         
-        uint random = (uint(blockhash(block.number - 1)) + uint(leader) + uint(msg.sender));
-        if (random % 2 == 1) {
-            emit Log(msg.sender, leader, true);
-            balances[msg.sender] += 100 finney;
-            leader = msg.sender;
+        uint random = ((uint(blockhash(block.number - 1)) + uint(leaders[index]) + uint(msg.sender)) % 100) + 1;
+        
+        if (random > 50) {
+            emit Challenge(buyins[index], random, msg.sender, leaders[index], true);
+            balances[msg.sender] += buyins[index];
+            leaders[index] = msg.sender;
         } else {
-            emit Log(msg.sender, leader, false);
-            balances[leader] += 95 finney;
-            balances[owner] += 5 finney;
+            emit Challenge(buyins[index], random, msg.sender, leaders[index], false);
+            balances[leaders[index]] += (buyins[index] * 95 / 100);
+            balances[owner] += (buyins[index] * 5 / 100);
         }
     }
 }
