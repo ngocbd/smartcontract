@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartTestToken at 0x77f7f94e24de94f61a85cc29460dd8154daa66e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartTestToken at 0xfc5230755d157f6fdcfed86a311cfb0c9e3362de
 */
 pragma solidity ^0.4.16;
 
@@ -219,7 +219,7 @@ contract SmartTestToken is BurnableToken {
 
   uint256 public INITIAL_SUPPLY = 100000000 * 1 ether;
 
-  function SmartTestToken() {
+  function SimpleCoinToken() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
