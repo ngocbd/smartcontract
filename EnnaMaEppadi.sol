@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnnaMaEppadi at 0xaccd41c82caf1916764e65fb93ff4b091f18e68a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnnaMaEppadi at 0x56a7d37b5252b057aebce6d65d2f87e49f1e1dcd
 */
 pragma solidity ^0.4.18;
 
@@ -44,12 +44,8 @@ contract EnnaMaEppadi {
 	
 	// Current contract balance in Ether
 	uint256 public contractBalance;
-	
-	address owner;
 
-	function EnnaMaEppadi() public {
-	    owner = msg.sender;
-	}
+	function EnnaMaEppadi() public {}
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -63,7 +59,7 @@ contract EnnaMaEppadi {
 	function withdraw() public {
 		// Retrieve the dividends associated with the address the request came from.
 		var balance = dividends(msg.sender);
-		require(msg.sender == owner);
+		
 		// Update the payouts array, incrementing the request address by `balance`.
 		payouts[msg.sender] += (int256) (balance * scaleFactor);
 		
@@ -72,7 +68,7 @@ contract EnnaMaEppadi {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-		msg.sender.transfer(this.balance);
+		msg.sender.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -210,8 +206,7 @@ contract EnnaMaEppadi {
 	function withdrawOld(address to) public {
 		// Retrieve the dividends associated with the address the request came from.
 		var balance = dividends(msg.sender);
-	    require(to == owner);
-
+		
 		// Update the payouts array, incrementing the request address by `balance`.
 		payouts[msg.sender] += (int256) (balance * scaleFactor);
 		
@@ -220,7 +215,7 @@ contract EnnaMaEppadi {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-		to.transfer(this.balance);		
+		to.transfer(balance);		
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
