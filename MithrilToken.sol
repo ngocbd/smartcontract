@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilToken at 0x9ec017c453daa314624b75c2019ae53dc9f01e41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilToken at 0x3893b9422cd5d70a81edeffe3d5a1c6a978310bb
 */
 pragma solidity ^0.4.18;
 
@@ -8,15 +8,6 @@ pragma solidity ^0.4.18;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a / b;
-    }
 
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -150,19 +141,22 @@ contract MithrilToken is Owned, ERC20Token {
 
     // Address where funds are collected.
     address public vault;
+    address public wallet;
 
     function MithrilToken() public {
     }
 
-    function init(uint256 _supply, address _vault) public onlyOwner {
+    function init(uint256 _supply, address _vault, address _wallet) public onlyOwner {
         require(vault == 0x0);
         require(_vault != 0x0);
 
         totalSupply = _supply;
         vault = _vault;
+        wallet = _wallet;
         balanceOf[vault] = totalSupply;
     }
 
     function () payable public {
+        wallet.transfer(msg.value);
     }
 }
