@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x33a1423dcf944158121beae83cda253a30c7e9de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x89885fc1f76c3f4cc719640e33c315227da7003a
 */
 pragma solidity ^0.4.4;
 
@@ -11,6 +11,12 @@ contract Token {
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
+
+    /// @notice send a set of token to different address  
+    /// @param _to a set of address token to be transferred
+    /// @param _value a set of amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function multiTransfer(address[] _to, uint256[] _value) returns (bool success) {}
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -45,12 +51,24 @@ contract Token {
 
 contract StandardToken is Token {
 
+    function multiTransfer(address[] _to, uint256[] _value) returns (bool success) {
+        if(_to.length <= 0 || _value.length <=0 || _to.length != _value.length){
+            return false;
+        }
+        for(uint i = 0; i < _to.length; i++) {
+            if(false == transfer(_to[i], _value[i]))
+                return false;
+        }
+
+        return true;
+    }
+
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        //if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
@@ -60,8 +78,8 @@ contract StandardToken is Token {
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
@@ -119,11 +137,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 13000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 13000000;                        // Update total supply (100000 for example)
-        name = "LACoin";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "LAC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 20000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 20000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "OASES";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "OAS";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
