@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VitalikLotto at 0xd558f49478ef8cbd88c3ab5dc706fe0f7aeb0fae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VitalikLotto at 0xae7e86ce9c1df263266a27a0049a53d9f9e775f4
 */
 pragma solidity ^0.4.22;
 
@@ -1109,7 +1109,7 @@ contract VitalikLotto is usingOraclize {
     }
 
     // administration state variables
-    uint256 constant internal ambassadorQuota = 4.8 ether;
+    uint256 constant internal ambassadorQuota = 5 ether;
     bool public pausedToPublic = true;
     bool public ambassadorMode = true;
     bool public pendingOraclize = false;
@@ -1216,7 +1216,6 @@ contract VitalikLotto is usingOraclize {
         Lottery storage lotto = lotteries[lottoQueue];
         require(lotto.instantiated);
         require(!lotto.completed);
-        require(lotto.ticketHolders.length == requiredLottoParticipants);
         require(!pendingOraclize);
         pendingOraclize = true;
         emit RandomRequested(lotto.identifier);
