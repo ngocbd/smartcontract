@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeCenterToken at 0x4b864991128799784649c85ccf11bdded3cbb987
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeCenterToken at 0x94b528763fb16c7d8de1fcd4e751fbe487ab3c7c
 */
 pragma solidity ^0.4.11;
 
@@ -148,7 +148,7 @@ contract DeCenterToken is owned, queue, DSMath {
 
         balanceOf[this] = totalSupply;
 
-        lastProcessedDay = firstStageDuration - 1;
+        lastProcessedDay = dayFor(startTime + firstStageDuration * 1 days);
 
         scheduledTopUp();
     }
