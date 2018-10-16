@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0xc6725ae749677f21e4d8f85f41cfb6de49b9db29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x4a5cb62e27120a5a2b113198a69a2b12069ad146
 */
 pragma solidity ^0.4.18;
 
@@ -194,15 +194,6 @@ contract IERC20Token {
 }
 
 /*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-/*
     Token Holder interface
 */
 contract ITokenHolder is IOwned {
@@ -240,6 +231,15 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     {
         assert(_token.transfer(_to, _amount));
     }
+}
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
 }
 
 /*
