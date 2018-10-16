@@ -1,6 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x41c4413c7a2dcaa95b5e3441d8401f13e24d337c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xe4f4c979738f84d9dcd204e94a94750608dfd184
 */
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+
+
 /**
  * Safe unsigned safe math.
  *
@@ -26,7 +79,7 @@ library SafeMathLib {
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    assert(c>=a);
     return c;
   }
 
@@ -131,7 +184,7 @@ contract PricingStrategy {
    * @param decimals - how many decimal units the token has
    * @return Amount of tokens the investor receives
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -299,10 +352,6 @@ contract Crowdsale is Haltable {
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
-    if(_minimumFundingGoal != 0) {
-      // Mysterium specific fix to allow funding goal only be set in CHF
-    }
-
     owner = msg.sender;
 
     token = FractionalERC20(_token);
@@ -331,6 +380,8 @@ contract Crowdsale is Haltable {
         throw;
     }
 
+    // Minimum funding goal can be zero
+    minimumFundingGoal = _minimumFundingGoal;
   }
 
   /**
@@ -388,7 +439,7 @@ contract Crowdsale is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
 
     // Check that we did not bust the cap
-    if(isBreakingCap(tokenAmount, weiAmount, weiRaised, tokensSold)) {
+    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
     }
 
@@ -399,9 +450,48 @@ contract Crowdsale is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
+  }
 
-    // Call the invest hooks
-    onInvest();
+  /**
+   * Preallocate tokens for the early investors.
+   *
+   * Preallocated tokens have been sold before the actual crowdsale opens.
+   * This function mints the tokens and moves the crowdsale needle.
+   *
+   * Investor count is not handled; it is assumed this goes for multiple investors
+   * and the token distribution happens outside the smart contract flow.
+   *
+   * No money is exchanged, as the crowdsale team already have received the payment.
+   *
+   * @param fullTokens tokens as full tokens - decimal places added internally
+   * @param weiPrice Price of a single full token in wei
+   *
+   */
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+
+    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
+    assignTokens(receiver, tokenAmount);
+
+    // Tell us invest was success
+    Invested(receiver, weiAmount, tokenAmount, 0);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+     bytes32 hash = sha256(addr);
+     if (ecrecover(hash, v, r, s) != signerAddress) throw;
+     if(customerId == 0) throw;  // UUIDv4 sanity check
+     investInternal(addr, customerId);
   }
 
   /**
@@ -420,6 +510,14 @@ contract Crowdsale is Haltable {
     if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer and clear his address.
+   *
+   */
+  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    investWithSignedAddress(msg.sender, customerId, v, r, s);
   }
 
   /**
@@ -483,13 +581,45 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Set policy if all investors must be cleared on the server side first.
+   *
+   * This is e.g. for the accredited investor clearing.
+   *
+   */
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+    requiredSignedAddress = value;
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
    * Allow addresses to do early participation.
    *
    * TODO: Fix spelling error in the name
    */
-    function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
     earlyParticipantWhitelist[addr] = status;
     Whitelisted(addr, status);
+  }
+
+  /**
+   * Allow crowdsale owner to close early or extend the crowdsale.
+   *
+   * This is useful e.g. for a manual soft cap implementation:
+   * - after X amount is reached determine manual closing
+   *
+   * This may put the crowdsale to an invalid state,
+   * but we trust owners know what they are doing.
+   *
+   */
+  function setEndsAt(uint time) onlyOwner {
+
+    if(now > time) {
+      throw; // Don't change past
+    }
+
+    endsAt = time;
+    EndsAtChanged(endsAt);
   }
 
   /**
@@ -576,14 +706,6 @@ contract Crowdsale is Haltable {
     return true;
   }
 
-
-  /**
-   * Allow subcontracts to take extra actions on a successful invet.
-   */
-  function onInvest() internal {
-
-  }
-
   //
   // Modifiers
   //
@@ -594,25 +716,6 @@ contract Crowdsale is Haltable {
     _;
   }
 
-  /**
-   * Allow crowdsale owner to close early or extend the crowdsale.
-   *
-   * This is useful e.g. for a manual soft cap implementation:
-   * - after X amount is reached determine manual closing
-   *
-   * This may put the crowdsale to an invalid state,
-   * but we trust owners know what they are doing.
-   *
-   */
-  function setEndsAt(uint time) onlyOwner {
-
-    if(now > time) {
-      throw; // Don't change past
-    }
-
-    endsAt = time;
-    EndsAtChanged(endsAt);
-  }
 
   //
   // Abstract functions
@@ -653,59 +756,6 @@ contract Crowdsale is Haltable {
 
 
 /**
- * Math operations with safety checks
- */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-
-
-
-/**
  * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
  * Based on code by FirstBlood:
@@ -713,7 +763,13 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
+
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
+
+  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
   /**
@@ -736,8 +792,8 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    uint _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
@@ -781,6 +837,7 @@ contract StandardToken is ERC20, SafeMath {
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
@@ -800,10 +857,12 @@ contract StandardToken is ERC20, SafeMath {
       } else {
           allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
       }
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
 }
+
 
 
 /**
@@ -816,11 +875,10 @@ contract StandardToken is ERC20, SafeMath {
  * - Allow unlimited investors
  * - Tokens are distributed on PreICOProxyBuyer smart contract first
  * - The original investors can claim their tokens from the smart contract after the token transfer has been released
+ * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable {
-
-  using SafeMathLib for uint;
+contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
   /** How many investors we have now */
   uint public investorCount;
@@ -842,6 +900,9 @@ contract PreICOProxyBuyer is Ownable {
 
   /** What is the minimum buy in */
   uint public weiMinimumLimit;
+
+  /** How many weis total we are allowed to collect. */
+  uint public weiCap;
 
   /** How many tokens were bought */
   uint public tokensBought;
@@ -872,7 +933,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * Create presale contract where lock up period is given days
    */
-  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit) {
+  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiCap) {
 
     owner = _owner;
 
@@ -887,6 +948,7 @@ contract PreICOProxyBuyer is Ownable {
     }
 
     weiMinimumLimit = _weiMinimumLimit;
+    weiCap = _weiCap;
     freezeEndsAt = _freezeEndsAt;
   }
 
@@ -904,7 +966,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * Participate to a presale.
    */
-  function invest() public payable {
+  function invest() public stopInEmergency payable {
 
     // Cannot invest anymore through crowdsale when moving has begun
     if(getState() != State.Funding) throw;
@@ -915,7 +977,7 @@ contract PreICOProxyBuyer is Ownable {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = balances[investor].plus(msg.value);
+    balances[investor] = safeAdd(balances[investor], msg.value);
 
     // Need to fulfill minimum limit
     if(balances[investor] < weiMinimumLimit) {
@@ -928,7 +990,10 @@ contract PreICOProxyBuyer is Ownable {
       investorCount++;
     }
 
-    weiRaisedTotal = weiRaisedTotal.plus(msg.value);
+    weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
+    if(weiRaisedTotal > weiCap) {
+      throw;
+    }
 
     Invested(investor, msg.value);
   }
@@ -938,7 +1003,7 @@ contract PreICOProxyBuyer is Ownable {
    *
    *
    */
-  function buyForEverybody() public {
+  function buyForEverybody() stopInEmergency public {
 
     if(getState() != State.Funding) {
       // Only allow buy once
@@ -971,14 +1036,14 @@ contract PreICOProxyBuyer is Ownable {
     if(getState() != State.Distributing) {
       throw;
     }
-    return balances[investor].times(tokensBought) / weiRaisedTotal;
+    return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
   }
 
   /**
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    return getClaimAmount(investor).minus(claimed[investor]);
+    return safeSub(getClaimAmount(investor), claimed[investor]);
   }
 
   /**
@@ -992,7 +1057,7 @@ contract PreICOProxyBuyer is Ownable {
    * Claim N bought tokens to the investor as the msg sender.
    *
    */
-  function claim(uint amount) {
+  function claim(uint amount) stopInEmergency {
     address investor = msg.sender;
 
     if(amount == 0) {
@@ -1009,8 +1074,8 @@ contract PreICOProxyBuyer is Ownable {
       claimCount++;
     }
 
-    claimed[investor] = claimed[investor].plus(amount);
-    totalClaimed = totalClaimed.plus(amount);
+    claimed[investor] = safeAdd(claimed[investor], amount);
+    totalClaimed = safeAdd(totalClaimed, amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);
@@ -1019,7 +1084,7 @@ contract PreICOProxyBuyer is Ownable {
   /**
    * ICO never happened. Allow refund.
    */
-  function refund() {
+  function refund() stopInEmergency {
 
     // Trying to ask refund too soon
     if(getState() != State.Refunding) throw;
@@ -1038,7 +1103,7 @@ contract PreICOProxyBuyer is Ownable {
   function setCrowdsale(Crowdsale _crowdsale) public onlyOwner {
     crowdsale = _crowdsale;
 
-    // Chck interface
+    // Check interface
     if(!crowdsale.isCrowdsale()) true;
   }
 
