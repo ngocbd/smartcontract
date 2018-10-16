@@ -1,43 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetSlots at 0x3e4ecfcfdabb36c1f0058694941801cbb11f6582
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetSlots at 0x4a3e0c60f7fa67e8b65c401ddbbf7c17fea5fe40
 */
-// WELCOME TO THE EOSBET.IO BUG BOUNTY CONTRACTS!
-// GOOD LUCK... YOU'LL NEED IT!
-
 pragma solidity ^0.4.21;
-
-// <ORACLIZE_API>
-/*
-Copyright (c) 2015-2016 Oraclize SRL
-Copyright (c) 2016 Oraclize LTD
-
-
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
-// This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
-pragma solidity ^0.4.18;
 
 contract OraclizeI {
     address public cbAddress;
@@ -1147,10 +1111,7 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		DICE = dice;
 		SLOTS = slots;
 
-		////////////////////////////////////////////////
-		// CHANGE TO 6 HOURS ON LIVE DEPLOYMENT
-		////////////////////////////////////////////////
-		WAITTIMEUNTILWITHDRAWORTRANSFER = 0 seconds;
+		WAITTIMEUNTILWITHDRAWORTRANSFER = 6 hours;
 		MAXIMUMINVESTMENTSALLOWED = 500 ether;
 	}
 
@@ -1379,11 +1340,11 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		receiver.transfer(developersFund);
 	}
 
-	// Can be removed after some testing...
-	function emergencySelfDestruct() public {
-		require(msg.sender == OWNER);
+	// rescue tokens inadvertently sent to the contract address 
+	function ERC20Rescue(address tokenAddress, uint256 amtTokens) public {
+		require (msg.sender == OWNER);
 
-		selfdestruct(msg.sender);
+		ERC20(tokenAddress).transfer(msg.sender, amtTokens);
 	}
 
 	///////////////////////////////
@@ -1401,64 +1362,55 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to this contract addr, it'll just kill tokens
 	function transfer(address _to, uint256 _value) public returns (bool success){
-		if (balances[msg.sender] >= _value 
-			&& _value > 0 
+		require(balances[msg.sender] >= _value 
 			&& contributionTime[msg.sender] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely subtract
-			balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-			balances[_to] = SafeMath.add(balances[_to], _value);
+		// safely subtract
+		balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
+		balances[_to] = SafeMath.add(balances[_to], _value);
 
-			// log event 
-			emit Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		else {
-			return false;
-		}
+		// log event 
+		emit Transfer(msg.sender, _to, _value);
+		return true;
 	}
 
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to the contract addr, it'll just kill tokens
 	function transferFrom(address _from, address _to, uint _value) public returns(bool){
-		if (allowed[_from][msg.sender] >= _value 
+		require(allowed[_from][msg.sender] >= _value 
 			&& balances[_from] >= _value 
-			&& _value > 0 
 			&& contributionTime[_from] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely add to _to and subtract from _from, and subtract from allowed balances.
-			balances[_to] = SafeMath.add(balances[_to], _value);
-	   		balances[_from] = SafeMath.sub(balances[_from], _value);
-	  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+		// safely add to _to and subtract from _from, and subtract from allowed balances.
+		balances[_to] = SafeMath.add(balances[_to], _value);
+   		balances[_from] = SafeMath.sub(balances[_from], _value);
+  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
 
-	  		// log event
-    		emit Transfer(_from, _to, _value);
-    		return true;
-   		} 
-    	else { 
-    		return false;
-    	}
+  		// log event
+		emit Transfer(_from, _to, _value);
+		return true;
+   		
 	}
 	
 	function approve(address _spender, uint _value) public returns(bool){
-		if(_value > 0){
 
-			allowed[msg.sender][_spender] = _value;
-			emit Approval(msg.sender, _spender, _value);
-			// log event
-			return true;
-		}
-		else {
-			return false;
-		}
+		allowed[msg.sender][_spender] = _value;
+		emit Approval(msg.sender, _spender, _value);
+		// log event
+		return true;
 	}
 	
 	function allowance(address _owner, address _spender) constant public returns(uint){
 		return allowed[_owner][_spender];
 	}
 }
+
+pragma solidity ^0.4.18;
+
 
 /**
  * @title SafeMath
@@ -1538,8 +1490,8 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 	
 	// togglable values
 	uint256 public ORACLIZEQUERYMAXTIME;
-	uint256 public MINBET_forORACLIZE;
-	uint256 public MINBET;
+	uint256 public MINBET_perSPIN;
+	uint256 public MINBET_perTX;
 	uint256 public ORACLIZEGASPRICE;
 	uint256 public INITIALGASFORORACLIZE;
 	uint16 public MAXWIN_inTHOUSANDTHPERCENTS;
@@ -1560,8 +1512,8 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 		oraclize_setProof(proofType_Ledger);
 
 		// gas prices for oraclize call back, can be changed
-		oraclize_setCustomGasPrice(10000000000);
-		ORACLIZEGASPRICE = 10000000000;
+		oraclize_setCustomGasPrice(8000000000);
+		ORACLIZEGASPRICE = 8000000000;
 		INITIALGASFORORACLIZE = 225000;
 
 		AMOUNTWAGERED = 0;
@@ -1571,9 +1523,9 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 		REFUNDSACTIVE = true;
 
 		ORACLIZEQUERYMAXTIME = 6 hours;
-		MINBET_forORACLIZE = 350 finney; // 0.35 ether is the max bet to avoid miner cheating. see python sim. on our github
-		MINBET = 1 finney; // currently, this is ~40-50c a spin, which is pretty average slots. This is changeable by OWNER 
-        MAXWIN_inTHOUSANDTHPERCENTS = 300; // 300/1000 so a jackpot can take 30% of bankroll (extremely rare)
+		MINBET_perSPIN = 2 finney; // currently, this is ~40-50c a spin, which is pretty average slots. This is changeable by OWNER 
+		MINBET_perTX = 10 finney;
+        MAXWIN_inTHOUSANDTHPERCENTS = 333; // 333/1000 so a jackpot can take 33% of bankroll (extremely rare)
         OWNER = msg.sender;
 	}
 
@@ -1661,17 +1613,16 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 		REFUNDSACTIVE = active;
 	}
 
-	// setting this to 0 would just force all bets through oraclize, and setting to MAX_UINT_256 would never use oraclize 
-	function setMinBetForOraclize(uint256 minBet) public {
-		require(msg.sender == OWNER);
-
-		MINBET_forORACLIZE = minBet;
-	}
-
-	function setMinBet(uint256 minBet) public {
+	function setMinBetPerSpin(uint256 minBet) public {
 		require(msg.sender == OWNER && minBet > 1000);
 
-		MINBET = minBet;
+		MINBET_perSPIN = minBet;
+	}
+
+	function setMinBetPerTx(uint256 minBet) public {
+		require(msg.sender == OWNER && minBet > 1000);
+
+		MINBET_perTX = minBet;
 	}
 
 	function setMaxwin(uint16 newMaxWinInThousandthPercents) public {
@@ -1680,11 +1631,11 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 		MAXWIN_inTHOUSANDTHPERCENTS = newMaxWinInThousandthPercents;
 	}
 
-	// this can be deleted after some testing.
-	function emergencySelfDestruct() public {
-		require(msg.sender == OWNER);
+	// rescue tokens inadvertently sent to the contract address 
+	function ERC20Rescue(address tokenAddress, uint256 amtTokens) public {
+		require (msg.sender == OWNER);
 
-		selfdestruct(msg.sender);
+		ERC20(tokenAddress).transfer(msg.sender, amtTokens);
 	}
 
 	function refund(bytes32 oraclizeQueryId) public {
@@ -1719,178 +1670,36 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 		// require that the game is unpaused, and that the credits being purchased are greater than 0 and less than the allowed amount, default: 100 spins 
 		// verify that the bet is less than or equal to the bet limit, so we don't go bankrupt, and that the etherreceived is greater than the minbet.
 		require(!GAMEPAUSED
-			&& msg.value > 0
-			&& betPerCredit >= MINBET
+			&& msg.value >= MINBET_perTX
+			&& betPerCredit >= MINBET_perSPIN
 			&& credits > 0 
 			&& credits <= 224
 			&& SafeMath.mul(betPerCredit, 5000) <= getMaxWin()); // 5000 is the jackpot payout (max win on a roll)
 
-		// if each bet is relatively small, resolve the bet in-house
-		if (betPerCredit < MINBET_forORACLIZE){
+		// equation for gas to oraclize is:
+		// gas = (some fixed gas amt) + 3270 * credits
 
-			// randomness will be determined by keccak256(blockhash, nonce)
-			// store these into memory for cheap access
-			bytes32 blockHash = block.blockhash(block.number);
+		uint256 gasToSend = INITIALGASFORORACLIZE + (uint256(3270) * credits);
 
-			// use dialsSpun as a nonce for the oraclize return random bytes.
-			uint256 dialsSpun;
+		EOSBetBankrollInterface(BANKROLLER).payOraclize(oraclize_getPrice('random', gasToSend));
 
-			// dial1, dial2, dial3 are the items that the wheel lands on, represented by uints 0-6
-			// these are then echoed to the front end by data1, data2, data3
-			uint8 dial1;
-			uint8 dial2;
-			uint8 dial3;
+		// oraclize_newRandomDSQuery(delay in seconds, bytes of random data, gas for callback function)
+		bytes32 oraclizeQueryId = oraclize_newRandomDSQuery(0, 30, gasToSend);
 
-			// these are used ONLY for log data for the frontend
-			// each dial of the machine can be between 0 and 6 (see below table for distribution)
-			// therefore, each dial takes 3 BITS of space -> uint(bits('111')) == 7, uint(bits('000')) == 0
-			// so dataX can hold 256 bits/(3 bits * 3 dials) = 28.444 -> 28 spins worth of data 
-			uint256[] memory logsData = new uint256[](8);
+		// add the new slots data to a mapping so that the oraclize __callback can use it later
+		slotsData[oraclizeQueryId] = SlotsGameData({
+			player : msg.sender,
+			paidOut : false,
+			start : block.timestamp,
+			etherReceived : msg.value,
+			credits : credits
+		});
 
-			// this is incremented every time a player hits a spot of the wheel that pays out
-			// at the end this is multiplied by the betPerCredit amount to determine how much the game should payout.
-			uint256 payout;
+		// add the sent value into liabilities. this should NOT go into the bankroll yet
+		// and must be quarantined here to prevent timing attacks
+		LIABILITIES = SafeMath.add(LIABILITIES, msg.value);
 
-			// Now, loop over each credit.
-			// Please note that this loop is almost identical to the loop in the __callback from oraclize
-			// Modular-izing the loops into a single function is impossible because solidity can only store 16 variables into memory
-			// also, it would cost increased gas for each spin.
-			for (uint8 i = 0; i < credits; i++){
-
-				// spin the first dial
-				dialsSpun += 1;
-				dial1 = uint8(uint(keccak256(blockHash, dialsSpun)) % 64);
-				// spin the second dial
-				dialsSpun += 1;
-				dial2 = uint8(uint(keccak256(blockHash, dialsSpun)) % 64);
-				// spin the third dial
-				dialsSpun += 1;
-				dial3 = uint8(uint(keccak256(blockHash, dialsSpun)) % 64);
-
-				// dial 1, based on above table
-				dial1 = getDial1Type(dial1);
-
-				// dial 2, based on above table
-				dial2 = getDial2Type(dial2);
-
-				// dial 3, based on above table
-				dial3 = getDial3Type(dial3);
-
-				// determine the payouts (all in uint8)
-
-				payout += determinePayout(dial1, dial2, dial3);
-
-				// Here we assemble uint256's of log data so that the frontend can "replay" the spins
-				// each "dial" is a uint8 but can only be between 0-6, so would only need 3 bits to store this. uint(bits('111')) = 7
-				// 2 ** 3 is the bitshift operator for three bits 
-				if (i <= 27){
-					// in logsData0
-					logsData[0] += uint256(dial1) * uint256(2) ** (3 * ((3 * (27 - i)) + 2));
-					logsData[0] += uint256(dial2) * uint256(2) ** (3 * ((3 * (27 - i)) + 1));
-					logsData[0] += uint256(dial3) * uint256(2) ** (3 * ((3 * (27 - i))));
-				}
-				else if (i <= 55){
-					// in logsData1
-					logsData[1] += uint256(dial1) * uint256(2) ** (3 * ((3 * (55 - i)) + 2));
-					logsData[1] += uint256(dial2) * uint256(2) ** (3 * ((3 * (55 - i)) + 1));
-					logsData[1] += uint256(dial3) * uint256(2) ** (3 * ((3 * (55 - i))));
-				}
-				else if (i <= 83) {
-					// in logsData2
-					logsData[2] += uint256(dial1) * uint256(2) ** (3 * ((3 * (83 - i)) + 2));
-					logsData[2] += uint256(dial2) * uint256(2) ** (3 * ((3 * (83 - i)) + 1));
-					logsData[2] += uint256(dial3) * uint256(2) ** (3 * ((3 * (83 - i))));
-				}
-				else if (i <= 111) {
-					// in logsData3
-					logsData[3] += uint256(dial1) * uint256(2) ** (3 * ((3 * (111 - i)) + 2));
-					logsData[3] += uint256(dial2) * uint256(2) ** (3 * ((3 * (111 - i)) + 1));
-					logsData[3] += uint256(dial3) * uint256(2) ** (3 * ((3 * (111 - i))));
-				}
-				else if (i <= 139){
-					// in logsData4
-					logsData[4] += uint256(dial1) * uint256(2) ** (3 * ((3 * (139 - i)) + 2));
-					logsData[4] += uint256(dial2) * uint256(2) ** (3 * ((3 * (139 - i)) + 1));
-					logsData[4] += uint256(dial3) * uint256(2) ** (3 * ((3 * (139 - i))));
-				}
-				else if (i <= 167){
-					// in logsData5
-					logsData[5] += uint256(dial1) * uint256(2) ** (3 * ((3 * (167 - i)) + 2));
-					logsData[5] += uint256(dial2) * uint256(2) ** (3 * ((3 * (167 - i)) + 1));
-					logsData[5] += uint256(dial3) * uint256(2) ** (3 * ((3 * (167 - i))));
-				}
-				else if (i <= 195){
-					// in logsData6
-					logsData[6] += uint256(dial1) * uint256(2) ** (3 * ((3 * (195 - i)) + 2));
-					logsData[6] += uint256(dial2) * uint256(2) ** (3 * ((3 * (195 - i)) + 1));
-					logsData[6] += uint256(dial3) * uint256(2) ** (3 * ((3 * (195 - i))));
-				}
-				else {
-					// in logsData7
-					logsData[7] += uint256(dial1) * uint256(2) ** (3 * ((3 * (223 - i)) + 2));
-					logsData[7] += uint256(dial2) * uint256(2) ** (3 * ((3 * (223 - i)) + 1));
-					logsData[7] += uint256(dial3) * uint256(2) ** (3 * ((3 * (223 - i))));
-				}
-			}
-
-			// add these new dials to the storage variable DIALSSPUN
-			DIALSSPUN += dialsSpun;
-
-			// and add the amount wagered
-			AMOUNTWAGERED = SafeMath.add(AMOUNTWAGERED, msg.value);
-
-			// calculate amount for the developers fund.
-			// this is: value of ether * (5% house edge) * (20% cut)
-			uint256 developersCut = msg.value / 100;
-
-			// add this to the developers fund.
-			DEVELOPERSFUND = SafeMath.add(DEVELOPERSFUND, developersCut);
-
-			// transfer the (msg.value - developersCut) to the bankroll
-			EOSBetBankrollInterface(BANKROLLER).receiveEtherFromGameAddress.value(SafeMath.sub(msg.value, developersCut))();
-
-			// now payout ether
-			uint256 etherPaidout = SafeMath.mul(betPerCredit, payout);
-
-			// make the bankroll transfer the paidout amount to the player
-			EOSBetBankrollInterface(BANKROLLER).payEtherToWinner(etherPaidout, msg.sender);
-
-			// and lastly, log an event
-			// log the data logs that were created above, we will not use event watchers here, but will use the txReceipt to get logs instead.
-			emit SlotsSmallBet(logsData[0], logsData[1], logsData[2], logsData[3], logsData[4], logsData[5], logsData[6], logsData[7]);
-
-		}
-		// if the bet amount is OVER the oraclize query limit, we must get the randomness from oraclize.
-		// This is because miners are inventivized to interfere with the block.blockhash, in an attempt
-		// to get more favorable rolls/slot spins/etc.
-		else {
-			// oraclize_newRandomDSQuery(delay in seconds, bytes of random data, gas for callback function)
-			bytes32 oraclizeQueryId;
-
-			// equation for gas to oraclize is:
-			// gas = (some fixed gas amt) + 3270 * credits
-			
-			uint256 gasToSend = INITIALGASFORORACLIZE + (uint256(3270) * credits);
-
-			EOSBetBankrollInterface(BANKROLLER).payOraclize(oraclize_getPrice('random', gasToSend));
-
-			oraclizeQueryId = oraclize_newRandomDSQuery(0, 30, gasToSend);
-
-			// add the new slots data to a mapping so that the oraclize __callback can use it later
-			slotsData[oraclizeQueryId] = SlotsGameData({
-				player : msg.sender,
-				paidOut : false,
-				start : block.timestamp,
-				etherReceived : msg.value,
-				credits : credits
-			});
-
-			// add the sent value into liabilities. this should NOT go into the bankroll yet
-			// and must be quarantined here to prevent timing attacks
-			LIABILITIES = SafeMath.add(LIABILITIES, msg.value);
-
-			emit BuyCredits(oraclizeQueryId);
-		}
+		emit BuyCredits(oraclizeQueryId);
 	}
 
 	function __callback(bytes32 _queryId, string _result, bytes _proof) public {
@@ -2098,11 +1907,11 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 	// 3x Gold Ether					//	1777  //
 	// 3x Silver Ether					//	250   //
 	// 3x Bronze Ether					//	250   //
-	//  3x any Ether 					//	95    //
 	// Bronze P -> Silver P -> Gold P	//	90    //
+	// 3x any Ether 					//	70    //
 	// 3x Gold Planet 					//	50    //
 	// 3x Silver Planet					//	25    //
-	// Any Gold P & Silver P & Bronze P //	20    //
+	// Any Gold P & Silver P & Bronze P //	15    //
 	// 3x Bronze Planet					//	10    //
 	// Any 3 planet type				//	3     //
 	// Any 3 gold						//	3     //
@@ -2126,7 +1935,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 			// one gold planet, one silver planet, one bronze planet, any order!
 			// note: other order covered above, return 90
 			else if (dial2 == 3 && dial3 == 4)
-				return 20;
+				return 15;
 
 			// all bronze planet 
 			else if (dial2 == 5 && dial3 == 5) 
@@ -2147,7 +1956,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 
 			// one gold planet, one silver planet, one bronze planet, any order!
 			else if ((dial2 == 3 && dial3 == 5) || (dial2 == 5 && dial3 == 3))
-				return 20;
+				return 15;
 
 			// any three planet type 
 			else if (dial2 >= 3 && dial2 <= 5 && dial3 >= 3 && dial3 <= 5)
@@ -2164,7 +1973,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 
 			// one gold planet, one silver planet, one bronze planet, any order!
 			else if ((dial2 == 4 && dial3 == 5) || (dial2 == 5 && dial3 == 4))
-				return 20;
+				return 15;
 
 			// any three planet type 
 			else if (dial2 >= 3 && dial2 <= 5 && dial3 >= 3 && dial3 <= 5)
@@ -2184,7 +1993,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 
 			// all some type of ether
 			else if (dial2 >= 0 && dial2 <= 2 && dial3 >= 0 && dial3 <= 2)
-				return 95;
+				return 70;
 
 			// any three bronze
 			else if ((dial2 == 2 || dial2 == 5) && (dial3 == 2 || dial3 == 5))
@@ -2197,7 +2006,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 
 			// all some type of ether
 			else if (dial2 >= 0 && dial2 <= 2 && dial3 >= 0 && dial3 <= 2)
-				return 95;
+				return 70;
 
 			// any three silver
 			else if ((dial2 == 1 || dial2 == 4) && (dial3 == 1 || dial3 == 4))
@@ -2210,7 +2019,7 @@ contract EOSBetSlots is usingOraclize, EOSBetGameInterface {
 
 			// all some type of ether
 			else if (dial2 >= 0 && dial2 <= 2 && dial3 >= 0 && dial3 <= 2)
-				return 95;
+				return 70;
 
 			// any three gold
 			else if ((dial2 == 0 || dial2 == 3) && (dial3 == 0 || dial3 == 3))
