@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0xc8e12d15592d7366cf8d9aa8fb0202faf5c00ab2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0xd03cf495ec384640802dbef640d15f7b79194973
 */
 pragma solidity ^0.4.11;
 /**
@@ -19,7 +19,7 @@ contract ERC20Basic {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+  address internal owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -235,7 +235,7 @@ library SafeMath {
 }
 /**
  * @title Benebit Crowdsale
- * @author Hamza Yasin || Junaid Mushtaq
+ * @author Junaid Mushtaq || Hamza Yasin
  * @dev Crowdsale is a base contract for managing a token crowdsale.
  * Crowdsales have a start and end timestamps, where investors can make
  * token purchases and the crowdsale will assign them tokens based
@@ -267,7 +267,7 @@ contract Crowdsale is Ownable {
   uint256 public rate;
   // amount of raised money in wei
   uint256 internal weiRaised;
-  // bonus distribution on behalf of weeks
+  // Weeks in UTC
   uint256 weekOne;
   uint256 weekTwo;
   uint256 weekThree;
@@ -332,9 +332,9 @@ contract Crowdsale is Ownable {
     // Pre-ICO start Time
     preStartTime = _startTime;
     // Pre-ICO end time
-    preEndTime = 1516280400;
+    preEndTime = 1521637200;
     // ICO start Time
-    ICOstartTime = 1516626000;
+    ICOstartTime = 1521982800;
     // ICO end Time
     ICOEndTime = _endTime;
     // Base Rate of BNE Token
@@ -451,7 +451,7 @@ contract Crowdsale is Ownable {
      * @param beneficiary address where owner wants to transfer tokens
      * @param valueToken value of token
   */
-  function bountyFunds(address beneficiary, uint256 valueToken) onlyOwner public payable { 
+  function bountyFunds(address beneficiary, uint256 valueToken) onlyOwner public { 
     valueToken = SafeMath.mul(valueToken, 1 ether);
     require(remainingBountySupply >= valueToken);
     remainingBountySupply = SafeMath.sub(remainingBountySupply,valueToken);
@@ -462,7 +462,7 @@ contract Crowdsale is Ownable {
      * @param beneficiary address where owner wants to transfer tokens
      * @param valueToken value of token
   */
-  function rewardsFunds(address beneficiary, uint256 valueToken) onlyOwner public payable { 
+  function rewardsFunds(address beneficiary, uint256 valueToken) onlyOwner public { 
     valueToken = SafeMath.mul(valueToken, 1 ether);
     require(remainingRewardsSupply >= valueToken);
     remainingRewardsSupply = SafeMath.sub(remainingRewardsSupply,valueToken);
@@ -687,11 +687,11 @@ contract BenebitToken is MintableToken {
   }
 }
 contract BenebitICO is Crowdsale, CappedCrowdsale, RefundableCrowdsale {
-    uint256 _startTime = 1514206800;
-    uint256 _endTime = 1519822800; 
+    uint256 _startTime = 1516626000;
+    uint256 _endTime = 1525093200; 
     uint256 _rate = 3000;
     uint256 _goal = 5000 * 1 ether;
-    uint256 _cap = 75000 * 1 ether;
+    uint256 _cap = 40000 * 1 ether;
     address _wallet  = 0x88BfBd2B464C15b245A9f7a563D207bd8A161054;   
     /** Constructor BenebitICO */
     function BenebitICO() 
