@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtremeToken at 0x95b5a10ed52b84edd61d8205bb946323fcaedbec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExtremeToken at 0x23a20f8e0b5c79f39a2b4395a610a60fb30bc71d
 */
 pragma solidity ^0.4.14;
 
@@ -129,7 +129,6 @@ contract StandardToken is newToken, ERC20 {
   string public constant name = "Extreme Coin";
   string public constant symbol = "XT";
   uint public constant decimals = 2;
-  mapping (address => uint256) public balanceOf;
   uint256 public initialSupply;
     
   // Constructor
@@ -145,6 +144,8 @@ contract ExtremeToken is Ownable, Extreme {
     /* Initializes contract with initial supply tokens to the creator of the contract */
    function ExtremeToken() Extreme () {}
   mapping (address => mapping (address => uint)) allowed;
+  
+ mapping (address => uint256) public balanceOf;
   
   function transfer(address _to, uint256 _value) {
         if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
