@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x749bfd76a91fc84d6ec66b595ef4c4fc7ddb4e85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x69ae52c5b4afc652d853fcfebc374983738d6b48
 */
 pragma solidity ^0.4.18;
 
@@ -75,7 +75,7 @@ contract admined{
 	}
 }
 
-contract MyToken is Token("TLT","TalentAgency Coin",8,50000000000000000000000000),ERC20,ERC223,admined
+contract MyToken is Token("TLT","Talent Agency Coin",8,50000000),ERC20,ERC223,admined
 {   
     uint256 public sellPrice;
     uint256 public buyPrice;
