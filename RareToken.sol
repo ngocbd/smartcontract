@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RareToken at 0xe7df28376f0c44b58396fda253132321021e08cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RareToken at 0x6E2aBdd755ebE560d10A9836d0bd9f99FF4Ba60D
 */
 pragma solidity ^0.4.11;
 
@@ -168,7 +168,7 @@ contract RareToken is StandardToken {
 	string public name = 'Rare Token';
 	string public symbol = 'RARE';
 	uint public decimals = 18;
-	uint public INITIAL_SUPPLY = 100000000000000000000000000;
+	uint public INITIAL_SUPPLY = 888888888000000000000000000;
 
 	function RareToken() payable {
 		totalSupply = INITIAL_SUPPLY;
