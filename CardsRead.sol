@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsRead at 0xcc20149f2933359e20fc26e062b6a0a9a7332ea1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsRead at 0x2651a435e2d451a3c2c2649067b79548d9f3859b
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -126,35 +126,29 @@ contract CardsRead {
     return (itemId, itemNumber);
   }
 
-  //get up value
-  function getUpgradeValue(address player, uint256 upgradeClass, uint256 unitId, uint256 upgradeValue) external view returns (uint256) {
-    uint256 icount = cards.getOwnedCount(player,unitId);
-    uint256 unitProduction = cards.getUintCoinProduction(player,unitId);
-    if (upgradeClass == 0) {
-      if (icount!=0) {
-        return (icount * upgradeValue * 10000 * (10 + cards.getUnitCoinProductionMultiplier(player, unitId))/unitProduction);
-      } else {
-        return (upgradeValue * 10000) / schema.unitCoinProduction(unitId);
-      }
+    //get up value
+  function getUpgradeValue(address player, uint256 upgradeClass, uint256 unitId, uint256 upgradeValue) external view returns (
+    uint256 productionGain ,uint256 preValue,uint256 afterValue) {
+    if (cards.getOwnedCount(player,unitId) == 0) {
+      if (upgradeClass == 0) {
+        productionGain = upgradeValue * 10;
+        preValue = schema.unitCoinProduction(unitId);
+        afterValue   = preValue + productionGain;
+      } else if (upgradeClass == 1){
+        productionGain = upgradeValue * schema.unitCoinProduction(unitId);
+        preValue = schema.unitCoinProduction(unitId);
+        afterValue   = preValue + productionGain;
+      } 
+    }else { // >= 1
+      if (upgradeClass == 0) {
+        productionGain = (cards.getOwnedCount(player,unitId) * upgradeValue * (10 + cards.getUnitCoinProductionMultiplier(player,unitId)));
+        preValue = cards.getUintCoinProduction(player,unitId);
+        afterValue   = preValue + productionGain;
      } else if (upgradeClass == 1) {
-      if (icount!=0) {
-        return (icount * upgradeValue * 10000 * (schema.unitCoinProduction(unitId) + cards.getUnitCoinProductionIncreases(player,unitId))/unitProduction);
-      }else{
-        return (upgradeValue * 10000) / schema.unitCoinProduction(unitId);  
-      }
-    } else if (upgradeClass == 2) {
-      return (upgradeValue  * 10000)/(schema.unitAttack(unitId) + cards.getUnitAttackIncreases(player,unitId));
-    } else if (upgradeClass == 3) {
-      return (upgradeValue  * 10000)/(10 + cards.getUnitAttackMultiplier(player,unitId));
-    } else if (upgradeClass == 4) {
-      return (upgradeValue  * 10000)/(schema.unitDefense(unitId) + cards.getUnitDefenseIncreases(player,unitId));
-    } else if (upgradeClass == 5) {
-      return (upgradeValue  * 10000)/(10 + cards.getUnitDefenseMultiplier(player,unitId));
-    } else if (upgradeClass == 6) {
-      return (upgradeValue  * 10000)/(schema.unitStealingCapacity(unitId) + cards.getUnitJadeStealingIncreases(player,unitId));
-    } else if (upgradeClass == 7) {
-      return (upgradeValue  * 10000)/(10 + cards.getUnitJadeStealingMultiplier(player,unitId));
-      
+        productionGain = (cards.getOwnedCount(player,unitId) * upgradeValue * (schema.unitCoinProduction(unitId) + cards.getUnitCoinProductionIncreases(player,unitId)));
+        preValue = cards.getUintCoinProduction(player,unitId);
+        afterValue   = preValue + productionGain;
+     }
     }
   }
 }
