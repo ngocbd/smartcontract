@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegistroBlockchain at 0xdc7f5bf55c5f63538226c176f807991f8ca5a811
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegistroBlockchain at 0x4741f3a19196740af562cdd4274dcaf273e45480
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.21;
 contract RegistroBlockchain {
 
     struct Registro {
@@ -12,7 +12,7 @@ contract RegistroBlockchain {
     mapping(bytes32 => Registro) public registros;
     address public admin;
 
-    function RegistroBlockchain() public {
+    constructor() public {
         admin = msg.sender;
     }
     
@@ -21,16 +21,15 @@ contract RegistroBlockchain {
         admin = _admin;
     }
 
-    function GuardaRegistro(string _hash) public {
+    function GuardaRegistro(bytes32 hash) public {
         require(msg.sender == admin);
-        bytes32 hash = sha256(_hash);
-        require(!registros[hash].existe);
-        registros[hash].existe = true;
-        registros[hash].block_number = block.number;
+        if (!registros[hash].existe) {
+            registros[hash].existe = true;
+            registros[hash].block_number = block.number;
+        }
     }
 
-    function ConsultaRegistro(string _hash) public constant returns (uint) {
-        bytes32 hash = sha256(_hash);
+    function ConsultaRegistro(bytes32 hash) public constant returns (uint) {
         require(registros[hash].existe);
         return (registros[hash].block_number);
     }
