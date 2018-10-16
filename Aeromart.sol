@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x432c7180c29a93d1703be41b6171755b72d86321
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0xdcaf157faa03309653cd0acddd6947f3417e8dd2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 contract Owned {
     address owner;
@@ -19,9 +19,9 @@ contract Owned {
 contract Aeromart is Owned {
     
     struct Note {
-        bytes32 productID;
-        bytes20 serialNumber;
+        bytes32 productID;        
         string text;
+		string image;
     }
     
     uint public notesLength;
@@ -29,35 +29,35 @@ contract Aeromart is Owned {
    
     event noteInfo(
         bytes32 productID,
-        bytes20 serialNumber,
-        string text
+        string text,
+		string image
     );
     
-    function addNote(bytes32 _productID, bytes20 _serialNumber, string _text) onlyOwner public returns (uint) {
+    function addNote(bytes32 _productID, string _text, string _image) onlyOwner public returns (uint) {
         Note storage note = notes[notesLength];
         
-        note.productID = _productID;
-        note.serialNumber = _serialNumber;
+        note.productID = _productID;        
         note.text = _text;
+		note.image = _image;
         
-        emit noteInfo(_productID, _serialNumber, _text);
+        emit noteInfo(_productID, _text, _image);
         
         notesLength++;
         return notesLength;
     }
     
-    function setNote(uint256 _id, bytes32 _productID, bytes20 _serialNumber, string _text) onlyOwner public {
+    function setNote(uint256 _id, bytes32 _productID, string _text, string _image) onlyOwner public {
         Note storage note = notes[_id];
         
-        note.productID = _productID;
-        note.serialNumber = _serialNumber;
+        note.productID = _productID;        
         note.text = _text;
+		note.image = _image;
         
-        emit noteInfo(_productID, _serialNumber, _text);
+        emit noteInfo(_productID, _text, _image);
     }
     
-    function getNote(uint256 _id) view public returns (bytes32, bytes20, string) {
-        return (notes[_id].productID, notes[_id].serialNumber, notes[_id].text);
+    function getNote(uint256 _id) view public returns (bytes32, string, string) {
+        return (notes[_id].productID, notes[_id].text, notes[_id].image);
     }
     
     // comments section
@@ -68,7 +68,7 @@ contract Aeromart is Owned {
     }
     
     uint public commentsLength;
-    mapping (address => Comment) public comments;
+    mapping (uint256 => Comment) public comments;
     address[] public commentsAccounts;
     
     event commentInfo(
@@ -76,9 +76,8 @@ contract Aeromart is Owned {
         string text
     );
     
-    /*
     function addComment(bytes3 _rating, string _text) public returns (uint) {
-        Comment storage comment = comments[msg.sender];
+        Comment storage comment = comments[commentsLength];
         
         comment.rating = _rating;
         comment.text = _text;
@@ -87,31 +86,19 @@ contract Aeromart is Owned {
         
         commentsLength++;
         return commentsLength;
-        // commentsAccounts.push(msg.sender) -1;
     }
-    */
-    
-    function setComment(bytes3 _rating, string _text) public {
-        Comment storage comment = comments[msg.sender];
+        
+    function setComment(uint256 _id, bytes3 _rating, string _text) public {
+        Comment storage comment = comments[_id];
         
         comment.rating = _rating;
         comment.text = _text;
         
         emit commentInfo(_rating, _text);
-        
-        commentsAccounts.push(msg.sender) -1;
     }
     
-    function getComment(address _address) view public returns (bytes3, string) {
-        return (comments[_address].rating, comments[_address].text);
-    }
-    
-    function getCommentAccounts() view public returns (address[]) {
-        return commentsAccounts;
-    }
-    
-    function getCommentAccountsLength() view public returns (uint) {
-        return commentsAccounts.length;
+    function getComment(uint256 _id) view public returns (bytes3, string) {
+        return (comments[_id].rating, comments[_id].text);
     }
     
 }
