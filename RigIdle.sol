@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RigIdle at 0xd731c88890ca047cd1bed2e6ea1562c7a425c29d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RigIdle at 0x5d4cbcd30515d78370f35c5e45427dd576922225
 */
 pragma solidity ^0.4.18;
 
@@ -20,82 +20,88 @@ library SafeMath {
     }
 }
 
-library NumericSequence
+library GeometricSequence
 {
     using SafeMath for uint256;
-    function sumOfN(uint256 basePrice, uint256 pricePerLevel, uint256 owned, uint256 count) internal pure returns (uint256 price)
+    function sumOfNGeom(uint256 basePrice, uint256 owned, uint256 count) internal pure returns (uint256 price)
     {
         require(count > 0);
         
-        price = 0;
-        price += SafeMath.mul((basePrice + pricePerLevel * owned), count);
-        price += pricePerLevel * (count.mul((count-1))) / 2;
+        uint256 multiplier = 5;
+        
+        uint256 basePower = owned / multiplier;
+        uint256 endPower = (owned + count) / multiplier;
+        
+        price = (basePrice * (2**basePower) * multiplier).mul((2**((endPower-basePower)+1))-1);
+        
+        price = price.sub((basePrice * 2**basePower) * (owned % multiplier));
+        price = price.sub((basePrice * 2**endPower) * (multiplier - ((owned + count) % multiplier)));
     }
 }
 
+contract ERC20 {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
 //-----------------------------------------------------------------------
-contract RigIdle  {
-    using NumericSequence for uint;
+contract RigIdle is ERC20 {
+    using GeometricSequence for uint;
     using SafeMath for uint;
 
     struct MinerData 
     {
-        uint256[9]   rigs; // rig types and their upgrades
-        uint8[3]     hasUpgrade;
-        uint256      money;
-        uint256      lastUpdateTime;
-        uint256      premamentMineBonusPct;
-        uint256      unclaimedPot;
-        uint256      lastPotClaimIndex;
+        // rigs and their upgrades
+        mapping(uint256=>uint256)  rigCount;
+        mapping(int256=>uint256)   rigPctBonus;
+        mapping(int256=>uint256)   rigFlatBonus;
+        
+        uint256 money;
+        uint256 lastUpdateTime;
+        uint256 unclaimedPot;
+        uint256 lastPotClaimIndex;
+        uint256 prestigeLevel; 
+        uint256 prestigeBonusPct;
+    }
+  
+    struct BoostData
+    {
+        int256  rigIndex;
+        uint256 flatBonus;
+        uint256 percentBonus;
+        
+        uint256 priceInWEI;
+        uint256 priceIncreasePct;
+        uint256 totalCount;
+        uint256 currentIndex;
+        address[] boostHolders;
     }
     
     struct RigData
     {
         uint256 basePrice;
         uint256 baseOutput;
-        uint256 pricePerLevel;
-        uint256 priceInETH;
-        uint256 limit;
+        uint256 unlockMultiplier;
     }
     
-    struct BoostData
+    struct PrestigeData
     {
-        uint256 percentBonus;
-        uint256 priceInWEI;
+        uint256 price;
+        uint256 productionBonusPct;
     }
     
-    struct PVPData
-    {
-        uint256[6] troops;
-        uint256    immunityTime;
-        uint256    exhaustTime;
-    }
-    
-    struct TroopData
-    {
-        uint256 attackPower;
-        uint256 defensePower;
-        uint256 priceGold;
-        uint256 priceETH;
-    }
-    
-    uint8 private constant NUMBER_OF_RIG_TYPES = 9;
-    RigData[9]  private rigData;
-    
-    uint8 private constant NUMBER_OF_UPGRADES = 3;
-    BoostData[3] private boostData;
-    
-    uint8 private constant NUMBER_OF_TROOPS = 6;
-    uint8 private constant ATTACKER_START_IDX = 0;
-    uint8 private constant ATTACKER_END_IDX = 3;
-    uint8 private constant DEFENDER_START_IDX = 3;
-    uint8 private constant DEFENDER_END_IDX = 6;
-    TroopData[6] private troopData;
+    mapping(uint256=>RigData) private rigData;
+    uint256 private numberOfRigs;
 
     // honey pot variables
     uint256 private honeyPotAmount;
-    uint256 private honeyPotSharePct; // 90%
-    uint256 private jackPot;
     uint256 private devFund;
     uint256 private nextPotDistributionTime;
     mapping(address => mapping(uint256 => uint256)) private minerICOPerCycle;
@@ -104,17 +110,34 @@ contract RigIdle  {
     uint256 private cycleCount;
     
     //booster info
-    uint256 private constant NUMBER_OF_BOOSTERS = 5;
-    uint256 private boosterIndex;
-    uint256 private nextBoosterPrice;
-    address[5] private boosterHolders;
+    uint256 private numberOfBoosts;
+    mapping(uint256=>BoostData) private boostData;
+
+    //prestige info
+    uint256 private maxPrestige;
+    mapping(uint256=>PrestigeData) prestigeData;
     
+    // miner info
     mapping(address => MinerData) private miners;
-    mapping(address => PVPData)   private pvpMap;
     mapping(uint256 => address)   private indexes;
     uint256 private topindex;
     
     address private owner;
+    
+    // ERC20 functionality
+    mapping(address => mapping(address => uint256)) private allowed;
+    string public constant name  = "RigWarsIdle";
+    string public constant symbol = "RIG";
+    uint8 public constant decimals = 8;
+    uint256 private estimatedSupply;
+    
+    // referral
+    mapping(address=>address) referrals;
+    
+    // Data Store Management
+    mapping(uint256=>uint256) private prestigeFinalizeTime;
+    mapping(uint256=>uint256) private rigFinalizeTime;
+    mapping(uint256=>uint256) private boostFinalizeTime;
     
     // ------------------------------------------------------------------------
     // Constructor
@@ -122,80 +145,54 @@ contract RigIdle  {
     function RigIdle() public {
         owner = msg.sender;
         
-        //                   price,           prod.     upgrade,        priceETH, limit
-        rigData[0] = RigData(128,             1,        64,              0,          64);
-        rigData[1] = RigData(1024,            64,       512,             0,          64);
-        rigData[2] = RigData(204800,          1024,     102400,          0,          128);
-        rigData[3] = RigData(25600000,        8192,     12800000,        0,          128);
-        rigData[4] = RigData(30000000000,     65536,    30000000000,     0.01 ether, 256);
-        rigData[5] = RigData(30000000000,     100000,   10000000000,     0,          256);
-        rigData[6] = RigData(300000000000,    500000,   100000000000,    0,          256);
-        rigData[7] = RigData(50000000000000,  3000000,  12500000000000,  0.1 ether,  256);
-        rigData[8] = RigData(100000000000000, 30000000, 50000000000000,  0,          256);
-        
-        boostData[0] = BoostData(30,  0.01 ether);
-        boostData[1] = BoostData(50,  0.1 ether);
-        boostData[2] = BoostData(100, 1 ether);
+        //                   price,           prod.     unlockMultiplier
+        rigData[0] = RigData(32,              1,        1);
+        rigData[1] = RigData(256,             4,        1); 
+        rigData[2] = RigData(25600,           64,       2); 
+        rigData[3] = RigData(512000,          512,      1); 
+        rigData[4] = RigData(10240000,        8192,     4); 
+        rigData[5] = RigData(3000000000,      50000,    8); 
+        rigData[6] = RigData(75000000000,     250000,   10); 
+        rigData[7] = RigData(2500000000000,   1500000,  1);
+
+        numberOfRigs = 8;
         
         topindex = 0;
         honeyPotAmount = 0;
         devFund = 0;
-        jackPot = 0;
         nextPotDistributionTime = block.timestamp;
-        honeyPotSharePct = 90;
         
-        // has to be set to a value
-        boosterHolders[0] = owner;
-        boosterHolders[1] = owner;
-        boosterHolders[2] = owner;
-        boosterHolders[3] = owner;
-        boosterHolders[4] = owner;
+        miners[msg.sender].lastUpdateTime = block.timestamp;
+        miners[msg.sender].rigCount[0] = 1;
+      
+        indexes[topindex] = msg.sender;
+        ++topindex;
         
-        boosterIndex = 0;
-        nextBoosterPrice = 0.1 ether;
+        boostData[0] = BoostData(-1, 0, 100, 0.1 ether, 5, 5, 0, new address[](5));
+        boostData[0].boostHolders[0] = 0xe57A18783640c9fA3c5e8E4d4b4443E2024A7ff9;
+        boostData[0].boostHolders[1] = 0xf0333B94F895eb5aAb3822Da376F9CbcfcE8A19C;
+        boostData[0].boostHolders[2] = 0x85abE8E3bed0d4891ba201Af1e212FE50bb65a26;
+        boostData[0].boostHolders[3] = 0x11e52c75998fe2E7928B191bfc5B25937Ca16741;
+        boostData[0].boostHolders[4] = 0x522273122b20212FE255875a4737b6F50cc72006;
         
-        //pvp
-        troopData[0] = TroopData(10,     0,      100000,   0);
-        troopData[1] = TroopData(1000,   0,      80000000, 0);
-        troopData[2] = TroopData(100000, 0,      0,        0.01 ether);
-        troopData[3] = TroopData(0,      15,     100000,   0);
-        troopData[4] = TroopData(0,      1500,   80000000, 0);
-        troopData[5] = TroopData(0,      150000, 0,        0.01 ether);
+        numberOfBoosts = 1;
+        
+        prestigeData[0] = PrestigeData(25000, 100);       // before lvl 3
+        prestigeData[1] = PrestigeData(25000000, 200);    // befroe lvl 5 ~30min with 30k prod
+        prestigeData[2] = PrestigeData(20000000000, 400); // befroe lvl 7 ~6h with 25-30 lvl6 rig
+        
+        maxPrestige = 3;
         
         honeyPotPerCycle.push(0);
         globalICOPerCycle.push(1);
         cycleCount = 0;
+        
+        estimatedSupply = 1000000000000000000000000000;
     }
     
     //--------------------------------------------------------------------------
     // Data access functions
     //--------------------------------------------------------------------------
-    function GetMinerData(address minerAddr) public constant returns 
-        (uint256 money, uint256 lastupdate, uint256 prodPerSec, 
-         uint256[9] rigs, uint[3] upgrades, uint256 unclaimedPot, bool hasBooster, uint256 unconfirmedMoney)
-    {
-        uint8 i = 0;
-        
-        money = miners[minerAddr].money;
-        lastupdate = miners[minerAddr].lastUpdateTime;
-        prodPerSec = GetProductionPerSecond(minerAddr);
-        
-        for(i = 0; i < NUMBER_OF_RIG_TYPES; ++i)
-        {
-            rigs[i] = miners[minerAddr].rigs[i];
-        }
-        
-        for(i = 0; i < NUMBER_OF_UPGRADES; ++i)
-        {
-            upgrades[i] = miners[minerAddr].hasUpgrade[i];
-        }
-        
-        unclaimedPot = miners[minerAddr].unclaimedPot;
-        hasBooster = HasBooster(minerAddr);
-        
-        unconfirmedMoney = money + (prodPerSec * (now - lastupdate));
-    }
-    
     function GetTotalMinerCount() public constant returns (uint256 count)
     {
         count = topindex;
@@ -207,30 +204,98 @@ contract RigIdle  {
         minerAddr = indexes[idx];
     }
     
-    function GetPotInfo() public constant returns (uint256 _honeyPotAmount, uint256 _devFunds, uint256 _jackPot, uint256 _nextDistributionTime)
-    {
-        _honeyPotAmount = honeyPotAmount;
-        _devFunds = devFund;
-        _jackPot = jackPot;
-        _nextDistributionTime = nextPotDistributionTime;
-    }
-    
     function GetProductionPerSecond(address minerAddr) public constant returns (uint256 personalProduction)
     {
         MinerData storage m = miners[minerAddr];
         
         personalProduction = 0;
-        uint256 productionSpeed = 100 + m.premamentMineBonusPct;
+        uint256 productionSpeedFlat = m.rigFlatBonus[-1];
         
-        if(HasBooster(minerAddr)) // 500% bonus
-            productionSpeed += 500;
-        
-        for(uint8 j = 0; j < NUMBER_OF_RIG_TYPES; ++j)
+        for(uint8 j = 0; j < numberOfRigs; ++j)
         {
-            personalProduction += m.rigs[j] * rigData[j].baseOutput;
+            if(m.rigCount[j] > 0)
+                personalProduction += (rigData[j].baseOutput + productionSpeedFlat + m.rigFlatBonus[j]) * m.rigCount[j] * (100 + m.rigPctBonus[j]);
+            else
+                break;
         }
         
-        personalProduction = personalProduction * productionSpeed / 100;
+        personalProduction = (personalProduction * ((100 + m.prestigeBonusPct) * (100 + m.rigPctBonus[-1]))) / 1000000;
+    }
+    
+    function GetMinerData(address minerAddr) public constant returns 
+        (uint256 money, uint256 lastupdate, uint256 prodPerSec, 
+         uint256 unclaimedPot, uint256 globalFlat, uint256 globalPct, uint256 prestigeLevel)
+    {
+        money = miners[minerAddr].money;
+        lastupdate = miners[minerAddr].lastUpdateTime;
+        prodPerSec = GetProductionPerSecond(minerAddr);
+     
+        unclaimedPot = miners[minerAddr].unclaimedPot;
+        
+        globalFlat = miners[minerAddr].rigFlatBonus[-1];
+        globalPct  = miners[minerAddr].rigPctBonus[-1];
+        
+        prestigeLevel = miners[minerAddr].prestigeLevel;
+    }
+    
+    function GetMinerRigsCount(address minerAddr, uint256 startIdx) public constant returns (uint256[10] rigs, uint256[10] totalProduction)
+    {
+        uint256 i = startIdx;
+        MinerData storage m = miners[minerAddr];
+        
+        for(i = startIdx; i < (startIdx+10) && i < numberOfRigs; ++i)
+        {
+            rigs[i]      = miners[minerAddr].rigCount[i];
+            totalProduction[i] = (rigData[i].baseOutput + m.rigFlatBonus[-1] + m.rigFlatBonus[int256(i)]) * ((100 + m.rigPctBonus[int256(i)]) *
+              (100 + m.prestigeBonusPct) * (100 + m.rigPctBonus[-1])) / 1000000;
+        }
+    }
+    
+    function GetTotalRigCount() public constant returns (uint256)
+    {
+        return numberOfRigs;
+    }
+    
+    function GetRigData(uint256 idx) public constant returns (uint256 _basePrice, uint256 _baseOutput, uint256 _unlockMultiplier, uint256 _lockTime)
+    {
+        require(idx < numberOfRigs);
+        
+        _basePrice  = rigData[idx].basePrice;
+        _baseOutput = rigData[idx].baseOutput;
+        _unlockMultiplier  = rigData[idx].unlockMultiplier;
+        _lockTime = rigFinalizeTime[idx];
+    }
+    
+    function CalculatePriceofRigs(uint256 idx, uint256 owned, uint256 count) public constant returns (uint256)
+    {
+        if(idx >= numberOfRigs)
+            return 0;
+            
+        if(owned == 0)
+            return (rigData[idx].basePrice * rigData[idx].unlockMultiplier);
+            
+        return GeometricSequence.sumOfNGeom(rigData[idx].basePrice, owned, count); 
+    }
+    
+    function GetMaxPrestigeLevel() public constant returns (uint256)
+    {
+        return maxPrestige;
+    }
+    
+    function GetPrestigeInfo(uint256 idx) public constant returns (uint256 price, uint256 bonusPct, uint256 _lockTime)
+    {
+        require(idx < maxPrestige);
+        
+        price = prestigeData[idx].price;
+        bonusPct = prestigeData[idx].productionBonusPct;
+        _lockTime = prestigeFinalizeTime[idx];
+    }
+  
+    function GetPotInfo() public constant returns (uint256 _honeyPotAmount, uint256 _devFunds, uint256 _nextDistributionTime)
+    {
+        _honeyPotAmount = honeyPotAmount;
+        _devFunds = devFund;
+        _nextDistributionTime = nextPotDistributionTime;
     }
     
     function GetGlobalProduction() public constant returns (uint256 globalMoney, uint256 globalHashRate)
@@ -246,42 +311,44 @@ contract RigIdle  {
         }
     }
     
-    function GetBoosterData() public constant returns (address[5] _boosterHolders, uint256 currentPrice, uint256 currentIndex)
+    function GetBoosterCount() public constant returns (uint256)
     {
-        for(uint i = 0; i < NUMBER_OF_BOOSTERS; ++i)
-        {
-            _boosterHolders[i] = boosterHolders[i];
-        }
-        currentPrice = nextBoosterPrice;
-        currentIndex = boosterIndex;
+        return numberOfBoosts;
     }
-    
-    function HasBooster(address addr) public constant returns (bool hasBoost)
-    { 
-        for(uint i = 0; i < NUMBER_OF_BOOSTERS; ++i)
-        {
-           if(boosterHolders[i] == addr)
-            return true;
-        }
-        return false;
-    }
-    
-    function GetPVPData(address addr) public constant returns (uint256 attackpower, uint256 defensepower, uint256 immunityTime, uint256 exhaustTime,
-    uint256[6] troops)
+  
+    function GetBoosterData(uint256 idx) public constant returns (int256 rigIdx, uint256 flatBonus, uint256 ptcBonus, 
+        uint256 currentPrice, uint256 increasePct, uint256 maxNumber, uint256 _lockTime)
     {
-        PVPData storage a = pvpMap[addr];
-            
-        immunityTime = a.immunityTime;
-        exhaustTime = a.exhaustTime;
+        require(idx < numberOfBoosts);
         
-        attackpower = 0;
-        defensepower = 0;
-        for(uint i = 0; i < NUMBER_OF_TROOPS; ++i)
+        rigIdx       = boostData[idx].rigIndex;
+        flatBonus    = boostData[idx].flatBonus;
+        ptcBonus     = boostData[idx].percentBonus;
+        currentPrice = boostData[idx].priceInWEI;
+        increasePct  = boostData[idx].priceIncreasePct;
+        maxNumber    = boostData[idx].totalCount;
+        _lockTime    = boostFinalizeTime[idx];
+    }
+    
+    function HasBooster(address addr, uint256 startIdx) public constant returns (uint8[10] hasBoost)
+    { 
+        require(startIdx < numberOfBoosts);
+        
+        uint j = 0;
+        
+        for( ;j < 10 && (j + startIdx) < numberOfBoosts; ++j)
         {
-            attackpower  += a.troops[i] * troopData[i].attackPower;
-            defensepower += a.troops[i] * troopData[i].defensePower;
-            
-            troops[i] = a.troops[i];
+            BoostData storage b = boostData[j + startIdx];
+            hasBoost[j] = 0;
+            for(uint i = 0; i < b.totalCount; ++i)
+            {
+               if(b.boostHolders[i] == addr)
+                    hasBoost[j] = 1;
+            }
+        }
+        for( ;j < 10; ++j)
+        {
+            hasBoost[j] = 0;
         }
     }
     
@@ -322,7 +389,7 @@ contract RigIdle  {
         MinerData storage m = miners[miner];
         
         require(m.lastUpdateTime != 0);
-        require(m.lastPotClaimIndex < cycleCount);
+        require(m.lastPotClaimIndex <= cycleCount);
         
         uint256 i = m.lastPotClaimIndex;
         uint256 limit = cycleCount;
@@ -334,284 +401,185 @@ contract RigIdle  {
         for(; i < cycleCount; ++i)
         {
             if(minerICOPerCycle[msg.sender][i] > 0)
-                unclaimedPot += (honeyPotPerCycle[i] * minerICOPerCycle[miner][i]) / globalICOPerCycle[i];
+                unclaimedPot += (honeyPotPerCycle[i] * minerICOPerCycle[msg.sender][i]) / globalICOPerCycle[i];
         }
     }
     
     // -------------------------------------------------------------------------
     // RigWars game handler functions
     // -------------------------------------------------------------------------
-    function StartNewMiner() external
+    function StartNewMiner(address referral) external
     {
         require(miners[msg.sender].lastUpdateTime == 0);
+        require(referral != msg.sender);
         
         miners[msg.sender].lastUpdateTime = block.timestamp;
-        miners[msg.sender].money = 0;
-        miners[msg.sender].rigs[0] = 1;
-        miners[msg.sender].unclaimedPot = 0;
         miners[msg.sender].lastPotClaimIndex = cycleCount;
         
-        pvpMap[msg.sender].immunityTime = block.timestamp + 28800;
-        pvpMap[msg.sender].exhaustTime  = block.timestamp;
+        miners[msg.sender].rigCount[0] = 1;
         
         indexes[topindex] = msg.sender;
         ++topindex;
+        
+        if(referral != owner && referral != 0 && miners[referral].lastUpdateTime != 0)
+        {
+            referrals[msg.sender] = referral;
+            miners[msg.sender].rigCount[0] += 9;
+        }
     }
     
-    function UpgradeRig(uint8 rigIdx, uint16 count) external
+    function UpgradeRig(uint8 rigIdx, uint256 count) external
     {
-        require(rigIdx < NUMBER_OF_RIG_TYPES);
+        require(rigIdx < numberOfRigs);
         require(count > 0);
-        require(count <= 256);
+        require(count <= 512);
+        require(rigFinalizeTime[rigIdx] < block.timestamp);
+        require(miners[msg.sender].lastUpdateTime != 0);
         
         MinerData storage m = miners[msg.sender];
         
-        require(rigData[rigIdx].limit >= (m.rigs[rigIdx] + count));
+        require(m.rigCount[rigIdx] > 0);
+        require(512 >= (m.rigCount[rigIdx] + count));
         
-        UpdateMoney();
+        UpdateMoney(msg.sender);
      
         // the base of geometrical sequence
-        uint256 price = NumericSequence.sumOfN(rigData[rigIdx].basePrice, rigData[rigIdx].pricePerLevel, m.rigs[rigIdx], count); 
+        uint256 price = GeometricSequence.sumOfNGeom(rigData[rigIdx].basePrice, m.rigCount[rigIdx], count); 
        
         require(m.money >= price);
         
-        m.rigs[rigIdx] = m.rigs[rigIdx] + count;
-        
-        if(m.rigs[rigIdx] > rigData[rigIdx].limit)
-            m.rigs[rigIdx] = rigData[rigIdx].limit;
+        m.rigCount[rigIdx] = m.rigCount[rigIdx] + count;
         
         m.money -= price;
     }
     
-    function UpgradeRigETH(uint8 rigIdx, uint256 count) external payable
+    function UnlockRig(uint8 rigIdx) external
     {
-        require(rigIdx < NUMBER_OF_RIG_TYPES);
-        require(count > 0);
-        require(count <= 256);
-        require(rigData[rigIdx].priceInETH > 0);
+        require(rigIdx < numberOfRigs);
+        require(rigIdx > 0);
+        require(rigFinalizeTime[rigIdx] < block.timestamp);
+        require(miners[msg.sender].lastUpdateTime != 0);
         
         MinerData storage m = miners[msg.sender];
         
-        require(rigData[rigIdx].limit >= (m.rigs[rigIdx] + count));
-      
-        uint256 price = (rigData[rigIdx].priceInETH).mul(count); 
+        require(m.rigCount[rigIdx] == 0);
+        require(m.rigCount[rigIdx-1] > 0);
+        
+        UpdateMoney(msg.sender);
+        
+        uint256 price = rigData[rigIdx].basePrice * rigData[rigIdx].unlockMultiplier;
+        
+        require(m.money >= price);
+        
+        m.rigCount[rigIdx] = 1;
+        m.money -= price;
+    }
+    
+    function PrestigeUp() external
+    {
+        require(miners[msg.sender].lastUpdateTime != 0);
+        require(prestigeFinalizeTime[m.prestigeLevel] < block.timestamp);
+        
+        MinerData storage m = miners[msg.sender];
+        
+        require(m.prestigeLevel < maxPrestige);
+        
+        UpdateMoney(msg.sender);
+        
+        require(m.money >= prestigeData[m.prestigeLevel].price);
+        
+        if(referrals[msg.sender] != 0)
+        {
+            miners[referrals[msg.sender]].money += prestigeData[m.prestigeLevel].price / 2;
+        }
+        
+        for(uint256 i = 0; i < numberOfRigs; ++i)
+        {
+            if(m.rigCount[i] > 1)
+                m.rigCount[i] = m.rigCount[i] / 2; 
+        }
+        
+        m.money = 0;
+        m.prestigeBonusPct += prestigeData[m.prestigeLevel].productionBonusPct;
+        m.prestigeLevel += 1;
+    }
+ 
+    function UpdateMoney(address addr) private
+    {
+        require(block.timestamp > miners[addr].lastUpdateTime);
+        
+        if(miners[addr].lastUpdateTime != 0)
+        {
+            MinerData storage m = miners[addr];
+            uint256 diff = block.timestamp - m.lastUpdateTime;
+            uint256 revenue = GetProductionPerSecond(addr);
        
-        require(msg.value >= price);
-        
-        BuyHandler(msg.value);
-        
-        UpdateMoney();
-        
-        m.rigs[rigIdx] = m.rigs[rigIdx] + count;
-        
-        if(m.rigs[rigIdx] > rigData[rigIdx].limit)
-            m.rigs[rigIdx] = rigData[rigIdx].limit;
-    }
-    
-    function UpdateMoney() private
-    {
-        require(miners[msg.sender].lastUpdateTime != 0);
-        require(block.timestamp >= miners[msg.sender].lastUpdateTime);
-        
-        MinerData storage m = miners[msg.sender];
-        uint256 diff = block.timestamp - m.lastUpdateTime;
-        uint256 revenue = GetProductionPerSecond(msg.sender);
-   
-        m.lastUpdateTime = block.timestamp;
-        if(revenue > 0)
-        {
-            revenue *= diff;
-            
-            m.money += revenue;
+            m.lastUpdateTime = block.timestamp;
+            if(revenue > 0)
+            {
+                revenue *= diff;
+                
+                m.money += revenue;
+            }
         }
-    }
-    
-    function UpdateMoneyAt(address addr) private
-    {
-        require(miners[addr].lastUpdateTime != 0);
-        require(block.timestamp >= miners[addr].lastUpdateTime);
-        
-        MinerData storage m = miners[addr];
-        uint256 diff = block.timestamp - m.lastUpdateTime;
-        uint256 revenue = GetProductionPerSecond(addr);
-   
-        m.lastUpdateTime = block.timestamp;
-        if(revenue > 0)
-        {
-            revenue *= diff;
-            
-            m.money += revenue;
-        }
-    }
-    
-    function BuyUpgrade(uint256 idx) external payable
-    {
-        require(idx < NUMBER_OF_UPGRADES);
-        require(msg.value >= boostData[idx].priceInWEI);
-        require(miners[msg.sender].hasUpgrade[idx] == 0);
-        require(miners[msg.sender].lastUpdateTime != 0);
-        
-        BuyHandler(msg.value);
-        
-        UpdateMoney();
-        
-        miners[msg.sender].hasUpgrade[idx] = 1;
-        miners[msg.sender].premamentMineBonusPct +=  boostData[idx].percentBonus;
     }
     
     //--------------------------------------------------------------------------
     // BOOSTER handlers
     //--------------------------------------------------------------------------
-    function BuyBooster() external payable 
+    function BuyBooster(uint256 idx) external payable 
     {
-        require(msg.value >= nextBoosterPrice);
         require(miners[msg.sender].lastUpdateTime != 0);
+        require(idx < numberOfBoosts);
+        require(boostFinalizeTime[idx] < block.timestamp);
         
-        for(uint i = 0; i < NUMBER_OF_BOOSTERS; ++i)
-            if(boosterHolders[i] == msg.sender)
+        BoostData storage b = boostData[idx];
+        
+        require(msg.value >= b.priceInWEI);
+        
+        for(uint i = 0; i < b.totalCount; ++i)
+            if(b.boostHolders[i] == msg.sender)
                 revert();
                 
-        address beneficiary = boosterHolders[boosterIndex];
+        address beneficiary = b.boostHolders[b.currentIndex];
         
         MinerData storage m = miners[beneficiary];
+        MinerData storage m2 = miners[msg.sender];
         
-        // 20% interest after 5 buys
-        m.unclaimedPot += (msg.value * 9403) / 10000;
+        // distribute the ETH
+        m.unclaimedPot += (msg.value * 9) / 10;
+        honeyPotAmount += msg.value / 20;
+        devFund += msg.value / 20;
         
-        // distribute the rest
-        honeyPotAmount += (msg.value * 597) / 20000;
-        devFund += (msg.value * 597) / 20000;
+        // increase price by X%
+        b.priceInWEI += (b.priceInWEI * b.priceIncreasePct) / 100;
         
-        // increase price by 5%
-        nextBoosterPrice += nextBoosterPrice / 20;
-        
-        UpdateMoney();
-        UpdateMoneyAt(beneficiary);
+        UpdateMoney(msg.sender);
+        UpdateMoney(beneficiary);
         
         // transfer ownership    
-        boosterHolders[boosterIndex] = msg.sender;
+        b.boostHolders[b.currentIndex] = msg.sender;
+        
+        // handle booster bonuses
+        if(m.rigFlatBonus[b.rigIndex] >= b.flatBonus){
+            m.rigFlatBonus[b.rigIndex] -= b.flatBonus;
+        } else {
+            m.rigFlatBonus[b.rigIndex] = 0;
+        }
+        
+        if(m.rigPctBonus[b.rigIndex] >= b.percentBonus) {
+            m.rigPctBonus[b.rigIndex] -= b.percentBonus;
+        } else {
+            m.rigPctBonus[b.rigIndex] = 0;
+        }
+        
+        m2.rigFlatBonus[b.rigIndex] += b.flatBonus;
+        m2.rigPctBonus[b.rigIndex] += b.percentBonus;
         
         // increase booster index
-        boosterIndex += 1;
-        if(boosterIndex >= 5)
-            boosterIndex = 0;
-    }
-    
-    //--------------------------------------------------------------------------
-    // PVP handler
-    //--------------------------------------------------------------------------
-    // 0 for attacker 1 for defender
-    function BuyTroop(uint256 idx, uint256 count) external payable
-    {
-        require(idx < NUMBER_OF_TROOPS);
-        require(count > 0);
-        require(count <= 1000);
-        
-        PVPData storage pvp = pvpMap[msg.sender];
-        MinerData storage m = miners[msg.sender];
-        
-        uint256 owned = pvp.troops[idx];
-        
-        uint256 priceGold = NumericSequence.sumOfN(troopData[idx].priceGold, troopData[idx].priceGold, owned, count); 
-        uint256 priceETH = (troopData[idx].priceETH).mul(count);
-        
-        UpdateMoney();
-        
-        require(m.money >= priceGold);
-        require(msg.value >= priceETH);
-        
-        if(priceGold > 0)
-            m.money -= priceGold;
-         
-        if(msg.value > 0)
-            BuyHandler(msg.value);
-        
-        pvp.troops[idx] += count;
-    }
-    
-    function Attack(address defenderAddr) external
-    {
-        require(msg.sender != defenderAddr);
-        require(miners[msg.sender].lastUpdateTime != 0);
-        require(miners[defenderAddr].lastUpdateTime != 0);
-        
-        PVPData storage attacker = pvpMap[msg.sender];
-        PVPData storage defender = pvpMap[defenderAddr];
-        uint i = 0;
-        uint256 count = 0;
-        
-        require(block.timestamp > attacker.exhaustTime);
-        require(block.timestamp > defender.immunityTime);
-        
-        // the aggressor loses immunity
-        if(attacker.immunityTime > block.timestamp)
-            attacker.immunityTime = block.timestamp - 1;
-            
-        attacker.exhaustTime = block.timestamp + 7200;
-        
-        uint256 attackpower = 0;
-        uint256 defensepower = 0;
-        for(i = 0; i < ATTACKER_END_IDX; ++i)
-        {
-            attackpower  += attacker.troops[i] * troopData[i].attackPower;
-            defensepower += defender.troops[i + DEFENDER_START_IDX] * troopData[i + DEFENDER_START_IDX].defensePower;
-        }
-        
-        if(attackpower > defensepower)
-        {
-            if(defender.immunityTime < block.timestamp + 14400)
-                defender.immunityTime = block.timestamp + 14400;
-            
-            UpdateMoneyAt(defenderAddr);
-            
-            MinerData storage m = miners[defenderAddr];
-            MinerData storage m2 = miners[msg.sender];
-            uint256 moneyStolen = m.money / 2;
-         
-            for(i = DEFENDER_START_IDX; i < DEFENDER_END_IDX; ++i)
-            {
-                defender.troops[i] = 0;
-            }
-            
-            for(i = ATTACKER_START_IDX; i < ATTACKER_END_IDX; ++i)
-            {
-                if(troopData[i].attackPower > 0)
-                {
-                    count = attacker.troops[i];
-                    
-                    // if the troops overpower the total defense power only a fraction is lost
-                    if((count * troopData[i].attackPower) > defensepower)
-                        count = defensepower / troopData[i].attackPower;
-                        
-                    attacker.troops[i] -= count;
-                    defensepower -= count * troopData[i].attackPower;
-                }
-            }
-            
-            m.money -= moneyStolen;
-            m2.money += moneyStolen;
-        } else
-        {
-            for(i = ATTACKER_START_IDX; i < ATTACKER_END_IDX; ++i)
-            {
-                attacker.troops[i] = 0;
-            }
-            
-            for(i = DEFENDER_START_IDX; i < DEFENDER_END_IDX; ++i)
-            {
-                if(troopData[i].defensePower > 0)
-                {
-                    count = defender.troops[i];
-                    
-                    // if the troops overpower the total defense power only a fraction is lost
-                    if((count * troopData[i].defensePower) > attackpower)
-                        count = attackpower / troopData[i].defensePower;
-                        
-                    defender.troops[i] -= count;
-                    attackpower -= count * troopData[i].defensePower;
-                }
-            }
-        }
+        b.currentIndex += 1;
+        if(b.currentIndex >= b.totalCount)
+            b.currentIndex = 0;
     }
     
     //--------------------------------------------------------------------------
@@ -626,17 +594,13 @@ contract RigIdle  {
 
         nextPotDistributionTime = block.timestamp + 86400;
 
-        honeyPotPerCycle[cycleCount] = honeyPotAmount / 5; // 20% of the pot
+        honeyPotPerCycle[cycleCount] = honeyPotAmount / 4; // 25% of the pot
         
-        honeyPotAmount -= honeyPotAmount / 5;
+        honeyPotAmount -= honeyPotAmount / 4;
 
         honeyPotPerCycle.push(0);
         globalICOPerCycle.push(0);
         cycleCount = cycleCount + 1;
-
-        MinerData storage jakpotWinner = miners[msg.sender];
-        jakpotWinner.unclaimedPot += jackPot;
-        jackPot = 0;
     }
     
     function FundICO(uint amount) external
@@ -646,7 +610,7 @@ contract RigIdle  {
         
         MinerData storage m = miners[msg.sender];
         
-        UpdateMoney();
+        UpdateMoney(msg.sender);
         
         require(m.money >= amount);
         
@@ -678,16 +642,75 @@ contract RigIdle  {
     }
     
     //--------------------------------------------------------------------------
-    // ETH handler functions
+    // Data Storage Management
     //--------------------------------------------------------------------------
-    function BuyHandler(uint amount) private
+     function AddNewBooster(uint256 idx, int256 _rigType, uint256 _flatBonus, uint256 _pctBonus, 
+      uint256 _ETHPrice, uint256 _priceIncreasePct, uint256 _totalCount) external
     {
-        // add 90% to honeyPot
-        honeyPotAmount += (amount * honeyPotSharePct) / 100;
-        jackPot += amount / 100;
-        devFund += (amount * (100-(honeyPotSharePct+1))) / 100;
+        require(msg.sender == owner);
+        require(idx <= numberOfBoosts);
+        
+        if(idx < numberOfBoosts)
+            require(boostFinalizeTime[idx] > block.timestamp); 
+            
+        boostFinalizeTime[idx] = block.timestamp + 7200;
+        
+        boostData[idx].rigIndex = _rigType;
+        boostData[idx].flatBonus = _flatBonus;
+        boostData[idx].percentBonus = _pctBonus;
+        
+        boostData[idx].priceInWEI = _ETHPrice;
+        boostData[idx].priceIncreasePct = _priceIncreasePct;
+        boostData[idx].totalCount = _totalCount;
+        boostData[idx].currentIndex = 0;
+        
+        boostData[idx].boostHolders = new address[](_totalCount);
+        
+        for(uint256 i = 0; i < _totalCount; ++i)
+            boostData[idx].boostHolders[i] = owner;
+        
+        if(idx == numberOfBoosts)    
+            numberOfBoosts += 1;
     }
     
+    function AddorModifyRig(uint256 idx, uint256 _basePrice, uint256 _baseOutput, uint256 _unlockMultiplier) external
+    {
+        require(msg.sender == owner);
+        require(idx <= numberOfRigs);
+        
+        if(idx < numberOfRigs)
+            require(rigFinalizeTime[idx] > block.timestamp); 
+            
+        rigFinalizeTime[idx] = block.timestamp + 7200;
+        
+        rigData[idx].basePrice     = _basePrice;
+        rigData[idx].baseOutput    = _baseOutput;
+        rigData[idx].unlockMultiplier = _unlockMultiplier;
+        
+        if(idx == numberOfRigs)
+            numberOfRigs += 1;
+    }
+    
+    function AddNewPrestige(uint256 idx, uint256 _price, uint256 _bonusPct) public
+    {
+        require(msg.sender == owner);
+        require(idx <= maxPrestige);
+        
+        if(idx < maxPrestige)
+            require(prestigeFinalizeTime[idx] > block.timestamp); 
+            
+        prestigeFinalizeTime[idx] = block.timestamp + 7200;
+        
+        prestigeData[idx].price = _price;
+        prestigeData[idx].productionBonusPct = _bonusPct;
+        
+        if(idx == maxPrestige)
+            maxPrestige += 1;
+    }
+    
+    //--------------------------------------------------------------------------
+    // ETH handler functions
+    //--------------------------------------------------------------------------
     function WithdrawPotShare() public
     {
         MinerData storage m = miners[msg.sender];
@@ -717,5 +740,49 @@ contract RigIdle  {
     // fallback payment to pot
     function() public payable {
          devFund += msg.value;
+    }
+    
+    //--------------------------------------------------------------------------
+    // ERC20 support
+    //--------------------------------------------------------------------------
+    function totalSupply() public constant returns(uint256) {
+        return estimatedSupply;
+    }
+    
+    function balanceOf(address miner) public constant returns(uint256) {
+        return miners[miner].money;
+    }
+    
+     function transfer(address recipient, uint256 amount) public returns (bool) {
+        require(amount <= miners[msg.sender].money);
+        
+        miners[msg.sender].money = (miners[msg.sender].money).sub(amount);
+        miners[recipient].money  = (miners[recipient].money).add(amount);
+        
+        emit Transfer(msg.sender, recipient, amount);
+        return true;
+    }
+    
+    function transferFrom(address miner, address recipient, uint256 amount) public returns (bool) {
+        require(amount <= allowed[miner][msg.sender] && amount <= balanceOf(miner));
+        
+        miners[miner].money        = (miners[miner].money).sub(amount);
+        miners[recipient].money    = (miners[recipient].money).add(amount);
+        allowed[miner][msg.sender] = (allowed[miner][msg.sender]).sub(amount);
+        
+        emit Transfer(miner, recipient, amount);
+        return true;
+    }
+    
+    function approve(address approvee, uint256 amount) public returns (bool){
+        require(amount <= miners[msg.sender].money);
+        
+        allowed[msg.sender][approvee] = amount;
+        emit Approval(msg.sender, approvee, amount);
+        return true;
+    }
+    
+    function allowance(address miner, address approvee) public constant returns(uint256){
+        return allowed[miner][approvee];
     }
 }
