@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessToken at 0x460dc8b70a189bee176d22d3f0272d171bd4c5ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessToken at 0x9047ef7c3d52956dd0909c1c1e011e986ce60691
 */
 /**
  * The Edgeless token contract complies with the ERC20 standard. 
@@ -70,7 +70,7 @@ contract EdgelessToken {
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (now < startTime && _from!=owner) throw; //check if the crowdsale is already over
+        if (now < startTime) throw; //check if the crowdsale is already over
         if (balanceOf[_from]-locked[_from][getInterval()] < _value) throw;     // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
         if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
