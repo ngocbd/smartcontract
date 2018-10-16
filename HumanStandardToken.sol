@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x0fefe1a94a3033dc67206275de590776bfad3574
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x144b16a49cd260517698a20cacdd5e4233a13cbe
 */
 pragma solidity ^0.4.8;
 contract Token{
