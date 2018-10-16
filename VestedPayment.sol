@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestedPayment at 0x6283d6eabe2df8eb6a188fdbbb30bef3a488489f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestedPayment at 0x41a09d330f3d9bc4d269bfa872bc06db1c5a04fc
 */
 pragma solidity ^0.4.18;
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -43,6 +44,8 @@ contract Ownable {
   }
 
 }
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -90,6 +93,7 @@ library SafeMath {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -103,33 +107,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
-   @title ERC827 interface, an extension of ERC20 token standard
-
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
- */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -176,6 +154,20 @@ contract BasicToken is ERC20Basic {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -272,128 +264,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
-   @title ERC827, an extension of ERC20 token standard
-
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
  * @title Mintable token
@@ -438,6 +309,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
 /**
  * @title Pausable
@@ -483,6 +355,7 @@ contract Pausable is Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/PausableToken.sol
 
 /**
  * @title Pausable token
@@ -511,6 +384,7 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+// File: contracts/LifToken.sol
 
 /**
    @title Líf, the Winding Tree token
@@ -520,7 +394,7 @@ contract PausableToken is StandardToken, Pausable {
    on transfer.
    Uses OpenZeppelin StandardToken, ERC827Token, MintableToken and PausableToken.
  */
-contract LifToken is StandardToken, ERC827Token, MintableToken, PausableToken {
+contract LifToken is StandardToken, MintableToken, PausableToken {
   // Token Name
   string public constant NAME = "Líf";
 
@@ -568,103 +442,7 @@ contract LifToken is StandardToken, ERC827Token, MintableToken, PausableToken {
   }
 }
 
-
-/**
-   @title Vested Payment Schedule for LifToken
-
-   An ownable vesting schedule for the LifToken, the tokens can only be
-   claimed by the owner. The contract has a start timestamp, a duration
-   of each period in seconds (it can be days, months, years), a total
-   amount of periods and a cliff. The available amount of tokens will
-   be calculated based on the balance of LifTokens of the contract at
-   that time.
- */
-
-contract VestedPayment is Ownable {
-  using SafeMath for uint256;
-
-  // When the vested schedule starts
-  uint256 public startTimestamp;
-
-  // How many seconds each period will last
-  uint256 public secondsPerPeriod;
-
-  // How many periods will have in total
-  uint256 public totalPeriods;
-
-  // The amount of tokens to be vested in total
-  uint256 public tokens;
-
-  // How many tokens were claimed
-  uint256 public claimed;
-
-  // The token contract
-  LifToken public token;
-
-  // Duration (in periods) of the initial cliff in the vesting schedule
-  uint256 public cliffDuration;
-
-  /**
-     @dev Constructor.
-
-     @param _startTimestamp see `startTimestamp`
-     @param _secondsPerPeriod see `secondsPerPeriod`
-     @param _totalPeriods see `totalPeriods
-     @param _cliffDuration see `cliffDuration`
-     @param _tokens see `tokens`
-     @param tokenAddress the address of the token contract
-   */
-  function VestedPayment(
-    uint256 _startTimestamp, uint256 _secondsPerPeriod,
-    uint256 _totalPeriods, uint256 _cliffDuration,
-    uint256 _tokens, address tokenAddress
-  ) {
-    require(_startTimestamp >= block.timestamp);
-    require(_secondsPerPeriod > 0);
-    require(_totalPeriods > 0);
-    require(tokenAddress != address(0));
-    require(_cliffDuration < _totalPeriods);
-    require(_tokens > 0);
-
-    startTimestamp = _startTimestamp;
-    secondsPerPeriod = _secondsPerPeriod;
-    totalPeriods = _totalPeriods;
-    cliffDuration = _cliffDuration;
-    tokens = _tokens;
-    token = LifToken(tokenAddress);
-  }
-
-  /**
-     @dev Get how many tokens are available to be claimed
-   */
-  function getAvailableTokens() public view returns (uint256) {
-    uint256 period = block.timestamp.sub(startTimestamp)
-      .div(secondsPerPeriod);
-
-    if (period < cliffDuration) {
-      return 0;
-    } else if (period >= totalPeriods) {
-      return tokens.sub(claimed);
-    } else {
-      return tokens.mul(period.add(1)).div(totalPeriods).sub(claimed);
-    }
-  }
-
-  /**
-     @dev Claim the tokens, they can be claimed only by the owner
-     of the contract
-
-     @param amount how many tokens to be claimed
-   */
-  function claimTokens(uint256 amount) public onlyOwner {
-    assert(getAvailableTokens() >= amount);
-
-    claimed = claimed.add(amount);
-    token.transfer(owner, amount);
-  }
-
-}
-
+// File: contracts/LifMarketValidationMechanism.sol
 
 /**
    @title Market Validation Mechanism (MVM)
@@ -781,6 +559,13 @@ contract LifMarketValidationMechanism is Ownable {
       div(originalTotalSupply);
 
     funded = true;
+  }
+
+  /**
+     @dev Change the LifToken address
+    */
+  function changeToken(address newToken) public onlyOwner {
+    lifToken = LifToken(newToken);
   }
 
   /**
@@ -970,433 +755,107 @@ contract LifMarketValidationMechanism is Ownable {
 
 }
 
-/**
-   @title Crowdsale for the Lif Token Generation Event
+// File: contracts/VestedPayment.sol
 
-   Implementation of the Lif Token Generation Event (TGE) Crowdsale: A 2 week
-   fixed price, uncapped token sale, with a discounted ratefor contributions
-   ìn the private presale and a Market Validation Mechanism that will receive
-   the funds over the USD 10M soft cap.
-   The crowdsale has a minimum cap of USD 5M which in case of not being reached
-   by purchases made during the 2 week period the token will not start operating
-   and all funds sent during that period will be made available to be claimed by
-   the originating addresses.
-   Funds up to the USD 10M soft cap will be sent to the Winding Tree Foundation
-   wallet at the end of the crowdsale.
-   Funds over that amount will be put in a MarketValidationMechanism (MVM) smart
-   contract that guarantees a price floor for a period of 2 or 4 years, allowing
-   any token holder to burn their tokens in exchange of part of the eth amount
-   sent during the TGE in exchange of those tokens.
+/**
+   @title Vested Payment Schedule for LifToken
+
+   An ownable vesting schedule for the LifToken, the tokens can only be
+   claimed by the owner. The contract has a start timestamp, a duration
+   of each period in seconds (it can be days, months, years), a total
+   amount of periods and a cliff. The available amount of tokens will
+   be calculated based on the balance of LifTokens of the contract at
+   that time.
  */
-contract LifCrowdsale is Ownable, Pausable {
+
+contract VestedPayment is Ownable {
   using SafeMath for uint256;
 
-  // The token being sold.
+  // When the vested schedule starts
+  uint256 public startTimestamp;
+
+  // How many seconds each period will last
+  uint256 public secondsPerPeriod;
+
+  // How many periods will have in total
+  uint256 public totalPeriods;
+
+  // The amount of tokens to be vested in total
+  uint256 public tokens;
+
+  // How many tokens were claimed
+  uint256 public claimed;
+
+  // The token contract
   LifToken public token;
 
-  // Beginning of the period where tokens can be purchased at rate `rate1`.
-  uint256 public startTimestamp;
-  // Moment after which the rate to buy tokens goes from `rate1` to `rate2`.
-  uint256 public end1Timestamp;
-  // Marks the end of the Token Generation Event.
-  uint256 public end2Timestamp;
-
-  // Address of the Winding Tree Foundation wallet. Funds up to the soft cap are
-  // sent to this address. It's also the address to which the MVM distributes
-  // the funds that are made available month after month. An extra 5% of tokens
-  // are put in a Vested Payment with this address as beneficiary, acting as a
-  // long-term reserve for the foundation.
-  address public foundationWallet;
-
-  // Address of the Winding Tree Founders wallet. An extra 12.8% of tokens
-  // are put in a Vested Payment with this address as beneficiary, with 1 year
-  // cliff and 4 years duration.
-  address public foundersWallet;
-
-  // TGE min cap, in USD. Converted to wei using `weiPerUSDinTGE`.
-  uint256 public minCapUSD = 5000000;
-
-  // Maximun amount from the TGE that the foundation receives, in USD. Converted
-  // to wei using `weiPerUSDinTGE`. Funds over this cap go to the MVM.
-  uint256 public maxFoundationCapUSD = 10000000;
-
-  // Maximum amount from the TGE that makes the MVM to last for 24 months. If
-  // funds from the TGE exceed this amount, the MVM will last for 24 months.
-  uint256 public MVM24PeriodsCapUSD = 40000000;
-
-  // Conversion rate from USD to wei to use during the TGE.
-  uint256 public weiPerUSDinTGE = 0;
-
-  // Seconds before the TGE since when the corresponding USD to
-  // wei rate cannot be set by the owner anymore.
-  uint256 public setWeiLockSeconds = 0;
-
-  // Quantity of Lif that is received in exchage of 1 Ether during the first
-  // week of the 2 weeks TGE
-  uint256 public rate1;
-
-  // Quantity of Lif that is received in exchage of 1 Ether during the second
-  // week of the 2 weeks TGE
-  uint256 public rate2;
-
-  // Amount of wei received in exchange of tokens during the 2 weeks TGE
-  uint256 public weiRaised;
-
-  // Amount of lif minted and transferred during the TGE
-  uint256 public tokensSold;
-
-  // Address of the vesting schedule for the foundation created at the
-  // end of the crowdsale
-  VestedPayment public foundationVestedPayment;
-
-  // Address of the vesting schedule for founders created at the
-  // end of the crowdsale
-  VestedPayment public foundersVestedPayment;
-
-  // Address of the MVM created at the end of the crowdsale
-  LifMarketValidationMechanism public MVM;
-
-  // Tracks the wei sent per address during the 2 week TGE. This is the amount
-  // that can be claimed by each address in case the minimum cap is not reached
-  mapping(address => uint256) public purchases;
-
-  // Has the Crowdsale been finalized by a successful call to `finalize`?
-  bool public isFinalized = false;
+  // Duration (in periods) of the initial cliff in the vesting schedule
+  uint256 public cliffDuration;
 
   /**
-     @dev Event triggered (at most once) on a successful call to `finalize`
-  **/
-  event Finalized();
-
-  /**
-     @dev Event triggered every time a presale purchase is done
-  **/
-  event TokenPresalePurchase(address indexed beneficiary, uint256 weiAmount, uint256 rate);
-
-  /**
-     @dev Event triggered on every purchase during the TGE
-
-     @param purchaser who paid for the tokens
-     @param beneficiary who got the tokens
-     @param value amount of wei paid
-     @param amount amount of tokens purchased
-   */
-  event TokenPurchase(
-    address indexed purchaser,
-    address indexed beneficiary,
-    uint256 value,
-    uint256 amount
-  );
-
-  /**
-     @dev Constructor. Creates the token in a paused state
+     @dev Constructor.
 
      @param _startTimestamp see `startTimestamp`
-     @param _end1Timestamp see `end1Timestamp`
-     @param _end2Timestamp see `end2Timestamp
-     @param _rate1 see `rate1`
-     @param _rate2 see `rate2`
-     @param _foundationWallet see `foundationWallet`
+     @param _secondsPerPeriod see `secondsPerPeriod`
+     @param _totalPeriods see `totalPeriods
+     @param _cliffDuration see `cliffDuration`
+     @param _tokens see `tokens`
+     @param tokenAddress the address of the token contract
    */
-  function LifCrowdsale(
-    uint256 _startTimestamp,
-    uint256 _end1Timestamp,
-    uint256 _end2Timestamp,
-    uint256 _rate1,
-    uint256 _rate2,
-    uint256 _setWeiLockSeconds,
-    address _foundationWallet,
-    address _foundersWallet
+  function VestedPayment(
+    uint256 _startTimestamp, uint256 _secondsPerPeriod,
+    uint256 _totalPeriods, uint256 _cliffDuration,
+    uint256 _tokens, address tokenAddress
   ) {
-
-    require(_startTimestamp > block.timestamp);
-    require(_end1Timestamp > _startTimestamp);
-    require(_end2Timestamp > _end1Timestamp);
-    require(_rate1 > 0);
-    require(_rate2 > 0);
-    require(_setWeiLockSeconds > 0);
-    require(_foundationWallet != address(0));
-    require(_foundersWallet != address(0));
-
-    token = new LifToken();
-    token.pause();
+    require(_startTimestamp >= block.timestamp);
+    require(_secondsPerPeriod > 0);
+    require(_totalPeriods > 0);
+    require(tokenAddress != address(0));
+    require(_cliffDuration < _totalPeriods);
+    require(_tokens > 0);
 
     startTimestamp = _startTimestamp;
-    end1Timestamp = _end1Timestamp;
-    end2Timestamp = _end2Timestamp;
-    rate1 = _rate1;
-    rate2 = _rate2;
-    setWeiLockSeconds = _setWeiLockSeconds;
-    foundationWallet = _foundationWallet;
-    foundersWallet = _foundersWallet;
+    secondsPerPeriod = _secondsPerPeriod;
+    totalPeriods = _totalPeriods;
+    cliffDuration = _cliffDuration;
+    tokens = _tokens;
+    token = LifToken(tokenAddress);
   }
 
   /**
-     @dev Set the wei per USD rate for the TGE. Has to be called by
-     the owner up to `setWeiLockSeconds` before `startTimestamp`
-
-     @param _weiPerUSD wei per USD rate valid during the TGE
-   */
-  function setWeiPerUSDinTGE(uint256 _weiPerUSD) public onlyOwner {
-    require(_weiPerUSD > 0);
-    assert(block.timestamp < startTimestamp.sub(setWeiLockSeconds));
-
-    weiPerUSDinTGE = _weiPerUSD;
+     @dev Change the LifToken address
+    */
+  function changeToken(address newToken) public onlyOwner {
+    token = LifToken(newToken);
   }
 
   /**
-     @dev Returns the current Lif per Eth rate during the TGE
-
-     @return the current Lif per Eth rate or 0 when not in TGE
+     @dev Get how many tokens are available to be claimed
    */
-  function getRate() public view returns (uint256) {
-    if (block.timestamp < startTimestamp)
+  function getAvailableTokens() public view returns (uint256) {
+    uint256 period = block.timestamp.sub(startTimestamp)
+      .div(secondsPerPeriod);
+
+    if (period < cliffDuration) {
       return 0;
-    else if (block.timestamp <= end1Timestamp)
-      return rate1;
-    else if (block.timestamp <= end2Timestamp)
-      return rate2;
-    else
-      return 0;
-  }
-
-  /**
-     @dev Fallback function, payable. Calls `buyTokens`
-   */
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-     @dev Allows to get tokens during the TGE. Payable. The value is converted to
-     Lif using the current rate obtained by calling `getRate()`.
-
-     @param beneficiary Address to which Lif should be sent
-   */
-  function buyTokens(address beneficiary) public payable whenNotPaused validPurchase {
-    require(beneficiary != address(0));
-    assert(weiPerUSDinTGE > 0);
-
-    uint256 weiAmount = msg.value;
-
-    // get current price (it depends on current block number)
-    uint256 rate = getRate();
-
-    assert(rate > 0);
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // store wei amount in case of TGE min cap not reached
-    weiRaised = weiRaised.add(weiAmount);
-    purchases[beneficiary] = purchases[beneficiary].add(weiAmount);
-    tokensSold = tokensSold.add(tokens);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-  }
-
-  /**
-     @dev Allows to add the address and the amount of wei sent by a contributor
-     in the private presale. Can only be called by the owner before the beginning
-     of TGE
-
-     @param beneficiary Address to which Lif will be sent
-     @param weiSent Amount of wei contributed
-     @param rate Lif per ether rate at the moment of the contribution
-   */
-  function addPrivatePresaleTokens(
-    address beneficiary, uint256 weiSent, uint256 rate
-  ) public onlyOwner {
-    require(block.timestamp < startTimestamp);
-    require(beneficiary != address(0));
-    require(weiSent > 0);
-
-    // validate that rate is higher than TGE rate
-    require(rate > rate1);
-
-    uint256 tokens = weiSent.mul(rate);
-
-    weiRaised = weiRaised.add(weiSent);
-
-    token.mint(beneficiary, tokens);
-
-    TokenPresalePurchase(beneficiary, weiSent, rate);
-  }
-
-  /**
-     @dev Internal. Forwards funds to the foundation wallet and in case the soft
-     cap was exceeded it also creates and funds the Market Validation Mechanism.
-   */
-  function forwardFunds() internal {
-
-    // calculate the max amount of wei for the foundation
-    uint256 foundationBalanceCapWei = maxFoundationCapUSD.mul(weiPerUSDinTGE);
-
-    // If the minimiun cap for the MVM is not reached transfer all funds to foundation
-    // else if the min cap for the MVM is reached, create it and send the remaining funds.
-    // We use weiRaised to compare becuase that is the total amount of wei raised in all TGE
-    // but we have to distribute the balance using `this.balance` because thats the amount
-    // raised by the crowdsale
-    if (weiRaised <= foundationBalanceCapWei) {
-
-      foundationWallet.transfer(this.balance);
-
-      mintExtraTokens(uint256(24));
-
+    } else if (period >= totalPeriods) {
+      return tokens.sub(claimed);
     } else {
-
-      uint256 mmFundBalance = this.balance.sub(foundationBalanceCapWei);
-
-      // check how much preiods we have to use on the MVM
-      uint8 MVMPeriods = 24;
-      if (mmFundBalance > MVM24PeriodsCapUSD.mul(weiPerUSDinTGE))
-        MVMPeriods = 48;
-
-      foundationWallet.transfer(foundationBalanceCapWei);
-
-      MVM = new LifMarketValidationMechanism(
-        address(token), block.timestamp.add(30 minutes), 10 minutes, MVMPeriods, foundationWallet
-      );
-      MVM.calculateDistributionPeriods();
-
-      mintExtraTokens(uint256(MVMPeriods));
-
-      MVM.fund.value(mmFundBalance)();
-      MVM.transferOwnership(foundationWallet);
-
+      return tokens.mul(period.add(1)).div(totalPeriods).sub(claimed);
     }
   }
 
   /**
-     @dev Internal. Distribute extra tokens among founders,
-     team and the foundation long-term reserve. Founders receive
-     12.8% of tokens in a 4y (1y cliff) vesting schedule.
-     Foundation long-term reserve receives 5% of tokens in a
-     vesting schedule with the same duration as the MVM that
-     starts when the MVM ends. An extra 7.2% is transferred to
-     the foundation to be distributed among advisors and future hires
+     @dev Claim the tokens, they can be claimed only by the owner
+     of the contract
+
+     @param amount how many tokens to be claimed
    */
-  function mintExtraTokens(uint256 foundationMonthsStart) internal {
-    // calculate how much tokens will the founders,
-    // foundation and advisors will receive
-    uint256 foundersTokens = token.totalSupply().mul(128).div(1000);
-    uint256 foundationTokens = token.totalSupply().mul(50).div(1000);
-    uint256 teamTokens = token.totalSupply().mul(72).div(1000);
+  function claimTokens(uint256 amount) public onlyOwner {
+    assert(getAvailableTokens() >= amount);
 
-    // create the vested payment schedule for the founders
-    foundersVestedPayment = new VestedPayment(
-      block.timestamp, 10 minutes, 48, 12, foundersTokens, token
-    );
-    token.mint(foundersVestedPayment, foundersTokens);
-    foundersVestedPayment.transferOwnership(foundersWallet);
-
-    // create the vested payment schedule for the foundation
-    uint256 foundationPaymentStart = foundationMonthsStart.mul(10 minutes)
-      .add(30 minutes);
-    foundationVestedPayment = new VestedPayment(
-      block.timestamp.add(foundationPaymentStart), 10 minutes,
-      foundationMonthsStart, 0, foundationTokens, token
-    );
-    token.mint(foundationVestedPayment, foundationTokens);
-    foundationVestedPayment.transferOwnership(foundationWallet);
-
-    // transfer the token for advisors and future employees to the foundation
-    token.mint(foundationWallet, teamTokens);
-
-  }
-
-  /**
-     @dev Modifier
-     ok if the transaction can buy tokens on TGE
-   */
-  modifier validPurchase() {
-    bool withinPeriod = now >= startTimestamp && now <= end2Timestamp;
-    bool nonZeroPurchase = msg.value != 0;
-    assert(withinPeriod && nonZeroPurchase);
-    _;
-  }
-
-  /**
-     @dev Modifier
-     ok when block.timestamp is past end2Timestamp
-  */
-  modifier hasEnded() {
-    assert(block.timestamp > end2Timestamp);
-    _;
-  }
-
-  /**
-     @dev Modifier
-     @return true if minCapUSD has been reached by contributions during the TGE
-  */
-  function funded() public view returns (bool) {
-    assert(weiPerUSDinTGE > 0);
-    return weiRaised >= minCapUSD.mul(weiPerUSDinTGE);
-  }
-
-  /**
-     @dev Allows a TGE contributor to claim their contributed eth in case the
-     TGE has finished without reaching the minCapUSD
-   */
-  function claimEth() public whenNotPaused hasEnded {
-    require(isFinalized);
-    require(!funded());
-
-    uint256 toReturn = purchases[msg.sender];
-    assert(toReturn > 0);
-
-    purchases[msg.sender] = 0;
-
-    msg.sender.transfer(toReturn);
-  }
-
-  /**
-     @dev Allows the owner to return an purchase to a contributor
-   */
-  function returnPurchase(address contributor)
-    public hasEnded onlyOwner
-  {
-    require(!isFinalized);
-
-    uint256 toReturn = purchases[contributor];
-    assert(toReturn > 0);
-
-    uint256 tokenBalance = token.balanceOf(contributor);
-
-    // Substract weiRaised and tokens sold
-    weiRaised = weiRaised.sub(toReturn);
-    tokensSold = tokensSold.sub(tokenBalance);
-    token.burn(contributor, tokenBalance);
-    purchases[contributor] = 0;
-
-    contributor.transfer(toReturn);
-  }
-
-  /**
-     @dev Finalizes the crowdsale, taking care of transfer of funds to the
-     Winding Tree Foundation and creation and funding of the Market Validation
-     Mechanism in case the soft cap was exceeded. It also unpauses the token to
-     enable transfers. It can be called only once, after `end2Timestamp`
-   */
-  function finalize() public onlyOwner hasEnded {
-    require(!isFinalized);
-
-    // foward founds and unpause token only if minCap is reached
-    if (funded()) {
-
-      forwardFunds();
-
-      // finish the minting of the token
-      token.finishMinting();
-
-      // transfer the ownership of the token to the foundation
-      token.transferOwnership(owner);
-
-    }
-
-    Finalized();
-    isFinalized = true;
+    claimed = claimed.add(amount);
+    token.transfer(owner, amount);
   }
 
 }
