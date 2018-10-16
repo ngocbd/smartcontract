@@ -1,518 +1,254 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofToken at 0xdd5656ed48f9c26532d9e7d12b5dfaff6e568c26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofToken at 0x6f3a995e904c9be5279e375e79f3c30105efa618
 */
-pragma solidity ^0.4.15;
+/*
+This file is part of the PROOF Contract.
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+The PROOF Contract is free software: you can redistribute it and/or
+modify it under the terms of the GNU lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+The PROOF Contract is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU lesser General Public License for more details.
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+You should have received a copy of the GNU lesser General Public License
+along with the PROOF Contract. If not, see <http://www.gnu.org/licenses/>.
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+@author Ilya Svirin <i.svirin@prover.io>
+*/
 
-contract ApproveAndCallReceiver {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
-}
+pragma solidity ^0.4.11;
 
-contract TokenFactoryInterface {
+contract owned {
 
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        string _tokenSymbol
-      ) public returns (ProofToken newToken);
-}
+    address public owner;
+    address public candidate;
 
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  function Controllable() public {
-    controller = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) public onlyController {
-    if (newController != address(0)) {
-      controller = newController;
+    function owned() public {
+        owner = msg.sender;
     }
-  }
+    
+    modifier onlyOwner {
+        require(owner == msg.sender);
+        _;
+    }
 
+    function changeOwner(address _owner) onlyOwner public {
+        candidate = _owner;
+    }
+    
+    function confirmOwner() public {
+        require(candidate == msg.sender);
+        owner = candidate;
+        delete candidate;
+    }
 }
 
-contract ProofToken is Controllable {
+/**
+ * @title Base of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract BaseERC20 {
+    function balanceOf(address who) public constant returns (uint);
+    function transfer(address to, uint value) public;
+}
 
-  using SafeMath for uint256;
-  ProofTokenInterface public parentToken;
-  TokenFactoryInterface public tokenFactory;
+contract ManualMigration is owned {
 
-  string public name;
-  string public symbol;
-  string public version;
-  uint8 public decimals;
+    address                      public original = 0x5B5d8A8A732A3c73fF0fB6980880Ef399ecaf72E;
+    uint                         public totalSupply;
+    mapping (address => uint256) public balanceOf;
 
-  uint256 public parentSnapShotBlock;
-  uint256 public creationBlock;
-  bool public transfersEnabled;
+    uint                         public numberOfInvestors;
+    mapping (address => bool)    public investors;
 
-  bool public masterTransfersEnabled;
-  address public masterWallet = 0xD8271285C255Ce31b9b25E46ac63619322Af5934;
+    event Transfer(address indexed from, address indexed to, uint value);
 
+    function ManualMigration() public owned() {}
 
-  struct Checkpoint {
-    uint128 fromBlock;
-    uint128 value;
-  }
-
-  Checkpoint[] totalSupplyHistory;
-  mapping(address => Checkpoint[]) balances;
-  mapping (address => mapping (address => uint)) allowed;
-
-  bool public mintingFinished = false;
-  bool public presaleBalancesLocked = false;
-
-  uint256 public constant TOTAL_PRESALE_TOKENS = 112386712924725508802400;
-
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
-  event NewCloneToken(address indexed cloneToken);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-
-
-
-  function ProofToken(
-    address _tokenFactory,
-    address _parentToken,
-    uint256 _parentSnapShotBlock,
-    string _tokenName,
-    string _tokenSymbol
-    ) public {
-      tokenFactory = TokenFactoryInterface(_tokenFactory);
-      parentToken = ProofTokenInterface(_parentToken);
-      parentSnapShotBlock = _parentSnapShotBlock;
-      name = _tokenName;
-      symbol = _tokenSymbol;
-      decimals = 18;
-      transfersEnabled = false;
-      masterTransfersEnabled = false;
-      creationBlock = block.number;
-      version = '0.1';
-  }
-
-  function() public payable {
-    revert();
-  }
-
-
-  /**
-  * Returns the total Proof token supply at the current block
-  * @return total supply {uint256}
-  */
-  function totalSupply() public constant returns (uint256) {
-    return totalSupplyAt(block.number);
-  }
-
-  /**
-  * Returns the total Proof token supply at the given block number
-  * @param _blockNumber {uint256}
-  * @return total supply {uint256}
-  */
-  function totalSupplyAt(uint256 _blockNumber) public constant returns(uint256) {
-    // These next few lines are used when the totalSupply of the token is
-    //  requested before a check point was ever created for this token, it
-    //  requires that the `parentToken.totalSupplyAt` be queried at the
-    //  genesis block for this token as that contains totalSupply of this
-    //  token at this block number.
-    if ((totalSupplyHistory.length == 0) || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
-        if (address(parentToken) != 0) {
-            return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
-        } else {
-            return 0;
+    function migrateManual(address _who, bool _preico) public onlyOwner {
+        require(original != 0);
+        require(balanceOf[_who] == 0);
+        uint balance = BaseERC20(original).balanceOf(_who);
+        balance *= _preico ? 27 : 45;
+        balance /= 10;
+        balance *= 100000000;
+        balanceOf[_who] = balance;
+        totalSupply += balance;
+        if (!investors[_who]) {
+            investors[_who] = true;
+            ++numberOfInvestors;
         }
-
-    // This will return the expected totalSupply during normal situations
-    } else {
-        return getValueAt(totalSupplyHistory, _blockNumber);
+        Transfer(original, _who, balance);
     }
-  }
-
-  /**
-  * Returns the token holder balance at the current block
-  * @param _owner {address}
-  * @return balance {uint256}
-   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balanceOfAt(_owner, block.number);
-  }
-
-  /**
-  * Returns the token holder balance the the given block number
-  * @param _owner {address}
-  * @param _blockNumber {uint256}
-  * @return balance {uint256}
-  */
-  function balanceOfAt(address _owner, uint256 _blockNumber) public constant returns (uint256) {
-    // These next few lines are used when the balance of the token is
-    //  requested before a check point was ever created for this token, it
-    //  requires that the `parentToken.balanceOfAt` be queried at the
-    //  genesis block for that token as this contains initial balance of
-    //  this token
-    if ((balances[_owner].length == 0) || (balances[_owner][0].fromBlock > _blockNumber)) {
-        if (address(parentToken) != 0) {
-            return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
-        } else {
-            // Has no parent
-            return 0;
+    
+    function migrateListManual(address [] _who, bool _preico) public onlyOwner {
+        for(uint i = 0; i < _who.length; ++i) {
+            migrateManual(_who[i], _preico);
         }
-
-    // This will return the expected balance during normal situations
-    } else {
-        return getValueAt(balances[_owner], _blockNumber);
     }
-  }
-
-  /**
-  * Standard ERC20 transfer tokens function
-  * @param _to {address}
-  * @param _amount {uint}
-  * @return success {bool}
-  */
-  function transfer(address _to, uint256 _amount) public returns (bool success) {
-    return doTransfer(msg.sender, _to, _amount);
-  }
-
-  /**
-  * Standard ERC20 transferFrom function
-  * @param _from {address}
-  * @param _to {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
-    require(allowed[_from][msg.sender] >= _amount);
-    allowed[_from][msg.sender] -= _amount;
-    return doTransfer(_from, _to, _amount);
-  }
-
-  /**
-  * Standard ERC20 approve function
-  * @param _spender {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function approve(address _spender, uint256 _amount) public returns (bool success) {
-    require(transfersEnabled);
-
-    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _amount;
-    Approval(msg.sender, _spender, _amount);
-    return true;
-  }
-
-  /**
-  * Standard ERC20 approve function
-  * @param _spender {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
-    approve(_spender, _amount);
-
-    ApproveAndCallReceiver(_spender).receiveApproval(
-        msg.sender,
-        _amount,
-        this,
-        _extraData
-    );
-
-    return true;
-  }
-
-  /**
-  * Standard ERC20 allowance function
-  * @param _owner {address}
-  * @param _spender {address}
-  * @return remaining {uint256}
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-  * Internal Transfer function - Updates the checkpoint ledger
-  * @param _from {address}
-  * @param _to {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function doTransfer(address _from, address _to, uint256 _amount) internal returns(bool) {
-
-    if (msg.sender != masterWallet) {
-      require(transfersEnabled);
-    } else {
-      require(masterTransfersEnabled);
+    
+    function sealManualMigration() public onlyOwner {
+        delete original;
     }
-
-    require(_amount > 0);
-    require(parentSnapShotBlock < block.number);
-    require((_to != 0) && (_to != address(this)));
-
-    // If the amount being transfered is more than the balance of the
-    // account the transfer returns false
-    uint256 previousBalanceFrom = balanceOfAt(_from, block.number);
-    require(previousBalanceFrom >= _amount);
-
-    // First update the balance array with the new value for the address
-    //  sending the tokens
-    updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
-
-    // Then update the balance array with the new value for the address
-    //  receiving the tokens
-    uint256 previousBalanceTo = balanceOfAt(_to, block.number);
-    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-    updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-    // An event to make the transfer easy to find on the blockchain
-    Transfer(_from, _to, _amount);
-    return true;
-  }
-
-
-  /**
-  * Token creation functions - can only be called by the tokensale controller during the tokensale period
-  * @param _owner {address}
-  * @param _amount {uint256}
-  * @return success {bool}
-  */
-  function mint(address _owner, uint256 _amount) public onlyController canMint returns (bool) {
-    uint256 curTotalSupply = totalSupply();
-    uint256 previousBalanceTo = balanceOf(_owner);
-
-    require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-
-    updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-    updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-    Transfer(0, _owner, _amount);
-    return true;
-  }
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-
-  /**
-   * Import presale balances before the start of the token sale. After importing
-   * balances, lockPresaleBalances() has to be called to prevent further modification
-   * of presale balances.
-   * @param _addresses {address[]} Array of presale addresses
-   * @param _balances {uint256[]} Array of balances corresponding to presale addresses.
-   * @return success {bool}
-   */
-  function importPresaleBalances(address[] _addresses, uint256[] _balances) public onlyController returns (bool) {
-    require(presaleBalancesLocked == false);
-
-    for (uint256 i = 0; i < _addresses.length; i++) {
-      updateValueAtNow(balances[_addresses[i]], _balances[i]);
-      Transfer(0, _addresses[i], _balances[i]);
-    }
-
-    updateValueAtNow(totalSupplyHistory, TOTAL_PRESALE_TOKENS);
-    return true;
-  }
-
-  /**
-   * Lock presale balances after successful presale balance import
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function lockPresaleBalances() public onlyController returns (bool) {
-    presaleBalancesLocked = true;
-    return true;
-  }
-
-  /**
-   * Lock the minting of Proof Tokens - to be called after the presale
-   * @return {bool} success
-  */
-  function finishMinting() public onlyController returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-
-  /**
-   * Enable or block transfers - to be called in case of emergency
-   * @param _value {bool}
-  */
-  function enableTransfers(bool _value) public onlyController {
-    transfersEnabled = _value;
-  }
-
-  /**
-   * Enable or block transfers - to be called in case of emergency
-   * @param _value {bool}
-  */
-  function enableMasterTransfers(bool _value) public onlyController {
-    masterTransfersEnabled = _value;
-  }
-
-  /**
-   * Internal balance method - gets a certain checkpoint value a a certain _block
-   * @param _checkpoints {Checkpoint[]} List of checkpoints - supply history or balance history
-   * @return value {uint256} Value of _checkpoints at _block
-  */
-  function getValueAt(Checkpoint[] storage _checkpoints, uint256 _block) constant internal returns (uint256) {
-
-      if (_checkpoints.length == 0)
-        return 0;
-      // Shortcut for the actual value
-      if (_block >= _checkpoints[_checkpoints.length-1].fromBlock)
-        return _checkpoints[_checkpoints.length-1].value;
-      if (_block < _checkpoints[0].fromBlock)
-        return 0;
-
-      // Binary search of the value in the array
-      uint256 min = 0;
-      uint256 max = _checkpoints.length-1;
-      while (max > min) {
-          uint256 mid = (max + min + 1) / 2;
-          if (_checkpoints[mid].fromBlock<=_block) {
-              min = mid;
-          } else {
-              max = mid-1;
-          }
-      }
-      return _checkpoints[min].value;
-  }
-
-
-  /**
-  * Internal update method - updates the checkpoint ledger at the current block
-  * @param _checkpoints {Checkpoint[]}  List of checkpoints - supply history or balance history
-  * @return value {uint256} Value to add to the checkpoints ledger
-   */
-  function updateValueAtNow(Checkpoint[] storage _checkpoints, uint256 _value) internal {
-      if ((_checkpoints.length == 0) || (_checkpoints[_checkpoints.length-1].fromBlock < block.number)) {
-              Checkpoint storage newCheckPoint = _checkpoints[_checkpoints.length++];
-              newCheckPoint.fromBlock = uint128(block.number);
-              newCheckPoint.value = uint128(_value);
-          } else {
-              Checkpoint storage oldCheckPoint = _checkpoints[_checkpoints.length-1];
-              oldCheckPoint.value = uint128(_value);
-          }
-  }
-
-
-  function min(uint256 a, uint256 b) internal constant returns (uint) {
-      return a < b ? a : b;
-  }
-
-  /**
-  * Clones Proof Token at the given snapshot block
-  * @param _snapshotBlock {uint256}
-  * @param _name {string} - The cloned token name
-  * @param _symbol {string} - The cloned token symbol
-  * @return clonedTokenAddress {address}
-   */
-  function createCloneToken(uint256 _snapshotBlock, string _name, string _symbol) public returns(address) {
-
-      if (_snapshotBlock == 0) {
-        _snapshotBlock = block.number;
-      }
-
-      if (_snapshotBlock > block.number) {
-        _snapshotBlock = block.number;
-      }
-
-      ProofToken cloneToken = tokenFactory.createCloneToken(
-          this,
-          _snapshotBlock,
-          _name,
-          _symbol
-        );
-
-
-      cloneToken.transferControl(msg.sender);
-
-      // An event to make the token easy to find on the blockchain
-      NewCloneToken(address(cloneToken));
-      return address(cloneToken);
-    }
-
 }
 
-contract ProofTokenInterface is Controllable {
+contract Crowdsale is ManualMigration {
 
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
-  event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    address public backend;
+    address public cryptaurToken = 0x88d50B466BE55222019D71F9E8fAe17f5f45FCA1;
+    uint    public crowdsaleStartTime = 1517270400;  // 30 January 2018, GMT 00:00:00
+    uint    public crowdsaleFinishTime = 1522454400; // 31 March 2018, 00:00:00
+    uint    public etherPrice;
+    uint    public collectedUSD;
+    bool    public crowdsaleFinished;
 
-  function totalSupply() public constant returns (uint);
-  function totalSupplyAt(uint _blockNumber) public constant returns(uint);
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint);
-  function transfer(address _to, uint256 _amount) public returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
-  function approve(address _spender, uint256 _amount) public returns (bool success);
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-  function mint(address _owner, uint _amount) public returns (bool);
-  function importPresaleBalances(address[] _addresses, uint256[] _balances, address _presaleAddress) public returns (bool);
-  function lockPresaleBalances() public returns (bool);
-  function finishMinting() public returns (bool);
-  function enableTransfers(bool _value) public;
-  function enableMasterTransfers(bool _value) public;
-  function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) public returns (address);
+    event Mint(address indexed minter, uint tokens, bytes32 originalTxHash);
 
+    // Fix for the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4);
+        _;
+    }
+
+    modifier isCrowdsale() {
+        require(now >= crowdsaleStartTime && now <= crowdsaleFinishTime);
+        _;
+    }
+
+    function Crowdsale(address _backend, uint _etherPrice) public ManualMigration() {
+        backend = _backend;
+        etherPrice = _etherPrice;
+    }
+
+    function changeBackend(address _backend) public onlyOwner {
+        backend = _backend;
+    }
+    
+    function setEtherPrice(uint _etherPrice) public {
+        require(msg.sender == owner || msg.sender == backend);
+        etherPrice = _etherPrice;
+    }
+
+    function () payable public isCrowdsale {
+        uint valueUSD = msg.value * etherPrice / 1 ether;
+        collectedUSD += valueUSD;
+        mintTokens(msg.sender, valueUSD);
+    }
+
+    function depositUSD(address _who, uint _valueUSD) public isCrowdsale {
+        require(msg.sender == backend || msg.sender == owner);
+        collectedUSD += _valueUSD;
+        mintTokens(_who, _valueUSD);
+    }
+
+    function mintTokens(address _who, uint _valueUSD) internal {
+        uint tokensPerUSD = 100;
+        if (_valueUSD >= 50000) {
+            tokensPerUSD = 120;
+        } else if (now < crowdsaleStartTime + 1 days) {
+            tokensPerUSD = 115;
+        } else if (now < crowdsaleStartTime + 1 weeks) {
+            tokensPerUSD = 110;
+        }
+        uint tokens = tokensPerUSD * _valueUSD * 100000000;
+        require(balanceOf[_who] + tokens > balanceOf[_who]); // overflow
+        require(tokens > 0);
+        balanceOf[_who] += tokens;
+        if (!investors[_who]) {
+            investors[_who] = true;
+            ++numberOfInvestors;
+        }
+        Transfer(this, _who, tokens);
+        totalSupply += tokens;
+    }
+
+    function depositCPT(address _who, uint _valueCPT, bytes32 _originalTxHash) public isCrowdsale {
+        require(msg.sender == backend || msg.sender == owner);
+        // decimals in CPT and PROOF are the same and equal 8
+        uint tokens = 15 * _valueCPT / 10;
+        require(balanceOf[_who] + tokens > balanceOf[_who]); // overflow
+        require(tokens > 0);
+        balanceOf[_who] += tokens;
+        totalSupply += tokens;
+        collectedUSD += _valueCPT / 100;
+        if (!investors[_who]) {
+            investors[_who] = true;
+            ++numberOfInvestors;
+        }
+        Transfer(this, _who, tokens);
+        Mint(_who, tokens, _originalTxHash);
+    }
+
+    function withdraw() public onlyOwner {
+        require(msg.sender.call.gas(3000000).value(this.balance)());
+        uint balance = BaseERC20(cryptaurToken).balanceOf(this);
+        BaseERC20(cryptaurToken).transfer(msg.sender, balance);
+    }
+    
+    function finishCrowdsale() public onlyOwner {
+        require(!crowdsaleFinished);
+        uint extraTokens = totalSupply / 2;
+        balanceOf[msg.sender] += extraTokens;
+        totalSupply += extraTokens;
+        if (!investors[msg.sender]) {
+            investors[msg.sender] = true;
+            ++numberOfInvestors;
+        }
+        Transfer(this, msg.sender, extraTokens);
+        crowdsaleFinished = true;
+    }
 }
 
-contract ControllerInterface {
+contract ProofToken is Crowdsale {
 
-    function proxyPayment(address _owner) public payable returns(bool);
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
-    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
+    string  public standard = 'Token 0.1';
+    string  public name     = 'PROOF';
+    string  public symbol   = 'PF';
+    uint8   public decimals = 8;
+
+    mapping (address => mapping (address => uint)) public allowed;
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Burn(address indexed owner, uint value);
+
+    function ProofToken(address _backend, uint _etherPrice) public
+        payable Crowdsale(_backend, _etherPrice) {
+    }
+
+    function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+    }
+    
+    function transferFrom(address _from, address _to, uint _value) public onlyPayloadSize(3 * 32) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]); // overflow
+        require(allowed[_from][msg.sender] >= _value);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint _value) public {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+    
+    function burn(uint _value) public {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+    }
 }
