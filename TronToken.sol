@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronToken at 0x373cf0787a2bd4bc11257d4e43bdf990f1c99029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronToken at 0x062344dc7fbe2cb6a14eaf84b613af64684252bf
 */
 pragma solidity ^0.4.18;
 
@@ -10,14 +10,11 @@ contract TronToken {
     uint256  public decimals ;        //  token digit
 
     mapping (address => uint256) public balanceOf;
-    mapping (address => bool) public frozenAccount;
-    mapping (address => uint256) public frozenBalance; 
-    mapping (address => mapping (address => uint256)) public allowance;
 
     uint256 public totalSupply = 0;
     bool public stopped = false;      //  stopflag: true is stoped,false is not stoped
 
-    uint256 constant valueFounder = 1000000000000000000;
+    uint256 constant valueFounder = 500000000000000000;
     address owner = 0x0;
 
     modifier isOwner {
@@ -48,80 +45,38 @@ contract TronToken {
         balanceOf[_addressFounder] = totalSupply;
         Transfer(0x0, _addressFounder, totalSupply);
     }
-    /* stop contract */
-    function stop() public isOwner {
-        stopped = true;
-    }
-    /* start contract */
-    function start() public isOwner {
-        stopped = false;
-    }
-    /* set contract name */
-    function setName(string _name) public isOwner {
-        name = _name;
-    }
-    /* set contract owner */
-    function setOwner(address _owner) public isOwner {
-        owner = _owner;
-    }
-    /* send coins */
+
     function transfer(address _to, uint256 _value) public isRunning validAddress returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(balanceOf[msg.sender] - frozenBalance[msg.sender] >= _value);
+        require(balanceOf[msg.sender] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
         balanceOf[msg.sender] -= _value;
         balanceOf[_to] += _value;
         Transfer(msg.sender, _to, _value);
         return true;
     }
-    /* freeze account of target */
-    function freezeAccount(address _target) public isOwner {
-        frozenAccount[_target] = true;
-        FrozenFunds(_target, true);
+
+    function stop() public isOwner {
+        stopped = true;
     }
-    /* unfreeze account of target */
-    function unfreezeAccount(address _target) public isOwner {
-        frozenAccount[_target] = false;
-        FrozenFunds(_target, false);
+
+    function start() public isOwner {
+        stopped = false;
     }
-    /* freeze Balance of target */
-    function freezeBalance(address _target,uint256 _value) public isOwner {
-        frozenBalance[_target] = _value;
-        FrozenCoins(_target, _value);
+
+    function setName(string _name) public isOwner {
+        name = _name;
     }
-    /* unfreeze Balance of target */
-    function unfreezeBalance(address _target) public isOwner {
-        frozenBalance[_target] = 0;
-        FrozenCoins(_target, 0);
+    
+    function setOwner(address _owner) public isOwner {
+        owner = _owner;
     }
-    /* burn coins */
+
     function burn(uint256 _value) public {
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] -= _value;
         balanceOf[0x0] += _value;
         Transfer(msg.sender, 0x0, _value);
     }
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(balanceOf[_from] - frozenBalance[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        require(allowance[_from][msg.sender] >= _value) ;     // Check allowance
-        balanceOf[_from] -= _value;                           // Subtract from the sender
-        balanceOf[_to] += _value;                             // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value; 
-        Transfer(_from, _to, _value);
-        return true;
-    }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event FrozenFunds(address _target, bool _frozen);
-    event FrozenCoins(address _target, uint256 _value); 
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
