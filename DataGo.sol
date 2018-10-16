@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataGo at 0x05d199c8a245d03c30b0b920e64dba76ea6d9710
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataGo at 0x550adc599cddd67df53a29f845adc84bb3705ea7
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'DGO' DataGo
+// 'DGO' token contract
 //
 // Deployed to : 0x3dc7b4CdFd990df8B81A155e5dc66f6c7fE948A0
 // Symbol      : DGO
 // Name        : DataGo
-// Total supply: 100000000
+// Total supply: 500000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -115,12 +115,12 @@ contract DataGo is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function DataGo() public {
-        symbol = "DGO";
+    function DatingCoinToken() public {
+        symbol = "DTG";
         name = "DataGo";
         decimals = 18;
-        _totalSupply = 100000000;
-        balances[0x3dc7b4CdFd990df8B81A155e5dc66f6c7fE948A0] = _totalSupply;
+        _totalSupply = 100000000000000000000000000;
+        balances[0xD6a8AD5AE94ba12b0B4848FE689550e61151E7b0] = _totalSupply;
         Transfer(address(0), 0x3dc7b4CdFd990df8B81A155e5dc66f6c7fE948A0, _totalSupply);
     }
 
