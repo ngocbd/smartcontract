@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xFA69B360a33acebA81a6Ff762150F25B311cE039
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x27058b0fe23a4cdd08aced7ffd646647019cdab9
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.11;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
 contract Ownable {
   address public owner;
 
@@ -43,6 +38,8 @@ contract Ownable {
   }
 
 }
+
+
 contract ERC20Basic {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
