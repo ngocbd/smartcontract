@@ -1,367 +1,552 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma at 0x8309dd14df991b8f26954b3a2c0d03aad6cc0547
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KARMA at 0x67104e4ff34acdf64d58a829d055eb7cf4b5bb46
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
+/*
+/*
+* ===========================
+* We Present to you....
+* Coin Karma
+* 
+*================================*
+*| |                             *
+*| | ____ _ _ __ _ __ ___   __ _ *
+*| |/ / _` | '__| '_ ` _ \ / _` |*
+*|   < (_| | |  | | | | | | (_| |*
+*|_|\_\__,_|_|  |_| |_| |_|\__,_|*
+*================================*
+*
+* Game: https://coinkarma.me
+* Discord: https://discord.gg/4G7Jr7N
+* ===========================
+* -> Karma is Universal and now.. It's DECENTRALIZED!
+* We've managed to incorporated the best aspects of different contracts to bring KARMA to the blockchain.
+*
+* Why participate in our Ethereum dApp Game?
+* [?] 20% rewards for KARMA purchases, split among all KARMA holders.
+* [?] 10% rewards for KARMA transfers, split among all KARMA holders.
+* [?] 25% rewards for KARMA selling.
+* [?] 7% rewards is given to masternode referrer.
+* [?] 50 KARMA required to activate Masternodes (Must maintain 50 KARMA at ALL TIMES to benefit from masternode referrals.
+*
+*/
 
-/** SafeMath libs are inspired by:
-  *  https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
-  * There is debate as to whether this lib should use assert or require:
-  *  https://github.com/OpenZeppelin/zeppelin-solidity/issues/565
+contract KARMA {
 
-  * `require` is used in these libraries for the following reasons:
-  *   - overflows should not be checked in contract function bodies; DRY
-  *   - "valid" user input can cause overflows, which should not assert()
-  */
+
+    /*=================================
+    =            MODIFIERS            =
+    =================================*/
+
+    /// @dev Only people with tokens
+    modifier onlyBagholders {
+        require(myTokens() > 0);
+        _;
+    }
+
+    /// @dev Only people with profits
+    modifier onlyStronghands {
+        require(myDividends(true) > 0);
+        _;
+    }
+
+
+    /*==============================
+    =            EVENTS            =
+    ==============================*/
+
+    event onTokenPurchase(
+        address indexed customerAddress,
+        uint256 incomingEthereum,
+        uint256 tokensMinted,
+        address indexed referredBy,
+        uint timestamp,
+        uint256 price
+    );
+
+    event onTokenSell(
+        address indexed customerAddress,
+        uint256 tokensBurned,
+        uint256 ethereumEarned,
+        uint timestamp,
+        uint256 price
+    );
+
+    event onReinvestment(
+        address indexed customerAddress,
+        uint256 ethereumReinvested,
+        uint256 tokensMinted
+    );
+
+    event onWithdraw(
+        address indexed customerAddress,
+        uint256 ethereumWithdrawn
+    );
+
+    // ERC20
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 tokens
+    );
+
+
+    /*=====================================
+    =            CONFIGURABLES            =
+    =====================================*/
+
+    string public name = "Coin Karma";
+    string public symbol = "KARMA";
+    uint8 constant public decimals = 18;
+
+    /// @dev 15% dividends for token purchase
+    uint8 constant internal entryFee_ = 20;
+
+    /// @dev 10% dividends for token transfer
+    uint8 constant internal transferFee_ = 10;
+
+    /// @dev 25% dividends for token selling
+    uint8 constant internal exitFee_ = 25;
+
+    /// @dev 35% of entryFee_ (i.e. 7% dividends) is given to referrer
+    uint8 constant internal refferalFee_ = 35;
+
+    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal magnitude = 2 ** 64;
+
+    /// @dev proof of stake (defaults at 50 tokens)
+    uint256 public stakingRequirement = 50e18;
+
+
+   /*=================================
+    =            DATASETS            =
+    ================================*/
+
+    // amount of shares for each address (scaled number)
+    mapping(address => uint256) internal tokenBalanceLedger_;
+    mapping(address => uint256) internal referralBalance_;
+    mapping(address => int256) internal payoutsTo_;
+    uint256 internal tokenSupply_;
+    uint256 internal profitPerShare_;
+
+
+    /*=======================================
+    =            PUBLIC FUNCTIONS           =
+    =======================================*/
+
+    /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
+    function buy(address _referredBy) public payable returns (uint256) {
+        purchaseTokens(msg.value, _referredBy);
+    }
+
+    /**
+     * @dev Fallback function to handle ethereum that was send straight to the contract
+     *  Unfortunately we cannot use a referral address this way.
+     */
+    function() payable public {
+        purchaseTokens(msg.value, 0x0);
+    }
+
+    /// @dev Converts all of caller's dividends to tokens.
+    function reinvest() onlyStronghands public {
+        // fetch dividends
+        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
+
+        // pay out the dividends virtually
+        address _customerAddress = msg.sender;
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+
+        // retrieve ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+
+        // dispatch a buy order with the virtualized "withdrawn dividends"
+        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+
+        // fire event
+        onReinvestment(_customerAddress, _dividends, _tokens);
+    }
+
+    /// @dev Alias of sell() and withdraw().
+    function exit() public {
+        // get token count for caller & sell them all
+        address _customerAddress = msg.sender;
+        uint256 _tokens = tokenBalanceLedger_[_customerAddress];
+        if (_tokens > 0) sell(_tokens);
+
+        // lambo delivery service
+        withdraw();
+    }
+
+    /// @dev Withdraws all of the callers earnings.
+    function withdraw() onlyStronghands public {
+        // setup data
+        address _customerAddress = msg.sender;
+        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
+
+        // update dividend tracker
+        payoutsTo_[_customerAddress] += (int256) (_dividends * magnitude);
+
+        // add ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+
+        // lambo delivery service
+        _customerAddress.transfer(_dividends);
+
+        // fire event
+        onWithdraw(_customerAddress, _dividends);
+    }
+
+    /// @dev Liquifies tokens to ethereum.
+    function sell(uint256 _amountOfTokens) onlyBagholders public {
+        // setup data
+        address _customerAddress = msg.sender;
+        // russian hackers BTFO
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        uint256 _tokens = _amountOfTokens;
+        uint256 _ethereum = tokensToEthereum_(_tokens);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+
+        // burn the sold tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
+
+        // update dividends tracker
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
+        payoutsTo_[_customerAddress] -= _updatedPayouts;
+
+        // dividing by zero is a bad idea
+        if (tokenSupply_ > 0) {
+            // update the amount of dividends per token
+            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+        }
+
+        // fire event
+        onTokenSell(_customerAddress, _tokens, _taxedEthereum, now, buyPrice());
+    }
+
+
+    /**
+     * @dev Transfer tokens from the caller to a new holder.
+     *  Remember, there's a 15% fee here as well.
+     */
+    function transfer(address _toAddress, uint256 _amountOfTokens) onlyBagholders public returns (bool) {
+        // setup
+        address _customerAddress = msg.sender;
+
+        // make sure we have the requested tokens
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+
+        // withdraw all outstanding dividends first
+        if (myDividends(true) > 0) {
+            withdraw();
+        }
+
+        // liquify 10% of the tokens that are transfered
+        // these are dispersed to shareholders
+        uint256 _tokenFee = SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
+        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
+        uint256 _dividends = tokensToEthereum_(_tokenFee);
+
+        // burn the fee tokens
+        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
+
+        // exchange tokens
+        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
+
+        // update dividend trackers
+        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
+
+        // disperse dividends among holders
+        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+
+        // fire event
+        Transfer(_customerAddress, _toAddress, _taxedTokens);
+
+        // ERC20
+        return true;
+    }
+
+
+    /*=====================================
+    =      HELPERS AND CALCULATORS        =
+    =====================================*/
+
+    /**
+     * @dev Method to view the current Ethereum stored in the contract
+     *  Example: totalEthereumBalance()
+     */
+    function totalEthereumBalance() public view returns (uint256) {
+        return this.balance;
+    }
+
+    /// @dev Retrieve the total token supply.
+    function totalSupply() public view returns (uint256) {
+        return tokenSupply_;
+    }
+
+    /// @dev Retrieve the tokens owned by the caller.
+    function myTokens() public view returns (uint256) {
+        address _customerAddress = msg.sender;
+        return balanceOf(_customerAddress);
+    }
+
+    /**
+     * @dev Retrieve the dividends owned by the caller.
+     *  If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
+     *  The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
+     *  But in the internal calculations, we want them separate.
+     */
+    function myDividends(bool _includeReferralBonus) public view returns (uint256) {
+        address _customerAddress = msg.sender;
+        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+    }
+
+    /// @dev Retrieve the token balance of any single address.
+    function balanceOf(address _customerAddress) public view returns (uint256) {
+        return tokenBalanceLedger_[_customerAddress];
+    }
+
+    /// @dev Retrieve the dividend balance of any single address.
+    function dividendsOf(address _customerAddress) public view returns (uint256) {
+        return (uint256) ((int256) (profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
+    }
+
+    /// @dev Return the sell price of 1 individual token.
+    function sellPrice() public view returns (uint256) {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if (tokenSupply_ == 0) {
+            return tokenPriceInitial_ - tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+
+            return _taxedEthereum;
+        }
+    }
+
+    /// @dev Return the buy price of 1 individual token.
+    function buyPrice() public view returns (uint256) {
+        // our calculation relies on the token supply, so we need supply. Doh.
+        if (tokenSupply_ == 0) {
+            return tokenPriceInitial_ + tokenPriceIncremental_;
+        } else {
+            uint256 _ethereum = tokensToEthereum_(1e18);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, entryFee_), 100);
+            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
+
+            return _taxedEthereum;
+        }
+    }
+
+    /// @dev Function for the frontend to dynamically retrieve the price scaling of buy orders.
+    function calculateTokensReceived(uint256 _ethereumToSpend) public view returns (uint256) {
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, entryFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+
+        return _amountOfTokens;
+    }
+
+    /// @dev Function for the frontend to dynamically retrieve the price scaling of sell orders.
+    function calculateEthereumReceived(uint256 _tokensToSell) public view returns (uint256) {
+        require(_tokensToSell <= tokenSupply_);
+        uint256 _ethereum = tokensToEthereum_(_tokensToSell);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        return _taxedEthereum;
+    }
+
+
+    /*==========================================
+    =            INTERNAL FUNCTIONS            =
+    ==========================================*/
+
+    /// @dev Internal function to actually purchase the tokens.
+    function purchaseTokens(uint256 _incomingEthereum, address _referredBy) internal returns (uint256) {
+        // data setup
+        address _customerAddress = msg.sender;
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, entryFee_), 100);
+        uint256 _referralBonus = SafeMath.div(SafeMath.mul(_undividedDividends, refferalFee_), 100);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+
+        // no point in continuing execution if OP is a poorfag russian hacker
+        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
+        // (or hackers)
+        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
+        require(_amountOfTokens > 0 && SafeMath.add(_amountOfTokens, tokenSupply_) > tokenSupply_);
+
+        // is the user referred by a masternode?
+        if (
+            // is this a referred purchase?
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
+
+            // no cheating!
+            _referredBy != _customerAddress &&
+
+            // does the referrer have at least X whole tokens?
+            // i.e is the referrer a godly chad masternode
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ) {
+            // wealth redistribution
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+        } else {
+            // no ref purchase
+            // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
+        }
+
+        // we can't give people infinite ethereum
+        if (tokenSupply_ > 0) {
+            // add tokens to the pool
+            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+
+            // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
+            profitPerShare_ += (_dividends * magnitude / tokenSupply_);
+
+            // calculate the amount of tokens the customer receives over his purchase
+            _fee = _fee - (_fee - (_amountOfTokens * (_dividends * magnitude / tokenSupply_)));
+        } else {
+            // add tokens to the pool
+            tokenSupply_ = _amountOfTokens;
+        }
+
+        // update circulating supply & the ledger address for the customer
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+
+        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
+        // really i know you think you do but you don't
+        int256 _updatedPayouts = (int256) (profitPerShare_ * _amountOfTokens - _fee);
+        payoutsTo_[_customerAddress] += _updatedPayouts;
+
+        // fire event
+        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy, now, buyPrice());
+
+        return _amountOfTokens;
+    }
+
+    /**
+     * @dev Calculate Token price based on an amount of incoming ethereum
+     *  It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     *  Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+    function ethereumToTokens_(uint256 _ethereum) internal view returns (uint256) {
+        uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
+        uint256 _tokensReceived =
+         (
+            (
+                // underflow attempts BTFO
+                SafeMath.sub(
+                    (sqrt
+                        (
+                            (_tokenPriceInitial ** 2)
+                            +
+                            (2 * (tokenPriceIncremental_ * 1e18) * (_ethereum * 1e18))
+                            +
+                            ((tokenPriceIncremental_ ** 2) * (tokenSupply_ ** 2))
+                            +
+                            (2 * tokenPriceIncremental_ * _tokenPriceInitial*tokenSupply_)
+                        )
+                    ), _tokenPriceInitial
+                )
+            ) / (tokenPriceIncremental_)
+        ) - (tokenSupply_);
+
+        return _tokensReceived;
+    }
+
+    /**
+     * @dev Calculate token sell value.
+     *  It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
+     *  Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
+     */
+    function tokensToEthereum_(uint256 _tokens) internal view returns (uint256) {
+        uint256 tokens_ = (_tokens + 1e18);
+        uint256 _tokenSupply = (tokenSupply_ + 1e18);
+        uint256 _etherReceived =
+        (
+            // underflow attempts BTFO
+            SafeMath.sub(
+                (
+                    (
+                        (
+                            tokenPriceInitial_ + (tokenPriceIncremental_ * (_tokenSupply / 1e18))
+                        ) - tokenPriceIncremental_
+                    ) * (tokens_ - 1e18)
+                ), (tokenPriceIncremental_ * ((tokens_ ** 2 - tokens_) / 1e18)) / 2
+            )
+        / 1e18);
+
+        return _etherReceived;
+    }
+
+    /// @dev This is where all your gas goes.
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
+        uint256 z = (x + 1) / 2;
+        y = x;
+
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
+
+
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a);
-    return a - b;
-  }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a);
-    return c;
-  }
-}
-
-library SafeMath64 {
-  function sub(uint64 a, uint64 b) internal pure returns (uint64) {
-    require(b <= a);
-    return a - b;
-  }
-
-  function add(uint64 a, uint64 b) internal pure returns (uint64) {
-    uint64 c = a + b;
-    require(c >= a);
-    return c;
-  }
-}
-
-
-// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-
-// https://github.com/ethereum/EIPs/issues/179
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-// https://github.com/ethereum/EIPs/issues/20
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/DetailedERC20.sol
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-
-  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-  }
-}
-
-
-/** KarmaToken has the following properties:
-  *
-  * User Creation:
-  * - Self-registration
-  *   - Owner signs hash(address, username, endowment), and sends to user
-  *   - User registers with username, endowment, and signature to create new account.
-  * - Mod creates new user.
-  * - Users are first eligible to withdraw dividends for the period after account creation.
-  *
-  * Karma/Token Rules:
-  * - Karma is created by initial user creation endowment.
-  * - Karma can also be minted by mod into an existing account.
-  * - Karma can only be transferred to existing account holder.
-  * - Karma implements the ERC20 token interface.
-  *
-  * Dividends:
-  * - each user can withdraw a dividend once per month.
-  * - dividend is total contract value minus owner cut at end of the month, divided by total number of users at end of month.
-  * - owner cut is determined at beginning of new period.
-  * - user has 1 month to withdraw their dividend from the previous month.
-  * - if user does not withdraw their dividend, their share will be given to owner.
-  * - mod can place a user on a 1 month "timeout", whereby they won't be eligible for a dividend.
-
-  * Eg: 10 eth is sent to the contract in January, owner cut is 30%. 
-  * There are 70 token holders on Jan 31. At any time in February, each token holder can withdraw .1 eth for their January 
-  * dividend (unless they were given a "timeout" in January).
-  */
-contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
-  // SafeMath libs are responsible for checking overflow.
-  using SafeMath for uint256;
-  using SafeMath64 for uint64;
-
-  struct User {
-    bytes20 username;
-    uint64 karma; 
-    uint16 canWithdrawPeriod;
-    uint16 birthPeriod;
-  }
-
-  // Manage users.
-  mapping(address => User) public users;
-  mapping(bytes20 => address) public usernames;
-
-  // Manage dividend payments.
-  uint256 public epoch; // Timestamp at start of new period.
-  uint256 dividendPool; // Total amount of dividends to pay out for last period.
-  uint256 public dividend; // Per-user share of last period's dividend.
-  uint256 public ownerCut; // Percentage, in basis points, of owner cut of this period's payments.
-  uint64 public numUsers; // Number of users created before this period.
-  uint64 public newUsers; // Number of users created during this period.
-  uint16 public currentPeriod = 1;
-
-  address public moderator;
-
-  mapping(address => mapping (address => uint256)) internal allowed;
-
-  event Mint(address indexed to, uint256 amount);
-  event PeriodEnd(uint16 period, uint256 amount, uint64 users);
-  event Payment(address indexed from, uint256 amount);
-  event Withdrawal(address indexed to, uint16 indexed period, uint256 amount);
-  event NewUser(address addr, bytes20 username, uint64 endowment);
-
-  modifier onlyMod() {
-    require(msg.sender == moderator);
-    _;
-  }
-
-  function Karma(uint256 _startEpoch) public {
-    epoch = _startEpoch;
-    moderator = msg.sender;
-  }
-
-  function() payable public {
-    Payment(msg.sender, msg.value);
-  }
-
-  /** 
-   * Owner Functions 
-   */
-
-  function setMod(address _newMod) public onlyOwner {
-    moderator = _newMod;
-  }
-
-  // Owner should call this on 1st of every month.
-  // _ownerCut is new owner cut for new period.
-  function newPeriod(uint256 _ownerCut) public onlyOwner {
-    require(now >= epoch + 28 days);
-    require(_ownerCut <= 10000);
-
-    uint256 unclaimedDividend = dividendPool;
-    uint256 ownerRake = (this.balance-unclaimedDividend) * ownerCut / 10000;
-
-    dividendPool = this.balance - unclaimedDividend - ownerRake;
-
-    // Calculate dividend.
-    uint64 existingUsers = numUsers;
-    if (existingUsers == 0) {
-      dividend = 0;
-    } else {
-      dividend = dividendPool / existingUsers;
-    }
-
-    numUsers = numUsers.add(newUsers);
-    newUsers = 0;
-    currentPeriod++;
-    epoch = now;
-    ownerCut = _ownerCut;
-
-    msg.sender.transfer(ownerRake + unclaimedDividend);
-    PeriodEnd(currentPeriod-1, this.balance, existingUsers);
-  }
-
-  /**
-    * Mod Functions
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
     */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-  function createUser(address _addr, bytes20 _username, uint64 _amount) public onlyMod {
-    newUser(_addr, _username, _amount);
-  }
-
-  // Send karma to existing account.
-  function mint(address _addr, uint64 _amount) public onlyMod {
-    require(users[_addr].canWithdrawPeriod != 0);
-
-    users[_addr].karma = users[_addr].karma.add(_amount);
-    totalSupply = totalSupply.add(_amount);
-    Mint(_addr, _amount);
-  }
-
-  // If a user has been bad, they won't be able to receive a dividend :(
-  function timeout(address _addr) public onlyMod {
-    require(users[_addr].canWithdrawPeriod != 0);
-
-    users[_addr].canWithdrawPeriod = currentPeriod + 1;
-  }
-
-  /**
-    * User Functions
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
     */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  // Owner will sign hash(address, username, amount), and address owner uses this 
-  // signature to register their account.
-  function register(bytes20 _username, uint64 _endowment, bytes _sig) public {
-    require(recover(keccak256(msg.sender, _username, _endowment), _sig) == owner);
-    newUser(msg.sender, _username, _endowment);
-  }
-
-  // User can withdraw their share of donations from the previous month.
-  function withdraw() public {
-    require(users[msg.sender].canWithdrawPeriod != 0);
-    require(users[msg.sender].canWithdrawPeriod < currentPeriod);
-
-    users[msg.sender].canWithdrawPeriod = currentPeriod;
-    dividendPool -= dividend;
-    msg.sender.transfer(dividend);
-    Withdrawal(msg.sender, currentPeriod-1, dividend);
-  }
-
-  /**
-    * ERC20 Functions
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
-
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return users[_owner].karma;
-  }
-
-  // Contrary to most ERC20 implementations, require that recipient is existing user.
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(users[_to].canWithdrawPeriod != 0);
-    require(_value <= users[msg.sender].karma);
-
-    // Type assertion to uint64 is safe because we require that _value is < uint64 above.
-    users[msg.sender].karma = users[msg.sender].karma.sub(uint64(_value));
-    users[_to].karma = users[_to].karma.add(uint64(_value));
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
 
-  // Contrary to most ERC20 implementations, require that recipient is existing user.
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(users[_to].canWithdrawPeriod != 0);
-    require(_value <= users[_from].karma);
-    require(_value <= allowed[_from][msg.sender]);
-
-    users[_from].karma = users[_from].karma.sub(uint64(_value));
-    users[_to].karma = users[_to].karma.add(uint64(_value));
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-    * Private Functions
+    /**
+    * @dev Adds two numbers, throws on overflow.
     */
-
-  // Ensures that username isn't taken, and account doesn't already exist for 
-  // user's address.
-  function newUser(address _addr, bytes20 _username, uint64 _endowment) private {
-    require(usernames[_username] == address(0));
-    require(users[_addr].canWithdrawPeriod == 0);
-
-    users[_addr].canWithdrawPeriod = currentPeriod + 1;
-    users[_addr].birthPeriod = currentPeriod;
-    users[_addr].karma = _endowment;
-    users[_addr].username = _username;
-    usernames[_username] = _addr;
-
-    newUsers = newUsers.add(1);
-    totalSupply = totalSupply.add(_endowment);
-    NewUser(_addr, _username, _endowment);
-  }
-
-  // https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ECRecovery.sol
-  function recover(bytes32 hash, bytes sig) internal pure returns (address) {
-    bytes32 r;
-    bytes32 s;
-    uint8 v;
-
-    //Check the signature length
-    if (sig.length != 65) {
-      return (address(0));
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 
-    // Divide the signature in r, s and v variables
-    assembly {
-      r := mload(add(sig, 32))
-      s := mload(add(sig, 64))
-      v := byte(0, mload(add(sig, 96)))
-    }
-
-    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-    if (v < 27) {
-      v += 27;
-    }
-
-    // If the version is correct return the signer address
-    if (v != 27 && v != 28) {
-      return (address(0));
-    } else {
-      return ecrecover(hash, v, r, s);
-    }
-  }
 }
