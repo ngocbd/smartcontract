@@ -1,25 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Burner at 0xb69fba56b2e67e7dda61c8aa057886a8d1468575
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Burner at 0xE47f0EbA2F8b2D4713a30D28D7B1e756514F6f9E
 */
-pragma solidity ^0.4.11;
+pragma solidity ^ 0.4.11;
+
+
+contract Dragon {
+    function burnDragons( uint256 _amount );
+}
+
 
 contract Burner {
-    uint256 public totalBurned;
     
-    function Purge() public {
-        // the caller of purge action receives 0.01% out of the
-        // current balance.
-        msg.sender.transfer(this.balance / 1000);
-        assembly {
-            mstore(0, 0x30ff)
-            // transfer all funds to a new contract that will selfdestruct
-            // and destroy all ether in the process.
-            create(balance(address), 30, 2)
-            pop
+
+    address dragon;
+    uint256 DragonsBurned;
+    
+    
+    modifier onlyDragon() {
+        if (msg.sender != dragon) {
+            throw;
         }
+        _;
     }
     
-    function Burn() payable {
-        totalBurned += msg.value;
+    function Burner () {
+        
+        dragon = 0x1d1CF6cD3fE91fe4d1533BA3E0b7758DFb59aa1f;
+        
     }
+
+
+
+    function dragonHandler( uint256 _amount ) onlyDragon {
+        
+        Dragon drag = Dragon ( dragon );
+        drag.burnDragons ( _amount );
+        DragonsBurned += _amount;
+    
+        
+    }   
+ 
+ 
+    
+    
 }
