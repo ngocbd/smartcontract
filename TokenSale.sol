@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x521ed218348577fa2915b9454b72712024d350d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xe59015e2d097b545f0b1701c64310f98e3600495
 */
-/*
- * NYX Token smart contract
+pragma solidity ^0.4.18;
+
+ 
+ /*
+ * NYX Token sale
  *
  * Supports ERC20, ERC223 stadards
  *
@@ -370,7 +373,6 @@ contract ERC23PayableToken is BasicToken, ERC23{
 contract NYXToken is MintableToken, ERC23PayableToken {
     string public constant name = "NYX Token";
     string public constant symbol = "NYX";
-    uint constant decimals = 0;
 
     bool public transferEnabled = true;
 
@@ -438,7 +440,7 @@ contract TokenSale is Ownable {
 
     // State variables
     // ===============
-    bool public presale;
+    bool public presale = true;
     NYXToken public token;
     address authority; //An account to control the contract on behalf of the owner
     address robot; //An account to purchase tokens for altcoins
@@ -457,7 +459,7 @@ contract TokenSale is Ownable {
 
     // Public functions
     // ================
-    function togglePresale(bool activate) onlyOwner {
+    function togglePresale(bool activate) onlyAuthority {
         presale = activate;
     }
 
@@ -548,6 +550,13 @@ contract TokenSale is Ownable {
     function open(bool opn) onlyAuthority {
         isOpen = opn;
         opn ? RunSale() : PauseSale();
+    }
+    
+    function finalizePresale() onlyAuthority {
+        // Check for SOFT_CAP
+        require(token.totalSupply() > SOFT_CAP + TEAM_CAP);
+        // Transfer collected softcap to the team
+        owner.transfer(this.balance);
     }
 
     function finalize() onlyAuthority {
