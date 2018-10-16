@@ -1,751 +1,599 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x6d0a44fb6a416da6efe1c192560be1bccd01f6be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x937ee62efc6a3b3f498ef59bca5e9f59cf4166ca
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 /**
- * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function () public payable {
+    revert();
+  }
+
+}
+
+/**
+ * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
  * functions, this simplifies the implementation of "user permissions".
- * license: MIT
  */
-contract OwnableSimple {
-    address public owner;
+contract Ownable {
+  address public owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function OwnableSimple() public {
-        owner = msg.sender;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-// based on axiomzen, MIT license
-contract RandomApi {
-    uint64 _seed = 0;
-
-    function random(uint64 maxExclusive) public returns (uint64 randomNumber) {
-        // the blockhash of the current block (and future block) is 0 because it doesn't exist
-        _seed = uint64(keccak256(keccak256(block.blockhash(block.number - 1), _seed), block.timestamp));
-        return _seed % maxExclusive;
-    }
-
-    function random256() public returns (uint256 randomNumber) {
-        uint256 rand = uint256(keccak256(keccak256(block.blockhash(block.number - 1), _seed), block.timestamp));
-        _seed = uint64(rand);
-        return rand;
-    }
-}
-
-// @title ERC-165: Standard interface detection
-// https://github.com/ethereum/EIPs/issues/165
-contract ERC165 {
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
-}
-
-// @title ERC-721: Non-Fungible Tokens
-// @author Dieter Shirley (https://github.com/dete)
-// @dev https://github.com/ethereum/eips/issues/721
-contract ERC721 is ERC165 {
-    // Required methods
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 count);
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
+contract MintableToken is StandardToken, Ownable {
     
-    // described in old version of the standard
-    // use the more flexible transferFrom
-    function takeOwnership(uint256 _tokenId) external;
+  event Mint(address indexed to, uint256 amount);
+  
+  event MintFinished();
 
-    // Events
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+  bool public mintingFinished = false;
 
-    // Optional
-    // function name() public view returns (string);
-    // function symbol() public view returns (string);
-    function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
-    function tokenMetadata(uint256 _tokenId, string _preferredTransport) external view returns (string infoUrl);
-    
-    // Optional, described in old version of the standard
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
-    function tokenMetadata(uint256 _tokenId) external view returns (string infoUrl);
-}
+  address public saleAgent;
 
-// Based on strings library by Nick Johnson <arachnid@notdot.net>
-// Apache license
-// https://github.com/Arachnid/solidity-stringutils
-library strings {
-    struct slice {
-        uint _len;
-        uint _ptr;
-    }
-    
-    function memcpy(uint dest, uint src, uint len) private pure {
-        // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
 
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-    }
-    
-    function toSlice(string self) internal pure returns (slice) {
-        uint ptr;
-        assembly {
-            ptr := add(self, 0x20)
-        }
-        return slice(bytes(self).length, ptr);
-    }
-    
-    function toString(slice self) internal pure returns (string) {
-        var ret = new string(self._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
+  function setSaleAgent(address newSaleAgnet) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    saleAgent = newSaleAgnet;
+  }
 
-        memcpy(retptr, self._ptr, self._len);
-        return ret;
-    }
-    
-    function len(slice self) internal pure returns (uint l) {
-        // Starting at ptr-31 means the LSB will be the byte we care about
-        var ptr = self._ptr - 31;
-        var end = ptr + self._len;
-        for (l = 0; ptr < end; l++) {
-            uint8 b;
-            assembly { b := and(mload(ptr), 0xFF) }
-            if (b < 0x80) {
-                ptr += 1;
-            } else if(b < 0xE0) {
-                ptr += 2;
-            } else if(b < 0xF0) {
-                ptr += 3;
-            } else if(b < 0xF8) {
-                ptr += 4;
-            } else if(b < 0xFC) {
-                ptr += 5;
-            } else {
-                ptr += 6;
-            }
-        }
-    }
-    
-    function len(bytes32 self) internal pure returns (uint) {
-        uint ret;
-        if (self == 0)
-            return 0;
-        if (self & 0xffffffffffffffffffffffffffffffff == 0) {
-            ret += 16;
-            self = bytes32(uint(self) / 0x100000000000000000000000000000000);
-        }
-        if (self & 0xffffffffffffffff == 0) {
-            ret += 8;
-            self = bytes32(uint(self) / 0x10000000000000000);
-        }
-        if (self & 0xffffffff == 0) {
-            ret += 4;
-            self = bytes32(uint(self) / 0x100000000);
-        }
-        if (self & 0xffff == 0) {
-            ret += 2;
-            self = bytes32(uint(self) / 0x10000);
-        }
-        if (self & 0xff == 0) {
-            ret += 1;
-        }
-        return 32 - ret;
-    }
-    
-    function toSliceB32(bytes32 self) internal pure returns (slice ret) {
-        assembly {
-            let ptr := mload(0x40)
-            mstore(0x40, add(ptr, 0x20))
-            mstore(ptr, self)
-            mstore(add(ret, 0x20), ptr)
-        }
-        ret._len = len(self);
-    }
-    
-    function concat(slice self, slice other) internal pure returns (string) {
-        var ret = new string(self._len + other._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
-        memcpy(retptr, self._ptr, self._len);
-        memcpy(retptr + self._len, other._ptr, other._len);
-        return ret;
-    }
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require(msg.sender == saleAgent && !mintingFinished);
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+  
 }
 
 /**
- * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/lifecycle/Pausable.sol
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
-contract PausableSimple is OwnableSimple {
-    event Pause();
-    event Unpause();
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
-    bool public paused = true;
+  bool public paused = false;
 
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
 
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
 
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
 
-    /**
-     * @dev called by the owner to unpause, returns to normal state
-     */
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
 }
 
-// heavily modified from https://github.com/dob/auctionhouse/blob/master/contracts/AuctionHouse.sol
-// license: MIT
-// original author: Doug Petkanics (petkanics@gmail.com) https://github.com/dob
-contract PresaleMarket is PausableSimple {
-    struct Auction {
-        address seller;
-        uint256 price;           // In wei, can be 0
-    }
+contract CRYPTORIYA is MintableToken {	
+    
+  string public constant name = "CRYPTORIYA";
+   
+  string public constant symbol = "CIYA";
+    
+  uint32 public constant decimals = 18;
 
-    ERC721 public artworkContract;
-    mapping (uint256 => Auction) artworkIdToAuction;
+  mapping (address => uint) public locked;
 
-    //      0 means everything goes to the seller
-    //   1000 means 1%
-    //   2500 means 2.5%
-    //   4000 means 4%
-    //  50000 means 50%
-    // 100000 means everything goes to us
-    uint256 public distributionCut = 2500;
-    bool public constant isPresaleMarket = true;
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(locked[msg.sender] < now);
+    return super.transfer(_to, _value);
+  }
 
-    event AuctionCreated(uint256 _artworkId, uint256 _price);
-    event AuctionConcluded(uint256 _artworkId, uint256 _price, address _buyer);
-    event AuctionCancelled(uint256 _artworkId);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(locked[_from] < now);
+    return super.transferFrom(_from, _to, _value);
+  }
+  
+  function lock(address addr, uint periodInDays) public {
+    require(locked[addr] < now && (msg.sender == saleAgent || msg.sender == addr));
+    locked[addr] = now + periodInDays * 1 days;
+  }
 
-    // mapping(address => uint256[]) public auctionsRunByUser;
-    // No need to have a dedicated variable
-    // Can be found by
-    //  iterate all artwork ids owned by this auction contract
-    //    get the auction object from artworkIdToAuction
-    //      get the seller property
-    //        return artwork id
-    // however it would be a lot better if our second layer keeps track of it
-    function auctionsRunByUser(address _address) external view returns(uint256[]) {
-        uint256 allArtworkCount = artworkContract.balanceOf(this);
-
-        uint256 artworkCount = 0;
-        uint256[] memory allArtworkIds = new uint256[](allArtworkCount);
-        for(uint256 i = 0; i < allArtworkCount; i++) {
-            uint256 artworkId = artworkContract.tokenOfOwnerByIndex(this, i);
-            Auction storage auction = artworkIdToAuction[artworkId];
-            if(auction.seller == _address) {
-                allArtworkIds[artworkCount++] = artworkId;
-            }
-        }
-
-        uint256[] memory result = new uint256[](artworkCount);
-        for(i = 0; i < artworkCount; i++) {
-            result[i] = allArtworkIds[i];
-        }
-
-        return result;
-    }
-
-    // constructor. rename this if you rename the contract
-    function PresaleMarket(address _artworkContract) public {
-        artworkContract = ERC721(_artworkContract);
-    }
-
-    function bid(uint256 _artworkId) external payable whenNotPaused {
-        require(_isAuctionExist(_artworkId));
-        Auction storage auction = artworkIdToAuction[_artworkId];
-        require(auction.seller != msg.sender);
-        uint256 price = auction.price;
-        require(msg.value == price);
-
-        address seller = auction.seller;
-        delete artworkIdToAuction[_artworkId];
-
-        if(price > 0) {
-            uint256 myCut =  price * distributionCut / 100000;
-            uint256 sellerCut = price - myCut;
-            seller.transfer(sellerCut);
-        }
-
-        AuctionConcluded(_artworkId, price, msg.sender);
-        artworkContract.transfer(msg.sender, _artworkId);
-    }
-
-    function getAuction(uint256 _artworkId) external view returns(address seller, uint256 price) {
-        require(_isAuctionExist(_artworkId));
-        Auction storage auction = artworkIdToAuction[_artworkId];
-        return (auction.seller, auction.price);
-    }
-
-    function createAuction(uint256 _artworkId, uint256 _price, address _originalOwner) external whenNotPaused {
-        require(msg.sender == address(artworkContract));
-
-        // Will check to see if the seller owns the asset at the contract
-        _takeOwnership(_originalOwner, _artworkId);
-
-        Auction memory auction;
-
-        auction.seller = _originalOwner;
-        auction.price = _price;
-
-        _createAuction(_artworkId, auction);
-    }
-
-    function _createAuction(uint256 _artworkId, Auction _auction) internal {
-        artworkIdToAuction[_artworkId] = _auction;
-        AuctionCreated(_artworkId, _auction.price);
-    }
-
-    function cancelAuction(uint256 _artworkId) external {
-        require(_isAuctionExist(_artworkId));
-        Auction storage auction = artworkIdToAuction[_artworkId];
-        address seller = auction.seller;
-        require(msg.sender == seller);
-        _cancelAuction(_artworkId, seller);
-    }
-
-    function _cancelAuction(uint256 _artworkId, address _owner) internal {
-        delete artworkIdToAuction[_artworkId];
-        artworkContract.transfer(_owner, _artworkId);
-        AuctionCancelled(_artworkId);
-    }
-
-    function withdraw() public onlyOwner {
-        msg.sender.transfer(this.balance);
-    }
-
-    // only if there is a bug discovered and we need to migrate to a new market contract
-    function cancelAuctionEmergency(uint256 _artworkId) external whenPaused onlyOwner {
-        require(_isAuctionExist(_artworkId));
-        Auction storage auction = artworkIdToAuction[_artworkId];
-        _cancelAuction(_artworkId, auction.seller);
-    }
-
-    // simple methods
-
-    function _isAuctionExist(uint256 _artworkId) internal view returns(bool) {
-        return artworkIdToAuction[_artworkId].seller != address(0);
-    }
-
-    function _owns(address _address, uint256 _artworkId) internal view returns(bool) {
-        return artworkContract.ownerOf(_artworkId) == _address;
-    }
-
-    function _takeOwnership(address _originalOwner, uint256 _artworkId) internal {
-        artworkContract.transferFrom(_originalOwner, this, _artworkId);
-    }
 }
 
-contract Presale is OwnableSimple, RandomApi, ERC721 {
-    using strings for *;
+contract StagedCrowdsale is Pausable {
 
-    // There are 4 batches available for presale.
-    // A batch is a set of artworks and
-    // we plan to release batches monthly.
-    uint256 public batchCount;
-    mapping(uint256 => uint256) public prices;
-    mapping(uint256 => uint256) public supplies;
-    mapping(uint256 => uint256) public sold;
+  using SafeMath for uint;
 
-    // Before each batch is released on the main contract,
-    // we will disable transfers (including trading)
-    // on this contract.
-    // This is to prevent someone selling an artwork
-    // on the presale contract when we are migrating
-    // the artworks to the main contract.
-    mapping(uint256 => bool) public isTransferDisabled;
+  struct Stage {
+    uint hardcap;
+    uint price;
+    uint invested;
+    uint closed;
+  }
 
-    uint256[] public dnas;
-    mapping(address => uint256) public ownerToTokenCount;
-    mapping (uint256 => address) public artworkIdToOwner;
-    mapping (uint256 => address) public artworkIdToTransferApproved;
+  uint public start;
 
-    PresaleMarket public presaleMarket;
+  uint public period;
 
-    bytes4 constant ERC165Signature_ERC165 = bytes4(keccak256('supportsInterface(bytes4)'));
+  uint public totalHardcap;
+ 
+  uint public totalInvested;
 
-    // Latest version of ERC721 perhaps
-    bytes4 constant ERC165Signature_ERC721A =
-    bytes4(keccak256('totalSupply()')) ^
-    bytes4(keccak256('balanceOf(address)')) ^
-    bytes4(keccak256('ownerOf(uint256)')) ^
-    bytes4(keccak256('approve(address,uint256)')) ^
-    bytes4(keccak256('transfer(address,uint256)')) ^
-    bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-    bytes4(keccak256('name()')) ^
-    bytes4(keccak256('symbol()')) ^
-    bytes4(keccak256('tokensOfOwner(address)')) ^
-    bytes4(keccak256('tokenMetadata(uint256,string)'));
+  Stage[] public stages;
 
-    // as described in https://github.com/ethereum/eips/issues/721
-    // as of January 23, 2018
-    bytes4 constant ERC165Signature_ERC721B =
-    bytes4(keccak256('name()')) ^
-    bytes4(keccak256('symbol()')) ^
-    bytes4(keccak256('totalSupply()')) ^
-    bytes4(keccak256('balanceOf(address)')) ^
-    bytes4(keccak256('ownerOf(uint256)')) ^
-    bytes4(keccak256('approve(address,uint256)')) ^
-    bytes4(keccak256('takeOwnership(uint256)')) ^
-    bytes4(keccak256('transfer(address,uint256)')) ^
-    bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-    bytes4(keccak256('tokenMetadata(uint256)'));
+  function stagesCount() public constant returns(uint) {
+    return stages.length;
+  }
 
-    function Presale() public {
-        // Artworks are released in batches, which we plan to release
-        // every month if possible. New batches might contain new characters,
-        // or old characters in new poses. Later batches will definitely be
-        // more rare.
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
 
-        // By buying at presale, you have a chance to buy the
-        // artwork at potentially 50% of the public release initial sales price.
-        // Note that because the public release uses a sliding price system,
-        // once an artwork is in the marketplace, the price will get lower until
-        // someone buys it.
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
+  }
 
-        // Example: You bought a batch 1 artwork at presale for 0.05 eth.
-        // When the game launches, the first batch 1 artworks are generated
-        // on the marketplace with the initial price of 0.1 eth. You sell yours
-        // on the marketplace for 0.08 eth which is lower than the public release
-        // initial sales price. If someone buys your artwork, you will get profit.
+  function addStage(uint hardcap, uint price) public onlyOwner {
+    require(hardcap > 0 && price > 0);
+    Stage memory stage = Stage(hardcap.mul(1 ether), price, 0, 0);
+    stages.push(stage);
+    totalHardcap = totalHardcap.add(stage.hardcap);
+  }
 
-        // Note that we do not guarantee any profit whatsoever. The price of an
-        // item we sell will get cheaper until someone buys it. So other people might wait
-        // for the public release artworks to get cheaper and buy it instead of
-        // buying yours.
-
-        // Distribution of presale artworks:
-        // When the game is released, all batch 1 presale artworks
-        // will be immediately available for trading.
-
-        // When other batches are released, first we will generate 10 artworks
-        // on the marketplace. After that we will distribute the presale
-        // artworks with the rate of around 10 every minute.
-        // Note that because of mining uncertainties we cannot guarantee any
-        // specific timings.
-
-        // public release initial sales price >= 0.1 ether
-        _addPresale(0.05 ether, 450);
-
-        // public release initial sales price >= 0.24 ether
-        _addPresale(0.12 ether, 325);
-
-        // public release initial sales price >= 0.7 ether
-        _addPresale(0.35 ether, 150);
-
-        // public release initial sales price >= 2.0 ether
-        _addPresale(1.0 ether, 75);
+  function removeStage(uint8 number) public onlyOwner {
+    require(number >=0 && number < stages.length);
+    Stage storage stage = stages[number];
+    totalHardcap = totalHardcap.sub(stage.hardcap);    
+    delete stages[number];
+    for (uint i = number; i < stages.length - 1; i++) {
+      stages[i] = stages[i+1];
     }
+    stages.length--;
+  }
 
-    function buy(uint256 _batch) public payable {
-        require(_batch < batchCount);
-        require(msg.value == prices[_batch]); // we don't want to deal with refunds
-        require(sold[_batch] < supplies[_batch]);
+  function changeStage(uint8 number, uint hardcap, uint price) public onlyOwner {
+    require(number >= 0 &&number < stages.length);
+    Stage storage stage = stages[number];
+    totalHardcap = totalHardcap.sub(stage.hardcap);    
+    stage.hardcap = hardcap.mul(1 ether);
+    stage.price = price;
+    totalHardcap = totalHardcap.add(stage.hardcap);    
+  }
 
-        sold[_batch]++;
-        uint256 dna = _generateRandomDna(_batch);
-
-        uint256 artworkId = dnas.push(dna) - 1;
-        ownerToTokenCount[msg.sender]++;
-        artworkIdToOwner[artworkId] = msg.sender;
-
-        Transfer(0, msg.sender, artworkId);
+  function insertStage(uint8 numberAfter, uint hardcap, uint price) public onlyOwner {
+    require(numberAfter < stages.length);
+    Stage memory stage = Stage(hardcap.mul(1 ether), price, 0, 0);
+    totalHardcap = totalHardcap.add(stage.hardcap);
+    stages.length++;
+    for (uint i = stages.length - 2; i > numberAfter; i--) {
+      stages[i + 1] = stages[i];
     }
+    stages[numberAfter + 1] = stage;
+  }
 
-    function getArtworkInfo(uint256 _id) external view returns (
-        uint256 dna, address owner) {
-        require(_id < totalSupply());
-
-        dna = dnas[_id];
-        owner = artworkIdToOwner[_id];
+  function clearStages() public onlyOwner {
+    for (uint i = 0; i < stages.length; i++) {
+      delete stages[i];
     }
+    stages.length -= stages.length;
+    totalHardcap = 0;
+  }
 
-    function withdraw() public onlyOwner {
-        msg.sender.transfer(this.balance);
+  function lastSaleDate() public constant returns(uint) {
+    return start + period * 1 days;
+  }
+
+  modifier saleIsOn() {
+    require(stages.length > 0 && now >= start && now < lastSaleDate());
+    _;
+  }
+  
+  modifier isUnderHardcap() {
+    require(totalInvested <= totalHardcap);
+    _;
+  }
+
+  function currentStage() public saleIsOn isUnderHardcap constant returns(uint) {
+    for(uint i=0; i < stages.length; i++) {
+      if(stages[i].closed == 0) {
+        return i;
+      }
     }
+    revert();
+  }
 
-    function getBatchInfo(uint256 _batch) external view returns(uint256 price, uint256 supply, uint256 soldAmount) {
-        require(_batch < batchCount);
+}
 
-        return (prices[_batch], supplies[_batch], sold[_batch]);
+contract CommonSale is StagedCrowdsale {
+
+  address public masterWallet;
+
+  address public slaveWallet;
+  
+  address public directMintAgent;
+
+  uint public slaveWalletPercent = 30;
+
+  uint public percentRate = 100;
+
+  uint public minPrice;
+
+  uint public totalTokensMinted;
+  
+  bool public slaveWalletInitialized;
+  
+  bool public slaveWalletPercentInitialized;
+
+  CRYPTORIYA public token;
+  
+  modifier onlyDirectMintAgentOrOwner() {
+    require(directMintAgent == msg.sender || owner == msg.sender);
+    _;
+  }
+  
+  function setDirectMintAgent(address newDirectMintAgent) public onlyOwner {
+    directMintAgent = newDirectMintAgent;
+  }
+  
+  function setMinPrice(uint newMinPrice) public onlyOwner {
+    minPrice = newMinPrice;
+  }
+
+  function setSlaveWalletPercent(uint newSlaveWalletPercent) public onlyOwner {
+    require(!slaveWalletPercentInitialized);
+    slaveWalletPercent = newSlaveWalletPercent;
+    slaveWalletPercentInitialized = true;
+  }
+
+  function setMasterWallet(address newMasterWallet) public onlyOwner {
+    masterWallet = newMasterWallet;
+  }
+
+  function setSlaveWallet(address newSlaveWallet) public onlyOwner {
+    require(!slaveWalletInitialized);
+    slaveWallet = newSlaveWallet;
+    slaveWalletInitialized = true;
+  }
+  
+  function setToken(address newToken) public onlyOwner {
+    token = CRYPTORIYA(newToken);
+  }
+
+  function directMint(address to, uint investedWei) public onlyDirectMintAgentOrOwner saleIsOn {
+    mintTokens(to, investedWei);
+  }
+
+  function createTokens() public whenNotPaused payable {
+    require(msg.value >= minPrice);
+    uint masterValue = msg.value.mul(percentRate.sub(slaveWalletPercent)).div(percentRate);
+    uint slaveValue = msg.value.sub(masterValue);
+    masterWallet.transfer(masterValue);
+    slaveWallet.transfer(slaveValue);
+    mintTokens(msg.sender, msg.value);
+  }
+
+  function mintTokens(address to, uint weiInvested) internal {
+    uint stageIndex = currentStage();
+    Stage storage stage = stages[stageIndex];
+    uint tokens = weiInvested.mul(stage.price);
+    token.mint(this, tokens);
+    token.transfer(to, tokens);
+    totalTokensMinted = totalTokensMinted.add(tokens);
+    totalInvested = totalInvested.add(weiInvested);
+    stage.invested = stage.invested.add(weiInvested);
+    if(stage.invested >= stage.hardcap) {
+      stage.closed = now;
     }
+  }
 
-    function setTransferDisabled(uint256 _batch, bool _isDisabled) external onlyOwner {
-        require(_batch < batchCount);
+  function() external payable {
+    createTokens();
+  }
+  
+  function retrieveTokens(address anotherToken, address to) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
 
-        isTransferDisabled[_batch] = _isDisabled;
-    }
+}
 
-    function setPresaleMarketAddress(address _address) public onlyOwner {
-        PresaleMarket presaleMarketTest = PresaleMarket(_address);
-        require(presaleMarketTest.isPresaleMarket());
-        presaleMarket = presaleMarketTest;
-    }
+contract Presale is CommonSale {
 
-    function sell(uint256 _artworkId, uint256 _price) external {
-        require(_isOwnerOf(msg.sender, _artworkId));
-        require(_canTransferBatch(_artworkId));
-        _approveTransfer(_artworkId, presaleMarket);
-        presaleMarket.createAuction(_artworkId, _price, msg.sender);
-    }
+  Mainsale public mainsale;
 
-    // Helper methods
+  function setMainsale(address newMainsale) public onlyOwner {
+    mainsale = Mainsale(newMainsale);
+  }
 
-    function _addPresale(uint256 _price, uint256 _supply) private {
-        prices[batchCount] = _price;
-        supplies[batchCount] = _supply;
+  function finishMinting() public whenNotPaused onlyOwner {
+    token.setSaleAgent(mainsale);
+  }
 
-        batchCount++;
-    }
+  function() external payable {
+    createTokens();
+  }
 
-    function _generateRandomDna(uint256 _batch) private returns(uint256 dna) {
-        uint256 rand = random256() % (10 ** 76);
+}
 
-        // set batch digits
-        rand = rand / 100000000 * 100000000 + _batch;
+contract Mainsale is CommonSale {
 
-        return rand;
-    }
+  address public foundersTokensWallet;
+  
+  address public bountyTokensWallet;
+  
+  uint public foundersTokensPercent;
+  
+  uint public bountyTokensPercent;
+  
+  uint public lockPeriod;
 
-    function _isOwnerOf(address _address, uint256 _tokenId) private view returns (bool) {
-        return artworkIdToOwner[_tokenId] == _address;
-    }
+  function setLockPeriod(uint newLockPeriod) public onlyOwner {
+    lockPeriod = newLockPeriod;
+  }
 
-    function _approveTransfer(uint256 _tokenId, address _address) internal {
-        artworkIdToTransferApproved[_tokenId] = _address;
-    }
+  function setFoundersTokensPercent(uint newFoundersTokensPercent) public onlyOwner {
+    foundersTokensPercent = newFoundersTokensPercent;
+  }
 
-    function _transfer(address _from, address _to, uint256 _tokenId) internal {
-        artworkIdToOwner[_tokenId] = _to;
-        ownerToTokenCount[_to]++;
+  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
+    bountyTokensPercent = newBountyTokensPercent;
+  }
 
-        ownerToTokenCount[_from]--;
-        delete artworkIdToTransferApproved[_tokenId];
+  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
+    foundersTokensWallet = newFoundersTokensWallet;
+  }
 
-        Transfer(_from, _to, _tokenId);
-    }
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
 
-    function _approvedForTransfer(address _address, uint256 _tokenId) internal view returns (bool) {
-        return artworkIdToTransferApproved[_tokenId] == _address;
-    }
+  function finishMinting() public whenNotPaused onlyOwner {
+    uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
+    uint mintedTokens = token.totalSupply();
+    uint totalSupply = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
+    uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
+    uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
+    token.mint(this, foundersTokens);
+    token.transfer(foundersTokensWallet, foundersTokens);
+    token.mint(this, bountyTokens);
+    token.transfer(bountyTokensWallet, bountyTokens);
+    totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
+    token.finishMinting();
+  }
 
-    function _transferFrom(address _from, address _to, uint256 _tokenId) internal {
-        require(_isOwnerOf(_from, _tokenId));
-        require(_approvedForTransfer(msg.sender, _tokenId));
-
-        // prevent accidental transfer
-        require(_to != address(0));
-        require(_to != address(this));
-
-        // perform the transfer and emit Transfer event
-        _transfer(_from, _to, _tokenId);
-    }
-
-    function _canTransferBatch(uint256 _tokenId) internal view returns(bool) {
-        uint256 batch = dnas[_tokenId] % 10;
-        return !isTransferDisabled[batch];
-    }
-
-    function _tokenMetadata(uint256 _tokenId, string _preferredTransport) internal view returns (string infoUrl) {
-        _preferredTransport; // we don't use this parameter
-
-        require(_tokenId < totalSupply());
-
-        strings.slice memory tokenIdSlice = _uintToBytes(_tokenId).toSliceB32();
-        return "/http/etherwaifu.com/presale/artwork/".toSlice().concat(tokenIdSlice);
-    }
-
-    // Author: pipermerriam
-    // MIT license
-    // https://github.com/pipermerriam/ethereum-string-utils
-    function _uintToBytes(uint256 v) internal pure returns(bytes32 ret) {
-        if (v == 0) {
-            ret = '0';
-        }
-        else {
-            while (v > 0) {
-                ret = bytes32(uint256(ret) / (2 ** 8));
-                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
-                v /= 10;
-            }
-        }
-        return ret;
-    }
-
-    // Required methods of ERC721
-
-    function totalSupply() public view returns (uint256) {
-        return dnas.length;
-    }
-
-    function balanceOf(address _owner) public view returns (uint256) {
-        return ownerToTokenCount[_owner];
-    }
-
-    function ownerOf(uint256 _tokenId) external view returns (address) {
-        address theOwner = artworkIdToOwner[_tokenId];
-        require(theOwner != address(0));
-        return theOwner;
-    }
-
-    function approve(address _to, uint256 _tokenId) external {
-        require(_canTransferBatch(_tokenId));
-
-        require(_isOwnerOf(msg.sender, _tokenId));
-
-        // MUST throw if _tokenID does not represent an NFT
-        // but if it is not NFT, owner is address(0)
-        // which means it is impossible because msg.sender is a nonzero address
-
-        require(msg.sender != _to);
-
-        address prevApprovedAddress = artworkIdToTransferApproved[_tokenId];
-        _approveTransfer(_tokenId, _to);
-
-        // Don't send Approval event if it is just
-        // reaffirming that there is no one approved
-        if(!(prevApprovedAddress == address(0) && _to == address(0))) {
-            Approval(msg.sender, _to, _tokenId);
-        }
-    }
-
-    function transfer(address _to, uint256 _tokenId) external {
-        require(_canTransferBatch(_tokenId));
-        require(_isOwnerOf(msg.sender, _tokenId));
-
-        // prevent accidental transfers
-        require(_to != address(0));
-        require(_to != address(this));
-        require(_to != address(presaleMarket));
-
-        // perform the transfer and emit Transfer event
-        _transfer(msg.sender, _to, _tokenId);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _tokenId) external {
-        require(_canTransferBatch(_tokenId));
-        _transferFrom(_from, _to, _tokenId);
-    }
-
-    function takeOwnership(uint256 _tokenId) external {
-        require(_canTransferBatch(_tokenId));
-        address owner = artworkIdToOwner[_tokenId];
-        _transferFrom(owner, msg.sender, _tokenId);
-    }
-
-    // Optional methods of ERC721
-
-    function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds) {
-        uint256 count = balanceOf(_owner);
-
-        uint256[] memory res = new uint256[](count);
-        uint256 allArtworkCount = totalSupply();
-        uint256 i = 0;
-
-        for(uint256 artworkId = 1; artworkId <= allArtworkCount && i < count; artworkId++) {
-            if(artworkIdToOwner[artworkId] == _owner) {
-                res[i++] = artworkId;
-            }
-        }
-
-        return res;
-    }
-
-    function tokenMetadata(uint256 _tokenId, string _preferredTransport) external view returns (string infoUrl) {
-        return _tokenMetadata(_tokenId, _preferredTransport);
-    }
-
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId) {
-        require(_index < balanceOf(_owner));
-
-        // not strictly needed because if the state is consistent then
-        // a match will be found
-        uint256 allArtworkCount = totalSupply();
-
-        uint256 i = 0;
-        for(uint256 artworkId = 0; artworkId < allArtworkCount; artworkId++) {
-            if(artworkIdToOwner[artworkId] == _owner) {
-                if(i == _index) {
-                    return artworkId;
-                } else {
-                    i++;
-                }
-            }
-        }
-        assert(false); // should never reach here
-    }
-
-    function tokenMetadata(uint256 _tokenId) external view returns (string infoUrl) {
-        return _tokenMetadata(_tokenId, "http");
-    }
-
-    // ERC-165 Standard interface detection (required)
-
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool)
-    {
-        return _interfaceID == ERC165Signature_ERC165 ||
-        _interfaceID == ERC165Signature_ERC721A ||
-        _interfaceID == ERC165Signature_ERC721B;
-    }
 }
