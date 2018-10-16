@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xabd7ef287eb9f67c8342a3e02e40f8e73665e85e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe5cc7a435db6e44ee1a2b6147f8d7676b52ff5dc
 */
 pragma solidity ^0.4.19; 
 
@@ -121,9 +121,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 69000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 69000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Binchain";                                   // Set the name for display purposes
+        name = "ABCSS COIN";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "BIN";                               // Set the symbol for display purposes
+        symbol = "ABCSS";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
