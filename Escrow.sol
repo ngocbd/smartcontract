@@ -1,25 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x66943100bf0464c1ec43b957a5f72fe2d67a3678
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x073e957bc883693f15ecb14bfced3e8ffc8654c5
 */
 contract Escrow {
-    
-    address seller;
     address buyer;
-    address arbiter;
-    
-    function Escrow() {
-        buyer = msg.sender;
-        seller = 0x1db3439a222c519ab44bb1144fc28167b4fa6ee6;
-        arbiter = 0xd8da6bf26964af9d7eed9e03e53415d37aa96045;
+    address seller;
+    address arbitrator;
+
+    function Escrow() payable {
+       seller = 0x5ed8cee6b63b1c6afce3ad7c92f4fd7e1b8fad9f;
+       buyer = msg.sender;
+       arbitrator = 0xabad6ec946eff02b22e4050b3209da87380b3cbd;
     }
     
     function finalize() {
-        if (msg.sender != buyer && msg.sender != arbiter) throw;
-        seller.send(this.balance);
+        if (msg.sender == buyer || msg.sender == arbitrator)
+            seller.send(this.balance);
     }
     
     function refund() {
-        if (msg.sender != seller && msg.sender != arbiter) throw;
-        buyer.send(this.balance);        
+        if (msg.sender == seller || msg.sender == arbitrator)
+            buyer.send(this.balance);
     }
 }
