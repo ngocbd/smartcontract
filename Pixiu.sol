@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu at 0xd92d62ce8504e5c61aa17d9a9b13c65dbd77c268
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pixiu at 0x3bf3b11023650d21140ba10c68a8a4dd0a372d3f
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.13;
 
 /**
  * Math operations with safety checks
@@ -198,7 +198,6 @@ contract Pixiu is StandardToken {
     address[] public memberArray;
     
 	 
-    address public deposit_address;
     uint256 public tokenExchangeRateInWei = 300*10**6;
 	
 	/*
@@ -216,35 +215,30 @@ contract Pixiu is StandardToken {
     mapping (uint => address) public shopStoreAddress; 
     uint256 public shopStorePrice = 1*10**6;
     uint256 public shopStoreNextId = 0;
-    address public shopStoreRegister;
-
-	//???
-	
+    address public Apply_Store_Id_Fee;
 	uint256 public total_tokenwei = 0; 
 	uint256 public min_pay_wei = 0;
-	// admin_withdraw_all ??
-	uint256 public total_devidend = 0; //member
-	uint256 public total_withdraw = 0; //member
-    uint256 public deposit_amount = 0;  //deposit
-    uint256 public withdraw_amount = 0; //deposit
-    uint256 public dividend_amount = 0; //admin   
+	uint256 public total_devidend = 0; 
+	uint256 public total_withdraw = 0; 
+    uint256 public withdraw_amount = 0; 
+    uint256 public dividend_amount = 0; 
     
     event Paydata(address indexed payer, uint256 value, bytes data, uint256 thisTokenWei);
     
     function Pixiu() {
         totalSupply = 21000000000000; 
         adminArray.push(msg.sender);
-        admin_set_deposit(msg.sender);
-        admin_set_shopStoreRegister(msg.sender);
+        admin_set_Apply_Store_Id_Fee(msg.sender);
          
     }
     
-    function get_orderAddress(address _address,uint _expire_day,uint _userdata,uint _amount) constant returns (address){
+    function get_orderAddress(address _address,uint _expire_day,uint _userdata,uint _pixiu, uint _wei) constant returns (address){
         
         uint256 storeid = shopStoreId[_address];
         uint160 result = uint152(0xffffffff<<120) + uint120((_expire_day * 86400 + now)<<88) + uint88(storeid<<64); 
         uint _zero = 0;
-        uint256 _amount2 = _amount * 10 ** 6;
+        uint256 _amount2 = _pixiu * 10 ** 6 + _wei;
+        uint256 _amount = _amount2;
         while(_amount2 % 10 == 0){
             
             _amount2 /= 10;
@@ -252,7 +246,7 @@ contract Pixiu is StandardToken {
             
         }
         
-        _userdata = _userdata<<16;
+        _userdata = _userdata<<24;
         _userdata += _amount;
         
         result += uint64(_userdata<<8);
@@ -264,13 +258,6 @@ contract Pixiu is StandardToken {
     function isLeading4FF(address _sender ) private  returns(bool){
         uint32 ff4= uint32(uint256(_sender) >> 128);
         return (ff4 == 0xffffffff);
-    }
-
-    modifier onlyDeposit() {
-        
-        require(msg.sender == deposit_address);
-        _;
-        
     }
     
     modifier onlyAdmin() {
@@ -341,23 +328,6 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_deposit(int _Eth, int _Wei) onlyAdmin{
-        
-        int xWei = _Eth * 10 ** 18 + _Wei;
-        if(xWei > 0){
-            
-            deposit_amount += uint256(xWei);
-            
-        }else{
-            
-            deposit_amount -= uint256(xWei * -1);
-            
-        } 
-        
-        
-    }
-    
-    /**	*	???????	*	??????? 	*	*/
     function admin_dividend(int _Eth, int _Wei) onlyAdmin {
         
         int xWei = _Eth * 10 ** 18 + _Wei;
@@ -365,14 +335,12 @@ contract Pixiu is StandardToken {
 
         if(xWei > 0){
             
-            require(uint256(xWei) <= (deposit_amount-dividend_amount) ); 
             dividend_amount += uint256(xWei);
             
         }else{
             
             xWei *= -1;
             is_add = false;
-            require(uint256(xWei) <= deposit_amount); 
             dividend_amount -= uint256(xWei * -1);
             
         } 
@@ -421,9 +389,9 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_set_shopStoreRegister(address _address) onlyAdmin{
+    function admin_set_Apply_Store_Id_Fee(address _address) onlyAdmin{
         
-        shopStoreRegister = _address;
+        Apply_Store_Id_Fee = _address;
         
     }
     
@@ -483,12 +451,6 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_set_deposit(address addr) onlyAdmin{
-        
-        deposit_address = addr;
-        
-    }
-    
     function admin_set_shopStorePrice(uint256 _shopStorePrice) onlyAdmin{
         
         shopStorePrice = _shopStorePrice;
@@ -525,10 +487,9 @@ contract Pixiu is StandardToken {
         
     }
     
-    function get_total_info() constant returns(uint256 _deposit_amount, uint256 _total_devidend, uint256 _total_remain, uint256 _total_withdraw){
+    function get_total_info() constant returns(uint256 _total_devidend, uint256 _total_remain, uint256 _total_withdraw){
 
         _total_remain = total_devidend - total_withdraw;
-        _deposit_amount = deposit_amount;
         _total_devidend = total_devidend;
         _total_withdraw = total_withdraw;
         
@@ -555,10 +516,10 @@ contract Pixiu is StandardToken {
 
     }
 
-    function admin_withdraw(uint xWei) onlyDeposit{
+    function admin_withdraw(uint xWei){
 
         uint256 _withdraw = xWei;
-		require( msg.sender == deposit_address );
+		require( msg.sender == Apply_Store_Id_Fee );
 
 		require(this.balance > _withdraw);
 		msg.sender.transfer(_withdraw);
@@ -567,15 +528,14 @@ contract Pixiu is StandardToken {
         
     }
     
-    function admin_withdraw_all(address _deposit) onlyAdmin {
+    function admin_withdraw_all(address _ApplyStoreIdFee) onlyAdmin {
         
-		require( _deposit == deposit_address ); 
+		require( _ApplyStoreIdFee == Apply_Store_Id_Fee ); 
 
-		_deposit.transfer(this.balance);
+		_ApplyStoreIdFee.transfer(this.balance);
 
 		total_devidend = 0; //member
 		total_withdraw = 0; //member
-		deposit_amount = 0;  //deposit
 		withdraw_amount = 0; //deposit
 		dividend_amount = 0; //admin   
         
@@ -583,7 +543,7 @@ contract Pixiu is StandardToken {
     
     function admin_transfer(address _to, uint256 _value) onlyAdmin onlyPayloadSize(2 * 32)     {
         
-        require(_to != deposit_address);
+        require(_to != Apply_Store_Id_Fee);
         require(total_tokenwei <= totalSupply - _value);
         balances[_to] = balances[_to].add(_value);
         
@@ -604,7 +564,7 @@ contract Pixiu is StandardToken {
         require(isPayable);
 		balances[msg.sender] = balances[msg.sender].sub(_value);
 		
-		if(_to == deposit_address){
+		if(_to == Apply_Store_Id_Fee){
 		    
 		    require(_value == shopStorePrice);
 		    shopStoreNextId++;
@@ -618,18 +578,13 @@ contract Pixiu is StandardToken {
     		    uint256 to256 = uint256(_to);
                 uint32 expire = uint32(to256>>96);
                 uint32 storeid = uint24(to256>>72);
-                //uint8 crc8 = uint8(to256);
-                //uint8 byte19 = uint8(to256>>8);
                 uint8 byte19_1 = uint8(uint8(to256>>8)>>4);
                 uint8 byte19_2 = uint8(uint8(to256>>8)<<4);
                 byte19_2 = byte19_2>>4;
-                uint56 byte1218 = uint56(to256>>16);
-                uint32 byte1215 = uint32(to256>>40);
                 uint24 byte1618 = uint24(to256>>16);
                 
                 require(uint32(now)<expire || expire==0);
                 
-                //uint8 crc20 = uint8(sha256(uint152(to256>>8)));
                 require(uint8(sha256(uint152(to256>>8)))==uint8(to256));
                 
                 _to = shopStoreAddress[uint(storeid)];
@@ -661,8 +616,8 @@ contract Pixiu is StandardToken {
 	}
 	
 	function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32)     {
-		require(_to != deposit_address);
-		require(_from != deposit_address);
+		require(_to != Apply_Store_Id_Fee);
+		require(_from != Apply_Store_Id_Fee);
         require(isPayable);
 		var _allowance = allowed[_from][msg.sender]; 
 		require(_allowance >= _value);
@@ -693,8 +648,8 @@ contract Pixiu is StandardToken {
         require(msg.value > min_pay_wei);
         require(isPayable);
         
-        if(msg.sender == deposit_address){
-             deposit_amount += msg.value;
+        if(msg.sender == Apply_Store_Id_Fee){
+
         }else{
             
             if(isRequireData){
