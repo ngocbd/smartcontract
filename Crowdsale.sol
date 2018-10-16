@@ -1,292 +1,165 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x00822484be254581970ed737d20cf2d71f14e525
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xfc560a12fb91c7b743d070e5764b4404de2f4883
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.23;
+/*
 
+LIGO CrowdSale - Wave 1
 
+*/
 
-/**
-
- * @title SafeMath
-
- * @dev Math operations with safety checks that throw on error
-
- */
-
-library SafeMath {
-
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    uint256 c = a * b;
-
-    assert(a == 0 || c / a == b);
-
-    return c;
-
-  }
-
-
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-
-    uint256 c = a / b;
-
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-    return c;
-
-  }
-
-
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    assert(b <= a);
-
-    return a - b;
-
-  }
-
-
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    uint256 c = a + b;
-
-    assert(c >= a);
-
-    return c;
-
-  }
-
+// interface to represent the LIGO token contract, so we can call functions on it
+interface ligoToken {
+    function transfer(address receiver, uint amount) external;
+    function balanceOf(address holder) external returns(uint); 
 }
 
-
-
-/**
-
- * @title Crowdsale
-
- * @dev Crowdsale is a base contract for managing a token crowdsale.
-
- * Crowdsales have a start and end timestamps, where investors can make
-
- * token purchases and the crowdsale will assign them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded to a wallet
-
- * as they arrive.
-
- */
-
-contract token { function transfer(address receiver, uint amount){  } }
-
 contract Crowdsale {
-
-  using SafeMath for uint256;
-
-
-
-  // uint256 durationInMinutes;
-
-  // address where funds are collected
-
-  address public wallet;
-
-  // token address
-
-  address addressOfTokenUsedAsReward;
-
-
-
-  token tokenReward;
-
-
-
-
-
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-
-  uint256 public startTime;
-
-  uint256 public endTime;
-
-  // amount of raised money in wei
-
-  uint256 public weiRaised;
-
-
-
-  /**
-
-   * event for token purchase logging
-
-   * @param purchaser who paid for the tokens
-
-   * @param beneficiary who got the tokens
-
-   * @param value weis paid for purchase
-
-   * @param amount amount of tokens purchased
-
-   */
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-
-
-
-  function Crowdsale() {
-
-    wallet = 0x205E2ACd291E235425b5c10feC8F62FE7Ec26063;
-
-    // durationInMinutes = _durationInMinutes;
-
-    addressOfTokenUsedAsReward = 0x82B99C8a12B6Ee50191B9B2a03B9c7AEF663D527;
-
-
-
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-
-  }
-
-
-
-  bool started = false;
-
-
-
-  function startSale(uint256 delay){
-
-    if (msg.sender != wallet || started) throw;
-
-    startTime = now + delay * 1 minutes;
-
-    endTime = startTime + 30 * 24 * 60 * 1 minutes;
-
-    started = true;
-
-  }
-
-
-
-  // fallback function can be used to buy tokens
-
-  function () payable {
-
-    buyTokens(msg.sender);
-
-  }
-
-
-
-  // low level token purchase function
-
-  function buyTokens(address beneficiary) payable {
-
-    require(beneficiary != 0x0);
-
-    require(validPurchase());
-
-
-
-    uint256 weiAmount = msg.value;
-
-
-
-    // calculate token amount to be sent
-
-    uint256 tokens = (weiAmount/10**10) * 3000;
-
-
-
-    if(now < startTime + 1*7*24*60* 1 minutes){
-
-      tokens += (tokens * 20) / 100;
-
-    }else if(now < startTime + 2*7*24*60* 1 minutes){
-
-      tokens += (tokens * 10) / 100;
-
-    }else{
-
-      tokens += (tokens * 5) / 100;
-
+	// Public visible variables
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public startTime;
+    uint public deadline;
+    ligoToken public tokenReward;
+    uint public amountRaised;
+    uint public buyerCount = 0;
+    bool public fundingGoalReached = false;
+	uint public withdrawlDeadline;
+    // bool public hasStarted = false; // not needed, automatically start wave 1 when deployed
+	// public array of buyers
+    mapping(address => uint256) public balanceOf;
+    mapping(address => uint256) public fundedAmount;
+    mapping(uint => address) public buyers;
+	// private variables
+    bool crowdsaleClosed = false;
+	// crowdsale settings
+	uint constant minContribution  = 20000000000000000; // 0.02 ETH
+	uint constant maxContribution = 100 ether; 
+	uint constant fundsOnHoldAfterDeadline = 30 days; //Escrow period
+
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    /**
+     * Constructor function
+     *
+     * Setup the owner
+     */
+    constructor(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint startUnixTime,
+        uint durationInMinutes,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        startTime = startUnixTime;
+        deadline = startTime + durationInMinutes * 1 minutes;
+		withdrawlDeadline = deadline + fundsOnHoldAfterDeadline;
+        tokenReward = ligoToken(addressOfTokenUsedAsReward);
     }
 
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () public payable {
+        require(!crowdsaleClosed);
+        require(!(now <= startTime));
+		require(!(amountRaised >= fundingGoal)); // stop accepting payments when the goal is reached.
 
+		// get the total for this contributor so far
+        uint totalContribution = balanceOf[msg.sender];
+		// if total > 0, this user already contributed
+		bool exstingContributor = totalContribution > 0;
 
-    // update state
+        uint amount = msg.value;
+        bool moreThanMinAmount = amount >= minContribution; //> 0.02 Ether
+        bool lessThanMaxTotalContribution = amount + totalContribution <= maxContribution; // < 100 Ether total, including this amount
 
-    weiRaised = weiRaised.add(weiAmount);
+        require(moreThanMinAmount);
+        require(lessThanMaxTotalContribution);
 
-
-
-    tokenReward.transfer(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-
-  }
-
-
-
-  // send ether to the fund collection wallet
-
-  // override to create custom fund forwarding mechanisms
-
-  function forwardFunds() internal {
-
-    // wallet.transfer(msg.value);
-
-    if (!wallet.send(msg.value)) {
-
-      throw;
-
+        if (lessThanMaxTotalContribution && moreThanMinAmount) {
+            // Add to buyer's balance
+            balanceOf[msg.sender] += amount;
+            // Add to tracking array
+            fundedAmount[msg.sender] += amount;
+            emit FundTransfer(msg.sender, amount, true);
+			if (!exstingContributor) {
+				// this is a new contributor, add to the count and the buyers array
+				buyers[buyerCount] = msg.sender;
+				buyerCount += 1;
+			}
+            amountRaised += amount;
+		}
     }
 
-  }
+    modifier afterDeadline() { if (now >= deadline) _; }
+    modifier afterWithdrawalDeadline() { if (now >= withdrawlDeadline) _; }
 
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() public afterDeadline {
+		if (beneficiary == msg.sender) {
+			if (amountRaised >= fundingGoal){
+				fundingGoalReached = true;
+				emit GoalReached(beneficiary, amountRaised);
+			}
+			crowdsaleClosed = true;
+		}
+    }
 
+    /**
+     * returns contract's LIGO balance
+     */
+    function getContractTokenBalance() public constant returns (uint) {
+        return tokenReward.balanceOf(address(this));
+    }
+    
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if time limit has been reached, and if so, 
+     * sends the entire amount to the beneficiary, and send LIGO to buyers. 
+     */
+    function safeWithdrawal() public afterWithdrawalDeadline {
+		
+		// Only the beneficiery can withdraw from Wave 1
+		if (beneficiary == msg.sender) {
 
-  // @return true if the transaction can buy tokens
+			// first send all the ETH to beneficiary
+            if (beneficiary.send(amountRaised)) {
+                emit FundTransfer(beneficiary, amountRaised, false);
+            }
 
-  function validPurchase() internal constant returns (bool) {
+			// Read amount of total LIGO in this contract
+			uint totalTokens = tokenReward.balanceOf(address(this));
+			uint remainingTokens = totalTokens;
 
-    bool withinPeriod = now >= startTime && now <= endTime;
+			// send the LIGO to each buyer
+			for (uint i=0; i<buyerCount; i++) {
+				address buyerId = buyers[i];
+				uint amount = ((balanceOf[buyerId] * 500) * 125) / 100; //Modifier is 100->125% so divide by 100.
+				// Make sure there are enough remaining tokens in the contract before trying to send
+				if (remainingTokens >= amount) {
+					tokenReward.transfer(buyerId, amount); 
+					// subtract from the total
+					remainingTokens -= amount;
+					// clear out buyer's balance
+					balanceOf[buyerId] = 0;
+				}
+			}
 
-    bool nonZeroPurchase = msg.value != 0;
-
-    return withinPeriod && nonZeroPurchase;
-
-  }
-
-
-
-  // @return true if crowdsale event has ended
-
-  function hasEnded() public constant returns (bool) {
-
-    return now > endTime;
-
-  }
-
-
-
-  function withdrawTokens(uint256 _amount) {
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward.transfer(wallet,_amount);
-
-  }
-
+			// send unsold tokens back to contract init wallet
+			if (remainingTokens > 0) {
+				tokenReward.transfer(beneficiary, remainingTokens);
+			}
+        }
+    }
 }
