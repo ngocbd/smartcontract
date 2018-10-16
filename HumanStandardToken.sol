@@ -1,7 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x2728361ad889146544c48786b3a549f8b550c5d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xf99cb18c46974d0df384bbdccbbe9537f7310496
 */
-pragma solidity ^0.4.19;
+/*
+This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
+
+In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
+Imagine coins, currencies, shares, voting weight, etc.
+Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
+
+1) Initial Finite Supply (upon creation one specifies how much is minted).
+2) In the absence of a token registry: Optional Decimal, Symbol & Name.
+3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
+
+.*/
+
+pragma solidity ^0.4.8;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -57,7 +70,7 @@ contract StandardToken is Token {
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
         //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        require(balances[msg.sender] >= _value);
+        require(balances[msg.sender] >= _value && _to != 0x0);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
         Transfer(msg.sender, _to, _value);
@@ -68,7 +81,7 @@ contract StandardToken is Token {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
+        require(balances[_from] >= _value && allowance >= _value && _to != 0x0);
         balances[_to] += _value;
         balances[_from] -= _value;
         if (allowance < MAX_UINT256) {
@@ -89,13 +102,15 @@ contract StandardToken is Token {
     }
 
     function allowance(address _owner, address _spender)
-    view public returns (uint256 remaining) {
+    view public returns (uint256 remaining) 
+    {
       return allowed[_owner][_spender];
     }
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
+
 
 contract HumanStandardToken is StandardToken {
 
@@ -110,14 +125,15 @@ contract HumanStandardToken is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = "H0.1";       //human 0.1 standard. Just an arbitrary versioning scheme.
 
      function HumanStandardToken(
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
         string _tokenSymbol
-        ) public {
+        ) public 
+    {
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = _tokenName;                                   // Set the name for display purposes
