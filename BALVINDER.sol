@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BALVINDER at 0xf08af196e0cc58a82824371d44fa64ca84e48f14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BALVINDER at 0x6f65dd1f39650a7c11e0d4cdbec183a17e7a71ce
 */
 pragma solidity ^0.4.18;
 library SafeMath {
@@ -54,7 +54,7 @@ function receiveApproval(address from, uint256 tokens, address token, bytes data
 // ----------------------------------------------------------------------------
 contract Owned {
 address public owner;
-//address public newOwner;
+address public newOwner;
  
 event OwnershipTransferred(address indexed _from, address indexed _to);
 
@@ -67,15 +67,15 @@ modifier onlyOwner {
          _;
      }
  
-     //function transferOwnership(address _newOwner) public onlyOwner {
-       //  newOwner = _newOwner;
-     //}
-     //function acceptOwnership() public {
-       //  require(msg.sender == newOwner);
-         //OwnershipTransferred(owner, newOwner);
-       //  owner = newOwner;
-         //newOwner = address(0);
-     //}
+     function transferOwnership(address _newOwner) public onlyOwner {
+         newOwner = _newOwner;
+     }
+     function acceptOwnership() public {
+         require(msg.sender == newOwner);
+         OwnershipTransferred(owner, newOwner);
+         owner = newOwner;
+         newOwner = address(0);
+     }
  }
  
  
