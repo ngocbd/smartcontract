@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgurisToken at 0x9b6e2ef9666051804c1e6796962c5f17fda15463
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgurisToken at 0x56a312834d31c76072a03c8200f1c106bdd65bdb
 */
 pragma solidity ^0.4.18;
 
@@ -14,7 +14,7 @@ interface tokenRecipient {
 }
 
 contract AgurisToken {
-    string public constant name = "Aguris";
+    bytes32 public constant name = "Aguris";
     bytes32 public constant symbol = "AGS";
     uint8 public decimals = 18;
     uint256 public totalSupply;
