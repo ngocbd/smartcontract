@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitLoanex at 0xc585ddbf02254b3711dec711239e7241132b44a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitLoanex at 0x4fa5c1edfb2bbc21d31d9cf3dc2faf5138f2d78c
 */
 pragma solidity ^0.4.15;
 
@@ -210,14 +210,14 @@ contract BitLoanex is Ownable {
     //owner.transfer(msg.value);
   }
   
-  function tokenBoughtPerTime(uint _time) public view returns (uint256) {
-    uint256 num = 0;
+  function tokenBoughtPerTime(uint _time) public view returns (uint[]) {
+    uint[] tTime;
     for(var i = 0; i < timeBought.length; i++){
           if(_time<=timeBought[i]){
-              num++;
+              tTime.push(timeBought[i]) -1;
           }
     }
-    return num;
+    return tTime;
   }
   
   function getInvestors() view public returns (address[])
