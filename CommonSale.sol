@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommonSale at 0xe9ef26c4e9761e2305f455a0e0d4cd286e2d13a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommonSale at 0x638dB321775E03cf4c29207E0Bb228BbAFb76460
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.16;
 
 /**
  * @title ERC20Basic
@@ -200,7 +200,7 @@ contract MintableToken is StandardToken, Ownable {
   
   event MintFinished();
 
-  bool public mintingFinished = false;
+  bool public finishMinting = false;
 
   address public saleAgent;
 
@@ -216,7 +216,7 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) returns (bool) {
-    require(msg.sender == saleAgent && !mintingFinished);
+    require(msg.sender == saleAgent && !finishMinting);
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -228,8 +228,8 @@ contract MintableToken is StandardToken, Ownable {
    * @return True if the operation was successful.
    */
   function finishMinting() returns (bool) {
-    require(msg.sender == saleAgent || msg.sender == owner && !mintingFinished);
-    mintingFinished = true;
+    require(msg.sender == saleAgent || msg.sender == owner && !finishMinting);
+    finishMinting = true;
     MintFinished();
     return true;
   }
@@ -282,11 +282,11 @@ contract Pausable is Ownable {
   
 }
 
-contract TlindToken is MintableToken {	
+contract WCMToken is MintableToken {	
     
-  string public constant name = "Tlind";
+  string public constant name = "WCMT";
    
-  string public constant symbol = "TDT";
+  string public constant symbol = "WCM tokens";
     
   uint32 public constant decimals = 18;
     
@@ -407,6 +407,7 @@ contract StagedCrowdsale is Pausable {
 
 }
 
+// FIX for freezed alien tokens, price and etc
 contract CommonSale is StagedCrowdsale {
 
   address public multisigWallet;
@@ -415,30 +416,19 @@ contract CommonSale is StagedCrowdsale {
   
   address public bountyTokensWallet;
 
-  uint public foundersTokensPercent;
+  uint public foundersPercent;
   
-  uint public bountyTokensPercent;
+  uint public bountyTokensCount;
  
   uint public price;
 
   uint public percentRate = 100;
 
-  uint public softcap;
-
-  bool public refundOn = false;
-
-  bool public isSoftcapOn = false;
-
-  mapping (address => uint) balances;
-
+  bool public bountyMinted = false;
+  
   CommonSale public nextSale;
   
   MintableToken public token;
-
-  function setSoftcap(uint newSoftcap) onlyOwner {
-    isSoftcapOn = true;
-    softcap = newSoftcap;
-  }
 
   function setToken(address newToken) onlyOwner {
     token = MintableToken(newToken);
@@ -456,12 +446,12 @@ contract CommonSale is StagedCrowdsale {
     percentRate = newPercentRate;
   }
 
-  function setFoundersTokensPercent(uint newFoundersTokensPercent) onlyOwner {
-    foundersTokensPercent = newFoundersTokensPercent;
+  function setFoundersPercent(uint newFoundersPercent) onlyOwner {
+    foundersPercent = newFoundersPercent;
   }
   
-  function setBountyTokensPercent(uint newBountyTokensPercent) onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
+  function setBountyTokensCount(uint newBountyTokensCount) onlyOwner {
+    bountyTokensCount = newBountyTokensCount;
   }
   
   function setMultisigWallet(address newMultisigWallet) onlyOwner {
@@ -477,49 +467,30 @@ contract CommonSale is StagedCrowdsale {
   }
 
   function createTokens() whenNotPaused isUnderHardCap saleIsOn payable {
-    require(msg.value >= 100000000000000000);
+    require(msg.value > 0);
     uint milestoneIndex = currentMilestone();
     Milestone storage milestone = milestones[milestoneIndex];
-    if(!isSoftcapOn) {
-      multisigWallet.transfer(msg.value);
-    }
+    multisigWallet.transfer(msg.value);
     invested = invested.add(msg.value);
-    uint tokens = msg.value.mul(1 ether).div(price);
-    uint bonusTokens = tokens.mul(milestone.bonus).div(percentRate);
+    uint tokens = msg.value.div(price).mul(1 ether);
+    uint bonusTokens = tokens.div(percentRate).mul(milestone.bonus);
     uint tokensWithBonus = tokens.add(bonusTokens);
-    token.mint(this, tokensWithBonus);
-    token.transfer(msg.sender, tokensWithBonus);
-    balances[msg.sender] = balances[msg.sender].add(msg.value);
+    token.mint(msg.sender, tokensWithBonus);
+    uint foundersTokens = tokens.div(percentRate).mul(foundersPercent);
+    token.mint(foundersTokensWallet, foundersTokens);
   }
 
-  function refund() whenNotPaused {
-    require(now > start && refundOn && balances[msg.sender] > 0);
-    msg.sender.transfer(balances[msg.sender]);
-  } 
+  function mintBounty() public whenNotPaused onlyOwner {
+    require(!bountyMinted);
+    token.mint(bountyTokensWallet, bountyTokensCount * 1 ether);
+    bountyMinted = true;
+  }
 
   function finishMinting() public whenNotPaused onlyOwner {
-    if(isSoftcapOn && invested < softcap) {
-      refundOn = true;
+    if(nextSale == address(0)) {
       token.finishMinting();
     } else {
-      if(isSoftcapOn) {
-        multisigWallet.transfer(invested);
-      }
-      uint issuedTokenSupply = token.totalSupply();
-      uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
-      uint summaryFoundersTokens = issuedTokenSupply.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
-      uint totalSupply = summaryFoundersTokens + issuedTokenSupply;
-      uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
-      uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
-      token.mint(this, foundersTokens);
-      token.transfer(foundersTokensWallet, foundersTokens);
-      token.mint(this, bountyTokens);
-      token.transfer(bountyTokensWallet, bountyTokens);
-      if(nextSale == address(0)) {
-        token.finishMinting();
-      } else {
-        token.setSaleAgent(nextSale);
-      }
+      token.setSaleAgent(nextSale);
     }
   }
 
@@ -530,71 +501,6 @@ contract CommonSale is StagedCrowdsale {
   function retrieveTokens(address anotherToken) public onlyOwner {
     ERC20 alienToken = ERC20(anotherToken);
     alienToken.transfer(multisigWallet, token.balanceOf(this));
-  }
-
-}
-
-contract Configurator is Ownable {
-
-  MintableToken public token; 
-
-  CommonSale public presale;
-
-  CommonSale public mainsale;
-
-  function deploy() {
-    address presaleMultisigWallet = 0x675cf930aefA144dA7e10ddBACC02f902A233eFC;
-    address presaleBountyTokensWallet = 0x06B8fF8476425E45A3D2878e0a27BB79efd4Dde1;
-    address presaleFoundersWallet = 0x27F1Ac3E29CBec9D225d98fF95B6933bD30E3F71;
-    uint presaleSoftcap = 50000000000000000000;
-    uint presaleHardcap = 2000000000000000000000;
-
-    address mainsaleMultisigWallet = 0xFb72502E9c56497BAC3B1c21DE434b371891CC05;
-    address mainsaleBountyTokensWallet = 0xd08112054C8e01E33fAEE176531dEB087809CbB2;
-    address mainsaleFoundersWallet = 0xDeFAE9a126bA5aA2537AaC481D9335827159D33B;
-    uint mainsaleHardcap = 25000000000000000000000000;
-
-    token = new TlindToken();
-
-    presale = new CommonSale();
-
-    presale.setToken(token);
-    presale.setSoftcap(presaleSoftcap);
-    presale.setHardcap(presaleHardcap);
-    presale.setMultisigWallet(presaleMultisigWallet);
-    presale.setFoundersTokensWallet(presaleFoundersWallet);
-    presale.setBountyTokensWallet(presaleBountyTokensWallet);
-    presale.setStart(1506344400);
-    presale.setFoundersTokensPercent(15);
-    presale.setBountyTokensPercent(5);
-    presale.setPrice(10000000000000000);
-    presale.addMilestone(8,200);
-    presale.addMilestone(8,100);
-    token.setSaleAgent(presale);	
-
-    mainsale = new CommonSale();
-
-    mainsale.setToken(token);
-    mainsale.setHardcap(mainsaleHardcap);
-    mainsale.setMultisigWallet(mainsaleMultisigWallet);
-    mainsale.setFoundersTokensWallet(mainsaleFoundersWallet);
-    mainsale.setBountyTokensWallet(mainsaleBountyTokensWallet);
-    mainsale.setStart(1510318800);
-    mainsale.setFoundersTokensPercent(15);
-    mainsale.setBountyTokensPercent(5);
-    mainsale.setPrice(10000000000000000);
-    mainsale.addMilestone(1,50);
-    mainsale.addMilestone(6,30);
-    mainsale.addMilestone(14,15);
-    mainsale.addMilestone(14,10);
-    mainsale.addMilestone(14,5);
-    mainsale.addMilestone(7,0);
-    
-    presale.setNextSale(mainsale);
-
-    token.transferOwnership(owner);
-    presale.transferOwnership(owner);
-    mainsale.transferOwnership(owner);
   }
 
 }
