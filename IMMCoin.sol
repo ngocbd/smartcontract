@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMMCoin at 0xe42ba5558b00d2e6109cc60412d5d4c9473fe998
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMMCOIN at 0xdaecac3bf07b2170341b5a5b20e0edf35daa4d50
 */
 pragma solidity ^0.4.16;
 
-/**
- * iMMCoin extended ERC20 token contract created on November the 13th, 2017 by INTERDAY MARKETS MANAGEMENT in the Philippines 
- *
- *
- */
 contract owned {
     address public owner;
 
@@ -29,8 +24,8 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract Token {
     // Public variables of the token
-    string public name;
-    string public symbol;
+    string public name ;
+    string public symbol ;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
@@ -178,13 +173,13 @@ contract Token {
 }
 
 /******************************************/
-/*       IMMCoin       */
+/*       iMMCoin  Contract        */
 /******************************************/
 
-contract IMMCoin is owned, Token {
+contract IMMCOIN is owned, Token {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    uint256 public iMMCoinsellPrice;
+    uint256 public iMMCoinbuyPrice;
 
     mapping (address => bool) public frozenAccount;
 
@@ -192,7 +187,7 @@ contract IMMCoin is owned, Token {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function IMMCoin(
+    function IMMCOIN(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -232,23 +227,21 @@ contract IMMCoin is owned, Token {
     /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+        iMMCoinsellPrice = newSellPrice;
+        iMMCoinbuyPrice = newBuyPrice;
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
+        uint amount = msg.value / iMMCoinbuyPrice;        // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        require(this.balance >= amount * iMMCoinsellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);                     // makes the transfers
+        msg.sender.transfer(amount * iMMCoinsellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
-    
-    
 }
