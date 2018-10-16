@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x73b958200ca61991556324cdf2f315ce2ae08698
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x2fa8174ec68f1b7dad8717d1f6876985f9834b59
 */
 pragma solidity ^0.4.16;
 
@@ -105,10 +105,10 @@ contract Slotthereum is Mortal {
     }
 
     function getBlockHash(uint i) internal constant returns (bytes32 blockHash) {
-        if (i >= 255) {
+        if (i > 255) {
             i = 255;
         }
-        if (i <= 0) {
+        if (i < 0) {
             i = 1;
         }
         blockHash = block.blockhash(block.number - i);
