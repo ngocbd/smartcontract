@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcfbfd9167f0335045dee6955906377172eb9e2a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb70d8d7e66be634a06b6bd024bb47f48d187cb66
 */
 pragma solidity ^0.4.15;
 
@@ -232,11 +232,11 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract ApiaryToken is MintableToken {
+contract TttestaryToken is MintableToken {
     
-    string public constant name = "Apiary";
+    string public constant name = "Tttestary";
     
-    string public constant symbol = "API";
+    string public constant symbol = "TARY";
     
     uint32 public constant decimals = 18;
     
@@ -247,15 +247,15 @@ contract Crowdsale is Ownable {
     
     using SafeMath for uint;
     
-    address eth_addr;
+    address multisig;
 
-    address devs_addr;
-    
-    uint devs_percent;
+    uint restrictedPercent;
 
-    ApiaryToken public token = new ApiaryToken();
+    address restricted;
 
-    uint start_ico;
+    TttestaryToken public token = new TttestaryToken();
+
+    uint start;
     
     uint period;
 
@@ -264,36 +264,37 @@ contract Crowdsale is Ownable {
     uint rate;
 
     function Crowdsale() {
-        eth_addr = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
-        start_ico = 1527854400;
-        period = 30;
+        multisig = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
+        restricted = 0x18A09596E20A84EC5915DC1EBdC0B13312C924cD;
+        restrictedPercent = 3;
         rate = 5000e18;
+        start = 1524060501;
+        period = 30;
         hardcap = 500 ether;
-        devs_percent = 3;
     }
 
     modifier saleIsOn() {
-    	require(now > start_ico && now < start_ico + period * 1 days);
+    	require(now > start && now < start + period * 1 days);
     	_;
     }
 	
     modifier isUnderHardCap() {
-        require(eth_addr.balance <= hardcap);
+        require(multisig.balance <= hardcap);
         _;
     }
  
     function finishMinting() public onlyOwner {
 	uint issuedTokenSupply = token.totalSupply();
-	uint restrictedTokens = issuedTokenSupply.mul(devs_percent).div(100 - devs_percent);
-	token.mint(eth_addr, restrictedTokens);
+	uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
+	token.mint(restricted, restrictedTokens);
         token.finishMinting();
     }
  
    function createTokens() isUnderHardCap saleIsOn payable {
-        eth_addr.transfer(msg.value);
+        multisig.transfer(msg.value);
         uint tokens = rate.mul(msg.value).div(1 ether);
         uint bonusTokens = 0;
-        if(now < start_ico + (period * 1 days).div(3)) {
+        if(now < start + (period * 1 days).div(5)) {
           bonusTokens = tokens.div(5);
         } else {
           bonusTokens = 0;
