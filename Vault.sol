@@ -1,22 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xf163484a4b2c32e68b991bc45d7e7fa8c6c596c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x8bacaa76933c0d3b8e64764c4fbcd25998de4c74
 */
-pragma solidity ^0.4.19;
-
-contract Token {
-    function balanceOf(address) public constant returns (uint);
-    function transfer(address, uint) public returns (bool);
-}
+pragma solidity ^0.4.20;
 
 contract Vault {
-    Token constant public token = Token(0xa645264C5603E96c3b0B078cdab68733794B0A71);
-    address constant public recipient = 0x002AE208AD6064F75Fa78e7bbeF9B12DB850f559;
-    // UNIX timestamp
-    uint constant public unlockedAt = 1528397739;
+    mapping (address=>uint256) public eth_stored;
+    address public owner;
+    address public primary_wallet;
     
-    function unlock() public {
-        require(now > unlockedAt);
-        uint vaultBalance = token.balanceOf(address(this));
-        token.transfer(recipient, vaultBalance);
+    constructor (address main_wallet) public {
+        owner = msg.sender;
+        primary_wallet = main_wallet;
+    }
+    
+    function () public payable {
+        eth_stored[msg.sender] += msg.value;
+    }
+    
+    modifier owner_only{
+        require(msg.sender==owner);
+        _;
+    }
+    
+    function withdraw_all () public owner_only {
+        primary_wallet.transfer(address(this).balance);
+    }
+    
+    function kill () public owner_only {
+        selfdestruct(primary_wallet);
     }
 }
