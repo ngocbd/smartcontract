@@ -1,36 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VT at 0xca48AC42C9Cd4eE98813af8945A1024868ee62de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VT at 0x38405fa410c6eba342f9eb5ac66b2aaf6498c8e9
 */
 pragma solidity ^0.4.16;
 
-contract owned {
-    address public owner;
-
-    function owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract VT is owned {
+contract VT {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals=18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    // 1 ether = 1000 example tokens 
-    uint public constant price = 1000;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
