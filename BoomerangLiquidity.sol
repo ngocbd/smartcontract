@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x03358425ada4620246dd703dc1f2246b8e148d22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x58ed44f46c279f30fd0a0724d3fed4bc18b11bb0
 */
 pragma solidity ^0.4.21;
 
@@ -77,6 +77,7 @@ contract BoomerangLiquidity is Owned {
 
     
     function() payable public {
+        deposit();
     }
     
     function deposit() payable public {
@@ -110,7 +111,7 @@ contract BoomerangLiquidity is Owned {
     
     
     function withdraw() public {
-        weak_hands.withdraw.gas(1000000)();
+        weak_hands.withdraw.gas(3000000)();
     }
     
     function donate() payable public {
