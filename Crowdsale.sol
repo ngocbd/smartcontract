@@ -1,292 +1,222 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7c08e870a8f056d147604d3d5d1b95d1f76e0f79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb602f224523c89c80dd8e970573291c63beeb778
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
 
-
-
-/**
-
- * @title SafeMath
-
- * @dev Math operations with safety checks that throw on error
-
- */
-
-library SafeMath {
-
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-
+library SafeMath { //standard library for uint
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0 || b == 0){
+        return 0;
+    }
     uint256 c = a * b;
-
-    assert(a == 0 || c / a == b);
-
+    assert(c / a == b);
     return c;
-
   }
 
-
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-
-    uint256 c = a / b;
-
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
-    return c;
-
-  }
-
-
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
-
     return a - b;
-
   }
 
-
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
-
     assert(c >= a);
-
     return c;
+  }
 
+  function pow(uint256 a, uint256 b) internal pure returns (uint256){ //power function
+    if (b == 0){
+      return 1;
+    }
+    uint256 c = a**b;
+    assert (c >= a);
+    return c;
+  }
+}
+
+//standard contract to identify owner
+contract Ownable {
+
+  address public owner;
+
+  address public newOwner;
+
+  address public techSupport;
+
+  address public newTechSupport;
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  modifier onlyTechSupport() {
+    require(msg.sender == techSupport || msg.sender == owner);
+    _;
+  }
+
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  function transferOwnership(address _newOwner) public onlyOwner {
+    require(_newOwner != address(0));
+    newOwner = _newOwner;
+  }
+
+  function acceptOwnership() public {
+    if (msg.sender == newOwner) {
+      owner = newOwner;
+    }
+  }
+
+  function transferTechSupport (address _newSupport) public{
+    require (msg.sender == owner || msg.sender == techSupport);
+    newTechSupport = _newSupport;
+  }
+
+  function acceptSupport() public{
+    if(msg.sender == newTechSupport){
+      techSupport = newTechSupport;
+    }
   }
 
 }
 
+//Abstract Token contract
+contract BineuroToken{
+  function setCrowdsaleContract (address) public;
+  function sendCrowdsaleTokens(address, uint256)  public;
+  function burnTokens(address,address, address, uint) public;
+  function getOwner()public view returns(address);
+}
 
+//Crowdsale contract
+contract Crowdsale is Ownable{
 
-/**
+  using SafeMath for uint;
 
- * @title Crowdsale
+  uint public decimals = 3;
+  // Token contract address
+  BineuroToken public token;
 
- * @dev Crowdsale is a base contract for managing a token crowdsale.
+  // Constructor
+  function Crowdsale(address _tokenAddress) public{
+    token = BineuroToken(_tokenAddress);
+    techSupport = msg.sender;
 
- * Crowdsales have a start and end timestamps, where investors can make
-
- * token purchases and the crowdsale will assign them tokens based
-
- * on a token per ETH rate. Funds collected are forwarded to a wallet
-
- * as they arrive.
-
- */
-
-contract token { function transfer(address receiver, uint amount){  } }
-
-contract Crowdsale {
-
-  using SafeMath for uint256;
-
-
-
-  // uint256 durationInMinutes;
-
-  // address where funds are collected
-
-  address public wallet;
-
-  // token address
-
-  address addressOfTokenUsedAsReward;
-
-
-
-  token tokenReward;
-
-
-
-
-
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-
-  uint256 public startTime;
-
-  uint256 public endTime;
-
-  // amount of raised money in wei
-
-  uint256 public weiRaised;
-
-
-
-  /**
-
-   * event for token purchase logging
-
-   * @param purchaser who paid for the tokens
-
-   * @param beneficiary who got the tokens
-
-   * @param value weis paid for purchase
-
-   * @param amount amount of tokens purchased
-
-   */
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-
-
-
-  function Crowdsale() {
-
-    wallet = 0x205E2ACd291E235425b5c10feC8F62FE7Ec26063;
-
-    // durationInMinutes = _durationInMinutes;
-
-    addressOfTokenUsedAsReward = 0x82B99C8a12B6Ee50191B9B2a03B9c7AEF663D527;
-
-
-
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-
+    token.setCrowdsaleContract(this);
+    owner = token.getOwner();
   }
 
+  address etherDistribution1 = 0x64f89e3CE504f1b15FcD4465b780Fb393ab79187;
+  address etherDistribution2 = 0x320359973d7953FbEf62C4f50960C46D8DBE2425;
 
+  address bountyAddress = 0x7e06828655Ba568Bbe06eD8ce165e4052A6Ea441;
 
-  bool started = false;
+  //Crowdsale variables
+  uint public tokensSold = 0;
+  uint public ethCollected = 0;
 
+  // Buy constants
+  uint public minDeposit = (uint)(500).mul((uint)(10).pow(decimals));
 
+  uint public tokenPrice = 0.0001 ether;
 
-  function startSale(uint256 delay){
+  // Ico constants
+  uint public icoStart = 1522141200; //27.03.2018  12:00 UTC+3
+  uint public icoFinish = 1528156800; //27.03.2018  12:00 UTC+2
 
-    if (msg.sender != wallet || started) throw;
+  uint public maxCap = 47000000 ether;
 
-    startTime = now + delay * 1 minutes;
-
-    endTime = startTime + 20 * 24 * 60 * 1 minutes;
-
-    started = true;
-
+  //Owner can change end date
+  function changeIcoFinish (uint _newDate) public onlyTechSupport {
+    icoFinish = _newDate;
   }
 
-
-
-  // fallback function can be used to buy tokens
-
-  function () payable {
-
-    buyTokens(msg.sender);
-
-  }
-
-
-
-  // low level token purchase function
-
-  function buyTokens(address beneficiary) payable {
-
-    require(beneficiary != 0x0);
-
-    require(validPurchase());
-
-
-
-    uint256 weiAmount = msg.value;
-
-
-
-    // calculate token amount to be sent
-
-    uint256 tokens = (weiAmount/10**10) * 490;
-
-
-
-    if(now < startTime + 1*7*24*60* 1 minutes){
-
-      tokens += (tokens * 20) / 100;
-
-    }else if(now < startTime + 2*7*24*60* 1 minutes){
-
-      tokens += (tokens * 10) / 100;
-
-    }else{
-
-      tokens += (tokens * 5) / 100;
-
+  //check is now ICO
+  function isIco(uint _time) public view returns (bool){
+    if((icoStart <= _time) && (_time < icoFinish)){
+      return true;
     }
-
-
-
-    // update state
-
-    weiRaised = weiRaised.add(weiAmount);
-
-
-
-    tokenReward.transfer(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-
+    return false;
   }
 
-
-
-  // send ether to the fund collection wallet
-
-  // override to create custom fund forwarding mechanisms
-
-  function forwardFunds() internal {
-
-    // wallet.transfer(msg.value);
-
-    if (!wallet.send(msg.value)) {
-
-      throw;
-
+  function timeBasedBonus(uint _time) public view returns(uint res) {
+    res = 20;
+    uint timeBuffer = icoStart;
+    for (uint i = 0; i<10; i++){
+      if(_time <= timeBuffer + 7 days){
+        return res;
+      }else{
+        res = res - 2;
+        timeBuffer = timeBuffer + 7 days;
+      }
+      if (res == 0){
+        return (0);
+      }
     }
-
+    return res;
+  }
+  
+  function volumeBasedBonus(uint _value)public pure returns(uint res) {
+    if(_value < 5 ether){
+      return 0;
+    }
+    if (_value < 15 ether){
+      return 2;
+    }
+    if (_value < 30 ether){
+      return 5;
+    }
+    if (_value < 50 ether){
+      return 8;
+    }
+    return 10;
+  }
+  
+  //fallback function (when investor send ether to contract)
+  function() public payable{
+    require(isIco(now));
+    require(ethCollected.add(msg.value) <= maxCap);
+    require(buy(msg.sender,msg.value, now)); //redirect to func buy
   }
 
+  //function buy Tokens
+  function buy(address _address, uint _value, uint _time) internal returns (bool){
+    uint tokensForSend = etherToTokens(_value,_time);
 
+    require (tokensForSend >= minDeposit);
 
-  // @return true if the transaction can buy tokens
+    tokensSold = tokensSold.add(tokensForSend);
+    ethCollected = ethCollected.add(_value);
 
-  function validPurchase() internal constant returns (bool) {
+    token.sendCrowdsaleTokens(_address,tokensForSend);
+    etherDistribution1.transfer(this.balance/2);
+    etherDistribution2.transfer(this.balance);
 
-    bool withinPeriod = now >= startTime && now <= endTime;
-
-    bool nonZeroPurchase = msg.value != 0;
-
-    return withinPeriod && nonZeroPurchase;
-
+    return true;
   }
 
+  function manualSendTokens (address _address, uint _tokens) public onlyTechSupport {
+    token.sendCrowdsaleTokens(_address, _tokens);
+    tokensSold = tokensSold.add(_tokens);
+  }
+  
 
-
-  // @return true if crowdsale event has ended
-
-  function hasEnded() public constant returns (bool) {
-
-    return now > endTime;
-
+  //convert ether to tokens (without decimals)
+  function etherToTokens(uint _value, uint _time) public view returns(uint res) {
+    res = _value.mul((uint)(10).pow(decimals))/(tokenPrice);
+    uint bonus = timeBasedBonus(_time).add(volumeBasedBonus(_value));
+    res = res.add(res.mul(bonus)/100);
   }
 
-
-
-  function withdrawTokens(uint256 _amount) {
-
-    if(msg.sender!=wallet) throw;
-
-    tokenReward.transfer(wallet,_amount);
-
+  bool public isIcoEnded = false;
+  function endIco () public {
+    require(!isIcoEnded);
+    require(msg.sender == owner || msg.sender == techSupport);
+    require(now > icoFinish + 5 days);
+    token.burnTokens(etherDistribution1,etherDistribution2, bountyAddress, tokensSold);
+    isIcoEnded = true;
   }
-
 }
