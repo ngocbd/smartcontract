@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x999b190dbbc297980e6b01c5e486a54cb8dbffd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x5f2f1cce7311e436c6e02313c00bf99f9f4a28cb
 */
 /*
  * ERC20 interface
@@ -80,19 +80,11 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
   mapping(address => uint) balances;
-
-  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
-  }
+  // Interface marker
+  bool public constant isToken = true;
 
   /**
    *
@@ -114,8 +106,8 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
@@ -146,39 +138,6 @@ contract StandardToken is ERC20, SafeMath {
 
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
-  }
-
-  /**
-   * Atomic increment of approved spending
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   */
-  function addApproval(address _spender, uint _addedValue)
-  returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-  /**
-   * Atomic decrement of approved spending.
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   */
-  function subApproval(address _spender, uint _subtractedValue)
-  returns (bool success) {
-
-      uint oldVal = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
   }
 
 }
@@ -224,7 +183,7 @@ contract Ownable {
  * - Prepare a spreadsheet for token allocation
  * - Deploy this contract, with the sum to tokens to be distributed, from the owner account
  * - Call setInvestor for all investors from the owner account using a local script and CSV input
- * - Move tokensToBeAllocated in this contract using StandardToken.transfer()
+ * - Move tokensToBeAllocated in this contract usign StandardToken.transfer()
  * - Call lock from the owner account
  * - Wait until the freeze period is over
  * - After the freeze time is over investors can call claim() from their address to get their tokens
@@ -305,16 +264,13 @@ contract TokenVault is Ownable {
       throw;
     }
 
-    // Sanity check on _tokensToBeAllocated
-    if(_tokensToBeAllocated == 0) {
-      throw;
-    }
-
     freezeEndsAt = _freezeEndsAt;
     tokensToBeAllocated = _tokensToBeAllocated;
   }
 
-  /// @dev Add a presale participating allocation
+  /**
+   * Add a presale participatin allocation.
+   */
   function setInvestor(address investor, uint amount) public onlyOwner {
 
     if(lockedAt > 0) {
@@ -325,7 +281,8 @@ contract TokenVault is Ownable {
     if(amount == 0) throw; // No empty buys
 
     // Don't allow reset
-    if(balances[investor] > 0) {
+    bool existing = balances[investor] > 0;
+    if(existing) {
       throw;
     }
 
@@ -338,23 +295,27 @@ contract TokenVault is Ownable {
     Allocated(investor, amount);
   }
 
-  /// @dev Lock the vault
-  ///      - All balances have been loaded in correctly
-  ///      - Tokens are transferred on this vault correctly
-  ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
+  /**
+   * Lock the vault.
+   *
+   *
+   * - All balances have been loaded in correctly
+   * - Tokens are transferred on this vault correctly
+   *
+   * Checks are in place to prevent creating a vault that is locked with incorrect token balances.
+   *
+   */
   function lock() onlyOwner {
 
     if(lockedAt > 0) {
       throw; // Already locked
     }
 
-    // Spreadsheet sum does not match to what we have loaded to the investor data
-    if(tokensAllocatedTotal != tokensToBeAllocated) {
-      throw;
-    }
-
-    // Do not lock the vault if the given tokens are not on this contract
-    if(token.balanceOf(address(this)) != tokensAllocatedTotal) {
+    // Do not lock the vault if the given tokens on this contract
+    // Note that we do not check != so that we can top up little bit extra
+    // due to decimal rounding and having issues with it.
+    // This extras will be lost forever when the vault is locked.
+    if(token.balanceOf(address(this)) < tokensAllocatedTotal) {
       throw;
     }
 
@@ -363,7 +324,9 @@ contract TokenVault is Ownable {
     Locked();
   }
 
-  /// @dev In the case locking failed, then allow the owner to reclaim the tokens on the contract.
+  /**
+   * In the case locking failed, then allow the owner to reclaim the tokens on the contract.
+   */
   function recoverFailedLock() onlyOwner {
     if(lockedAt > 0) {
       throw;
@@ -373,13 +336,17 @@ contract TokenVault is Ownable {
     token.transfer(owner, token.balanceOf(address(this)));
   }
 
-  /// @dev Get the current balance of tokens in the vault
-  /// @return uint How many tokens there are currently in vault
+  /**
+   * Get the current balance of tokens in the vault.
+   */
   function getBalance() public constant returns (uint howManyTokensCurrentlyInVault) {
     return token.balanceOf(address(this));
   }
 
-  /// @dev Claim N bought tokens to the investor as the msg sender
+  /**
+   * Claim N bought tokens to the investor as the msg sender.
+   *
+   */
   function claim() {
 
     address investor = msg.sender;
@@ -412,7 +379,9 @@ contract TokenVault is Ownable {
     Distributed(investor, amount);
   }
 
-  /// @dev Resolve the contract umambigious state
+  /**
+   * Resolve the contract umambigious state.
+   */
   function getState() public constant returns(State) {
     if(lockedAt == 0) {
       return State.Loading;
