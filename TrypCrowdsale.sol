@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrypCrowdsale at 0xbba67b58cb5059f388cae3d7597ebac6cb70dfe6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrypCrowdsale at 0xc29f013d7745d95c86407b53137a1596072d4b83
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
 
 /**
  * @title Ownable
@@ -112,7 +112,7 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
-  uint256 totalSupply_;
+  uint256 public totalSupply_;
 
   /**
   * @dev total number of tokens in existence
@@ -258,10 +258,10 @@ contract StandardToken is ERC20, BasicToken {
 	
     using SafeMath for uint256;
 
-	string public name = "Tryp"; 
+	string public name = "the Tryp"; 
 	string public symbol = "Tryp";
-	uint public decimals = 18;
-	uint256 public constant INITIAL_SUPPLY = 1000000000000000000000000;
+	uint public decimals = 0;  // We don't want fractional tokens 
+	uint256 public constant INITIAL_SUPPLY = 1000000;
 
   // The token being sold
 
@@ -275,14 +275,11 @@ contract StandardToken is ERC20, BasicToken {
 
   // How many token units a buyer gets per wei
 
-    uint256 public weiPerToken = 15000000000000000;
- //   uint256 public ethPriceToday;
-
+    uint256 public weiPerToken = 16000000000000000;
 
   // Amount of wei raised
 
 	uint256 public weiRaised;
-    uint256 public totalSupply_;
     uint256 public remainingSupply_;
  
   /**
@@ -346,13 +343,12 @@ contract StandardToken is ERC20, BasicToken {
   // Internal interface (extensible)
   // -----------------------------------------
 
-  // Set rate in ETH * 1000
+  // Set cost of token in Eth.  Set rate in ETH * 1000 ie: 0.015 eth = setrate 15
 
     function setRate (uint256 _ethPriceToday) public onlyOwner {
 
         require(_ethPriceToday != 0);
-        weiPerToken = (_ethPriceToday * 1e18)/1000;
-
+        weiPerToken = _ethPriceToday.mul(1e18).div(1000);
     }    
 
   /**
@@ -376,15 +372,15 @@ contract StandardToken is ERC20, BasicToken {
     function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
 
         token.transfer(_beneficiary, _tokenAmount);
-        remainingSupply_ -= _tokenAmount;
+        remainingSupply_ = remainingSupply_.sub(_tokenAmount);
     }
 
-  // Use to correct any token transaction errors
+  // administrative use to correct any token transaction errors
   
     function deliverTokensAdmin(address _beneficiary, uint256 _tokenAmount) public onlyOwner {
 
         token.transfer(_beneficiary, _tokenAmount);
-        remainingSupply_ -= _tokenAmount;
+        remainingSupply_ = remainingSupply_.sub(_tokenAmount);
     }
 
 
@@ -393,25 +389,38 @@ contract StandardToken is ERC20, BasicToken {
    * @param _weiAmount Value in wei to be converted into tokens
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
+   
+   // token meant to be sold in whole numbers.  Round down to nearest whole to avoid fractional purchases
 
     function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-		uint256 _tokens = ((_weiAmount/weiPerToken) * 1e18);
+		uint256 _tokens = _weiAmount.div(weiPerToken);
         return (_tokens);
     }
-
+    
+   
   /**
    * @dev Determines how ETH is stored/forwarded on purchases.
    */
     function _forwardFunds() internal {
 
-    	uint total_eth = (msg.value);
-    	uint prize_pool = (total_eth * 50)/100; // 50% to Main Prize Pool
-    	uint prize_pool_sec = (total_eth * 10)/100; // 10% to Secondary Prize Pool
-    	uint admin_pool = (total_eth-prize_pool-prize_pool_sec); // Remainder to Admin Pool
+    	uint256 total_eth = (msg.value);
+    	uint256 prize_pool = total_eth.mul(50).div(100);
+    	uint256 prize_pool_sec = total_eth.mul(10).div(100);
+    	uint256 admin_pool = total_eth.sub(prize_pool).sub(prize_pool_sec);
 
+    	require(prizewallet == (0x6eFd9391Db718dEff494C2199CD83E0EFc8102f6));
     	prizewallet.transfer(prize_pool);
+	    require(prize2wallet == (0x426570e5b796A2845C700B4b49058E097f7dCb54));
     	prize2wallet.transfer(prize_pool_sec);
+	    require(adminwallet == (0xe7d718cc663784480EBB62A672180fbB68f89424));
     	adminwallet.transfer(admin_pool);
+    }
+
+
+    // Function to remove any ethereum that gets stuck in contract (most likely from under or over payment)   
+    function withdraw() public onlyOwner {
+         uint bal = address(this).balance;
+         address(owner).transfer(bal);
     }
 
 }
