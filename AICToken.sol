@@ -1,235 +1,441 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AicToken at 0x37CD394C1d3deD7168111834fa9eAf362D0EcD5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AICToken at 0x5eac95ad5b287cf44e058dcf694419333b796123
 */
 pragma solidity ^0.4.21;
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
- * @title owned
- * @dev The owned contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title Ownable
+ * @dev Owner validator
  */
-contract owned {
+contract Ownable {
     address public owner;
 
-    function owned() public {
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    constructor() public {
         owner = msg.sender;
     }
 
     /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner {
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
     /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) onlyOwner public {
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
 
 
 /**
- * @title Controlled
- * @dev Base contract which allows children to implement an emergency stop mechanism.
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract Controlled is owned {
-
-  bool public paused = false;
+library SafeMath {
 
   /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
   /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
   /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
 
 /**
- * @title Basic token
- * @dev Basic version of StandardToken.
+ * @title BasicToken
+ * @dev Implementation of ERC20Basic
  */
-contract BasicToken is Controlled{
+contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
-    
-    uint256       _supply;
-    mapping (address => uint256)    _balances;
-    
-    event Transfer( address indexed from, address indexed to, uint256 value);
 
-    function BasicToken() public {    }
-    
-    function totalSupply() public view returns (uint256) {
-        return _supply;
-    }
-    function balanceOf(address _owner) public view returns (uint256) {
-        return _balances[_owner];
-    }
-    
+    mapping(address => uint256) balances;
+
+    uint256 totalSupply_;
+
     /**
-     * @dev transfer token for a specified address
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     */
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        require(_balances[msg.sender] >= _value && _value > 0);
+    * @dev total number of tokens in exsitence
+    */
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }
+
+    function msgSender() 
+        public
+        view
+        returns (address)
+    {
+        return msg.sender;
+    }
+
+    function transfer(
+        address _to, 
+        uint256 _value
+    ) 
+        public 
+        returns (bool) 
+    {
+        require(_to != address(0));
+        require(_to != msg.sender);
+        require(_value <= balances[msg.sender]);
         
-        _balances[msg.sender] =_balances[msg.sender].sub(_value);
-        _balances[_to] =_balances[_to].add(_value);
-        
+        _preValidateTransfer(msg.sender, _to, _value);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         emit Transfer(msg.sender, _to, _value);
-        
         return true;
     }
-  
+
+    /**
+     * @dev Gets the balance of the specified address.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balances[_owner];
+    }
+
+    function _preValidateTransfer(
+        address _from, 
+        address _to, 
+        uint256 _value
+    ) 
+        internal 
+    {
+
+    }
 }
 
-contract AicToken is BasicToken {
-    string  constant public symbol = "AIC";
-    string  constant public name = "AicBlock";
-    uint256 constant public decimals = 18;
-    uint256 public lockedCounts = 0;
+/**
+ * @title StandardToken
+ * @dev Base Of token
+ */
+contract StandardToken is ERC20, BasicToken, Ownable {
 
-    struct LockStruct {
-        uint256 unlockTime;
-        bool locked;
-    }
-    
-    uint256[][] public unlockCountArray;
-    address[] public addressArray;
-    LockStruct[] public unlockTimeMap;
+    mapping (address => mapping (address => uint256)) internal allowed;
 
-    function AicToken() public {
-        
-        _supply = 10*(10**8)*(10**18);
-        _balances[0x01] = _supply;
-        lockedCounts = _supply;
-        
-        //2018
-        unlockTimeMap.push(LockStruct({unlockTime:1527782400, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1535731200, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1543593600, locked: true})); 
-        //2019
-        unlockTimeMap.push(LockStruct({unlockTime:1551369600, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1559318400, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1567267200, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1575129600, locked: true})); 
-        //2020
-        unlockTimeMap.push(LockStruct({unlockTime:1582992000, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1590940800, locked: true})); 
-        unlockTimeMap.push(LockStruct({unlockTime:1598889600, locked: true}));
-        unlockTimeMap.push(LockStruct({unlockTime:1606752000, locked: true}));
-        
-        unlockCountArray = new uint256[][](7);
-        unlockCountArray[0] = [28000000,10500000,10500000,10500000,10500000,0,0,0,0,0,0];
-        unlockCountArray[1] = [70000000,17500000,17500000,17500000,17500000,0,0,0,0,0,0];
-        unlockCountArray[2] = [168000000,18000000,18000000,18000000,18000000,0,0,0,0,0,0];
-        unlockCountArray[3] = [0,0,25000000,0,25000000,0,0,0,0,0,0];
-        unlockCountArray[4] = [0,0,20000000,0,20000000,0,20000000,0,20000000,0,20000000];
-        unlockCountArray[5] = [0,0,50000000,0,50000000,0,50000000,0,50000000,0,50000000];
-        unlockCountArray[6] = [0,15000000,15000000,15000000,15000000,15000000,15000000,15000000,15000000,15000000,15000000];
-    
-    }
-  
-    
-    function setAddressArr(address[] self) onlyOwner public {
-        //Only call once
-        require(unlockTimeMap[0].locked);
-        require (self.length==7);
-        
-        addressArray = new address[](self.length);
-        for (uint i = 0; i < self.length; i++){
-           addressArray[i]=self[i]; 
-        }
-    
+    /**
+    * @dev Transfer tokens from one address to another
+    * @param _from address The address which you want to send tokens from
+    * @param _to address the address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+    function transferFrom(
+        address _from, 
+        address _to, 
+        uint256 _value
+    ) 
+        public 
+        returns (bool) 
+    {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        _preValidateTransfer(_from, _to, _value);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].sub(_value);  
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true; 
+    } 
+
+    /**
+    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender
+.   * @param _spender The address which will spend the funds.
+    */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require (now >= unlockTimeMap[0].unlockTime);
-
-        return super.transfer(_to, _value);
-    }
-
-     /**
-     * @dev unlock , only can be called by owner.
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed jto a spender. 
      */
-    function unlock(uint256 _index) onlyOwner public {
-         
-        require (addressArray.length == 7);
-        require(_index >= 0 && _index < unlockTimeMap.length);
-        require(now >= unlockTimeMap[_index].unlockTime && unlockTimeMap[_index].locked);
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
 
-        for (uint _addressIndex = 0; _addressIndex < addressArray.length; _addressIndex++) {
-            
-          uint256 unlockCount = unlockCountArray[_addressIndex][_index].mul(10**18);
+/**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
 
-          require(_balances[0x01] >= unlockCount);
 
-          _balances[addressArray[_addressIndex]] = _balances[addressArray[_addressIndex]].add(unlockCount);
-          _balances[0x01] = _balances[0x01].sub(unlockCount);
-          
-          lockedCounts = lockedCounts.sub(unlockCount);
-
-          emit Transfer(0x01, addressArray[_addressIndex], unlockCount);  
+    function decreseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
 
-        unlockTimeMap[_index].locked = false;
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
-  
+
+}
+
+/**
+ * @title MintableToken
+ * @dev Minting of total balance 
+ */
+contract MintableToken is StandardToken {
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+
+    bool public mintingFinished = false;
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+   
+    /**
+    * @dev Function to mint tokens
+    * @param _to The address that will receive the minted tokens.
+    * @param _amount The amount of tokens to mint
+    * @return A boolean that indicated if the operation was successful.
+    */
+    function mint(address _to, uint256 _amount) onlyOwner   canMint public returns (bool) {
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     * @return True if the operation was successful. 
+     */
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        emit MintFinished();
+        return true;
+    }
+}
+
+
+/**
+ * @title LockableToken
+ * @dev locking of granted balance
+ */
+contract LockableToken is MintableToken {
+
+    using SafeMath for uint256;
+
+    /**
+     * @dev Lock defines a lock of token
+     */
+    struct Lock {
+        uint256 amount;
+        uint256 expiresAt;
+    }
+
+    // granted to locks;
+    mapping (address => Lock[]) public grantedLocks;
+
+    function addLock(
+        address _granted, 
+        uint256 _amount, 
+        uint256 _expiresAt
+    ) 
+        public 
+        onlyOwner 
+    {
+        require(_amount > 0);
+        require(_expiresAt > now);
+
+        grantedLocks[_granted].push(Lock(_amount, _expiresAt));
+    }
+
+    function deleteLock(
+        address _granted, 
+        uint8 _index
+    ) 
+        public 
+        onlyOwner 
+    {
+        Lock storage lock = grantedLocks[_granted][_index];
+
+        delete grantedLocks[_granted][_index];
+        for (uint i = _index; i < grantedLocks[_granted].length - 1; i++) {
+            grantedLocks[_granted][i] = grantedLocks[_granted][i+1];
+        }
+        grantedLocks[_granted].length--;
+
+        if (grantedLocks[_granted].length == 0)
+            delete grantedLocks[_granted];
+    }
+
+    function transferWithLock(
+        address _to, 
+        uint256 _value,
+        uint256[] _expiresAtList
+    ) 
+        public 
+        onlyOwner
+        returns (bool) 
+    {
+        require(_to != address(0));
+        require(_to != msg.sender);
+        require(_value <= balances[msg.sender]);
+
+        uint256 count = _expiresAtList.length;
+        if (count > 0) {
+            uint256 devidedValue = _value.div(count);
+            for (uint i = 0; i < count; i++) {
+                addLock(_to, devidedValue, _expiresAtList[i]);  
+            }
+        }
+
+        return transfer(_to, _value);
+    }
+
+    /**
+        @param _from - _granted
+        @param _to - no usable
+        @param _value - amount of transfer
+     */
+    function _preValidateTransfer(
+        address _from, 
+        address _to, 
+        uint256 _value
+    ) 
+        internal
+    {
+        super._preValidateTransfer(_from, _to, _value);
+        
+        uint256 lockedAmount = getLockedAmount(_from);
+        uint256 balanceAmount = balanceOf(_from);
+
+        require(balanceAmount.sub(lockedAmount) >= _value);
+    }
+
+
+    function getLockedAmount(
+        address _granted
+    ) 
+        public
+        view
+        returns(uint256)
+    {
+
+        uint256 lockedAmount = 0;
+
+        Lock[] storage locks = grantedLocks[_granted];
+        for (uint i = 0; i < locks.length; i++) {
+            if (now < locks[i].expiresAt) {
+                lockedAmount = lockedAmount.add(locks[i].amount);
+            }
+        }
+        //uint256 balanceAmount = balanceOf(_granted);
+        //return balanceAmount.sub(lockedAmount);
+
+        return lockedAmount;
+    }
+    
+}
+
+
+contract AICToken is LockableToken {
+
+  string public constant name = "AICRYPTO";
+  string public constant symbol = "AIC";
+  uint32 public constant decimals = 18;
+
+  uint256 public constant INITIAL_SUPPLY = 10000000000 * (10 ** uint256(decimals));
+
+  /**
+  * @dev Constructor that gives msg.sender all of existing tokens.
+  */
+  constructor() public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+    emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
 }
