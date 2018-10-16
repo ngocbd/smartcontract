@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x7c94d093df52d86056390f27d344c3019a865d32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x8361155c6c29a8d66c296c3319be309989453698
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'EnergyShellfish';
-        symbol = 'ES';
+        totalSupply = 210000000000000000000000000;
+        name = 'EXPREAD';
+        symbol = 'EXC';
         decimals = 18;
-        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
-        Transfer(address(0), 0xe1f77b81a2383162cbbdd0dd93630f31a6672477, totalSupply);
+        balanceOf[0x2abf847ce761300bcc72f881cd2feeeb2d518822] = totalSupply;
+        Transfer(address(0), 0x2abf847ce761300bcc72f881cd2feeeb2d518822, totalSupply);
     }
 }
