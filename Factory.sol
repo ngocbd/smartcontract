@@ -1,12 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x8e6fff605143f9f274f7fc676f0366e4a2a43258
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xbb014b85805cc76782731752456734042f3a28b7
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
@@ -149,18 +152,18 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract SOUL is StandardToken {
+contract HadaCoinIco is StandardToken {
     using SafeMath for uint256;
 
-    string public name = "SOUL COIN";
-    string public symbol = "SIN";
+    string public name = "HADACoin";
+    string public symbol = "HADA";
     uint256 public decimals = 18;
 
-    uint256 public totalSupply = 736303 * (uint256(10) ** decimals);
+    uint256 public totalSupply = 500000000 * (uint256(10) ** decimals);
     uint256 public totalRaised; // total ether raised (in wei)
 
     uint256 public startTimestamp; // timestamp after which ICO will start
-    uint256 public durationSeconds = 51 * 24 * 60 * 60; // 51 days
+    uint256 public durationSeconds = 60 * 60 * 24 * 31; // 31 Days
 
     uint256 public minCap; // the ICO ether goal (in wei)
     uint256 public maxCap; // the ICO ether max cap (in wei)
@@ -171,7 +174,7 @@ contract SOUL is StandardToken {
      */
     address public fundsWallet;
 
-    function SOUL(
+    function HadaCoinIco(
         address _fundsWallet,
         uint256 _startTimestamp,
         uint256 _minCap,
@@ -199,11 +202,23 @@ contract SOUL is StandardToken {
     }
 
     function calculateTokenAmount(uint256 weiAmount) constant returns(uint256) {
-        // standard rate: 1 ETH : 666 SIN
-        uint256 tokenAmount = weiAmount.mul(666);
-        if (now <= startTimestamp + 12 days) {
-            // +66% bonus during first 12 days
-            return tokenAmount.mul(166).div(100);
+        // standard rate: 1 ETH : 400 HADA
+        uint256 tokenAmount = weiAmount.mul(400);
+        if (now <= startTimestamp + 7 days) {
+            // +25% bonus during first week
+            return tokenAmount.mul(250).div(100);
+        } else
+        if (now >= startTimestamp + 7 days && now <= startTimestamp + 14 days) {
+            // +20% bonus during second week
+            return tokenAmount.mul(210).div(100);
+        } else
+        if (now >= startTimestamp + 14 days && now <= startTimestamp + 21 days) {
+            // +15% bonus during third week
+            return tokenAmount.mul(1725).div(1000);
+        } else 
+        if (now >= startTimestamp + 21 days && now <= startTimestamp + 28 days) {
+            // +10% bonus during fourth week
+            return tokenAmount.mul(1375).div(1000);
         } else {
             return tokenAmount;
         }
@@ -239,7 +254,7 @@ contract Factory {
         uint256 _minCapEth,
         uint256 _maxCapEth) returns(address created) 
     {
-        return new SOUL(
+        return new HadaCoinIco(
             _fundsWallet,
             _startTimestamp,
             _minCapEth * 1 ether,
