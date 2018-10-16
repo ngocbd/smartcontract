@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Shuttle at 0xf34fd18dd4b8079235242d7059a2d9f0163f9d07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Shuttle at 0x1a3de2f2bdf9b7b431d440a1296d26ae5714c441
 */
 pragma solidity ^0.4.16;
 
@@ -222,7 +222,7 @@ contract ERC677Token is ERC677 {
 
 contract Shuttle is StandardToken, ERC677Token {
 
-  uint public constant totalSupply = 10**27;
+  uint public constant totalSupply = 10**9;
   string public constant name = 'Shuttle Token';
   uint8 public constant decimals = 18;
   string public constant symbol = 'SHTL';
