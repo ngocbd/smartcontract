@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x9d64bbbe449c5ff69f9f1a9d33b9f56e6f567cb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x34aC5Ad2D404723eC362f4F5b272602055851f67
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
+
 
 /*
     Utilities & Common Modifiers
@@ -10,7 +11,7 @@ contract Utils {
     /**
         constructor
     */
-    function Utils() {
+    function Utils() public {
     }
 
     // verifies that an amount is greater than zero
@@ -21,7 +22,7 @@ contract Utils {
 
     // validates an address - currently only checks that it isn't null
     modifier validAddress(address _address) {
-        require(_address != 0x0);
+        require(_address != address(0));
         _;
     }
 
@@ -41,7 +42,7 @@ contract Utils {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -55,7 +56,7 @@ contract Utils {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -68,85 +69,31 @@ contract Utils {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
     }
 }
 
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
-    }
-}
 
 /*
     ERC20 Standard Token interface
 */
 contract IERC20Token {
     // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
 
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
+
 
 /**
     ERC20 Standard Token implementation
@@ -170,7 +117,7 @@ contract ERC20Token is IERC20Token, Utils {
         @param _symbol      token symbol
         @param _decimals    decimal points, for display purposes
     */
-    function ERC20Token(string _name, string _symbol, uint8 _decimals) {
+    function ERC20Token(string _name, string _symbol, uint8 _decimals) public {
         require(bytes(_name).length > 0 && bytes(_symbol).length > 0); // validate input
 
         name = _name;
@@ -248,12 +195,72 @@ contract ERC20Token is IERC20Token, Utils {
     }
 }
 
+
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
 /*
     Token Holder interface
 */
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
+
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -266,7 +273,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
         @dev constructor
     */
-    function TokenHolder() {
+    function TokenHolder() public {
     }
 
     /**
@@ -288,6 +295,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
+
 /*
     Smart Token interface
 */
@@ -296,6 +304,7 @@ contract ISmartToken is IOwned, IERC20Token {
     function issue(address _to, uint256 _amount) public;
     function destroy(address _from, uint256 _amount) public;
 }
+
 
 /*
     Smart Token v0.3
@@ -322,6 +331,7 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
         @param _decimals   for display purposes only
     */
     function SmartToken(string _name, string _symbol, uint8 _decimals)
+        public
         ERC20Token(_name, _symbol, _decimals)
     {
         NewSmartToken(address(this));
