@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0xed59cf07c469f071fa1eb268f3b62d744ae572c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0x230cacd4242bdb5b9f7178eb1db0ad109ec76ca0
 */
 contract BountyEscrow {
 
@@ -8,6 +8,7 @@ contract BountyEscrow {
   function BountyEscrow() {
     admin = msg.sender;
   }
+
 
   event Bounty(
     address indexed sender,
@@ -25,6 +26,7 @@ contract BountyEscrow {
   // transfer deposits funds to recipients
   // Gas used in each `send` will be default stipend, 2300
   function payout(address[] recipients, uint256[] amounts) {
+    require(admin == msg.sender);
     require(recipients.length == amounts.length);
     for (uint i = 0; i < recipients.length; i++) {
       Payout(
