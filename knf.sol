@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract knf at 0xcdcbb474268703da1b6744c540500e8a2a39e8dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract knf at 0x17f0badcdf99b0a94429478d2e9ddb1ff13174f7
 */
 pragma solidity ^0.4.18;
 
@@ -161,6 +161,7 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
+
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
    *
@@ -179,31 +180,35 @@ contract StandardToken is ERC20, BasicToken {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;                
+    return true;                /*^ 23 ^*/
   }                            
 }
 contract knf is StandardToken {
   string public name; // solium-disable-line uppercase
   string public symbol; // solium-disable-line uppercase
-  mapping(address => uint256) airdroped;
   uint8 public decimals; // solium-disable-line uppercase
   uint256 DropedThisWeek;
-  string constant public version = "1.2";
   uint256 lastWeek;
   uint256 decimate;
   uint256 weekly_limit;
   uint256 air_drop;
+  mapping(address => uint256) airdroped;
   address control;
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   function availableSupply() public view returns (uint256) {
     return balances[owner];
-  }  
+  }
+  
   modifier onlyControl() {
     require(msg.sender == control);
     _;
   }
-  function changeName(string newName) onlyControl public {name = newName;}
+  
+  function changeName(string newName) onlyControl public {
+    name = newName;
+  }
+  
   function RecordTransfer(address _from, address _to, uint256 _value) internal {
     Transfer(_from, _to, _value);
 	if(airdroped[_from] == 0) airdroped[_from] = 1;
@@ -212,19 +217,21 @@ contract knf is StandardToken {
 	  lastWeek = thisweek();
 	  DropedThisWeek = 0;
 	}
-  }  
-  /*** */ function Award(address _to, uint256 _v) public onlyControl {
+  }
+  
+  /*** */
+  function Award(address _to, uint256 _v) public onlyControl {
     require(_to != address(0));
 	require(_v <= balances[owner]);
 	balances[_to] += _v;
 	balances[owner] -= _v;
 	RecordTransfer(owner, _to, _v);
-  }  
+  }
+  
   /*** @param newOwner  The address to transfer ownership to
     owner tokens go with owner, airdrops always from owner pool */
   function transferOwnership(address newOwner) public onlyControl {
     require(newOwner != address(0));
-	require(newOwner != control);
 	OwnershipTransferred(owner, newOwner);
 	owner = newOwner;
   } /*** @param newControl  The address to transfer control to.   */
@@ -244,12 +251,15 @@ contract knf is StandardToken {
     decimals = _decimalUnits;                            
 	decimate = (10 ** uint256(decimals));
 	weekly_limit = 100000 * decimate;
-	air_drop = 2000 * decimate;	
+	air_drop = 1018 * decimate;	
   } /** rescue lost erc20 kin **/
   function transfererc20(address tokenAddress, address _to, uint256 _value) external onlyControl returns (bool) {
     require(_to != address(0));
 	return ERC20(tokenAddress).transfer(_to, _value);
-  } /** kn0more **/function cleanup() onlyControl external {selfdestruct(control);}  
+  } /** token no more **/
+  function destroy() onlyControl external {
+    require(owner != address(this)); selfdestruct(control);
+  }  
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
 	require(_value <= allowed[_from][msg.sender]);
