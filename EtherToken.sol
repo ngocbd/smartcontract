@@ -1,401 +1,887 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0xc0829421c1d260bd3cb3e0f06cfe2d52db2ce315
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0xb59a226a2b8a2f2b0512baa35cc348b6b213b671
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.15;
 
-/*
-    Utilities & Common Modifiers
-*/
-contract Utils {
-    /**
-        constructor
-    */
-    function Utils() {
-    }
+/// @title provides subject to role checking logic
+contract IAccessPolicy {
 
-    // verifies that an amount is greater than zero
-    modifier greaterThanZero(uint256 _amount) {
-        require(_amount > 0);
-        _;
-    }
+    ////////////////////////
+    // Public functions
+    ////////////////////////
 
-    // validates an address - currently only checks that it isn't null
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
-        _;
-    }
-
-    // verifies that the address is different than this contract address
-    modifier notThis(address _address) {
-        require(_address != address(this));
-        _;
-    }
-
-    // Overflow protected math functions
-
-    /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
-
-        @param _x   value 1
-        @param _y   value 2
-
-        @return sum
-    */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
-    }
-
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
-
-        @param _x   minuend
-        @param _y   subtrahend
-
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
-
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
-}
-
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address owner) { owner; }
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
-    }
-}
-
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
-}
-
-/*
-    We consider every contract to be a 'token holder' since it's currently not possible
-    for a contract to deny receiving tokens.
-
-    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
-    the owner to send tokens that were sent to the contract by mistake back to their sender.
-*/
-contract TokenHolder is ITokenHolder, Owned, Utils {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() {
-    }
-
-    /**
-        @dev withdraws tokens held by the contract and sends them to an account
-        can only be called by the owner
-
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+    /// @notice We don't make this function constant to allow for state-updating access controls such as rate limiting.
+    /// @dev checks if subject belongs to requested role for particular object
+    /// @param subject address to be checked against role, typically msg.sender
+    /// @param role identifier of required role
+    /// @param object contract instance context for role checking, typically contract requesting the check
+    /// @param verb additional data, in current AccessControll implementation msg.sig
+    /// @return if subject belongs to a role
+    function allowed(
+        address subject,
+        bytes32 role,
+        address object,
+        bytes4 verb
+    )
         public
-        ownerOnly
-        validAddress(_token)
-        validAddress(_to)
-        notThis(_to)
+        returns (bool);
+}
+
+/// @title enables access control in implementing contract
+/// @dev see AccessControlled for implementation
+contract IAccessControlled {
+
+    ////////////////////////
+    // Events
+    ////////////////////////
+
+    /// @dev must log on access policy change
+    event LogAccessPolicyChanged(
+        address controller,
+        IAccessPolicy oldPolicy,
+        IAccessPolicy newPolicy
+    );
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    /// @dev allows to change access control mechanism for this contract
+    ///     this method must be itself access controlled, see AccessControlled implementation and notice below
+    /// @notice it is a huge issue for Solidity that modifiers are not part of function signature
+    ///     then interfaces could be used for example to control access semantics
+    /// @param newPolicy new access policy to controll this contract
+    /// @param newAccessController address of ROLE_ACCESS_CONTROLLER of new policy that can set access to this contract
+    function setAccessPolicy(IAccessPolicy newPolicy, address newAccessController)
+        public;
+
+    function accessPolicy()
+        public
+        constant
+        returns (IAccessPolicy);
+
+}
+
+contract StandardRoles {
+
+    ////////////////////////
+    // Constants
+    ////////////////////////
+
+    // @notice Soldity somehow doesn't evaluate this compile time
+    // @dev role which has rights to change permissions and set new policy in contract, keccak256("AccessController")
+    bytes32 internal constant ROLE_ACCESS_CONTROLLER = 0xac42f8beb17975ed062dcb80c63e6d203ef1c2c335ced149dc5664cc671cb7da;
+}
+
+/// @title Granular code execution permissions
+/// @notice Intended to replace existing Ownable pattern with more granular permissions set to execute smart contract functions
+///     for each function where 'only' modifier is applied, IAccessPolicy implementation is called to evaluate if msg.sender belongs to required role for contract being called.
+///     Access evaluation specific belong to IAccessPolicy implementation, see RoleBasedAccessPolicy for details.
+/// @dev Should be inherited by a contract requiring such permissions controll. IAccessPolicy must be provided in constructor. Access policy may be replaced to a different one
+///     by msg.sender with ROLE_ACCESS_CONTROLLER role
+contract AccessControlled is IAccessControlled, StandardRoles {
+
+    ////////////////////////
+    // Mutable state
+    ////////////////////////
+
+    IAccessPolicy private _accessPolicy;
+
+    ////////////////////////
+    // Modifiers
+    ////////////////////////
+
+    /// @dev limits function execution only to senders assigned to required 'role'
+    modifier only(bytes32 role) {
+        require(_accessPolicy.allowed(msg.sender, role, this, msg.sig));
+        _;
+    }
+
+    ////////////////////////
+    // Constructor
+    ////////////////////////
+
+    function AccessControlled(IAccessPolicy policy) internal {
+        require(address(policy) != 0x0);
+        _accessPolicy = policy;
+    }
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    //
+    // Implements IAccessControlled
+    //
+
+    function setAccessPolicy(IAccessPolicy newPolicy, address newAccessController)
+        public
+        only(ROLE_ACCESS_CONTROLLER)
     {
-        assert(_token.transfer(_to, _amount));
+        // ROLE_ACCESS_CONTROLLER must be present
+        // under the new policy. This provides some
+        // protection against locking yourself out.
+        require(newPolicy.allowed(newAccessController, ROLE_ACCESS_CONTROLLER, this, msg.sig));
+
+        // We can now safely set the new policy without foot shooting.
+        IAccessPolicy oldPolicy = _accessPolicy;
+        _accessPolicy = newPolicy;
+
+        // Log event
+        LogAccessPolicyChanged(msg.sender, oldPolicy, newPolicy);
+    }
+
+    function accessPolicy()
+        public
+        constant
+        returns (IAccessPolicy)
+    {
+        return _accessPolicy;
     }
 }
 
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string name) { name; }
-    function symbol() public constant returns (string symbol) { symbol; }
-    function decimals() public constant returns (uint8 decimals) { decimals; }
-    function totalSupply() public constant returns (uint256 totalSupply) { totalSupply; }
-    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
+contract IsContract {
 
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
+    ////////////////////////
+    // Internal functions
+    ////////////////////////
+
+    function isContract(address addr)
+        internal
+        constant
+        returns (bool)
+    {
+        uint256 size;
+        // takes 700 gas
+        assembly { size := extcodesize(addr) }
+        return size > 0;
+    }
+}
+
+contract AccessRoles {
+
+    ////////////////////////
+    // Constants
+    ////////////////////////
+
+    // NOTE: All roles are set to the keccak256 hash of the
+    // CamelCased role name, i.e.
+    // ROLE_LOCKED_ACCOUNT_ADMIN = keccak256("LockedAccountAdmin")
+
+    // may setup LockedAccount, change disbursal mechanism and set migration
+    bytes32 internal constant ROLE_LOCKED_ACCOUNT_ADMIN = 0x4675da546d2d92c5b86c4f726a9e61010dce91cccc2491ce6019e78b09d2572e;
+
+    // may setup whitelists and abort whitelisting contract with curve rollback
+    bytes32 internal constant ROLE_WHITELIST_ADMIN = 0xaef456e7c864418e1d2a40d996ca4febf3a7e317fe3af5a7ea4dda59033bbe5c;
+
+    // May issue (generate) Neumarks
+    bytes32 internal constant ROLE_NEUMARK_ISSUER = 0x921c3afa1f1fff707a785f953a1e197bd28c9c50e300424e015953cbf120c06c;
+
+    // May burn Neumarks it owns
+    bytes32 internal constant ROLE_NEUMARK_BURNER = 0x19ce331285f41739cd3362a3ec176edffe014311c0f8075834fdd19d6718e69f;
+
+    // May create new snapshots on Neumark
+    bytes32 internal constant ROLE_SNAPSHOT_CREATOR = 0x08c1785afc57f933523bc52583a72ce9e19b2241354e04dd86f41f887e3d8174;
+
+    // May enable/disable transfers on Neumark
+    bytes32 internal constant ROLE_TRANSFER_ADMIN = 0xb6527e944caca3d151b1f94e49ac5e223142694860743e66164720e034ec9b19;
+
+    // may reclaim tokens/ether from contracts supporting IReclaimable interface
+    bytes32 internal constant ROLE_RECLAIMER = 0x0542bbd0c672578966dcc525b30aa16723bb042675554ac5b0362f86b6e97dc5;
+
+    // represents legally platform operator in case of forks and contracts with legal agreement attached. keccak256("PlatformOperatorRepresentative")
+    bytes32 internal constant ROLE_PLATFORM_OPERATOR_REPRESENTATIVE = 0xb2b321377653f655206f71514ff9f150d0822d062a5abcf220d549e1da7999f0;
+
+    // allows to deposit EUR-T and allow addresses to send and receive EUR-T. keccak256("EurtDepositManager")
+    bytes32 internal constant ROLE_EURT_DEPOSIT_MANAGER = 0x7c8ecdcba80ce87848d16ad77ef57cc196c208fc95c5638e4a48c681a34d4fe7;
+}
+
+contract IBasicToken {
+
+    ////////////////////////
+    // Events
+    ////////////////////////
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 amount);
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    /// @dev This function makes it easy to get the total number of tokens
+    /// @return The total number of tokens
+    function totalSupply()
+        public
+        constant
+        returns (uint256);
+
+    /// @param owner The address that's balance is being requested
+    /// @return The balance of `owner` at the current block
+    function balanceOf(address owner)
+        public
+        constant
+        returns (uint256 balance);
+
+    /// @notice Send `amount` tokens to `to` from `msg.sender`
+    /// @param to The address of the recipient
+    /// @param amount The amount of tokens to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address to, uint256 amount)
+        public
+        returns (bool success);
+
+}
+
+/// @title allows deriving contract to recover any token or ether that it has balance of
+/// @notice note that this opens your contracts to claims from various people saying they lost tokens and they want them back
+///     be ready to handle such claims
+/// @dev use with care!
+///     1. ROLE_RECLAIMER is allowed to claim tokens, it's not returning tokens to original owner
+///     2. in derived contract that holds any token by design you must override `reclaim` and block such possibility.
+///         see LockedAccount as an example
+contract Reclaimable is AccessControlled, AccessRoles {
+
+    ////////////////////////
+    // Constants
+    ////////////////////////
+
+    IBasicToken constant internal RECLAIM_ETHER = IBasicToken(0x0);
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    function reclaim(IBasicToken token)
+        public
+        only(ROLE_RECLAIMER)
+    {
+        address reclaimer = msg.sender;
+        if(token == RECLAIM_ETHER) {
+            reclaimer.transfer(this.balance);
+        } else {
+            uint256 balance = token.balanceOf(this);
+            require(token.transfer(reclaimer, balance));
+        }
+    }
+}
+
+contract ITokenMetadata {
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    function symbol()
+        public
+        constant
+        returns (string);
+
+    function name()
+        public
+        constant
+        returns (string);
+
+    function decimals()
+        public
+        constant
+        returns (uint8);
+}
+
+/// @title adds token metadata to token contract
+/// @dev see Neumark for example implementation
+contract TokenMetadata is ITokenMetadata {
+
+    ////////////////////////
+    // Immutable state
+    ////////////////////////
+
+    // The Token's name: e.g. DigixDAO Tokens
+    string private NAME;
+
+    // An identifier: e.g. REP
+    string private SYMBOL;
+
+    // Number of decimals of the smallest unit
+    uint8 private DECIMALS;
+
+    // An arbitrary versioning scheme
+    string private VERSION;
+
+    ////////////////////////
+    // Constructor
+    ////////////////////////
+
+    /// @notice Constructor to set metadata
+    /// @param tokenName Name of the new token
+    /// @param decimalUnits Number of decimals of the new token
+    /// @param tokenSymbol Token Symbol for the new token
+    /// @param version Token version ie. when cloning is used
+    function TokenMetadata(
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol,
+        string version
+    )
+        public
+    {
+        NAME = tokenName;                                 // Set the name
+        SYMBOL = tokenSymbol;                             // Set the symbol
+        DECIMALS = decimalUnits;                          // Set the decimals
+        VERSION = version;
+    }
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    function name()
+        public
+        constant
+        returns (string)
+    {
+        return NAME;
+    }
+
+    function symbol()
+        public
+        constant
+        returns (string)
+    {
+        return SYMBOL;
+    }
+
+    function decimals()
+        public
+        constant
+        returns (uint8)
+    {
+        return DECIMALS;
+    }
+
+    function version()
+        public
+        constant
+        returns (string)
+    {
+        return VERSION;
+    }
+}
+
+contract IERC223Callback {
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    function onTokenTransfer(
+        address from,
+        uint256 amount,
+        bytes data
+    )
+        public;
+
+}
+
+contract IERC223Token is IBasicToken {
+
+    /// @dev Departure: We do not log data, it has no advantage over a standard
+    ///     log event. By sticking to the standard log event we
+    ///     stay compatible with constracts that expect and ERC20 token.
+
+    // event Transfer(
+    //    address indexed from,
+    //    address indexed to,
+    //    uint256 amount,
+    //    bytes data);
+
+
+    /// @dev Departure: We do not use the callback on regular transfer calls to
+    ///     stay compatible with constracts that expect and ERC20 token.
+
+    // function transfer(address to, uint256 amount)
+    //     public
+    //     returns (bool);
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    function transfer(address to, uint256 amount, bytes data)
+        public
+        returns (bool);
+}
+
+contract IERC20Allowance {
+
+    ////////////////////////
+    // Events
+    ////////////////////////
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 amount);
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    /// @dev This function makes it easy to read the `allowed[]` map
+    /// @param owner The address of the account that owns the token
+    /// @param spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens of owner that spender is allowed
+    ///  to spend
+    function allowance(address owner, address spender)
+        public
+        constant
+        returns (uint256 remaining);
+
+    /// @notice `msg.sender` approves `spender` to spend `amount` tokens on
+    ///  its behalf. This is a modified version of the ERC20 approve function
+    ///  to be a little bit safer
+    /// @param spender The address of the account able to transfer the tokens
+    /// @param amount The amount of tokens to be approved for transfer
+    /// @return True if the approval was successful
+    function approve(address spender, uint256 amount)
+        public
+        returns (bool success);
+
+    /// @notice Send `amount` tokens to `to` from `from` on the condition it
+    ///  is approved by `from`
+    /// @param from The address holding the tokens being transferred
+    /// @param to The address of the recipient
+    /// @param amount The amount of tokens to be transferred
+    /// @return True if the transfer was successful
+    function transferFrom(address from, address to, uint256 amount)
+        public
+        returns (bool success);
+
+}
+
+contract IERC20Token is IBasicToken, IERC20Allowance {
+
+}
+
+contract IERC677Callback {
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    // NOTE: This call can be initiated by anyone. You need to make sure that
+    // it is send by the token (`require(msg.sender == token)`) or make sure
+    // amount is valid (`require(token.allowance(this) >= amount)`).
+    function receiveApproval(
+        address from,
+        uint256 amount,
+        address token, // IERC667Token
+        bytes data
+    )
+        public
+        returns (bool success);
+
+}
+
+contract IERC677Allowance is IERC20Allowance {
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    /// @notice `msg.sender` approves `spender` to send `amount` tokens on
+    ///  its behalf, and then a function is triggered in the contract that is
+    ///  being approved, `spender`. This allows users to use their tokens to
+    ///  interact with contracts in one function call instead of two
+    /// @param spender The address of the contract able to transfer the tokens
+    /// @param amount The amount of tokens to be approved for transfer
+    /// @return True if the function call was successful
+    function approveAndCall(address spender, uint256 amount, bytes extraData)
+        public
+        returns (bool success);
+
+}
+
+contract IERC677Token is IERC20Token, IERC677Allowance {
+}
+
+contract Math {
+
+    ////////////////////////
+    // Internal functions
+    ////////////////////////
+
+    // absolute difference: |v1 - v2|
+    function absDiff(uint256 v1, uint256 v2)
+        internal
+        constant
+        returns(uint256)
+    {
+        return v1 > v2 ? v1 - v2 : v2 - v1;
+    }
+
+    // divide v by d, round up if remainder is 0.5 or more
+    function divRound(uint256 v, uint256 d)
+        internal
+        constant
+        returns(uint256)
+    {
+        return add(v, d/2) / d;
+    }
+
+    // computes decimal decimalFraction 'frac' of 'amount' with maximum precision (multiplication first)
+    // both amount and decimalFraction must have 18 decimals precision, frac 10**18 represents a whole (100% of) amount
+    // mind loss of precision as decimal fractions do not have finite binary expansion
+    // do not use instead of division
+    function decimalFraction(uint256 amount, uint256 frac)
+        internal
+        constant
+        returns(uint256)
+    {
+        // it's like 1 ether is 100% proportion
+        return proportion(amount, frac, 10**18);
+    }
+
+    // computes part/total of amount with maximum precision (multiplication first)
+    // part and total must have the same units
+    function proportion(uint256 amount, uint256 part, uint256 total)
+        internal
+        constant
+        returns(uint256)
+    {
+        return divRound(mul(amount, part), total);
+    }
+
+    //
+    // Open Zeppelin Math library below
+    //
+
+    function mul(uint256 a, uint256 b)
+        internal
+        constant
+        returns (uint256)
+    {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b)
+        internal
+        constant
+        returns (uint256)
+    {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b)
+        internal
+        constant
+        returns (uint256)
+    {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function min(uint256 a, uint256 b)
+        internal
+        constant
+        returns (uint256)
+    {
+        return a < b ? a : b;
+    }
+
+    function max(uint256 a, uint256 b)
+        internal
+        constant
+        returns (uint256)
+    {
+        return a > b ? a : b;
+    }
 }
 
 /**
-    ERC20 Standard Token implementation
-*/
-contract ERC20Token is IERC20Token, Utils {
-    string public standard = 'Token 0.1';
-    string public name = '';
-    string public symbol = '';
-    uint8 public decimals = 0;
-    uint256 public totalSupply = 0;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is IBasicToken, Math {
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    ////////////////////////
+    // Mutable state
+    ////////////////////////
 
-    /**
-        @dev constructor
+    mapping(address => uint256) internal _balances;
 
-        @param _name        token name
-        @param _symbol      token symbol
-        @param _decimals    decimal points, for display purposes
-    */
-    function ERC20Token(string _name, string _symbol, uint8 _decimals) {
-        require(bytes(_name).length > 0 && bytes(_symbol).length > 0); // validate input
+    uint256 internal _totalSupply;
 
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
+    ////////////////////////
+    // Public functions
+    ////////////////////////
 
     /**
-        @dev send coins
-        throws on any error rather then return a false flag to minimize user errors
-
-        @param _to      target address
-        @param _value   transfer amount
-
-        @return true if the transfer was successful, false if it wasn't
+    * @dev transfer token for a specified address
+    * @param to The address to transfer to.
+    * @param amount The amount to be transferred.
     */
-    function transfer(address _to, uint256 _value)
+    function transfer(address to, uint256 amount)
         public
-        validAddress(_to)
-        returns (bool success)
+        returns (bool)
     {
-        balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], _value);
-        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-        Transfer(msg.sender, _to, _value);
+        transferInternal(msg.sender, to, amount);
         return true;
     }
 
-    /**
-        @dev an account/contract attempts to get the coins
-        throws on any error rather then return a false flag to minimize user errors
-
-        @param _from    source address
-        @param _to      target address
-        @param _value   transfer amount
-
-        @return true if the transfer was successful, false if it wasn't
-    */
-    function transferFrom(address _from, address _to, uint256 _value)
+    /// @dev This function makes it easy to get the total number of tokens
+    /// @return The total number of tokens
+    function totalSupply()
         public
-        validAddress(_from)
-        validAddress(_to)
-        returns (bool success)
+        constant
+        returns (uint256)
     {
-        allowance[_from][msg.sender] = safeSub(allowance[_from][msg.sender], _value);
-        balanceOf[_from] = safeSub(balanceOf[_from], _value);
-        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-        Transfer(_from, _to, _value);
-        return true;
+        return _totalSupply;
     }
 
     /**
-        @dev allow another account/contract to spend some tokens on your behalf
-        throws on any error rather then return a false flag to minimize user errors
-
-        also, to minimize the risk of the approve/transferFrom attack vector
-        (see https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/), approve has to be called twice
-        in 2 separate transactions - once to change the allowance to 0 and secondly to change it to the new allowance value
-
-        @param _spender approved address
-        @param _value   allowance amount
-
-        @return true if the approval was successful, false if it wasn't
+    * @dev Gets the balance of the specified address.
+    * @param owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
     */
-    function approve(address _spender, uint256 _value)
+    function balanceOf(address owner)
         public
-        validAddress(_spender)
-        returns (bool success)
+        constant
+        returns (uint256 balance)
     {
-        // if the allowance isn't 0, it can only be updated to 0 to prevent an allowance change immediately after withdrawal
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+        return _balances[owner];
     }
-}
 
-/*
-    Ether Token interface
-*/
-contract IEtherToken is ITokenHolder, IERC20Token {
-    function deposit() public payable;
-    function withdraw(uint256 _amount) public;
-    function withdrawTo(address _to, uint256 _amount);
+    ////////////////////////
+    // Internal functions
+    ////////////////////////
+
+    // actual transfer function called by all public variants
+    function transferInternal(address from, address to, uint256 amount)
+        internal
+    {
+        require(to != address(0));
+
+        _balances[from] = sub(_balances[from], amount);
+        _balances[to] = add(_balances[to], amount);
+        Transfer(from, to, amount);
+    }
 }
 
 /**
-    Ether tokenization contract
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is
+    IERC20Token,
+    BasicToken,
+    IERC677Token
+{
 
-    'Owned' is specified here for readability reasons
-*/
-contract EtherToken is IEtherToken, Owned, ERC20Token, TokenHolder {
-    // triggered when the total supply is increased
-    event Issuance(uint256 _amount);
-    // triggered when the total supply is decreased
-    event Destruction(uint256 _amount);
+    ////////////////////////
+    // Mutable state
+    ////////////////////////
 
-    /**
-        @dev constructor
-    */
-    function EtherToken()
-        ERC20Token('Ether Token', 'ETH', 18) {
-    }
+    mapping (address => mapping (address => uint256)) private _allowed;
 
-    /**
-        @dev deposit ether in the account
-    */
-    function deposit() public payable {
-        balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], msg.value); // add the value to the account balance
-        totalSupply = safeAdd(totalSupply, msg.value); // increase the total supply
+    ////////////////////////
+    // Public functions
+    ////////////////////////
 
-        Issuance(msg.value);
-        Transfer(this, msg.sender, msg.value);
-    }
+    //
+    // Implements ERC20
+    //
 
     /**
-        @dev withdraw ether from the account
-
-        @param _amount  amount of ether to withdraw
+    * @dev Transfer tokens from one address to another
+    * @param from address The address which you want to send tokens from
+    * @param to address The address which you want to transfer to
+    * @param amount uint256 the amount of tokens to be transferred
     */
-    function withdraw(uint256 _amount) public {
-        withdrawTo(msg.sender, _amount);
-    }
-
-    /**
-        @dev withdraw ether from the account to a target account
-
-        @param _to      account to receive the ether
-        @param _amount  amount of ether to withdraw
-    */
-    function withdrawTo(address _to, uint256 _amount)
+    function transferFrom(address from, address to, uint256 amount)
         public
-        notThis(_to)
+        returns (bool)
     {
-        balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], _amount); // deduct the amount from the account balance
-        totalSupply = safeSub(totalSupply, _amount); // decrease the total supply
-        _to.transfer(_amount); // send the amount to the target account
-
-        Transfer(msg.sender, this, _amount);
-        Destruction(_amount);
-    }
-
-    // ERC20 standard method overrides with some extra protection
-
-    /**
-        @dev send coins
-        throws on any error rather then return a false flag to minimize user errors
-
-        @param _to      target address
-        @param _value   transfer amount
-
-        @return true if the transfer was successful, false if it wasn't
-    */
-    function transfer(address _to, uint256 _value)
-        public
-        notThis(_to)
-        returns (bool success)
-    {
-        assert(super.transfer(_to, _value));
+        // check and reset allowance
+        var allowance = _allowed[from][msg.sender];
+        _allowed[from][msg.sender] = sub(allowance, amount);
+        // do the transfer
+        transferInternal(from, to, amount);
         return true;
     }
 
     /**
-        @dev an account/contract attempts to get the coins
-        throws on any error rather then return a false flag to minimize user errors
-
-        @param _from    source address
-        @param _to      target address
-        @param _value   transfer amount
-
-        @return true if the transfer was successful, false if it wasn't
+    * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+    * @param spender The address which will spend the funds.
+    * @param amount The amount of tokens to be spent.
     */
-    function transferFrom(address _from, address _to, uint256 _value)
+    function approve(address spender, uint256 amount)
         public
-        notThis(_to)
-        returns (bool success)
+        returns (bool)
     {
-        assert(super.transferFrom(_from, _to, _value));
+
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender, 0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        require((amount == 0) || (_allowed[msg.sender][spender] == 0));
+
+        _allowed[msg.sender][spender] = amount;
+        Approval(msg.sender, spender, amount);
         return true;
     }
 
     /**
-        @dev deposit ether in the account
+    * @dev Function to check the amount of tokens that an owner allowed to a spender.
+    * @param owner address The address which owns the funds.
+    * @param spender address The address which will spend the funds.
+    * @return A uint256 specifing the amount of tokens still avaible for the spender.
     */
-    function() public payable {
-        deposit();
+    function allowance(address owner, address spender)
+        public
+        constant
+        returns (uint256 remaining)
+    {
+        return _allowed[owner][spender];
+    }
+
+    //
+    // Implements IERC677Token
+    //
+
+    function approveAndCall(
+        address spender,
+        uint256 amount,
+        bytes extraData
+    )
+        public
+        returns (bool)
+    {
+        require(approve(spender, amount));
+
+        // in case of re-entry 1. approval is done 2. msg.sender is different
+        bool success = IERC677Callback(spender).receiveApproval(
+            msg.sender,
+            amount,
+            this,
+            extraData
+        );
+        require(success);
+
+        return true;
+    }
+}
+
+contract EtherToken is
+    IsContract,
+    AccessControlled,
+    StandardToken,
+    TokenMetadata,
+    Reclaimable
+{
+    ////////////////////////
+    // Constants
+    ////////////////////////
+
+    string private constant NAME = "Ether Token";
+
+    string private constant SYMBOL = "ETH-T";
+
+    uint8 private constant DECIMALS = 18;
+
+    ////////////////////////
+    // Events
+    ////////////////////////
+
+    event LogDeposit(
+        address indexed to,
+        uint256 amount
+    );
+
+    event LogWithdrawal(
+        address indexed from,
+        uint256 amount
+    );
+
+    ////////////////////////
+    // Constructor
+    ////////////////////////
+
+    function EtherToken(IAccessPolicy accessPolicy)
+        AccessControlled(accessPolicy)
+        StandardToken()
+        TokenMetadata(NAME, DECIMALS, SYMBOL, "")
+        Reclaimable()
+        public
+    {
+    }
+
+    ////////////////////////
+    // Public functions
+    ////////////////////////
+
+    /// deposit msg.value of Ether to msg.sender balance
+    function deposit()
+        payable
+        public
+    {
+        _balances[msg.sender] = add(_balances[msg.sender], msg.value);
+        _totalSupply = add(_totalSupply, msg.value);
+        LogDeposit(msg.sender, msg.value);
+        Transfer(address(0), msg.sender, msg.value);
+    }
+
+    /// withdraws and sends 'amount' of ether to msg.sender
+    function withdraw(uint256 amount)
+        public
+    {
+        require(_balances[msg.sender] >= amount);
+        _balances[msg.sender] = sub(_balances[msg.sender], amount);
+        _totalSupply = sub(_totalSupply, amount);
+        msg.sender.transfer(amount);
+        LogWithdrawal(msg.sender, amount);
+        Transfer(msg.sender, address(0), amount);
+    }
+
+    //
+    // Implements IERC223Token
+    //
+
+    function transfer(address to, uint256 amount, bytes data)
+        public
+        returns (bool)
+    {
+        transferInternal(msg.sender, to, amount);
+
+        // Notify the receiving contract.
+        if (isContract(to)) {
+            // in case of re-entry (1) transfer is done (2) msg.sender is different
+            IERC223Callback(to).onTokenTransfer(msg.sender, amount, data);
+        }
+        return true;
+    }
+
+    //
+    // Overrides Reclaimable
+    //
+
+    /// @notice allows EtherToken to reclaim tokens wrongly sent to its address
+    /// @dev as EtherToken by design has balance of Ether (native Ethereum token)
+    ///     such reclamation is not allowed
+    function reclaim(IBasicToken token)
+        public
+    {
+        // forbid reclaiming ETH hold in this contract.
+        require(token != RECLAIM_ETHER);
+        Reclaimable.reclaim(token);
     }
 }
