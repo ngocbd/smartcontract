@@ -1,434 +1,556 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenManager at 0x584af734a101538cad9b9522d1b9c87f1c08f9c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenManager at 0xb12b490b6b33d2107cfa8f8eb106e6db641b187a
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.21;
 
-/*
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
- * source       https://github.com/blockbitsio/
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
- * @name        Application Entity Generic Contract
- * @package     BlockBitsIO
- * @author      Micky Socaci <micky@nowlive.ro>
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    Used for the ABI interface when assets need to call Application Entity.
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
 
-    This is required, otherwise we end up loading the assets themselves when we load the ApplicationEntity contract
-    and end up in a loop
-*/
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
+// File: contracts/BonusStrategy.sol
 
-contract ApplicationEntityABI {
+contract BonusStrategy {
+    using SafeMath for uint;
 
-    address public ProposalsEntity;
-    address public FundingEntity;
-    address public MilestonesEntity;
-    address public MeetingsEntity;
-    address public BountyManagerEntity;
-    address public TokenManagerEntity;
-    address public ListingContractEntity;
-    address public FundingManagerEntity;
-    address public NewsContractEntity;
+    uint public defaultAmount = 1*10**18;
+    uint public limit = 300*1000*10**18; // 300.000  DCNT
+    uint public currentAmount = 0;
+    uint[] public startTimes;
+    uint[] public endTimes;
+    uint[] public amounts;
 
-    bool public _initialized = false;
-    bool public _locked = false;
-    uint8 public CurrentEntityState;
-    uint8 public AssetCollectionNum;
-    address public GatewayInterfaceAddress;
-    address public deployerAddress;
-    address testAddressAllowUpgradeFrom;
-    mapping (bytes32 => uint8) public EntityStates;
-    mapping (bytes32 => address) public AssetCollection;
-    mapping (uint8 => bytes32) public AssetCollectionIdToName;
-    mapping (bytes32 => uint256) public BylawsUint256;
-    mapping (bytes32 => bytes32) public BylawsBytes32;
+    constructor(
+        uint[] _startTimes,
+        uint[] _endTimes,
+        uint[] _amounts
+        ) public 
+    {
+        require(_startTimes.length == _endTimes.length && _endTimes.length == _amounts.length);
+        startTimes = _startTimes;
+        endTimes = _endTimes;
+        amounts = _amounts;
+    }
 
-    function ApplicationEntity() public;
-    function getEntityState(bytes32 name) public view returns (uint8);
-    function linkToGateway( address _GatewayInterfaceAddress, bytes32 _sourceCodeUrl ) external;
-    function setUpgradeState(uint8 state) public ;
-    function addAssetProposals(address _assetAddresses) external;
-    function addAssetFunding(address _assetAddresses) external;
-    function addAssetMilestones(address _assetAddresses) external;
-    function addAssetMeetings(address _assetAddresses) external;
-    function addAssetBountyManager(address _assetAddresses) external;
-    function addAssetTokenManager(address _assetAddresses) external;
-    function addAssetFundingManager(address _assetAddresses) external;
-    function addAssetListingContract(address _assetAddresses) external;
-    function addAssetNewsContract(address _assetAddresses) external;
-    function getAssetAddressByName(bytes32 _name) public view returns (address);
-    function setBylawUint256(bytes32 name, uint256 value) public;
-    function getBylawUint256(bytes32 name) public view returns (uint256);
-    function setBylawBytes32(bytes32 name, bytes32 value) public;
-    function getBylawBytes32(bytes32 name) public view returns (bytes32);
-    function initialize() external returns (bool);
-    function getParentAddress() external view returns(address);
-    function createCodeUpgradeProposal( address _newAddress, bytes32 _sourceCodeUrl ) external returns (uint256);
-    function acceptCodeUpgradeProposal(address _newAddress) external;
-    function initializeAssetsToThisApplication() external returns (bool);
-    function transferAssetsToNewApplication(address _newAddress) external returns (bool);
-    function lock() external returns (bool);
-    function canInitiateCodeUpgrade(address _sender) public view returns(bool);
-    function doStateChanges() public;
-    function hasRequiredStateChanges() public view returns (bool);
-    function anyAssetHasChanges() public view returns (bool);
-    function extendedAnyAssetHasChanges() internal view returns (bool);
-    function getRequiredStateChanges() public view returns (uint8, uint8);
-    function getTimestamp() view public returns (uint256);
+    function isStrategy() external pure returns (bool) {
+        return true;
+    }
+
+    function getCurrentBonus() public view returns (uint bonus) {
+        if (currentAmount >= limit) {
+            currentAmount = currentAmount.add(defaultAmount);
+            return defaultAmount;
+        }
+        for (uint8 i = 0; i < amounts.length; i++) {
+            if (now >= startTimes[i] && now <= endTimes[i]) {
+                bonus = amounts[i];
+                currentAmount = currentAmount.add(bonus);
+                return bonus;
+            }
+        }
+        currentAmount = currentAmount.add(defaultAmount);
+        return defaultAmount;
+    }
 
 }
 
-/*
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
- * source       https://github.com/blockbitsio/
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
- * @name        Application Asset Contract
- * @package     BlockBitsIO
- * @author      Micky Socaci <micky@nowlive.ro>
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
- Any contract inheriting this will be usable as an Asset in the Application Entity
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-*/
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
 
-contract ApplicationAsset {
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-    event EventAppAssetOwnerSet(bytes32 indexed _name, address indexed _owner);
-    event EventRunBeforeInit(bytes32 indexed _name);
-    event EventRunBeforeApplyingSettings(bytes32 indexed _name);
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
 
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    mapping (bytes32 => uint8) public EntityStates;
-    mapping (bytes32 => uint8) public RecordStates;
-    uint8 public CurrentEntityState;
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    event EventEntityProcessor(bytes32 indexed _assetName, uint8 indexed _current, uint8 indexed _required);
-    event DebugEntityRequiredChanges( bytes32 _assetName, uint8 indexed _current, uint8 indexed _required );
+}
 
-    bytes32 public assetName;
+// File: contracts/InfoBurnableToken.sol
 
-    /* Asset records */
-    uint8 public RecordNum = 0;
+contract InfoBurnableToken is BurnableToken, StandardToken {
+    string message = "No sufficient funds";
+    address public manager;
 
-    /* Asset initialised or not */
-    bool public _initialized = false;
+    event NoFunds(address _who, string _message);
 
-    /* Asset settings present or not */
-    bool public _settingsApplied = false;
-
-    /* Asset owner ( ApplicationEntity address ) */
-    address public owner = address(0x0) ;
-    address public deployerAddress;
-
-    function ApplicationAsset() public {
-        deployerAddress = msg.sender;
+    modifier onlyManager() {
+        require(msg.sender == manager);
+        _;
     }
 
-    function setInitialApplicationAddress(address _ownerAddress) public onlyDeployer requireNotInitialised {
-        owner = _ownerAddress;
+    constructor(address _manager) public {
+        require(address(_manager) != 0);
+        manager = _manager;
     }
 
-    function setInitialOwnerAndName(bytes32 _name) external
-        requireNotInitialised
-        onlyOwner
-        returns (bool)
-    {
-        // init states
-        setAssetStates();
-        assetName = _name;
-        // set initial state
-        CurrentEntityState = getEntityState("NEW");
-        runBeforeInitialization();
-        _initialized = true;
-        EventAppAssetOwnerSet(_name, owner);
-        return true;
-    }
-
-    function setAssetStates() internal {
-        // Asset States
-        EntityStates["__IGNORED__"]     = 0;
-        EntityStates["NEW"]             = 1;
-        // Funding Stage States
-        RecordStates["__IGNORED__"]     = 0;
-    }
-
-    function getRecordState(bytes32 name) public view returns (uint8) {
-        return RecordStates[name];
-    }
-
-    function getEntityState(bytes32 name) public view returns (uint8) {
-        return EntityStates[name];
-    }
-
-    function runBeforeInitialization() internal requireNotInitialised  {
-        EventRunBeforeInit(assetName);
-    }
-
-    function applyAndLockSettings()
-        public
-        onlyDeployer
-        requireInitialised
-        requireSettingsNotApplied
-        returns(bool)
-    {
-        runBeforeApplyingSettings();
-        _settingsApplied = true;
-        return true;
-    }
-
-    function runBeforeApplyingSettings() internal requireInitialised requireSettingsNotApplied  {
-        EventRunBeforeApplyingSettings(assetName);
-    }
-
-    function transferToNewOwner(address _newOwner) public requireInitialised onlyOwner returns (bool) {
-        require(owner != address(0x0) && _newOwner != address(0x0));
-        owner = _newOwner;
-        EventAppAssetOwnerSet(assetName, owner);
-        return true;
-    }
-
-    function getApplicationAssetAddressByName(bytes32 _name)
-        public
-        view
-        returns(address)
-    {
-        address asset = ApplicationEntityABI(owner).getAssetAddressByName(_name);
-        if( asset != address(0x0) ) {
-            return asset;
-        } else {
-            revert();
+    function burn(uint256 _value) public {
+        if (balances[msg.sender] < _value){
+            emit NoFunds(msg.sender, message);
+        }else {
+            _burn(msg.sender, _value);
         }
     }
 
-    function getApplicationState() public view returns (uint8) {
-        return ApplicationEntityABI(owner).CurrentEntityState();
+    function burnPassportToken(address _from, uint256 _value) onlyManager public returns (bool) {
+        if (_value <= balances[_from]){
+            _burn(_from, _value);
+            return true;
+        }
+        emit NoFunds(_from, message);
+        return false;
     }
 
-    function getApplicationEntityState(bytes32 name) public view returns (uint8) {
-        return ApplicationEntityABI(owner).getEntityState(name);
-    }
-
-    function getAppBylawUint256(bytes32 name) public view requireInitialised returns (uint256) {
-        ApplicationEntityABI CurrentApp = ApplicationEntityABI(owner);
-        return CurrentApp.getBylawUint256(name);
-    }
-
-    function getAppBylawBytes32(bytes32 name) public view requireInitialised returns (bytes32) {
-        ApplicationEntityABI CurrentApp = ApplicationEntityABI(owner);
-        return CurrentApp.getBylawBytes32(name);
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyApplicationEntity() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier requireInitialised() {
-        require(_initialized == true);
-        _;
-    }
-
-    modifier requireNotInitialised() {
-        require(_initialized == false);
-        _;
-    }
-
-    modifier requireSettingsApplied() {
-        require(_settingsApplied == true);
-        _;
-    }
-
-    modifier requireSettingsNotApplied() {
-        require(_settingsApplied == false);
-        _;
-    }
-
-    modifier onlyDeployer() {
-        require(msg.sender == deployerAddress);
-        _;
-    }
-
-    modifier onlyAsset(bytes32 _name) {
-        address AssetAddress = getApplicationAssetAddressByName(_name);
-        require( msg.sender == AssetAddress);
-        _;
-    }
-
-    function getTimestamp() view public returns (uint256) {
-        return now;
-    }
-
-
-}
-
-/*
-
- * source       https://github.com/blockbitsio/
-
- * @name        Token Contract
- * @package     BlockBitsIO
- * @author      Micky Socaci <micky@nowlive.ro>
-
- Zeppelin ERC20 Standard Token
-
-*/
-
-
-
-contract ABIToken {
-
-    string public  symbol;
-    string public  name;
-    uint8 public   decimals;
-    uint256 public totalSupply;
-    string public  version;
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    address public manager;
-    address public deployer;
-    bool public mintingFinished = false;
-    bool public initialized = false;
-
-    function transfer(address _to, uint256 _value) public returns (bool);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
-    function approve(address _spender, uint256 _value) public returns (bool);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool success);
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success);
-    function mint(address _to, uint256 _amount) public returns (bool);
-    function finishMinting() public returns (bool);
-
-    event Transfer(address indexed from, address indexed to, uint256 indexed value);
-    event Approval(address indexed owner, address indexed spender, uint256 indexed value);
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-}
-
-/*
-
- * source       https://github.com/blockbitsio/
-
- * @name        Token Stake Calculation And Distribution Algorithm - Type 3 - Sell a variable amount of tokens for a fixed price
- * @package     BlockBitsIO
- * @author      Micky Socaci <micky@nowlive.ro>
-
-
-    Inputs:
-
-    Defined number of tokens per wei ( X Tokens = 1 wei )
-    Received amount of ETH
-    Generates:
-
-    Total Supply of tokens available in Funding Phase respectively Project
-    Observations:
-
-    Will sell the whole supply of Tokens available to Current Funding Phase
-    Use cases:
-
-    Any Funding Phase where you want the first Funding Phase to determine the token supply of the whole Project
-
-*/
-
-
-
-
-contract ABITokenSCADAVariable {
-    bool public SCADA_requires_hard_cap = true;
-    bool public initialized;
-    address public deployerAddress;
-    function addSettings(address _fundingContract) public;
-    function requiresHardCap() public view returns (bool);
-    function getTokensForValueInCurrentStage(uint256 _value) public view returns (uint256);
-    function getTokensForValueInStage(uint8 _stage, uint256 _value) public view returns (uint256);
-    function getBoughtTokens( address _vaultAddress, bool _direct ) public view returns (uint256);
-}
-
-/*
-
- * source       https://github.com/blockbitsio/
-
- * @name        Token Manager Contract
- * @package     BlockBitsIO
- * @author      Micky Socaci <micky@nowlive.ro>
-
-*/
-
-
-
-
-
-
-
-contract TokenManager is ApplicationAsset {
-
-    ABITokenSCADAVariable public TokenSCADAEntity;
-    ABIToken public TokenEntity;
-    address public MarketingMethodAddress;
-
-    function addSettings(address _scadaAddress, address _tokenAddress, address _marketing ) onlyDeployer public {
-        TokenSCADAEntity = ABITokenSCADAVariable(_scadaAddress);
-        TokenEntity = ABIToken(_tokenAddress);
-        MarketingMethodAddress = _marketing;
-    }
-
-    function getTokenSCADARequiresHardCap() public view returns (bool) {
-        return TokenSCADAEntity.requiresHardCap();
-    }
-
-    function mint(address _to, uint256 _amount)
-        onlyAsset('FundingManager')
-        public
-        returns (bool)
-    {
-        return TokenEntity.mint(_to, _amount);
-    }
-
-    function finishMinting()
-        onlyAsset('FundingManager')
-        public
-        returns (bool)
-    {
-        return TokenEntity.finishMinting();
-    }
-
-    function mintForMarketingPool(address _to, uint256 _amount)
-        onlyMarketingPoolAsset
-        requireSettingsApplied
-        external
-        returns (bool)
-    {
-        return TokenEntity.mint(_to, _amount);
-    }
-
-    modifier onlyMarketingPoolAsset() {
-        require(msg.sender == MarketingMethodAddress);
-        _;
-    }
-
-    // Development stage complete, release tokens to Project Owners
-    event EventOwnerTokenBalancesReleased(address _addr, uint256 _value);
-    bool OwnerTokenBalancesReleased = false;
-
-    function ReleaseOwnersLockedTokens(address _multiSigOutputAddress)
-        public
-        onlyAsset('FundingManager')
-        returns (bool)
-    {
-        require(OwnerTokenBalancesReleased == false);
-        uint256 lockedBalance = TokenEntity.balanceOf(address(this));
-        TokenEntity.transfer( _multiSigOutputAddress, lockedBalance );
-        EventOwnerTokenBalancesReleased(_multiSigOutputAddress, lockedBalance);
-        OwnerTokenBalancesReleased = true;
+    function transferManager(address _newManager) onlyManager public returns (bool) {
+        require(address(_newManager) != 0);
+        manager = _newManager;
         return true;
+    }
+
+}
+
+// File: contracts/DecenturionToken.sol
+
+contract DecenturionToken is InfoBurnableToken {
+    using SafeMath for uint;
+
+    string constant public name = "Decenturion Token";
+    string constant public symbol = "DCNT";
+    uint constant public decimals = 18;
+    uint constant public deployerAmount = 20 * (10 ** 6) * (10 ** decimals); // 20 000 000 DCNT
+    uint constant public managerAmount = 10 * (10 ** 6) * (10 ** decimals); // 10 000 000 DCNT
+
+    constructor(address _manager) InfoBurnableToken(_manager) public {
+        totalSupply_ = 30 * (10 ** 6) * (10 ** decimals); // 30 000 000 DCNT
+        balances[msg.sender] = deployerAmount;
+        balances[manager] = managerAmount;
+    }
+
+}
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+// File: contracts/TokenManager.sol
+
+contract TokenManager is Ownable, Pausable {
+    using SafeMath for uint;
+
+    uint public totalRegistrationBonusAmount = 0;
+    uint public emissionTime;
+    uint public tokensForBurn = 1*10**18; 
+    string public alreadyRegisteredMessage = "user already registered";
+    string public nullBonusMessage = "registration bonus = 0";
+
+    mapping (address=>bool) isRegistered;
+    mapping (address=>bool) isTokensDistributed;
+
+    BonusStrategy public bonusStrategy;
+    DecenturionToken public token;
+
+    event UserAlreadyRegistered(address user, string message);
+    event TokensAlreadyDistributed(address user);
+
+    constructor(BonusStrategy _bonusStrategy, uint _emissionTime) public {
+        require(_bonusStrategy.isStrategy());
+        require(_emissionTime > now);
+        bonusStrategy = _bonusStrategy;
+        emissionTime = _emissionTime;
+    }
+
+    function() public payable { }
+
+    function setTokenAddress(DecenturionToken _token) onlyOwner public returns (bool){
+        require(address(_token) != 0);
+        token = _token;
+        return true;
+    }
+
+    function distributeRegistrationBonus(address _recepient) onlyOwner whenNotPaused public returns (bool) {
+        if (!isRegistered[_recepient]) {
+            _distributeRegistrationBonus(_recepient);
+            isRegistered[_recepient] = true;
+        }else {
+            emit UserAlreadyRegistered(_recepient, alreadyRegisteredMessage);
+            return false;
+        }
+        return true;
+    }
+
+    function _distributeRegistrationBonus(address _recepient) internal returns (bool) {
+        uint registrationBonus = bonusStrategy.getCurrentBonus();
+        totalRegistrationBonusAmount = totalRegistrationBonusAmount.add(registrationBonus);  
+        token.transfer(_recepient, registrationBonus);
+        return true;
+    }
+
+    function distributeTokens(address _address, uint _totalEthBalance) onlyOwner whenNotPaused public returns (bool) {
+        require(now >= emissionTime);
+        if (isTokensDistributed[_address]){
+            emit TokensAlreadyDistributed(_address);
+            return false;
+        }
+        uint decimals = 10**18;
+        uint precision = 10**3;
+        uint balance = _address.balance;
+        uint stake = balance.div(_totalEthBalance);
+        uint total = token.managerAmount().sub(totalRegistrationBonusAmount);
+        uint emission = stake.mul(total).div(decimals).mul(precision);
+        token.transfer(_address, emission);
+        isTokensDistributed[_address] = true;
+        return true;
+    }
+
+    function setEmissionTime(uint _time) onlyOwner whenNotPaused public returns (bool) {
+        require(now <= _time);
+        emissionTime = _time;
+        return true;
+    }
+
+    function register(address _who) onlyOwner whenNotPaused public returns (bool) {
+        if (isRegistered[_who]) {
+            emit UserAlreadyRegistered(_who, alreadyRegisteredMessage);
+            return false;
+        }
+        _distributeRegistrationBonus(_who);
+
+        bool isBurned = token.burnPassportToken(_who, tokensForBurn);
+        if (isBurned) {
+            isRegistered[_who] = true;
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    function sendTokensTo(address[] _users, uint _amount) onlyOwner whenNotPaused public {
+        uint maxLength = 10;
+        if (_users.length < maxLength) {
+            maxLength = _users.length;
+        }
+        for (uint i = 0; i < maxLength; i++){
+            token.transfer(_users[i], _amount);
+        }
+    }
+
+    function substituteManagerContract(address _newManager) onlyOwner whenNotPaused public {
+        token.transferManager(_newManager);
     }
 
 }
