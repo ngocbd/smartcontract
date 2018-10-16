@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0x0e786d42fd70e4a51ab5f80aa5da19e74337e7f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SWAP at 0x14a52cf6b4f68431bd5d9524e4fcd6f41ce4ade9
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -33,197 +29,151 @@ library SafeMath {
   }
 }
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-  
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() internal {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+contract Base {
+    modifier only(address allowed) {
+        require(msg.sender == allowed);
+        _;
+    }
 }
 
-contract tokenInterface {
-	function balanceOf(address _owner) public constant returns (uint256 balance);
-	function transfer(address _to, uint256 _value) public returns (bool);
+contract Owned is Base {
+
+    address public owner;
+    address newOwner;
+
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address _newOwner) only(owner) public {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() only(newOwner) public {
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
 }
 
-contract Library {
-    // Notes:
-    // - this is limited to a payload length of 253 bytes
-    // - the payload should be ASCII as many clients will want to display this to the user
-    function createBSMHash(string payload) pure internal returns (bytes32) {
-        // \x18Bitcoin Signed Message:\n#{message.size.chr}#{message}
-        string memory prefix = "\x18Bitcoin Signed Message:\n";
-        return sha256(sha256(prefix, bytes1(bytes(payload).length), payload));
-    }
+contract ERC20 is Owned {
+    using SafeMath for uint;
 
-    function validateBSM(string payload, address key, uint8 v, bytes32 r, bytes32 s) internal pure returns (bool) {
-        return key == ecrecover(createBSMHash(payload), v, r, s);
-    }
-  
-	//bytes32 constant mask4 = 0xffffffff00000000000000000000000000000000000000000000000000000000;
-	//bytes1 constant network = 0x00;
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
 
-    /*
-	function getBitcoinAddress( bytes32 _xPoint, bytes32 _yPoint ) constant public returns( bytes20 hashedPubKey, bytes4 checkSum, bytes1 network)	{
-		hashedPubKey 	= getHashedPublicKey(_xPoint, _yPoint);
- 		checkSum 	= getCheckSum(hashedPubKey);
- 		network 	= network;
-	}*/
-
-	function btcAddrPubKeyUncompr( bytes32 _xPoint, bytes32 _yPoint) internal pure returns( bytes20 hashedPubKey )	{
-		bytes1 startingByte = 0x04;
- 		return ripemd160(sha256(startingByte, _xPoint, _yPoint));
-	}
-	
-	function btcAddrPubKeyCompr(bytes32 _x, bytes32 _y) internal pure returns( bytes20 hashedPubKey )	{
-	    bytes1 _startingByte;
-	    if (uint256(_y) % 2 == 0  ) {
-            _startingByte = 0x02;
-        } else {
-            _startingByte = 0x03;
-        }
- 		return ripemd160(sha256(_startingByte, _x));
-	}
-	
-	function ethAddressPublicKey( bytes32 _xPoint, bytes32 _yPoint) internal pure returns( address ethAddr )	{
- 		return address(keccak256(_xPoint, _yPoint) ); 
-	}
-	/*
-	function getCheckSum( bytes20 _hashedPubKey ) public pure returns(bytes4 checkSum) {
-		var full = sha256((sha256(network, _hashedPubKey)));
-		return bytes4(full&mask4);
-	}
-    */
-    function toAsciiString(address x) internal pure returns (string) {
-        bytes memory s = new bytes(42);
-        s[0] = 0x30;
-        s[1] = 0x78;
-        for (uint i = 0; i < 20; i++) {
-            byte b = byte(uint8(uint(x) / (2**(8*(19 - i)))));
-            byte hi = byte(uint8(b) / 16);
-            byte lo = byte(uint8(b) - 16 * uint8(hi));
-            s[2+2*i] = char(hi);
-            s[2+2*i+1] = char(lo);            
-        }
-        return string(s);
-    }
+    function transfer(address _to, uint _value) isStartedOnly public returns (bool success) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
     
-    function char(byte b) internal pure returns (byte c) {
-        if (b < 10) return byte(uint8(b) + 0x30);
-        else return byte(uint8(b) + 0x57);
-    }
-    
-    /*
-    function getBTCAddr(bytes32 _xPoint, bytes32 _yPoint) pure public returns (bytes) {
-		bytes20 hashedPubKey = btcAddressPublicKey(_xPoint, _yPoint);
-		bytes4 checkSum = getCheckSum(hashedPubKey);
-		bytes memory output = new bytes(25);
-		
-		output[0] = network[0];
-		
-		for (uint8 i = 0; i<20; i++) {
-            output[i+1] = hashedPubKey[i];
-        }
-        
-        for ( i = 0; i<4; i++) {
-            output[i+1+20] = checkSum[i];
-        }
-
-        return output;
-    }
-    */
-}
-
-contract Swap is Ownable, Library {
-    using SafeMath for uint256;
-    tokenInterface public tokenContract;
-	Data public dataContract;
-    
-    mapping(address => bool) claimed;
-
-    function Swap(address _tokenAddress) public {
-        tokenContract = tokenInterface(_tokenAddress);
-    }
-
-    function claim(address _ethAddrReceiver, bytes32 _x, bytes32 _y, uint8 _v, bytes32 _r, bytes32 _s) public returns(bool) {
-        require ( dataContract != address(0) );
-        
-		/* This code enable swap from BTC address compressed and uncompressed, check before compressed (more common format)
-		 * and then also uncompressed address format - btc address is calculated in hex format without checksum and prefix
-		 */
-        address btcAddr0x; 
-		btcAddr0x = address( btcAddrPubKeyCompr(_x,_y) ); 
-		if( dataContract.CftBalanceOf( btcAddr0x ) == 0 || claimed[ btcAddr0x ] ) { //check if have balance of if is already claimed
-			btcAddr0x = address( btcAddrPubKeyUncompr(_x,_y) ); 
-		}
-		
-		require ( dataContract.CftBalanceOf( btcAddr0x ) != 0 );
-        require ( !claimed[ btcAddr0x ] );
-		
-		address checkEthAddr0x = address( ethAddressPublicKey(_x,_y) ); //calculate eth address from pubkey for check of ecrecover function to verify sign
-        require ( validateBSM( toAsciiString(_ethAddrReceiver), checkEthAddr0x, _v, _r, _s) ); // check if eth address of receiver is signed by owner of privkey
-        
-        //add 10 number after the dot, 1 satoshi = 10^8 | 1 wei = 10^18
-        // the swap is 1:0,5
-        uint256 tokenAmount = dataContract.CftBalanceOf(btcAddr0x) * 10**10 / 2; 
-        
-        claimed[btcAddr0x] = true;
-        
-        tokenContract.transfer(_ethAddrReceiver, tokenAmount);
-        
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function withdrawTokens(address to, uint256 value) public onlyOwner returns (bool) {
-        return tokenContract.transfer(to, value);
-    }
+    function transferFrom(address _from, address _to, uint _value) isStartedOnly public returns (bool success) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
     
-    function setTokenContract(address _tokenContract) public onlyOwner {
-        tokenContract = tokenInterface(_tokenContract);
-    }
-    
-    function setDataContract(address _tokenContract) public onlyOwner {
-        dataContract = Data(_tokenContract);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    function () public payable {
-        revert();
+    function balanceOf(address _owner) constant public returns (uint balance) {
+        return balances[_owner];
     }
+
+    function approve_fixed(address _spender, uint _currentValue, uint _value) isStartedOnly public returns (bool success) {
+        if(allowed[msg.sender][_spender] == _currentValue){
+            allowed[msg.sender][_spender] = _value;
+            Approval(msg.sender, _spender, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function approve(address _spender, uint _value) isStartedOnly public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant public returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+
+    uint public totalSupply;
+    bool    public isStarted = false;
+
+    modifier isStartedOnly() {
+        require(isStarted);
+        _;
+    }
+
 }
 
+contract SWAP is ERC20 {
+    using SafeMath for uint;
 
-contract Data {
-    mapping(address => uint256) public CftBalanceOf;
-       function Data() public {
-            }
+    string public name = "www.swap.online community token";
+    string public symbol = "SWAP";
+    uint8 public decimals = 18;
+
+    modifier isNotStartedOnly() {
+        require(!isStarted);
+        _;
+    }
+
+    function getTotalSupply()
+    public
+    constant
+    returns(uint)
+    {
+        return totalSupply;
+    }
+
+    function start()
+    public
+    only(owner)
+    isNotStartedOnly
+    {
+        isStarted = true;
+    }
+
+    //================= Crowdsale Only =================
+    function mint(address _to, uint _amount) public
+    only(owner)
+    isNotStartedOnly
+    returns(bool)
+    {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+
+
+    function multimint(address[] dests, uint[] values) public
+    only(owner)
+    isNotStartedOnly
+    returns (uint) {
+        uint i = 0;
+        while (i < dests.length) {
+           mint(dests[i], values[i]);
+           i += 1;
+        }
+        return(i);
+    }
 }
