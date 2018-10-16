@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x87aE38D63A6bbB63E46219F494b549e3bE7Fc400
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x26B06b2B76220e36b40Fa206543184fCF96Ed362
 */
 pragma solidity ^0.4.6;
 
@@ -153,10 +153,10 @@ contract NewToken is BasicToken, ERC20 {
 
 contract SimpleToken is NewToken {
 
-  string public name = "ListAndPump";
-  string public symbol = "LAP";
+  string public name = "LUCRUM";
+  string public symbol = "LUC";
   uint public decimals = 8;
-  uint public INITIAL_SUPPLY = 1000000000000000;
+  uint public INITIAL_SUPPLY = 5000000000000000;
 
   function SimpleToken() {
     totalSupply = INITIAL_SUPPLY;
