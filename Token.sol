@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xD663636102e41C173BCBB98b8980Faf29476f472
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa8ea09823744f20aE5bB4aF3975602fC8B9ACb76
 */
 pragma solidity ^0.4.15;
 
@@ -447,5 +447,241 @@ contract Token is TokenI {
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         ClaimedTokens(_token, controller, balance);
+    }
+}
+
+contract BaseTokenSale is TokenController, Controlled {
+
+    using SafeMath for uint256;
+
+    uint256 public startFundingTime;
+    uint256 public endFundingTime;
+    
+    uint256 constant public maximumFunding = 1951 ether; //??
+    uint256 public maxFunding;  //??????
+    uint256 public minFunding = 0.001 ether;  //??????
+    uint256 public tokensPerEther = 41000;
+    uint256 constant public maxGasPrice = 50000000000;
+    uint256 constant oneDay = 86400;
+    uint256 public totalCollected = 0;
+    bool    public paused;
+    Token public tokenContract;
+    bool public finalized = false;
+    bool public allowChange = true;
+    bool private transfersEnabled = true;
+    address private vaultAddress;
+
+    bool private initialed = false;
+
+    event Payment(address indexed _sender, uint256 _ethAmount, uint256 _tokenAmount);
+
+    /**
+     * @param _startFundingTime The UNIX time that the BaseTokenSale will be able to start receiving funds
+     * @param _endFundingTime   The UNIX time that the BaseTokenSale will stop being able to receive funds
+     * @param _vaultAddress     The address that will store the donated funds
+     * @param _tokenAddress     Address of the token contract this contract controls
+     */
+    function BaseTokenSale(
+        uint _startFundingTime, 
+        uint _endFundingTime, 
+        address _vaultAddress,
+        address _tokenAddress
+    ) public {
+        require(_endFundingTime > now);
+        require(_endFundingTime >= _startFundingTime);
+        require(_vaultAddress != 0);
+        require(_tokenAddress != 0);
+        require(!initialed);
+
+        startFundingTime = _startFundingTime;
+        endFundingTime = _endFundingTime;
+        vaultAddress = _vaultAddress;
+        tokenContract = Token(_tokenAddress);
+        paused = false;
+        initialed = true;
+    }
+
+
+    function setTime(uint time1, uint time2) onlyController public {
+        require(endFundingTime > now && startFundingTime < endFundingTime);
+        startFundingTime = time1;
+        endFundingTime = time2;
+    }
+
+
+    /**
+     * @dev The fallback function is called when ether is sent to the contract, it simply calls `doPayment()` with the address that sent the ether as the `_owner`. Payable is a required solidity modifier for functions to receive ether, without this modifier functions will throw if ether is sent to them
+     */
+    function () payable notPaused public {
+        doPayment(msg.sender);
+    }
+
+    /**
+     * @notice `proxyPayment()` allows the caller to send ether to the BaseTokenSale and have the tokens created in an address of their choosing
+     * @param _owner The address that will hold the newly created tokens
+     */
+    function proxyPayment(address _owner) payable notPaused public returns(bool success) {
+        return doPayment(_owner);
+    }
+
+    /**
+    * @notice Notifies the controller about a transfer, for this BaseTokenSale all transfers are allowed by default and no extra notifications are needed
+    * @param _from The origin of the transfer
+    * @param _to The destination of the transfer
+    * @param _amount The amount of the transfer
+    * @return False if the controller does not authorize the transfer
+    */
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool success) {
+        if ( _from == vaultAddress || transfersEnabled) {
+            return true;
+        }
+        _to;
+        _amount;
+        return false;
+    }
+
+    /**
+     * @notice Notifies the controller about an approval, for this BaseTokenSale all
+     * approvals are allowed by default and no extra notifications are needed
+     * @param _owner The address that calls `approve()`
+     * @param _spender The spender in the `approve()` call
+     * @param _amount The amount in the `approve()` call
+     * @return False if the controller does not authorize the approval
+     */
+    function onApprove(address _owner, address _spender, uint _amount) public returns(bool success) {
+        if ( _owner == vaultAddress ) {
+            return true;
+        }
+        _spender;
+        _amount;
+        return false;
+    }
+
+    event info(string name, string msg);
+    event info256(string name, uint256 value);
+
+    /// @dev `doPayment()` is an internal function that sends the ether that this
+    ///  contract receives to the `vault` and creates tokens in the address of the
+    ///  `_owner` assuming the BaseTokenSale is still accepting funds
+    /// @param _owner The address that will hold the newly created tokens
+    function doPayment(address _owner) internal returns(bool success) {
+        //info("step", "enter doPayment");
+        require(msg.value >= minFunding);
+        require(endFundingTime > now);
+
+        // Track how much the BaseTokenSale has collected
+        require(totalCollected < maximumFunding);
+        totalCollected = totalCollected.add(msg.value);
+
+        //Send the ether to the vault
+        require(vaultAddress.send(msg.value));
+        
+        uint256 tokenValue = tokensPerEther.mul(msg.value);
+        // Creates an equal amount of tokens as ether sent. The new tokens are created in the `_owner` address
+        require(tokenContract.generateTokens(_owner, tokenValue));
+        uint256 lock1 = tokenValue / 10;    //?5??????10%??
+        uint256 lock2 = tokenValue / 5;     //???????20%
+        require(tokenContract.freeze(_owner, lock1, 0)); //???????
+        tokenContract.freeze(_owner, lock1, 1); //???????
+        tokenContract.freeze(_owner, lock1, 2);
+        tokenContract.freeze(_owner, lock1, 3);
+        tokenContract.freeze(_owner, lock1, 4);
+        tokenContract.freeze(_owner, lock2, 5);
+        //require(tokenContract.freeze(_owner, lock3, 5)); //???????
+        Payment(_owner, msg.value, tokenValue);
+        return true;
+    }
+
+    function changeTokenController(address _newController) onlyController public {
+        tokenContract.changeController(_newController);
+    }
+
+    /**
+     * ??TNB????
+     */
+    function changeTokensPerEther(uint256 _newRate) onlyController public {
+        require(allowChange);
+        tokensPerEther = _newRate;
+    }
+
+    function changeFundingLimit(uint256 _min, uint256 _max) onlyController public {
+        require(_min > 0 && _min <= _max);
+        minFunding = _min;
+        maxFunding = _max;
+    }
+
+    /**
+     * ????????
+     */
+    function allowTransfersEnabled(bool _allow) onlyController public {
+        transfersEnabled = _allow;
+    }
+
+    /// @dev Internal function to determine if an address is a contract
+    /// @param _addr The address being queried
+    /// @return True if `_addr` is a contract
+    function isContract(address _addr) constant internal returns (bool) {
+        if (_addr == 0) {
+            return false;
+        }
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
+    }
+
+    /// @notice `finalizeSale()` ends the BaseTokenSale. It will generate the platform and team tokens
+    ///  and set the controller to the referral fee contract.
+    /// @dev `finalizeSale()` can only be called after the end of the funding period or if the maximum amount is raised.
+    function finalizeSale() onlyController public {
+        require(now > endFundingTime || totalCollected >= maximumFunding);
+        require(!finalized);
+
+        //20000 TNB/ETH and 90 percent discount
+        uint256 totalTokens = totalCollected * tokensPerEther * 10**18;
+        if (!tokenContract.generateTokens(vaultAddress, totalTokens)) {
+            revert();
+        }
+
+        finalized = true;
+        allowChange = false;
+    }
+
+//////////
+// Safety Methods
+//////////
+
+    /// @notice This method can be used by the controller to extract mistakenly
+    ///  sent tokens to this contract.
+    /// @param _token The address of the token contract that you want to recover
+    ///  set to 0 in case you want to extract ether.
+    function claimTokens(address _token) onlyController public {
+        if (_token == 0x0) {
+            controller.transfer(this.balance);
+            return;
+        }
+
+        ERC20Token token = ERC20Token(_token);
+        uint balance = token.balanceOf(this);
+        token.transfer(controller, balance);
+        ClaimedTokens(_token, controller, balance);
+    }
+
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+
+  /// @notice Pauses the contribution if there is any issue
+    function pauseContribution() onlyController public {
+        paused = true;
+    }
+
+    /// @notice Resumes the contribution
+    function resumeContribution() onlyController public {
+        paused = false;
+    }
+
+    modifier notPaused() {
+        require(!paused);
+        _;
     }
 }
