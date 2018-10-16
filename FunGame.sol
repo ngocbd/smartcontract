@@ -1,20 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunGame at 0x2262776164585b8de3a5f581caea9e1464b08653
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunGame at 0xdd9734d041637868bbcdc963b0cea2db77dca3a7
 */
 pragma solidity ^0.4.10;
 
 contract FunGame 
 {
     address owner;
-    struct user
+    modifier OnlyOwner() 
     {
-        address parent;
-        uint8 level;
+        if (msg.sender == owner) 
+        _;
     }
-    mapping(address=>user) public map;
     function FunGame()
     {
         owner = msg.sender;
-        map[msg.sender].level = 8; 
+    }
+    function TakeMoney() OnlyOwner
+    {
+        owner.transfer(this.balance);
+    }
+    function ChangeOwner(address NewOwner) OnlyOwner 
+    {
+        owner = NewOwner;
     }
 }
