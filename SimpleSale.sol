@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSale at 0xd3353412854f2f6e16d25beee977878aeb52b58d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSale at 0x96b26c1872566fd977e7a282a17bc0203a20a90e
 */
 pragma solidity ^0.4.16;
 
@@ -108,7 +108,6 @@ contract SimpleSale is Ownable,Pausable {
     address public cs;
     uint256 public totalCollected;
     bool    public saleFinished;
-    bool    public freeForAll = true;
     uint256 public startTime = 1505998800;
     uint256 public stopTime = 1508590800;
 
@@ -127,7 +126,7 @@ contract SimpleSale is Ownable,Pausable {
      * @dev throws if person sending is not authorised or sends nothing
      */
     modifier onlyAuthorised() {
-        require (authorised[msg.sender] || freeForAll);
+        require (authorised[msg.sender]);
         require (msg.value > 0);
         require (now >= startTime);
         require (now <= stopTime);
@@ -173,10 +172,6 @@ contract SimpleSale is Ownable,Pausable {
     function setCS(address newCS) onlyOwner {
         cs = newCS;
     }
-    
-    function requireAuthorisation(bool state) {
-        freeForAll = !state;
-    }
 
     /**
      * @dev call an end (e.g. because cap reached)
@@ -185,6 +180,9 @@ contract SimpleSale is Ownable,Pausable {
         saleFinished = true;
     }
     
+    function SimpleSale() {
+        
+    }
 
     /**
      * @dev fallback function received ether, sends it to the multisig, notes indivdual and group contributions
