@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xf4f5683bc45bb1b3a3c61bb458006682d29d08a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xb43b5be03416ca16f7b9749c6aba818538dcc032
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
 
 
 contract Owned {
@@ -32,8 +32,8 @@ contract Slotthereum is Mortal {
 
     Game[] public games;                              // games
     uint public numberOfGames = 0;                    // number of games
-    uint private minBetAmount = 1;                    // minimum amount per bet
-    uint private maxBetAmount = 5000000000000000000;  // maximum amount per bet
+    uint private minBetAmount = 100000000000000;      // minimum amount per bet
+    uint private maxBetAmount = 1000000000000000000;  // maximum amount per bet
     uint8 private pointer = 1;                        // block pointer
 
     struct Game {
@@ -50,6 +50,15 @@ contract Slotthereum is Mortal {
 
     event MinBetAmountChanged(uint amount);
     event MaxBetAmountChanged(uint amount);
+    event PointerChanged(uint8 value);
+
+    event GameRoll(
+        address indexed player,
+        uint indexed gameId,
+        uint8 start,
+        uint8 end,
+        uint amount
+    );
 
     event GameWin(
         address indexed player,
@@ -96,10 +105,10 @@ contract Slotthereum is Mortal {
     }
 
     function getBlockHash(uint i) internal constant returns (bytes32 blockHash) {
-        if (i > 255) {
+        if (i >= 255) {
             i = 255;
         }
-        if (i < 0) {
+        if (i <= 0) {
             i = 1;
         }
         blockHash = block.blockhash(block.number - i);
@@ -126,7 +135,7 @@ contract Slotthereum is Mortal {
 
         uint8 counter = end - start + 1;
 
-        if (counter > 9) {
+        if (counter > 7) {
             return false;
         }
 
@@ -135,7 +144,10 @@ contract Slotthereum is Mortal {
         }
 
         uint gameId = games.length;
-        games.length += 1;
+        games.length++;
+        numberOfGames++;
+
+        GameRoll(msg.sender, gameId, start, end, msg.value);
 
         games[gameId].id = gameId;
         games[gameId].player = msg.sender;
@@ -144,7 +156,16 @@ contract Slotthereum is Mortal {
         games[gameId].end = end;
         games[gameId].hash = getBlockHash(pointer);
         games[gameId].number = getNumber(games[gameId].hash);
-        pointer = games[gameId].number;
+        
+        if (pointer == games[gameId].number) {
+            if (pointer <= 4) {
+                pointer++;
+            } else {
+                pointer--;
+            }
+        } else {
+            pointer = games[gameId].number;
+        }
 
         if ((games[gameId].number >= start) && (games[gameId].number <= end)) {
             games[gameId].win = true;
@@ -171,6 +192,14 @@ contract Slotthereum is Mortal {
         return true;
     }
 
+    function withdraw(uint amount) onlyowner returns (uint) {
+        if (amount <= this.balance) {
+            msg.sender.transfer(amount);
+            return amount;
+        }
+        return 0;
+    }
+
     function setMinBetAmount(uint _minBetAmount) onlyowner returns (uint) {
         minBetAmount = _minBetAmount;
         MinBetAmountChanged(minBetAmount);
@@ -181,6 +210,12 @@ contract Slotthereum is Mortal {
         maxBetAmount = _maxBetAmount;
         MaxBetAmountChanged(maxBetAmount);
         return maxBetAmount;
+    }
+
+    function setPointer(uint8 _pointer) onlyowner returns (uint) {
+        pointer = _pointer;
+        PointerChanged(pointer);
+        return pointer;
     }
 
     function getGameIds() constant returns(uint[]) {
