@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiteXTokenVesting at 0x64d2db533a3a65ed6db297c382a79a322d466aea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiteXTokenVesting at 0x9d2d59b93f7ddc460fcdd9a1ea45d3b3bdd8efd3
 */
 pragma solidity ^0.4.18;
 
@@ -164,7 +164,7 @@ contract TokenVesting is Ownable {
   uint256 public start;
   uint256 public duration;
 
-  bool revocable;
+  bool public revocable;
 
   mapping (address => uint256) public released;
   mapping (address => bool) public revoked;
