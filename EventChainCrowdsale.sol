@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EventChainCrowdsale at 0x486cf19a550e2814aef970b14e509e93209a0151
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EventChainCrowdsale at 0xb70f92ff6bca4aa0c61973c27243978b20ecbe5a
 */
 pragma solidity ^0.4.11;
 
@@ -118,6 +118,18 @@ contract ERC20Basic {
 
 
 /**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function approve(address spender, uint256 value) returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
@@ -156,18 +168,6 @@ contract BasicToken is ERC20Basic {
         assert (msg.data.length >= size + 4);
         _;
     }
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) returns (bool);
-    function approve(address spender, uint256 value) returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -368,18 +368,16 @@ contract EventChain is ReleasableToken, MintableToken {
 contract EventChainCrowdsale is Haltable {
     using SafeMath for uint256;
 
-    enum State{Preparing, Prepared, Presale, Phase1, Phase2, Closed}
+    enum State{Ready, Phase1, Phase2, Phase3, CrowdsaleEnded}
 
-    uint256 constant public PRESALE_SUPPLY = 11000000 ether;
-    uint256 constant public PHASE1_SUPPLY = 36000000 ether;
-    uint256 constant public PHASE2_SUPPLY = 7600000 ether;
+    uint256 constant public PHASE2_SUPPLY = 21000000 ether;
+    uint256 constant public PHASE3_SUPPLY = 22600000 ether;
 
-    uint256 constant public PRESALE_RATE = 570;
-    uint256 constant public PHASE1_RATE = 460;
-    uint256 constant public PHASE2_RATE = 230;
+    uint256 constant public PHASE1_RATE = 1140;
+    uint256 constant public PHASE2_RATE = 920;
+    uint256 constant public PHASE3_RATE = 800;
 
     uint256 constant public MIN_INVEST = 10 finney;
-    uint256 constant public PRESALE_MIN_INVEST = 10 ether;
     uint256 constant public BTWO_CLAIM_PERCENT = 3;
 
     EventChain public evc;
@@ -388,12 +386,12 @@ contract EventChainCrowdsale is Haltable {
     uint256 public totalRaised;
 
     State public currentState;
-    uint256 public currentRate;
+    uint256 public currentRate; 
     uint256 public currentSupply;
     uint256 public currentTotalSupply;
 
     event StateChanged(State from, State to);
-    event PresaleClaimed(uint256 claim);
+    event FundsClaimed(address receiver, uint256 claim, string crowdsalePhase);
     event InvestmentMade(
         address investor,
         uint256 weiAmount,
@@ -406,17 +404,21 @@ contract EventChainCrowdsale is Haltable {
         assert(address(_evc) != 0x0);
         assert(address(_beneficiary) != 0x0);
         assert(address(_beneficiaryTwo) != 0x0);
+
         beneficiary = _beneficiary;
         beneficiaryTwo = _beneficiaryTwo;
         evc = _evc;
     }
 
-    function() payable onlyWhenCrowdsaleIsOpen requiresMinimumInvest stopInEmergency external {
-        assert(msg.data.length <= 68); // 64 bytes limit plus 4 for the prefix
+    function() payable onlyWhenCrowdsaleIsOpen stopInEmergency external {
+        assert(msg.data.length <= 68); // 64 bytes data limit plus 4 for the prefix
+        assert(msg.value >= MIN_INVEST);
+
         uint256 tokens = msg.value.mul(currentRate);
         currentSupply = currentSupply.sub(tokens);
         evc.mint(msg.sender, tokens);
         totalRaised = totalRaised.add(msg.value);
+
         InvestmentMade(
             msg.sender,
             msg.value,
@@ -426,66 +428,70 @@ contract EventChainCrowdsale is Haltable {
         );
     }
 
-    function mintFounderTokens() onlyOwner inState(State.Preparing) external {
-        assert(evc.mintAgents(this));
-        // allocate 35% (29,4 million) of the total token supply (84 million) to the founders
-        evc.mint(beneficiary, 29400000 ether);
-        currentState = State.Prepared;
-        StateChanged(State.Preparing, currentState);
-    }
-
-    function startPresale() onlyOwner inState(State.Prepared) external {
-        currentTotalSupply = PRESALE_SUPPLY;
-        currentSupply = currentTotalSupply;
-        currentRate = PRESALE_RATE;
-        currentState = State.Presale;
-        StateChanged(State.Prepared, currentState);
-    }
-
-    function startPhase1() onlyOwner inState(State.Presale) external {
-        currentTotalSupply = currentSupply.add(PHASE1_SUPPLY);
+    function startPhase1() onlyOwner inState(State.Ready) stopInEmergency external {
+        currentTotalSupply = evc.mintableSupply().sub(PHASE2_SUPPLY).sub(PHASE3_SUPPLY);
         currentSupply = currentTotalSupply;
         currentRate = PHASE1_RATE;
         currentState = State.Phase1;
-        uint256 claim = this.balance;
-        beneficiary.transfer(claim);
-        PresaleClaimed(claim);
-        StateChanged(State.Presale, currentState);
+
+        StateChanged(State.Ready, currentState);
     }
 
-    function startPhase2() onlyOwner inState(State.Phase1) external {
+    function startPhase2() onlyOwner inState(State.Phase1) stopInEmergency external {
+        phaseClaim();
+
         currentTotalSupply = currentSupply.add(PHASE2_SUPPLY);
         currentSupply = currentTotalSupply;
         currentRate = PHASE2_RATE;
         currentState = State.Phase2;
+
         StateChanged(State.Phase1, currentState);
     }
 
-    function closeCrowdsale() onlyOwner inState(State.Phase2) external {
-        uint256 beneficiaryTwoClaim = totalRaised.div(100).mul(BTWO_CLAIM_PERCENT);
-        beneficiaryTwo.transfer(beneficiaryTwoClaim);
-        beneficiary.transfer(this.balance);
-        currentTotalSupply = 0;
-        currentSupply = 0;
-        currentRate = 0;
-        currentState = State.Closed;
+    function startPhase3() onlyOwner inState(State.Phase2) stopInEmergency external {
+        phaseClaim();
+
+        currentTotalSupply = currentSupply.add(PHASE3_SUPPLY);
+        currentSupply = currentTotalSupply;
+        currentRate = PHASE3_RATE;
+        currentState = State.Phase3;
+
         StateChanged(State.Phase2, currentState);
     }
 
+    function endCrowdsale() onlyOwner inState(State.Phase3) stopInEmergency external {
+        phaseClaim();
+
+        currentTotalSupply = 0;
+        currentSupply = 0;
+        currentRate = 0;
+        currentState = State.CrowdsaleEnded;
+
+        StateChanged(State.Phase3, currentState);
+    }
+
     function currentStateToString() constant returns (string) {
-        if (currentState == State.Preparing) {
-            return "Preparing";
-        } else if (currentState == State.Prepared) {
-            return "Prepared";
-        } else if (currentState == State.Presale) {
-            return "Presale";
+        if (currentState == State.Ready) {
+            return "Ready";
         } else if (currentState == State.Phase1) {
             return "Phase 1";
         } else if (currentState == State.Phase2) {
             return "Phase 2";
+        } else if (currentState == State.Phase3) {
+            return "Phase 3";
         } else {
-            return "Closed";
+            return "Crowdsale ended";
         }
+    }
+
+    function phaseClaim() internal {
+        uint256 beneficiaryTwoClaim = this.balance.div(100).mul(BTWO_CLAIM_PERCENT);
+        beneficiaryTwo.transfer(beneficiaryTwoClaim);
+        FundsClaimed(beneficiaryTwo, beneficiaryTwoClaim, currentStateToString());
+
+        uint256 beneficiaryClaim = this.balance;
+        beneficiary.transfer(this.balance);
+        FundsClaimed(beneficiary, beneficiaryClaim, currentStateToString());
     }
 
     modifier inState(State _state) {
@@ -494,16 +500,7 @@ contract EventChainCrowdsale is Haltable {
     }
 
     modifier onlyWhenCrowdsaleIsOpen() {
-        assert(currentState == State.Presale || currentState == State.Phase1 || currentState == State.Phase2);
-        _;
-    }
-
-    modifier requiresMinimumInvest() {
-        if (currentState == State.Presale) {
-            assert(msg.value >= PRESALE_MIN_INVEST);
-        } else {
-            assert(msg.value >= MIN_INVEST);
-        }
+        assert(currentState == State.Phase1 || currentState == State.Phase2 || currentState == State.Phase3);
         _;
     }
 }
