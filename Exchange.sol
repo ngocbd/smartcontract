@@ -1,556 +1,813 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0xF0Fb984B464CDB7cbef0CC7222018BBba7F9e97E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x03cc979c46b030c4abd7d4063cd075cb38cd0919
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-contract Token {
-    bytes32 public standard;
-    bytes32 public name;
-    bytes32 public symbol;
-    uint256 public totalSupply;
-    uint8 public decimals;
-    bool public allowTransactions;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success); 
+contract ERC20 {
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
-contract EthermiumAffiliates {
-    mapping(address => address[]) public referrals; // mapping of affiliate address to referral addresses
-    mapping(address => address) public affiliates; // mapping of referrals addresses to affiliate addresses
-    mapping(address => bool) public admins; // mapping of admin accounts
-    string[] public affiliateList;
-    address public owner;
-
-    function setOwner(address newOwner);
-    function setAdmin(address admin, bool isAdmin) public;
-    function assignReferral (address affiliate, address referral) public;    
-
-    function getAffiliateCount() returns (uint);
-    function getAffiliate(address refferal) public returns (address);
-    function getReferrals(address affiliate) public returns (address[]);
-}
-
-contract EthermiumTokenList {
-    function isTokenInList(address tokenAddress) public constant returns (bool);
-}
-
-
-contract Exchange {
-    function assert(bool assertion) {
-        if (!assertion) throw;
-    }
-    function safeMul(uint a, uint b) returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        require(c / a == b);
         return c;
     }
 
-    function safeSub(uint a, uint b) returns (uint) {
-        assert(b <= a);
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
         return a - b;
     }
 
-    function safeAdd(uint a, uint b) returns (uint) {
-        uint c = a + b;
-        assert(c>=a && c>=b);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
         return c;
     }
-    address public owner;
-    mapping (address => uint256) public invalidOrder;
 
-    event SetOwner(address indexed previousOwner, address indexed newOwner);
-    modifier onlyOwner {
-        assert(msg.sender == owner);
-        _;
-    }
-    function setOwner(address newOwner) onlyOwner {
-        SetOwner(owner, newOwner);
-        owner = newOwner;
-    }
-    function getOwner() returns (address out) {
-        return owner;
-    }
-    function invalidateOrdersBefore(address user, uint256 nonce) onlyAdmin {
-        if (nonce < invalidOrder[user]) throw;
-        invalidOrder[user] = nonce;
+    function min(uint a, uint b) internal pure returns (uint) {
+        if (a >= b)
+            return b;
+        return a;
     }
 
-    mapping (address => mapping (address => uint256)) public tokens; //mapping of token addresses to mapping of account balances
-
-    mapping (address => bool) public admins;
-    mapping (address => uint256) public lastActiveTransaction;
-    mapping (bytes32 => uint256) public orderFills;
-    address public feeAccount;
-    uint256 public feeAffiliate; // percentage times (1 ether)
-    uint256 public inactivityReleasePeriod;
-    mapping (bytes32 => bool) public traded;
-    mapping (bytes32 => bool) public withdrawn;
-    uint256 public makerFee; // fraction * 1 ether
-    uint256 public takerFee; // fraction * 1 ether
-    uint256 public affiliateFee; // fraction as proportion of 1 ether
-    uint256 public makerAffiliateFee; // wei deductible from makerFee
-    uint256 public takerAffiliateFee; // wei deductible form takerFee
-
-    mapping (address => address) public referrer;  // mapping of user addresses to their referrer addresses
-
-    address public affiliateContract;
-    address public tokenListContract;
-
-
-    enum Errors {
-        INVLID_PRICE,           // Order prices don't match
-        INVLID_SIGNATURE,       // Signature is invalid
-        TOKENS_DONT_MATCH,      // Maker/taker tokens don't match
-        ORDER_ALREADY_FILLED,    // Order was already filled
-        GAS_TOO_HIGH    // Order was already filled
+    function max(uint a, uint b) internal pure returns (uint) {
+        if (a >= b)
+            return a;
+        return b;
     }
-  
-    event Order(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
-    event Cancel(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, address user, uint8 v, bytes32 r, bytes32 s);
-    event Trade(
-        address takerTokenBuy, uint256 takerAmountBuy,
-        address takerTokenSell, uint256 takerAmountSell,
-        address maker, address taker,
-        uint256 makerFee, uint256 takerFee,
-        uint256 makerAmountTaken, uint256 takerAmountTaken,
-        bytes32 makerOrderHash, bytes32 takerOrderHash
-    );
-    event Deposit(address token, address user, uint256 amount, uint256 balance, address referrerAddress);
-    event Withdraw(address token, address user, uint256 amount, uint256 balance);
-    event FeeChange(uint256 makerFee, uint256 takerFee, uint256 affiliateFee);
-    event AffiliateFeeChange(uint256 newAffiliateFee);
-    event LogError(uint8 indexed errorId, bytes32 indexed orderHash);
-    event CancelOrder(bytes32 cancelHash, bytes32 orderHash, address user, address tokenSell, uint256 amountSell, uint256 cancelFee);
+}
 
-    function setInactivityReleasePeriod(uint256 expiry) onlyAdmin returns (bool success) {
-        if (expiry > 1000000) throw;
-        inactivityReleasePeriod = expiry;
-        return true;
-    }
+contract DSAuthority {
+    function canCall(
+        address src,
+        address dst,
+        bytes4 sig
+        ) public view returns (bool);
+}
 
-    function Exchange(address feeAccount_, uint256 makerFee_, uint256 takerFee_, uint256 affiliateFee_, address affiliateContract_, address tokenListContract_) {
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    constructor() public {
         owner = msg.sender;
-        feeAccount = feeAccount_;
-        inactivityReleasePeriod = 100000;
-        makerFee = makerFee_;
-        takerFee = takerFee_;
-        affiliateFee = affiliateFee_;
-
-
-
-        makerAffiliateFee = safeMul(makerFee, affiliateFee_) / (1 ether);
-        takerAffiliateFee = safeMul(takerFee, affiliateFee_) / (1 ether);
-
-        affiliateContract = affiliateContract_;
-        tokenListContract = tokenListContract_;
+        emit LogSetOwner(msg.sender);
     }
 
-    function setFees(uint256 makerFee_, uint256 takerFee_, uint256 affiliateFee_) onlyOwner {
-        require(makerFee_ < 10 finney && takerFee_ < 10 finney);
-        require(affiliateFee_ > affiliateFee);
-        makerFee = makerFee_;
-        takerFee = takerFee_;
-        affiliateFee = affiliateFee_;
-        makerAffiliateFee = safeMul(makerFee, affiliateFee_) / (1 ether);
-        takerAffiliateFee = safeMul(takerFee, affiliateFee_) / (1 ether);
-
-        FeeChange(makerFee, takerFee, affiliateFee_);
+    function setOwner(address owner_)
+        public
+        auth
+    {
+        owner = owner_;
+        emit LogSetOwner(owner);
     }
 
-    function setAdmin(address admin, bool isAdmin) onlyOwner {
-        admins[admin] = isAdmin;
+    function setAuthority(DSAuthority authority_)
+        public
+        auth
+    {
+        authority = authority_;
+        emit LogSetAuthority(authority);
     }
 
-    modifier onlyAdmin {
-        if (msg.sender != owner && !admins[msg.sender]) throw;
+    modifier auth {
+        require(isAuthorized(msg.sender, msg.sig));
         _;
     }
 
-    function() external {
-        throw;
-    }
-
-    function depositToken(address token, uint256 amount, address referrerAddress) {
-        //require(EthermiumTokenList(tokenListContract).isTokenInList(token));
-        if (referrerAddress == msg.sender) referrerAddress = address(0);
-        if (referrer[msg.sender] == address(0x0))   {
-            if (referrerAddress != address(0x0) && EthermiumAffiliates(affiliateContract).getAffiliate(msg.sender) == address(0))
-            {
-                referrer[msg.sender] = referrerAddress;
-                EthermiumAffiliates(affiliateContract).assignReferral(referrerAddress, msg.sender);
-            }
-            else
-            {
-                referrer[msg.sender] = EthermiumAffiliates(affiliateContract).getAffiliate(msg.sender);
-            }
-        } 
-        tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
-        lastActiveTransaction[msg.sender] = block.number;
-        if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
-        Deposit(token, msg.sender, amount, tokens[token][msg.sender], referrer[msg.sender]);
-    }
-
-    function deposit(address referrerAddress) payable {
-        if (referrerAddress == msg.sender) referrerAddress = address(0);
-        if (referrer[msg.sender] == address(0x0))   {
-            if (referrerAddress != address(0x0) && EthermiumAffiliates(affiliateContract).getAffiliate(msg.sender) == address(0))
-            {
-                referrer[msg.sender] = referrerAddress;
-                EthermiumAffiliates(affiliateContract).assignReferral(referrerAddress, msg.sender);
-            }
-            else
-            {
-                referrer[msg.sender] = EthermiumAffiliates(affiliateContract).getAffiliate(msg.sender);
-            }
-        } 
-        tokens[address(0)][msg.sender] = safeAdd(tokens[address(0)][msg.sender], msg.value);
-        lastActiveTransaction[msg.sender] = block.number;
-        Deposit(address(0), msg.sender, msg.value, tokens[address(0)][msg.sender], referrer[msg.sender]);
-    }
-
-    function withdraw(address token, uint256 amount) returns (bool success) {
-        if (safeSub(block.number, lastActiveTransaction[msg.sender]) < inactivityReleasePeriod) throw;
-        if (tokens[token][msg.sender] < amount) throw;
-        tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
-        if (token == address(0)) {
-            if (!msg.sender.send(amount)) throw;
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
         } else {
-            if (!Token(token).transfer(msg.sender, amount)) throw;
+            return authority.canCall(src, this, sig);
         }
-        Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+    }
+}
+
+contract Exchange is DSAuth {
+
+    using SafeMath for uint;
+
+    ERC20 public daiToken;
+    mapping(address => uint) public dai;
+    mapping(address => uint) public eth;
+
+    mapping(address => uint) public totalEth;
+    mapping(address => uint) public totalDai;
+
+    mapping(bytes32 => mapping(address => uint)) public callsOwned;
+    mapping(bytes32 => mapping(address => uint)) public putsOwned;
+    mapping(bytes32 => mapping(address => uint)) public callsSold;
+    mapping(bytes32 => mapping(address => uint)) public putsSold;
+
+    mapping(bytes32 => uint) public callsAssigned;
+    mapping(bytes32 => uint) public putsAssigned;
+    mapping(bytes32 => uint) public callsExercised;
+    mapping(bytes32 => uint) public putsExercised;
+
+    mapping(address => mapping(bytes32 => bool)) public cancelled;
+    mapping(address => mapping(bytes32 => uint)) public filled;
+
+    mapping(address => uint) public feeRebates;
+    mapping(bytes32 => bool) public claimedFeeRebate;
+
+    // fee values are actually in DAI, ether is just a keyword
+    uint public flatFee       = 7 ether;
+    uint public contractFee   = 1 ether;
+    uint public exerciseFee   = 20 ether;
+    uint public settlementFee = 20 ether;
+    uint public feesCollected = 0;
+    uint public feesWithdrawn = 0;
+
+    string precisionError = "Precision";
+
+    constructor(address daiAddress) public {
+        require(daiAddress != 0x0);
+        daiToken = ERC20(daiAddress);
     }
 
-    function adminWithdraw(address token, uint256 amount, address user, uint256 nonce, uint8 v, bytes32 r, bytes32 s, uint256 feeWithdrawal) onlyAdmin returns (bool success) {
-        bytes32 hash = keccak256(this, token, amount, user, nonce);
-        if (withdrawn[hash]) throw;
-        withdrawn[hash] = true;
-        if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", hash), v, r, s) != user) throw;
-        if (feeWithdrawal > 50 finney) feeWithdrawal = 50 finney;
-        if (tokens[token][user] < amount) throw;
-        tokens[token][user] = safeSub(tokens[token][user], amount);
-        tokens[address(0)][user] = safeSub(tokens[address(0x0)][user], feeWithdrawal);
-        //tokens[token][feeAccount] = safeAdd(tokens[token][feeAccount], safeMul(feeWithdrawal, amount) / 1 ether);
-        tokens[address(0)][feeAccount] = safeAdd(tokens[address(0)][feeAccount], feeWithdrawal);
-
-        //amount = safeMul((1 ether - feeWithdrawal), amount) / 1 ether;
-        if (token == address(0)) {
-            if (!user.send(amount)) throw;
-        } else {
-            if (!Token(token).transfer(user, amount)) throw;
-        }
-        lastActiveTransaction[user] = block.number;
-        Withdraw(token, user, amount, tokens[token][user]);
+    function() public payable {
+        revert();
     }
 
-    function balanceOf(address token, address user) constant returns (uint256) {
-        return tokens[token][user];
+    event Deposit(address indexed account, uint amount);
+    event Withdraw(address indexed account, uint amount, address to);
+    event DepositDai(address indexed account, uint amount);
+    event WithdrawDai(address indexed account, uint amount, address to);
+
+    function deposit() public payable {
+        _addEth(msg.value, msg.sender);
+        emit Deposit(msg.sender, msg.value);
     }
 
-    struct OrderPair {
-        uint256 makerAmountBuy;
-        uint256 makerAmountSell;
-        uint256 makerNonce;
-        uint256 takerAmountBuy;
-        uint256 takerAmountSell;
-        uint256 takerNonce;
-        uint256 takerGasFee;
-
-        address makerTokenBuy;
-        address makerTokenSell;
-        address maker;
-        address takerTokenBuy;
-        address takerTokenSell;
-        address taker;
-
-        bytes32 makerOrderHash;
-        bytes32 takerOrderHash;
+    function depositDai(uint amount) public {
+        require(daiToken.transferFrom(msg.sender, this, amount));
+        _addDai(amount, msg.sender);
+        emit DepositDai(msg.sender, amount);
     }
 
-    struct TradeValues {
-        uint256 qty;
-        uint256 invQty;
-        uint256 makerAmountTaken;
-        uint256 takerAmountTaken;
-        address makerReferrer;
-        address takerReferrer;
+    function withdraw(uint amount, address to) public {
+        require(to != 0x0);
+        _subEth(amount, msg.sender);
+        to.transfer(amount);
+        emit Withdraw(msg.sender, amount, to);
+    }
+
+    function withdrawDai(uint amount, address to) public {
+        require(to != 0x0);
+        _subDai(amount, msg.sender);
+        daiToken.transfer(to, amount);
+        emit WithdrawDai(msg.sender, amount, to);
+    }
+
+    function depositDaiFor(uint amount, address account) public {
+        require(account != 0x0);
+        require(daiToken.transferFrom(msg.sender, this, amount));
+        _addDai(amount, account);
+        emit DepositDai(account, amount);
+    }
+
+    function _addEth(uint amount, address account) private {
+        eth[account] = eth[account].add(amount);
+        totalEth[account] = totalEth[account].add(amount);
+    }
+
+    function _subEth(uint amount, address account) private {
+        eth[account] = eth[account].sub(amount);
+        totalEth[account] = totalEth[account].sub(amount);
+    }
+
+    function _addDai(uint amount, address account) private {
+        dai[account] = dai[account].add(amount);
+        totalDai[account] = totalDai[account].add(amount);
+    }
+
+    function _subDai(uint amount, address account) private {
+        dai[account] = dai[account].sub(amount);
+        totalDai[account] = totalDai[account].sub(amount);
+    }
+
+    // ===== Admin functions ===== //
+
+    function setFeeSchedule(
+        uint _flatFee,
+        uint _contractFee,
+        uint _exerciseFee,
+        uint _settlementFee
+    ) public auth {
+        flatFee = _flatFee;
+        contractFee = _contractFee;
+        exerciseFee = _exerciseFee;
+        settlementFee = _settlementFee;
+
+        require(contractFee < 5 ether);
+        require(flatFee < 6.95 ether);
+        require(exerciseFee < 20 ether);
+        require(settlementFee < 20 ether);
+    }
+
+    function withdrawFees(address to) public auth {
+        require(to != 0x0);
+        uint amount = feesCollected.sub(feesWithdrawn);
+        feesWithdrawn = feesCollected;
+        require(daiToken.transfer(to, amount));
+    }
+
+    // ===== End Admin Functions ===== //
+
+    modifier hasFee(uint amount) {
+        _;
+        _collectFee(msg.sender, calculateFee(amount));
+    }
+
+    enum Action {
+        BuyCallToOpen,
+        BuyCallToClose,
+        SellCallToOpen,
+        SellCallToClose,
+        BuyPutToOpen,
+        BuyPutToClose,
+        SellPutToOpen,
+        SellPutToClose
+    }
+
+    event CancelOrder(address indexed account, bytes32 h);
+    function cancelOrder(bytes32 h) public {
+        cancelled[msg.sender][h] = true;
+        emit CancelOrder(msg.sender, h);
+    }
+
+    function callBtoWithSto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyCallToOpen(amount, expiration, price, strike, msg.sender);
+        _sellCallToOpen(amount, expiration, price, strike, maker);
+    }
+
+    function callBtoWithStc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellCallToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyCallToOpen(amount, expiration, price, strike, msg.sender);
+        _sellCallToClose(amount, expiration, price, strike, maker);
+    }
+
+    function callBtcWithSto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyCallToClose(amount, expiration, price, strike, msg.sender);
+        _sellCallToOpen(amount, expiration, price, strike, maker);
+    }
+
+    function callBtcWithStc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellCallToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyCallToClose(amount, expiration, price, strike, msg.sender);
+        _sellCallToClose(amount, expiration, price, strike, maker);
+    }
+
+    function callStoWithBto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellCallToOpen(amount, expiration, price, strike, msg.sender);
+        _buyCallToOpen(amount, expiration, price, strike, maker);
+    }
+
+    function callStoWithBtc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyCallToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellCallToOpen(amount, expiration, price, strike, msg.sender);
+        _buyCallToClose(amount, expiration, price, strike, maker);
+    }
+
+    function callStcWithBto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellCallToClose(amount, expiration, price, strike, msg.sender);
+        _buyCallToOpen(amount, expiration, price, strike, maker);
+    }
+
+    function callStcWithBtc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyCallToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellCallToClose(amount, expiration, price, strike, msg.sender);
+        _buyCallToClose(amount, expiration, price, strike, maker);
+    }
+
+    event BuyCallToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event SellCallToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event BuyCallToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event SellCallToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
+
+    function _buyCallToOpen(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _subDai(premium, buyer);
+        callsOwned[series][buyer] = callsOwned[series][buyer].add(amount);
+        emit BuyCallToOpen(buyer, amount, expiration, price, strike);
+    }
+
+    function _buyCallToClose(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _subDai(premium, buyer);
+        eth[buyer] = eth[buyer].add(amount);
+        callsSold[series][buyer] = callsSold[series][buyer].sub(amount);
+        emit BuyCallToClose(buyer, amount, expiration, price, strike);
+    }
+
+    function _sellCallToOpen(uint amount, uint expiration, uint price, uint strike, address seller) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _addDai(premium, seller);
+        eth[seller] = eth[seller].sub(amount);
+        callsSold[series][seller] = callsSold[series][seller].add(amount);
+        emit SellCallToOpen(seller, amount, expiration, price, strike);
+    }
+
+    function _sellCallToClose(uint amount, uint expiration, uint price, uint strike, address seller) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _addDai(premium, seller);
+        callsOwned[series][seller] = callsOwned[series][seller].sub(amount);
+        emit SellCallToClose(seller, amount, expiration, price, strike);
+    }
+
+    event ExerciseCall(address indexed account, uint amount, uint expiration, uint strike);
+    function exerciseCall(
+        uint amount,
+        uint expiration,
+        uint strike
+    ) public {
+        require(now < expiration, "Expired");
+        require(amount % 1 finney == 0, precisionError);
+        uint cost = amount.mul(strike).div(1 ether);
+        bytes32 series = keccak256(expiration, strike);
+
+        require(callsOwned[series][msg.sender] > 0);
+        callsOwned[series][msg.sender] = callsOwned[series][msg.sender].sub(amount);
+        callsExercised[series] = callsExercised[series].add(amount);
+
+        _collectFee(msg.sender, exerciseFee);
+        _subDai(cost, msg.sender);
+        _addEth(amount, msg.sender);
+        emit ExerciseCall(msg.sender, amount, expiration, strike);
+    }
+
+    event AssignCall(address indexed account, uint amount, uint expiration, uint strike);
+    event SettleCall(address indexed account, uint expiration, uint strike);
+    function settleCall(uint expiration, uint strike, address writer) public {
+        require(msg.sender == writer || isAuthorized(msg.sender, msg.sig), "Unauthorized");
+        require(now > expiration, "Expired");
+
+        bytes32 series = keccak256(expiration, strike);
+        require(callsSold[series][writer] > 0);
+
+        if (callsAssigned[series] < callsExercised[series]) {
+            uint maximum = callsSold[series][writer];
+            uint needed = callsExercised[series].sub(callsAssigned[series]);
+            uint assignment = needed.min(maximum);
+
+            totalEth[writer] = totalEth[writer].sub(assignment);
+            callsAssigned[series] = callsAssigned[series].add(assignment);
+            callsSold[series][writer] = callsSold[series][writer].sub(assignment);
+
+            uint value = strike.mul(assignment).div(1 ether);
+            _addDai(value, writer);
+            emit AssignCall(msg.sender, assignment, expiration, strike);
+        }
+
+        _collectFee(writer, settlementFee);
+        eth[writer] = eth[writer].add(callsSold[series][writer]);
+        callsSold[series][writer] = 0;
+        emit SettleCall(writer, expiration, strike);
     }
 
 
+    // ========== PUT OPTIONS EXCHANGE ========== //
 
-  
-    function trade(
-        uint8[2] v,
-        bytes32[4] rs,
-        uint256[7] tradeValues,
-        address[6] tradeAddresses
-    ) onlyAdmin returns (uint filledTakerTokenAmount) 
-    {
-    
-        /* tradeValues
-          [0] makerAmountBuy
-          [1] makerAmountSell
-          [2] makerNonce
-          [3] takerAmountBuy
-          [4] takerAmountSell
-          [5] takerNonce
-          [6] takerGasFee
+    function putBtoWithSto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
-          tradeAddresses
-          [0] makerTokenBuy
-          [1] makerTokenSell
-          [2] maker
-          [3] takerTokenBuy
-          [4] takerTokenSell
-          [5] taker
-        */
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyPutToOpen(amount, expiration, price, strike, msg.sender);
+        _sellPutToOpen(amount, expiration, price, strike, maker);
+    }
 
-        OrderPair memory t  = OrderPair({
-            makerAmountBuy  : tradeValues[0],
-            makerAmountSell : tradeValues[1],
-            makerNonce      : tradeValues[2],
-            takerAmountBuy  : tradeValues[3],
-            takerAmountSell : tradeValues[4],
-            takerNonce      : tradeValues[5],
-            takerGasFee     : tradeValues[6],
+    function putBtoWithStc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellPutToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
-            makerTokenBuy   : tradeAddresses[0],
-            makerTokenSell  : tradeAddresses[1],
-            maker           : tradeAddresses[2],
-            takerTokenBuy   : tradeAddresses[3],
-            takerTokenSell  : tradeAddresses[4],
-            taker           : tradeAddresses[5],
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyPutToOpen(amount, expiration, price, strike, msg.sender);
+        _sellPutToClose(amount, expiration, price, strike, maker);
+    }
 
-            makerOrderHash  : keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeAddresses[2]),
-            takerOrderHash  : keccak256(this, tradeAddresses[3], tradeValues[3], tradeAddresses[4], tradeValues[4], tradeValues[5], tradeAddresses[5])
-        });
+    function putBtcWithSto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
-        //bytes32 makerOrderHash = keccak256(this, tradeAddresses[0], tradeValues[0], tradeAddresses[1], tradeValues[1], tradeValues[2], tradeAddresses[2]);
-        //bytes32 makerOrderHash = §
-        if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", t.makerOrderHash), v[0], rs[0], rs[1]) != t.maker) 
-        {
-            LogError(uint8(Errors.INVLID_SIGNATURE), t.makerOrderHash);
-            return 0;
-        }
-        //bytes32 takerOrderHash = keccak256(this, tradeAddresses[3], tradeValues[3], tradeAddresses[4], tradeValues[4], tradeValues[5], tradeAddresses[5]);
-        //bytes32 takerOrderHash = keccak256(this, t.takerTokenBuy, t.takerAmountBuy, t.takerTokenSell, t.takerAmountSell, t.takerNonce, t.taker);
-        if (ecrecover(keccak256("\x19Ethereum Signed Message:\n32", t.takerOrderHash), v[1], rs[2], rs[3]) != t.taker)
-        {
-            LogError(uint8(Errors.INVLID_SIGNATURE), t.takerOrderHash);
-            return 0;
-        }
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyPutToClose(amount, expiration, price, strike, msg.sender);
+        _sellPutToOpen(amount, expiration, price, strike, maker);
+    }
 
-        if (t.makerTokenBuy != t.takerTokenSell || t.makerTokenSell != t.takerTokenBuy) 
-        {
-            LogError(uint8(Errors.TOKENS_DONT_MATCH), t.takerOrderHash);
-            return 0;
-        } // tokens don't match
+    function putBtcWithStc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.SellPutToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
-        if (t.takerGasFee > 100 finney)
-        {
-            LogError(uint8(Errors.GAS_TOO_HIGH), t.makerOrderHash);
-            return 0;
-        } // takerGasFee too high
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _buyPutToClose(amount, expiration, price, strike, msg.sender);
+        _sellPutToClose(amount, expiration, price, strike, maker);
+    }
 
+    function putStoWithBto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellPutToOpen(amount, expiration, price, strike, msg.sender);
+        _buyPutToOpen(amount, expiration, price, strike, maker);
+    }
 
-        if (!(
-        (t.makerTokenBuy != address(0x0) && safeMul(t.makerAmountSell, 1 ether) / t.makerAmountBuy >= safeMul(t.takerAmountBuy, 1 ether) / t.takerAmountSell)
-        ||
-        (t.makerTokenBuy == address(0x0) && safeMul(t.makerAmountBuy, 1 ether) / t.makerAmountSell <= safeMul(t.takerAmountSell, 1 ether) / t.takerAmountBuy)
-        )) 
-        {
-            LogError(uint8(Errors.INVLID_PRICE), t.makerOrderHash);
-            return 0; // prices don't match
-        }
+    function putStoWithBtc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyPutToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
-        TradeValues memory tv = TradeValues({
-            qty                 : 0,
-            invQty              : 0,
-            makerAmountTaken    : 0,
-            takerAmountTaken    : 0,
-            makerReferrer       : referrer[t.maker],
-            takerReferrer       : referrer[t.taker]
-        });
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellPutToOpen(amount, expiration, price, strike, msg.sender);
+        _buyPutToClose(amount, expiration, price, strike, maker);
+    }
 
-        if (tv.makerReferrer == address(0x0)) tv.makerReferrer = feeAccount;
-        if (tv.takerReferrer == address(0x0)) tv.takerReferrer = feeAccount;
+    function putStcWithBto(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
 
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellPutToClose(amount, expiration, price, strike, msg.sender);
+        _buyPutToOpen(amount, expiration, price, strike, maker);
+    }
+
+    function putStcWithBtc(
+        uint    amount,
+        uint    expiration,
+        bytes32 nonce,
+        uint    price,
+        uint    size,
+        uint    strike,
+        uint    validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8   v
+    ) public hasFee(amount) {
+        bytes32 h = keccak256(Action.BuyPutToClose, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = _getMaker(h, v, r, s);
+
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        _sellPutToClose(amount, expiration, price, strike, msg.sender);
+        _buyPutToClose(amount, expiration, price, strike, maker);
+    }
+
+    event BuyPutToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event SellPutToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event BuyPutToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
+    event SellPutToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
+
+    function _buyPutToOpen(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _subDai(premium, buyer);
+        putsOwned[series][buyer] = putsOwned[series][buyer].add(amount);
+        emit BuyPutToOpen(buyer, amount, expiration, price, strike);
+    }
+
+    function _buyPutToClose(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        dai[buyer] = dai[buyer].add(strike.mul(amount).div(1 ether));
+        _subDai(premium, buyer);
+        putsSold[series][buyer] = putsSold[series][buyer].sub(amount);
+        emit BuyPutToClose(buyer, amount, expiration, price, strike);
+    }
+
+    function _sellPutToOpen(uint amount, uint expiration, uint price, uint strike, address seller) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+        uint cost = strike.mul(amount).div(1 ether);
+
+        _addDai(premium, seller);
+        dai[seller] = dai[seller].sub(cost);
+        putsSold[series][seller] = putsSold[series][seller].add(amount);
+        emit SellPutToOpen(seller, amount, expiration, price, strike);
+    }
+
+    function _sellPutToClose(uint amount, uint expiration, uint price, uint strike, address seller) private {
+        bytes32 series = keccak256(expiration, strike);
+        uint premium = amount.mul(price).div(1 ether);
+
+        _addDai(premium, seller);
+        putsOwned[series][seller] = putsOwned[series][seller].sub(amount);
+        emit SellPutToClose(seller, amount, expiration, price, strike);
+    }
+
+    event ExercisePut(address indexed account, uint amount, uint expiration, uint strike);
+    function exercisePut(
+        uint amount,
+        uint expiration,
+        uint strike
+    ) public {
+        require(now < expiration, "Expired");
+        require(amount % 1 finney == 0, precisionError);
+        uint yield = amount.mul(strike).div(1 ether);
+        bytes32 series = keccak256(expiration, strike);
+
+        require(putsOwned[series][msg.sender] > 0);
         
+        putsOwned[series][msg.sender] = putsOwned[series][msg.sender].sub(amount);
+        putsExercised[series] = putsExercised[series].add(amount);
 
-        // maker buy, taker sell
-        if (t.makerTokenBuy != address(0x0)) 
-        {
-            
-
-            tv.qty = min(safeSub(t.makerAmountBuy, orderFills[t.makerOrderHash]), safeSub(t.takerAmountSell, safeMul(orderFills[t.takerOrderHash], t.takerAmountSell) / t.takerAmountBuy));
-            if (tv.qty == 0)
-            {
-                LogError(uint8(Errors.ORDER_ALREADY_FILLED), t.makerOrderHash);
-                return 0;
-            }
-
-            tv.invQty = safeMul(tv.qty, t.makerAmountSell) / t.makerAmountBuy;
-
-            tokens[t.makerTokenSell][t.maker]           = safeSub(tokens[t.makerTokenSell][t.maker],           tv.invQty);
-            tv.makerAmountTaken                         = safeSub(tv.qty, safeMul(tv.qty, makerFee) / (1 ether));
-            tokens[t.makerTokenBuy][t.maker]            = safeAdd(tokens[t.makerTokenBuy][t.maker],            tv.makerAmountTaken);
-            tokens[t.makerTokenBuy][tv.makerReferrer]   = safeAdd(tokens[t.makerTokenBuy][tv.makerReferrer],   safeMul(tv.qty,    makerAffiliateFee) / (1 ether));
-            
-            tokens[t.takerTokenSell][t.taker]           = safeSub(tokens[t.takerTokenSell][t.taker],           tv.qty);
-            tv.takerAmountTaken                         = safeSub(safeSub(tv.invQty, safeMul(tv.invQty, takerFee) / (1 ether)), safeMul(tv.invQty, t.takerGasFee) / (1 ether));
-            tokens[t.takerTokenBuy][t.taker]            = safeAdd(tokens[t.takerTokenBuy][t.taker],            tv.takerAmountTaken);
-            tokens[t.takerTokenBuy][tv.takerReferrer]   = safeAdd(tokens[t.takerTokenBuy][tv.takerReferrer],   safeMul(tv.invQty, takerAffiliateFee) / (1 ether));
-
-            tokens[t.makerTokenBuy][feeAccount]     = safeAdd(tokens[t.makerTokenBuy][feeAccount],      safeMul(tv.qty,    safeSub(makerFee, makerAffiliateFee)) / (1 ether));
-            tokens[t.takerTokenBuy][feeAccount]     = safeAdd(tokens[t.takerTokenBuy][feeAccount],      safeAdd(safeMul(tv.invQty, safeSub(takerFee, takerAffiliateFee)) / (1 ether), safeMul(tv.invQty, t.takerGasFee) / (1 ether)));
-
-           
-            orderFills[t.makerOrderHash]            = safeAdd(orderFills[t.makerOrderHash], tv.qty);
-            orderFills[t.takerOrderHash]            = safeAdd(orderFills[t.takerOrderHash], safeMul(tv.qty, t.takerAmountBuy) / t.takerAmountSell);
-            lastActiveTransaction[t.maker]          = block.number;
-            lastActiveTransaction[t.taker]          = block.number;
-
-            Trade(
-                t.takerTokenBuy, tv.qty,
-                t.takerTokenSell, tv.invQty,
-                t.maker, t.taker,
-                makerFee, takerFee,
-                tv.makerAmountTaken , tv.takerAmountTaken,
-                t.makerOrderHash, t.takerOrderHash
-            );
-            return tv.qty;
-        }
-        // maker sell, taker buy
-        else
-        {
-
-            tv.qty = min(safeSub(t.makerAmountSell,  safeMul(orderFills[t.makerOrderHash], t.makerAmountSell) / t.makerAmountBuy), safeSub(t.takerAmountBuy, orderFills[t.takerOrderHash]));
-            if (tv.qty == 0)
-            {
-                LogError(uint8(Errors.ORDER_ALREADY_FILLED), t.makerOrderHash);
-                return 0;
-            }
-
-            tv.invQty = safeMul(tv.qty, t.makerAmountBuy) / t.makerAmountSell;
-
-            tokens[t.makerTokenSell][t.maker]           = safeSub(tokens[t.makerTokenSell][t.maker],           tv.qty);
-            tv.makerAmountTaken                         = safeSub(tv.invQty, safeMul(tv.invQty, makerFee) / (1 ether));
-            tokens[t.makerTokenBuy][t.maker]            = safeAdd(tokens[t.makerTokenBuy][t.maker],            tv.makerAmountTaken);
-            tokens[t.makerTokenBuy][tv.makerReferrer]   = safeAdd(tokens[t.makerTokenBuy][tv.makerReferrer],   safeMul(tv.invQty, makerAffiliateFee) / (1 ether));
-            
-            tokens[t.takerTokenSell][t.taker]           = safeSub(tokens[t.takerTokenSell][t.taker],           tv.invQty);
-            tv.takerAmountTaken                         = safeSub(safeSub(tv.qty,    safeMul(tv.qty, takerFee) / (1 ether)), safeMul(tv.qty, t.takerGasFee) / (1 ether));
-            tokens[t.takerTokenBuy][t.taker]            = safeAdd(tokens[t.takerTokenBuy][t.taker],            tv.takerAmountTaken);
-            tokens[t.takerTokenBuy][tv.takerReferrer]   = safeAdd(tokens[t.takerTokenBuy][tv.takerReferrer],   safeMul(tv.qty,    takerAffiliateFee) / (1 ether));
-
-            tokens[t.makerTokenBuy][feeAccount]     = safeAdd(tokens[t.makerTokenBuy][feeAccount],      safeMul(tv.invQty, safeSub(makerFee, makerAffiliateFee)) / (1 ether));
-            tokens[t.takerTokenBuy][feeAccount]     = safeAdd(tokens[t.takerTokenBuy][feeAccount],      safeAdd(safeMul(tv.qty,    safeSub(takerFee, takerAffiliateFee)) / (1 ether), safeMul(tv.qty, t.takerGasFee) / (1 ether)));
-
-            orderFills[t.makerOrderHash]            = safeAdd(orderFills[t.makerOrderHash], tv.invQty);
-            orderFills[t.takerOrderHash]            = safeAdd(orderFills[t.takerOrderHash], tv.qty); //safeMul(qty, tradeValues[takerAmountBuy]) / tradeValues[takerAmountSell]);
-
-            lastActiveTransaction[t.maker]          = block.number;
-            lastActiveTransaction[t.taker]          = block.number;
-
-            Trade(
-                t.takerTokenBuy, tv.qty,
-                t.takerTokenSell, tv.invQty,
-                t.maker, t.taker,
-                makerFee, takerFee,
-                tv.makerAmountTaken , tv.takerAmountTaken,
-                t.makerOrderHash, t.takerOrderHash
-            );
-            return tv.qty;
-        }
+        _subEth(amount, msg.sender);
+        _addDai(yield, msg.sender);
+        _collectFee(msg.sender, exerciseFee);
+        emit ExercisePut(msg.sender, amount, expiration, strike);
     }
-    
-    function batchOrderTrade(
-        uint8[2][] v,
-        bytes32[4][] rs,
-        uint256[7][] tradeValues,
-        address[6][] tradeAddresses
-    )
-    {
-        for (uint i = 0; i < tradeAddresses.length; i++) {
-            trade(
-                v[i],
-                rs[i],
-                tradeValues[i],
-                tradeAddresses[i]            
-            );
+
+    event AssignPut(address indexed account, uint amount, uint expiration, uint strike);
+    event SettlePut(address indexed account, uint expiration, uint strike);
+    function settlePut(uint expiration, uint strike, address writer) public {
+        require(msg.sender == writer || isAuthorized(msg.sender, msg.sig), "Unauthorized");
+        require(now > expiration, "Expired");
+
+        bytes32 series = keccak256(expiration, strike);
+        require(putsSold[series][writer] > 0);
+
+        if (putsAssigned[series] < putsExercised[series]) {
+            uint maximum = putsSold[series][writer];
+            uint needed = putsExercised[series].sub(putsAssigned[series]);
+            uint assignment = maximum.min(needed);
+
+            totalDai[writer] = totalDai[writer].sub(assignment.mul(strike).div(1 ether));
+            putsSold[series][writer] = putsSold[series][writer].sub(assignment);
+            putsAssigned[series] = putsAssigned[series].add(assignment);
+
+            _addEth(assignment, writer);
+            emit AssignPut(writer, assignment, expiration, strike);
+        }
+
+        uint yield = putsSold[series][writer].mul(strike).div(1 ether);
+        _collectFee(writer, settlementFee);
+        dai[writer] = dai[writer].add(yield);
+        putsSold[series][writer] = 0;
+        emit SettlePut(writer, expiration, strike);
+    }
+
+    function calculateFee(uint amount) public view returns (uint) {
+        return amount.mul(contractFee).div(1 ether).add(flatFee);
+    }
+
+    function claimFeeRebate(uint amount, bytes32 nonce, bytes32 r, bytes32 s, uint8 v) public {
+        bytes32 h = keccak256(amount, nonce, msg.sender);
+        h = keccak256("\x19Ethereum Signed Message:\n32", h);
+        address signer = ecrecover(h, v, r, s);
+        require(amount <= 1000);
+        require(isAuthorized(signer, msg.sig));
+        require(claimedFeeRebate[nonce] == false);
+        feeRebates[msg.sender] = feeRebates[msg.sender].add(amount);
+        claimedFeeRebate[nonce] = true;
+    }
+
+    event TakeOrder(address indexed account, address maker, uint amount, bytes32 h);
+    function _validateOrder(uint amount, uint expiration, bytes32 h, address maker, uint price, uint validUntil, uint size, uint strike) private {
+        require(strike % 1 ether == 0, precisionError);
+        require(amount % 1 finney == 0, precisionError);
+        require(price % 1 finney == 0, precisionError);
+        require(expiration % 86400 == 0, "Expiration");
+
+        require(cancelled[maker][h] == false, "Cancelled");
+        require(amount <= size.sub(filled[maker][h]), "Filled");
+        require(now < validUntil, "OrderExpired");
+        require(now < expiration, "Expired");
+
+        filled[maker][h] = filled[maker][h].add(amount);
+        emit TakeOrder(msg.sender, maker, amount, h);
+    }
+
+    function _collectFee(address account, uint amount) private {
+        if (feeRebates[msg.sender] > 0) {
+            feeRebates[msg.sender] = feeRebates[msg.sender].sub(1);
+        } else {
+            _subDai(amount, account);
+            feesCollected = feesCollected.add(amount);
         }
     }
 
-    function cancelOrder(
-		/*
-		[0] orderV
-		[1] cancelV
-		*/
-	    uint8[2] v,
-
-		/*
-		[0] orderR
-		[1] orderS
-		[2] cancelR
-		[3] cancelS
-		*/
-	    bytes32[4] rs,
-
-		/*
-		[0] orderAmountBuy
-		[1] orderAmountSell
-		[2] orderNonce
-		[3] cancelNonce
-		[4] cancelFee
-		*/
-		uint256[5] cancelValues,
-
-		/*
-		[0] orderTokenBuy
-		[1] orderTokenSell
-		[2] orderUser
-		[3] cancelUser
-		*/
-		address[4] cancelAddresses
-    ) public onlyAdmin {
-        // Order values should be valid and signed by order owner
-        bytes32 orderHash = keccak256(
-	        this, cancelAddresses[0], cancelValues[0], cancelAddresses[1],
-	        cancelValues[1], cancelValues[2], cancelAddresses[2]
-        );
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", orderHash), v[0], rs[0], rs[1]) == cancelAddresses[2]);
-
-        // Cancel action should be signed by cancel's initiator
-        bytes32 cancelHash = keccak256(this, orderHash, cancelAddresses[3], cancelValues[3]);
-        require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", cancelHash), v[1], rs[2], rs[3]) == cancelAddresses[3]);
-
-        // Order owner should be same as cancel's initiator
-        require(cancelAddresses[2] == cancelAddresses[3]);
-
-        // Do not allow to cancel already canceled or filled orders
-        require(orderFills[orderHash] != cancelValues[0]);
-
-        // Limit cancel fee
-        if (cancelValues[4] > 50 finney) {
-            cancelValues[4] = 50 finney;
-        }
-
-        // Take cancel fee
-        // This operation throw an error if fee amount is more than user balance
-        tokens[address(0)][cancelAddresses[3]] = safeSub(tokens[address(0)][cancelAddresses[3]], cancelValues[4]);
-
-        // Cancel order by filling it with amount buy value
-        orderFills[orderHash] = cancelValues[0];
-
-        // Emit cancel order
-        CancelOrder(cancelHash, orderHash, cancelAddresses[3], cancelAddresses[1], cancelValues[1], cancelValues[4]);
-    }
-
-    function min(uint a, uint b) private pure returns (uint) {
-        return a < b ? a : b;
+    function _getMaker(bytes32 h, uint8 v, bytes32 r, bytes32 s) public pure returns (address) {
+        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", h), v, r, s);
     }
 }
