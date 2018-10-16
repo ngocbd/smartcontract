@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xa83c50d091E39a02E02Fcc88d4c5EB2b9efF14eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xb1F4ca3C6256f415E420dE511504Af8ea8a9C8e0
 */
 pragma solidity ^0.4.19;
 
@@ -8,13 +8,13 @@ pragma solidity ^0.4.19;
 // Guess the number secretly stored in the blockchain and win the whole contract balance!
 // A new number is randomly chosen after each try.
 //
-// To play, call the play() method with the guessed number (1-10).  Bet price: 0.1 ether
+// To play, call the play() method with the guessed number (1-10).  Bet price: 0.2 ether
 
 contract CryptoRoulette {
 
     uint256 private secretNumber;
     uint256 public lastPlayed;
-    uint256 public betPrice = 0.1 ether;
+    uint256 public betPrice = 0.2 ether;
     address public ownerAddr;
 
     struct Game {
@@ -51,7 +51,7 @@ contract CryptoRoulette {
     }
 
     function kill() public {
-        if (msg.sender == ownerAddr && now > lastPlayed + 12 hours) {
+        if (msg.sender == ownerAddr && now > lastPlayed + 1 days) {
             suicide(msg.sender);
         }
     }
