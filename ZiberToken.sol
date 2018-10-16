@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xa279111bac7ea963b0ee35a562304fb59c97807b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0x5343f8df57fbe3130571b14ada4823e5cafc78ba
 */
 pragma solidity ^0.4.13;
 
