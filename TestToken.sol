@@ -1,382 +1,217 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0xfa74f89a6d4a918167c51132614bbbe193ee8c22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0x176ec7b6afb4e023b2c33a6f0b309ed5975d1e92
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
-contract AllocationAddressList {
 
-  address[] public allocationAddressList;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+          return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract ERC223ReceivingContract {
-  // AUDIT[CHF-08] The name of the token transfer "fallback" function.
-  //
-  // There were suggestions to change the "stanard" fallback function name
-  // to "onTokenReceived", see
-  // https://github.com/ethereum/EIPs/issues/223#issuecomment-327709226
-  // See also https://github.com/ethereum/EIPs/issues/777.
-  function tokenFallback(address _from, uint256 _value, bytes _data) public;
-}
-
-contract ERC223Token {
-  using SafeMath for uint256;
-
-  // token constants
-  string public name;
-  bytes32 public symbol;
-  uint8 public decimals;
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
   uint256 public totalSupply;
-
-  // token balances
-  mapping(address => uint256) public balanceOf;
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address to, uint256 value, bytes data) public returns (bool) {
-    // Standard function transfer similar to ERC20 transfer with no _data .
-    // Added due to backwards compatibility reasons .
-    uint256 codeLength;
-
-    assembly {
-      // Retrieve the size of the code on target address, this needs assembly .
-      codeLength := extcodesize(to)
-    }
-
-    balanceOf[msg.sender] = balanceOf[msg.sender].sub(value);
-    balanceOf[to] = balanceOf[to].add(value);
-    if (codeLength > 0) {
-      ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-      receiver.tokenFallback(msg.sender, value, data);
-    }
-    Transfer(msg.sender, to, value, data);
-    return true;
-  }
-
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address to, uint256 value) public returns (bool) {
-    uint256 codeLength;
-    bytes memory empty;
-
-    assembly {
-      // Retrieve the size of the code on target address, this needs assembly .
-      codeLength := extcodesize(to)
-    }
-
-    balanceOf[msg.sender] = balanceOf[msg.sender].sub(value);
-    balanceOf[to] = balanceOf[to].add(value);
-    if (codeLength > 0) {
-      ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-      receiver.tokenFallback(msg.sender, value, empty);
-    }
-    Transfer(msg.sender, to, value, empty);
-    // ERC20 compatible event:
-    Transfer(msg.sender, to, value);
-    return true;
-  }
-
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC223MintableToken is ERC223Token {
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
+
   using SafeMath for uint256;
-  uint256 public circulatingSupply;
-  function mint(address to, uint256 value) internal returns (bool) {
-    uint256 codeLength;
 
-    assembly {
-      // Retrieve the size of the code on target address, this needs assembly .
-      codeLength := extcodesize(to)
-    }
+  mapping(address => uint256) balances;
 
-    circulatingSupply += value;
+  /**
+  * Modifier avoids short address attacks.
+  * For more info check: https://ericrafaloff.com/analyzing-the-erc20-short-address-attack/
+  */
+  modifier onlyPayloadSize(uint size) {
+      if (msg.data.length < size + 4) {
+      revert();
+      }
+      _;
+  }
 
-    balanceOf[to] = balanceOf[to].add(value);
-    if (codeLength > 0) {
-      ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
-      bytes memory empty;
-      receiver.tokenFallback(msg.sender, value, empty);
-    }
-    Mint(to, value);
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  event Mint(address indexed to, uint256 value);
-}
-
-contract TestToken is ERC223MintableToken {
-  mapping (address => bool) public IS_SIGNATURER;
-
-  VestingAllocation private partnerTokensAllocation;
-  VestingAllocation private companyTokensAllocation;
-  BountyTokenAllocation private bountyTokensAllocation;
-
-  /*
-   * ICO TOKENS
-   * 33%
-   *
-   * Ico tokens are sent to the ICO_TOKEN_ADDRESS immediately
-   * after TestToken initialization
-   */ 
-  uint256 constant ICO_TOKENS = 25346500000000000000000000;
-  address constant ICO_TOKENS_ADDRESS = 0xCE1182147FD13A59E4Ca114CAa1cD58719e09F67;
-  // AUDIT[CHF-02] Document "seed" tokens.
-  uint256 constant SEED_TOKENS = 25346500000000000000000000;
-  address constant SEED_TOKENS_ADDRESS = 0x8746177Ff2575E826f6f73A1f90351e0FD0A6649;
-
-  /*
-   * COMPANY TOKENS
-   * 33%
-   *
-   * Company tokens are being distrubited in 36 months
-   * Total tokens = COMPANY_TOKENS_PER_PERIOD * COMPANY_PERIODS
-   */
-  uint256 constant COMPANY_TOKENS_PER_PERIOD = 704069444444444000000000;
-  uint256 constant COMPANY_PERIODS = 36;
-  uint256 constant MINUTES_IN_COMPANY_PERIOD = 10; //1 years / 12 / 1 minutes;
-
-  /*
-   * PARTNER TOKENS
-   * 30%
-   *
-   * Company tokens are avaialable after 18 months
-   * Total tokens = PARTNER_TOKENS_PER_PERIOD * PARTNER_PERIODS
-   */
-  uint256 constant PARTNER_TOKENS_PER_PERIOD = 23042272727272700000000000;
-  uint256 constant PARTNER_PERIODS = 1;
-  uint256 constant MINUTES_IN_PARTNER_PERIOD = 60 * 2; //MINUTES_IN_COMPANY_PERIOD * 18;
-
-  /*
-   * BOUNTY TOKENS
-   * 30%
-   *
-   * Bounty tokens can be sent immediately after initialization
-   */
-  uint256 constant BOUNTY_TOKENS = 2304227272727270000000000;
-
-  /*
-   * MARKETING COST TOKENS
-   * 1%
-   *
-   * Tokens are sent to the MARKETING_COST_ADDRESS immediately
-   * after TestToken initialization
-   */
-  uint256 constant MARKETING_COST_TOKENS = 768075757575758000000000;
-  address constant MARKETING_COST_ADDRESS = 0x54a0AB12710fad2a24CB391406c234855C835340;
-
-  uint256 public INIT_DATE;
-
-  string public constant name = "Test Token";
-  bytes32 public constant symbol = "TST";
-  uint8 public constant decimals = 18;
-  uint256 public constant totalSupply = (
-    COMPANY_TOKENS_PER_PERIOD * COMPANY_PERIODS +
-    PARTNER_TOKENS_PER_PERIOD * PARTNER_PERIODS +
-    BOUNTY_TOKENS + MARKETING_COST_TOKENS +
-    ICO_TOKENS + SEED_TOKENS);
-
   /**
-   * TestToken contructor.
-   *
-   * Exy token contains allocations of:
-   * - partnerTokensAllocation
-   * - companyTokensAllocation
-   * - bountyTokensAllocation
-   *
-   * param signaturer0 Address of first signaturer.
-   * param signaturer1 Address of second signaturer.
-   * param signaturer2 Address of third signaturer.
-   *
-   * Arguments in constructor are only for testing. When deploying
-   * on main net, please hardcode them inside:
-   * address signaturer0 = 0x0;
-   * address signaturer1 = 0x1;
-   * address signaturer2 = 0x2;
-   */
-  function TestToken() public {
-    address signaturer0 = 0xe029b7b51b8c5B71E6C6f3DC66a11DF3CaB6E3B5;
-    address signaturer1 = 0xBEE9b5e75383f56eb103DdC1a4343dcA6124Dfa3;
-    address signaturer2 = 0xcdD1Db16E83AA757a5B3E6d03482bBC9A27e8D49;
-    IS_SIGNATURER[signaturer0] = true;
-    IS_SIGNATURER[signaturer1] = true;
-    IS_SIGNATURER[signaturer2] = true;
-    INIT_DATE = block.timestamp;
-
-    // AUDIT[CHF-06] Inherit instead of compose.
-    //
-    // I don't see a point of creating "Signatures" as a separate contract.
-    // Just embed it here.
-    // Also, move "onlySignaturer" to Signatures contract
-    companyTokensAllocation = new VestingAllocation(
-      COMPANY_TOKENS_PER_PERIOD,
-      COMPANY_PERIODS,
-      MINUTES_IN_COMPANY_PERIOD,
-      INIT_DATE);
-
-    partnerTokensAllocation = new VestingAllocation(
-      PARTNER_TOKENS_PER_PERIOD,
-      PARTNER_PERIODS,
-      MINUTES_IN_PARTNER_PERIOD,
-      INIT_DATE);
-
-    bountyTokensAllocation = new BountyTokenAllocation(
-      BOUNTY_TOKENS
-    );
-
-    // minting marketing cost tokens
-    mint(MARKETING_COST_ADDRESS, MARKETING_COST_TOKENS);
-
-    // minting ICO tokens
-    mint(ICO_TOKENS_ADDRESS, ICO_TOKENS);
-    // minting SEED tokens
-    mint(SEED_TOKENS_ADDRESS, SEED_TOKENS);
-  }
-
-  /**
-   * Adds a proposition of a company token split to companyTokensAllocation
-   */
-  function proposeCompanyAllocation(address _dest, uint256 _tokensPerPeriod) public onlySignaturer {
-    companyTokensAllocation.proposeAllocation(msg.sender, _dest, _tokensPerPeriod);
-  }
-
-  /**
-   * Approves a proposition of a company token split
-   */
-  function approveCompanyAllocation(address _dest) public onlySignaturer {
-    companyTokensAllocation.approveAllocation(msg.sender, _dest);
-  }
-
-  /**
-   * Rejects a proposition of a company token split.
-   * it can reject only not approved method
-   */
-  function rejectCompanyAllocation(address _dest) public onlySignaturer {
-    companyTokensAllocation.rejectAllocation(_dest);
-  }
-
-  /**
-   * Return number of remaining company tokens allocations
-   * @return Length of company allocations per period
-   */
-  function getRemainingCompanyTokensAllocation() public view returns (uint256) {
-    return companyTokensAllocation.remainingTokensPerPeriod();
-  }
-
-  /**
-   * Given the index of the company allocation in allocationAddressList
-   * we find its reciepent address and return struct with informations
-   * about this allocation
-   *
-   * @param nr Index of allocation in allocationAddressList
-   * @return Information about company alloction
-   */
-  function getCompanyAllocation(uint256 nr) public view returns (uint256, address, uint256, Types.AllocationState, address) {
-    address recipientAddress = companyTokensAllocation.allocationAddressList(nr);
-    var (tokensPerPeriod, proposalAddress, claimedPeriods, allocationState) = companyTokensAllocation.allocationOf(recipientAddress);
-    return (tokensPerPeriod, proposalAddress, claimedPeriods, allocationState, recipientAddress);
-  }
-
-  /**
-   * Adds a proposition of a partner token split to companyTokensAllocation
-   */
-  function proposePartnerAllocation(address _dest, uint256 _tokensPerPeriod) public onlySignaturer {
-    partnerTokensAllocation.proposeAllocation(msg.sender, _dest, _tokensPerPeriod);
-  }
-
-  /**
-   * Approves a proposition of a partner token split
-   */
-  function approvePartnerAllocation(address _dest) public onlySignaturer {
-    partnerTokensAllocation.approveAllocation(msg.sender, _dest);
-  }
-
-  /**
-   * Rejects a proposition of a partner token split.
-   * it can reject only not approved method
-   */
-  function rejectPartnerAllocation(address _dest) public onlySignaturer {
-    partnerTokensAllocation.rejectAllocation(_dest);
-  }
-
-  /**
-   * Return number of remaining partner tokens allocations
-   * @return Length of partner allocations per period
-   */
-  function getRemainingPartnerTokensAllocation() public view returns (uint256) {
-    return partnerTokensAllocation.remainingTokensPerPeriod();
-  }
-
-  /**
-   * Given the index of the partner allocation in allocationAddressList
-   * we find its reciepent address and return struct with informations
-   * about this allocation
-   *
-   * @param nr Index of allocation in allocationAddressList
-   * @return Information about partner alloction
-   */
-  function getPartnerAllocation(uint256 nr) public view returns (uint256, address, uint256, Types.AllocationState, address) {
-    address recipientAddress = partnerTokensAllocation.allocationAddressList(nr);
-    var (tokensPerPeriod, proposalAddress, claimedPeriods, allocationState) = partnerTokensAllocation.allocationOf(recipientAddress);
-    return (tokensPerPeriod, proposalAddress, claimedPeriods, allocationState, recipientAddress);
-  }
-
-  function proposeBountyTransfer(address _dest, uint256 _amount) public onlySignaturer {
-    bountyTokensAllocation.proposeBountyTransfer(_dest, _amount);
-  }
-
-  /**
-   * Approves a bounty transfer and mint tokens
-   *
-   * @param _dest Address of the bounty reciepent to whom we should mint token
-   */
-  function approveBountyTransfer(address _dest) public onlySignaturer {
-    uint256 tokensToMint = bountyTokensAllocation.approveBountyTransfer(msg.sender, _dest);
-    mint(_dest, tokensToMint);
-  }
-
-  /**
-   * Rejects a proposition of a bounty token.
-   * it can reject only not approved method
-   */
-  function rejectBountyTransfer(address _dest) public onlySignaturer {
-    bountyTokensAllocation.rejectBountyTransfer(_dest);
-  }
-
-  function getBountyTransfers(uint256 nr) public view returns (uint256, address, Types.BountyState, address) {
-    address recipientAddress = bountyTokensAllocation.allocationAddressList(nr);
-    var (amount, proposalAddress, bountyState) = bountyTokensAllocation.bountyOf(recipientAddress);
-    return (amount, proposalAddress, bountyState, recipientAddress);
-  }
-
-  /**
-   * Return number of remaining bounty tokens allocations
-   * @return Length of company allocations
-   */
-  function getRemainingBountyTokens() public view returns (uint256) {
-    return bountyTokensAllocation.remainingBountyTokens();
-  }
-
-  function claimTokens() public returns (uint256) {
-    mint(msg.sender,
-      partnerTokensAllocation.claimTokens(msg.sender) +
-      companyTokensAllocation.claimTokens(msg.sender));
-  }
-  modifier onlySignaturer() {
-    require(IS_SIGNATURER[msg.sender]);
-    _;
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
   }
 
 }
 
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(3 * 32) returns (bool) {
+    require(_to != address(0));
+    require(allowed[_from][msg.sender] >= _value);
+    require(balances[_from] >= _value);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+  
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until 
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  function Ownable() internal {
     owner = msg.sender;
   }
+
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -386,248 +221,355 @@ contract Ownable {
     _;
   }
 
-}
-
-contract BountyTokenAllocation is Ownable, AllocationAddressList {
-
-  // This contract describes how the bounty tokens are allocated.
-  // After a bounty allocation was proposed by a signaturer, another
-  // signaturer must accept this allocation.
-
-  // Total amount of remaining tokens to be distributed
-  uint256 public remainingBountyTokens;
-
-  // Possible split states: Proposed, Approved, Rejected
-  // Proposed is the initial state.
-  // Both Approved and Rejected are final states.
-  // The only possible transitions are:
-  // Proposed => Approved
-  // Proposed => Rejected
-
-  // keep map here of bounty proposals
-  mapping (address => Types.StructBountyAllocation) public bountyOf;
-
-  address public owner = msg.sender;
 
   /**
-   * Bounty token allocation constructor.
-   *
-   * @param _remainingBountyTokens Total number of bounty tokens that will be
-   *                               allocated.
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
    */
-  function BountyTokenAllocation(uint256 _remainingBountyTokens) onlyOwner public {
-    remainingBountyTokens = _remainingBountyTokens;
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-  /**
-   * Propose a bounty transfer
-   *
-   * @param _dest Address of bounty reciepent
-   * @param _amount Amount of tokens he will receive
-   */
-  function proposeBountyTransfer(address _dest, uint256 _amount) public onlyOwner {
-    require(_amount > 0);
-    require(_amount <= remainingBountyTokens);
-     // we can't overwrite existing proposal
-     // but we can overwrite rejected proposal with new values
-    require(bountyOf[_dest].proposalAddress == 0x0 || bountyOf[_dest].bountyState == Types.BountyState.Rejected);
+}
 
-    if (bountyOf[_dest].bountyState != Types.BountyState.Rejected) {
-      allocationAddressList.push(_dest);
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable  {
+    event Pause();
+    event Unpause();
+    event Freeze ();
+    event LogFreeze();
+
+    bool public paused = false;
+
+    address public founder;
+    
+    /**
+    * @dev modifier to allow actions only when the contract IS paused
+    */
+    modifier whenNotPaused() {
+        require(!paused || msg.sender == founder);
+        _;
     }
 
-    bountyOf[_dest] = Types.StructBountyAllocation({
-      amount: _amount,
-      proposalAddress: msg.sender,
-      bountyState: Types.BountyState.Proposed
-    });
-
-    remainingBountyTokens = remainingBountyTokens - _amount;
-  }
-
-  /**
-   * Approves a bounty transfer
-   *
-   * @param _dest Address of bounty reciepent
-   * @return amount of tokens which we approved
-   */
-  function approveBountyTransfer(address _approverAddress, address _dest) public onlyOwner returns (uint256) {
-    require(bountyOf[_dest].bountyState == Types.BountyState.Proposed);
-    require(bountyOf[_dest].proposalAddress != _approverAddress);
-
-    bountyOf[_dest].bountyState = Types.BountyState.Approved;
-    return bountyOf[_dest].amount;
-  }
-
-  /**
-   * Rejects a bounty transfer
-   *
-   * @param _dest Address of bounty reciepent for whom we are rejecting bounty transfer
-   */
-  function rejectBountyTransfer(address _dest) public onlyOwner {
-    var tmp = bountyOf[_dest];
-    require(tmp.bountyState == Types.BountyState.Proposed);
-
-    bountyOf[_dest].bountyState = Types.BountyState.Rejected;
-    remainingBountyTokens = remainingBountyTokens + bountyOf[_dest].amount;
-  }
-
-}
-
-library SafeMath {
-  function sub(uint256 a, uint256 b) pure internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) pure internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  function min(uint256 a, uint256 b) pure internal returns (uint256) {
-    if(a > b)
-      return b;
-    else
-      return a;
-  }
-}
-
-contract Types {
-
-  // Possible split states: Proposed, Approved, Rejected
-  // Proposed is the initial state.
-  // Both Approved and Rejected are final states.
-  // The only possible transitions are:
-  // Proposed => Approved
-  // Proposed => Rejected
-  enum AllocationState {
-    Proposed,
-    Approved,
-    Rejected
-  }
-
-  // Structure used for storing company and partner allocations
-  struct StructVestingAllocation {
-    // How many tokens per period we want to pass
-    uint256 tokensPerPeriod;
-    // By whom was this split proposed. Another signaturer must approve too
-    address proposerAddress;
-    // How many times did we released tokens
-    uint256 claimedPeriods;
-    // State of actual split.
-    AllocationState allocationState;
-  }
-
-   enum BountyState {
-    Proposed, // 0
-    Approved, // 1
-    Rejected  // 2
-  }
-
-  struct StructBountyAllocation {
-    // How many tokens send him or her
-    uint256 amount;
-    // By whom was this allocation proposed
-    address proposalAddress;
-    // State of actual split.
-    BountyState bountyState;
-  }
-}
-
-contract VestingAllocation is Ownable, AllocationAddressList {
-
-  // This contract describes how the tokens are being released in time
-
-  // How many distributions periods there are
-  uint256 public periods;
-  // How long is one interval
-  uint256 public minutesInPeriod;
-  // Total amount of remaining tokens to be distributed
-  uint256 public remainingTokensPerPeriod;
-  // Total amount of all tokens
-  uint256 public totalSupply;
-  // Inital timestamp
-  uint256 public initTimestamp;
-
-  // For each address we can add exactly one possible split.
-  // If we try to add another proposal on existing address it will be rejected
-  mapping (address => Types.StructVestingAllocation) public allocationOf;
-
-  /**
-   * VestingAllocation contructor.
-   * RemainingTokensPerPeriod variable which represents
-   * the remaining amount of tokens to be distributed
-   */
-  // Invoking parent constructor (OwnedBySignaturers) with signatures addresses
-  function VestingAllocation(uint256 _tokensPerPeriod, uint256 _periods, uint256 _minutesInPeriod, uint256 _initalTimestamp)  Ownable() public {
-    totalSupply = _tokensPerPeriod * _periods;
-    periods = _periods;
-    minutesInPeriod = _minutesInPeriod;
-    remainingTokensPerPeriod = _tokensPerPeriod;
-    initTimestamp = _initalTimestamp;
-  }
-
-  /**
-   * Propose split method adds proposal to the splits Array.
-   *
-   * @param _dest              - address of the new receiver
-   * @param _tokensPerPeriod   - how many tokens we are giving to dest
-   */
-  function proposeAllocation(address _proposerAddress, address _dest, uint256 _tokensPerPeriod) public onlyOwner {
-    require(_tokensPerPeriod > 0);
-    require(_tokensPerPeriod <= remainingTokensPerPeriod);
-    // In solidity there is no "exist" method on a map key.
-    // We can't overwrite existing proposal, so we are checking if it is the default value (0x0)
-    // Add `allocationOf[_dest].allocationState == Types.AllocationState.Rejected` for possibility to overwrite rejected allocation
-    require(allocationOf[_dest].proposerAddress == 0x0 || allocationOf[_dest].allocationState == Types.AllocationState.Rejected);
-
-    if (allocationOf[_dest].allocationState != Types.AllocationState.Rejected) {
-      allocationAddressList.push(_dest);
+    /**
+    * @dev modifier to allow actions only when the contract IS NOT paused
+    */
+    modifier whenPaused() {
+        require(paused);
+        _;
     }
 
-    allocationOf[_dest] = Types.StructVestingAllocation({
-      tokensPerPeriod: _tokensPerPeriod,
-      allocationState: Types.AllocationState.Proposed,
-      proposerAddress: _proposerAddress,
-      claimedPeriods: 0
-    });
+    /**
+    * @dev called by the owner to pause, triggers stopped state
+    */
+    function pause() public onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
+    
 
-    remainingTokensPerPeriod = remainingTokensPerPeriod - _tokensPerPeriod; // TODO safe-math
+    /**
+    * @dev called by the owner to unpause, returns to normal state
+    */
+    function unpause() public onlyOwner whenPaused {
+        paused = false;
+        Unpause();
+    }
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused onlyPayloadSize(2 * 32) returns (bool) {
+    return super.transfer(_to, _value);
   }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused onlyPayloadSize(3 * 32) returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  //The functions below surve no real purpose. Even if one were to approve another to spend
+  //tokens on their behalf, those tokens will still only be transferable when the token contract
+  //is not paused.
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract MintableToken is PausableToken {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function finishMinting() public onlyOwner canMint returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+contract TestToken is MintableToken {
+
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  event TokensBurned(address initiatior, address indexed _partner, uint256 _tokens);
+ 
 
   /**
-   * Approves the split allocation, so it can be claimed after periods
-   *
-   * @param _address - address for the split
+   * @dev Constructor that gives the founder all of the existing tokens.
    */
-  function approveAllocation(address _approverAddress, address _address) public onlyOwner {
-    require(allocationOf[_address].allocationState == Types.AllocationState.Proposed);
-    require(allocationOf[_address].proposerAddress != _approverAddress);
-    allocationOf[_address].allocationState = Types.AllocationState.Approved;
-  }
-
- /**
-   * Rejects the split allocation
-   *
-   * @param _address - address for the split to be rejected
-   */
-  function rejectAllocation(address _address) public onlyOwner {
-    var tmp = allocationOf[_address];
-    require(tmp.allocationState == Types.AllocationState.Proposed);
-    allocationOf[_address].allocationState = Types.AllocationState.Rejected;
-    remainingTokensPerPeriod = remainingTokensPerPeriod + tmp.tokensPerPeriod;
-  }
-
-  function claimTokens(address _address) public returns (uint256) {
-    Types.StructVestingAllocation storage alloc = allocationOf[_address];
-    if (alloc.allocationState == Types.AllocationState.Approved) {
-      uint256 periodsElapsed = SafeMath.min((block.timestamp - initTimestamp) / (minutesInPeriod * 1 minutes), periods);
-      uint256 tokens = (periodsElapsed - alloc.claimedPeriods) * alloc.tokensPerPeriod;
-      alloc.claimedPeriods = periodsElapsed;
-      return tokens;
+    function TestToken() public {
+        name = "FTest3";
+        symbol = "FOT3";
+        decimals = 18;
+        totalSupply = 15000000e18;
+        founder = 0xc85095257946D88585ab12050890bdd6f07a80F0;
+        balances[founder] = totalSupply; //15,000,000 tokens for founders for marketing.
+        Transfer(0x0, founder, 15000000e18);
+        pause();
     }
-    return 0;
-  }
 
+    modifier onlyFounder {
+      require(msg.sender == founder);
+      _;
+    }
+
+    event NewFounderAddress(address indexed from, address indexed to);
+
+    function changeFounderAddress(address _newFounder) public onlyFounder {
+        require(_newFounder != 0x0);
+        NewFounderAddress(founder, _newFounder);
+        founder = _newFounder;
+    }
+
+    /*
+    * @dev Token burn function to be called at the time of token swap
+    * @param _partner address to use for token balance buring
+    * @param _tokens uint256 amount of tokens to burn
+    */
+    function burnTokens(address _partner, uint256 _tokens) public onlyFounder {
+        require(balances[_partner] >= _tokens);
+        balances[_partner] = balances[_partner].sub(_tokens);
+        totalSupply = totalSupply.sub(_tokens);
+        TokensBurned(msg.sender, _partner, _tokens);
+    }
+}
+
+
+contract Crowdsale is Ownable {
+
+    using SafeMath for uint256;
+
+    TestToken public token;
+    uint256 public tokensForPreICO;
+    uint256 public tokenCapForFirstMainStage;
+    uint256 public tokenCapForSecondMainStage;
+    uint256 public tokenCapForThirdMainStage;
+    uint256 public tokenCapForFourthMainStage;
+    uint256 public totalTokensForSale;
+    uint256 public startTime;
+    uint256 public endTime;
+    address public wallet;
+    uint256 public rate;
+    uint256 public weiRaised;
+
+    uint256[4] public ICObonusStages;
+
+    uint256 public preICOduration;
+    bool public mainSaleActive;
+
+    uint256 public tokensSold;
+
+    /**
+    * event for token purchase logging
+    * @param purchaser who paid for the tokens
+    * @param beneficiary who got the tokens
+    * @param value weis paid for purchase
+    * @param amount amount of tokens purchased
+    */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event ICOSaleExtended(uint256 newEndTime);
+
+    function Crowdsale() public {
+        token = new TestToken();  //msg.sender is passed as the founder wallet which will recieve the 15,000,000 tokens
+        startTime = now; 
+        rate = 1160;
+        wallet = 0xc85095257946D88585ab12050890bdd6f07a80F0;
+        tokensForPreICO = 4500000e18;
+
+        tokenCapForFirstMainStage = 11500000e18;  //7,000,000 + 4,500,000
+        tokenCapForSecondMainStage = 18500000e18;  //11,500,000 + 7,000,000
+        tokenCapForThirdMainStage = 25500000e18;  //18,500,000 + 7,000,000
+        tokenCapForFourthMainStage = 35000000e18;  //25,500,000 + 9,500,000
+
+        totalTokensForSale = 35000000e18;
+        tokensSold = 0;
+
+        preICOduration = now.add(30 minutes);
+        endTime = preICOduration;
+
+        mainSaleActive = false;
+    }
+
+    function() external payable {
+        buyTokens(msg.sender);
+    }
+
+    function buyTokens(address _addr) public payable {
+        require(validPurchase() && tokensSold < totalTokensForSale);
+        require(_addr != 0x0 && msg.value > 100 finney);  
+        uint256 toMint;
+        if(now <= preICOduration) {
+            if(tokensSold >= tokensForPreICO) { revert(); }
+            toMint = msg.value.mul(rate.mul(2));
+        } else {
+            if(!mainSaleActive) { revert(); }
+            toMint = msg.value.mul(getRateWithBonus());
+        }
+        tokensSold = tokensSold.add(toMint);
+        token.mint(_addr, toMint);
+        forwardFunds();
+    }
+
+    function forwardFunds() internal {
+        wallet.transfer(msg.value);
+    }
+
+    function processOfflinePurchase(address _to, uint256 _toMint) public onlyOwner {
+        require(tokensSold.add(_toMint) <= totalTokensForSale);
+        require(_toMint > 0 && _to != 0x0);
+        tokensSold = tokensSold.add(_toMint);
+        token.mint(_to, _toMint);
+    }
+
+    function validPurchase() internal view returns (bool) {
+        bool withinPeriod = now >= startTime && now <= endTime;                                 // Dins periode total ICO
+        bool nonZeroPurchase = msg.value != 0;                                                  // ETH enviats diferent de 0
+        return withinPeriod && nonZeroPurchase;
+    }
+
+
+    function getRateWithBonus() internal view returns (uint256 rateWithDiscount) {
+        if (now > preICOduration && tokensSold < totalTokensForSale) {
+            return rate.mul(getCurrentBonus()).div(100).add(rate);
+            return rateWithDiscount;
+        }
+        return rate;
+    }
+
+    /**
+    * Function is called when the buy function is invoked  only after the pre sale duration and returns 
+    * the current discount in percentage. In this example, the discount starts at 20% and reduces by 5% for 
+    * every discount stage that has passed. After the 8th week, the discount percentage will be set to 0.
+    *
+    * day 31 - 37   / week 1: 20%
+    * day 38 - 44   / week 2: 15%
+    * day 45 - 51   / week 3: 10%
+    * day 52 - 58   / week 4:  0%
+    */
+    function getCurrentBonus() internal view returns (uint256 discount) {
+        require(tokensSold < tokenCapForFourthMainStage);
+        uint256 timeStamp = now;
+        uint256 stage;
+
+        for (uint i = 0; i < ICObonusStages.length; i++) {
+            if (timeStamp <= ICObonusStages[i]) {
+                stage = i + 1;
+                break;
+            } 
+        } 
+
+        if(stage == 1 && tokensSold < tokenCapForFirstMainStage) { discount = 20; }
+        if(stage == 1 && tokensSold >= tokenCapForFirstMainStage) { discount = 15; }
+        if(stage == 1 && tokensSold >= tokenCapForSecondMainStage) { discount = 10; }
+        if(stage == 1 && tokensSold >= tokenCapForThirdMainStage) { discount = 0; }
+
+        if(stage == 2 && tokensSold < tokenCapForSecondMainStage) { discount = 15; }
+        if(stage == 2 && tokensSold >= tokenCapForSecondMainStage) { discount = 10; }
+        if(stage == 2 && tokensSold >= tokenCapForThirdMainStage) { discount = 0; }
+
+        if(stage == 3 && tokensSold < tokenCapForThirdMainStage) { discount = 10; }
+        if(stage == 3 && tokensSold >= tokenCapForThirdMainStage) { discount = 0; }
+
+        if(stage == 4) { discount = 0; }
+
+        return discount;
+    }
+
+
+    
+    /**
+    * Function activates the main ICO only when the duration of the preICO hass finished. This function
+    * can only be called by the owner of the contract. Once called, the bonus stages will be set as such:
+    * week 1 will have 20% bonus, week 2 will have 15% bonus, week 3 will have 10% bonus and week 4 will 
+    * have no bonus.
+    **/
+    function activateMainSale() public onlyOwner {
+        require(now > preICOduration || tokensSold >= tokensForPreICO);
+        require(!mainSaleActive);
+        if(now < preICOduration) { preICOduration = now; }
+        mainSaleActive = true;
+        ICObonusStages[0] = now.add(7 minutes);
+
+        for (uint y = 1; y < ICObonusStages.length; y++) {
+            ICObonusStages[y] = ICObonusStages[y - 1].add(7 minutes);
+        }
+
+        endTime = ICObonusStages[3];
+    }
+
+    function extendDuration(uint256 _newEndTime) public onlyOwner {
+        require(endTime < _newEndTime && mainSaleActive);
+        endTime = _newEndTime;
+        ICOSaleExtended(_newEndTime);
+    }
+
+
+    function hasEnded() public view returns (bool) { 
+        return now > endTime;
+    }
+
+    /**
+    * Allows the owner of the ICO contract to unpause the token contract. This function is needed
+    * because the ICO contract deploys a new instance of the token contract, and by default the 
+    * ETH address which deploys a contract which is Ownable is assigned ownership of the contract,
+    * so the ICO contract is the owner of the token contract. Since unpause is a function which can
+    * only be executed by the owner, by adding this function here, then the owner of the ICO contract
+    * can call this and then the ICO contract will invoke the unpause function of the token contract
+    * and thus the token contract will successfully unpause as its owner the ICO contract invokend
+    * the the function. 
+    */
+    function unpauseToken() public onlyOwner {
+        token.unpause();
+    }
 }
