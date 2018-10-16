@@ -1,72 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCToken at 0xeb6e4fad04c68a2dd22c0a6acb1010c763c5ced8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCTOKEN at 0xe9307516906e400014670423417370EB3D23582A
 */
-pragma solidity ^0.4.8;
-contract Token{
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+pragma solidity ^0.4.21;
+
+contract SafeMath {
+    function safeSub(uint a, uint b) pure internal returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint a, uint b) pure internal returns (uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
 }
-contract StandardToken is Token {
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+
+
+contract ERC20 {
+    uint public totalSupply;
+    function balanceOf(address who) public constant returns (uint);
+    function allowance(address owner, address spender) public constant returns (uint);
+    function transfer(address toAddress, uint value) public returns (bool ok);
+    function transferFrom(address fromAddress, address toAddress, uint value) public returns (bool ok);
+    function approve(address spender, uint value) public returns (bool ok);
+    event Transfer(address indexed fromAddress, address indexed toAddress, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+contract StandardToken is ERC20, SafeMath {
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+
+    function transfer(address _to, uint _value) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
-    function approve(address _spender, uint256 _value) returns (bool success)   
-    {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value; 
-        allowed[_from][msg.sender] -= _value;
+
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        var _allowance = allowed[_from][msg.sender];
+
+        balances[_to] = safeAdd(balances[_to], _value);
+        balances[_from] = safeSub(balances[_from], _value);
+        allowed[_from][msg.sender] = safeSub(_allowance, _value);
         Transfer(_from, _to, _value);
         return true;
     }
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
 
-contract CCToken is StandardToken { 
-
-    string public name;                   
-    uint8 public decimals;               
-    string public symbol;             
-
-    function CCToken() {
-        balances[msg.sender] = 10000000000000000; 
-        totalSupply = 10000000000000000;         
-        name = "Coin Coming Token";                  
-        decimals = 8;          
-        symbol = "CCT";            
+    function balanceOf(address _owner) public constant returns (uint balance) {
+        return balances[_owner];
     }
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+
+    function approve(address _spender, uint _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))),  
-            msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+}
+
+contract CCTOKEN is StandardToken 
+{
+    string public name = "CCTOKEN";
+    string public symbol = "CCTOKEN";
+    uint public decimals = 18;
+    uint public totalSupply = 300 * 1000 * 1000 ether;
+
+    function CCTOKEN() public {
+        balances[msg.sender] = totalSupply;
     }
 }
