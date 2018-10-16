@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0x1D9E61248F88DC60889BB269FCf2244827f3A682
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0xe0CFa488bB6442D39a4aBf844D5876F209f03871
 */
 contract dEthereumlotteryNet {
 	/*
 		dEthereumlotteryNet
 		Coded by: iFA
-		http://d.ethereumlottery.net
-		ver: 2.1.0
+		https://d.ethereumlottery.net
+		ver: 2.0.0
 	*/
 	
 	/*
@@ -24,11 +24,11 @@ contract dEthereumlotteryNet {
 	uint private constant BestRollRate = 26;
 	
     bool public ContractEnabled = true;
+    uint public ContractDisabledBlock;
 	uint public Jackpot;
 	uint public RollCount;
 	uint public JackpotHits;
 	
-	uint private ContractDisabledBlock;
 	uint private jackpot_;
 	uint private extraJackpot_;
 	uint private feeValue;
@@ -40,7 +40,6 @@ contract dEthereumlotteryNet {
 		bool valid;
 		uint value;
 		uint game;
-		uint id;
 	}
 	
 	mapping(address => rolls_s[]) private players;
@@ -54,16 +53,15 @@ contract dEthereumlotteryNet {
 		uint timestamp;
 	}
 	
-	investors_s[] private investors;
+	investors_s[] investors;
 	
-	string constant public Information = "http://d.ethereumlottery.net";
+	string constant public Information = "https://d.ethereumlottery.net";
 	
 	/*
 		Deploy
 	*/
 	function dEthereumlotteryNet() {
 		owner = msg.sender;
-		investors.length = 1;
 	}
 	
 	/* 
@@ -93,16 +91,18 @@ contract dEthereumlotteryNet {
 		min = minimumRollPrice;
 		max = getRealBet(BestRollRate);
 	}
-	function Investors(address Address) constant returns(uint Investment, uint Balance, bool Live) {
-		uint InvestorID = getInvestorByAddress(Address);
-		if (InvestorID == 0 || ! investors[InvestorID].valid) {
+	function Investors(uint id) constant returns(address Owner, uint Investment, uint Balance, bool Live) {
+		if (id < investors.length) {
+			Owner = investors[id].owner;
+			Investment = investors[id].value;
+			Balance = investors[id].balance;
+			Live = investors[id].live;
+		} else {
+			Owner = 0;
 			Investment = 0;
 			Balance = 0;
 			Live = false;
 		}
-		Investment = investors[InvestorID].value;
-		Balance = investors[InvestorID].balance;
-		Live = investors[InvestorID].live;
 	}
 	
 	/*
@@ -120,50 +120,49 @@ contract dEthereumlotteryNet {
 			if ( ! msg.sender.send(value_ % investUnit)) { throw; } 
 			value_ = value_ - (value_ % investUnit);
 		}
-		uint InvestorID = getInvestorByAddress(msg.sender);
-		if (InvestorID == 0) {
-			InvestorID = investors.length;
-			investors.length++;
+		for ( uint a=0 ; a < investors.length ; a++ ) {
+			if ( ! investors[a].valid) {
+				newInvest(a,msg.sender,value_);
+				return;
+			}
 		}
-		if (investors[InvestorID].valid && investors[InvestorID].live) {
-			investors[InvestorID].value += value_;
-		} else {
-			investors[InvestorID].value = value_;
-		}
-		investors[InvestorID].timestamp = now + investMinDuration;
-		investors[InvestorID].valid = true;
-		investors[InvestorID].live = true;
-		investors[InvestorID].owner = msg.sender;
-		jackpot_ += value_;
-		setJackpot();
+		investors.length++;
+		newInvest(investors.length-1,msg.sender,value_);
 	}
-	function GetMyInvestmentBalance() external noEther {
-		uint InvestorID = getInvestorByAddress(msg.sender);
-		if (InvestorID == 0) { throw; }
-		if ( ! investors[InvestorID].valid) { throw; }
-		if (investors[InvestorID].balance == 0) { throw; }
-		if ( ! msg.sender.send( investors[InvestorID].balance )) { throw; }
-		investors[InvestorID].balance = 0;
-	}
-	function CancelMyInvestment() external noEther {
-		uint InvestorID = getInvestorByAddress(msg.sender);
-		if (InvestorID == 0) { throw; }
-		if ( ! investors[InvestorID].valid) { throw; }
-		if (investors[InvestorID].timestamp > now && ContractEnabled) { throw; }
+	function GetMyInvestFee() external {
+		reFund();
 		uint balance_;
-		if (investors[InvestorID].live) {
-			jackpot_ -= investors[InvestorID].value;
-			balance_ = investors[InvestorID].value;
-			setJackpot();
+		for ( uint a=0 ; a < investors.length ; a++ ) {
+			if (investors[a].owner == msg.sender && ! investors[a].valid) {
+				balance_ = investors[a].balance;
+				investors[a].valid = false;
+			}
 		}
-		if (investors[InvestorID].balance > 0) {
-			balance_ += investors[InvestorID].balance;
+		if (balance_ > 0) { if ( ! msg.sender.send(balance_)) { throw; } }
+	}
+	function CancelMyInvest() external {
+		reFund();
+		uint balance_;
+		for ( uint a=0 ; a < investors.length ; a++ ) {
+			if ((investors[a].owner == msg.sender && investors[a].valid)) {
+			    if (investors[a].timestamp < now || ! ContractEnabled) {
+    				if (investors[a].live) {
+    					balance_ = investors[a].value + investors[a].balance;
+    					jackpot_ -= investors[a].value;
+    					delete investors[a];
+    				} else {
+    					balance_ = investors[a].balance;
+    					delete investors[a];
+    				}
+			    }
+			}
 		}
-		if ( ! msg.sender.send( balance_ )) { throw; }
-		delete investors[InvestorID];
+		setJackpot();
+		if (balance_ > 0) { if ( ! msg.sender.send(balance_)) { throw; } }
 	}
 	/* For Players */
-	function DoRoll() external noEther {
+	function DoRoll() external {
+		reFund();
 		uint value_;
 		bool found;
 		for ( uint a=0 ; a < players[msg.sender].length ; a++ ) {
@@ -173,7 +172,6 @@ contract dEthereumlotteryNet {
 			        feeValue += feeValue_;
 			        investorAddFee(players[msg.sender][a].value - feeValue_);
 					playersPot -= players[msg.sender][a].value;
-					DoRollEvent(msg.sender, players[msg.sender][a].value, players[msg.sender][a].id, false, true, false, false, 0, 0, 0);
 					delete players[msg.sender][a];
 					found = true;
 					continue;
@@ -181,7 +179,6 @@ contract dEthereumlotteryNet {
 				if ( ! ContractEnabled || jackpot_ == 0 || players[msg.sender][a].game != JackpotHits) {
 					value_ += players[msg.sender][a].value;
 					playersPot -= players[msg.sender][a].value;
-					DoRollEvent(msg.sender, players[msg.sender][a].value, players[msg.sender][a].id, true, false, false, false, 0, 0, 0);
 					delete players[msg.sender][a];
 					found = true;
 					continue;
@@ -195,8 +192,8 @@ contract dEthereumlotteryNet {
 				}
 			}
 		}
+		if (value_ > 0) { if (msg.sender.send(value_)) { throw; } }
 		if ( ! found) { throw; }
-		if (value_ > 0) { if ( ! msg.sender.send(value_)) { throw; } }
 	}
 	function PrepareRoll(uint seed) OnlyEnabled {
 		if (msg.value < minimumRollPrice) { throw; }
@@ -224,22 +221,27 @@ contract dEthereumlotteryNet {
 		prepareRoll( players[msg.sender].length-1, _realBet, seed );
 	}
 	/* For Owner */
-	function OwnerCloseContract() external OnlyOwner noEther {
+	function OwnerCloseContract() external OnlyOwner {
+		reFund();
 		if ( ! ContractEnabled) {
 		    if (ContractDisabledBlock < block.number) {
-				if (playersPot == 0) { throw; }
-				if ( ! msg.sender.send( playersPot )) { throw; }
-				playersPot = 0;
+		        uint balance_ = this.balance;
+		        for ( uint a=0 ; a < investors.length ; a++ ) {
+		            balance_ -= investors[a].balance;
+		        }
+		        if (balance_ > 0) {
+                    if ( ! msg.sender.send(balance_)) { throw; }
+		        }
 		    }
 		} else {
     		ContractEnabled = false;
     		ContractDisabledBlock = block.number+rollLossBlockDelay;
-			ContractDisabled(ContractDisabledBlock);
     		feeValue += extraJackpot_;
     		extraJackpot_ = 0;
 		}
 	}
-	function OwnerGetFee() external OnlyOwner noEther {
+	function OwnerGetFee() external OnlyOwner {
+		reFund();
 		if (feeValue == 0) { throw; }
 		if ( ! owner.send(feeValue)) { throw; }
 		feeValue = 0;
@@ -248,6 +250,16 @@ contract dEthereumlotteryNet {
 	/*
 		Private functions
 	*/
+	function newInvest(uint investorsID, address investor, uint value) private {
+		investors[investorsID].owner = investor;
+		investors[investorsID].value = value;
+		investors[investorsID].balance = 0;
+		investors[investorsID].valid = true;
+		investors[investorsID].live = true;
+		investors[investorsID].timestamp = now + investMinDuration;
+		jackpot_ += value;
+		setJackpot();
+	}
 	function setJackpot() private {
 		Jackpot = extraJackpot_ + jackpot_;
 	}
@@ -266,22 +278,21 @@ contract dEthereumlotteryNet {
 		uint bigNumber = uint64(hash_);
 		if (bigNumber % _rate == 0 ) {
 			win = Jackpot;
-			for ( a=1 ; a < investors.length ; a++ ) {
+			for ( a=0 ; a < investors.length ; a++ ) {
 				investors[a].live = false;
 			}
 			JackpotHits++;
 			extraJackpot_ = 0;
 			jackpot_ = 0;
 			Jackpot = 0;
-			DoRollEvent(msg.sender, win, players[msg.sender][id].id, false, false, false, true, bigNumber, _rate, bigNumber % _rate);
-		} else {
-			DoRollEvent(msg.sender, players[msg.sender][id].value, players[msg.sender][id].id, false, false, true, false, bigNumber, _rate, bigNumber % _rate);
 		}
+		RollEvent(msg.sender, _rate, bigNumber % _rate, bigNumber ,win);
+		delete players[msg.sender][id];
 	}
 	function investorAddFee(uint value) private {
 		bool done;
-		for ( uint a=1 ; a < investors.length ; a++ ) {
-			if (investors[a].live && investors[a].valid) {
+		for ( uint a=0 ; a < investors.length ; a++ ) {
+			if (investors[a].live) {
 				investors[a].balance += value * investors[a].value / jackpot_;
 				done = true;
 			}
@@ -290,16 +301,16 @@ contract dEthereumlotteryNet {
 			feeValue += value;
 		}
 	}
+	function reFund() private { if (msg.value > 0) { if ( ! msg.sender.send(msg.value)) { throw; } } }
 	function prepareRoll(uint rollID, uint bet, uint seed) private {
-		RollCount++;
 		players[msg.sender][rollID].blockNumber = block.number + prepareBlockDelay;
 		players[msg.sender][rollID].extraHash = sha3(RollCount, now, seed);
 		players[msg.sender][rollID].valid = true;
 		players[msg.sender][rollID].value = bet;
 		players[msg.sender][rollID].game = JackpotHits;
-		players[msg.sender][rollID].id = RollCount;
+		RollCount++;
 		playersPot += bet;
-		PrepareRollEvent(msg.sender, players[msg.sender][rollID].blockNumber, players[msg.sender][rollID].value, players[msg.sender][rollID].id);
+		PrepareRollEvent(msg.sender, players[msg.sender][rollID].blockNumber, bet);
 	}
 	
 	/*
@@ -311,26 +322,16 @@ contract dEthereumlotteryNet {
 	function getRealBet(uint rate) internal returns (uint) {
 		return jackpot_ * 1000000 / ( rate * 1000000 * investorFee / extraRate);
 	}
-	function getInvestorByAddress(address Address) internal returns (uint id) {
-		for ( id=1 ; id < investors.length ; id++ ) {
-			if (investors[id].owner == Address) {
-				return;
-			}
-		}
-		return 0;
-	}
 	
 	/*
 		Events
 	*/	
-	event DoRollEvent(address Player, uint Value, uint RollID, bool Refund, bool LostBet, bool LossRoll, bool WinRoll, uint BigNumber, uint Rate, uint RollResult);
-	event PrepareRollEvent(address Player, uint Block, uint Bet, uint RollID);
-	event ContractDisabled(uint LossAllBetBlockNumber);
+	event RollEvent(address Player, uint Rate, uint Result, uint Number, uint Win);
+	event PrepareRollEvent(address Player, uint Block, uint Bet);
 	
 	/*
-		Modifiers
+		Modifiders
 	*/
-	modifier noEther() { if (msg.value > 0) { throw; } _ }
 	modifier OnlyOwner() { if (owner != msg.sender) { throw; } _ }
 	modifier OnlyEnabled() { if ( ! ContractEnabled) { throw; } _ }
 }
