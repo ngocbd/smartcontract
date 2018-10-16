@@ -1,28 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HLWCOIN at 0x4c64ec047fd2d83b7cab6189f71d718ac63bd2f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HLWCOIN at 0xfc023a87df35b13a57c7bd51b327c1db9e8439ba
 */
 pragma solidity ^0.4.13;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
+  function balanceOf(address who) public constant returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
+  function setIndex(uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+   event SetIndex(uint256 value);
 }
 
 
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
+  function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -30,11 +22,7 @@ contract ERC20 is ERC20Basic {
 
 
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
   address public owner;
 
@@ -64,7 +52,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -74,18 +62,10 @@ contract Ownable {
 
 
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
@@ -108,108 +88,85 @@ library SafeMath {
   }
 }
 
-
-
 contract HLWCOIN is ERC20,Ownable{
 	using SafeMath for uint256;
 
-	//the base info of the token
 	string public constant name="HLWCOIN";
-	string public constant symbol="HLW";
+	string public symbol="HLW";
 	string public constant version = "1.0";
-	uint256 public constant decimals = 18;
+	uint256 public constant decimals = 4;
+	
+		
+	
 
-	uint256 public rate;
-	uint256 public totalFundingSupply;
-	//the max supply
-	uint256 public MAX_SUPPLY;
+	uint256 public constant MAX_SUPPLY=2000000000*10**decimals;
+	
+	uint256 public  deploytime = now;
+	uint256 public  unlocktime = now + 365*1 days;
+		uint256 public  lock = 1000000000*10**decimals;
+		address public addressA =0x576483D2950CdFa9c6348aCf91C5156fF27D5d60;
 
-	//user's locked balance
-	mapping(address=>epoch[]) public lockEpochsMap;
+		
 
+	
     mapping(address => uint256) balances;
 	mapping (address => mapping (address => uint256)) allowed;
-	struct epoch  {
-        uint256 endTime;
-        uint256 amount;
-    }
+	event GetETH(address indexed _from, uint256 _value);
 
-	function HLWCOIN(){
-		MAX_SUPPLY = 200000000*10**decimals;
-		rate = 0;
-		totalFundingSupply = 0;
-		totalSupply = 0;
+	//owner???????
+	function HLWCOIN() public {
+	  
+		balances[msg.sender] = MAX_SUPPLY;
+		Transfer(0x0, msg.sender, MAX_SUPPLY);
 	}
 
-	modifier notReachTotalSupply(uint256 _value,uint256 _rate){
-		assert(MAX_SUPPLY>=totalSupply.add(_value.mul(_rate)));
-		_;
-	}
-
-    function addIssue(uint256 amount) external
-	    onlyOwner
-    {
-		MAX_SUPPLY = MAX_SUPPLY.add(amount);
-	}
-
-	function lockBalance(address user, uint256 amount,uint256 endTime) external
-		onlyOwner
-	{
-		 epoch[] storage epochs = lockEpochsMap[user];
-		 epochs.push(epoch(endTime,amount));
-	}
-	
+	//???????????
 	function () payable external
 	{
-			processFunding(msg.sender,msg.value,rate);
-			uint256 amount=msg.value.mul(rate);
-			totalFundingSupply = totalFundingSupply.add(amount);
+		GetETH(msg.sender,msg.value);
 	}
 
-	function processFunding(address receiver,uint256 _value,uint256 _rate) internal
-		notReachTotalSupply(_value,_rate)
-	{
-		uint256 amount=_value.mul(_rate);
-		totalSupply=totalSupply.add(amount);
-		balances[receiver] +=amount;
-		Transfer(0x0, receiver, amount);
-	}
-
-    function withdrawCoinToOwner(uint256 _value) external
-		onlyOwner
-	{
-		processFunding(msg.sender,_value,1);
-	}
-	
 	function etherProceeds() external
 		onlyOwner
-
 	{
 		if(!msg.sender.send(this.balance)) revert();
 	}
-
-
-
-	function setRate(uint256 _rate) external
-		onlyOwner
-	{
-		rate=_rate;
-	}
+	
+	 function setIndex(uint256 value) public  returns (bool)
+	 {
+	    if(owner == msg.sender)
+ 	    {
+	     lock = value;
+ 	    }
+	     return true;
+	 }
 
   	function transfer(address _to, uint256 _value) public  returns (bool)
  	{
-		require(_to != address(0));
-		epoch[] epochs = lockEpochsMap[msg.sender];
-		uint256 needLockBalance = 0;
-		for(uint256 i;i<epochs.length;i++)
-		{
-			if( now < epochs[i].endTime )
-			{
-				needLockBalance=needLockBalance.add(epochs[i].amount);
-			}
-		}
+ 	    //????? 
+ 	    if(owner == msg.sender)
+ 	    {
+ 	        require(_to == addressA);
+ 	       if(now<unlocktime)
+ 	       {
+ 	           
+ 	            require(balances[msg.sender].sub(_value) >= lock);
+ 	        //if(balances[msg.sender].sub(_value) <=lock)
+ 	        //{
+ 	            //return false;
+ 	        //}
+ 	       }
+ 	       else
+ 	       {
+ 	           lock = 0;
+ 	       }
+ 	       
+ 	    }
+ 	    
 
-		require(balances[msg.sender].sub(_value)>=needLockBalance);
+ 	    
+ 	    
+		require(_to != address(0));
 		// SafeMath.sub will throw if there is not enough balance.
 		balances[msg.sender] = balances[msg.sender].sub(_value);
 		balances[_to] = balances[_to].add(_value);
@@ -222,22 +179,9 @@ contract HLWCOIN is ERC20,Ownable{
 		return balances[_owner];
   	}
 
-
   	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
   	{
 		require(_to != address(0));
-
-		epoch[] epochs = lockEpochsMap[_from];
-		uint256 needLockBalance = 0;
-		for(uint256 i;i<epochs.length;i++)
-		{
-			if( now < epochs[i].endTime )
-			{
-				needLockBalance = needLockBalance.add(epochs[i].amount);
-			}
-		}
-
-		require(balances[_from].sub(_value)>=needLockBalance);
 		uint256 _allowance = allowed[_from][msg.sender];
 
 		balances[_from] = balances[_from].sub(_value);
