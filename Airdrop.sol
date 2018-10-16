@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xce9a5619b3bfb2c11cdffcc15843eab11f6c8280
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x4818eadce82fdcb668834c50fa06fa01a3b8af95
 */
+pragma solidity ^0.4.19;
+
 contract ERC20 {
   function transfer(address _recipient, uint256 _value) public returns (bool success);
 }
