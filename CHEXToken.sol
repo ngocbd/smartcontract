@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xa12a5ABF5b1607EEF863BDd20549404AfA2Ea9A3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x23166b7900d968f2A2100829b0A19540aa2f7cf1
 */
 pragma solidity ^0.4.11;
 /**
@@ -133,21 +133,14 @@ contract CHEXToken is Token {
     uint public presaleEtherRaised = 0;
 
     event Buy(address indexed recipient, uint eth, uint chx);
-    event Deliver(address indexed recipient, uint chx, bytes32 _for);
+    event Deliver(address indexed recipient, uint chx, string _for);
 
     uint public presaleAllocation = totalSupply / 2; //50% of token supply allocated for crowdsale
-    uint public strategicAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for strategic supply
-    uint public reserveAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for internal
-    bool public strategicAllocated = false;
-    bool public reserveAllocated = false;
+    uint public ecosystemAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for the ecosystem fund
+    uint public reservedAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for internal
+    bool public ecosystemAllocated = false;
 
-    uint public transferLockup = 5760; //no transfers until 1 day after sale is over
-    uint public strategicLockup = 80640; //strategic supply locked until 14 days after sale is over
-    uint public reserveLockup = 241920; //first wave of reserve locked until 42 days after sale is over
-
-    uint public reserveWave = 0; //increments each time 10% of reserve is allocated, to a max of 10
-    uint public reserveWaveTokens = reserveAllocation / 10; //10% of reserve will be released on each wave
-    uint public reserveWaveLockup = 172800; //30 day intervals before subsequent wave of reserve tokens can be released
+    uint public transferLockup = 40320; //No transfers until 1 week after sale is over
 
     uint public constant MIN_ETHER = 1 finney;
 
@@ -237,9 +230,8 @@ contract CHEXToken is Token {
         _;
     }
 
-    function deliver(address recipient, uint tokens, bytes32 _for) onlyInternal {
+    function deliver(address recipient, uint tokens, string _for) onlyInternal {
         if (tokens <= 0) throw;
-        if (_for == 0) throw;
         if (totalTokens >= totalSupply) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
@@ -257,27 +249,17 @@ contract CHEXToken is Token {
         Deliver(recipient, tokens, _for);
     }
 
-    function allocateStrategicTokens() onlyInternal {
-        if (block.number <= endBlock + strategicLockup) throw;
-        if (strategicAllocated) throw;
+    function allocateEcosystemTokens() onlyInternal {
+        if (block.number <= endBlock) throw;
+        if (ecosystemAllocated) throw;
 
-        balances[owner] = add(balances[owner], strategicAllocation);
-        totalTokens = add(totalTokens, strategicAllocation);
+        balances[owner] = add(balances[owner], ecosystemAllocation);
+        totalTokens = add(totalTokens, ecosystemAllocation);
 
-        strategicAllocated = true;
-    }
+        balances[founder] = add(balances[founder], reservedAllocation);
+        totalTokens = add(totalTokens, reservedAllocation);
 
-    function allocateReserveTokens() onlyInternal {
-        if (block.number <= endBlock + reserveLockup + (reserveWaveLockup * reserveWave)) throw;
-        if (reserveAllocated) throw;
-
-        balances[founder] = add(balances[founder], reserveWaveTokens);
-        totalTokens = add(totalTokens, reserveWaveTokens);
-
-        reserveWave++;
-        if (reserveWave >= 10) {
-            reserveAllocated = true;
-        }
+        ecosystemAllocated = true;
     }
 
     function freeze() onlyInternal {
@@ -286,6 +268,17 @@ contract CHEXToken is Token {
 
     function unfreeze() onlyInternal {
         _saleState = TokenSaleState.Presale;
+        updateTokenSaleState();
+    }
+
+    function startSalePhase (uint start, uint length) onlyInternal {
+        if (_saleState == TokenSaleState.Presale) throw;
+        if (length == 0) throw;
+        if (start == 0) start = block.number;
+
+        startBlock = start;
+        endBlock = startBlock + length;
+
         updateTokenSaleState();
     }
 
