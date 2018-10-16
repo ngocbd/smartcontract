@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumHole at 0xd3a661f28b33167d0982e88caf431675bdf4a3d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumHole at 0x16a5dba1d8d5dd53ad7bb9d8a8b97af577be753d
 */
 pragma solidity ^0.4.19;
 
@@ -24,7 +24,7 @@ contract EthereumHole {
 
 
     // Initial countdown duration at the start of each round
-    uint public constant BASE_DURATION = 600000 minutes;
+    uint public constant BASE_DURATION = 10 minutes;
 
     // Amount by which the countdown duration decreases per ether in the pot
     uint public constant DURATION_DECREASE_PER_ETHER = 5 minutes;
