@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetBuyer at 0x089431F295b58c17C0b1754Be2e15d706e990151
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetBuyer at 0x8E6057adfdAfBa64a69C53510197B6EA33367B74
 */
 pragma solidity ^0.4.11;
 
@@ -39,7 +39,7 @@ contract BetBuyer {
   uint256 bet_per_eth = 2000;
   
   // The BET Token address and sale address are the same.
-  DaoCasinoToken public token = DaoCasinoToken(0xFd08655DFcaD0d42B57Dc8f1dc8CC39eD8b6B071);
+  DaoCasinoToken public token = DaoCasinoToken(0x2B09b52d42DfB4e0cBA43F607dD272ea3FE1FB9F);
   // The developer address.
   address developer = 0x000Fb8369677b3065dE5821a86Bc9551d5e5EAb9;
   
