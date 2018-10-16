@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloutToken at 0x768349931518b00e5331d0fad3815b6ccde331b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloutToken at 0x572781e7b021d2b3f3f082b3e487234ce9fc2961
 */
 pragma solidity ^0.4.16;
 
 
-
+//Clout Token version 0.2
 
 
 contract SafeMath {
@@ -144,9 +144,9 @@ contract CloutToken is StandardToken {
     uint256 public check = 0;
     
     address public owner = msg.sender;
-    address public Founder1 = 0xB5D39A8Ea30005f9114Bf936025De2D6f353813E;
-    address public Founder2 = 0x00A591199F53907480E1f5A00958b93B43200Fe4;
-    address public Founder3 = 0x0d19C131400e73c71bBB2bC1666dBa8Fe22d242D;
+    address public Founder1 = 0xB5D39A8Ea30005f9114Bf936025De2D6f353813E;  //sta
+    address public Founder2 = 0x00A591199F53907480E1f5A00958b93B43200Fe4;  //ste
+    address public Founder3 = 0x0d19C131400e73c71bBB2bC1666dBa8Fe22d242D;  //cd
     
 	uint256 public tokenAmount;
   
@@ -158,7 +158,7 @@ contract CloutToken is StandardToken {
 
   function mint(address receiver, uint amount) public {
       
-      tokenAmount = ((msg.value*rate)/(1 ether));
+      tokenAmount = ((msg.value/rate));
     
     if (tokenAmount != amount || amount == 0 || receiver != msg.sender)
     {
@@ -166,7 +166,7 @@ contract CloutToken is StandardToken {
     }
     
 
-    totalSupply = totalSupply + (amount*1 ether);
+    totalSupply = totalSupply + amount;
     balances[receiver] += (amount*1 ether);
 
     // This will make the mint transaction appear in EtherScan.io
@@ -179,13 +179,8 @@ contract CloutToken is StandardToken {
 	//This function is called when Ether is sent to the contract address
 	//Even if 0 ether is sent.
     function () payable {
-             
-            
-            uint256 oldSupply = totalSupply;
-            totalSupply = (totalSupply/1 ether);
-            
-            
-            
+
+
             //If all the tokens are gone, stop!
             if (totalSupply > 999999)
             {
@@ -194,39 +189,39 @@ contract CloutToken is StandardToken {
             
 
             
-            //Set the price to 0.0003 ETH/CLOUT
+            //Set the price to 0.00034 ETH/CLOUT
             //$0.10 per
             if (totalSupply < 25000)
             {
-                rate = 3340;
+                rate = 0.00034*1 ether;
             }
             
-            //Set the price to 0.0015 ETH/CLOUT
+            //Set the price to 0.0017 ETH/CLOUT
             //$0.50 per
             if (totalSupply >= 25000)
             {
-                rate = 668;
+                rate = 0.0017*1 ether;
             }
             
-            //Set the price to 0.0030 ETH/CLOUT
+            //Set the price to 0.0034 ETH/CLOUT
             //$1.00 per
             if (totalSupply >= 125000)
             {
-                rate = 334;
+                rate = 0.0034*1 ether;
             }
             
-            //Set the price to 0.0075 ETH/CLOUT
-            //$2.50 per
+            //Set the price to 0.0068 ETH/CLOUT
+            //$2.00 per
             if (totalSupply >= 525000)
             {
-                rate = 134;
+                rate = 0.0068*1 ether;
             }
             
             
            
             
             tokenAmount = 0;
-            tokenAmount = ((msg.value*rate)/(1 ether));
+            tokenAmount = ((msg.value/rate));
             
             
             //Make sure they send enough to buy atleast 1 token.
@@ -268,22 +263,21 @@ contract CloutToken is StandardToken {
             
             //Prevent any ETH address from buying more than 50 CLOUT during the pre-sale
             uint256 senderBalance = (balances[msg.sender]/1 ether);
-            if ((senderBalance + tokenAmount) > 50 && totalSupply < 25000)
+            if ((senderBalance + tokenAmount) > 200 && totalSupply < 25000)
             {
                 revert();
             }
             
     
-            totalSupply = oldSupply;
         	mint(msg.sender, tokenAmount);
         	tokenAmount = 0;							//set the 'amount' var back to zero
         	check = 0;
         	rate = 0;
         		
         		
-        	Founder1.transfer((msg.value/3));					//Send the ETH
-        	Founder2.transfer((msg.value/3));					//Send the ETH
-        	Founder3.transfer((msg.value/3));					//Send the ETH
+        	Founder1.transfer((msg.value/100)*49);					//Send the ETH 49%
+        	Founder2.transfer((msg.value/100)*2);					//Send the ETH  2%
+        	Founder3.transfer((msg.value/100)*49);					//Send the ETH 49%
     
     }
 
@@ -294,7 +288,7 @@ contract CloutToken is StandardToken {
         
         if (msg.sender == owner)
         {
-            totalSupply = (1000000*1 ether);
+            totalSupply = 1000000;
         } else {throw;}
 
     }
