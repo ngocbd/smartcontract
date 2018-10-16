@@ -1,11 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarsICO at 0x1bffa323d25ce1b2709d4d346b3a4670faa948c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarsICO at 0xdd92a257d279c99579aad35b544285fa42d563bd
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.3;
 
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {    uint256 c = a * b;    assert(a == 0 || c / a == b);    return c;  }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
