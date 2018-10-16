@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xbbf578f4441836324907e241b8f0ff4a514fff0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x6d5fa8b81972ae0fa2f43a62af1ae80ee4411a2f
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = '2019';
-	string public symbol = '2019';
-	uint public decimals = 3;
-	uint public initialSupply = 100000000000;
+	string public name = 'TETRIS';
+	string public symbol = 'TETRIS';
+	uint public decimals = 18;
+	uint public initialSupply = 101111101011110010110010;
 	string public publisher = 'TokenDone.io';
 	uint public CreationTime;
 	
