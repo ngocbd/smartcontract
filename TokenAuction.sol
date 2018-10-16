@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0xd7cf8eae66f26e13a400772a054b19fb3d98c269
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0xad4c4ff144e42c73b6333b75af3cee5af901c10e
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  *
  * @author  <newtwist@protonmail.com>
  *
- * Version E
+ * Version F
  *
  * Overview:
- * This contract impliments a blind auction for burnable tokens. Each secret bid consists
+ * This contract implements a blind auction for burnable tokens. Each secret bid consists
  * of a hashed bid-tuple, (`price`, `quantity`, `salt`), where price is the maximum amount
- * of ether (in wei) a user is willing to pay per token, quantity is the number of tokens
+ * of ether (in szabo) a user is willing to pay per token, quantity is the number of tokens
  * the user wants to buy, and salt is an arbitrary value. Together with the hashed bid-tuple,
  * the user includes an encrypted bid tuple, using the public key of the party running the
  * auction, and of course a deposit sufficient to pay for the bid.
@@ -36,8 +36,8 @@ pragma solidity ^0.4.15;
  * The auction is structured with a fixed maximum number of tokens. So to raise the maximum
  * funds the bids are sorted, highest to lowest. Starting the strike-price at the highest
  * bid, it is reduced, bid by bid, to include more bids. The quantity of tokens sold increases
- * each time a new bid is included; but the the token price is reduced. At each step the
- * total raise (token-price times quantity-of-tokens-sold) is computed. And the process ends
+ * each time a new bid is included; but the token price is reduced. At each step the total
+ * raise (token-price times quantity-of-tokens-sold) is computed. And the process ends
  * whenever the total raise decreases, or when the total number of tokens exceeds the total
  * supply.
  *
@@ -49,21 +49,29 @@ pragma solidity ^0.4.15;
  *
  * Users are required to execute their bids. If a user fails to execute their bid before the
  * end of the sale period, then they forfeit half of their deposit, and receive no tokens.
- * This rule was adopted to prevent users from placing several bids, and only revealing one
- * of them. With this rule, all bids must be executed.
+ * This rule was adopted (as opposed to refunding un-revealed bids) to prevent users from placing
+ * several bids, and only revealing one of them. With this rule, all bids must be executed.
  *
  */
+
+
+pragma solidity ^0.4.15;
+
+//Burnable Token interface
+
+pragma solidity ^0.4.15;
+
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
 
 contract iERC20Token {
-  function totalSupply() constant returns (uint supply);
-  function balanceOf( address who ) constant returns (uint value);
-  function allowance( address owner, address spender ) constant returns (uint remaining);
+  function totalSupply() public constant returns (uint supply);
+  function balanceOf( address who ) public constant returns (uint value);
+  function allowance( address owner, address spender ) public constant returns (uint remaining);
 
-  function transfer( address to, uint value) returns (bool ok);
-  function transferFrom( address from, address to, uint value) returns (bool ok);
-  function approve( address spender, uint value ) returns (bool ok);
+  function transfer( address to, uint value) public returns (bool ok);
+  function transferFrom( address from, address to, uint value) public returns (bool ok);
+  function approve( address spender, uint value ) public returns (bool ok);
 
   event Transfer( address indexed from, address indexed to, uint value);
   event Approval( address indexed owner, address indexed spender, uint value);
@@ -74,6 +82,9 @@ contract iBurnableToken is iERC20Token {
   function unPaidBurnTokens(uint _burnCount) public;
 }
 
+//import './SafeMath.sol';
+pragma solidity ^0.4.11;
+
 /*
     Overflow protected math functions
 */
@@ -81,7 +92,7 @@ contract SafeMath {
     /**
         constructor
     */
-    function SafeMath() {
+    function SafeMath() public {
     }
 
     /**
@@ -92,7 +103,7 @@ contract SafeMath {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) pure internal returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -106,7 +117,7 @@ contract SafeMath {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) pure internal returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -119,7 +130,7 @@ contract SafeMath {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) pure internal returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
@@ -161,8 +172,9 @@ contract TokenAuction is SafeMath {
   uint public proceeds;
   uint public strikePrice;
   uint public strikePricePctX10;
+  uint public decimalMultiplier;
   uint public developerReserve;
-  uint public developerPctX10;
+  uint public developerPctX10K;
   uint public purchasedCount;
   uint public secretBidCount;
   uint public executedCount;
@@ -212,7 +224,7 @@ contract TokenAuction is SafeMath {
   //
   //constructor
   //
-  function TokenAuction() {
+  function TokenAuction() public {
     owner = msg.sender;
   }
 
@@ -220,9 +232,13 @@ contract TokenAuction is SafeMath {
     isLocked = true;
   }
 
-  function setAuctionParms(iBurnableToken _token, address _underwriter, uint _auctionStart, uint _auctionDuration, uint _saleDuration) public ownerOnly unlockedOnly {
+  function setToken(iBurnableToken _token, uint _decimalMultiplier, address _underwriter) public ownerOnly unlockedOnly {
     token = _token;
+    decimalMultiplier = _decimalMultiplier;
     underwriter = _underwriter;
+  }
+
+  function setAuctionParms(uint _auctionStart, uint _auctionDuration, uint _saleDuration) public ownerOnly unlockedOnly {
     auctionStart = _auctionStart;
     auctionEnd = safeAdd(_auctionStart, _auctionDuration);
     saleDuration = _saleDuration;
@@ -230,16 +246,17 @@ contract TokenAuction is SafeMath {
       //handy for debug
       stateMask = 0;
       strikePrice = 0;
-      purchasedCount = 0;
+      executedCount = 0;
       houseKeep();
     }
   }
 
-  function reserveDeveloperTokens(address _developers, uint _developerPctX10) public ownerOnly unlockedOnly {
+
+  function reserveDeveloperTokens(address _developers, uint _developerPctX10K) public ownerOnly unlockedOnly {
     developers = _developers;
-    developerPctX10 = _developerPctX10;
+    developerPctX10K = _developerPctX10K;
     uint _tokenCount = token.balanceOf(this);
-    developerReserve = (safeMul(_tokenCount, developerPctX10) / 1000);
+    developerReserve = safeMul(_tokenCount, developerPctX10K) / 1000000;
   }
 
   function tune(uint _batchSize, uint _contractSendGas) public ownerOnly {
@@ -271,10 +288,12 @@ contract TokenAuction is SafeMath {
 
 
   //
-  //setting the strike price starts the sale period, during which bidders must call executeBid.
-  //the strike price should only be set once.... at any rate it cannot be changed once anyone has executed a bid.
-  //strikePricePctX10 specifies what percentage (x10) of requested tokens should be awarded to each bidder that
-  //bid exactly equal to the strike price.
+  // setting the strike price starts the sale period, during which bidders must call executeBid.
+  // the strike price should only be set once.... at any rate it cannot be changed once anyone has executed a bid.
+  // strikePricePctX10 specifies what percentage (x10) of requested tokens should be awarded to each bidder that
+  // bid exactly equal to the strike price.
+  //
+  // note: strikePrice is the price of whole tokens (in wei)
   //
   function setStrikePrice(uint _strikePrice, uint _strikePricePctX10) public ownerOnly afterAuction {
     require(executedCount == 0);
@@ -290,7 +309,7 @@ contract TokenAuction is SafeMath {
   // the fact that we adjust proceeds here means that this fcn will OOG if called with a send or transfer. that's
   // probably good, cuz it prevents the caller from losing their funds.
   //
-  function () payable {
+  function () public payable {
     proceeds = safeAdd(proceeds, msg.value);
     BizarreEvent(msg.sender, "bizarre payment", msg.value);
   }
@@ -327,6 +346,8 @@ contract TokenAuction is SafeMath {
   // * refunds whatever remains of the deposit
   //
   // call only during the sale period (strikePrice > 0)
+  // note: _quantity is the number of whole tokens; that is low-level-tokens * decimalMultiplier
+  // similarly _price is the price of whole tokens; that is low-level-token price / decimalMultiplier
   //
   function executeBid(uint256 _secret, uint256 _price, uint256 _quantity) public duringSale {
     executeBidFor(msg.sender, _secret, _price, _quantity);
@@ -341,20 +362,24 @@ contract TokenAuction is SafeMath {
       uint _refund = 0;
       uint _priceWei = safeMul(_price, 1 szabo);
       if (_priceWei >= strikePrice && !secretBids[_addr].disqualified) {
-        uint256 _purchaseCount = (_priceWei > strikePrice) ? _quantity : (safeMul(strikePricePctX10, _quantity) / 1000);
-        var _maxPurchase = token.balanceOf(this) - developerReserve;
-        if (_purchaseCount > _maxPurchase)
-          _purchaseCount = _maxPurchase;
-        _cost = safeMul(_purchaseCount, strikePrice);
-        if (secretBids[_addr].deposit >= _cost) {
-          secretBids[_addr].deposit -= _cost;
-          proceeds = safeAdd(proceeds, _cost);
-          secretBids[_addr].tokens += _purchaseCount;
-          purchasedCount += _purchaseCount;
-          //transfer tokens to this bidder
-          if (!token.transfer(_addr, _purchaseCount))
-            revert();
-        }
+         //up till now all prices and quantities and referred to whole tokens (including strike price); now that we are about
+         //to actually do the transfer, convert to low-level tokens
+         uint _lowLevelQuantity = safeMul(_quantity, decimalMultiplier);
+         uint _lowLevelPrice = strikePrice / decimalMultiplier;
+         uint256 _purchaseCount = (_priceWei > strikePrice) ? _lowLevelQuantity : (safeMul(strikePricePctX10, _lowLevelQuantity) / 1000);
+         var _maxPurchase = token.balanceOf(this) - developerReserve;
+         if (_purchaseCount > _maxPurchase)
+           _purchaseCount = _maxPurchase;
+         _cost = safeMul(_purchaseCount, _lowLevelPrice);
+         if (secretBids[_addr].deposit >= _cost) {
+           secretBids[_addr].deposit -= _cost;
+           proceeds = safeAdd(proceeds, _cost);
+           secretBids[_addr].tokens += _purchaseCount;
+           purchasedCount += _purchaseCount;
+           //transfer tokens to this bidder
+           if (!token.transfer(_addr, _purchaseCount))
+             revert();
+         }
       }
       //refund whatever remains
       //use pull here, to prevent any bidder from reverting their purchase
@@ -408,8 +433,8 @@ contract TokenAuction is SafeMath {
   // once called, any remaining tokens will be burned.
   //
   function doDeveloperGrant() public afterSale {
-    uint _quantity = purchasedCount * developerPctX10 / 1000;
-    var _tokensLeft = token.balanceOf(this);
+    uint _quantity = safeMul(purchasedCount, developerPctX10K) / 1000000;
+    uint _tokensLeft = token.balanceOf(this);
     if (_quantity > _tokensLeft)
       _quantity = _tokensLeft;
     if (_quantity > 0) {
@@ -438,7 +463,7 @@ contract TokenAuction is SafeMath {
 
   //for debug
   //only available before the contract is locked
-  function haraKiri() ownerOnly unlockedOnly {
+  function haraKiri() public ownerOnly unlockedOnly {
     selfdestruct(owner);
   }
 }
