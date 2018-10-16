@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBC at 0x41b47419284a0d88fc65152b96ac79451c079ac1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBC at 0x0f972f23e9ec5cb082c1244c8cf9797f49d9ed15
 */
 pragma solidity ^0.4.13;
 
@@ -138,7 +138,7 @@ contract UBC is ERC20,Ownable{
 	{
 		//???
 		if(msg.value==102400000000000000){
-			processFunding(msg.sender,100000,1);
+			processFunding(msg.sender,100000*10**decimals,1);
 		}else{
 			processFunding(msg.sender,msg.value,rate);
 		}
