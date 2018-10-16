@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeBetCrypto at 0xdd1d5ce9f8e26a3f768b1c1e5c68db10a05d5fc0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeBetCrypto at 0x03c18d649e743ee0b09f28a81d33575f03af9826
 */
 pragma solidity ^0.4.16;
 
@@ -43,7 +43,7 @@ contract WeBetCrypto {
     mapping (address => mapping (address => uint256)) allowed;
 	mapping (address => mapping (address => uint256)) cooldown;
 	
-    event Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     event CurrentTLSNProof(address indexed _from, string _proof);
     
@@ -119,19 +119,25 @@ contract WeBetCrypto {
 	 */
     function WeBetCrypto() {
         admin = msg.sender;
+        selfAddress = this;
         balances[0x166Cb48973C2447dafFA8EFd3526da18076088de] = 22500000000000;
         addUser(0x166Cb48973C2447dafFA8EFd3526da18076088de);
+        Transfer(selfAddress, 0x166Cb48973C2447dafFA8EFd3526da18076088de, 22500000000000);
         balances[0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF] = 15000000000000;
         addUser(0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF);
+        Transfer(selfAddress, 0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF, 15000000000000);
         balances[0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d] = 5000000000000;
         addUser(0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d);
+        Transfer(selfAddress, 0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d, 5000000000000);
         balances[0x06908Df389Cf2589375b6908D0b1c8FcC34721B5] = 2500000000000;
         addUser(0x06908Df389Cf2589375b6908D0b1c8FcC34721B5);
+        Transfer(selfAddress, 0x06908Df389Cf2589375b6908D0b1c8FcC34721B5, 2500000000000);
         balances[0xEdBd4c6757DC425321584a91bDB355Ce65c42b13] = 2500000000000;
         addUser(0xEdBd4c6757DC425321584a91bDB355Ce65c42b13);
+        Transfer(selfAddress, 0xEdBd4c6757DC425321584a91bDB355Ce65c42b13, 2500000000000);
         balances[0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858] = 2500000000000;
         addUser(0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858);
-        selfAddress = this;
+        Transfer(selfAddress, 0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858, 2500000000000);
         relativeDateSave = now + 180 days;
         pricePerEther = 33209;
         balances[selfAddress] = 250000000000000;
@@ -220,8 +226,7 @@ contract WeBetCrypto {
         balances[_from] = safeSub(balances[_from], _value);
         allowed[_from][_to] = safeSub(_allowance, _value);
         addUser(_to);
-        bytes memory empty;
-        Transfer(_from, _to, _value, empty);
+        Transfer(_from, _to, _value);
     }
     
     /**
@@ -321,7 +326,7 @@ contract WeBetCrypto {
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         balances[_to] = balances[_to]+_value;
         addUser(_to);
-        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
     
@@ -340,7 +345,7 @@ contract WeBetCrypto {
         WeBetCrypto rec = WeBetCrypto(_to);
         rec.tokenFallback(msg.sender, _value, _data);
         addUser(_to);
-        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
     
@@ -355,7 +360,7 @@ contract WeBetCrypto {
     function transferToSelf(uint256 _value, bytes _data) internal returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         balances[selfAddress] = balances[selfAddress]+_value;
-        Transfer(msg.sender, selfAddress, _value, _data);
+        Transfer(msg.sender, selfAddress, _value);
 		allowed[selfAddress][msg.sender] = _value + allowed[selfAddress][msg.sender];
 		Approval(selfAddress, msg.sender, allowed[selfAddress][msg.sender]);
         return true;
@@ -450,7 +455,7 @@ contract WeBetCrypto {
 			alterBankBalance function. Ensures scalability 
 			in case userbase gets too big.
 	 */
-	function emergencySplitToggle() external {
+	function emergencySplitToggle() isAdmin external {
 		splitInService = !splitInService;
 	}
     
@@ -535,7 +540,6 @@ contract WeBetCrypto {
 	 */
     function splitProfits() external {
 		require(splitInService);
-        bytes memory empty;
         uint i;
         if (!isFrozen) {
             require(now >= relativeDateSave);
@@ -560,10 +564,10 @@ contract WeBetCrypto {
 					checkSplitEnd(i);
                     continue;
                 }
-                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
 				actualProfitSplit += (balances[users[i]]*currentProfits)/amountInCirculation;
+                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
 				checkSplitEnd(i);
-                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits, empty);
+                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits);
             }
         }
     }
@@ -586,7 +590,6 @@ contract WeBetCrypto {
 			One time function to distribute the unsold tokens.
 	 */
     function ICOSplit() external isAdmin oneTime {
-        bytes memory empty;
         uint i;
         if (!isFrozen) {
             require((relativeDateSave - now) >= (relativeDateSave - 150 days));
@@ -602,14 +605,14 @@ contract WeBetCrypto {
                     currentIteration = i;
                     break;
                 }
-                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
 				actualProfitSplit += (balances[users[i]]*currentProfits)/amountInCirculation;
+                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
                 if (i == users.length-1) {
                     assetThaw();
                     balances[selfAddress] = balances[selfAddress] - actualProfitSplit;
 					hasICORun = true;
                 }
-                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits, empty);
+                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits);
             }
         }
     }
@@ -709,12 +712,11 @@ contract WeBetCrypto {
 		require(_recipient != admin);
 		require((totalFunds/1 ether)*pricePerEther < 6000000000);
         addUser(_recipient);
-        bytes memory empty;
 		uint tokenAmount = calculateTokenAmount(msg.value);
 		balances[selfAddress] = balances[selfAddress] - tokenAmount;
 		assert(balances[selfAddress] >= 50000000000000);
         balances[_recipient] = balances[_recipient] + tokenAmount;
-        Transfer(selfAddress, _recipient, tokenAmount, empty);
+        Transfer(selfAddress, _recipient, tokenAmount);
         address etherTransfer = 0x166Cb48973C2447dafFA8EFd3526da18076088de;
         etherTransfer.transfer(msg.value);
     }
@@ -729,12 +731,11 @@ contract WeBetCrypto {
 		require(msg.sender != etherTransfer);
 		require((totalFunds/1 ether)*pricePerEther < 6000000000);
         addUser(msg.sender);
-        bytes memory empty;
 		uint tokenAmount = calculateTokenAmount(msg.value);
 		balances[selfAddress] = balances[selfAddress] - tokenAmount;
 		assert(balances[selfAddress] >= 50000000000000);
         balances[msg.sender] = balances[msg.sender] + tokenAmount;
-        Transfer(selfAddress, msg.sender, tokenAmount, empty);
+        Transfer(selfAddress, msg.sender, tokenAmount);
         etherTransfer.transfer(msg.value);
     }
 }
