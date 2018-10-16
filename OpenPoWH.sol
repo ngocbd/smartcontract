@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0x6e692023289738afd6ec4a89bf048c5fbe2db884
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0xf7d724304d99a29305d36bc073a89d44fd401e39
 */
 pragma solidity ^0.4.18;
 
 /*
- - Testing -
 
 Proof of Weak Hands  -  New Open Edition!
  _____             _____     _ _ _ _____ 
@@ -20,17 +19,13 @@ OpenPoWH was made to be a decentralized clone of PoWH with an even start for all
 It's simple:
 - The first 50 transactions can only buy in for 0.1 ETH max. Anything more gets refunded. 
 - The contract address is released roughly 7 days prior to the game starting (based on block number), alowing time for review and preparation.
--_Any purchases done before the start block are refunded.
 
 Credits:
 
 Based on original PoWH concept: https://test.jochen-hoenicke.de/eth/ponzitoken/
-Original PoWHCoin Launch: PonziBot
-EthPy Secure Rewrite and Audit: divine, tocksIck, arc
+EthPy Secure Rewrite and Audit: divine, tocksick, arc
 Limitation of Buyin Amount: tocksick
 Delayed Public Start Time: Common Sense / https://solidity.readthedocs.io/ / The People
-modernvillain: Shit Shadow didn't even get a mention?
-
 
 */
 
@@ -86,7 +81,7 @@ contract OpenPoWH {
  	// Game Start Time
  	// Around 7 days @ 15s/block
   	uint public gameStartBlock;
-  	uint constant gameStartBlockOffset = 4; 
+  	uint constant gameStartBlockOffset = 4 * 60 * 24 * 7; 
     
 	function OpenPoWH() public {
     	initialFunds = limitedFirstBuyers;
