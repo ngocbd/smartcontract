@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xdfae83a2789fce7f6b2e01eb3aa47a6165ace955
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x651efeba62be2911f211b9e39ae7dcf3094bd758
 */
 pragma solidity ^0.4.13;
 library SafeMath {    
@@ -162,17 +162,21 @@ contract Sale is RI {
  **********/
 
     // THIS IS KEY VARIABLE AND DEFINED ACCORDING TO VALUE OF PLANNED COSTS ON THE PAGE https://business.fundaria.com
-    uint public poolCapUSD = 1002750;
+    uint public poolCapUSD = 1002750; // 1002750 initially
     // USD per 1 ether, added 10% aproximatelly to secure from wrong low price. We need add 10% of Stakes to supply to cover such price.
-    uint public usdPerEther = 360;
+    uint public usdPerEther = 350;
     uint public supplyCap; // Current total supply cap according to lastStakePriceUSCents and poolCapUSD 
-    uint public businessPlannedPeriodDuration = 365 days; // total period planned for business activity
+    uint public businessPlannedPeriodDuration = 365 days; // total period planned for business activity 365 days
     uint public businessPlannedPeriodEndTimestamp;
     uint public teamCap; // team Stakes capacity
     uint8 public teamShare = 45; // share for team
     uint public distributedTeamStakes; // distributed Stakes to team   
     uint public contractCreatedTimestamp; // when this contract was created  
-    address public pool = 0x335C415D7897B2cb2a2562079400Fb6eDf54a7ab; // initial pool wallet address    
+    address public pool = 0x1882464533072e9fCd8C6D3c5c5b588548B95296; // initial pool wallet address  
+    mapping (address=>bool) public rejectedInvestmentWithdrawals;
+    uint public allowedAmountToTransferToPool; // this amount is increased when investor rejects to withdraw his/her investment
+    uint public allowedAmountTransferedToPoolTotal; // sum of all allowedAmountToTransferToPool used 
+    uint public investmentGuidesRewardsWithdrawn; // total amount of rewards wei withdrawn by Guides  
 
 /********** 
  * Bounty *
@@ -185,6 +189,7 @@ contract Sale is RI {
 /*********** 
  * Sale *
  ***********/
+    address supplier = 0x0000000000000000000000000000000000000000; // address of Stakes initial supplier (abstract)
     // data to store invested wei value & Stakes for Investor
     struct saleData {
       uint stakes; // how many Stakes where recieved by this Investor total
@@ -194,8 +199,8 @@ contract Sale is RI {
       address guide; // address of Investment Guide
     }
     mapping (address=>saleData) public saleStat; // invested value + Stakes data for every Investor        
-    uint public saleStartTimestamp = 1511546400; // 1511546400 regular Stakes sale start date            
-    uint public saleEndTimestamp = 1513965600; // 1513965600
+    uint public saleStartTimestamp = 1511373600; // regular Stakes sale start date            
+    uint public saleEndTimestamp = 1513965600; 
     uint public distributedSaleStakes; // distributed stakes to all Investors
     uint public totalInvested; //how many invested total
     uint public totalWithdrawn; //how many withdrawn total
@@ -212,7 +217,8 @@ contract Sale is RI {
     struct guideData {
       bool registered; // is this Investment Guide registered
       uint accumulatedPotentialReward; // how many reward wei are potentially available
-      uint withdrawnReward; // how much reward wei where withdrawn by this Investment Guide already
+      uint rewardToWithdraw; // availabe reward to withdraw now
+      uint periodicallyWithdrawnReward; // how much reward wei where withdrawn by this Investment Guide already
     }
     mapping (address=>guideData) public guidesStat; // mapping of Investment Guides datas    
     uint public bonusCap; // max amount of bonus Stakes availabe
@@ -224,14 +230,7 @@ contract Sale is RI {
   WANT TO EARN ON STAKES SALE ?
   BECOME INVESTMENT GUIDE AND RECIEVE 10% OF ATTRACTED INVESTMENT !
   INTRODUCE YOURSELF ON FUNDARIA.COM@GMAIL.COM & GIVE YOUR WALLET ADDRESS
-*/
-    
-/************* 
- * Promotion *
- *************/
-    
-    uint public maxAmountForSalePromotion = 30 ether; // How many we can use for promotion of sale
-    uint public withdrawnAmountForSalePromotion;    
+*/    
 
 /********************************************* 
  * To Pool transfers & Investment withdrawal *
@@ -252,6 +251,7 @@ contract Sale is RI {
     event PoolCapChanged(uint oldCapUSD, uint newCapUSD);
     event RegisterGuide(address investmentGuide);
     event TargetPriceChanged(uint8 N, uint oldTargetPrice, uint newTargetPrice);
+    event InvestmentGuideWithdrawReward(address investmentGuide, uint withdrawnRewardWei);
     
     modifier onlyOwner() {
       require(msg.sender==owner);
@@ -264,15 +264,17 @@ contract Sale is RI {
     function Sale() public {     
       uint financePeriodDuration = businessPlannedPeriodDuration/financePeriodsCount; // quantity of seconds in chosen finance period
       // making array with timestamps of every finance period end date
-      for(uint8 i=0; i<financePeriodsCount; i++) {
-        financePeriodsTimestamps.push(saleEndTimestamp+financePeriodDuration*(i+1));  
+      financePeriodsTimestamps.push(saleEndTimestamp); // first finance period is whole sale period
+      for(uint8 i=1; i<=financePeriodsCount; i++) {
+        financePeriodsTimestamps.push(saleEndTimestamp+financePeriodDuration*i);  
       }
       businessPlannedPeriodEndTimestamp = saleEndTimestamp+businessPlannedPeriodDuration; 
       contractCreatedTimestamp = now;
       targetPrice.push(1); // Initial Stake price mark in U.S. cents (1 cent = $0.01)  
       targetPrice.push(10); // price mark at the sale period start timestamp      
       targetPrice.push(100); // price mark at the sale period end timestamp       
-      targetPrice.push(1000); // price mark at hte end of business planned period          
+      targetPrice.push(1000); // price mark at hte end of business planned period
+      balances[supplier] = 0; // nullify Stakes formal supplier balance         
     }
   /**
    * @dev How many investment remained? Maximum investment is poolCapUSD
@@ -358,7 +360,7 @@ contract Sale is RI {
           balances[owner] += teamStakes; // rewarding team according to teamShare
           totalSupply += teamStakes; // supplying team Stakes
           distributedTeamStakes += teamStakes; // saving distributed team Stakes 
-          saleSupply(msg.sender, saleStakes, weiInvested, teamStakes); // process saleSupply
+          saleSupply(msg.sender, saleStakes, weiInvested); // process saleSupply
           if(saleStat[msg.sender].guide != address(0)) { // we have Investment Guide to reward and distribute bonus Stakes
             distributeBonusStakes(msg.sender, saleStakes, weiInvested);  
           }          
@@ -376,16 +378,16 @@ contract Sale is RI {
    * @param _stakes is quantity of Stakes transfered 
    * @param _wei is value invested        
    */ 
-    function saleSupply(address _to, uint _stakes, uint _wei, uint team_stakes) internal {
-      require(_stakes > 0);   
-      balances[_to] = balances[_to].add(_stakes); // to
-      totalSupply = totalSupply.add(_stakes);
-      distributedSaleStakes = distributedSaleStakes.add(_stakes);
+    function saleSupply(address _to, uint _stakes, uint _wei) internal {
+      require(_stakes > 0);  
+      balances[_to] += _stakes; // supply sold Stakes directly to buyer
+      totalSupply += _stakes;
+      distributedSaleStakes += _stakes;
       totalInvested = totalInvested.add(_wei); // adding to total investment
       // saving stat
-      saleStat[_to].stakes = saleStat[_to].stakes.add(_stakes); // stating Stakes bought       
+      saleStat[_to].stakes += _stakes; // stating Stakes bought       
       saleStat[_to].invested = saleStat[_to].invested.add(_wei); // stating wei invested
-      StakesSale(_to, _wei, _stakes, team_stakes, lastStakePriceUSCents);
+      Transfer(supplier, _to, _stakes);
     }      
   /**
    * @dev Set new owner
@@ -451,7 +453,7 @@ contract Sale is RI {
     function getBonusStakesPermanently(address key) public {
       require(guidesStat[key].registered);
       require(saleStat[msg.sender].guide == address(0)); // Investment Guide is not applied yet for this Investor
-      saleStat[msg.sender].guide = key; // apply Guide 
+      saleStat[msg.sender].guide = key; // apply Inv. Guide 
       if(saleStat[msg.sender].invested > 0) { // we have invested value, process distribution of bonus Stakes and rewarding a Guide     
         distributeBonusStakes(msg.sender, saleStat[msg.sender].stakes, saleStat[msg.sender].invested);
       }
@@ -467,7 +469,11 @@ contract Sale is RI {
       uint added_bonus_stakes = (added_stakes*((bonusShare*100).div(saleShare)))/100; // how many bonus Stakes to add
       require(distributedBonusStakes+added_bonus_stakes <= bonusCap); // check is bonus cap is not overflowed
       uint added_potential_reward = (added_wei*guideInvestmentAttractedShareToPay)/100; // reward for the Guide
-      guidesStat[saleStat[_to].guide].accumulatedPotentialReward += added_potential_reward; // save reward for the Guide
+      if(!rejectedInvestmentWithdrawals[_to]) {
+        guidesStat[saleStat[_to].guide].accumulatedPotentialReward += added_potential_reward; // save potential reward for the Guide
+      } else {
+        guidesStat[saleStat[_to].guide].rewardToWithdraw += added_potential_reward; // let linked Investment Guide to withdraw all this reward   
+      }      
       saleStat[_to].guideReward += added_potential_reward; // add guideReward wei value for stat
       saleStat[_to].bonusStakes += added_bonus_stakes; // add bonusStakes for stat    
       balances[_to] += added_bonus_stakes; // transfer bonus Stakes
@@ -476,29 +482,28 @@ contract Sale is RI {
       BonusDistributed(_to, added_bonus_stakes, saleStat[_to].guide, added_potential_reward);          
     }
   /**
+   * @dev Get current finance period number
+   * @return current finance period number        
+   */    
+    function currentFinancePeriod() internal view returns(uint8) {
+      uint8 current_finance_period = 0;
+      for(uint8 i=0; i <= financePeriodsCount; i++) {
+        current_finance_period = i;
+        if(now<financePeriodsTimestamps[i]) {          
+          break;
+        }
+      }
+      return current_finance_period;      
+    }
+  /**
    * @dev Show how much wei can withdraw Investment Guide
    * @param _guide address of registered guide 
    * @return wei quantity        
    */     
     function guideRewardToWithdraw(address _guide) public view returns(uint) {
-      uint8 current_finance_period = 0;
-      for(uint8 i=0; i < financePeriodsCount; i++) {
-        current_finance_period = i+1;
-        if(now<financePeriodsTimestamps[i]) {          
-          break;
-        }
-      }
-      // reward to withdraw depends on current finance period and do not include potentially withdaw amount of investment
-      return (guidesStat[_guide].accumulatedPotentialReward*current_finance_period)/financePeriodsCount - guidesStat[_guide].withdrawnReward;  
+      // reward to withdraw depends on current finance period and do not include potentially withdraw amount of investment
+      return (guidesStat[_guide].accumulatedPotentialReward*(currentFinancePeriod()+1))/(financePeriodsCount+1) + guidesStat[_guide].rewardToWithdraw - guidesStat[_guide].periodicallyWithdrawnReward;  
     }  
-  /**
-   * @dev Show share of Stakes on some address related to full supply capacity
-   * @param my_address my or someone address
-   * @return share of Stakes in % (floored to less number. If less then 1, null is showed)        
-   */      
-    function myStakesSharePercent(address my_address) public view returns(uint) {
-      return (balances[my_address]*100)/supplyCap;
-    }
   
   /*
     weiForStake & stakeForWei functions sometimes show not correct translated value from dapp interface (view) 
@@ -528,45 +533,34 @@ contract Sale is RI {
    *      2) according to share (finance_periods_last + current_finance_period) / business_planned_period
    */    
     function transferToPool() public onlyOwner {      
-      uint available; // available funds for transfering to pool    
+      uint max_available; // max_available funds for transfering to pool    
       uint amountToTransfer; // amount to transfer to pool
-      // promotional funds
-      if(now < saleEndTimestamp) {
-        require(withdrawnAmountForSalePromotion < maxAmountForSalePromotion); // withdrawn not maximum promotional funds
-        available = totalInvested/financePeriodsCount; // avaialbe only part of total value of total invested funds        
-        // current contract balance + witdrawn promo funds is less or equal to max promo funds
-        if(available+withdrawnAmountForSalePromotion <= maxAmountForSalePromotion) {
-          withdrawnAmountForSalePromotion += available;
-          transferedToPool += available;
-          amountToTransfer = available;         
-        } else {
-          // contract balance + witdrawn promo funds more then maximum promotional funds 
-          amountToTransfer = maxAmountForSalePromotion-withdrawnAmountForSalePromotion;
-          withdrawnAmountForSalePromotion = maxAmountForSalePromotion;
-          transferedToPool = maxAmountForSalePromotion;
-        }
-        pool.transfer(amountToTransfer);
-        TransferedToPool(amountToTransfer, 0);             
-      } else {
         // search end timestamp of current financial period
-        for(uint8 i=0; i < financePeriodsCount; i++) {
+        for(uint8 i=0; i <= financePeriodsCount; i++) {
           // found end timestamp of current financial period OR now is later then business planned end date (transfer wei remnant)
-          if(now < financePeriodsTimestamps[i] || (i == financePeriodsCount-1 && now > financePeriodsTimestamps[i])) {   
-            available = ((i+1)*(totalInvested+totalWithdrawn))/financePeriodsCount; // avaialbe only part of total value of total invested funds
-            // not all available funds are transfered at the moment
-            if(available > transferedToPool) {
-              amountToTransfer = available-transferedToPool;
-              if(amountToTransfer > this.balance) {
-                amountToTransfer = this.balance;  
+          if(now < financePeriodsTimestamps[i] || (i == financePeriodsCount && now > financePeriodsTimestamps[i])) {   
+            // avaialbe only part of total value of total invested funds with substracted total allowed amount transfered
+            max_available = ((i+1)*(totalInvested+totalWithdrawn-allowedAmountTransferedToPoolTotal))/(financePeriodsCount+1); 
+            // not all max_available funds are transfered at the moment OR we have allowed amount to transfer
+            if(max_available > transferedToPool-allowedAmountTransferedToPoolTotal || allowedAmountToTransferToPool > 0) {
+              if(allowedAmountToTransferToPool > 0) { // we have allowed by Investor (rejected to withdraw) amount
+                amountToTransfer = allowedAmountToTransferToPool; // to transfer this allowed amount 
+                allowedAmountTransferedToPoolTotal += allowedAmountToTransferToPool; // add allowed amount to total allowed amount
+                allowedAmountToTransferToPool = 0;                  
+              } else {
+                amountToTransfer = max_available-transferedToPool; // only remained amount is available to transfer
               }
-              transferedToPool += amountToTransfer;
-              pool.transfer(amountToTransfer);                           
+              if(amountToTransfer > this.balance) { // remained amount to transfer more then current balance
+                amountToTransfer = this.balance; // correct amount to transfer  
+              }
+              transferedToPool += amountToTransfer; // increase transfered to pool amount               
+              pool.transfer(amountToTransfer);                        
               TransferedToPool(amountToTransfer, i+1);
             }
+            allowedAmountToTransferToPool=0;
             break;    
           }
-        }
-      }      
+        }     
     }  
   /**
    * @dev Investor can withdraw part of his/her investment.
@@ -574,17 +568,17 @@ contract Sale is RI {
    *      Investor gives back all stakes which he/she got for his/her investment.     
    */       
     function withdrawInvestment() public {
+      require(!rejectedInvestmentWithdrawals[msg.sender]); // this Investor not rejected to withdraw their investment
       require(saleStat[msg.sender].stakes > 0);
       require(balances[msg.sender] >= saleStat[msg.sender].stakes+saleStat[msg.sender].bonusStakes); // Investor has needed stakes to return
-      require(now > saleEndTimestamp); // do not able to withdraw investment before end of regular sale period
       uint remained; // all investment which are available to withdraw by all Investors
       uint to_withdraw; // available funds to withdraw for this particular Investor
-      for(uint8 i=0; i < financePeriodsCount-1; i++) {
+      for(uint8 i=0; i < financePeriodsCount; i++) { // last fin. period is not available
         if(now<financePeriodsTimestamps[i]) { // find end timestamp of current financial period          
-          remained = totalInvested - ((i+1)*totalInvested)/financePeriodsCount; // remained investment to withdraw by all Investors 
+          remained = totalInvested - ((i+1)*totalInvested)/(financePeriodsCount+1); // remained investment to withdraw by all Investors 
           to_withdraw = (saleStat[msg.sender].invested*remained)/totalInvested; // investment to withdraw by this Investor
           uint sale_stakes_to_burn = saleStat[msg.sender].stakes+saleStat[msg.sender].bonusStakes; // returning all Stakes saved in saleStat[msg.sender]
-          uint team_stakes_to_burn = (saleStat[msg.sender].stakes*teamShare)/saleShare; // team Stakes are also burned
+          uint team_stakes_to_burn = (saleStat[msg.sender].stakes*teamShare)/saleShare; // appropriate issued team Stakes are also burned
           balances[owner] = balances[owner].sub(team_stakes_to_burn); // burn appropriate team Stakes
           distributedTeamStakes -= team_stakes_to_burn; // remove team Stakes from distribution         
           balances[msg.sender] = balances[msg.sender].sub(sale_stakes_to_burn); // burn stakes got for invested wei
@@ -593,7 +587,7 @@ contract Sale is RI {
           distributedSaleStakes -= saleStat[msg.sender].stakes;
           if(saleStat[msg.sender].guide != address(0)) { // we have Guide and bonusStakes
             // potential reward for the Guide is decreased proportionally
-            guidesStat[saleStat[msg.sender].guide].accumulatedPotentialReward -= (saleStat[msg.sender].guideReward - ((i+1)*saleStat[msg.sender].guideReward)/financePeriodsCount); 
+            guidesStat[saleStat[msg.sender].guide].accumulatedPotentialReward -= (saleStat[msg.sender].guideReward - ((i+1)*saleStat[msg.sender].guideReward)/(financePeriodsCount+1)); 
             distributedBonusStakes -= saleStat[msg.sender].bonusStakes;
             saleStat[msg.sender].bonusStakes = 0;
             saleStat[msg.sender].guideReward = 0;          
@@ -602,11 +596,43 @@ contract Sale is RI {
           saleStat[msg.sender].invested = 0; // nullify wei invested value
           totalWithdrawn += to_withdraw;
           msg.sender.transfer(to_withdraw); // witdraw investment
-          InvestmentWithdrawn(msg.sender, to_withdraw, sale_stakes_to_burn, financePeriodsCount-i-1);          
+          InvestmentWithdrawn(msg.sender, to_withdraw, sale_stakes_to_burn, financePeriodsCount-i);          
           break;  
         }
       }      
     }
+  /**
+   * @dev Investor rejects withdraw investment. This lets Investment Guide withdraw all his/her reward related to this Investor   
+   */     
+    function rejectInvestmentWithdrawal() public {
+      rejectedInvestmentWithdrawals[msg.sender] = true;
+      address guide = saleStat[msg.sender].guide;
+      if(guide != address(0)) { // Inv. Guide exists
+        if(saleStat[msg.sender].guideReward >= guidesStat[guide].periodicallyWithdrawnReward) { // already withdrawed less then to withdraw for this Investor
+          uint remainedRewardToWithdraw = saleStat[msg.sender].guideReward-guidesStat[guide].periodicallyWithdrawnReward;
+          guidesStat[guide].periodicallyWithdrawnReward = 0; // withdrawn reward is counted as withdrawn of this Investor reward 
+          if(guidesStat[guide].accumulatedPotentialReward >= remainedRewardToWithdraw) { // we have enough potential reward
+            guidesStat[guide].accumulatedPotentialReward -= remainedRewardToWithdraw; // decrease potential reward
+            guidesStat[guide].rewardToWithdraw += remainedRewardToWithdraw;  // increase total amount to withdraw right now
+          } else {
+            guidesStat[guide].accumulatedPotentialReward = 0; // something wrong so nullify
+          }
+        } else {
+          // substract current Investor's reward from periodically withdrawn reward to remove it from withdrawned
+          guidesStat[guide].periodicallyWithdrawnReward -= saleStat[msg.sender].guideReward;
+          // we have enough potential reward - all ok 
+          if(guidesStat[guide].accumulatedPotentialReward >= saleStat[msg.sender].guideReward) {
+            // we do not count this Investor guideReward in potential reward
+            guidesStat[guide].accumulatedPotentialReward -= saleStat[msg.sender].guideReward;
+            guidesStat[guide].rewardToWithdraw += saleStat[msg.sender].guideReward;  // increase total amount to withdraw right now  
+          } else {
+            guidesStat[guide].accumulatedPotentialReward = 0; // something wrong so nullify  
+          }   
+        }
+      }
+      allowedAmountToTransferToPool += saleStat[msg.sender].invested;
+    }
+  
   /**
    * @dev Distribute bounty rewards for bounty tasks
    * @param _to is address of bounty hunter
