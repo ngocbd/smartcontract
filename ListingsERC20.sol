@@ -1,8 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0x548f7581e85b473da466ef9edbe85c5226eaa3b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0xa667f7c9f8d9e7f54814f312ae42d08a31154889
 */
 pragma solidity ^0.4.18;
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -39,19 +45,13 @@ contract Ownable {
   }
 
 }
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+pragma solidity ^0.4.18;
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -79,6 +79,23 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+}
+
+
+
+contract ERC20Basic {
+  uint256 public totalSupply;
+  uint8 public decimals;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 contract ListingsERC20 is Ownable {
       using SafeMath for uint256;
@@ -130,6 +147,9 @@ contract ListingsERC20 is Ownable {
     function getAllowance(address tokenContract, address seller, address listingContract) internal constant returns (uint256) {
         return ERC20(tokenContract).allowance.gas(GAS_LIMIT)(seller, listingContract);
     }
+    function getDecimals(address tokenContract) internal constant returns (uint256) {
+        return ERC20(tokenContract).decimals.gas(GAS_LIMIT)();
+    }
 
     function createListing(address tokenContractAddress, uint256 price, uint256 allowance, uint256 dateEnds, uint256 salt) external {
         require(price > 0);
@@ -154,8 +174,16 @@ contract ListingsERC20 is Ownable {
         address seller = listing.seller;
         address contractAddress = listing.tokenContractAddress;
         uint256 price = listing.price;
-        uint256 sale = price.mul(amount);
+        uint256 decimals = getDecimals(listing.tokenContractAddress);
+        uint256 factor = 10 ** decimals;
+        uint256 sale;
+        if (decimals > 0) {
+            sale = price.mul(amount).div(factor);
+        } else {
+            sale = price.mul(amount);
+        } 
         uint256 allowance = listing.allowance;
+        //make sure listing is still available
         require(now <= listing.dateEnds);
         //make sure there are still enough to sell from this listing
         require(allowance - sold[listingId] >= amount);
@@ -166,8 +194,12 @@ contract ListingsERC20 is Ownable {
         require(msg.value == sale);
         ERC20 tokenContract = ERC20(contractAddress);
         require(tokenContract.transferFrom(seller, msg.sender, amount));
-        seller.transfer(sale - (sale.mul(ownerPercentage).div(10000)));
-        sold[listingId] = allowance.sub(amount);
+        if (ownerPercentage > 0) {
+            seller.transfer(sale - (sale.mul(ownerPercentage).div(10000)));
+        } else {
+            seller.transfer(sale);
+        }
+        sold[listingId] = sold[listingId].add(amount);
         ListingBought(listingId, contractAddress, price, amount, now, msg.sender);
     }
 
