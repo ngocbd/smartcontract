@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0x8a628e600c9e170a73cc140b5f5770bd05f102e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0x49ecdc2ca8052a73f2d785b635db0ea711da9423
 */
 pragma solidity ^0.4.4;
 
@@ -59,7 +59,6 @@ contract TokenSeller is Owned {
 
     event ActivatedEvent(bool sells);
     event MakerWithdrewAsset(uint256 tokens);
-    event MakerTransferredAsset(address toTokenSeller, uint256 tokens);
     event MakerWithdrewERC20Token(address tokenAddress, uint256 tokens);
     event MakerWithdrewEther(uint256 ethers);
     event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
@@ -104,32 +103,6 @@ contract TokenSeller is Owned {
     function makerWithdrawAsset(uint256 tokens) onlyOwner returns (bool ok) {
         MakerWithdrewAsset(tokens);
         return ERC20Partial(asset).transfer(owner, tokens);
-    }
-
-    // Maker can transfer asset tokens from this contract to another
-    // TokenSeller contract, with the following parameter:
-    //   toTokenSeller  Another TokenSeller contract owned by the
-    //                  same owner
-    //   tokens         is the number of asset tokens to be moved
-    //
-    // The MakerTransferredAsset() event is logged with the following
-    // parameters:
-    //   toTokenSeller  The other TokenSeller contract owned by
-    //                  the same owner
-    //   tokens         is the number of tokens transferred
-    //
-    // The asset Transfer() event is logged from this contract to
-    // the other contract
-    //
-    function makerTransferAsset(
-        TokenSeller toTokenSeller,
-        uint256 tokens
-    ) onlyOwner returns (bool ok) {
-        if (owner != toTokenSeller.owner() || asset != toTokenSeller.asset()) {
-            throw;
-        }
-        MakerTransferredAsset(toTokenSeller, tokens);
-        return ERC20Partial(asset).transfer(toTokenSeller, tokens);
     }
 
     // Maker can withdraw any ERC20 asset tokens from this contract
@@ -189,7 +162,7 @@ contract TokenSeller is Owned {
             if (order > 0) {
                 if(!ERC20Partial(asset).transfer(msg.sender, order * units)) throw;
             }
-            TakerBoughtAsset(msg.sender, msg.value, change, order * units);
+            TakerBoughtAsset(msg.sender, msg.value, order * units, change);
         }
         // Return user funds if the contract is not selling
         else if (!msg.sender.send(msg.value)) throw;
