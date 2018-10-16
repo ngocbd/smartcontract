@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronosCore at 0xC67a50adFbDD3C8ce6157cd65360047843541175
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronosCore at 0x51D32FB6c763878F44f93907d7f88FD9eF370595
 */
 pragma solidity ^0.4.18;
 
