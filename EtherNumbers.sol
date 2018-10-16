@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0x171ad7aa2d6e083ebbbef0e7ada2ef76da4dadb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0x2c38b6023509aeb6437491dbce27d87e3ad37310
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -212,7 +212,8 @@ contract EtherNumbers is ERC721 {
     // Making sure sent amount is greater than or equal to the sellingPrice
     require(msg.value >= sellingPrice);
 
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 82), 100));
+    uint256 dividends = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 10), 100));
     uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
 
     // Update prices
@@ -221,11 +222,73 @@ contract EtherNumbers is ERC721 {
       gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 92);
     } else if (sellingPrice < secondStepLimit) {
       // second stage
-      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 92);
+      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 140), 92);
     } else {
       // third stage
-      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 92);
+      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 92);
     }
+
+
+    if (balanceOf(ownerOf(0)) >= 3 || ownerOf(0) == ownerOf(getNumberOne()) || ownerOf(0) == ownerOf(getNumberTwo()) || ownerOf(0) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(0).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 15));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 15));
+    }
+
+    if (balanceOf(ownerOf(1)) >= 3 || ownerOf(1) == ownerOf(getNumberOne()) || ownerOf(1) == ownerOf(getNumberTwo()) || ownerOf(1) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(1).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 14));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 14));
+    }
+
+    if (balanceOf(ownerOf(2)) >= 3 || ownerOf(2) == ownerOf(getNumberOne()) || ownerOf(2) == ownerOf(getNumberTwo()) || ownerOf(2) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(2).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 13));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 13));
+    }
+
+    if (balanceOf(ownerOf(3)) >= 3 || ownerOf(3) == ownerOf(getNumberOne()) || ownerOf(3) == ownerOf(getNumberTwo()) || ownerOf(3) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(3).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 12));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 12));
+    }
+
+    if (balanceOf(ownerOf(4)) >= 3 || ownerOf(4) == ownerOf(getNumberOne()) || ownerOf(4) == ownerOf(getNumberTwo()) || ownerOf(4) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(4).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 11));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 11));
+    }
+
+    if (balanceOf(ownerOf(5)) >= 3 || ownerOf(5) == ownerOf(getNumberOne()) || ownerOf(5) == ownerOf(getNumberTwo()) || ownerOf(5) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(5).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 9));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 9));
+    }
+
+    if (balanceOf(ownerOf(6)) >= 3 || ownerOf(6) == ownerOf(getNumberOne()) || ownerOf(6) == ownerOf(getNumberTwo()) || ownerOf(6) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(6).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 8));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 8));
+    }
+
+    if (balanceOf(ownerOf(7)) >= 3 || ownerOf(7) == ownerOf(getNumberOne()) || ownerOf(7) == ownerOf(getNumberTwo()) || ownerOf(7) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(7).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 7));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 7));
+    }
+
+    if (balanceOf(ownerOf(8)) >= 3 || ownerOf(8) == ownerOf(getNumberOne()) || ownerOf(8) == ownerOf(getNumberTwo()) || ownerOf(8) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(8).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 6));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 6));
+    }
+
+    if (balanceOf(ownerOf(9)) >= 3 || ownerOf(9) == ownerOf(getNumberOne()) || ownerOf(9) == ownerOf(getNumberTwo()) || ownerOf(9) == ownerOf(getNumberThree()) && oldOwner != address(this)) {
+        ownerOf(9).transfer(SafeMath.mul(SafeMath.div(dividends, 100), 5));
+    } else {
+        oldOwner.transfer(SafeMath.mul(SafeMath.div(dividends, 100), 5));
+    }
+
 
     _transfer(oldOwner, newOwner, _tokenId);
 
@@ -234,10 +297,45 @@ contract EtherNumbers is ERC721 {
       oldOwner.transfer(payment); //(1-0.08)
     }
 
+
+
+
     TokenSold(_tokenId, sellingPrice, gemIndexToPrice[_tokenId], oldOwner, newOwner, gems[_tokenId].name);
 
     msg.sender.transfer(purchaseExcess);
   }
+
+
+    uint256 numberOne;
+    uint256 numberTwo;
+    uint256 numberThree;
+
+
+  function setNumberOne(uint256 number) public onlyCEO {
+      numberOne = number;
+  }
+
+  function setNumberTwo(uint256 number) public onlyCEO {
+      numberTwo = number;
+  }
+
+  function setNumberThree(uint256 number) public onlyCEO {
+      numberThree = number;
+  }
+
+  function getNumberOne() public view returns (uint256 dailyNumber) {
+      return numberOne;
+  }
+
+  function getNumberTwo() public view returns (uint256 dailyNumber) {
+      return numberTwo;
+  }
+
+  function getNumberThree() public view returns (uint256 dailyNumber) {
+      return numberThree;
+  }
+
+
 
 
   function changePrice(uint256 _tokenId) public  {
