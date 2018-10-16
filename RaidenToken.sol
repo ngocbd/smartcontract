@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RaidenToken at 0x255aa6df07540cb5d3d297f0d0d4d84cb52bc8e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RaidenToken at 0xe4c622227b48e9c40bc1afa8a7ca81c4ee4b6247
 */
 pragma solidity ^0.4.17;
 
@@ -288,7 +288,7 @@ contract DutchAuction {
      */
 
     // Wait 7 days after the end of the auction, before anyone can claim tokens
-    uint constant public token_claim_waiting_period = 7 days;
+    uint constant public token_claim_waiting_period = 15 minutes;
 
     // Bid value over which the address has to be whitelisted
     // At deployment moment, less than 1k$
