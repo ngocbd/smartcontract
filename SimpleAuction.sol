@@ -1,23 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleAuction at 0xbee149d5cef48724918836c48f2749a5c5f75f8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleAuction at 0x207ff240d2f5baaefce160785f38ebd5d7bbdce4
 */
 pragma solidity ^0.4.11;
 
 contract SimpleAuction {
-    // 
-    // This is an auction where UNICEF is the beneficiary 
-    //
-    // The highest bidder of this auction is entiteled to Poster Number one of the worlds first Ehtereum funded movie The-Pitt-Circus Movie. 
-    // The Poster is a limited editions serigraphy (numbered and signed by the artist).
-    // To claim the poster the highest bidder can get in touch with the-pitts-circus.com or send the address an data-field transation to the contract of the beneficiary = 0xb23397f97715118532c8c1207F5678Ed4FbaEA6c after the auction has ended
-    // 
-    // 
-    //
-    //Parameters of the auction. Times are either
+    // Parameters of the auction. Times are either
     // absolute unix timestamps (seconds since 1970-01-01)
     // or time periods in seconds.
-    // 
-  	
+    address public beneficiary;
     uint public auctionStart;
     uint public biddingTime;
 
@@ -43,16 +33,10 @@ contract SimpleAuction {
     /// Create a simple auction with `_biddingTime`
     /// seconds bidding time on behalf of the
     /// beneficiary address `_beneficiary`.
-    
-    address _beneficiary = 0xb23397f97715118532c8c1207F5678Ed4FbaEA6c;
-	// UNICEF Multisig Wallet according to:
-	// unicefstories.org/2017/08/04/unicef-ventures-exploring-smart-contracts/
-	address beneficiary;
-    
     function SimpleAuction() {
-        beneficiary = _beneficiary;
+        beneficiary = 0x7Ef6fA8683491521223Af5A69b923E771fF2e73A;
         auctionStart = now;
-        biddingTime = 2587587;
+        biddingTime = 7 days;
     }
 
     /// Bid on the auction with the value sent
@@ -77,9 +61,9 @@ contract SimpleAuction {
         if (highestBidder != 0) {
             // Sending back the money by simply using
             // highestBidder.send(highestBid) is a security risk
-            // because it can be prevented by the caller by e.g.
-            // raising the call stack to 1023. It is always safer
-            // to let the recipients withdraw their money themselves.
+            // because it could execute an untrusted contract.
+            // It is always safer to let the recipients
+            // withdraw their money themselves.
             pendingReturns[highestBidder] += highestBid;
         }
         highestBidder = msg.sender;
@@ -104,11 +88,7 @@ contract SimpleAuction {
         }
         return true;
     }
-    // Users want to know when the auction ends, seconds from 1970-01-01
-    function auctionEndTime() constant returns (uint256) {
-        return auctionStart + biddingTime;
-    }
-    
+
     /// End the auction and send the highest bid
     /// to the beneficiary.
     function auctionEnd() {
