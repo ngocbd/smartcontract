@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x47584af952b675d35b20ce9eaf0cd95a9924812a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x42853c34b6ee66ea6dc5a894db5d3dee2aa701ee
 */
 pragma solidity ^0.4.18;
 
@@ -112,7 +112,7 @@ contract Gryphon is ERC20, Ownable {
     uint256 public preSaleMaxCapInWei = 10000 ether;
     uint256 public preSaleRaised = 0;
 
-    uint256 public icoSoftCapInWei = 100000 ether;
+    uint256 public icoSoftCapInWei = 102000 ether;
     uint256 public icoHardCapInWei = 238100 ether;
     uint256 public icoRaised = 0;
 
@@ -138,7 +138,7 @@ contract Gryphon is ERC20, Ownable {
     function Gryphon() public {
 
         owner = 0xf42B82D02b8f3E7983b3f7E1000cE28EC3F8C815;
-        vault = new RefundVault(0xe5D80dB8d236C0C6a5f5513533767781B2e6200f);
+        vault = new RefundVault(0x6cD6B03D16E4BE08159412a7E290F1EA23446Bf2);
 
         totalSupply_ = initialSupply*(10**decimals);
 
@@ -270,32 +270,6 @@ contract Gryphon is ERC20, Ownable {
             investorCount=investorCount-1;
         }
 
-        //if payment raised with otheer cryptos and token manually sent from here
-        if(msg.sender==owner){
-            uint raized = (_tokens_in_cents.div(10**decimals)).mul(rateICO);
-            if(isCrowdSaleStatePreSale()) {
-                preSaleRaised = preSaleRaised.add(raized);
-            } else if (isCrowdSaleStateICO()) {
-                icoRaised = icoRaised.add(raized);
-            }
-        }
-
-        Transfer(msg.sender, _to, _tokens_in_cents);
-        return true;
-    }
-
-    function transferBonus(address _to, uint256 _tokens) public returns (bool) {
-        require(msg.sender == owner);
-        require(_to != msg.sender);
-        require(_to != owner);
-        require(_tokens > 0);
-        uint _tokens_in_cents = _tokens.mul(10**decimals);
-        require(balances[msg.sender] >= _tokens_in_cents);
-
-        balances[msg.sender] = balances[msg.sender].sub(_tokens_in_cents);
-        vested[msg.sender] = vested[msg.sender].sub(_tokens_in_cents);
-        balances[_to] = balances[_to].add(_tokens_in_cents);
-
         Transfer(msg.sender, _to, _tokens_in_cents);
         return true;
     }
@@ -393,7 +367,7 @@ contract Gryphon is ERC20, Ownable {
             crowdSaleState = State.ICOFinalized;
             return false;
         } else {
-            return true;
+            return now > icoStartTimestamp;
         }
     }
 
