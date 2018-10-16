@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0x4e7a37f5c5832a35fea477bafe84b666429a5a36
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0xb551a9661068ce19ee24e8c71a95f5dc6fa41ed1
 */
 pragma solidity ^0.4.18;
 
@@ -18,7 +18,9 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -33,7 +35,6 @@ library SafeMath {
     return c;
   }
 }
-
 
 /**
  * @title Ownable
@@ -125,7 +126,6 @@ contract Pausable is Ownable {
     * Orginally from https://github.com/OpenZeppelin/zeppelin-solidity
     * Modified by https://github.com/agarwalakarsh
     */
-
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 /*****
     * @title Basic Token
@@ -300,10 +300,10 @@ contract ERC20BasicToken is Pausable{
 contract JWCToken is ERC20BasicToken {
 	using SafeMath for uint256;
 
-	string public constant name      = "JWC Blockchain Ventures";   //tokens name
-	string public constant symbol    = "JWC";                       //token symbol
-	uint256 public constant decimals = 18;                          //token decimal
-	string public constant version   = "1.0";                       //tokens version
+	string public constant name      = "JWC"; //tokens name
+	string public constant symbol    = "JWC"; //token symbol
+	uint256 public constant decimals = 18;    //token decimal
+	string public constant version   = "1.0"; //tokens version
 
 	uint256 public constant tokenPreSale         = 100000000 * 10**decimals;//tokens for pre-sale
 	uint256 public constant tokenPublicSale      = 400000000 * 10**decimals;//tokens for public-sale
@@ -364,124 +364,18 @@ contract JWCToken is ERC20BasicToken {
  * Store config of phase ICO
  */
 contract IcoPhase {
-  uint256 public constant phasePresale_From = 1516456800;//14h 20/01/2018 GMT
-  uint256 public constant phasePresale_To = 1517839200;//14h 05/02/2018 GMT
+  uint256 public constant phasePresale_From = 1517493600;//14h 01/02/2018 GMT
+  uint256 public constant phasePresale_To = 1518703200;//14h 15/02/2018 GMT
 
-  uint256 public constant phasePublicSale1_From = 1519912800;//14h 01/03/2018 GMT
-  uint256 public constant phasePublicSale1_To = 1520344800;//14h 06/03/2018 GMT
+  uint256 public constant phasePublicSale1_From = 1520690400;//14h 10/03/2018 GMT
+  uint256 public constant phasePublicSale1_To = 1521122400;//14h 15/03/2018 GMT
 
-  uint256 public constant phasePublicSale2_From = 1520344800;//14h 06/03/2018 GMT
-  uint256 public constant phasePublicSale2_To = 1520776800;//14h 11/03/2018 GMT
+  uint256 public constant phasePublicSale2_From = 1521122400;//14h 15/03/2018 GMT
+  uint256 public constant phasePublicSale2_To = 1521554400;//14h 20/03/2018 GMT
 
-  uint256 public constant phasePublicSale3_From = 1520776800;//14h 11/03/2018 GMT
-  uint256 public constant phasePublicSale3_To = 1521208800;//14h 16/03/2018 GMT
+  uint256 public constant phasePublicSale3_From = 1521554400;//14h 20/03/2018 GMT
+  uint256 public constant phasePublicSale3_To = 1521986400;//14h 25/03/2018 GMT
 }
-
-/**
- * This contract will give bonus for user when buy tokens. The bonus will be paid after finishing ICO
- */
-contract Bonus is IcoPhase, Ownable {
-	using SafeMath for uint256;
-
-	//decimals of tokens
-	uint256 constant decimals = 18;
-
-	//enable/disable
-	bool public isBonus;
-
-	//max tokens for time bonus
-	uint256 public maxTimeBonus = 225000000*10**decimals;
-
-	//max tokens for amount bonus
-	uint256 public maxAmountBonus = 125000000*10**decimals;
-
-	//storage
-	mapping(address => uint256) public bonusAccountBalances;
-	mapping(uint256 => address) public bonusAccountIndex;
-	uint256 public bonusAccountCount;
-
-	uint256 public indexPaidBonus;//amount of accounts have been paid bonus
-
-	function Bonus() public {
-		isBonus = true;
-	}
-
-	/**
-	 * Enable bonus
-	 */
-	function enableBonus() public onlyOwner returns (bool)
-	{
-		require(!isBonus);
-		isBonus=true;
-		return true;
-	}
-
-	/**
-	 * Disable bonus
-	 */
-	function disableBonus() public onlyOwner returns (bool)
-	{
-		require(isBonus);
-		isBonus=false;
-		return true;
-	}
-
-	/**
-	 * Get bonus percent by time
-	 */
-	function getTimeBonus() public constant returns(uint256) {
-		uint256 bonus = 0;
-
-		if(now>=phasePresale_From && now<phasePresale_To){
-			bonus = 40;
-		} else if (now>=phasePublicSale1_From && now<phasePublicSale1_To) {
-			bonus = 20;
-		} else if (now>=phasePublicSale2_From && now<phasePublicSale2_To) {
-			bonus = 10;
-		} else if (now>=phasePublicSale3_From && now<phasePublicSale3_To) {
-			bonus = 5;
-		}
-
-		return bonus;
-	}
-
-	/**
-	 * Get bonus by eth
-	 * @param _value - eth to convert to bonus
-	 */
-	function getBonusByETH(uint256 _value) public pure returns(uint256) {
-		uint256 bonus = 0;
-
-		if(_value>=1500*10**decimals){
-			bonus=_value.mul(25)/100;
-		} else if(_value>=300*10**decimals){
-			bonus=_value.mul(20)/100;
-		} else if(_value>=150*10**decimals){
-			bonus=_value.mul(15)/100;
-		} else if(_value>=30*10**decimals){
-			bonus=_value.mul(10)/100;
-		} else if(_value>=15*10**decimals){
-			bonus=_value.mul(5)/100;
-		}
-
-		return bonus;
-	}
-
-	/**
-	 * Get bonus balance of an account
-	 * @param _owner - the address to get bonus of
-	 */
-	function balanceBonusOf(address _owner) public constant returns (uint256 balance)
-	{
-		return bonusAccountBalances[_owner];
-	}
-
-	/**
-	 * Get bonus balance of an account
-	 */
-	function payBonus() public onlyOwner returns (bool success);
-}
-
 
 /**
  * This contract will give affiliate for user when buy tokens. The affiliate will be paid after finishing ICO
@@ -507,9 +401,6 @@ contract Affiliate is Ownable {
 
 	//amount of accounts have been paid affiliate
 	uint256 public indexPaidAffiliate;
-
-	// max tokens for affiliate
-	uint256 public maxAffiliate = 100000000*(10**18);
 
 	/**
 	 * Throw if affiliate is disable
@@ -649,6 +540,82 @@ contract Affiliate is Ownable {
 	function payAffiliate() public onlyOwner returns (bool success);
 }
 
+/**
+ * This contract will give bonus for user when buy tokens. The bonus will be paid after finishing ICO
+ */
+contract Bonus is IcoPhase, Ownable {
+	using SafeMath for uint256;
+
+	//decimals of tokens
+	uint256 constant decimals = 18;
+
+	//enable/disable
+	bool public isBonus;
+
+	//storage
+	mapping(address => uint256) public bonusAccountBalances;
+	mapping(uint256 => address) public bonusAccountIndex;
+	uint256 public bonusAccountCount;
+
+	uint256 public indexPaidBonus;//amount of accounts have been paid bonus
+
+	function Bonus() public {
+		isBonus = true;
+	}
+
+	/**
+	 * Enable bonus
+	 */
+	function enableBonus() public onlyOwner returns (bool)
+	{
+		require(!isBonus);
+		isBonus=true;
+		return true;
+	}
+
+	/**
+	 * Disable bonus
+	 */
+	function disableBonus() public onlyOwner returns (bool)
+	{
+		require(isBonus);
+		isBonus=false;
+		return true;
+	}
+
+	/**
+	 * Get bonus percent by time
+	 */
+	function getTimeBonus() public constant returns(uint256) {
+		uint256 bonus = 0;
+
+		if(now>=phasePresale_From && now<phasePresale_To){
+			bonus = 20;
+		} else if (now>=phasePublicSale1_From && now<phasePublicSale1_To) {
+			bonus = 10;
+		} else if (now>=phasePublicSale2_From && now<phasePublicSale2_To) {
+			bonus = 6;
+		} else if (now>=phasePublicSale3_From && now<phasePublicSale3_To) {
+			bonus = 3;
+		}
+
+		return bonus;
+	}
+
+	/**
+	 * Get bonus balance of an account
+	 * @param _owner - the address to get bonus of
+	 */
+	function balanceBonusOf(address _owner) public constant returns (uint256 balance)
+	{
+		return bonusAccountBalances[_owner];
+	}
+
+	/**
+	 * Get bonus balance of an account
+	 */
+	function payBonus() public onlyOwner returns (bool success);
+}
 
 /**
  * This contract will send tokens when an account send eth
@@ -660,19 +627,19 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 	JWCToken ccc;
 
 	uint256 public totalTokenSale;
-	uint256 public minContribution = 0.1 ether;//minimun eth used to buy tokens
+	uint256 public minContribution = 0.5 ether;//minimun eth used to buy tokens
 	uint256 public tokenExchangeRate = 7000;//1ETH=7000 tokens
 	uint256 public constant decimals = 18;
 
 	uint256 public tokenRemainPreSale;//tokens remain for pre-sale
 	uint256 public tokenRemainPublicSale;//tokens for public-sale
 
-	address public ethFundDeposit = 0x133f29F316Aac08ABC0b39b5CdbD0E7f134671dB;//multi-sig wallet
+	address public ethFundDeposit = 0xC69f762Cf7255c13e616E8D8eb328A6588cA2826;//multi-sig wallet
 	address public tokenAddress;
 
 	bool public isFinalized;
 
-	uint256 public maxGasRefund = 0.0046 ether;//maximum gas used to refund for each transaction
+	uint256 public maxGasRefund = 0.004 ether;//maximum gas used to refund for each transaction
 
 	//constructor
 	function IcoContract(address _tokenAddress) public {
@@ -687,7 +654,10 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 		isFinalized=false;
 	}
 
-	//usage: web3 change token from eth
+	/**
+	 * web3 change token from eth
+	 * @param _value - amount of ETH to convert to token
+	 */
 	function changeETH2Token(uint256 _value) public constant returns(uint256) {
 		uint256 etherRecev = _value + maxGasRefund;
 		require (etherRecev >= minContribution);
@@ -712,6 +682,9 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 		return tokens;
 	}
 
+	/**
+	 * will be called when user send eth to buy token
+	 */
 	function () public payable whenNotPaused {
 		require (!isFinalized);
 		require (msg.sender != address(0));
@@ -769,37 +742,8 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 		//bonus
 		if(isBonus){
-			//bonus amount
-			//get bonus by eth
-			uint256 bonusAmountETH = getBonusByETH(etherRecev);
-			//get bonus by token
-			uint256 bonusAmountTokens = bonusAmountETH.mul(tokenExchangeRate);
-
-			//check if we have enough tokens for bonus
-			if(maxAmountBonus>0){
-				if(maxAmountBonus>=bonusAmountTokens){
-					maxAmountBonus-=bonusAmountTokens;
-				} else {
-					bonusAmountTokens = maxAmountBonus;
-					maxAmountBonus = 0;
-				}
-			} else {
-				bonusAmountTokens = 0;
-			}
-
 			//bonus time
 			uint256 bonusTimeToken = tokens.mul(getTimeBonus())/100;
-			//check if we have enough tokens for bonus
-			if(maxTimeBonus>0){
-				if(maxTimeBonus>=bonusTimeToken){
-					maxTimeBonus-=bonusTimeToken;
-				} else {
-					bonusTimeToken = maxTimeBonus;
-					maxTimeBonus = 0;
-				}
-			} else {
-				bonusTimeToken = 0;
-			}
 
 			//store bonus
 			if(bonusAccountBalances[msg.sender]==0){//new
@@ -807,8 +751,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 				bonusAccountCount++;
 			}
 
-			uint256 bonusTokens=bonusAmountTokens + bonusTimeToken;
-			bonusAccountBalances[msg.sender]=bonusAccountBalances[msg.sender].add(bonusTokens);
+			bonusAccountBalances[msg.sender]=bonusAccountBalances[msg.sender].add(bonusTimeToken);
 		}
 
 		//affiliate
@@ -816,18 +759,6 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 			address child=msg.sender;
 			for(uint256 i=0; i<affiliateLevel; i++){
 				uint256 giftToken=affiliateRate[i].mul(tokens)/100;
-
-				//check if we have enough tokens for affiliate
-				if(maxAffiliate<=0){
-					break;
-				} else {
-					if(maxAffiliate>=giftToken){
-						maxAffiliate-=giftToken;
-					} else {
-						giftToken = maxAffiliate;
-						maxAffiliate = 0;
-					}
-				}
 
 				address parent = referral[child];
 				if(parent != address(0x00)){//has affiliate
@@ -849,7 +780,9 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 		for(uint256 i=indexPaidAffiliate; i<toIndex; i++) {
 			address referee = referralIndex[i];
-			payAffiliate1Address(referee);
+
+			if(referralBalance[referee]>0)
+				payAffiliate1Address(referee);
 		}
 
 		return true;
@@ -857,6 +790,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 	/**
 	 * Pay affiliate to only a address
+	 * @param _referee - the address of referee
 	 */
 	function payAffiliate1Address(address _referee) public onlyOwner returns (bool success) {
 		address referrer = referral[_referee];
@@ -876,7 +810,8 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 		for(uint256 i=indexPaidBonus; i<toIndex; i++)
 		{
-			payBonus1Address(bonusAccountIndex[i]);
+			if(bonusAccountBalances[bonusAccountIndex[i]]>0)
+				payBonus1Address(bonusAccountIndex[i]);
 		}
 
 		return true;
@@ -884,6 +819,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 	/**
 	 * Pay bonus to only a address
+	 * @param _address - the address to pay bonus
 	 */
 	function payBonus1Address(address _address) public onlyOwner returns (bool success) {
 		ccc.payBonusAffiliate(_address, bonusAccountBalances[_address]);
@@ -902,7 +838,6 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 	/**
 	 * Get token exchange rate
-	 * Note: just use when ICO
 	 */
 	function getTokenExchangeRate() public constant returns(uint256 rate) {
 		rate = tokenExchangeRate;
@@ -946,6 +881,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 	/**
 	 * Set token exchange rate
+	 * @param _tokenExchangeRate - rate of eth-token
 	 */
 	function setTokenExchangeRate(uint256 _tokenExchangeRate) public onlyOwner returns (bool) {
 		require(_tokenExchangeRate>0);
