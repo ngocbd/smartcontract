@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HELToken at 0xa05974f14c9f5fea9f3babb653309bb8be969610
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HELToken at 0x2d56b74585A2B97d299445d5f2cAcbC2102f1335
 */
 pragma solidity ^0.4.16;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -10,7 +10,7 @@ contract HELToken {
     string public name = 'Helveticoin';
     string public symbol = 'HEL';
     uint8 public decimals = 18;
-    uint256 public totalSupply = 444444444000000000000000000;
+    uint256 public totalSupply = 444444444;
 
     /* Creates an array with all balances */
     mapping (address => uint256) public balanceOf;
