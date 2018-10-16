@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDrop at 0x400c73395bbc01d9e757f02f267925e1de0779f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDrop at 0xaf707fa6a0d5b2070eca8e03e5838233760c8c2b
 */
 // IMAERO.IO
 
@@ -41,8 +41,6 @@ contract TokenDrop {
 
         return true;
     }
-    
-    function tokenFallback(address _from, uint256 _value, bytes _data) external {  }
 
     function balanceOf(address who) public view returns(uint256) {
         return token.balanceOf(who);
