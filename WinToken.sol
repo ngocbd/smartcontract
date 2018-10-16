@@ -1,53 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinToken at 0x8fe1a2c232a3483eea00afc51b6127d519c49cfc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinToken at 0xa067ed96107e27a3cd5ad3a45594a511d1b94cc1
 */
 pragma solidity ^0.4.18;
 
-// File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: node_modules/zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -82,7 +37,69 @@ library SafeMath {
   }
 }
 
-// File: node_modules/zeppelin-solidity/contracts/token/ERC20Basic.sol
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+  address public allowed;
+  bool public lockTransfer; //Transfer Lock flag
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner or allowed.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner || msg.sender == allowed);
+    _;
+  }
+
+  modifier transferLock() { //A modifier to lock transactions
+    require(lockTransfer == false || allowed == msg.sender);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+  /**
+   * @dev Allows control of the contract to a newAllowed.
+   * @param newAllowed The address to transfer control to.
+   */
+  function allowAddress(address newAllowed) public onlyOwner {
+    allowed = newAllowed;
+  }
+
+  /**
+  * @dev Function to set transfer lock
+  * @param _set boolean flag (true | false)
+  */
+  function setTransferLock(bool _set) public onlyOwner { //Only the admin can set a lock on transfers
+      lockTransfer = _set;
+      SetTransferLock(_set);
+  }
+
+  event SetTransferLock(bool _set);
+
+}
 
 /**
  * @title ERC20Basic
@@ -96,13 +113,22 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: node_modules/zeppelin-solidity/contracts/token/BasicToken.sol
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
-contract BasicToken is ERC20Basic {
+contract BasicToken is Ownable,ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
@@ -112,7 +138,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) public transferLock returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
@@ -134,21 +160,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: node_modules/zeppelin-solidity/contracts/token/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: node_modules/zeppelin-solidity/contracts/token/StandardToken.sol
-
 /**
  * @title Standard ERC20 token
  *
@@ -167,7 +178,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public transferLock returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -230,8 +241,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: node_modules/zeppelin-solidity/contracts/token/MintableToken.sol
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -239,7 +248,7 @@ contract StandardToken is ERC20, BasicToken {
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is StandardToken {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
@@ -276,22 +285,22 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-// File: contracts/WinToken.sol
 
 /**
- * @title WinToken
- * An EIP20 compliant token used as the instrument of ticket purchase and
- * prize award in games on the WinTokens games platform.  After the crowd sale
- * and final minting of tokens for the project, the token supply will be
- * 2x the tokens sold during all tiers of the sale forever.
+ * @title WinToken main function
  */
-
 contract WinToken is MintableToken {
-    string public constant name = "Win Token";
-    string public constant symbol = "WIN";
-    uint8 public constant decimals = 18;
 
-    function WinToken() public {
-        totalSupply = 0;
-    }
+  string public constant name = "WinToken";
+  string public constant symbol = "WNT";
+  uint8 public constant decimals = 18;
+  uint256 public constant MAX_TOKEN = 8000000 * (10 ** uint256(decimals));
+
+  // cap minting so that totalSupply <= MAX_TOKEN
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply.add(_amount) <= MAX_TOKEN);
+    return super.mint(_to, _amount);
+  }
+
 }
