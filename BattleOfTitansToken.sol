@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0xDbD23BDE88D4169fB60b0d9966Fa1beF8eb74179
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0xc70709c6e3ec79d2965958ec79c36ea7f1077539
 */
 pragma solidity ^0.4.13;
 
@@ -236,30 +236,36 @@ contract Pausable is Ownable {
 
 /**
  * @title BattleOfTitans Token
- * @dev ERC20 BattleOfTitans Token (BoT)
+ * @dev ERC20 BattleOfTitans Token (BTT)
  *
- * BoT Tokens are divisible by 1e8 (100,000,000) base
+ * BTT Tokens are divisible by 1e8 (100,000,000) base
  * units referred to as 'Grains'.
  *
- * BoT are displayed using 8 decimal places of precision.
+ * BTT are displayed using 8 decimal places of precision.
  *
- * 1 BoT is equivalent to:
+ * 1 BTT is equivalent to:
  *   100000000 == 1 * 10**8 == 1e8 == One Hundred Million Grains
  *
- * All initial BoT Grains are assigned to the creator of
+ * All initial BTT Grains are assigned to the creator of
  * this contract.
  *
  */
 contract BattleOfTitansToken is StandardToken, Pausable {
 
   string public constant name = 'BattleOfTitans';                       // Set the token name for display
-  string public constant symbol = 'BoT';                                       // Set the token symbol for display
+  string public constant symbol = 'BTT';                                       // Set the token symbol for display
   uint8 public constant decimals = 8;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**uint256(decimals); // 500000 BoT specified in Grains
+  uint256 public constant INITIAL_SUPPLY = 360000000 * 10**uint256(decimals);
+  uint256 public constant launch_date = 1541980800;
+  uint public constant unfreeze_start_date = 1523059200;
+  uint public constant unfreeze_periods = 150;
+  uint public constant unfreeze_period_time = 86400;
+  uint public constant unfreeze_end_date = (unfreeze_start_date + (unfreeze_period_time * unfreeze_periods));
 
   mapping (address => uint256) public frozenAccount;
   
   event FrozenFunds(address target, uint256 frozen);
+  event Burn(address burner, uint256 burned);
   
   /**
    * @dev BattleOfTitansToken Constructor
@@ -276,7 +282,7 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @param _value The amount to be transferred.
    */
   function transfer(address _to, uint256 _value) whenNotPaused returns (bool) {
-    freezeCheck(_to, _value);
+    freezeCheck(msg.sender, _value);
 
     return super.transfer(_to, _value);
   }
@@ -288,7 +294,7 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) whenNotPaused returns (bool) {
-    freezeCheck(_to, _value);
+    freezeCheck(msg.sender, _value);
 
     return super.transferFrom(_from, _to, _value);
   }
@@ -304,21 +310,26 @@ contract BattleOfTitansToken is StandardToken, Pausable {
 
   
   function freezeAccount(address target, uint256 freeze)  onlyOwner  {
-        require(block.timestamp < (1505645727 + 3600*10));
+        require(block.timestamp < launch_date);
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
   }
   
-  function freezeCheck(address _to, uint256 _value) {
-    if(frozenAccount[_to] > 0) {
-       require(block.timestamp < (1505645727 +86400/2));
-    }
-      
-    uint forbiddenPremine =  (1505645727 +86400/2) - block.timestamp + 86400*1;
-    if (forbiddenPremine < 0) forbiddenPremine = 0;
-       
-    require(_to != address(0)); // Prevent transfer to 0x0 address. Use burn() instead
-    require(balances[msg.sender] >= _value + frozenAccount[msg.sender] * forbiddenPremine / (86400*1) ); // Check if the sender has enough
-    require(balances[_to] + _value > balances[_to]);
+  function freezeCheck(address _from, uint256 _value)  returns (bool) {
+  	if (block.timestamp < unfreeze_start_date) {
+  		require(balances[_from].sub(frozenAccount[_from]) >= _value );
+  	} else if(block.timestamp < unfreeze_end_date) {
+      require(balances[_from].sub((frozenAccount[_from] / unfreeze_periods) * ((unfreeze_end_date -  block.timestamp) / unfreeze_period_time)) >= _value);
+  	}
+    return true;
+  }
+  
+   function burn(uint256 _value) onlyOwner public {
+    require(_value > 0);
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
   }
 }
