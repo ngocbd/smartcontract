@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lambo at 0xae3350fdec3819e4d2a30b97835f0ccfe0973a21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lambo at 0xd0b0f77c2454b28b925b7430a71df0ebf8a150ac
 */
 pragma solidity ^0.4.21;
 
@@ -80,8 +80,8 @@ contract Lambo {
         if (who == 0x0){
             who = msg.sender;
         }
-        require(msg.value >= (1 wei));
-        _mint(who,10);
+        require(msg.value >= (1 finney));
+        _mint(who,3);
         owner.transfer(msg.value);
     }
     
