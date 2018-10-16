@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonsterCore at 0xec8e410316bd8d45cf660fdfd1fbd9eeafe9ed6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MonsterCore at 0xfd1db05574d71c5a536dffa9787b0a74ef4a349e
 */
 pragma solidity ^0.4.11;
 
@@ -1069,7 +1069,7 @@ contract GeneScience {
 
     }
 
-    function sqrt(uint256 x) internal pure returns (uint256 y) {
+    function sqrt(uint256 x) public pure returns (uint256 y) {
         uint256 z = (x + 1) / 2;
         y = x;
         while (z < y) {
@@ -1316,7 +1316,6 @@ contract SiringClockAuction is ClockAuction {
     }
 
 }
-
 
 
 
@@ -2568,7 +2567,7 @@ contract MonsterCore is MonsterMinting {
         cfoAddress = msg.sender;
 
         // start with the mythical monster 0 - so we don't have generation-0 parent issues
-        _createMonster(0, 0, 0, uint256(-1), address(0));
+        _createMonster(0, 0, 0, uint256(57896044618658097711785492504343953926634992332820282019728792004021511462807), address(0));
     }
 
     /// @dev Used to mark the smart contract as upgraded, in case there is a serious
