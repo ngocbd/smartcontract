@@ -1,66 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xd3f3eb105daa3712eda7709f59ac0ec0d2d202b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xe3c61a3bff7cb03ddd422258006fddd5ba1ed0fe
 */
 pragma solidity ^0.4.6;
 
+// Presale Smart Contract
 //
-// ==== DISCLAIMER ====
+// **** START:  WORK IN PROGRESS DISCLAIMER ****
+// This is a work in progress and not intended for reuse.
+// So don't reuse unless you know exactly what are you doing! 
+// **** END:  WORK IN PROGRESS DISCLAIMER ****
 //
-// ETHEREUM IS STILL AN EXPEREMENTAL TECHNOLOGY.
-// ALTHOUGH THIS SMART CONTRACT CREATED WITH GREAT CARE AND IN HOPE TO BE USEFUL, NO GUARANTEES OF FLAWLES OPERATION CAN BE GIVEN. 
-// ESPECIALLY SUBTILE BUGS, HACKER ATTACS OR MALFUNCTION OF UNDERLYING TECHNOLOGY CAN CAUSE AN UNINTENTIONAL BEHAVIOUR. 
-// YOU ARE DEEPLY ENCORAGED TO STUDY THIS SMART CONTRACT CAREFULLY IN ORDER TO UNDERSTAND POSSIBLE EDGE CASES AND RISKS. 
-// DON'T USE THIS SMART CONTRACT IN CASE OF ANY SUBSTANTIONAL DOUBTS OR IF YOU DON'T KNOW WHAT ARE YOU DOING.
-//
-// THIS SOFTWARE IS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY 
-// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-// OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// ====
-//
-//
-// ==== PARANOIA NOTICE ==== 
+// **** START:  PARANOIA DISCLAIMER ****
 // A careful reader will find here some unnecessary checks and excessive code consuming some extra valuable gas. It is intentionally. 
-// Even contract should works without these parts, they make the code more secure in production as well for future refactoring.
+// Even contract will works without these parts, they make the code more secure in production as well for future refactoring.
 // Additionally it shows more clearly what we have took care of.
 // You are welcome to discuss that places.
-// ====
+// **** END OF: PARANOIA DISCLAIMER *****
+//
+//
+// @author ethernian
 //
 
-/// @author ethernian
-/// @notice report bugs to: bugs@ethernian.com
-/// @title Presale Contract
 
 contract Presale {
 
-    string public constant VERSION = "0.1.4-beta";
+    string public constant VERSION = "0.1.3-beta";
 
-    /* ====== configuration START ====== */
-	uint public constant PRESALE_START  = 3125150; /* approx. 05.02.2017 04:20 CET */
-    uint public constant PRESALE_END    = 3125175; /* approx. 05.02.2017 04:25 CET */
-    uint public constant WITHDRAWAL_END = 3125195; /* approx. 05.02.2017 04:30 CET */
+	/* ====== configuration START ====== */
+
+	uint public constant PRESALE_START  = 3116646; //	approx. 	03.02.2017 18:50
+	uint public constant PRESALE_END    = 3116686; //	approx. 	03.02.2017 19:00
+	uint public constant WITHDRAWAL_END = 3116726; //	approx. 	03.02.2017 19:10
 
 
-    address public constant OWNER = 0x41ab8360dEF1e19FdFa32092D83a7a7996C312a4;
-
+	address public constant OWNER = 0xA4769870EB607A4fDaBFfbcC3AD066c8213bD87D;
+	
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
     uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
 
     /* ====== configuration END ====== */
-
+	
     string[5] private stateNames = ["BEFORE_START",  "PRESALE_RUNNING", "WITHDRAWAL_RUNNING", "REFUND_RUNNING", "CLOSED" ];
     enum State { BEFORE_START,  PRESALE_RUNNING, WITHDRAWAL_RUNNING, REFUND_RUNNING, CLOSED }
 
     uint public total_received_amount;
-    mapping (address => uint) public balances;
-
+	mapping (address => uint) public balances;
+	
     uint private constant MIN_TOTAL_AMOUNT_TO_RECEIVE = MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
     uint private constant MAX_TOTAL_AMOUNT_TO_RECEIVE = MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
     uint private constant MIN_ACCEPTED_AMOUNT = MIN_ACCEPTED_AMOUNT_FINNEY * 1 finney;
-    bool public isAborted = false;
-
+	
 
     //constructor
     function Presale () validSetupOnly() { }
@@ -99,15 +89,11 @@ contract Presale {
     noReentrancy
     {
         // transfer funds to owner if any
-        if (!OWNER.send(this.balance)) throw;
+        if (this.balance > 0) {
+            if (!OWNER.send(this.balance)) throw;
+        }
     }
 
-    function abort() external
-    inStateBefore(State.REFUND_RUNNING)
-    onlyOwner
-    {
-        isAborted = true;
-    }
 
     //displays current contract state in human readable form
     function state()  external constant
@@ -150,21 +136,17 @@ contract Presale {
 
 
     function currentState() private constant returns (State) {
-        if (isAborted) {
-            return this.balance > 0 
-                   ? State.REFUND_RUNNING 
-                   : State.CLOSED;
-        } else if (block.number < PRESALE_START) {
+        if (block.number < PRESALE_START) {
             return State.BEFORE_START;
         } else if (block.number <= PRESALE_END && total_received_amount < MAX_TOTAL_AMOUNT_TO_RECEIVE) {
             return State.PRESALE_RUNNING;
-        } else if (this.balance == 0) {
-            return State.CLOSED;
         } else if (block.number <= WITHDRAWAL_END && total_received_amount >= MIN_TOTAL_AMOUNT_TO_RECEIVE) {
             return State.WITHDRAWAL_RUNNING;
-        } else {
+        } else if (this.balance > 0){
             return State.REFUND_RUNNING;
-        } 
+        } else {
+            return State.CLOSED;		
+		} 
     }
 
     //
@@ -177,11 +159,6 @@ contract Presale {
         _;
     }
 
-    //fails if state is not less than given
-    modifier inStateBefore(State state) {
-        if (state >= currentState()) throw;
-        _;
-    }
 
     //fails if something in setup is looking weird
     modifier validSetupOnly() {
@@ -193,15 +170,15 @@ contract Presale {
             || PRESALE_START >= PRESALE_END
             || PRESALE_END   >= WITHDRAWAL_END
             || MIN_TOTAL_AMOUNT_TO_RECEIVE > MAX_TOTAL_AMOUNT_TO_RECEIVE )
-                throw;
+				throw;
         _;
     }
 
 
     //accepts calls from owner only
     modifier onlyOwner(){
-        if (msg.sender != OWNER)  throw;
-        _;
+    	if (msg.sender != OWNER)  throw;
+    	_;
     }
 
 
