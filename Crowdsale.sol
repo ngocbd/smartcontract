@@ -1,87 +1,167 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4ade568854ed1fceeca5286ee68d17f48e7554e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8231CE24732BeeB67E99eAb54accFcD9A33D96BD
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-interface token {
-    function transfer(address receiver, uint amount);
+/**
+ * Mistoken Campaign-1 Crowdsale Contract
+ * Based on the Wild Crypto Crowdsale Contract
+ * and the OpenZeppelin open-source framework
+ */
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Crowdsale {
-    address public beneficiary;
-    uint public fundingGoal;
-    uint public amountRaised;
-    uint public deadline;
-    uint public price;
-    mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    bool crowdsaleClosed = false;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
 
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, bool isContribution);
+  address public owner;
 
-function Crowdsale()
-{
-    beneficiary = 0x9F73Cc683f06061510908b0C80A27cF63f3E75c9;
-    fundingGoal = 1 * 1 ether;
-    deadline = now + 1 * 1 days;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
 }
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () payable {
-        require(!crowdsaleClosed);
-        uint amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        FundTransfer(msg.sender, amount, true);
-    }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
+/**
+ * @title Token
+ * @dev API interface for interacting with the MisToken contract 
+ */
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+}
 
-    /**
-     * Check if goal was reached
-     *
-     * Checks if the goal or time limit has been reached and ends the campaign
-     */
-    function checkGoalReached() afterDeadline {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
-        }
-        crowdsaleClosed = true;
-    }
+contract Crowdsale is Ownable {
 
+  using SafeMath for uint256;
 
-    /**
-     * Withdraw the funds
-     *
-     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-     * the amount they contributed.
-     */
-    function safeWithdrawal() afterDeadline {
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
-        }
+  Token public token;
 
-        if (fundingGoalReached && beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
-            }
-        }
-    }
+  uint256 public constant RATE = 99; // Number of tokens per Ether
+  uint256 public constant CAP = 101; // Cap in Ether
+  uint256 public constant START = 1510398671; // Saturday, November 11, 2017 11:11:11 AM (GMT)
+  uint256 public constant DAYS = 11; // 11 Days
+
+  uint256 public constant initialTokens = 9999 * 10**18; // Initial number of tokens available
+  bool public initialized = false;
+  uint256 public raisedAmount = 0;
+
+  event BoughtTokens(address indexed to, uint256 value);
+
+  modifier whenSaleIsActive() {
+    // Check if sale is active
+    assert(isActive());
+
+    _;
+  }
+
+  function Crowdsale(address _tokenAddr) {
+      require(_tokenAddr != 0);
+      token = Token(_tokenAddr);
+  }
+  
+  function initialize() onlyOwner {
+      require(initialized == false); // Can only be initialized once
+      require(tokensAvailable() == initialTokens); // Must have some tokens allocated
+      initialized = true;
+  }
+
+  function isActive() constant returns (bool) {
+    return (
+        initialized == true &&
+        now >= START && // Must be after the START date
+        now <= START.add(DAYS * 1 days) && // Must be before the end date
+        goalReached() == false // Goal must not already be reached
+    );
+  }
+
+  function goalReached() constant returns (bool) {
+    return (raisedAmount >= CAP * 1 ether);
+  }
+
+  function () payable {
+    buyTokens();
+  }
+
+  /**
+  * @dev function that sells available tokens
+  */
+  function buyTokens() payable whenSaleIsActive {
+
+    // Calculate tokens to sell
+    uint256 weiAmount = msg.value;
+    uint256 tokens = weiAmount.mul(RATE);
+
+    BoughtTokens(msg.sender, tokens);
+
+    // Increment raised amount
+    raisedAmount = raisedAmount.add(msg.value);
+    
+    // Send tokens to buyer
+    token.transfer(msg.sender, tokens);
+    
+    // Send money to owner
+    owner.transfer(msg.value);
+  }
+
+  /**
+   * @dev returns the number of tokens allocated to this contract
+   */
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  /**
+   * @notice Terminate contract and refund to owner
+   */
+  function destroy() onlyOwner {
+    // Transfer tokens back to owner
+    uint256 balance = token.balanceOf(this);
+    assert(balance > 0);
+    token.transfer(owner, balance);
+
+    // There should be no ether in the contract but just in case
+    selfdestruct(owner);
+  }
+
 }
