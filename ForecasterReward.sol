@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForecasterReward at 0xd814203dba42d2c708cb52381dc1f471329da32c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ForecasterReward at 0x94b9188cb5b6980c88484b6ed38d8c4001108a04
 */
 /**
  *  ForecasterReward.sol v1.1.0
@@ -171,7 +171,7 @@ contract ForecasterReward is Haltable {
   {
 
     owner = 0xed4C73Ad76D90715d648797Acd29A8529ED511A0;
-    multisig = 0x177B63c7CaF85A360074bcB095952Aa8E929aE03;
+    multisig = 0xDadF84E3adFc746e005D55aB427C1a8B1cc9cBA5;
     
     startsAt = 1515600000;
     endsAt = 1516118400;
