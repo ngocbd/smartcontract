@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koth_v1b at 0x92A92648bd788DcAa086773C975d928b4A60A182
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koth_v1b at 0x974973D316Be10725444EF4F6E3bf1eb5E9F6678
 */
 pragma solidity ^0.4.16;
 
@@ -80,8 +80,7 @@ contract koth_v1b {
         koth = msg.sender;
         pot += highestBet;
 
-        // Equation expects pot to be in Ether
-        uint blocksRemaining = uint( 10 ** ((64-5*pot/1000000000000000000) / 40) );
+        uint blocksRemaining = uint( 10 ** ((64-5*pot) / 40) );
         if (blocksRemaining < 3) {
             blocksRemaining = 3;
         }
