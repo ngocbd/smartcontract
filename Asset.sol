@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x3bedc232d2229168818c3242d418dc65a9588d94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x9d5addd65ecc8f70ed4b531b6a75d36fefed8516
 */
 pragma solidity ^0.4.16;
 /**
 * @notice TOKEN CONTRACT
-* @dev ERC-20 Token Standardd Compliant
+* @dev ERC-20 Token Standar Compliant
+* @author Fares A. Akel C. f.antonio.akel@gmail.com
 */
 
 /**
@@ -45,7 +46,7 @@ contract ERC20TokenInterface {
 * @title ERC20Token
 * @notice Token definition contract
 */
-contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20Token
+contract ERC20Token is ERC20TokenInterface { //Standar definition of an ERC20Token
     using SafeMath for uint256; //SafeMath is used for uint256 operations
     mapping (address => uint256) balances; //A mapping of all balances per address
     mapping (address => mapping (address => uint256)) allowed; //A mapping of all allowances
@@ -56,7 +57,7 @@ contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20To
     * @param _owner The address to be query.
     */
     function balanceOf(address _owner) public constant returns (uint256 bal) {
-        return balances[_owner];
+      return balances[_owner];
     }
 
     /**
@@ -98,7 +99,7 @@ contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20To
     * @return success with boolean value true
     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
+      allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
@@ -110,7 +111,7 @@ contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20To
     * @return remaining with the allowance value
     */
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    return allowed[_owner][_spender];
     }
 
     /**
@@ -127,9 +128,9 @@ contract ERC20Token is ERC20TokenInterface { //Standard definition of an ERC20To
 * @dev ERC20 Token
 */
 contract Asset is ERC20Token {
-    string public name = 'Expert Token';
+    string public name = 'Digital Cloud Storage';
     uint8 public decimals = 18;
-    string public symbol = 'EXP';
+    string public symbol = 'DCST';
     string public version = '1';
     
     /**
@@ -137,11 +138,10 @@ contract Asset is ERC20Token {
     */
     function Asset() public {
 
-        totalSupply = 39000000 * (10 ** uint256(decimals)); //Token initial supply;
+        totalSupply = 10000000 * (10 ** uint256(decimals)); //Token initial supply;
         balances[msg.sender] = totalSupply;
         Transfer(0, this, totalSupply);
         Transfer(this, msg.sender, totalSupply);       
-    
     }
     
     /**
