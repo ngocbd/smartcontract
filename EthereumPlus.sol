@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPlus at 0xe61013ef7c464724da848e698077319895af70b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPlus at 0x0f3710eed1ec9bb60e9d019ee1c99517e1a92900
 */
 pragma solidity ^0.4.2;
 
@@ -21,10 +21,10 @@ contract EthereumPlus {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthereumPlus() {
 
-         initialSupply = 21000000000;
+         initialSupply = 210000000;
          name ="EthereumPlus";
         decimals = 2;
-         symbol = "ETHP";
+         symbol = "Ethp";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
