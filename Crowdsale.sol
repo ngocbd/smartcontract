@@ -1,354 +1,342 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3b1bcee51d853d6a2a9bc955b94c005f44892bdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x78b78cfb7f90edab1ddb0bb3be75cb228bb15d0c
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.18;
 
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-interface ERC20 {
-    function transfer (address _beneficiary, uint256 _tokenAmount) external returns (bool);
-    function mint (address _to, uint256 _amount) external returns (bool);
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
 
-contract Ownable {
-    address public owner;
-    function Ownable() public {
-        owner = msg.sender;
-    }
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
 }
 
-
-contract Crowdsale is Ownable {
-    using SafeMath for uint256;
-
-    modifier onlyWhileOpen {
-        require(
-            (now >= preICOStartDate && now < preICOEndDate) ||
-            (now >= ICOStartDate && now < ICOEndDate)
-        );
-        _;
-    }
-
-    modifier onlyWhileICOOpen {
-        require(now >= ICOStartDate && now < ICOEndDate);
-        _;
-    }
-
-    // The token being sold
-    ERC20 public token;
-
-    // Address where funds are collected
-    address public wallet;
-
-    // ????? ????????? ??????? ??? ?????????? ??????????
-    address public backendOperator = 0xd2420C5fDdA15B26AC3E13522e5cCD62CEB50e5F;
-
-    // ??????? ??????? ?????????? ???????? ?? 1 ????
-    uint256 public rate = 100;
-
-    // ??????? ?????? ?????????? ? ???? PreICO, wei
-    uint256 public preICOWeiRaised = 1850570000000000000000;
-
-    // ??????? ?????? ?????????? ? ???? ICO, wei
-    uint256 public ICOWeiRaised;
-
-    // ???? ETH ? ??????
-    uint256 public ETHUSD;
-
-    // ???? ?????? PreICO
-    uint256 public preICOStartDate;
-
-    // ???? ????????? PreICO
-    uint256 public preICOEndDate;
-
-    // ???? ?????? ICO
-    uint256 public ICOStartDate;
-
-    // ???? ????????? ICO
-    uint256 public ICOEndDate;
-
-    // ??????????? ????? ??????????? ??????? ? ???? ICO ? ??????
-    uint256 public softcap = 300000000;
-
-    // ??????? ??????????? ??????? ? ???? ICO ? ??????
-    uint256 public hardcap = 2500000000;
-
-    // ????? ????????, %
-    uint8 public referalBonus = 3;
-
-    // ????? ????????????? ?????????, %
-    uint8 public invitedByReferalBonus = 2;
-
-    // Whitelist
-    mapping(address => bool) public whitelist;
-
-    // ?????????, ??????? ?????? ?????
-    mapping (address => uint256) public investors;
-
-    event TokenPurchase(address indexed buyer, uint256 value, uint256 amount);
-
-    function Crowdsale(
-        address _wallet,
-        uint256 _preICOStartDate,
-        uint256 _preICOEndDate,
-        uint256 _ICOStartDate,
-        uint256 _ICOEndDate,
-        uint256 _ETHUSD
-    ) public {
-        require(_preICOEndDate > _preICOStartDate);
-        require(_ICOStartDate > _preICOEndDate);
-        require(_ICOEndDate > _ICOStartDate);
-
-        wallet = _wallet;
-        preICOStartDate = _preICOStartDate;
-        preICOEndDate = _preICOEndDate;
-        ICOStartDate = _ICOStartDate;
-        ICOEndDate = _ICOEndDate;
-        ETHUSD = _ETHUSD;
-    }
-
-    modifier backEnd() {
-        require(msg.sender == backendOperator || msg.sender == owner);
-        _;
-    }
-
-    /* ????????? ?????? */
-
-    // ?????????? ????????? ??????
-    function setRate (uint16 _rate) public onlyOwner {
-        require(_rate > 0);
-        rate = _rate;
-    }
-
-    // ?????????? ????? ???????? ??? ????? ???????
-    function setWallet (address _wallet) public onlyOwner {
-        require (_wallet != 0x0);
-        wallet = _wallet;
-    }
-
-    // ?????????? ????????? ?????
-    function setToken (ERC20 _token) public onlyOwner {
-        token = _token;
-    }
-
-    // ?????????? ???? ?????? PreICO
-    function setPreICOStartDate (uint256 _preICOStartDate) public onlyOwner {
-        require(_preICOStartDate < preICOEndDate);
-        preICOStartDate = _preICOStartDate;
-    }
-
-    // ?????????? ???? ????????? PreICO
-    function setPreICOEndDate (uint256 _preICOEndDate) public onlyOwner {
-        require(_preICOEndDate > preICOStartDate);
-        preICOEndDate = _preICOEndDate;
-    }
-
-    // ?????????? ???? ?????? ICO
-    function setICOStartDate (uint256 _ICOStartDate) public onlyOwner {
-        require(_ICOStartDate < ICOEndDate);
-        ICOStartDate = _ICOStartDate;
-    }
-
-    // ?????????? ???? ????????? PreICO
-    function setICOEndDate (uint256 _ICOEndDate) public onlyOwner {
-        require(_ICOEndDate > ICOStartDate);
-        ICOEndDate = _ICOEndDate;
-    }
-
-    // ?????????? ????????? ????? ? ??????
-    function setETHUSD (uint256 _ETHUSD) public onlyOwner {
-        ETHUSD = _ETHUSD;
-    }
-
-    // ?????????? ????????? ??????? ??? ?????????? ??????????
-    function setBackendOperator(address newOperator) public onlyOwner {
-        backendOperator = newOperator;
-    }
-
-    function () external payable {
-        address beneficiary = msg.sender;
-        uint256 weiAmount = msg.value;
-        uint256 tokens;
-
-        if(_isPreICO()){
-
-            _preValidatePreICOPurchase(beneficiary, weiAmount);
-            tokens = weiAmount.mul(rate.add(rate.mul(30).div(100)));
-            preICOWeiRaised = preICOWeiRaised.add(weiAmount);
-            wallet.transfer(weiAmount);
-            investors[beneficiary] = weiAmount;
-            _deliverTokens(beneficiary, tokens);
-            emit TokenPurchase(beneficiary, weiAmount, tokens);
-
-        } else if(_isICO()){
-
-            _preValidateICOPurchase(beneficiary, weiAmount);
-            tokens = _getTokenAmountWithBonus(weiAmount);
-            ICOWeiRaised = ICOWeiRaised.add(weiAmount);
-            investors[beneficiary] = weiAmount;
-            _deliverTokens(beneficiary, tokens);
-            emit TokenPurchase(beneficiary, weiAmount, tokens);
-
-        }
-    }
-
-    // ??????? ??????? ? ??????????? ???????
-    function buyTokensWithReferal(address _referal) public onlyWhileICOOpen payable {
-        address beneficiary = msg.sender;
-        uint256 weiAmount = msg.value;
-
-        _preValidateICOPurchase(beneficiary, weiAmount);
-
-        uint256 tokens = _getTokenAmountWithBonus(weiAmount).add(_getTokenAmountWithReferal(weiAmount, 2));
-        uint256 referalTokens = _getTokenAmountWithReferal(weiAmount, 3);
-
-        ICOWeiRaised = ICOWeiRaised.add(weiAmount);
-        investors[beneficiary] = weiAmount;
-
-        _deliverTokens(beneficiary, tokens);
-        _deliverTokens(_referal, referalTokens);
-
-        emit TokenPurchase(beneficiary, weiAmount, tokens);
-    }
-
-    // ???????? ????? ? whitelist
-    function addToWhitelist(address _beneficiary) public backEnd {
-        whitelist[_beneficiary] = true;
-    }
-
-    // ???????? ????????? ??????? ? whitelist
-    function addManyToWhitelist(address[] _beneficiaries) public backEnd {
-        for (uint256 i = 0; i < _beneficiaries.length; i++) {
-            whitelist[_beneficiaries[i]] = true;
-        }
-    }
-
-    // ????????? ????? ?? whitelist
-    function removeFromWhitelist(address _beneficiary) public backEnd {
-        whitelist[_beneficiary] = false;
-    }
-
-    // ?????? ????? ?? ???? ?????????? PreICO
-    function hasPreICOClosed() public view returns (bool) {
-        return now > preICOEndDate;
-    }
-
-    // ?????? ????? ?? ???? ?????????? ICO
-    function hasICOClosed() public view returns (bool) {
-        return now > ICOEndDate;
-    }
-
-    // ????????? ????????? ???????? ?? ??????? ??? ?????
-    function forwardFunds () public onlyOwner {
-        require(now > ICOEndDate);
-        require((preICOWeiRaised.add(ICOWeiRaised)).mul(ETHUSD).div(10**18) >= softcap);
-
-        wallet.transfer(ICOWeiRaised);
-    }
-
-    // ??????? ?????????????????? ????????, ???? ?? ??? ????????? softcap
-    function refund() public {
-        require(now > ICOEndDate);
-        require(preICOWeiRaised.add(ICOWeiRaised).mul(ETHUSD).div(10**18) < softcap);
-        require(investors[msg.sender] > 0);
-
-        address investor = msg.sender;
-        investor.transfer(investors[investor]);
-    }
-
-
-    /* ?????????? ?????? */
-
-    // ???????? ???????????? PreICO
-    function _isPreICO() internal view returns(bool) {
-        return now >= preICOStartDate && now < preICOEndDate;
-    }
-
-    // ???????? ???????????? ICO
-    function _isICO() internal view returns(bool) {
-        return now >= ICOStartDate && now < ICOEndDate;
-    }
-
-    // ????????? ????? ???????? ???????
-
-    function _preValidatePreICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
-        require(_weiAmount != 0);
-        require(whitelist[_beneficiary]);
-        require(now >= preICOStartDate && now <= preICOEndDate);
-    }
-
-    function _preValidateICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
-        require(_weiAmount != 0);
-        require(whitelist[_beneficiary]);
-        require((preICOWeiRaised + ICOWeiRaised + _weiAmount).mul(ETHUSD).div(10**18) <= hardcap);
-        require(now >= ICOStartDate && now <= ICOEndDate);
-    }
-
-    // ??????? ??????? ? ?????? ??????? ?? ???? ICO ? ????? ??????????
-    function _getTokenAmountWithBonus(uint256 _weiAmount) internal view returns(uint256) {
-        uint256 baseTokenAmount = _weiAmount.mul(rate);
-        uint256 tokenAmount = baseTokenAmount;
-        uint256 usdAmount = _weiAmount.mul(ETHUSD).div(10**18);
-
-        // ??????? ?????? ?? ????? ??????????
-        if(usdAmount >= 10000000){
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(7).div(100));
-        } else if(usdAmount >= 5000000){
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(5).div(100));
-        } else if(usdAmount >= 1000000){
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(3).div(100));
-        }
-
-        // ??????? ?????? ?? ???? ICO
-        if(now < ICOStartDate + 30 days) {
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(20).div(100));
-        } else if(now < ICOStartDate + 60 days) {
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(15).div(100));
-        } else if(now < ICOStartDate + 90 days) {
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(10).div(100));
-        } else {
-            tokenAmount = tokenAmount.add(baseTokenAmount.mul(5).div(100));
-        }
-
-        return tokenAmount;
-    }
-
-    // ??????? ??????? ? ?????? ??????? ??????????? ???????
-    function _getTokenAmountWithReferal(uint256 _weiAmount, uint8 _percent) internal view returns(uint256) {
-        return _weiAmount.mul(rate).mul(_percent).div(100);
-    }
-
-    // ??????? ???????
-    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-        token.mint(_beneficiary, _tokenAmount);
-    }
+/**
+ * Crowdsale has a life span during which investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to beneficiary
+ * as they arrive.
+ *
+ * A crowdsale is defined by:
+ *	offset (required) - crowdsale start, unix timestamp
+ *	length (required) - crowdsale length in seconds
+ *  price (required) - token price in wei
+ *	soft cap (optional) - minimum amount of funds required for crowdsale success, can be zero (if not used)
+ *	hard cap (optional) - maximum amount of funds crowdsale can accept, can be zero (unlimited)
+ *  quantum (optional) - enables value accumulation effect to reduce value transfer costs, usually is not used (set to zero)
+ *    if non-zero value passed specifies minimum amount of wei to transfer to beneficiary
+ *
+ * This crowdsale doesn't own tokens and doesn't perform any token emission.
+ * It expects enough tokens to be available on its address:
+ * these tokens are used for issuing them to investors.
+ * Token redemption is done in opposite way: tokens accumulate back on contract's address
+ * Beneficiary is specified by its address.
+ * This implementation can be used to make several crowdsales with the same token being sold.
+ */
+contract Crowdsale {
+	/**
+	* Descriptive name of this Crowdsale. There could be multiple crowdsales for same Token.
+	*/
+	string public name;
+
+	// contract creator, owner of the contract
+	// creator is also supplier of tokens
+	address private creator;
+
+	// crowdsale start (unix timestamp)
+	uint public offset;
+
+	// crowdsale length in seconds
+	uint public length;
+
+	// one token price in wei
+	uint public price;
+
+	// crowdsale minimum goal in wei
+	uint public softCap;
+
+	// crowdsale maximum goal in wei
+	uint public hardCap;
+
+	// minimum amount of value to transfer to beneficiary in automatic mode
+	uint private quantum;
+
+	// how much value collected (funds raised)
+	uint public collected;
+
+	// how many different addresses made an investment
+	uint public investorsCount;
+
+	// how much value refunded (if crowdsale failed)
+	uint public refunded;
+
+	// how much tokens issued to investors
+	uint public tokensIssued;
+
+	// how much tokens redeemed and refunded (if crowdsale failed)
+	uint public tokensRedeemed;
+
+	// how many successful transactions (with tokens being send back) do we have
+	uint public transactions;
+
+	// how many refund transactions (in exchange for tokens) made (if crowdsale failed)
+	uint public refunds;
+
+	// The token being sold
+	DetailedERC20 private token;
+
+	// decimal coefficient (k) enables support for tokens with non-zero decimals
+	uint k;
+
+	// address where funds are collected
+	address public beneficiary;
+
+	// investor's mapping, required for token redemption in a failed crowdsale
+	// making this field public allows to extend investor-related functionality in the future
+	mapping(address => uint) public balances;
+
+	// events to log
+	event InvestmentAccepted(address indexed holder, uint tokens, uint value);
+	event RefundIssued(address indexed holder, uint tokens, uint value);
+
+	// a crowdsale is defined by a set of parameters passed here
+	// make sure _end timestamp is in the future in order for crowdsale to be operational
+	// _price must be positive, this is a price of one token in wei
+	// _hardCap must be greater then _softCap or zero, zero _hardCap means unlimited crowdsale
+	// _quantum may be zero, in this case there will be no value accumulation on the contract
+	function Crowdsale(
+		string _name,
+		uint _offset,
+		uint _length,
+		uint _price,
+		uint _softCap,
+		uint _hardCap,
+		uint _quantum,
+		address _beneficiary,
+		address _token
+	) public {
+
+		// validate crowdsale settings (inputs)
+		// require(_offset > 0); // we don't really care
+		require(_length > 0);
+		require(now < _offset + _length); // crowdsale must not be already finished
+		// softCap can be anything, zero means crowdsale doesn't fail
+		require(_hardCap > _softCap || _hardCap == 0);
+		// hardCap must be greater then softCap
+		// quantum can be anything, zero means no accumulation
+		require(_price > 0);
+		require(_beneficiary != address(0));
+		require(_token != address(0));
+
+		name = _name;
+
+		// setup crowdsale settings
+		offset = _offset;
+		length = _length;
+		softCap = _softCap;
+		hardCap = _hardCap;
+		quantum = _quantum;
+		price = _price;
+		creator = msg.sender;
+
+		// define beneficiary
+		beneficiary = _beneficiary;
+
+		// allocate tokens: link and init coefficient
+		__allocateTokens(_token);
+	}
+
+	// accepts crowdsale investment, requires
+	// crowdsale to be running and not reached its goal
+	function invest() public payable {
+		// perform validations
+		assert(now >= offset && now < offset + length); // crowdsale is active
+		assert(collected + price <= hardCap || hardCap == 0); // its still possible to buy at least 1 token
+		require(msg.value >= price); // value sent is enough to buy at least one token
+
+		// call 'sender' nicely - investor
+		address investor = msg.sender;
+
+		// how much tokens we must send to investor
+		uint tokens = msg.value / price;
+
+		// how much value we must send to beneficiary
+		uint value = tokens * price;
+
+		// ensure we are not crossing the hardCap
+		if (value + collected > hardCap || hardCap == 0) {
+			value = hardCap - collected;
+			tokens = value / price;
+			value = tokens * price;
+		}
+
+		// update crowdsale status
+		collected += value;
+		tokensIssued += tokens;
+
+		// transfer tokens to investor
+		__issueTokens(investor, tokens);
+
+		// transfer the change to investor
+		investor.transfer(msg.value - value);
+
+		// accumulate the value or transfer it to beneficiary
+		if (collected >= softCap && this.balance >= quantum) {
+			// transfer all the value to beneficiary
+			__beneficiaryTransfer(this.balance);
+		}
+
+		// log an event
+		InvestmentAccepted(investor, tokens, value);
+	}
+
+	// refunds an investor of failed crowdsale,
+	// requires investor to allow token transfer back
+	function refund() public payable {
+		// perform validations
+		assert(now >= offset + length); // crowdsale ended
+		assert(collected < softCap); // crowdsale failed
+
+		// call 'sender' nicely - investor
+		address investor = msg.sender;
+
+		// find out how much tokens should be refunded
+		uint tokens = __redeemAmount(investor);
+
+		// calculate refund amount
+		uint refundValue = tokens * price;
+
+		// additional validations
+		require(tokens > 0);
+
+		// update crowdsale status
+		refunded += refundValue;
+		tokensRedeemed += tokens;
+		refunds++;
+
+		// transfer the tokens back
+		__redeemTokens(investor, tokens);
+
+		// make a refund
+		investor.transfer(refundValue + msg.value);
+
+		// log an event
+		RefundIssued(investor, tokens, refundValue);
+	}
+
+	// sends all the value to the beneficiary
+	function withdraw() public {
+		// perform validations
+		assert(creator == msg.sender || beneficiary == msg.sender); // only creator or beneficiary can initiate this call
+		assert(collected >= softCap); // crowdsale must be successful
+		assert(this.balance > 0); // there should be something to transfer
+
+		// how much to withdraw (entire balance obviously)
+		uint value = this.balance;
+
+		// perform the transfer
+		__beneficiaryTransfer(value);
+	}
+
+	// performs an investment, refund or withdrawal,
+	// depending on the crowdsale status
+	function() public payable {
+		// started or finished
+		require(now >= offset);
+
+		if(now < offset + length) {
+			// crowdsale is running, invest
+			invest();
+		}
+		else if(collected < softCap) {
+			// crowdsale failed, try to refund
+			refund();
+		}
+		else {
+			// crowdsale is successful, investments are not accepted anymore
+			// but maybe poor beneficiary is begging for change...
+			withdraw();
+		}
+	}
+
+	// ----------------------- internal section -----------------------
+
+	// allocates token source (basically links token)
+	function __allocateTokens(address _token) internal {
+		// link tokens, tokens are not owned by a crowdsale
+		// should be transferred to crowdsale after the deployment
+		token = DetailedERC20(_token);
+
+		// obtain decimals and calculate coefficient k
+		k = 10 ** uint(token.decimals());
+	}
+
+	// transfers tokens to investor, validations are not required
+	function __issueTokens(address investor, uint tokens) internal {
+		// if this is a new investor update investor count
+		if (balances[investor] == 0) {
+			investorsCount++;
+		}
+
+		// for open crowdsales we track investors balances
+		balances[investor] += tokens;
+
+		// issue tokens, taking into account decimals
+		token.transferFrom(creator, investor, tokens * k);
+	}
+
+	// calculates amount of tokens available to redeem from investor, validations are not required
+	function __redeemAmount(address investor) internal view returns (uint amount) {
+		// round down allowance taking into account token decimals
+		uint allowance = token.allowance(investor, this) / k;
+
+		// for open crowdsales we check previously tracked investor balance
+		uint balance = balances[investor];
+
+		// return allowance safely by checking also the balance
+		return balance < allowance ? balance : allowance;
+	}
+
+	// transfers tokens from investor, validations are not required
+	function __redeemTokens(address investor, uint tokens) internal {
+		// for open crowdsales we track investors balances
+		balances[investor] -= tokens;
+
+		// redeem tokens, taking into account decimals coefficient
+		token.transferFrom(investor, creator, tokens * k);
+	}
+
+	// transfers a value to beneficiary, validations are not required
+	function __beneficiaryTransfer(uint value) internal {
+		beneficiary.transfer(value);
+	}
+
+	// !---------------------- internal section ----------------------!
 }
