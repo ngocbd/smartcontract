@@ -1,205 +1,295 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0xa671f2914ba0e73979ffc47cd350801d1714b18f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0dea77b8a4be0e63e46f89cd78705b5982a6bed9
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
+ 
+/* 
+    PIONEER SOCIAL is Registered in United Kingdom. 
+    Pioneer Classic is first social coin who have big Social Media Platform 
+    where you upload videos and Create community, groups, pages, and earn handsome income.
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+ 
+/*
+   ERC20 interface
+  see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+ 
+/*  SafeMath - the lowest gas library
+  Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+ 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+ 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+ 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+}
+ 
+/*
+Basic token
+ Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
+    
+  using SafeMath for uint256;
+ 
+  mapping(address => uint256) balances;
+ 
+ function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+ 
+  /*
+  Gets the balance of the specified address.
+   param _owner The address to query the the balance of. 
+   return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+ 
+}
+ 
+/* Implementation of the basic standard token.
+  https://github.com/ethereum/EIPs/issues/20
+ */
+contract StandardToken is ERC20, BasicToken {
+ 
+  mapping (address => mapping (address => uint256)) allowed;
+ 
+  /*
+    Transfer tokens from one address to another
+    param _from address The address which you want to send tokens from
+    param _to address The address which you want to transfer to
+    param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+ 
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+ 
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+ 
+  /*
+  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   param _spender The address which will spend the funds.
+   param _value The amount of Roman Lanskoj's tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+ 
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+ 
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+ 
+  /*
+  Function to check the amount of tokens that an owner allowed to a spender.
+  param _owner address The address which owns the funds.
+  param _spender address The address which will spend the funds.
+  return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+}
+}
+ 
+/*
+The Ownable contract has an owner address, and provides basic authorization control
+ functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    
+  address public owner;
+ 
+ 
+  function Ownable() {
+    owner = msg.sender;
+  }
+ 
+  /*
+  Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+ 
+  /*
+  Allows the current owner to transfer control of the contract to a newOwner.
+  param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+ 
+}
+ 
+contract TheLiquidToken is StandardToken, Ownable {
+    // mint can be finished and token become fixed for forever
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  bool mintingFinished = false;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+ 
+ function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+ 
+  /*
+  Function to stop minting new tokens.
+  return True if the operation was successful.
+   */
+  
+  function burn(uint _value)
+        public
+    {
+        require(_value > 0);
 
-	contract SafeMath {
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
 
-	  function safeMul(uint a, uint b) returns (uint) {
-		if (a == 0) {
-		  return 0;
-		} else {
-		  uint c = a * b;
-		  require(c / a == b);
-		  return c;
-		}
-	  }
+    event Burn(address indexed burner, uint indexed value);
+}
 
-	  function safeDiv(uint a, uint b) returns (uint) {
-		require(b > 0);
-		uint c = a / b;
-		require(a == b * c + a % b);
-		return c;
-	  }
+contract PIONEER is TheLiquidToken {
+  string public constant name = "PIONEER COIN CLASSIC";
+  string public constant symbol = "PCC";
+  uint public constant decimals = 8;
+  uint256 public initialSupply;
+    
+  function PIONEER () { 
+     totalSupply = 15000000 * 10 ** decimals;
+      balances[msg.sender] = totalSupply;
+      initialSupply = totalSupply; 
+        Transfer(0, this, totalSupply);
+        Transfer(this, msg.sender, totalSupply);
+  }
+}
 
-	}
+contract Crowdsale is PIONEER {
+    
+    using SafeMath for uint;
+    
+    address multisig;
+ 
+    uint restrictedPercent;
+ 
+    address restricted;
+ 
+    PIONEER public token = new PIONEER();
+ 
+    uint start;
+    
+    uint period;
+ 
+    uint hardcap;
+ 
+    uint rate;
+ 
+    function Crowdsale() {
+	multisig = 0x0C12c4a7A690663813612924377262b7A957Eb23;
+	restricted = 0x0C12c4a7A690663813612924377262b7A957Eb23;
+	restrictedPercent = 50;
+	rate = 550 * (10 ** 8);
+	start = 1508743500; //23rd October 2017 07:25:00 AM (UTC)
 
-	contract token {
-		function transferFrom(address _from, address _receiver, uint _amount);
-	}
-
-	contract CrowdSale is SafeMath {
-		address public beneficiary;
-		uint public fundingMinimumTargetInUsd;
-		uint public fundingMaximumTargetInUsd;
-		uint public amountRaised;
-		uint public priceInUsd;
-		token public tokenReward;
-		mapping(address => uint256) public balanceOf;
-		bool public fundingGoalReached = false;
-		address tokenHolder;
-		address public creator;
-		uint public tokenAllocation;
-		uint public tokenRaised;
-		uint public etherPriceInUsd;
-		uint public totalUsdRaised;
-		bool public icoState = false;
-		bool public userRefund = false;
-		mapping(address => bool) public syncList;
-
-		event GoalMinimumReached(address _beneficiary, uint _amountRaised, uint _totalUsdRaised);
-		event GoalMaximumReached(address _beneficiary, uint _amountRaised, uint _totalUsdRaised);
-		event FundTransfer(address _backer, uint _amount, bool _isContribution);
-
-		/**
-		 * Constrctor function
-		 *
-		 * Setup the owner
-		 */
-		function CrowdSale(
-			address ifSuccessfulSendTo,
-			uint _fundingMinimumTargetInUsd,
-			uint _fundingMaximumTargetInUsd,
-			uint tokenPriceInUSD,
-			address addressOfTokenUsedAsReward,
-			address _tokenHolder,
-			uint _tokenAllocation,
-			uint _etherPriceInUsd
-		) {
-			creator = msg.sender;
-			syncList[creator] = true;
-			beneficiary = ifSuccessfulSendTo;
-			fundingMinimumTargetInUsd = _fundingMinimumTargetInUsd;
-			fundingMaximumTargetInUsd = _fundingMaximumTargetInUsd;
-			priceInUsd = tokenPriceInUSD;
-			tokenReward = token(addressOfTokenUsedAsReward);
-			tokenHolder = _tokenHolder;
-			tokenAllocation = _tokenAllocation;
-			etherPriceInUsd = _etherPriceInUsd;
-		}
-
-		modifier isMaximum() {
-		  require(safeMul(msg.value, etherPriceInUsd) <= 100000000000000000000000000);
-		   _;
-		}
-
-		modifier isCreator() {
-			require(msg.sender == creator);
-			_;
-		}
-
-		modifier isSyncList(address _source){
-		  require(syncList[_source]);
-		  _;
-		}
-
-		function addToSyncList(address _source) isCreator() returns (bool) {
-		  syncList[_source] = true;
-		}
-
-		function setEtherPrice(uint _price) isSyncList(msg.sender) returns (bool result){
-		  etherPriceInUsd = _price;
-		  return true;
-		}
-
-		function stopIco() isCreator() returns (bool result){
-		  icoState = false;
-		  return true;
-		}
-
-		function startIco() isCreator() returns (bool result){
-		  icoState = true;
-		  return true;
-		}
-
-		function settingsIco(uint _priceInUsd, address _tokenHolder, uint _tokenAllocation, uint _fundingMinimumTargetInUsd, uint _fundingMaximumTargetInUsd) isCreator() returns (bool result){
-		  require(!icoState);
-		  priceInUsd = _priceInUsd;
-		  tokenHolder = _tokenHolder;
-		  tokenAllocation = _tokenAllocation;
-		  fundingMinimumTargetInUsd = _fundingMinimumTargetInUsd;
-		  fundingMaximumTargetInUsd = _fundingMaximumTargetInUsd;
-		  return true;
-		}
-
-		/**
-		 * Fallback function
-		 *
-		 * The function without name is the default function that is called whenever anyone sends funds to a contract
-		 */
-		function () isMaximum() payable {
-			require(icoState);
-
-			uint etherAmountInWei = msg.value;
-			uint amount = safeMul(msg.value, etherPriceInUsd);
-			uint256 tokenAmount = safeDiv(safeDiv(amount, priceInUsd), 10000000000);
-			require(tokenRaised + tokenAmount <= tokenAllocation);
-			tokenRaised += tokenAmount;
-
-
-			uint amountInUsd = safeDiv(amount, 1000000000000000000);
-			require(totalUsdRaised + amountInUsd <= fundingMaximumTargetInUsd);
-			totalUsdRaised += amountInUsd;
-
-			balanceOf[msg.sender] += etherAmountInWei;
-			amountRaised += etherAmountInWei;
-			tokenReward.transferFrom(tokenHolder, msg.sender, tokenAmount);
-			FundTransfer(msg.sender, etherAmountInWei, true);
-		}
-
-		/**
-		 * Check if goal was reached
-		 *
-		 * Checks if the goal or time limit has been reached and ends the campaign
-		 */
-		function checkGoalReached() isCreator() {
-			if (totalUsdRaised >= fundingMaximumTargetInUsd){
-				fundingGoalReached = true;
-				GoalMaximumReached(beneficiary, amountRaised, totalUsdRaised);
-			} else if (totalUsdRaised >= fundingMinimumTargetInUsd) {
-				fundingGoalReached = true;
-				GoalMinimumReached(beneficiary, amountRaised, totalUsdRaised);
-			}
-		}
-
-
-		/**
-		 * Withdraw the funds
-		 *
-		 */
-		function safeWithdrawal() {
-			if (userRefund) {
-				uint amount = balanceOf[msg.sender];
-				balanceOf[msg.sender] = 0;
-				if (amount > 0) {
-					if (msg.sender.send(amount)) {
-						FundTransfer(msg.sender, amount, false);
-					} else {
-						balanceOf[msg.sender] = amount;
-					}
-				}
-			}
-		}
-
-		//Transfer Funds
-		function drain() {
-			require(beneficiary == msg.sender);
-			if (beneficiary.send(amountRaised)) {
-				FundTransfer(beneficiary, amountRaised, false);
-			}
-		}
-
-		//Autorize users refunds
-		function AutorizeRefund() isCreator() returns (bool success){
-			require(!icoState);
-			userRefund = true;
-			return true;
-		}
-
-		// Remove contract
-		function removeContract() public isCreator() {
-			require(!icoState);
-			selfdestruct(msg.sender);
-		}
-
-	}
+	period = 28;
+        hardcap = 100000 * (10 ** 18);
+    }
+ 
+    modifier saleIsOn() {
+    	require(now > start && now < start + period * 1 days);
+    	_;
+    }
+	
+    modifier isUnderHardCap() {
+        require(multisig.balance <= hardcap);
+        _;
+    }
+ 
+    function finishMinting() public onlyOwner {
+	uint issuedTokenSupply = token.totalSupply();
+	uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
+	token.mint(restricted, restrictedTokens);
+    }
+ 
+   function createTokens() isUnderHardCap saleIsOn payable {
+     multisig.transfer(msg.value);
+        uint tokens = rate.mul(msg.value).div(1 ether);
+        uint bonusTokens = 0;
+        if(now < (start + 1 days)) {
+          bonusTokens = 200;
+        } else if(now < (start + 1 days) + (period * 1 days).div(4)) {
+          bonusTokens = 150;
+        } else if(now >= (start + 1 days) + (period * 1 days).div(4) && now < (start + 1 days) + (period * 1 days).div(4).mul(2)) {
+          bonusTokens = 100;
+        } else if(now >= (start + 1 days) + (period * 1 days).div(4).mul(2) && now < (start + 1 days) + (period * 1 days).div(4).mul(3)) {
+          bonusTokens = 50;
+        }
+        tokens += bonusTokens;
+        token.mint(msg.sender, tokens);
+    }
+  
+ 
+    function() external payable {
+        createTokens();
+    }
+    
+}
