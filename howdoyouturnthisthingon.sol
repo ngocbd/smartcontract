@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howdoyouturnthisthingon at 0x048fe0f263b8c3cef3f3e6b0e4f1b8cba55453cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract howdoyouturnthisthingon at 0xb8405a5048b33e78c954c5f6b649ceaaffdc14a3
 */
 pragma solidity ^0.4.19;
 
@@ -16,7 +16,7 @@ interface Corn
 
 contract howdoyouturnthisthingon
 {
-    address public farmer = 0xC4C6328405F00Fa4a93715D2349f76DF0c7E8b79;
+    address public farmer = 0xA554DCFc413c3F1e34F4B67C637a35146a39B573;
     
     function sowCorn(address soil, uint8 seeds) external
     {
