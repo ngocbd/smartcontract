@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gladiethers at 0x64127ab1de00337514f88382cefaddc786deb173
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gladiethers at 0xfca7d75cf8cad941a48ab9b5e1af0ae571923378
 */
 pragma solidity ^0.4.20;
 
@@ -11,12 +11,14 @@ contract Gladiethers
     mapping (address => uint) public gladiatorToPower; // gladiator power
     mapping (address => uint) public gladiatorToCooldown;
     mapping(address => uint) public gladiatorToQueuePosition;
-    mapping(address => uint) public gladiatorToPowerBonus;
     mapping(address => bool)  public trustedContracts;
+    uint public m_OwnerFees = 0;
     address public kingGladiator;
+    address public oraclizeContract;
     address[] public queue;
+    
+    bool started = false;
 
-    uint founders = 0;
 
     event fightEvent(address indexed g1,address indexed g2,uint random,uint fightPower,uint g1Power);
     modifier OnlyOwnerAndContracts() {
@@ -35,21 +37,16 @@ contract Gladiethers
     function setPartner(address contract_partner) public OnlyOwnerAndContracts(){
         partner = contract_partner;
     }
+    
+    function setOraclize(address contract_oraclize) public OnlyOwnerAndContracts(){
+        require(!started);
+        oraclizeContract = contract_oraclize;
+        started = true;
+    }
 
     function joinArena() public payable returns (bool){
 
         require( msg.value >= 10 finney );
-
-        if(founders < 50 && gladiatorToPowerBonus[msg.sender] == 0){
-            gladiatorToPowerBonus[msg.sender] = 5; // 5% increase in the power of your gladiator for eveeer
-            founders++;
-        }else if(founders < 100 && gladiatorToPowerBonus[msg.sender] == 0){
-            gladiatorToPowerBonus[msg.sender] = 2; // 2% increase in the power
-            founders++;
-        }else if(founders < 200 && gladiatorToPowerBonus[msg.sender] == 0){
-            gladiatorToPowerBonus[msg.sender] = 1; // 1% increase in the power
-            founders++;
-        }
 
         if(queue.length > gladiatorToQueuePosition[msg.sender]){
 
@@ -57,7 +54,6 @@ contract Gladiethers
                 gladiatorToPower[msg.sender] += msg.value;
                 return false;
             }
-            
         }
         
         enter(msg.sender);
@@ -94,8 +90,9 @@ contract Gladiethers
         
     }
 
-    function removeOrc(address _gladiator) public OnlyOwnerAndContracts(){
-         remove(_gladiator);
+    function removeOrc(address _gladiator) public {
+        require(msg.sender == oraclizeContract);
+        remove(_gladiator);
     }
 
     function setCooldown(address gladiator, uint cooldown) internal{
@@ -110,64 +107,73 @@ contract Gladiethers
         return queue.length;
     }
 
-    function fight(address gladiator1,string _result) public OnlyOwnerAndContracts(){
+    function fight(address gladiator1,string _result) public {
 
-        uint indexgladiator2 = uint(sha3(_result)) % queue.length; // this is an efficient way to get the uint out in the [0, maxRange] range
-        uint randomNumber = uint(sha3(_result)) % 1000;
-        address gladiator2 = queue[indexgladiator2];
+        require(msg.sender == oraclizeContract);
         
-        require(gladiatorToPower[gladiator1] >= 10 finney && gladiator1 != gladiator2);
-
+        // in a unlikely case of 3 guys in queue two of them scheduleFight and the last one withdraws and left the first fighter that enconters the queue empty becomes the kingGladiator
+        if(queue.length == 0){  
+            gladiatorToCooldown[gladiator1] = now + 1 days;
+            queue.push(gladiator1);
+            gladiatorToQueuePosition[gladiator1] = queue.length - 1;
+            kingGladiator = gladiator1;
+        }else{
         
-        uint g1chance = getChancePowerWithBonus(gladiator1);
-        uint g2chance = getChancePowerWithBonus(gladiator2);
-        uint fightPower = SafeMath.add(g1chance,g2chance);
-
-        g1chance = (g1chance*1000)/fightPower;
-
-        if(g1chance <= 958){
-            g1chance = SafeMath.add(g1chance,40);
-        }else{
-            g1chance = 998;
-        }
-
-        fightEvent( gladiator1, gladiator2,randomNumber,fightPower,getChancePowerWithBonus(gladiator1));
-        uint devFee;
-
-        if(randomNumber <= g1chance ){ // Wins the Attacker
-            devFee = SafeMath.div(SafeMath.mul(gladiatorToPower[gladiator2],4),100);
-
-            gladiatorToPower[gladiator1] =  SafeMath.add( gladiatorToPower[gladiator1], SafeMath.sub(gladiatorToPower[gladiator2],devFee) );
-            queue[gladiatorToQueuePosition[gladiator2]] = gladiator1;
-            gladiatorToQueuePosition[gladiator1] = gladiatorToQueuePosition[gladiator2];
-            gladiatorToPower[gladiator2] = 0;
-            gladiatorToCooldown[gladiator1] = now + 1 days; // reset atacker cooldown
-
-            if(gladiatorToPower[gladiator1] > gladiatorToPower[kingGladiator] ){ // check if is the biggest guy in the arena
-                kingGladiator = gladiator1;
+            uint indexgladiator2 = uint(sha3(_result)) % queue.length; // this is an efficient way to get the uint out in the [0, maxRange] range
+            uint randomNumber = uint(sha3(_result)) % 1000;
+            address gladiator2 = queue[indexgladiator2];
+            
+            require(gladiatorToPower[gladiator1] >= 10 finney && gladiator1 != gladiator2);
+    
+            
+            uint g1chance = gladiatorToPower[gladiator1];
+            uint g2chance =  gladiatorToPower[gladiator2];
+            uint fightPower = SafeMath.add(g1chance,g2chance);
+    
+            g1chance = (g1chance*1000)/fightPower;
+    
+            if(g1chance <= 958){
+                g1chance = SafeMath.add(g1chance,40);
+            }else{
+                g1chance = 998;
             }
-
-        }else{
-            //Defender Wins
-            devFee = SafeMath.div(SafeMath.mul(gladiatorToPower[gladiator1],4),100);
-
-            gladiatorToPower[gladiator2] = SafeMath.add( gladiatorToPower[gladiator2],SafeMath.sub(gladiatorToPower[gladiator1],devFee) );
-            gladiatorToPower[gladiator1] = 0;
-
-            if(gladiatorToPower[gladiator2] > gladiatorToPower[kingGladiator] ){
-                kingGladiator = gladiator2;
-            }
+    
+            fightEvent( gladiator1, gladiator2,randomNumber,fightPower,gladiatorToPower[gladiator1]);
+            uint devFee;
+    
+            if(randomNumber <= g1chance ){ // Wins the Attacker
+                devFee = SafeMath.div(SafeMath.mul(gladiatorToPower[gladiator2],4),100);
+    
+                gladiatorToPower[gladiator1] =  SafeMath.add( gladiatorToPower[gladiator1], SafeMath.sub(gladiatorToPower[gladiator2],devFee) );
+                queue[gladiatorToQueuePosition[gladiator2]] = gladiator1;
+                gladiatorToQueuePosition[gladiator1] = gladiatorToQueuePosition[gladiator2];
+                gladiatorToPower[gladiator2] = 0;
+                gladiatorToCooldown[gladiator1] = now + 1 days; // reset atacker cooldown
+    
+                if(gladiatorToPower[gladiator1] > gladiatorToPower[kingGladiator] ){ // check if is the biggest guy in the arena
+                    kingGladiator = gladiator1;
+                }
+    
+            }else{
+                //Defender Wins
+                devFee = SafeMath.div(SafeMath.mul(gladiatorToPower[gladiator1],4),100);
+    
+                gladiatorToPower[gladiator2] = SafeMath.add( gladiatorToPower[gladiator2],SafeMath.sub(gladiatorToPower[gladiator1],devFee) );
+                gladiatorToPower[gladiator1] = 0;
+    
+                if(gladiatorToPower[gladiator2] > gladiatorToPower[kingGladiator] ){
+                    kingGladiator = gladiator2;
+                }
 
         }
 
         
         gladiatorToPower[kingGladiator] = SafeMath.add( gladiatorToPower[kingGladiator],SafeMath.div(devFee,4) ); // gives 1%      (4% dead gladiator / 4 )
-        gladiatorToPower[m_Owner] = SafeMath.add( gladiatorToPower[m_Owner] , SafeMath.sub(devFee,SafeMath.div(devFee,4)) ); // 4total - 1king  = 3%
+        m_OwnerFees = SafeMath.add( m_OwnerFees , SafeMath.sub(devFee,SafeMath.div(devFee,4)) ); // 4total - 1king  = 3%
+        }
+        
+        
 
-    }
-
-    function getChancePowerWithBonus(address gladiator) public view returns(uint power){
-        return SafeMath.add(gladiatorToPower[gladiator],SafeMath.div(SafeMath.mul(gladiatorToPower[gladiator],gladiatorToPowerBonus[gladiator]),100));
     }
 
 
@@ -178,11 +184,11 @@ contract Gladiethers
         // owner and partner can withdraw
         if (msg.sender == m_Owner || msg.sender == partner ) {
             withdrawalAccount = m_Owner;
-            withdrawalAmount = gladiatorToPower[m_Owner];
-            uint partnerFee = SafeMath.div(SafeMath.mul(gladiatorToPower[withdrawalAccount],15),100);
+            withdrawalAmount = m_OwnerFees;
+            uint partnerFee = SafeMath.div(SafeMath.mul(withdrawalAmount,15),100);
 
             // set funds to 0
-            gladiatorToPower[withdrawalAccount] = 0;
+            m_OwnerFees = 0;
 
             if (!m_Owner.send(SafeMath.sub(withdrawalAmount,partnerFee))) revert(); // send to owner
             if (!partner.send(partnerFee)) revert(); // send to partner
