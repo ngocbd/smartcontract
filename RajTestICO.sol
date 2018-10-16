@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0x04a4b43352a78294bc7b6d520450825ac639ea21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0x3dcff2492b076b2a78eac9979f50a413121fc70b
 */
 pragma solidity ^0.4.16;
 
@@ -204,16 +204,19 @@ contract RajTestICO is owned, Killable {
     string public state = "Pre ICO";
 
     /// the UNIX timestamp start date of the crowdsale
-    uint public startsAt = 1521648000;
+    uint public startsAt = 1521633600;
 
     /// the UNIX timestamp end date of the crowdsale
-    uint public endsAt = 1521666000;
+    uint public endsAt = 1521635400;
 
     /// the price of token
     uint256 public TokenPerETH = 1045;
 
+    /// Tokens funding goal in wei.
+    uint public MIN_GOAL_EBC = 2 * 10 ** 18;
+
     /// Tokens funding goal in wei, if the funding goal is reached, ico will stop
-    uint public MAX_GOAL_EBC = 30 * 10 ** 18;
+    uint public MAX_GOAL_EBC = 10 * 10 ** 18;
 
     /// Has this crowdsale been finalized
     bool public finalized = false;
