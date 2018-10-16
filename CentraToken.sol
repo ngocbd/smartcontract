@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraToken at 0x96a65609a7b84e8842732deb08f56c3e21ac6f8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraToken at 0xe9aec9c2a03d06243fffb907f6ce377e3c5c8936
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
     
    // ----------------------------------------------------------------------------------------------
    // Developer Nechesov Andrey: Facebook.com/Nechesov   
@@ -51,8 +51,8 @@ pragma solidity ^0.4.13;
       uint256 public constant token_price = 1/400*10**18; 
       uint public constant ico_start = 1501891200;
       uint public constant ico_finish = 1507248000; 
-      uint public constant minValuePre = 1/10*10**18; 
-      uint public constant minValue = 1/10*10**18; 
+      uint public constant minValuePre = 100*10**18; 
+      uint public constant minValue = 1*10**18; 
       uint public constant maxValue = 3000*10**18;       
 
       uint public constant card_gold_minamount  = 30*10**18;
