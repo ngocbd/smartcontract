@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xa4f0afbb84d2bf074e0a33bccf1ceb8062623613
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x0c3dffb69463b7d654bd930cf6a1f69c5490e6e1
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'CANON';
-	string public symbol = 'CANON';
+	string public name = 'SAP';
+	string public symbol = 'SAP';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
