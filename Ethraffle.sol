@@ -1,38 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9ea5b12af209634b92129b7b011ed36cb3299dd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x168521b94eb0ca6f9aea34a735c53bcff79abdaf
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.16;
 
 contract Ethraffle {
-    // Structs
     struct Contestant {
         address addr;
         uint raffleId;
     }
 
-    // Constants
-    address public creatorAddress;
-    address constant public rakeAddress = 0x15887100f3b3cA0b645F007c6AA11348665c69e5;
-    uint constant public prize = 0.1 ether;
-    uint constant public rake = 0.02 ether;
-    uint constant public totalTickets = 6;
-    uint constant public pricePerTicket = (prize + rake) / totalTickets;
+    event RaffleResult(
+        uint indexed raffleId,
+        uint winningNumber,
+        address winningAddress,
+        address seed1,
+        address seed2,
+        uint seed3,
+        bytes32 randHash
+    );
 
-    // Variables
-    uint public raffleId = 0;
-    uint public nextTicket = 0;
-    mapping (uint => Contestant) public contestants;
-    uint[] public gaps;
+    event TicketPurchase(
+        uint indexed raffleId,
+        address contestant,
+        uint number
+    );
+
+    event TicketRefund(
+        uint indexed raffleId,
+        address contestant,
+        uint number
+    );
+
+    // Constants
+    // uint public constant prize = 1.25 ether;
+    // uint public constant fee = 0.015 ether;
+    // uint public constant totalTickets = 50;
+    uint public constant prize = 0.05 ether;
+    uint public constant fee = 0.0005 ether;
+    uint public constant totalTickets = 10;
+    uint public constant pricePerTicket = (prize + fee) / totalTickets;
+    address feeAddress;
+
+    // Other internal variables
+    bool public paused = false;
+    uint public raffleId = 1;
+    uint nextTicket = 0;
+    mapping (uint => Contestant) contestants;
+    uint[] gaps;
 
     // Initialization
     function Ethraffle() public {
-        creatorAddress = msg.sender;
-        resetRaffle();
-    }
-
-    function resetRaffle() private {
-        raffleId++;
-        nextTicket = 1;
+        feeAddress = msg.sender;
     }
 
     // Call buyTickets() when receiving Ether outside a function
@@ -41,9 +59,14 @@ contract Ethraffle {
     }
 
     function buyTickets() payable public {
+        if (paused) {
+            msg.sender.transfer(msg.value);
+            return;
+        }
+
         uint moneySent = msg.value;
 
-        while (moneySent >= pricePerTicket && nextTicket <= totalTickets) {
+        while (moneySent >= pricePerTicket && nextTicket < totalTickets) {
             uint currTicket = 0;
             if (gaps.length > 0) {
                 currTicket = gaps[gaps.length-1];
@@ -53,11 +76,12 @@ contract Ethraffle {
             }
 
             contestants[currTicket] = Contestant(msg.sender, raffleId);
+            TicketPurchase(raffleId, msg.sender, currTicket);
             moneySent -= pricePerTicket;
         }
 
         // Choose winner if we sold all the tickets
-        if (nextTicket > totalTickets) {
+        if (nextTicket == totalTickets) {
             chooseWinner();
         }
 
@@ -68,31 +92,73 @@ contract Ethraffle {
     }
 
     function chooseWinner() private {
-        uint winningTicket = 1; // TODO: Randomize
-        address winningAddress = contestants[winningTicket].addr;
-        resetRaffle();
+        address seed1 = contestants[uint(block.coinbase) % totalTickets].addr;
+        address seed2 = contestants[uint(msg.sender) % totalTickets].addr;
+        uint seed3 = block.difficulty;
+        bytes32 randHash = keccak256(seed1, seed2, seed3);
+
+        uint winningNumber = uint(randHash) % totalTickets;
+        address winningAddress = contestants[winningNumber].addr;
+        RaffleResult(raffleId, winningNumber, winningAddress, seed1, seed2, seed3, randHash);
+
+        // Start next raffle
+        raffleId++;
+        nextTicket = 0;
+
+        // gaps.length = 0 isn't necessary here,
+        // because buyTickets() eventually clears
+        // the gaps array in the loop itself.
+
+        // Distribute prize and fee
         winningAddress.transfer(prize);
-        rakeAddress.transfer(rake);
+        feeAddress.transfer(fee);
     }
 
+    // Get your money back before the raffle occurs
     function getRefund() public {
-        uint refunds = 0;
-        for (uint i = 1; i <= totalTickets; i++) {
+        uint refund = 0;
+        for (uint i = 0; i < totalTickets; i++) {
             if (msg.sender == contestants[i].addr && raffleId == contestants[i].raffleId) {
-                refunds++;
+                refund += pricePerTicket;
                 contestants[i] = Contestant(address(0), 0);
                 gaps.push(i);
+                TicketRefund(raffleId, msg.sender, i);
             }
         }
 
-        if (refunds > 0) {
-            msg.sender.transfer(refunds * pricePerTicket);
+        if (refund > 0) {
+            msg.sender.transfer(refund);
+        }
+    }
+
+    // Refund everyone's money, start a new raffle, then pause it
+    function endRaffle() public {
+        if (msg.sender == feeAddress) {
+            paused = true;
+
+            for (uint i = 0; i < totalTickets; i++) {
+                if (raffleId == contestants[i].raffleId) {
+                    TicketRefund(raffleId, contestants[i].addr, i);
+                    contestants[i].addr.transfer(pricePerTicket);
+                }
+            }
+
+            RaffleResult(raffleId, totalTickets, address(0), address(0), address(0), 0, 0);
+            raffleId++;
+            nextTicket = 0;
+            gaps.length = 0;
+        }
+    }
+
+    function togglePause() public {
+        if (msg.sender == feeAddress) {
+            paused = !paused;
         }
     }
 
     function kill() public {
-        if (msg.sender == creatorAddress) {
-            selfdestruct(creatorAddress);
+        if (msg.sender == feeAddress) {
+            selfdestruct(feeAddress);
         }
     }
 }
