@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x3a931cabde9d3deeb9cfe50d8afb0b7be357cb16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xbbd021f65e0b26149ead8bc042f343c402d84495
 */
 pragma solidity ^0.4.16;
 
@@ -20,7 +20,9 @@ contract owned {
     }
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { 
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; 
+}
 
 contract TokenERC20 {
     // Public variables of the token
@@ -50,7 +52,7 @@ contract TokenERC20 {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = initialSupply;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
@@ -183,7 +185,13 @@ contract MyAdvancedToken is owned, TokenERC20 {
     uint256 public buyPrice;
 
     mapping (address => bool) public frozenAccount;
-
+    mapping (address => uint) public lockedAmount;
+    mapping (address => uint) public lockedTime;
+    
+    /* public event about locking */
+    event LockToken(address target, uint256 amount, uint256 unlockTime);
+    event OwnerUnlock(address target, uint256 amount);
+    event UserUnlock(uint256 amount);
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
@@ -260,5 +268,53 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
+
+    /// @notice lock some amount token 
+    /// @param target address which will be locked some token
+    /// @param lockAmount token amount
+    /// @param lockPeriod time until unlock
+    function lockToken (address target, uint256 lockAmount, uint256 lockPeriod) onlyOwner public returns(bool res) {
+        require(balanceOf[msg.sender] >= lockAmount);       // make sure owner has enough balance
+        require(lockedAmount[target] == 0);                 // cannot lock unless lockedAmount is 0
+        balanceOf[msg.sender] -= lockAmount;
+        lockedAmount[target] = lockAmount;
+        lockedTime[target] = now + lockPeriod;
+        LockToken(target, lockAmount, now + lockPeriod);
+        return true;
+    }
+    /// @notice cotnract owner unlock some token for target address despite of time
+    /// @param target address to receive unlocked token
+    /// @param amount unlock token amount, no more than locked of this address
+    function ownerUnlock (address target, uint256 amount) onlyOwner public returns(bool res) {
+        require(lockedAmount[target] >= amount);
+        balanceOf[target] += amount;
+        lockedAmount[target] -= amount;
+        OwnerUnlock(target, amount);
+        return true;
+    }
+    
+    /// @notice user unlock his/her own token
+    /// @param amount token that user wish to unlock 
+    function userUnlockToken (uint256 amount) public returns(bool res) {
+        require(lockedAmount[msg.sender] >= amount);        // make sure no more token user could unlock
+        require(now >= lockedTime[msg.sender]);             // make sure won't unlock too soon
+        lockedAmount[msg.sender] -= amount;
+        balanceOf[msg.sender] += amount;
+        UserUnlock(amount);
+        return true;
+    }
+    /// @notice multisend token to many address
+    /// @param addrs addresses to receive token
+    /// @param _value token each addrs will receive
+    function multisend (address[] addrs, uint256 _value) public returns(bool res) {
+        uint length = addrs.length;
+        require(_value * length <= balanceOf[msg.sender]);
+        uint i = 0;
+        while (i < length) {
+           transfer(addrs[i], _value);
+           i ++;
+        }
+        return true;
     }
 }
