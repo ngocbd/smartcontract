@@ -1,11 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EVXTestToken at 0x7ca5a1730d94c813905c5c31b6fd27131a8869ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EVXTestToken at 0x6e74216fc9ec901c8e0d3fd8acf237e6a2f85413
 */
-/**
- * HELLO KITTY
- */
 pragma solidity ^0.4.13;
 
+/**
+* Everex Token Contract
+* Copyright © 2017 by Everex https://everex.io
+*/
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) constant returns (uint256);
@@ -13,32 +20,21 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -70,13 +66,14 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
@@ -158,6 +155,14 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -195,6 +200,41 @@ contract Ownable {
 
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
@@ -235,6 +275,13 @@ contract Pausable is Ownable {
   }
 }
 
+
+
+/**
+ * @title evxOwnable
+ * @dev The evxOwnable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract evxOwnable is Ownable {
 
   address public newOwner;
@@ -259,6 +306,11 @@ contract evxOwnable is Ownable {
   }
 }
 
+
+/**
+ * @title Moderated
+ * @dev Moderator can make transfers from and to any account (including frozen).
+ */
 contract evxModerated is evxOwnable {
 
   address public moderator;
@@ -317,6 +369,11 @@ contract evxModerated is evxOwnable {
   }
 }
 
+
+/**
+ * @title evxPausable
+ * @dev Slightly modified implementation of an emergency stop mechanism.
+ */
 contract evxPausable is Pausable, evxModerated {
   /**
    * @dev called by the owner or moderator to pause, triggers stopped state
@@ -335,6 +392,11 @@ contract evxPausable is Pausable, evxModerated {
   }
 }
 
+
+/**
+ * Pausable token with moderator role and freeze address implementation
+ *
+ **/
 contract evxModeratedToken is StandardToken, evxPausable {
 
   mapping(address => bool) frozen;
@@ -400,15 +462,17 @@ contract evxModeratedToken is StandardToken, evxPausable {
     return true;
   }
 }
-
+/**
+ * EVXTestToken
+ **/
 contract EVXTestToken is evxModeratedToken {
-  string public constant version = "0.0.2";
-  string public constant name = "TEST Smart Contract 2";
+  string public constant version = "0.0.1";
+  string public constant name = "TestTokenSmartContract";
   string public constant symbol = "xTEST";
   uint256 public constant decimals = 4;
 
   /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
+   * @dev Contructor that gives msg.sender all of existing tokens.
    */
   function EVXTestToken(uint256 _initialSupply) {
     totalSupply = _initialSupply;
