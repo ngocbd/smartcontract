@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WFee at 0xc22e162db0b8b55486160c35064f91e418cc2221
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WFee at 0xd20098bde28e409ed99f16fed8a21e515148be3f
 */
 pragma solidity ^0.4.16;
 
@@ -366,14 +366,13 @@ contract LockUtils {
         if (now < createTime + 30 minutes) {
             return 1400000000 * 10 ** uint256(decimals);
         } else if (now < createTime + 2 years) {
-            return 1500000000 * 10 ** uint256(decimals);
+            return 1000000000 * 10 ** uint256(decimals);
+            //            return 1500000000 * 10 ** uint256(decimals);
         } else if (now < createTime + 2 years + 6 * 30 days) {
-            return 1125000000 * 10 ** uint256(decimals);
-        } else if (now < createTime + 3 years) {
             return 750000000 * 10 ** uint256(decimals);
-        } else if (now < createTime + 3 years + 6 * 30 days) {
+        } else if (now < createTime + 3 years) {
             return 375000000 * 10 ** uint256(decimals);
-        } else {
+        } else if (now < createTime + 3 years + 6 * 30 days) {
             return 0;
         }
     }
