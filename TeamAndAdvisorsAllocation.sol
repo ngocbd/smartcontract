@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamAndAdvisorsAllocation at 0xfcc5c3e4046ec3cf9b6475c5f669d3099bb75c04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamAndAdvisorsAllocation at 0x620e67c086554ee173f47b54cf0311daadf19d99
 */
 pragma solidity 0.4.19;
 
@@ -353,47 +353,44 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
-// File: contracts/ODEMToken.sol
+// File: contracts/ICNQToken.sol
 
 /**
- * @title ODEM Token contract - ERC20 compatible token contract.
- * @author Gustavo Guimaraes - <gustavo@odem.io>
+ * @title ICNQ Token contract - ERC20 compatible token contract.
+ * @author Gustavo Guimaraes - <gustavoguimaraes@gmail.com>
  */
-
-contract ODEMToken is PausableToken, MintableToken {
-    string public constant name = "ODEM Token";
-    string public constant symbol = "ODEM";
+contract ICNQToken is PausableToken, MintableToken {
+    string public constant name = "Iconiq Lab Token";
+    string public constant symbol = "ICNQ";
     uint8 public constant decimals = 18;
 }
 
 // File: contracts/TeamAndAdvisorsAllocation.sol
 
 /**
- * @title Team and Advisors Token Allocation contract
- * @author Gustavo Guimaraes - <gustavo@odem.io>
+ * @title Team And Advisors contract - Keep locked ICNQ tokens allocated to team and advisors for a determined time.
+ * @author Gustavo Guimaraes - <gustavoguimaraes@gmail.com>
  */
 
 contract TeamAndAdvisorsAllocation is Ownable {
-    using SafeMath for uint;
-
+    using SafeMath for uint256;
     uint256 public unlockedAt;
-    uint256 public canSelfDestruct;
-    uint256 public tokensCreated;
-    uint256 public allocatedTokens;
-    uint256 private totalTeamAndAdvisorsAllocation = 38763636e18; // 38 mm
+    uint256 public tokensTransferred;
 
     mapping (address => uint256) public teamAndAdvisorsAllocations;
 
-    ODEMToken public odem;
+    ICNQToken public icnq;
 
     /**
      * @dev constructor function that sets owner and token for the TeamAndAdvisorsAllocation contract
-     * @param token Token contract address for ODEMToken
+     * @param tokenAddress Token contract address for AllPublicArtToken
+     * @param _unlockAt Timestamp representing one year in the future
      */
-    function TeamAndAdvisorsAllocation(address token) public {
-        odem = ODEMToken(token);
-        unlockedAt = now.add(182 days);
-        canSelfDestruct = now.add(365 days);
+    function TeamAndAdvisorsAllocation(address tokenAddress, uint256 _unlockAt) public {
+        require(tokenAddress != address(0) && _unlockAt > now);
+
+        icnq = ICNQToken(tokenAddress);
+        unlockedAt = _unlockAt;
     }
 
     /**
@@ -407,45 +404,28 @@ contract TeamAndAdvisorsAllocation is Ownable {
         onlyOwner
         returns(bool)
     {
-        assert(teamAndAdvisorsAllocations[teamOrAdvisorsAddress] == 0); // can only add once.
-
-        allocatedTokens = allocatedTokens.add(allocationValue);
-        require(allocatedTokens <= totalTeamAndAdvisorsAllocation);
+        require(teamAndAdvisorsAllocations[teamOrAdvisorsAddress] == 0); // can only add once.
 
         teamAndAdvisorsAllocations[teamOrAdvisorsAddress] = allocationValue;
         return true;
     }
 
     /**
-     * @dev Allow company to unlock allocated tokens by transferring them whitelisted addresses.
+     * @dev Allow team and advisors to unlock allocated tokens by transferring them whitelisted addresses.
      * Need to be called by each address
      */
     function unlock() external {
-        assert(now >= unlockedAt);
+        require(now >= unlockedAt);
 
         // During first unlock attempt fetch total number of locked tokens.
-        if (tokensCreated == 0) {
-            tokensCreated = odem.balanceOf(this);
+        if (tokensTransferred == 0) {
+            tokensTransferred = icnq.balanceOf(this);
         }
 
         uint256 transferAllocation = teamAndAdvisorsAllocations[msg.sender];
         teamAndAdvisorsAllocations[msg.sender] = 0;
 
         // Will fail if allocation (and therefore toTransfer) is 0.
-        require(odem.transfer(msg.sender, transferAllocation));
-    }
-
-    /**
-     * @dev allow for selfdestruct possibility and sending funds to owner
-     */
-    function kill() public onlyOwner {
-        assert(now >= canSelfDestruct);
-        uint256 balance = odem.balanceOf(this);
-
-        if (balance > 0) {
-            odem.transfer(owner, balance);
-        }
-
-        selfdestruct(owner);
+        require(icnq.transfer(msg.sender, transferAllocation));
     }
 }
