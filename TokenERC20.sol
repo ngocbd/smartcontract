@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x880D086b07c1408967A3e8936A886C1B917561bD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x6b27bfd273ec79a64a62b4b3a18a89045c2389b1
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -19,9 +19,6 @@ contract TokenERC20 {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    // This generates a public event on the blockchain that will notify clients
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
@@ -31,7 +28,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor (
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -71,9 +68,8 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     /**
@@ -103,7 +99,6 @@ contract TokenERC20 {
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
