@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0xcb17910d94fc9bf2fd6f9937b0d1fb76904d0181
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0x8095ff4eea862eefead05b68a2f75f3aef7b81d0
 */
 pragma solidity ^0.4.18;
 
@@ -1411,6 +1411,7 @@ contract CryptoSagaCorrectedHeroStats {
 }
 
 
+
 /**
  * @title CryptoSagaArenaRecord
  * @dev The record of battles in the Arena.
@@ -1493,7 +1494,7 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
   // @dev Constructor.
   function CryptoSagaArenaRecord(
     address _firstPlayerAddress,
-    uint32 _firstPlayerElo, 
+    address _previousSeasonRecord,
     uint8 _numberOfLeaderboardPlayers, 
     uint8 _numberOfRecentPlayers)
     public
@@ -1510,7 +1511,16 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
     pushPlayer(_firstPlayerAddress);
     
     // The initial player's Elo.
-    addressToElo[_firstPlayerAddress] = _firstPlayerElo;
+    addressToElo[_firstPlayerAddress] = 1500;
+
+    // Get instance of previous season.
+    CryptoSagaArenaRecord _previous = CryptoSagaArenaRecord(_previousSeasonRecord);
+
+    for (uint256 i = _previous.recentPlayersFront(); i < _previous.recentPlayersBack(); i++) {
+      var _player = _previous.recentPlayers(i);
+      // The initial player's Elo.
+      addressToElo[_player] = _previous.getEloRating(_player);
+    }
   }
 
   // @dev Update record.
@@ -1611,9 +1621,9 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
         // Second, if the minimum elo value is smaller than the player's elo value, then replace the entity.
         if (_minimumElo <= addressToElo[_addressToUpdate]) {
+          addressToIsInLeaderboard[leaderBoardPlayers[_minimumEloPlayerIndex]] = false;
           leaderBoardPlayers[_minimumEloPlayerIndex] = _addressToUpdate;
           addressToIsInLeaderboard[_addressToUpdate] = true;
-          addressToIsInLeaderboard[leaderBoardPlayers[_minimumEloPlayerIndex]] = false;
           isChanged = true;
         }
       } else {
@@ -1662,7 +1672,6 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 }
 
 
-
 /**
  * @title CryptoSagaArenaVer1
  * @dev The actual gameplay is done by this contract. Version 1.0.2.
@@ -1702,13 +1711,13 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
   }
 
   // Progress contract.
-  CryptoSagaArenaRecord private recordContract;
+  CryptoSagaArenaRecord public recordContract;
 
   // The hero contract.
-  CryptoSagaHero private heroContract;
+  CryptoSagaHero public heroContract;
 
   // Corrected hero stats contract.
-  CryptoSagaCorrectedHeroStats private correctedHeroContract;
+  CryptoSagaCorrectedHeroStats public correctedHeroContract;
 
   // Gold contract.
   Gold public goldContract;
