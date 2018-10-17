@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x4d2c5308f1d9b42bdc398d215713bbc9e0738a0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x00547a1f1160a4af6fbee82fbf790b48b7192649
 */
 pragma solidity ^0.4.24;
 /**
@@ -168,6 +168,10 @@ contract Star3Devents {
     );
 }
 
+interface CompanyShareInterface {
+    function deposit() external payable;
+}
+
 //==============================================================================
 //   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
 //  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
@@ -186,6 +190,8 @@ contract Star3Dlong is modularLong {
 //=================_|===========================================================
     string constant public name = "Save the planet";
     string constant public symbol = "Star";
+    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0xBEd79cce1F55AbC0C4e403cF6c1C3d0DC2947578);
+
     uint256 private pID_ = 0;   // total number of players
 	uint256 private rndExtra_ = 1 hours;     // length of the very first ICO
     uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
@@ -766,9 +772,7 @@ contract Star3Dlong is modularLong {
             plyrNames_[_pID][_name] = true;
         }
         // registration fee goes directly to community rewards
-        address affAddreess = 0x9a099cF4d575f9152AB98b0F566c4e255D08C7a3;
-        affAddreess.transfer(msg.value);
-
+        CompanyShare.deposit.value(msg.value)();
     }
 
     function isNewPlayer(address _addr)
@@ -1349,8 +1353,8 @@ contract Star3Dlong is modularLong {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // dev rewards
-        address devAddress = 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F;
-        devAddress.transfer(_com);
+        CompanyShare.deposit.value(_com)();
+
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
 
@@ -1432,8 +1436,7 @@ contract Star3Dlong is modularLong {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
         } else {
             // dev rewards
-            address affAddreess = 0x9a099cF4d575f9152AB98b0F566c4e255D08C7a3;
-            affAddreess.transfer(_aff);
+            CompanyShare.deposit.value(_aff)();
         }
         return(_eventData_);
     }
@@ -1461,8 +1464,9 @@ contract Star3Dlong is modularLong {
             _gen = _gen.sub(_dust);
 
         // dev rewards
-        address devAddress = 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F;
-        devAddress.transfer(_dev);
+        CompanyShare.deposit.value(_dev)();
+//        address devAddress = 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F;
+//        devAddress.transfer(_dev);
 
         // add eth to pot
         round_[_rID].pot = _pot.add(_dust).add(round_[_rID].pot);
@@ -1567,7 +1571,7 @@ contract Star3Dlong is modularLong {
     {
         // only team just can activate
         require(
-			msg.sender == 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F,
+			msg.sender == 0x27D78bFb67874c7ac6aD3C70F99F03B35fc20c3b,
             "only team just can activate"
         );
 
