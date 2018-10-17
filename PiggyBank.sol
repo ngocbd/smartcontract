@@ -1,22 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x30e0d995a998bbf967cd80c921db7b6afe953900
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PIGGYBANK at 0x68af0f18c974a9603ec863fefcebb4ceb2589070
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-contract PiggyBank {
-    event Gift(address indexed donor, uint indexed amount);
-    event Lambo(uint indexed amount);
-
-    uint constant lamboTime = 2058739200; // my niece turns 18
-    address niece = 0x1FC7b94f00C54C89336FEB4BaF617010a6867B40; //address of my niece wallet
-
-    function() payable {
-        Gift(msg.sender, msg.value);
+contract PIGGYBANK
+{
+    
+    bytes32 hashPwd;
+    
+    bool isclosed = false;
+    
+    uint cashOutTime;
+    
+    address sender;
+    
+    address myadress;
+ 
+    
+    
+    function CashOut(bytes pass) external payable
+    {
+        if(hashPwd == keccak256(pass) && now>cashOutTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
     }
     
-    function buyLambo() {
-        require (block.timestamp > lamboTime && msg.sender == niece);
-        Lambo(this.balance);
-        msg.sender.transfer(this.balance);
+    function CashOut() public payable
+    {
+        if(msg.sender==myadress && now>cashOutTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
     }
+    
+    
+
+ 
+    function DebugHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
+    
+    function SetPwd(bytes32 hash) public payable
+    {
+        if( (!isclosed&&(msg.value>1 ether)) || hashPwd==0x00)
+        {
+            hashPwd = hash;
+            sender = msg.sender;
+            cashOutTime = now;
+        }
+    }
+    
+    function SetcashOutTime(uint date) public
+    {
+        if(msg.sender==sender)
+        {
+            cashOutTime = date;
+        }
+    }
+    
+    function Setmyadress(address _myadress) public
+    {
+        if(msg.sender==sender)
+        {
+            myadress = _myadress;
+        }
+    }
+    
+    function PwdHasBeenSet(bytes32 hash) public
+    {
+        if(hash==hashPwd&&msg.sender==sender)
+        {
+           isclosed=true;
+        }
+    }
+    
+    function() public payable{}
+    
 }
