@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERONEUM at 0x2ac6c3e75ea7bd845c8f84cb5180e1e9e9f1dfea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroneum at 0x0a388e7b24bd88c2946aca0050556a20740fb44f
 */
 pragma solidity ^0.4.24;
 
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract ETHERONEUM is StandardToken { // CHANGE THIS. Update the contract name.
+contract Etheroneum is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -107,10 +107,10 @@ contract ETHERONEUM is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function
     // which means the following function name has to match the contract name declared above
-    function ETHERONEUM() {
+    function Etheroneum() {
         balances[msg.sender] = 30000000000000000000000000000;      
         totalSupply = 30000000000000000000000000000;
-        name = "ETHERONEUM";                                   
+        name = "Etheroneum";                                   
         decimals = 18;                                        
         symbol = "ETN";                                       
         unitsOneEthCanBuy = 10000000;
