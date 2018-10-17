@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20_ICO at 0x13873a43694f039d18107afeac917aff6bc4fa96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20_ICO at 0xff9c25e5b8cb4f0df53ed8065877257170ac28e0
 */
 pragma solidity ^0.4.24;
 
@@ -14,14 +14,18 @@ contract owned {
         require(msg.sender == owner);
         _;
     }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
 }
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract ERC20 is owned {
     // Public variables of the token
-    string public name = "PerfectChain Network";
-    string public symbol = "PNN";
+    string public name = "Intcoex coin";
+    string public symbol = "ITX";
     uint8 public decimals = 18;
     uint256 public totalSupply = 200000000 * 10 ** uint256(decimals);
 
@@ -38,9 +42,6 @@ contract ERC20 is owned {
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-    
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
@@ -60,6 +61,7 @@ contract ERC20 is owned {
     function releaseToken() public onlyOwner {
         released = true;
     }
+    
     /**
      * Internal transfer, only can be called by this contract
      */
@@ -146,48 +148,6 @@ contract ERC20 is owned {
         }
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
-        return true;
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        emit Transfer(this, target, mintedAmount);
-    }
-
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
     /// @param target Address to be frozen
     /// @param freeze either to freeze it or not
@@ -209,18 +169,22 @@ contract Killable is owned {
     }
 }
 
-contract ERC20_ICO is owned, Killable {
+contract ERC20_ICO is Killable {
+
     /// The token we are selling
     ERC20 public token;
 
+    ///fund goes to
+    address beneficiary;
+
     /// the UNIX timestamp start date of the crowdsale
-    uint256 public startsAt = 1528761600;
+    uint256 public startsAt = 1527811200;
 
     /// the UNIX timestamp end date of the crowdsale
-    uint256 public endsAt = 1531389600;
+    uint256 public endsAt = 1535673600;
 
     /// the price of token
-    uint256 public TokenPerETH = 5600;
+    uint256 public TokenPerETH = 1666;
 
     /// Has this crowdsale been finalized
     bool public finalized = false;
@@ -234,17 +198,8 @@ contract ERC20_ICO is owned, Killable {
     /// How many distinct addresses have invested
     uint256 public investorCount = 0;
 
-    /// How much Token minimum sale.
-    uint256 public Soft_Cap = 40000000000000000000000000;
-
-    /// How much Token maximum sale.
-    uint256 public Hard_Cap = 140000000000000000000000000;
-
     /// How much ETH each address has invested to this crowdsale
     mapping (address => uint256) public investedAmountOf;
-
-    /// list of investor
-    address[] public investorlist;
 
     /// A new investment was made
     event Invested(address investor, uint256 weiAmount, uint256 tokenAmount);
@@ -254,23 +209,19 @@ contract ERC20_ICO is owned, Killable {
     event EndsAtChanged(uint256 endsAt);
     /// Calculated new price
     event RateChanged(uint256 oldValue, uint256 newValue);
-    /// Refund was processed for a contributor
-    event Refund(address investor, uint256 weiAmount);
-
-    constructor (address _token) public {
+    
+    constructor (address _token, address _beneficiary) public {
         token = ERC20(_token);
+        beneficiary = _beneficiary;
     }
 
     function investInternal(address receiver) private {
         require(!finalized);
         require(startsAt <= now && endsAt > now);
-        require(tokensSold <= Hard_Cap);
-        require(msg.value >= 10000000000000000);
 
         if(investedAmountOf[receiver] == 0) {
             // A new investor
             investorCount++;
-            investorlist.push(receiver) -1;
         }
 
         // Update investor
@@ -280,26 +231,14 @@ contract ERC20_ICO is owned, Killable {
         tokensSold += tokensAmount;
         weiRaised += msg.value;
 
-        // Tell us invest was success
+        // Emit an event that shows invested successfully
         emit Invested(receiver, msg.value, tokensAmount);
-
-        if (msg.value >= 100000000000000000 && msg.value < 10000000000000000000 ) {
-            // 0.1-10 ETH 20% Bonus
-            tokensAmount = tokensAmount * 120 / 100;
-        }
-        if (msg.value >= 10000000000000000000 && msg.value < 30000000000000000000) {
-            // 10-30 ETH 30% Bonus
-            tokensAmount = tokensAmount * 130 / 100;
-        }
-        if (msg.value >= 30000000000000000000) {
-            // 30 ETh and more 40% Bonus
-            tokensAmount = tokensAmount * 140 / 100;
-        }
-
+        
+        // Transfer Token to owner's address
         token.transfer(receiver, tokensAmount);
 
         // Transfer Fund to owner's address
-        owner.transfer(address(this).balance);
+        beneficiary.transfer(address(this).balance);
 
     }
 
@@ -328,6 +267,6 @@ contract ERC20_ICO is owned, Killable {
         // Finalized Pre ICO crowdsele.
         finalized = true;
         uint256 tokensAmount = token.balanceOf(this);
-        token.transfer(owner, tokensAmount);
+        token.transfer(beneficiary, tokensAmount);
     }
 }
