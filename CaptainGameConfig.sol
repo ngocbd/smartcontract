@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainGameConfig at 0xb94a576a8bb6224bc3b4b8f1c634267f75cc47f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainGameConfig at 0xce9435fd1123aff54d0fde8bc8094a93997e5207
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -29,36 +29,37 @@ contract CaptainGameConfig {
 
   function CaptainGameConfig() public {
     owner = msg.sender;
+    cardInfo[1] = Card(1, 2, 2640, 960, 1, 0.475 ether);
+    cardInfo[2] = Card(2, 1, 1625, 250, 2, 0.245 ether);
+    cardInfo[3] = Card(3, 4, 6760, 1040, 2, 0.99 ether);
+    cardInfo[4] = Card(4, 3, 2640, 2310, 3, 0.66 ether);
+    cardInfo[5] = Card(5, 4, 4160, 3640, 3, 0.99 ether);
+    cardInfo[6] = Card(6, 4, 5720, 2080, 1, 0.99 ether);
+    cardInfo[7] = Card(7, 2, 3120, 480, 2, 0.475 ether);
+    cardInfo[8] = Card(8, 3, 3630, 1320, 1, 0.66 ether);
+    cardInfo[9] = Card(9, 1, 1625, 250, 2, 0.245 ether);
 
-    // level 1 config
-    cardInfo[1] = Card(1, 2, 220, 80, 1, 0.495 ether);
-    cardInfo[2] = Card(2, 1, 130, 20, 2, 0.2475 ether);
-    cardInfo[3] = Card(3, 4, 520, 80, 2, 0.99 ether);
-    cardInfo[4] = Card(4, 3, 240, 210, 3, 0.7425 ether);
-    cardInfo[5] = Card(5, 4, 320, 280, 3, 0.99 ether);
-    cardInfo[6] = Card(6, 4, 440, 160, 1, 0.99 ether);
-    cardInfo[7] = Card(7, 2, 260, 40, 2, 0.495 ether);
-    cardInfo[8] = Card(8, 3, 330, 120, 1, 0.7425 ether);
-    cardInfo[9] = Card(9, 1, 130, 20, 2, 0.2475 ether);
-
-    captainIndxToCount[1] = 100000; // for count limited
-    captainIndxToCount[2] = 100000;
+    captainIndxToCount[1] = 50; 
+    captainIndxToCount[2] = 50;
     captainIndxToCount[3] = 30;
-    captainIndxToCount[4] = 100000;
+    captainIndxToCount[4] = 40;
     captainIndxToCount[5] = 30;
     captainIndxToCount[6] = 30;
-    captainIndxToCount[7] = 100000;
-    captainIndxToCount[8] = 100000;
-    captainIndxToCount[9] = 100000;
+    captainIndxToCount[7] = 40;
+    captainIndxToCount[8] = 40;
+    captainIndxToCount[9] = 60;
 
     calfactor[1] = 80; //for atk_min & atk_max calculate
     calfactor[2] = 85;
     calfactor[3] = 90;
     calfactor[4] = 95;
 
+    unitSellable[2] = true;
     unitSellable[3] = true;
+    unitSellable[4] = true;
     unitSellable[5] = true;
     unitSellable[6] = true;
+    unitSellable[7] = true;
   }
 
   function getCardInfo(uint32 cardId) external constant returns (uint32,uint32,uint32,uint32,uint32,uint256,uint256) {
@@ -66,12 +67,13 @@ contract CaptainGameConfig {
       cardInfo[cardId].color,
       cardInfo[cardId].atk, 
       cardInfo[cardId].atk*calfactor[cardInfo[cardId].color]/100,
-      cardInfo[cardId].atk*(200-cardInfo[cardId].color)/100,
+      cardInfo[cardId].atk*(200-calfactor[cardInfo[cardId].color])/100,
       cardInfo[cardId].defense,
       cardInfo[cardId].price,
       captainIndxToCount[cardId]);
   }    
-  
+
+
   function getCardType(uint32 cardId) external constant returns (uint32){
     return cardInfo[cardId].stype;
   }
@@ -106,17 +108,16 @@ contract CaptainGameConfig {
   }
 
   function getLevelConfig(uint32 cardId, uint32 level) external view returns (uint32 atk,uint32 defense,uint32 atk_min,uint32 atk_max) {
-    if (level==1) {
-      atk = cardInfo[cardId].atk;
-      defense = cardInfo[cardId].defense;
-    } else if (level==2) {
-      atk = cardInfo[cardId].atk * 150/100;
-      defense = cardInfo[cardId].defense * 150/100;
+    atk = cardInfo[cardId].atk;
+    defense = cardInfo[cardId].defense;
+    if (level==2) {
+      atk = atk * 150/100;
+      defense = defense * 150/100;
     } else if (level>=3) {
-      atk = cardInfo[cardId].atk * (level-1)*2 - (level-2) * cardInfo[cardId].atk * 150/100;
-      defense = cardInfo[cardId].defense * (level-1)*2 - (level-2) * cardInfo[cardId].defense * 150/100;
+      atk = atk * (level-1)*2 - atk * (level-2)* 150/100 - atk*50/100;
+      defense = defense * (level-1)*2 - (level-2) * defense * 150/100 - defense*50/100;
     }
-    atk_min = calfactor[cardInfo[cardId].color]/100;
-    atk_max = atk*(200-cardInfo[cardId].color)/100;
+    atk_min = atk*calfactor[cardInfo[cardId].color]/100;
+    atk_max = atk*(200-calfactor[cardInfo[cardId].color])/100;
   }  
 }
