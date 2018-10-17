@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LineageCode at 0xe1614c1bbe3550381624828118d6c3f7e8030901
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LineageCode at 0xe8d7ccd3be69a2849e268b6f736d6a84f04d905e
 */
 pragma solidity ^0.4.24;
 
@@ -256,7 +256,7 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract LineageCode is StandardToken {
-    string public name = 'LineageCode';
+    string public name = 'LinageCode';
     string public symbol = 'LIN';
     uint public decimals = 10;
     uint public INITIAL_SUPPLY = 80 * 100000000 * (10 ** decimals);
