@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CWT at 0x4027c7262554ba72ccc3e346c6b71794299d3b99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CWT at 0xdc313e1c5df8b0ba8bc2c592739b6e041a5ce552
 */
 pragma solidity ^0.4.24;
 
