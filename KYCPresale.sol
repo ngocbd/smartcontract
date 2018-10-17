@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCPresale at 0x16a19f43832292dc41ce7fb500909723b1c3be69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYCPresale at 0xe2ff99d71555b62271f74b062d1e2928c4d27b1e
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -479,15 +479,22 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
-   * @dev Calculate tokens user will have for theirr purchase
+   * @dev Calculate tokens user will have for their purchase
    *
    * @param weisTotal How much ethers (in wei) the user putssssss in
    * @param pricePerToken What is the price for one token
    *
-   * @return tokensTotal which is weisTotal divided by pricePerToken
+   * @return tokensTotal which is received tokens, token decimals included
    */
   function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public constant returns(uint tokensTotal) {
-    return weisTotal/pricePerToken;
+    // pricePerToken is how many full tokens, token decimal place included, you get for wei amount.
+    // Because, in theory, decimal amount can vary, we do the exponent calculation here,
+    // though gas wise using 10**18 constant would be much simpler.
+    // Furthermore we could use rough amounts and take in raw wei per tokens amount,
+    // but we lose too much accuracy for generic calculations, thus all these are
+    // practically implemented as 10**18 fixed points.
+    uint multiplier = 10 ** token.decimals();
+    return weisTotal.times(multiplier)/pricePerToken;
   }
 
   /**
@@ -910,7 +917,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
       // pass
     } else {
       // Unwanted state
-      revert;
+      revert();
     }
 
     if(investedAmountOf[receiver] == 0) {
@@ -980,7 +987,7 @@ contract KYCPresale is CrowdsaleBase, KYCPayloadDeserializer {
    * @dev Have this taken away from the parent contract?
    */
   function assignTokens(address receiver, uint tokenAmount) internal {
-    revert;
+    revert();
   }
 
   /**
