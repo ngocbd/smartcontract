@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0x8a25079d2449f264099e8cc278f61ce6fe319b69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0x09c74b2215918beea67e13945a8bd7872c4f35f0
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract Neulaut {
 
     uint256 public totalSupply = 7*10**27;
-    uint256 public fee = 15*10**18; // 15 NUA
-    uint256 public burn = 10**19; // 10 NUA
     address owner;
     string public name = "Neulaut";
     uint8 public decimals = 18;
@@ -16,28 +14,24 @@ contract Neulaut {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     
 
-    function Neulaut() {
-        balances[owner] = totalSupply;
+    constructor() public {
         owner = msg.sender;
+        balances[owner] = totalSupply;
     }
     
     function() payable {
         revert();
     }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(_value > fee+burn);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
-        balances[_to] += (_value - fee - burn);
-        balances[owner] += fee;
-        Transfer(msg.sender, _to, (_value - fee - burn));
-        Transfer(msg.sender, owner, fee);
-        Transfer(msg.sender, address(0), burn);
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
         return balances[_owner];
     }
 
