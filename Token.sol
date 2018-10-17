@@ -1,239 +1,435 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6a1428910fcff75f8a31803f34d697b7754a4926
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x70504eeed81fa1d75c84cf83c67e9f8cc03350b9
 */
-pragma solidity ^0.4.18;
- 
-contract Token {
-    string public symbol = "";
-    string public name = "";
-    uint8 public constant decimals = 18;
-	string public constant ICOFactoryVersion = "1.0";
-    uint256 _totalSupply = 0;
-	uint256 _oneEtherEqualsInWei = 0;	
-	uint256 _maxICOpublicSupply = 0;
-	uint256 _ownerICOsupply = 0;
-	uint256 _currentICOpublicSupply = 0;
-	uint256 _blockICOdatetime = 0;
-	address _ICOfundsReceiverAddress = 0;
-	address _remainingTokensReceiverAddress = 0;
-    address owner = 0;	
-    bool setupDone = false;
-	bool isICOrunning = false;
-	bool ICOstarted = false;
-	uint256 ICOoverTimestamp = 0;
-   
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-	event Burn(address indexed _owner, uint256 _value);
- 
+/*! silkroad.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+
+pragma solidity 0.4.24;
+
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns(uint256 c) {
+        if(a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns(uint256) {
+        return a / b;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+contract Ownable {
+    address public owner;
+
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() { require(msg.sender == owner); _;  }
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    function _transferOwnership(address _newOwner) internal {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
+
+    function renounceOwnership() public onlyOwner {
+        emit OwnershipRenounced(owner);
+        owner = address(0);
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        _transferOwnership(_newOwner);
+    }
+}
+
+contract ERC20 {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() public view returns(uint256);
+    function balanceOf(address who) public view returns(uint256);
+    function transfer(address to, uint256 value) public returns(bool);
+    function transferFrom(address from, address to, uint256 value) public returns(bool);
+    function allowance(address owner, address spender) public view returns(uint256);
+    function approve(address spender, uint256 value) public returns(bool);
+}
+
+contract StandardToken is ERC20 {
+    using SafeMath for uint256;
+
+    uint256 totalSupply_;
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+
     mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
- 
-    function Token(address adr) public {
-        owner = adr;        
+    mapping(address => mapping(address => uint256)) internal allowed;
+
+    constructor(string _name, string _symbol, uint8 _decimals) public {
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
     }
-	
-	function() public payable
-	{
-		if ((isICOrunning && _blockICOdatetime == 0) || (isICOrunning && _blockICOdatetime > 0 && now <= _blockICOdatetime))
-		{
-			uint256 _amount = ((msg.value * _oneEtherEqualsInWei) / 1000000000000000000);
-			
-			if (((_currentICOpublicSupply + _amount) > _maxICOpublicSupply) && _maxICOpublicSupply > 0) revert();
-			
-			if(!_ICOfundsReceiverAddress.send(msg.value)) revert();					
-			
-			_currentICOpublicSupply += _amount;
-			
-			balances[msg.sender] += _amount;
-			
-			_totalSupply += _amount;			
-			
-			Transfer(this, msg.sender, _amount);
-		}
-		else
-		{
-			revert();
-		}
-	}
-   
-    function SetupToken(string tokenName, string tokenSymbol, uint256 oneEtherEqualsInWei, uint256 maxICOpublicSupply, uint256 ownerICOsupply, address remainingTokensReceiverAddress, address ICOfundsReceiverAddress, uint256 blockICOdatetime) public
-    {
-        if (msg.sender == owner && !setupDone)
-        {
-            symbol = tokenSymbol;
-            name = tokenName;
-			_oneEtherEqualsInWei = oneEtherEqualsInWei;
-			_maxICOpublicSupply = maxICOpublicSupply * 1000000000000000000;									
-			if (ownerICOsupply > 0)
-			{
-				_ownerICOsupply = ownerICOsupply * 1000000000000000000;
-				_totalSupply = _ownerICOsupply;
-				balances[owner] = _totalSupply;
-				Transfer(this, owner, _totalSupply);
-			}			
-			_ICOfundsReceiverAddress = ICOfundsReceiverAddress;
-			if (_ICOfundsReceiverAddress == 0) _ICOfundsReceiverAddress = owner;
-			_remainingTokensReceiverAddress = remainingTokensReceiverAddress;
-			_blockICOdatetime = blockICOdatetime;			
-            setupDone = true;
-        }
+
+    function totalSupply() public view returns(uint256) {
+        return totalSupply_;
     }
-	
-	function StartICO() public returns (bool success)
-    {
-        if (msg.sender == owner && !ICOstarted && setupDone)
-        {
-            ICOstarted = true;			
-			isICOrunning = true;			
-        }
-		else
-		{
-			revert();
-		}
-		return true;
-    }
-	
-	function StopICO() public returns (bool success)
-    {
-        if (msg.sender == owner && isICOrunning)
-        {            
-			if (_remainingTokensReceiverAddress != 0 && _maxICOpublicSupply > 0)
-			{
-				uint256 _remainingAmount = _maxICOpublicSupply - _currentICOpublicSupply;
-				if (_remainingAmount > 0)
-				{
-					balances[_remainingTokensReceiverAddress] += _remainingAmount;
-					_totalSupply += _remainingAmount;
-					Transfer(this, _remainingTokensReceiverAddress, _remainingAmount);	
-				}
-			}				
-			isICOrunning = false;	
-			ICOoverTimestamp = now;
-        }
-		else
-		{
-			revert();
-		}
-		return true;
-    }
-	
-	function BurnTokens(uint256 amountInWei) public returns (bool success)
-    {
-		if (balances[msg.sender] >= amountInWei)
-		{
-			balances[msg.sender] -= amountInWei;
-			_totalSupply -= amountInWei;
-			Burn(msg.sender, amountInWei);
-			Transfer(msg.sender, 0, amountInWei);
-		}
-		else
-		{
-			revert();
-		}
-		return true;
-    }
- 
-    function totalSupply() public constant returns (uint256 totalSupplyValue) {        
-        return _totalSupply;
-    }
-	
-	function OneEtherEqualsInWei() public constant returns (uint256 oneEtherEqualsInWei) {        
-        return _oneEtherEqualsInWei;
-    }
-	
-	function MaxICOpublicSupply() public constant returns (uint256 maxICOpublicSupply) {        
-        return _maxICOpublicSupply;
-    }
-	
-	function OwnerICOsupply() public constant returns (uint256 ownerICOsupply) {        
-        return _ownerICOsupply;
-    }
-	
-	function CurrentICOpublicSupply() public constant returns (uint256 currentICOpublicSupply) {        
-        return _currentICOpublicSupply;
-    }
-	
-	function RemainingTokensReceiverAddress() public constant returns (address remainingTokensReceiverAddress) {        
-        return _remainingTokensReceiverAddress;
-    }
-	
-	function ICOfundsReceiverAddress() public constant returns (address ICOfundsReceiver) {        
-        return _ICOfundsReceiverAddress;
-    }
-	
-	function Owner() public constant returns (address ownerAddress) {        
-        return owner;
-    }
-	
-	function SetupDone() public constant returns (bool setupDoneFlag) {        
-        return setupDone;
-    }
-    
-	function IsICOrunning() public constant returns (bool isICOrunningFalg) {        
-        return isICOrunning;
-    }
-	
-	function IsICOstarted() public constant returns (bool isICOstartedFlag) {        
-        return ICOstarted;
-    }
-	
-	function ICOoverTimeStamp() public constant returns (uint256 ICOoverTimestampCheck) {        
-        return ICOoverTimestamp;
-    }
-	
-	function BlockICOdatetime() public constant returns (uint256 blockStopICOdate) {        
-        return _blockICOdatetime;
-    }
-	
-	function TimeNow() public constant returns (uint256 timenow) {        
-        return now;
-    }
-	 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+
+    function balanceOf(address _owner) public view returns(uint256) {
         return balances[_owner];
     }
- 
-    function transfer(address _to, uint256 _amount) public returns (bool success) {
-        if (balances[msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) public returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) public returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+
+    function transfer(address _to, uint256 _value) public returns(bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
- 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+
+    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
+        require(_to.length == _value.length);
+
+        for(uint i = 0; i < _to.length; i++) {
+            transfer(_to[i], _value[i]);
+        }
+
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns(uint256) {
         return allowed[_owner][_spender];
+    }
+
+    function approve(address _spender, uint256 _value) public returns(bool) {
+        allowed[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
+        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
+
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+
+        if(_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        }
+        else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+}
+
+contract MintableToken is StandardToken, Ownable {
+    bool public mintingFinished = false;
+
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+
+    modifier canMint() { require(!mintingFinished); _; }
+    modifier hasMintPermission() { require(msg.sender == owner); _; }
+
+    function mint(address _to, uint256 _amount) hasMintPermission canMint public returns(bool) {
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    function finishMinting() onlyOwner canMint public returns(bool) {
+        mintingFinished = true;
+
+        emit MintFinished();
+        return true;
+    }
+}
+
+contract CappedToken is MintableToken {
+    uint256 public cap;
+
+    constructor(uint256 _cap) public {
+        require(_cap > 0);
+        cap = _cap;
+    }
+
+    function mint(address _to, uint256 _amount) public returns(bool) {
+        require(totalSupply_.add(_amount) <= cap);
+
+        return super.mint(_to, _amount);
+    }
+}
+
+contract BurnableToken is StandardToken {
+    event Burn(address indexed burner, uint256 value);
+
+    function _burn(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+
+        balances[_who] = balances[_who].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+
+        emit Burn(_who, _value);
+        emit Transfer(_who, address(0), _value);
+    }
+
+    function burn(uint256 _value) public {
+        _burn(msg.sender, _value);
+    }
+
+    function burnFrom(address _from, uint256 _value) public {
+        require(_value <= allowed[_from][msg.sender]);
+        
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        _burn(_from, _value);
+    }
+}
+
+contract Withdrawable is Ownable {
+    function withdrawEther(address _to, uint _value) onlyOwner public {
+        require(_to != address(0));
+        require(address(this).balance >= _value);
+
+        _to.transfer(_value);
+    }
+
+    function withdrawTokensTransfer(ERC20 _token, address _to, uint256 _value) onlyOwner public {
+        require(_token.transfer(_to, _value));
+    }
+
+    function withdrawTokensTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) onlyOwner public {
+        require(_token.transferFrom(_from, _to, _value));
+    }
+
+    function withdrawTokensApprove(ERC20 _token, address _spender, uint256 _value) onlyOwner public {
+        require(_token.approve(_spender, _value));
+    }
+}
+
+contract Pausable is Ownable {
+    bool public paused = false;
+
+    event Pause();
+    event Unpause();
+
+    modifier whenNotPaused() { require(!paused); _; }
+    modifier whenPaused() { require(paused); _; }
+
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
+}
+
+contract Manageable is Ownable {
+    address[] public managers;
+
+    event ManagerAdded(address indexed manager);
+    event ManagerRemoved(address indexed manager);
+
+    modifier onlyManager() { require(isManager(msg.sender)); _; }
+
+    function countManagers() view public returns(uint) {
+        return managers.length;
+    }
+
+    function getManagers() view public returns(address[]) {
+        return managers;
+    }
+
+    function isManager(address _manager) view public returns(bool) {
+        for(uint i = 0; i < managers.length; i++) {
+            if(managers[i] == _manager) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function addManager(address _manager) onlyOwner public {
+        require(_manager != address(0));
+        require(!isManager(_manager));
+
+        managers.push(_manager);
+
+        emit ManagerAdded(_manager);
+    }
+
+    function removeManager(address _manager) onlyOwner public {
+        require(isManager(_manager));
+
+        uint index = 0;
+        for(uint i = 0; i < managers.length; i++) {
+            if(managers[i] == _manager) {
+                index = i;
+            }
+        }
+
+        for(; index < managers.length - 1; index++) {
+            managers[index] = managers[index + 1];
+        }
+        
+        managers.length--;
+        emit ManagerRemoved(_manager);
+    }
+}
+
+contract RewardToken is StandardToken, Ownable {
+    struct Payment {
+        uint time;
+        uint amount;
+    }
+
+    Payment[] public repayments;
+    mapping(address => Payment[]) public rewards;
+
+    event Repayment(address indexed from, uint256 time, uint256 amount);
+    event Reward(address indexed to, uint256 time, uint256 amount);
+
+    function repayment() onlyOwner payable public {
+        require(msg.value >= 0.01 * 1 ether);
+
+        repayments.push(Payment({time : now, amount : msg.value}));
+
+        emit Repayment(msg.sender, now, msg.value);
+    }
+
+    function _reward(address _to) private returns(bool) {
+        if(rewards[_to].length < repayments.length) {
+            uint sum = 0;
+            for(uint i = rewards[_to].length; i < repayments.length; i++) {
+                uint amount = balances[_to] > 0 ? (repayments[i].amount.mul(balances[_to]).div(totalSupply_)) : 0;
+                rewards[_to].push(Payment({time : now, amount : amount}));
+                sum = sum.add(amount);
+            }
+
+            if(sum > 0) {
+                _to.transfer(sum);
+                emit Reward(_to, now, sum);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    function reward() public returns(bool) {
+        return _reward(msg.sender);
+    }
+
+    function availableReward(address _to) public view returns(uint256 value) {
+        if(rewards[_to].length < repayments.length && balances[_to] > 0) {
+            uint sum = 0;
+            for(uint i = rewards[_to].length; i < repayments.length; i++) {
+                sum = sum.add(repayments[i].amount.mul(balances[_to]).div(totalSupply_));
+            }
+
+            return sum;
+        }
+        return 0;
+    }
+
+    function transfer(address _to, uint256 _value) public returns(bool) {
+        _reward(msg.sender);
+        _reward(_to);
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        _reward(_from);
+        _reward(_to);
+        return super.transferFrom(_from, _to, _value);
+    }
+}
+
+
+/*
+    ICO Silkroadmining
+*/
+contract Token is CappedToken, BurnableToken, RewardToken, Withdrawable {
+    constructor() CappedToken(100000000 * 1e8) StandardToken("SILK", "SILK", 8) public {
+        
+    }
+}
+
+contract Crowdsale is Manageable, Withdrawable, Pausable {
+    using SafeMath for uint;
+
+    Token public token;
+    bool public crowdsaleClosed = false;
+
+    event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
+    event CrowdsaleClose();
+   
+    constructor() public {
+        token = new Token();
+
+        addManager(0x915c517cB57fAB7C532262cB9f109C875bEd7d18);
+    }
+
+    function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
+        token.mint(_to, _tokens);
+        emit ExternalPurchase(_to, _tx, _currency, _value, _rate, _tokens);
+    }
+
+    function closeCrowdsale(address _to) onlyOwner public {
+        require(!crowdsaleClosed);
+
+        token.finishMinting();
+        token.transferOwnership(_to);
+
+        crowdsaleClosed = true;
+
+        emit CrowdsaleClose();
     }
 }
