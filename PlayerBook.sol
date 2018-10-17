@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xacd1ae32f6519ed27ec245462d4154584451bb38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xf628099229fae56f0ffbe7140a41d3820a1248f1
 */
 pragma solidity ^0.4.24;
 /*
@@ -68,7 +68,20 @@ contract PlayerBook {
 //==============================================================================    
     constructor()
         public
-    {}
+    {
+        // premine the dev names (sorry not sorry)
+            // No keys are purchased with this method, it's simply locking our addresses,
+            // PID's and names for referral codes.
+        plyr_[1].addr = 0xe15Ccba132Ae5e7faA1C98a33C743a4C7161e136;
+        plyr_[1].name = "inventor";
+        plyr_[1].names = 1;
+        pIDxAddr_[0xe15Ccba132Ae5e7faA1C98a33C743a4C7161e136] = 1;
+        pIDxName_["inventor"] = 1;
+        plyrNames_[1]["inventor"] = true;
+        plyrNameList_[1][1] = "inventor";
+        
+        pID_ = 1;
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
