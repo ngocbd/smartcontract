@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeBox at 0x8a1561f69837cd7e3f6dd7a34c986d7c1f52aba8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeBox at 0x92a3d1f6700944ab19a02d954229d9beeecac961
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -42,7 +42,7 @@ interface ERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract SafeCoin is ERC20 {
+contract SafeBoxCoin is ERC20 {
     using SafeMath for uint;
        
     string internal _name;
@@ -53,23 +53,13 @@ contract SafeCoin is ERC20 {
     mapping (address => uint256) internal balances;
     mapping (address => mapping (address => uint256)) internal allowed;
 
-    function SafeCoin() public {
-        _symbol = "SFC";
-        _name = "SafeCoin";
+    function SafeBoxCoin() public {
+        _symbol = "SBC";
+        _name = "SafeBoxCoin";
         _decimals = 18;
-        _totalSupply = 500000000;
+        _totalSupply = 252000000;
         balances[msg.sender] = _totalSupply;
     }
-
-    function _transfer(address _from, address _to, uint256 _value) internal returns (bool) {
-      require(_to != address(0));
-      require(_value <= balances[_from]);
-      balances[_from] = SafeMath.sub(balances[_from], _value);
-      balances[_to] = SafeMath.add(balances[_to], _value);
-      emit Transfer(_from, _to, _value);
-      return true;
-    }
-
 
     function transfer(address _to, uint256 _value) external returns (bool) {
       require(_to != address(0));
@@ -125,27 +115,32 @@ contract SafeCoin is ERC20 {
 
 }
 
-contract SafeBox is SafeCoin {
-    // ========================================================================================================
-    // ========================================================================================================
-    // FUNCTIONS RELATING TO THE MANAGEMENT OF THE CONTRACT ===================================================
+contract SafeBox is SafeBoxCoin {
+    
     mapping (address => user) private users;
     user private user_object;
     address private owner;
+    address private account_1;
+    address private account_2;
+    uint256 private divided_value;
+    Safe safe_object;
+    mapping (address =>  mapping (string => Safe)) private map_data_safe_benefited;
+    Prices public prices;
     
     struct Prices {
-        uint8 create;
-        uint8 edit;
-        uint8 active_contract;
+        uint256 create;
+        uint256 edit;
+        uint256 active_contract;
     }
 
-    Prices public prices;
 
     function SafeBox() public {
         owner = msg.sender;
-        prices.create = 10;
-        prices.edit = 10;
-        prices.active_contract = 10;
+        account_1 = 0x8Fc18dc65E432CaA9583F7024CC7B40ed99fd8e4;
+        account_2 = 0x51cbdb8CE8dE444D0cBC0a2a64066A852e14ff51;
+        prices.create = 1000;
+        prices.edit = 1000;
+        prices.active_contract = 7500;
     }
 
     modifier onlyOwner {
@@ -153,63 +148,55 @@ contract SafeBox is SafeCoin {
         _;
     }
 
-    // Muda o dono do contrato
-    function set_prices(uint8 _create, uint8 _edit, uint8 _active_contract) public onlyOwner returns (bool success){
+    function set_prices(uint256 _create, uint256 _edit, uint256 _active_contract) public onlyOwner returns (bool success){
         prices.create = _create;
         prices.edit = _edit;
         prices.active_contract = _active_contract;
         return true;
     }
 
-    function _my_transfer(address _address, uint8 _price) private returns (bool) {
-        SafeCoin._transfer(_address, owner, _price);
-        return true;
+
+    function _transfer(uint256 _value) private returns (bool) {
+      require(owner != address(0));
+      require(_value <= SafeBoxCoin.balances[msg.sender]);
+      SafeBoxCoin.balances[msg.sender] = SafeMath.sub(SafeBoxCoin.balances[msg.sender], _value);
+      divided_value = _value / 2;
+      SafeBoxCoin.balances[owner] = SafeMath.add(SafeBoxCoin.balances[owner], divided_value);
+      SafeBoxCoin.balances[account_1] = SafeMath.add(SafeBoxCoin.balances[account_1], divided_value / 2);
+      SafeBoxCoin.balances[account_2] = SafeMath.add(SafeBoxCoin.balances[account_2], divided_value / 2);
+      emit Transfer(msg.sender, owner, _value);
+      return true;
     }
 
-
-    // ========================================================================================================
-    // ========================================================================================================
-    // FUNCOES RELATIVAS AO GERENCIAMENTO DE USUARIOS =========================================================
-    function set_status_user(address _address, bool _live_user, bool _active_contract) public onlyOwner returns (bool success) {
-        users[_address].live_user = _live_user;
+    function set_status_user(address _address, bool _active_contract) public onlyOwner returns (bool success) {
         users[_address].active_contract = _active_contract;
         return true;
     }
 
     function set_active_contract() public returns (bool success) {
-        require(_my_transfer(msg.sender, prices.active_contract));
+        require(_transfer(prices.active_contract));
         users[msg.sender].active_contract = true;
         return true;
     }
 
-    // PUBLIC TEMPORARIAMENTE, DEPOIS PRIVATE
     function get_status_user(address _address) public view returns (
-            bool _live_user, bool _active_contract, bool _user_exists){
-        _live_user = users[_address].live_user;
+            bool _user_exists, bool _active_contract){
         _active_contract = users[_address].active_contract;
         _user_exists = users[_address].exists;
-        return (_live_user, _active_contract, _user_exists);
+        return (_active_contract, _user_exists);
     }
 
-    // Criando objeto usuario
     struct user {
         bool exists;
         address endereco;
-        bool live_user;
         bool active_contract;
     }
 
     function _create_user(address _address) private {
-        /*
-            Função privada cria user
-        */
-        user_object = user(true, _address, true, true);
+        user_object = user(true, _address, true);
         users[_address] = user_object;
     }
     
-    // ========================================================================================================
-    // ========================================================================================================
-    // FUNÇÔES REFERENTES AOS COFRES ==========================================================================
     struct Safe {
         address safe_owner_address;
         bool exists;
@@ -218,59 +205,32 @@ contract SafeBox is SafeCoin {
         string data;
     }
 
-    Safe safe_object;
-    // Endereco titular + safe_name = ObjetoDados 
-    mapping (address =>  mapping (string =>  Safe)) private map_data_safe_owner;
-    // Endereco benefited_address = ObjetoDados     
-    mapping (address =>  mapping (string =>  Safe)) private map_data_safe_benefited;
 
     function create_safe(address _benef, string _data, string _safe_name) public returns (bool success) {
-        require(map_data_safe_owner[msg.sender][_safe_name].exists == false);
-        require(_my_transfer(msg.sender, prices.create));
+        require(map_data_safe_benefited[_benef][_safe_name].exists == false);
+        require(_transfer(prices.create));
         if(users[msg.sender].exists == false){
             _create_user(msg.sender);
         }
-        // Transfere os tokens para o owner
-        // Cria um struct Safe
         safe_object = Safe(msg.sender, true, _safe_name, _benef, _data);
-        // Salva o cofre no dicionario do titular
-        map_data_safe_owner[msg.sender][_safe_name] = safe_object;
-        // Salva o cofre no dicionario do beneficiado
         map_data_safe_benefited[_benef][_safe_name] = safe_object;
         return true;
     }
 
     function edit_safe(address _benef, string _new_data,
-                         string _safe_name) public returns (bool success) {
-        require(map_data_safe_owner[msg.sender][_safe_name].exists == true);
+            string _safe_name) public returns (bool success) {
+        require(map_data_safe_benefited[_benef][_safe_name].exists == true);
         require(users[msg.sender].exists == true);
-        require(_my_transfer(msg.sender, prices.edit));
-        // _token.transferToOwner(msg.sender, owner, prices.edit, senha_owner);
-        // Salva o cofre no dicionario do titular
-        map_data_safe_owner[msg.sender][_safe_name].data = _new_data;
-        // Salva o cofre no dicionario do beneficiado
+        require(_transfer(prices.edit));
         map_data_safe_benefited[_benef][_safe_name].data = _new_data;
         return true;
     }
 
-    //  Get infor do cofre beneficiado
     function get_data_benefited(address _benef,
             string _safe_name) public view returns (string) {
         require(map_data_safe_benefited[_benef][_safe_name].exists == true);
         address _safe_owner_address = map_data_safe_benefited[_benef][_safe_name].safe_owner_address;
-        require(users[_safe_owner_address].live_user == false);
         require(users[_safe_owner_address].active_contract == true);
         return map_data_safe_benefited[_benef][_safe_name].data;
     }
-
-    //  Get infor do cofre beneficiado
-    function get_data_owner(address _address, string _safe_name)
-            public view returns (address _benefited_address, string _data) {
-        require(map_data_safe_owner[_address][_safe_name].exists == true);
-        require(users[_address].active_contract == true);
-        _benefited_address = map_data_safe_owner[_address][_safe_name].benefited_address;
-        _data = map_data_safe_owner[_address][_safe_name].data;
-        return (_benefited_address, _data);
-    }
-
 }
