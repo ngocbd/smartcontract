@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYC at 0x0cb9a31b5784f85264114854fb8cae26c2b5375a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYC at 0xe153bbfbd0dc32dfe390ece4815a77c39100108d
 */
 pragma solidity ^0.4.23;
 
@@ -132,13 +132,13 @@ contract BTYCToken is ERC20Interface, Owned {
     	sysPrice = 766; //??????
     	sysPer = 225; //???????? /100
     	
-    	onceOuttime = 86400; //????? ?? 
-    	onceAddTime = 864000; //????? ??
-    	onceoutTimePer = 8640000; //?????? ??
+    	//onceOuttime = 86400; //????? ?? 
+    	//onceAddTime = 864000; //????? ??
+    	//onceoutTimePer = 8640000; //?????? ??
     	
-    	//onceOuttime = 600; //????? ??  
-    	//onceAddTime = 1800; //????? ??
-    	//onceoutTimePer = 60000; //?????? ??
+    	onceOuttime = 600; //????? ??  
+    	onceAddTime = 1800; //????? ??
+    	onceoutTimePer = 60000; //?????? ??
 	
 	
         
@@ -316,10 +316,10 @@ contract BTYC is BTYCToken{
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public{
-        symbol = "BTYC";
-        name = "BTYC Coin";
+        symbol = "BYTCT";
+        name = "BYTYCT Coin";
         decimals = 18;
-        _totalSupply = 86400000 * 10**uint(decimals);
+        _totalSupply = 1000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
@@ -331,16 +331,11 @@ contract BTYC is BTYCToken{
     function totalSupply() public view returns (uint) {
         return _totalSupply.sub(balances[address(0)]);
     }
-    /*
     function buy(uint money) public payable {
         require(!frozenAccount[msg.sender]);
-        uint amount = money * buyPrice;
+        uint amount = money / buyPrice;
         balances[msg.sender] += amount;
-        //msg.sender.transfer(money);
-        emit Transfer(this, msg.sender, amount);
-    }
-    function () payable public {
-        buy(msg.value);
+        msg.sender.transfer(money);
     }
     /*
     function selleth(uint amount) public payable {
@@ -351,7 +346,6 @@ contract BTYC is BTYCToken{
        // balances[msg.sender] += money;
         owner.transfer(amount);
     }*/
-    /*
     function sell(uint amount)  public returns (bool success){
         //address user = msg.sender;
         //canOf[msg.sender] = myuseOf(msg.sender);
@@ -360,10 +354,10 @@ contract BTYC is BTYCToken{
         balances[msg.sender] -= amount;
         canOf[msg.sender] -= amount;
         uint moneys = amount / sellPrice;
-        msg.sender.transfer(moneys);
+        owner.transfer(moneys);
         //canOf[user] -= amount;
         return true;              
-    }*/
+    }
     
 
   
