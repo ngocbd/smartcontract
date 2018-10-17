@@ -1,21 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlEthereum at 0xba2403b8ec4f310017a887421c0227a529b04ad5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlEthereum at 0x6ba9908db7340f82e75ac42468b8172dbf37c1d6
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
+
+// ----------------------------------------------------------------------------
+// HODL Ethereum
+//
+// Pulled from URL: hodlethereum.com
+// GitHub: https://github.com/apguerrera/hodl_ethereum
+//
+// Enjoy.
+//
+// (c) Adrian Guerrera / Deepyr Pty Ltd and
+// HODL Ethereum Project - 2018. The MIT Licence.
+// ----------------------------------------------------------------------------
+
 contract hodlEthereum {
     event Hodl(address indexed hodler, uint indexed amount);
     event Party(address indexed hodler, uint indexed amount);
-    mapping (address => uint) hodlers;
-    uint constant partyTime = 1596067200; // 30th July 2020
-    function() payable {
+    mapping (address => uint) public hodlers;
+
+    // Set party date -  1st Sept 2018
+    uint constant partyTime = 1535760000;
+
+    // Deposit Funds
+    function hodl() payable public {
         hodlers[msg.sender] += msg.value;
-        Hodl(msg.sender, msg.value);
+        emit Hodl(msg.sender, msg.value);
     }
-    function party() {
+
+    // Withdrawl Funds
+    function party() public {
         require (block.timestamp > partyTime && hodlers[msg.sender] > 0);
         uint value = hodlers[msg.sender];
         hodlers[msg.sender] = 0;
         msg.sender.transfer(value);
-        Party(msg.sender, value);
+        emit Party(msg.sender, value);
     }
 }
