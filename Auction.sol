@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auction at 0x3280660b3bafdad41a774938ab5a34ae463edbfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Auction at 0x5b5b518d5eaaa14f790ba9b59a9a586c3a784d2f
 */
 pragma solidity ^0.4.23;
 
-// Deploying version: https://github.com/astralship/auction-ethereum/commit/1359e14e0319c6019eb9c7e57348b95c722e3dd6
+// Deploying version: https://github.com/astralship/eos/tree/4a4929d7e434ff8f2aec148fd038f30fa3cf26e4
 // Timestamp Converter: 1529279999
 // Is equivalent to: 06/17/2018 @ 11:59pm (UTC)
 // Sunday midnight, in a week ?
@@ -89,24 +89,30 @@ contract Auction {
     require(finalized == false, "can withdraw only once");
     require(initialPrice == false, "can withdraw only if there were bids");
 
-    finalized = true; // THINK: DAO hack reentrancy - does it matter which order? (just in case setting it first)
-    beneficiary.send(price);
+    finalized = true;
+    beneficiary.transfer(price);
+  }
 
+  function refundContributors() public ended() onlyOwner() {
     bids[winner] = 0; // setting it to zero that in the refund loop it is skipped
     for (uint i = 0; i < accountsList.length;  i++) {
       if (bids[accountsList[i]] > 0) {
-        accountsList[i].send( bids[accountsList[i]] ); // send? transfer? tell me baby: https://ethereum.stackexchange.com/a/38642/2524
-        bids[accountsList[i]] = 0; // in case someone calls `refund` again
+        uint refundValue = bids[accountsList[i]];
+        bids[accountsList[i]] = 0;
+        accountsList[i].transfer(refundValue); 
       }
-    }     
-  }
+    }
+  }   
 
   function refund() public {
     require(msg.sender != winner, "winner cannot refund");
+    require(bids[msg.sender] > 0, "refunds only allowed if you sent something");
 
-    msg.sender.send( bids[msg.sender] );
-    emit Refund(msg.sender, bids[msg.sender], now);
-    bids[msg.sender] = 0;
+    uint refundValue = bids[msg.sender];
+    bids[msg.sender] = 0; // reentrancy fix, setting to zero first
+    msg.sender.transfer(refundValue);
+    
+    emit Refund(msg.sender, refundValue, now);
   }
 
 }
