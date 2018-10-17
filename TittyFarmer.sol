@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TittyFarmer at 0x09f6742e42daafae735e14ec53b5ee95b66c2886
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TittyFarmer at 0x38764b00d2c555385bb19c80471616d3079db08c
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18; // solhint-disable-line
 contract TittyFarmer{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
-    uint256 public STARTING_SHRIMP=600;
+    uint256 public STARTING_SHRIMP=25;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
@@ -42,12 +42,12 @@ contract TittyFarmer{
         require(initialized);
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs);
-        uint256 fee=devFee(eggValue);
+       
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        ceoAddress.transfer(fee);
-        msg.sender.transfer(SafeMath.sub(eggValue,fee));
+    
+        msg.sender.transfer(eggValue);
     }
     function buyEggs() public payable{
         require(initialized);
@@ -71,7 +71,7 @@ contract TittyFarmer{
         return calculateEggBuy(eth,this.balance);
     }
     function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,4),100);
+        return SafeMath.div(SafeMath.mul(amount,30),100);
     }
     function seedMarket(uint256 eggs) public payable{
         require(marketEggs==0);
