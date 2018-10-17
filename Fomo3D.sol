@@ -1,742 +1,343 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3D at 0xc62b165F2e317BE858c10E651914d44A3c376776
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo3d at 0x38aefe9e8e0fc938475bfc6d7e52ae28d39febd8
 */
-pragma solidity ^0.4.20;
-
-/*
-Team JUST presents...
-
-    ______ ________  ________ 
-    |  ___|  _  |  \/  |  _  |
-    | |_  | | | |      | | | |
-    |  _| | | | | |\/| | | | |
-    | |   \ \_/ / |  | \ \_/ /
-    \_|    \___/\_|  |_/\___/ 
-          ___________             
-         |____ |  _  \            
-             / / | | |            
-             \ \ | | |            
-         ____/ / |/ /             
-         \____/|___/        
-
-
-fomo3d.xyz
-
-*/
-
-contract Fomo3D {
-    /*=================================
-    =            MODIFIERS            =
-    =================================*/
-    // only people with tokens
-    modifier onlyBagholders() {
-        require(myTokens() > 0);
-        _;
-    }
-    
-    // only people with profits
-    modifier onlyStronghands() {
-        require(myDividends(true) > 0);
-        _;
-    }
-    
-    // administrators can:
-    // -> change the name of the contract
-    // -> change the name of the token
-    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
-    // they CANNOT:
-    // -> take funds
-    // -> disable withdrawals
-    // -> kill the contract
-    // -> change the price of tokens
-    modifier onlyAdministrator(){
-        address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
-        _;
-    }
-    
-    
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
-    // result: healthy longevity.
-    modifier antiEarlyWhale(uint256 _amountOfEthereum){
-        address _customerAddress = msg.sender;
-        
-        // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
-        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
-            require(
-                // is the customer in the ambassador list?
-                ambassadors_[_customerAddress] == true &&
-                
-                // does the customer purchase exceed the max ambassador quota?
-                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
-                
-            );
-            
-            // updated the accumulated quota    
-            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
-        
-            // execute
-            _;
-        } else {
-            // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
-            _;    
-        }
-        
-    }
-    
-    
-    /*==============================
-    =            EVENTS            =
-    ==============================*/
-    event onTokenPurchase(
-        address indexed customerAddress,
-        uint256 incomingEthereum,
-        uint256 tokensMinted,
-        address indexed referredBy
-    );
-    
-    event onTokenSell(
-        address indexed customerAddress,
-        uint256 tokensBurned,
-        uint256 ethereumEarned
-    );
-    
-    event onReinvestment(
-        address indexed customerAddress,
-        uint256 ethereumReinvested,
-        uint256 tokensMinted
-    );
-    
-    event onWithdraw(
-        address indexed customerAddress,
-        uint256 ethereumWithdrawn
-    );
-    
-    // ERC20
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 tokens
-    );
-    
-    
-    /*=====================================
-    =            CONFIGURABLES            =
-    =====================================*/
-    string public name = "FOMO 3D";
-    string public symbol = "F3D";
-    uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 4;
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
-    uint256 constant internal magnitude = 2**64;
-    
-    // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
-    
-    // ambassador program
-    mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
-    
-    
-    
-   /*================================
-    =            DATASETS            =
-    ================================*/
-    // amount of shares for each address (scaled number)
-    mapping(address => uint256) internal tokenBalanceLedger_;
-    mapping(address => uint256) internal referralBalance_;
-    mapping(address => int256) internal payoutsTo_;
-    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
-    uint256 internal tokenSupply_ = 0;
-    uint256 internal profitPerShare_;
-    
-    // administrator list (see above on what they can do)
-    mapping(bytes32 => bool) public administrators;
-    
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false; //set to false, no ambassadors
-    
-
-
-    /*=======================================
-    =            PUBLIC FUNCTIONS            =
-    =======================================*/
-    /*
-    * -- APPLICATION ENTRY POINTS --  
-    */
-    function Hourglass()
-        public
-    {
-        // add administrators here
-       
-        // add the ambassadors here.
-        
-    }
-    
-     
-    /**
-     * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
-     */
-    function buy(address _referredBy)
-        public
-        payable
-        returns(uint256)
-    {
-        purchaseTokens(msg.value, _referredBy);
-    }
-    
-    /**
-     * Fallback function to handle ethereum that was send straight to the contract
-     * Unfortunately we cannot use a referral address this way.
-     */
-    function()
-        payable
-        public
-    {
-        purchaseTokens(msg.value, 0x0);
-    }
-    
-    /**
-     * Converts all of caller's dividends to tokens.
-     */
-    function reinvest()
-        onlyStronghands()
-        public
-    {
-        // fetch dividends
-        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
-        
-        // pay out the dividends virtually
-        address _customerAddress = msg.sender;
-        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
-        
-        // retrieve ref. bonus
-        _dividends += referralBalance_[_customerAddress];
-        referralBalance_[_customerAddress] = 0;
-        
-        // dispatch a buy order with the virtualized "withdrawn dividends"
-        uint256 _tokens = purchaseTokens(_dividends, 0x0);
-        
-        // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
-    }
-    
-    /**
-     * Alias of sell() and withdraw().
-     */
-    function exit()
-        public
-    {
-        // get token count for caller & sell them all
-        address _customerAddress = msg.sender;
-        uint256 _tokens = tokenBalanceLedger_[_customerAddress];
-        if(_tokens > 0) sell(_tokens);
-        
-        // lambo delivery service
-        withdraw();
-    }
-
-    /**
-     * Withdraws all of the callers earnings.
-     */
-    function withdraw()
-        onlyStronghands()
-        public
-    {
-        // setup data
-        address _customerAddress = msg.sender;
-        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
-        
-        // update dividend tracker
-        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
-        
-        // add ref. bonus
-        _dividends += referralBalance_[_customerAddress];
-        referralBalance_[_customerAddress] = 0;
-        
-        // lambo delivery service
-        _customerAddress.transfer(_dividends);
-        
-        // fire event
-        onWithdraw(_customerAddress, _dividends);
-    }
-    
-    /**
-     * Liquifies tokens to ethereum.
-     */
-    function sell(uint256 _amountOfTokens)
-        onlyBagholders()
-        public
-    {
-        // setup data
-        address _customerAddress = msg.sender;
-        // russian hackers BTFO
-        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        uint256 _tokens = _amountOfTokens;
-        uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-        
-        // burn the sold tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
-        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
-        
-        // update dividends tracker
-        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
-        payoutsTo_[_customerAddress] -= _updatedPayouts;       
-        
-        // dividing by zero is a bad idea
-        if (tokenSupply_ > 0) {
-            // update the amount of dividends per token
-            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
-        }
-        
-        // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
-    }
-    
-    
-    /**
-     * Transfer tokens from the caller to a new holder.
-     * Remember, there's a 10% fee here as well.
-     */
-    function transfer(address _toAddress, uint256 _amountOfTokens)
-        onlyBagholders()
-        public
-        returns(bool)
-    {
-        // setup
-        address _customerAddress = msg.sender;
-        
-        // make sure we have the requested tokens
-        // also disables transfers until ambassador phase is over
-        // ( we dont want whale premines )
-        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        
-        // withdraw all outstanding dividends first
-        if(myDividends(true) > 0) withdraw();
-        
-        // liquify 10% of the tokens that are transfered
-        // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
-        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _dividends = tokensToEthereum_(_tokenFee);
-  
-        // burn the fee tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
-
-        // exchange tokens
-        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
-        
-        // update dividend trackers
-        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
-        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
-        
-        // disperse dividends among holders
-        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
-        
-        // fire event
-        Transfer(_customerAddress, _toAddress, _taxedTokens);
-        
-        // ERC20
-        return true;
-       
-    }
-    
-    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
-    /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
-     */
-    function disableInitialStage()
-        onlyAdministrator()
-        public
-    {
-        onlyAmbassadors = false;
-    }
-    
-    /**
-     * In case one of us dies, we need to replace ourselves.
-     */
-    function setAdministrator(bytes32 _identifier, bool _status)
-        onlyAdministrator()
-        public
-    {
-        administrators[_identifier] = _status;
-    }
-    
-    /**
-     * Precautionary measures in case we need to adjust the masternode rate.
-     */
-    function setStakingRequirement(uint256 _amountOfTokens)
-        onlyAdministrator()
-        public
-    {
-        stakingRequirement = _amountOfTokens;
-    }
-    
-    /**
-     * If we want to rebrand, we can.
-     */
-    function setName(string _name)
-        onlyAdministrator()
-        public
-    {
-        name = _name;
-    }
-    
-    /**
-     * If we want to rebrand, we can.
-     */
-    function setSymbol(string _symbol)
-        onlyAdministrator()
-        public
-    {
-        symbol = _symbol;
-    }
-
-    
-    /*----------  HELPERS AND CALCULATORS  ----------*/
-    /**
-     * Method to view the current Ethereum stored in the contract
-     * Example: totalEthereumBalance()
-     */
-    function totalEthereumBalance()
-        public
-        view
-        returns(uint)
-    {
-        return this.balance;
-    }
-    
-    /**
-     * Retrieve the total token supply.
-     */
-    function totalSupply()
-        public
-        view
-        returns(uint256)
-    {
-        return tokenSupply_;
-    }
-    
-    /**
-     * Retrieve the tokens owned by the caller.
-     */
-    function myTokens()
-        public
-        view
-        returns(uint256)
-    {
-        address _customerAddress = msg.sender;
-        return balanceOf(_customerAddress);
-    }
-    
-    /**
-     * Retrieve the dividends owned by the caller.
-     * If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
-     * The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
-     * But in the internal calculations, we want them separate. 
-     */ 
-    function myDividends(bool _includeReferralBonus) 
-        public 
-        view 
-        returns(uint256)
-    {
-        address _customerAddress = msg.sender;
-        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
-    }
-    
-    /**
-     * Retrieve the token balance of any single address.
-     */
-    function balanceOf(address _customerAddress)
-        view
-        public
-        returns(uint256)
-    {
-        return tokenBalanceLedger_[_customerAddress];
-    }
-    
-    /**
-     * Retrieve the dividend balance of any single address.
-     */
-    function dividendsOf(address _customerAddress)
-        view
-        public
-        returns(uint256)
-    {
-        return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
-    }
-    
-    /**
-     * Return the buy price of 1 individual token.
-     */
-    function sellPrice() 
-        public 
-        view 
-        returns(uint256)
-    {
-        // our calculation relies on the token supply, so we need supply. Doh.
-        if(tokenSupply_ == 0){
-            return tokenPriceInitial_ - tokenPriceIncremental_;
-        } else {
-            uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-            return _taxedEthereum;
-        }
-    }
-    
-    /**
-     * Return the sell price of 1 individual token.
-     */
-    function buyPrice() 
-        public 
-        view 
-        returns(uint256)
-    {
-        // our calculation relies on the token supply, so we need supply. Doh.
-        if(tokenSupply_ == 0){
-            return tokenPriceInitial_ + tokenPriceIncremental_;
-        } else {
-            uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
-            return _taxedEthereum;
-        }
-    }
-    
-    /**
-     * Function for the frontend to dynamically retrieve the price scaling of buy orders.
-     */
-    function calculateTokensReceived(uint256 _ethereumToSpend) 
-        public 
-        view 
-        returns(uint256)
-    {
-        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
-        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-        
-        return _amountOfTokens;
-    }
-    
-    /**
-     * Function for the frontend to dynamically retrieve the price scaling of sell orders.
-     */
-    function calculateEthereumReceived(uint256 _tokensToSell) 
-        public 
-        view 
-        returns(uint256)
-    {
-        require(_tokensToSell <= tokenSupply_);
-        uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-        return _taxedEthereum;
-    }
-    
-    
-    /*==========================================
-    =            INTERNAL FUNCTIONS            =
-    ==========================================*/
-    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
-        antiEarlyWhale(_incomingEthereum)
-        internal
-        returns(uint256)
-    {
-        // data setup
-        address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
-        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
-        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
-        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
-        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-        uint256 _fee = _dividends * magnitude;
- 
-        // no point in continuing execution if OP is a poorfag russian hacker
-        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
-        // (or hackers)
-        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
-        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
-        
-        // is the user referred by a masternode?
-        if(
-            // is this a referred purchase?
-            _referredBy != 0x0000000000000000000000000000000000000000 &&
-
-            // no cheating!
-            _referredBy != _customerAddress &&
-            
-            // does the referrer have at least X whole tokens?
-            // i.e is the referrer a godly chad masternode
-            tokenBalanceLedger_[_referredBy] >= stakingRequirement
-        ){
-            // wealth redistribution
-            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
-        } else {
-            // no ref purchase
-            // add the referral bonus back to the global dividends cake
-            _dividends = SafeMath.add(_dividends, _referralBonus);
-            _fee = _dividends * magnitude;
-        }
-        
-        // we can't give people infinite ethereum
-        if(tokenSupply_ > 0){
-            
-            // add tokens to the pool
-            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
- 
-            // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
-            profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
-            
-            // calculate the amount of tokens the customer receives over his purchase 
-            _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
-        
-        } else {
-            // add tokens to the pool
-            tokenSupply_ = _amountOfTokens;
-        }
-        
-        // update circulating supply & the ledger address for the customer
-        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        
-        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
-        //really i know you think you do but you don't
-        int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
-        payoutsTo_[_customerAddress] += _updatedPayouts;
-        
-        // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
-        
-        return _amountOfTokens;
-    }
-
-    /**
-     * Calculate Token price based on an amount of incoming ethereum
-     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
-     * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
-     */
-    function ethereumToTokens_(uint256 _ethereum)
-        internal
-        view
-        returns(uint256)
-    {
-        uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
-        uint256 _tokensReceived = 
-         (
-            (
-                // underflow attempts BTFO
-                SafeMath.sub(
-                    (sqrt
-                        (
-                            (_tokenPriceInitial**2)
-                            +
-                            (2*(tokenPriceIncremental_ * 1e18)*(_ethereum * 1e18))
-                            +
-                            (((tokenPriceIncremental_)**2)*(tokenSupply_**2))
-                            +
-                            (2*(tokenPriceIncremental_)*_tokenPriceInitial*tokenSupply_)
-                        )
-                    ), _tokenPriceInitial
-                )
-            )/(tokenPriceIncremental_)
-        )-(tokenSupply_)
-        ;
-  
-        return _tokensReceived;
-    }
-    
-    /**
-     * Calculate token sell value.
-     * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
-     * Some conversions occurred to prevent decimal errors or underflows / overflows in solidity code.
-     */
-     function tokensToEthereum_(uint256 _tokens)
-        internal
-        view
-        returns(uint256)
-    {
-
-        uint256 tokens_ = (_tokens + 1e18);
-        uint256 _tokenSupply = (tokenSupply_ + 1e18);
-        uint256 _etherReceived =
-        (
-            // underflow attempts BTFO
-            SafeMath.sub(
-                (
-                    (
-                        (
-                            tokenPriceInitial_ +(tokenPriceIncremental_ * (_tokenSupply/1e18))
-                        )-tokenPriceIncremental_
-                    )*(tokens_ - 1e18)
-                ),(tokenPriceIncremental_*((tokens_**2-tokens_)/1e18))/2
-            )
-        /1e18);
-        return _etherReceived;
-    }
-    
-    
-    //This is where all your gas goes, sorry
-    //Not sorry, you probably only paid 1 gwei
-    function sqrt(uint x) internal pure returns (uint y) {
-        uint z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
-    }
-}
+pragma solidity 0.4.24;
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * DO NOT SEND ETH TO THIS CONTRACT ON MAINNET.  ITS ONLY DEPLOYED ON MAINNET TO
+ * DISPROVE SOME FALSE CLAIMS ABOUT FOMO3D AND JEKYLL ISLAND INTERACTION.  YOU 
+ * CAN TEST ALL THE PAYABLE FUNCTIONS SENDING 0 ETH.  OR BETTER YET COPY THIS TO 
+ * THE TESTNETS.
+ * 
+ * IF YOU SEND ETH TO THIS CONTRACT IT CANNOT BE RECOVERED.  THERE IS NO WITHDRAW.
+ * 
+ * THE CHECK BALANCE FUNCTIONS ARE FOR WHEN TESTING ON TESTNET TO SHOW THAT ALTHOUGH 
+ * THE CORP BANK COULD BE FORCED TO REVERT TX'S OR TRY AND BURN UP ALL/MOST GAS
+ * FOMO3D STILL MOVES ON WITHOUT RISK OF LOCKING UP.  AND IN CASES OF REVERT OR  
+ * OOG INSIDE CORP BANK.  ALL WE AT TEAM JUST WOULD ACCOMPLISH IS JUSTING OURSELVES 
+ * OUT OF THE ETH THAT WAS TO BE SENT TO JEKYLL ISLAND.  FOREVER LEAVING IT UNCLAIMABLE
+ * IN FOMO3D CONTACT.  SO WE CAN ONLY HARM OURSELVES IF WE TRIED SUCH A USELESS 
+ * THING.  AND FOMO3D WILL CONTINUE ON, UNAFFECTED
  */
-library SafeMath {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
+// this is deployed on mainnet at:  0x38aEfE9e8E0Fc938475bfC6d7E52aE28D39FEBD8
+contract Fomo3d {
+    // create some data tracking vars for testing
+    bool public depositSuccessful_;
+    uint256 public successfulTransactions_;
+    uint256 public gasBefore_;
+    uint256 public gasAfter_;
+    
+    // create forwarder instance
+    Forwarder Jekyll_Island_Inc;
+    
+    // take addr for forwarder in constructor arguments
+    constructor(address _addr)
+        public
+    {
+        // set up forwarder to point to its contract location
+        Jekyll_Island_Inc = Forwarder(_addr);
+    }
+
+    // some fomo3d function that deposits to Forwarder
+    function someFunction()
+        public
+        payable
+    {
+        // grab gas left
+        gasBefore_ = gasleft();
+        
+        // deposit to forwarder, uses low level call so forwards all gas
+        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit()"))))  
+        {
+            // give fomo3d work to do that needs gas. what better way than storage 
+            // write calls, since their so costly.
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+        } else {
+            depositSuccessful_ = true;
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
         }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
     }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+    
+    // some fomo3d function that deposits to Forwarder
+    function someFunction2()
+        public
+        payable
+    {
+        // grab gas left
+        gasBefore_ = gasleft();
+        
+        // deposit to forwarder, uses low level call so forwards all gas
+        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit2()"))))  
+        {
+            // give fomo3d work to do that needs gas. what better way than storage 
+            // write calls, since their so costly.
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+        } else {
+            depositSuccessful_ = true;
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+        }
     }
-
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    
+    // some fomo3d function that deposits to Forwarder
+    function someFunction3()
+        public
+        payable
+    {
+        // grab gas left
+        gasBefore_ = gasleft();
+        
+        // deposit to forwarder, uses low level call so forwards all gas
+        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit3()"))))  
+        {
+            // give fomo3d work to do that needs gas. what better way than storage 
+            // write calls, since their so costly.
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+        } else {
+            depositSuccessful_ = true;
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+        }
     }
+    
+    // some fomo3d function that deposits to Forwarder
+    function someFunction4()
+        public
+        payable
+    {
+        // grab gas left
+        gasBefore_ = gasleft();
+        
+        // deposit to forwarder, uses low level call so forwards all gas
+        if (!address(Jekyll_Island_Inc).call.value(msg.value)(bytes4(keccak256("deposit4()"))))  
+        {
+            // give fomo3d work to do that needs gas. what better way than storage 
+            // write calls, since their so costly.
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+        } else {
+            depositSuccessful_ = true;
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+        }
+    }
+    
+    // for data tracking lets make a function to check this contracts balance
+    function checkBalance()
+        public
+        view
+        returns(uint256)
+    {
+        return(address(this).balance);
+    }
+    
+}
 
+
+// heres a sample forwarder with a copy of the jekyll island forwarder (requirements on 
+// msg.sender removed for simplicity since its irrelevant to testing this.  and some
+// tracking vars added for test.)
+
+// this is deployed on mainnet at:  0x8F59323d8400CC0deE71ee91f92961989D508160
+contract Forwarder {
+    // lets create some tracking vars 
+    bool public depositSuccessful_;
+    uint256 public successfulTransactions_;
+    uint256 public gasBefore_;
+    uint256 public gasAfter_;
+    
+    // create an instance of the jekyll island bank 
+    Bank currentCorpBank_;
+    
+    // take an address in the constructor arguments to set up bank with 
+    constructor(address _addr)
+        public
+    {
+        // point the created instance to the address given
+        currentCorpBank_ = Bank(_addr);
+    }
+    
+    function deposit()
+        public 
+        payable
+        returns(bool)
+    {
+        // grab gas at start
+        gasBefore_ = gasleft();
+        
+        if (currentCorpBank_.deposit.value(msg.value)(msg.sender) == true) {
+            depositSuccessful_ = true;    
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+            return(true);
+        } else {
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+            return(false);
+        }
+    }
+    
+    function deposit2()
+        public 
+        payable
+        returns(bool)
+    {
+        // grab gas at start
+        gasBefore_ = gasleft();
+        
+        if (currentCorpBank_.deposit2.value(msg.value)(msg.sender) == true) {
+            depositSuccessful_ = true;    
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+            return(true);
+        } else {
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+            return(false);
+        }
+    }
+    
+    function deposit3()
+        public 
+        payable
+        returns(bool)
+    {
+        // grab gas at start
+        gasBefore_ = gasleft();
+        
+        if (currentCorpBank_.deposit3.value(msg.value)(msg.sender) == true) {
+            depositSuccessful_ = true;    
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+            return(true);
+        } else {
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+            return(false);
+        }
+    }
+    
+    function deposit4()
+        public 
+        payable
+        returns(bool)
+    {
+        // grab gas at start
+        gasBefore_ = gasleft();
+        
+        if (currentCorpBank_.deposit4.value(msg.value)(msg.sender) == true) {
+            depositSuccessful_ = true;    
+            successfulTransactions_++;
+            gasAfter_ = gasleft();
+            return(true);
+        } else {
+            depositSuccessful_ = false;
+            gasAfter_ = gasleft();
+            return(false);
+        }
+    }
+    
+    // for data tracking lets make a function to check this contracts balance
+    function checkBalance()
+        public
+        view
+        returns(uint256)
+    {
+        return(address(this).balance);
+    }
+    
+}
+
+// heres the bank with various ways someone could try and migrate to a bank that 
+// screws the tx.  to show none of them effect fomo3d.
+
+// this is deployed on mainnet at:  0x0C2DBC98581e553C4E978Dd699571a5DED408a4F
+contract Bank {
+    // lets use storage writes to this to burn up all gas
+    uint256 public i = 1000000;
+    uint256 public x;
+    address public fomo3d;
+    
     /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+     * this version will use up most gas.  but return just enough to make it back
+     * to fomo3d.  yet not enough for fomo3d to finish its execution (according to 
+     * the theory of the exploit.  which when you run this you'll find due to my 
+     * use of ! in the call from fomo3d to forwarder, and the use of a normal function 
+     * call from forwarder to bank, this fails to stop fomo3d from continuing)
+     */
+    function deposit(address _fomo3daddress)
+        external
+        payable
+        returns(bool)
+    {
+        // burn all gas leaving just enough to get back to fomo3d  and it to do
+        // a write call in a attempt to make Fomo3d OOG (doesn't work cause fomo3d 
+        // protects itself from this behavior)
+        while (i > 41000)
+        {
+            i = gasleft();
+        }
+        
+        return(true);
+    }
+    
+    /**
+     * this version just tries a plain revert.  (pssst... fomo3d doesn't care)
+     */
+    function deposit2(address _fomo3daddress)
+        external
+        payable
+        returns(bool)
+    {
+        // straight up revert (since we use low level call in fomo3d it doesn't 
+        // care if we revert the internal tx to bank.  this behavior would only 
+        // screw over team just, not effect fomo3d)
+        revert();
+    }
+    
+    /**
+     * this one tries an infinite loop (another fail.  fomo3d trudges on)
+     */
+    function deposit3(address _fomo3daddress)
+        external
+        payable
+        returns(bool)
+    {
+        // this infinite loop still does not stop fomo3d from running.
+        while(1 == 1) {
+            x++;
+            fomo3d = _fomo3daddress;
+        }
+        return(true);
+    }
+    
+    /**
+     * this one just runs a set length loops that OOG's (and.. again.. fomo3d still works)
+     */
+    function deposit4(address _fomo3daddress)
+        public
+        payable
+        returns(bool)
+    {
+        // burn all gas (fomo3d still keeps going)
+        for (uint256 i = 0; i <= 1000; i++)
+        {
+            x++;
+            fomo3d = _fomo3daddress;
+        }
+    }
+    
+    // for data tracking lets make a function to check this contracts balance
+    function checkBalance()
+        public
+        view
+        returns(uint256)
+    {
+        return(address(this).balance);
     }
 }
