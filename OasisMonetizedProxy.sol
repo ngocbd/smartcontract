@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisMonetizedProxy at 0xd186865848ed869932032d00f54998a7d0581117
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OasisMonetizedProxy at 0x38ca499bb3b405fcc4a9cfc9d1c119f0bcf05e6f
 */
 pragma solidity ^0.4.24;
+
 /*   
  *    Exodus adaptation of OasisDirectProxy by MakerDAO.
- *    Work in progress; Second Mainnet iteration.
  */
+
 contract OtcInterface {
     function sellAllAmount(address, uint, address, uint) public returns (uint);
     function buyAllAmount(address, uint, address, uint) public returns (uint);
@@ -23,7 +24,6 @@ contract TokenInterface {
 }
 
 contract FeeInterface {
-    function rateOf (address token) public view returns (uint);
     function takeFee (uint amt, address token) public view returns (uint fee, uint remaining);
 }
 
@@ -85,6 +85,16 @@ contract Mortal is DSAuth {
     function kill() public auth {
         selfdestruct(owner);
     }
+    
+    function withdrawTo(address _to) public auth {
+    /* rescue all ETH */
+        require(_to.call.value(address(this).balance)());
+    }
+    
+    function withdrawTokenTo(TokenInterface token, address _to) public auth {
+    /* rescue all of a token */
+        require(token.transfer(_to, token.balanceOf(this)));
+    }
 }
 
 contract DSMath {
@@ -140,23 +150,24 @@ contract DSMath {
 }
 
 contract OasisMonetizedProxy is Mortal, DSMath {
-    uint feePercentageWad;
     FeeInterface fees;
+    
     constructor(FeeInterface _fees) public {
         fees = _fees;
     }
     
-    function setFeeAuthority (FeeInterface newSource) public auth {
-        fees = newSource;
+    function setFeeAuthority(FeeInterface _fees) public auth {
+      fees = _fees;
     }
     
-    function withdrawAndSend(TokenInterface wethToken, uint wethAmt) internal {
+    function unwrapAndSend(TokenInterface wethToken, address _to, uint wethAmt) internal {
         wethToken.withdraw(wethAmt);
-        require(msg.sender.call.value(wethAmt)());
+        require(_to.call.value(wethAmt)()); 
+  /* perform a call when sending ETH, in case the _to is a contract */
     }
 
     /*** Public functions start here ***/
-    
+
     function sellAllAmount(
         OtcInterface otc,
         TokenInterface payToken, 
@@ -169,7 +180,6 @@ contract OasisMonetizedProxy is Mortal, DSMath {
             payToken.approve(otc, uint(-1));
         }
         uint buyAmt = otc.sellAllAmount(payToken, payAmt, buyToken, minBuyAmt);
-        buyToken.balanceOf(this);
         (uint feeAmt, uint buyAmtRemainder) = fees.takeFee(buyAmt, buyToken);
         require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
         require(buyToken.transfer(msg.sender, buyAmtRemainder));
@@ -206,8 +216,8 @@ contract OasisMonetizedProxy is Mortal, DSMath {
         }
         uint wethAmt = otc.sellAllAmount(payToken, payAmt, wethToken, minBuyAmt);
         (uint feeAmt, uint wethAmtRemainder) = fees.takeFee(wethAmt, wethToken);
-        require(wethToken.transfer(owner, feeAmt)); /* fee is taken in WETH */ 
-        withdrawAndSend(wethToken, wethAmtRemainder);
+        unwrapAndSend(wethToken, owner, feeAmt); /* fee is taken in ETH */ 
+        unwrapAndSend(wethToken, msg.sender, wethAmtRemainder);
         return wethAmtRemainder;
     }
 
@@ -225,7 +235,8 @@ contract OasisMonetizedProxy is Mortal, DSMath {
             payToken.approve(otc, uint(-1));
         } 
         payAmt = otc.buyAllAmount(buyToken, buyAmt, payToken, payAmtNow);
-        min(buyAmt, buyToken.balanceOf(this)); // To avoid rounding issues we check the minimum value
+        buyAmt = min(buyAmt, buyToken.balanceOf(this));
+        /* To avoid rounding issues we check the minimum value */
         (uint feeAmt, uint buyAmtRemainder) = fees.takeFee(buyAmt, buyToken);
         require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
         require(buyToken.transfer(msg.sender, buyAmtRemainder)); 
@@ -237,17 +248,19 @@ contract OasisMonetizedProxy is Mortal, DSMath {
         uint buyAmt, 
         TokenInterface wethToken
     ) public payable returns (uint wethAmt) {
-        // In this case user needs to send more ETH than a estimated value, then contract will send back the rest
+        /* In this case client needs to send more ETH than a estimated 
+           value, then contract will send back the rest */
         wethToken.deposit.value(msg.value)();
         if (wethToken.allowance(this, otc) < msg.value) {
             wethToken.approve(otc, uint(-1));
         }
         wethAmt = otc.buyAllAmount(buyToken, buyAmt, wethToken, msg.value);
-        buyAmt = min(buyAmt, buyToken.balanceOf(this)); // To avoid rounding issues we check the minimum value
+        buyAmt = min(buyAmt, buyToken.balanceOf(this));
+        /* To avoid rounding issues we check the minimum value */
         (uint feeAmt, uint buyAmtRemainder) = fees.takeFee(buyAmt, buyToken); 
         require(buyToken.transfer(owner, feeAmt)); /* fee is taken */
         require(buyToken.transfer(msg.sender, buyAmtRemainder)); 
-        withdrawAndSend(wethToken, sub(msg.value, wethAmt)); /* return leftover eth */
+        unwrapAndSend(wethToken, msg.sender, sub(msg.value, wethAmt)); /* return leftover eth */
     }
 
     function buyAllAmountBuyEth(
@@ -265,9 +278,12 @@ contract OasisMonetizedProxy is Mortal, DSMath {
         }
         payAmt = otc.buyAllAmount(wethToken, wethAmt, payToken, payAmtNow);
         (uint feeAmt, uint wethAmtRemainder) = fees.takeFee(wethAmt, wethToken);
-        require(wethToken.transfer(owner, feeAmt));
-        withdrawAndSend(wethToken, wethAmtRemainder);
+        unwrapAndSend(wethToken, owner, feeAmt);
+        unwrapAndSend(wethToken, msg.sender, wethAmtRemainder);
     }
 
-    function() public payable {} /* fallback function */
+    function() public payable {
+    /* fallback function. Revert ensures no ETH is sent to the contract by accident */
+         revert(); 
+    }
 }
