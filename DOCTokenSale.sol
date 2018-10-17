@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCTokenSale at 0x47fb9b34d4eca0ca1d25cafcb4924d8fc94e8170
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCTokenSale at 0x9ce3064bd899f9854d3f7013d9705df963b05d5c
 */
 pragma solidity ^0.4.19;
 library SafeMath {
@@ -334,9 +334,9 @@ contract FlexibleTokenSale is  Owned {
 
 contract DOCTokenSaleConfig {
     address WALLET_ADDRESS = 0x347364f2bc343f6c676620d09eb9c37431dbee60;
-    address TOKEN_ADDRESS = 0xb1a819a4aA03741D8B2Af06d78cA91A74C831029;
+    address TOKEN_ADDRESS = 0xede3fe45d0c671f21ed10eb7bcd0a85ec9f8418e;
     address UPDATE_PRICE_ADDRESS = 0x29b997d4b41b9840e60b86f32be029382b14bdcd;
-    uint ETHER_PRICE = 40500;//set current ether price. if current price 1000.00 then write 100000
+    uint ETHER_PRICE = 46500;//set current ether price. if current price 1000.00 then write 100000
 }
 
 contract DOCTokenSale is FlexibleTokenSale, DOCTokenSaleConfig {
