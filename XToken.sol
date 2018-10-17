@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0x4dac7251498f5855d15a6ea221d767940243cc21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0xdb1f3030532a593a733f8ae6fce310aa91ac3a17
 */
 pragma solidity ^0.4.20;
 
@@ -109,7 +109,7 @@ contract XToken {
     string public name = "X Token";
     string public symbol = "XTK";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 5;
+    uint8 constant internal dividendFee_ = 20;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
