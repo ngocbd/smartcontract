@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenderToken at 0x847f6cb2346058922939ac18afe81b9d001ddc7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenderToken at 0xea38c95b650d2145cf96eab2988ac9d0f0b0e387
 */
 pragma solidity ^0.4.24;
-
+ 
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -14,7 +14,7 @@ contract Erc20Basic {
     function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
+ 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -32,7 +32,7 @@ library LibSafeMath {
         assert(c / a == b);
         return c;
     }
-
+ 
     /**
      * @dev Integer division of two numbers, truncating the quotient.
      */
@@ -42,7 +42,7 @@ library LibSafeMath {
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
-
+ 
     /**
      * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
      */
@@ -50,7 +50,7 @@ library LibSafeMath {
         assert(b <= a);
         return a - b;
     }
-
+ 
     /**
      * @dev Adds two numbers, throws on overflow.
      */
@@ -59,7 +59,7 @@ library LibSafeMath {
         assert(c >= a);
         return c;
     }
-
+ 
     /**
      * @dev Safe a * b / c
      */
@@ -68,11 +68,11 @@ library LibSafeMath {
         return div(d, c);
     }
 }
-
-
+ 
+ 
 contract OwnedToken {
     using LibSafeMath for uint256;
-    
+   
     /**
      * ERC20 info
      */
@@ -103,7 +103,7 @@ contract OwnedToken {
      * List of address on hold
      */
     mapping(address => bool) public holded;
-
+ 
     /**
      * Events
      */
@@ -112,7 +112,7 @@ contract OwnedToken {
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event Burn(address indexed owner, uint256 amount);
     event Mint(address indexed to, uint256 amount);
-
+ 
     /**
      * @dev Throws if called by any account other than the owner.
      */
@@ -127,7 +127,7 @@ contract OwnedToken {
         require(isAdmin[msg.sender]);
         _;
     }
-
+ 
     /**
      * @dev Allows the current owner to transfer control of the contract to a newOwner
      * @param newOwner The address to transfer ownership to
@@ -158,7 +158,7 @@ contract OwnedToken {
     function unhold(address _user) onlyOwner public {
         holded[_user] = false;
     }
-    
+   
     /**
      * Edit token info
      */
@@ -168,14 +168,17 @@ contract OwnedToken {
     function setSymbol(string _symbol)  onlyOwner public {
         symbol = _symbol;
     }
-
+    function setDecimals(uint8 _decimals)  onlyOwner public {
+        decimals = _decimals;
+    }
+ 
     /**
      * @dev total number of tokens in existence
      */
     function totalSupply() public view returns (uint256) {
         return shareCount_;
     }
-
+ 
     /**
      * @dev Gets the balance of the specified address
      * @param _owner The address to query the the balance of
@@ -184,7 +187,7 @@ contract OwnedToken {
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return shares[_owner];
     }
-
+ 
     /**
      * @dev Internal transfer tokens from one address to another
      * @dev if adress is zero - mint or destroy tokens
@@ -210,7 +213,7 @@ contract OwnedToken {
         emit Transfer(_from, _to, _value);
         return true;
     }
-
+ 
     /**
      * @dev transfer token for a specified address
      * @param _to The address to transfer to
@@ -219,7 +222,7 @@ contract OwnedToken {
     function transfer(address _to, uint256 _value) public returns (bool) {
         return shareTransfer(msg.sender, _to, _value);
     }
-
+ 
     /**
      * @dev Transfer tokens from one address to another
      * @param _from address The address which you want to send tokens from
@@ -247,7 +250,7 @@ contract OwnedToken {
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-
+ 
     /**
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      * @param _owner address The address which owns the funds.
@@ -257,7 +260,7 @@ contract OwnedToken {
     function allowance(address _owner, address _spender) public view returns (uint256) {
         return allowed[_owner][_spender];
     }
-
+ 
     /**
      * @dev Increase the amount of tokens that an owner allowed to a spender.
      *
@@ -273,7 +276,7 @@ contract OwnedToken {
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-
+ 
     /**
      * @dev Decrease the amount of tokens that an owner allowed to a spender.
      *
@@ -294,7 +297,7 @@ contract OwnedToken {
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-    
+   
     /**
      * @dev Withdraw ethereum for a specified address
      * @param _to The address to transfer to
@@ -306,7 +309,7 @@ contract OwnedToken {
         _to.transfer(_value);
         return true;
     }
-    
+   
     /**
      * @dev Withdraw token (assets of our contract) for a specified address
      * @param token The address of token for transfer
@@ -321,39 +324,39 @@ contract OwnedToken {
         return true;
     }
 }
-
+ 
 contract TenderToken is OwnedToken {
     // dividends
-    uint256 public price = 1 ether;
+    uint256 public price = 3 ether / 1000000;
     uint256 public sellComission = 2900; // 2.9%
     uint256 public buyComission = 2900; // 2.9%
-    
+   
     // dividers
-    uint256 public priceUnits = 3 ether / 1000000; 
+    uint256 public priceUnits = 1 ether;
     uint256 public sellComissionUnits = 100000;
     uint256 public buyComissionUnits = 100000;
-    
+   
     /**
      * Orders structs
      */
     struct SellOrder {
-        address user; 
+        address user;
         uint256 shareNumber;
     }
     struct BuyOrder {
-        address user; 
+        address user;
         uint256 amountWei;
     }
-    
+   
     /**
      * Current orders list and total amounts in order
      */
-    SellOrder[] internal sellOrder;
-    BuyOrder[] internal buyOrder;
+    SellOrder[] public sellOrder;
+    BuyOrder[] public buyOrder;
     uint256 public sellOrderTotal;
     uint256 public buyOrderTotal;
-    
-
+   
+ 
     /**
      * Magic buy-order create
      * NB!!! big gas cost (non standart), see docs
@@ -364,7 +367,7 @@ contract TenderToken is OwnedToken {
             buyOrderTotal += msg.value;
         }
     }
-
+ 
     /**
      * Magic sell-order create
      */
@@ -375,7 +378,7 @@ contract TenderToken is OwnedToken {
         }
         return super.shareTransfer(_from, _to, _value);
     }
-
+ 
     /**
      * Configurate current price/comissions
      */
@@ -388,7 +391,16 @@ contract TenderToken is OwnedToken {
     function setBuyComission(uint _buyComission) onlyOwner public {
         buyComission = _buyComission;
     }
-    
+    function setPriceUnits(uint256 _priceUnits) onlyOwner public {
+        priceUnits = _priceUnits;
+    }
+    function setSellComissionUnits(uint _sellComissionUnits) onlyOwner public {
+        sellComissionUnits = _sellComissionUnits;
+    }
+    function setBuyComissionUnits(uint _buyComissionUnits) onlyOwner public {
+        buyComissionUnits = _buyComissionUnits;
+    }
+   
     /**
      * @dev Calculate default price for selected number of shares
      * @param shareNumber number of shares
@@ -399,7 +411,7 @@ contract TenderToken is OwnedToken {
         uint256 comissionWei = amountWei.mulDiv(sellComission, sellComissionUnits);
         return amountWei.sub(comissionWei);
     }
-
+ 
     /**
      * @dev Calculate count of shares what can buy with selected amount for default price
      * @param amountWei amount for buy share
@@ -410,25 +422,21 @@ contract TenderToken is OwnedToken {
         uint256 comissionShare = shareNumber.mulDiv(buyComission, buyComissionUnits);
         return shareNumber.sub(comissionShare);
     }
-    
+   
     /**
-     * Confirm all buys
+     * Confirm all buys/sells
      */
     function confirmAllBuys() external onlyAdmin {
         while(buyOrder.length > 0) {
             _confirmOneBuy();
         }
     }
-    
-    /**
-     * Confirm all sells
-     */
     function confirmAllSells() external onlyAdmin {
         while(sellOrder.length > 0) {
             _confirmOneSell();
         }
     }
-    
+   
     /**
      * Confirm one sell/buy (for problems fix)
      */
@@ -440,7 +448,6 @@ contract TenderToken is OwnedToken {
     function confirmOneSell() external onlyAdmin {
         _confirmOneSell();
     }
-    
     /**
      * Cancel one sell (for problem fix)
      */
@@ -451,7 +458,7 @@ contract TenderToken is OwnedToken {
         delete sellOrder[sellOrder.length-1];
         sellOrder.length--;
     }
-    
+   
     /**
      * Internal buy/sell
      */
