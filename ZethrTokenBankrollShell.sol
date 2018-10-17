@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrTokenBankrollShell at 0xde0f087ba406df4e2472c274dd36e80904095ff1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrTokenBankrollShell at 0x413ecc777510f5815492a9aa50503ba6890a426a
 */
 pragma solidity ^0.4.24;
 
@@ -41,8 +41,8 @@ contract ZethrTokenBankrollShell {
     function () public payable {}
     
     // Buy tokens at this contract's divRate
-    function buyTokens() public payable onlyOwner {
-        ZethrContract.buyAndSetDivPercentage.value(address(this).balance)(address(0x0), divRate, "0x0");
+    function buyTokens() public onlyOwner {
+        ZethrContract.buyAndSetDivPercentage(address(0x0), divRate, "0x0");
     }
     
     // Transfer tokens to newTokenBankroll
