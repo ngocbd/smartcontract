@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0xaf32B4E9605015332Cd09c613dc8261f9c9f95d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0x80dad9F8184bA18297948Ad8Ad6a40e1D5E84a86
 */
 pragma solidity ^0.4.23;
 
@@ -33,9 +33,9 @@ library SafeMath {
 
 contract Token {
  
-  function transferFrom(address from, address to, uint tokens) public returns (bool success);
+  function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
 
-  function transfer(address to, uint tokens) public returns (bool success);
+  function transfer(address to, uint256 tokens) public returns (bool success);
      
 }
 
@@ -49,24 +49,24 @@ contract BancorKillerContract {
 
   address public traded_token;
   
-  uint public base_token_seed_amount;
+  uint256 public base_token_seed_amount;
 
-  uint public traded_token_seed_amount;
+  uint256 public traded_token_seed_amount;
   
-  uint public commission_ratio;
+  uint256 public commission_ratio;
 
   bool public base_token_is_seeded;
 
   bool public traded_token_is_seeded;
 
-  mapping (address => uint) public token_balance;
+  mapping (address => uint256) public token_balance;
   
   modifier onlyAdmin() {
       msg.sender == admin;
       _;
   }
 
-  constructor(address _base_token, address _traded_token,uint _base_token_seed_amount, uint _traded_token_seed_amount, uint _commission_ratio) public {
+  constructor(address _base_token, address _traded_token,uint256 _base_token_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
       
     admin = tx.origin;  
       
@@ -100,7 +100,7 @@ contract BancorKillerContract {
       
   }
   
-  function deposit_token(address _token, uint _amount) private { 
+  function deposit_token(address _token, uint256 _amount) private { 
 
     token_balance[_token] = token_balance[_token].add(_amount);
 
@@ -114,9 +114,9 @@ contract BancorKillerContract {
 
   }  
   
-  function withdraw_token(uint _amount) onlyAdmin public {
+  function withdraw_token(uint256 _amount) onlyAdmin public {
       
-      uint currentBalance_ = token_balance[traded_token];
+      uint256 currentBalance_ = token_balance[traded_token];
       
       require(currentBalance_ >= _amount);
       
@@ -124,9 +124,9 @@ contract BancorKillerContract {
       
   }
   
-  function withdraw_eth(uint _amount) onlyAdmin public {
+  function withdraw_eth(uint256 _amount) onlyAdmin public {
       
-      uint currentBalance_ = token_balance[0];
+      uint256 currentBalance_ = token_balance[0];
       
       require(currentBalance_ >= _amount);
       
@@ -160,6 +160,8 @@ contract BancorKillerContract {
 
     require(!market_is_open());
 
+    require(msg.value == base_token_seed_amount);
+ 
     set_base_token_as_seeded();
 
     deposit_eth(); 
@@ -172,7 +174,7 @@ contract BancorKillerContract {
 
   }
 
-  function calculate_price(uint _pre_pay_in_price,uint _post_pay_in_price) private pure returns(uint256) {
+  function calculate_price(uint256 _pre_pay_in_price,uint256 _post_pay_in_price) private pure returns(uint256) {
 
     return (_pre_pay_in_price.add(_post_pay_in_price)).div(2);
 
@@ -180,43 +182,43 @@ contract BancorKillerContract {
 
   function get_amount_get_sell(uint256 _amount) private view returns(uint256) {
    
-    uint traded_token_balance_ = token_balance[traded_token];
+    uint256 traded_token_balance_ = token_balance[traded_token]*1 ether;
     
-    uint base_token_balance_ = token_balance[base_token];    
+    uint256 base_token_balance_ = token_balance[base_token];    
 
-    uint pre_pay_in_price_ = traded_token_balance_.div(base_token_balance_);
+    uint256 pre_pay_in_price_ = traded_token_balance_.div(base_token_balance_);
 
-    uint post_pay_in_price_ = (traded_token_balance_.add(_amount)).div(base_token_balance_);
+    uint256 post_pay_in_price_ = (traded_token_balance_.add(_amount)).div(base_token_balance_);
    
-    uint adjusted_price_ = calculate_price(pre_pay_in_price_,post_pay_in_price_);
+    uint256 adjusted_price_ = calculate_price(pre_pay_in_price_,post_pay_in_price_);
 
-    return _amount.div(adjusted_price_);   
+    return (_amount.div(adjusted_price_)).div(1 ether);   
       
   }
 
   function get_amount_get_buy(uint256 _amount) private view returns(uint256) {
  
-    uint traded_token_balance_ = token_balance[traded_token];
+    uint256 traded_token_balance_ = token_balance[traded_token]*1 ether;
     
-    uint base_token_balance_ = token_balance[base_token];    
+    uint256 base_token_balance_ = token_balance[base_token];    
 
-    uint pre_pay_in_price_ = traded_token_balance_.div(base_token_balance_);
+    uint256 pre_pay_in_price_ = traded_token_balance_.div(base_token_balance_);
 
-    uint post_pay_in_price_ = traded_token_balance_.div(base_token_balance_.add(_amount));
+    uint256 post_pay_in_price_ = traded_token_balance_.div(base_token_balance_.add(_amount));
    
-    uint adjusted_price_ = calculate_price(pre_pay_in_price_,post_pay_in_price_);
+    uint256 adjusted_price_ = calculate_price(pre_pay_in_price_,post_pay_in_price_);
 
-    return _amount.mul(adjusted_price_);
+    return (_amount.mul(adjusted_price_)).div(1 ether);
     
   }
 
-  function complete_sell_exchange(uint _amount_give) private {
+  function complete_sell_exchange(uint256 _amount_give) private {
 
-    uint amount_get_ = get_amount_get_sell(_amount_give);
+    uint256 amount_get_ = get_amount_get_sell(_amount_give);
     
-    uint amount_get_minus_fee_ = (amount_get_.mul(1 ether - commission_ratio)).div(1 ether);
+    uint256 amount_get_minus_fee_ = (amount_get_.mul(1 ether - commission_ratio)).div(1 ether);
     
-    uint admin_fee = amount_get_ - amount_get_minus_fee_;
+    uint256 admin_fee = amount_get_ - amount_get_minus_fee_;
 
     transferTokensThroughProxy(msg.sender,this,_amount_give);
 
@@ -228,13 +230,13 @@ contract BancorKillerContract {
   
   function complete_buy_exchange() private {
     
-    uint amount_give_ = msg.value;
+    uint256 amount_give_ = msg.value;
 
-    uint amount_get_ = get_amount_get_buy(amount_give_);
+    uint256 amount_get_ = get_amount_get_buy(amount_give_);
     
-    uint amount_get_minus_fee_ = (amount_get_.mul(1 ether - commission_ratio)).div(1 ether);
+    uint256 amount_get_minus_fee_ = (amount_get_.mul(1 ether - commission_ratio)).div(1 ether);
 
-    uint admin_fee = amount_get_ - amount_get_minus_fee_;
+    uint256 admin_fee = amount_get_ - amount_get_minus_fee_;
 
     transferTokens(msg.sender, amount_get_minus_fee_);
     
@@ -242,7 +244,7 @@ contract BancorKillerContract {
     
   }
   
-  function sell_tokens(uint _amount_give) public {
+  function sell_tokens(uint256 _amount_give) public {
 
     require(market_is_open());
 
