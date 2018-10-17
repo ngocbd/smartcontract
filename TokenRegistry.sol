@@ -1,272 +1,347 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0xad3407dedc56a1f69389edc191b770f0c935ea37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0x17ec0d79b60d415c09af6a4a67dac9f2fa31aceb
 */
 /*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
+
+  Copyright 2017 ZeroEx Intl.
+  Modifications Copyright 2018 bZeroX, LLC
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
+
 */
-pragma solidity 0.4.21;
-/// @title Utility Functions for address
-/// @author Daniel Wang - <daniel@loopring.org>
-library AddressUtil {
-    function isContract(address addr)
-        internal
-        view
-        returns (bool)
-    {
-        if (addr == 0x0) {
-            return false;
-        } else {
-            uint size;
-            assembly { size := extcodesize(addr) }
-            return size > 0;
-        }
-    }
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Ownable
-/// @dev The Ownable contract has an owner address, and provides basic
-///      authorization control functions, this simplifies the implementation of
-///      "user permissions".
+
+pragma solidity 0.4.24;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-    address public owner;
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+contract TokenRegistry is Ownable {
+
+    event LogAddToken(
+        address indexed token,
+        string name,
+        string symbol,
+        uint8 decimals,
+        string url
     );
-    /// @dev The Ownable constructor sets the original `owner` of the contract
-    ///      to the sender.
-    function Ownable() public {
-        owner = msg.sender;
+
+    event LogRemoveToken(
+        address indexed token,
+        string name,
+        string symbol,
+        uint8 decimals,
+        string url
+    );
+
+    event LogTokenNameChange(address indexed token, string oldName, string newName);
+    event LogTokenSymbolChange(address indexed token, string oldSymbol, string newSymbol);
+    event LogTokenURLChange(address indexed token, string oldURL, string newURL);
+
+    mapping (address => TokenMetadata) public tokens;
+    mapping (string => address) internal tokenBySymbol;
+    mapping (string => address) internal tokenByName;
+
+    address[] public tokenAddresses;
+
+    struct TokenMetadata {
+        address token;
+        string name;
+        string symbol;
+        uint8 decimals;
+        string url;
     }
-    /// @dev Throws if called by any account other than the owner.
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+
+    modifier tokenExists(address _token) {
+        require(tokens[_token].token != address(0), "TokenRegistry::token doesn't exist");
         _;
     }
-    /// @dev Allows the current owner to transfer control of the contract to a
-    ///      newOwner.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
-/// @title Claimable
-/// @dev Extension for the Ownable contract, where the ownership needs
-///      to be claimed. This allows the new owner to accept the transfer.
-contract Claimable is Ownable {
-    address public pendingOwner;
-    /// @dev Modifier throws if called by any account other than the pendingOwner.
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
+
+    modifier tokenDoesNotExist(address _token) {
+        require(tokens[_token].token == address(0), "TokenRegistry::token exists");
         _;
     }
-    /// @dev Allows the current owner to set the pendingOwner address.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0 && newOwner != owner);
-        pendingOwner = newOwner;
+
+    modifier nameDoesNotExist(string _name) {
+        require(tokenByName[_name] == address(0), "TokenRegistry::name exists");
+        _;
     }
-    /// @dev Allows the pendingOwner address to finalize the transfer.
-    function claimOwnership() onlyPendingOwner public {
-        emit OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = 0x0;
+
+    modifier symbolDoesNotExist(string _symbol) {
+        require(tokenBySymbol[_symbol] == address(0), "TokenRegistry::symbol exists");
+        _;
     }
-}
-/// @title Token Register Contract
-/// @dev This contract maintains a list of tokens the Protocol supports.
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenRegistry is Claimable {
-    using AddressUtil for address;
-    address tokenMintAddr;
-    address[] public addresses;
-    mapping (address => TokenInfo) addressMap;
-    mapping (string => address) symbolMap;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Structs                                                              ///
-    ////////////////////////////////////////////////////////////////////////////
-    struct TokenInfo {
-        uint   pos;      // 0 mens unregistered; if > 0, pos + 1 is the
-                         // token's position in `addresses`.
-        string symbol;   // Symbol of the token
+
+    modifier addressNotNull(address _address) {
+        require(_address != address(0), "TokenRegistry::address is null");
+        _;
     }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Events                                                               ///
-    ////////////////////////////////////////////////////////////////////////////
-    event TokenRegistered(address addr, string symbol);
-    event TokenUnregistered(address addr, string symbol);
-    ////////////////////////////////////////////////////////////////////////////
-    /// Public Functions                                                     ///
-    ////////////////////////////////////////////////////////////////////////////
-    /// @dev Disable default function.
-    function () payable public {
-        revert();
-    }
-    function TokenRegistry(address _tokenMintAddr) public
-    {
-        require(_tokenMintAddr.isContract());
-        tokenMintAddr = _tokenMintAddr;
-    }
-    function registerToken(
-        address addr,
-        string  symbol
-        )
-        external
+
+    /// @dev Allows owner to add a new token to the registry.
+    /// @param _token Address of new token.
+    /// @param _name Name of new token.
+    /// @param _symbol Symbol for new token.
+    /// @param _decimals Number of decimals, divisibility of new token.
+    /// @param _url URL of token icon.
+    function addToken(
+        address _token,
+        string _name,
+        string _symbol,
+        uint8 _decimals,
+        string _url)
+        public
         onlyOwner
+        tokenDoesNotExist(_token)
+        addressNotNull(_token)
+        symbolDoesNotExist(_symbol)
+        nameDoesNotExist(_name)
     {
-        registerTokenInternal(addr, symbol);
+        tokens[_token] = TokenMetadata({
+            token: _token,
+            name: _name,
+            symbol: _symbol,
+            decimals: _decimals,
+            url: _url
+        });
+        tokenAddresses.push(_token);
+        tokenBySymbol[_symbol] = _token;
+        tokenByName[_name] = _token;
+        emit LogAddToken(
+            _token,
+            _name,
+            _symbol,
+            _decimals,
+            _url
+        );
     }
-    function registerMintedToken(
-        address addr,
-        string  symbol
-        )
-        external
-    {
-        require(msg.sender == tokenMintAddr);
-        registerTokenInternal(addr, symbol);
-    }
-    function unregisterToken(
-        address addr,
-        string  symbol
-        )
-        external
+
+    /// @dev Allows owner to remove an existing token from the registry.
+    /// @param _token Address of existing token.
+    function removeToken(address _token, uint _index)
+        public
         onlyOwner
+        tokenExists(_token)
     {
-        require(addr != 0x0);
-        require(symbolMap[symbol] == addr);
-        delete symbolMap[symbol];
-        uint pos = addressMap[addr].pos;
-        require(pos != 0);
-        delete addressMap[addr];
-        // We will replace the token we need to unregister with the last token
-        // Only the pos of the last token will need to be updated
-        address lastToken = addresses[addresses.length - 1];
-        // Don't do anything if the last token is the one we want to delete
-        if (addr != lastToken) {
-            // Swap with the last token and update the pos
-            addresses[pos - 1] = lastToken;
-            addressMap[lastToken].pos = pos;
-        }
-        addresses.length--;
-        emit TokenUnregistered(addr, symbol);
+        require(tokenAddresses[_index] == _token, "TokenRegistry::invalid index");
+
+        tokenAddresses[_index] = tokenAddresses[tokenAddresses.length - 1];
+        tokenAddresses.length -= 1;
+
+        TokenMetadata storage token = tokens[_token];
+        emit LogRemoveToken(
+            token.token,
+            token.name,
+            token.symbol,
+            token.decimals,
+            token.url
+        );
+        delete tokenBySymbol[token.symbol];
+        delete tokenByName[token.name];
+        delete tokens[_token];
     }
-    function areAllTokensRegistered(address[] addressList)
-        external
-        view
-        returns (bool)
+
+    /// @dev Allows owner to modify an existing token's name.
+    /// @param _token Address of existing token.
+    /// @param _name New name.
+    function setTokenName(address _token, string _name)
+        public
+        onlyOwner
+        tokenExists(_token)
+        nameDoesNotExist(_name)
     {
-        for (uint i = 0; i < addressList.length; i++) {
-            if (addressMap[addressList[i]].pos == 0) {
-                return false;
-            }
-        }
-        return true;
+        TokenMetadata storage token = tokens[_token];
+        emit LogTokenNameChange(_token, token.name, _name);
+        delete tokenByName[token.name];
+        tokenByName[_name] = _token;
+        token.name = _name;
     }
-    function getAddressBySymbol(string symbol)
-        external
+
+    /// @dev Allows owner to modify an existing token's symbol.
+    /// @param _token Address of existing token.
+    /// @param _symbol New symbol.
+    function setTokenSymbol(address _token, string _symbol)
+        public
+        onlyOwner
+        tokenExists(_token)
+        symbolDoesNotExist(_symbol)
+    {
+        TokenMetadata storage token = tokens[_token];
+        emit LogTokenSymbolChange(_token, token.symbol, _symbol);
+        delete tokenBySymbol[token.symbol];
+        tokenBySymbol[_symbol] = _token;
+        token.symbol = _symbol;
+    }
+
+    /// @dev Allows owner to modify an existing token's icon URL.
+    /// @param _token URL of token token.
+    /// @param _url New URL to token icon.
+    function setTokenURL(address _token, string _url)
+        public
+        onlyOwner
+        tokenExists(_token)
+    {
+        TokenMetadata storage token = tokens[_token];
+        emit LogTokenURLChange(_token, token.url, _url);
+        token.url = _url;
+    }
+
+    /*
+     * View functions
+     */
+    /// @dev Provides a registered token's address when given the token symbol.
+    /// @param _symbol Symbol of registered token.
+    /// @return Token's address.
+    function getTokenAddressBySymbol(string _symbol) 
+        public
+        view 
+        returns (address)
+    {
+        return tokenBySymbol[_symbol];
+    }
+
+    /// @dev Provides a registered token's address when given the token name.
+    /// @param _name Name of registered token.
+    /// @return Token's address.
+    function getTokenAddressByName(string _name) 
+        public
         view
         returns (address)
     {
-        return symbolMap[symbol];
+        return tokenByName[_name];
     }
-    function isTokenRegisteredBySymbol(string symbol)
+
+    /// @dev Provides a registered token's metadata, looked up by address.
+    /// @param _token Address of registered token.
+    /// @return Token metadata.
+    function getTokenMetaData(address _token)
         public
         view
-        returns (bool)
-    {
-        return symbolMap[symbol] != 0x0;
-    }
-    function isTokenRegistered(address addr)
-        public
-        view
-        returns (bool)
-    {
-        return addressMap[addr].pos != 0;
-    }
-    function getTokens(
-        uint start,
-        uint count
+        returns (
+            address,  //tokenAddress
+            string,   //name
+            string,   //symbol
+            uint8,    //decimals
+            string    //url
         )
+    {
+        TokenMetadata memory token = tokens[_token];
+        return (
+            token.token,
+            token.name,
+            token.symbol,
+            token.decimals,
+            token.url
+        );
+    }
+
+    /// @dev Provides a registered token's metadata, looked up by name.
+    /// @param _name Name of registered token.
+    /// @return Token metadata.
+    function getTokenByName(string _name)
         public
         view
-        returns (address[] addressList)
-    {
-        uint num = addresses.length;
-        if (start >= num) {
-            return;
-        }
-        uint end = start + count;
-        if (end > num) {
-            end = num;
-        }
-        if (start == num) {
-            return;
-        }
-        addressList = new address[](end - start);
-        for (uint i = start; i < end; i++) {
-            addressList[i - start] = addresses[i];
-        }
-    }
-    function registerTokenInternal(
-        address addr,
-        string  symbol
+        returns (
+            address,  //tokenAddress
+            string,   //name
+            string,   //symbol
+            uint8,    //decimals
+            string    //url
         )
-        internal
     {
-        require(0x0 != addr);
-        require(bytes(symbol).length > 0);
-        require(0x0 == symbolMap[symbol]);
-        require(0 == addressMap[addr].pos);
-        addresses.push(addr);
-        symbolMap[symbol] = addr;
-        addressMap[addr] = TokenInfo(addresses.length, symbol);
-        emit TokenRegistered(addr, symbol);
+        address _token = tokenByName[_name];
+        return getTokenMetaData(_token);
+    }
+
+    /// @dev Provides a registered token's metadata, looked up by symbol.
+    /// @param _symbol Symbol of registered token.
+    /// @return Token metadata.
+    function getTokenBySymbol(string _symbol)
+        public
+        view
+        returns (
+            address,  //tokenAddress
+            string,   //name
+            string,   //symbol
+            uint8,    //decimals
+            string    //url
+        )
+    {
+        address _token = tokenBySymbol[_symbol];
+        return getTokenMetaData(_token);
+    }
+
+    /// @dev Returns an array containing all token addresses.
+    /// @return Array of token addresses.
+    function getTokenAddresses()
+        public
+        view
+        returns (address[])
+    {
+        return tokenAddresses;
     }
 }
