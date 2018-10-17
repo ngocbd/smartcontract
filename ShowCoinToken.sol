@@ -1,100 +1,174 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShowCoinToken at 0x58d0A58E4B165a27E4e1B8C2A3eF39C89b581180
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShowCoinToken at 0xf41861f194e7ba8de95144a89e0c6ed16ee0b3a0
 */
-pragma solidity ^0.4.11;
-contract ShowCoinToken{
-    mapping (address => uint256) balances;
-    address public owner;
-    address public lockOwner;
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public lockAmount ;
-    uint256 public startTime ;
-    // total amount of tokens
-    uint256 public totalSupply;
-    // `allowed` tracks any extra transfer rights as in all ERC20 tokens
-    mapping (address => mapping (address => uint256)) allowed;
-    function ShowCoinToken() public {
-        owner = 0xd32c3c303BD6bd65066C1373720b5442A414f9CC;          // Set owner of contract
-        lockOwner = 0xC9BA6e5Eda033c66D34ab64d02d14590963Ce0c2;
-        startTime = 1514649600;
-        name = "ShowCoin";                                   // Set the name for display purposes
-        symbol = "Show";                                           // Set the symbol for display purposes
-        decimals = 18;                                            // Amount of decimals for display purposes
-        totalSupply = 10000000000000000000000000000;               // Total supply
-        balances[owner] = totalSupply * 90 /100 ;
-        balances[0x7b9b375B036dF9482033Aa7fee9273c78F40Aa85]=20000000000000000;
-        lockAmount = totalSupply / 10 ;
-    }
+pragma solidity ^0.4.23;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(_value > 0 );                                      // Check send token value > 0;
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(balances[_from] >= _value);                 // Check if the sender has enough
-        require(balances[_to] + _value >= balances[_to]);   // Check for overflows
-        require(_value <= allowed[_from][msg.sender]);      // Check allowance
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        allowed[_from][_to] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () private {
-        revert();     // Prevents accidental sending of ether
-    }
 
-    function releaseToken() public{
-        require(now >= startTime +2 years);
-        uint256 i = ((now  - startTime -2 years) / (0.5 years));
-        uint256  releasevalue = totalSupply /40 ;
-        require(lockAmount > (4 - i - 1) * releasevalue);
-        lockAmount -= releasevalue ;
-        balances[lockOwner] +=  releasevalue ;
-    }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval( address indexed owner, address indexed spender, uint256 value );
+}
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) internal balances;
+
+  uint256 internal totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+}
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom( address _from, address _to, uint256 _value ) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance( address _owner, address _spender ) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+
+
+contract ShowCoinToken is StandardToken {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  constructor( address initialAccount ) public {
+    name = "ShowCoin2.0";
+    symbol = "Show";
+    decimals = 18;
+    totalSupply_ = 1e28;
+    balances[initialAccount] = 9e27;
+    emit Transfer(address(0), initialAccount, 9e27);
+
+    balances[0xC9BA6e5Eda033c66D34ab64d02d14590963Ce0c2]=totalSupply_.sub(balances[initialAccount]);
+    emit Transfer(address(0), 0xC9BA6e5Eda033c66D34ab64d02d14590963Ce0c2, totalSupply_.sub(balances[initialAccount]));
+  }
 }
