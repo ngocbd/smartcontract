@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyCareTokenSale at 0x874d893b4777d821b5c342a03be422f14ca35110
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyCareTokenSale at 0x900ce61fffda41746f7c91269f112503305c704d
 */
 pragma solidity ^0.4.18;
 
@@ -678,7 +678,7 @@ contract TimedCrowdsale is Crowdsale {
    * @param _closingTime Crowdsale closing time
    */
   function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
-    require(_openingTime >= now);
+    //require(_openingTime >= now);
     require(_closingTime >= _openingTime);
 
     openingTime = _openingTime;
