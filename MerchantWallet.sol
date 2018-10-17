@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantWallet at 0x8836a944267cb5899ae61c227732aaedee7d7621
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantWallet at 0xe8ccda928fc762ee1e7fbf8a5384efc7208e7ce8
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -171,7 +171,7 @@ contract Contactable is Ownable{
 
 contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
 
-    string constant VERSION = "0.3";
+    string constant VERSION = "0.4";
 
     /// Address of merchant's account, that can withdraw from wallet
     address public merchantAccount;
@@ -191,8 +191,19 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
     /// number of last digits in compositeReputation for fractional part
     uint8 public constant REPUTATION_DECIMALS = 4;
 
+    /**
+     *  Restrict methods in such way, that they can be invoked only by merchant account.
+     */
     modifier onlyMerchant() {
         require(msg.sender == merchantAccount);
+        _;
+    }
+
+    /**
+     *  Restrict methods in such way, that they can be invoked only by merchant account or by monethaAddress account.
+     */
+    modifier onlyMerchantOrMonetha() {
+        require(msg.sender == merchantAccount || isMonethaAddress[msg.sender]);
         _;
     }
 
@@ -289,10 +300,18 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
     }
 
     /**
-     *  Allows merchant to withdraw funds to beneficiary address with a transaction
+     *  Allows merchant or Monetha to initiate exchange of funds by withdrawing funds to deposit address of the exchange
      */
-    function sendTo(address beneficiary, uint amount) external onlyMerchant whenNotPaused {
-        doWithdrawal(beneficiary, amount);
+    function withdrawToExchange(address depositAccount, uint amount) external onlyMerchantOrMonetha whenNotPaused {
+        doWithdrawal(depositAccount, amount);
+    }
+
+    /**
+     *  Allows merchant or Monetha to initiate exchange of funds by withdrawing all funds to deposit address of the exchange
+     */
+    function withdrawAllToExchange(address depositAccount, uint min_amount) external onlyMerchantOrMonetha whenNotPaused {
+        require (address(this).balance >= min_amount);
+        doWithdrawal(depositAccount, address(this).balance);
     }
 
     /**
