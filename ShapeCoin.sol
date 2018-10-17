@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShapeCoin at 0xfb15c76e564fcae43c462a07769f199d1ba45a5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShapeCoin at 0xf5b1a6cea339f2a632d065e7a55ce926022ae58f
 */
 pragma solidity ^0.4.22;
 
@@ -82,11 +82,11 @@ contract FoundationToken {
     mapping (address => uint) internal _balanceOf;
     mapping (address => mapping (address => uint)) internal _allowances;
     
-    constructor(string symbol, string name, uint8 decimals) public {
+    constructor(string symbol, string name, uint8 decimals, uint totalSupply) public {
         _symbol = symbol;
         _name = name;
         _decimals = decimals;
-        _totalSupply = 1000*1000000 * (uint256(10) ** decimals);
+        _totalSupply = totalSupply;
     }
     
     function name() public view returns (string) {
@@ -115,7 +115,7 @@ contract FoundationToken {
     event Transfer(address indexed _from, address indexed _to, uint _value);
 }
 
-contract ShapeCoin is FoundationToken("SHPC", "ShapeCoin", 18), ERC20, ERC223 {
+contract ShapeCoin is FoundationToken("SHPC", "ShapeCoin", 18, 1000000000), ERC20, ERC223 {
 
     using SafeMath for uint;
 
