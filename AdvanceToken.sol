@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x3434b8e5fbf0f5b4a81b46e62fa988b483356686
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x18a5c3c789c0c923c61a36ca4124b12c699242b8
 */
 pragma solidity ^0.4.20;
 
@@ -58,7 +58,7 @@ contract ERC20 is ERC20Interface,SafeMath {
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "VK-X";
+       symbol = "CONG";
        decimals = 4;
        totalSupply = 100000000000000;
        balanceOf[msg.sender] = totalSupply;
@@ -84,7 +84,7 @@ contract ERC20 is ERC20Interface,SafeMath {
       require(_to != address(0));
       require(allowed[_from][msg.sender] >= _value);
       require(balanceOf[_from] >= _value);
-      require(balanceOf[_to] + _value >= balanceOf[_to]);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
 
       balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
       balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to],_value);
@@ -127,8 +127,8 @@ contract owned {
 
 }
 
-contract SelfDesctructionContract is owned {
-   
+contract SelfDesctructionContract {
+   address public owner;
    string  public someValue;
    modifier ownerRestricted {
       require(owner == msg.sender);
