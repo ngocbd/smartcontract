@@ -1,444 +1,529 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ModuleToken at 0xE6D3FAFE7403C125AE8141e5EFb269192A49fd5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract moduleToken at 0x215f059fb73d2888a4ad9d4d268fd29fc00d3c74
 */
 pragma solidity ^0.4.16;
+contract moduleTokenInterface{
+    uint256 public totalSupply;
 
-/*
- * Abstract Token Smart Contract.  Copyright © 2017 by ABDK Consulting.
- * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
- */
-pragma solidity ^0.4.20;
-
-/*
- * EIP-20 Standard Token Smart Contract Interface.
- * Copyright © 2016–2018 by ABDK Consulting.
- * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
- */
-pragma solidity ^0.4.20;
-
-/**
- * ERC-20 standard token interface, as defined
- * <a href="https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md">here</a>.
- */
-contract Token {
-  /**
-   * Get total number of tokens in circulation.
-   *
-   * @return total number of tokens in circulation
-   */
-  function totalSupply () public view returns (uint256 supply);
-
-  /**
-   * Get number of tokens currently belonging to given owner.
-   *
-   * @param _owner address to get number of tokens currently belonging to the
-   *        owner of
-   * @return number of tokens currently belonging to the owner of given address
-   */
-  function balanceOf (address _owner) public view returns (uint256 balance);
-
-  /**
-   * Transfer given number of tokens from message sender to given recipient.
-   *
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer to the owner of given address
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transfer (address _to, uint256 _value)
-  public returns (bool success);
-
-  /**
-   * Transfer given number of tokens from given owner to given recipient.
-   *
-   * @param _from address to transfer tokens from the owner of
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer from given owner to given
-   *        recipient
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transferFrom (address _from, address _to, uint256 _value)
-  public returns (bool success);
-
-  /**
-   * Allow given spender to transfer given number of tokens from message sender.
-   *
-   * @param _spender address to allow the owner of to transfer tokens from
-   *        message sender
-   * @param _value number of tokens to allow to transfer
-   * @return true if token transfer was successfully approved, false otherwise
-   */
-  function approve (address _spender, uint256 _value)
-  public returns (bool success);
-
-  /**
-   * Tell how many tokens given spender is currently allowed to transfer from
-   * given owner.
-   *
-   * @param _owner address to get number of tokens allowed to be transferred
-   *        from the owner of
-   * @param _spender address to get number of tokens allowed to be transferred
-   *        by the owner of
-   * @return number of tokens given spender is currently allowed to transfer
-   *         from given owner
-   */
-  function allowance (address _owner, address _spender)
-  public view returns (uint256 remaining);
-
-  /**
-   * Logged when tokens were transferred from one owner to another.
-   *
-   * @param _from address of the owner, tokens were transferred from
-   * @param _to address of the owner, tokens were transferred to
-   * @param _value number of tokens transferred
-   */
-  event Transfer (address indexed _from, address indexed _to, uint256 _value);
-
-  /**
-   * Logged when owner approved his tokens to be transferred by some spender.
-   *
-   * @param _owner owner who approved his tokens to be transferred
-   * @param _spender spender who were allowed to transfer the tokens belonging
-   *        to the owner
-   * @param _value number of tokens belonging to the owner, approved to be
-   *        transferred by the spender
-   */
-  event Approval (
-    address indexed _owner, address indexed _spender, uint256 _value);
-}
-/*
- * Safe Math Smart Contract.  Copyright © 2016–2017 by ABDK Consulting.
- * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
- */
-pragma solidity ^0.4.20;
-
-/**
- * Provides methods to safely add, subtract and multiply uint256 numbers.
- */
-contract SafeMath {
-  uint256 constant private MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-  /**
-   * Add two uint256 values, throw in case of overflow.
-   *
-   * @param x first value to add
-   * @param y second value to add
-   * @return x + y
-   */
-  function safeAdd (uint256 x, uint256 y)
-  pure internal
-  returns (uint256 z) {
-    assert (x <= MAX_UINT256 - y);
-    return x + y;
-  }
-
-  /**
-   * Subtract one uint256 value from another, throw in case of underflow.
-   *
-   * @param x value to subtract from
-   * @param y value to subtract
-   * @return x - y
-   */
-  function safeSub (uint256 x, uint256 y)
-  pure internal
-  returns (uint256 z) {
-    assert (x >= y);
-    return x - y;
-  }
-
-  /**
-   * Multiply two uint256 values, throw in case of overflow.
-   *
-   * @param x first value to multiply
-   * @param y second value to multiply
-   * @return x * y
-   */
-  function safeMul (uint256 x, uint256 y)
-  pure internal
-  returns (uint256 z) {
-    if (y == 0) return 0; // Prevent division by zero at the next line
-    assert (x <= MAX_UINT256 / y);
-    return x * y;
-  }
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed a_owner, address indexed _spender, uint256 _value);
+    event OwnerChang(address indexed _old,address indexed _new,uint256 _coin_change);
+	event adminUsrChange(address usrAddr,address changeBy,bool isAdded);
+	event onAdminTransfer(address to,uint256 value);
 }
 
-
-/**
- * Abstract Token Smart Contract that could be used as a base contract for
- * ERC-20 token contracts.
- */
-contract AbstractToken is Token, SafeMath {
-  /**
-   * Create new Abstract Token contract.
-   */
-  function AbstractToken () public {
-    // Do nothing
-  }
-
-  /**
-   * Get number of tokens currently belonging to given owner.
-   *
-   * @param _owner address to get number of tokens currently belonging to the
-   *        owner of
-   * @return number of tokens currently belonging to the owner of given address
-   */
-  function balanceOf (address _owner) public view returns (uint256 balance) {
-    return accounts [_owner];
-  }
-
-  /**
-   * Transfer given number of tokens from message sender to given recipient.
-   *
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer to the owner of given address
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transfer (address _to, uint256 _value)
-  public returns (bool success) {
-    uint256 fromBalance = accounts [msg.sender];
-    if (fromBalance < _value) return false;
-    if (_value > 0 && msg.sender != _to) {
-      accounts [msg.sender] = safeSub (fromBalance, _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
+contract moduleToken is moduleTokenInterface {
+    
+    struct transferPlanInfo{
+        uint256 transferValidValue;
+        bool isInfoValid;
     }
-    Transfer (msg.sender, _to, _value);
-    return true;
-  }
+    
+    struct ethPlanInfo{
+	    uint256 ethNum;
+	    uint256 coinNum;
+	    bool isValid;
+	}
+	
+	//?????????????????????????????
+	struct transferEthAgreement{
+		//??????
+	    mapping(address=>bool) signUsrList;		
+		
+		//???????
+		uint32 signedUsrCount;
+		
+		//?????eth??
+	    uint256 transferEthInWei;
+		
+		//????
+		address to;
+		
+		//??????????
+		address infoOwner;
+		
+		//????????(??123456789)
+	    uint32 magic;
+	    
+	    //?????
+	    bool isValid;
+	}
+	
+	
 
-  /**
-   * Transfer given number of tokens from given owner to given recipient.
-   *
-   * @param _from address to transfer tokens from the owner of
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer from given owner to given
-   *        recipient
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transferFrom (address _from, address _to, uint256 _value)
-  public returns (bool success) {
-    uint256 spenderAllowance = allowances [_from][msg.sender];
-    if (spenderAllowance < _value) return false;
-    uint256 fromBalance = accounts [_from];
-    if (fromBalance < _value) return false;
-
-    allowances [_from][msg.sender] =
-      safeSub (spenderAllowance, _value);
-
-    if (_value > 0 && _from != _to) {
-      accounts [_from] = safeSub (fromBalance, _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
+    string public name;                   //?????"My test token"
+    uint8 public decimals;               //??token?????????????????3?????0.001??.
+    string public symbol;               //token??,like MTT
+    address public owner;
+    
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
+	
+	//????????eth????cot
+	bool public canRecvEthDirect=false;
+    
+    
+    //??????????????????
+    //
+    
+    //??????0???????????????   
+	uint256 public coinPriceInWei;
+	
+	//????????????????????????(??????????)
+	mapping(address=>transferPlanInfo) public transferPlanList;
+	
+	//????????????????????????????????????????
+	//??????????????????
+	mapping(address => ethPlanInfo) public ethPlanList;
+	
+	uint public blockTime=block.timestamp;
+    
+    bool public isTransPaused=true;//?true????? 
+    
+     //???????????  
+    struct adminUsrInfo{
+        bool isValid;
+	    string userName;
+		string descInfo;
     }
-    Transfer (_from, _to, _value);
-    return true;
-  }
+    mapping(address=>adminUsrInfo) public adminOwners; //????
+    bool public isAdminOwnersValid;
+    uint32 public adminUsrCount;//?????????
+    mapping(uint256=>transferEthAgreement) public transferEthAgreementList;
 
-  /**
-   * Allow given spender to transfer given number of tokens from message sender.
-   *
-   * @param _spender address to allow the owner of to transfer tokens from
-   *        message sender
-   * @param _value number of tokens to allow to transfer
-   * @return true if token transfer was successfully approved, false otherwise
-   */
-  function approve (address _spender, uint256 _value)
-  public returns (bool success) {
-    allowances [msg.sender][_spender] = _value;
-    Approval (msg.sender, _spender, _value);
-
-    return true;
-  }
-
-  /**
-   * Tell how many tokens given spender is currently allowed to transfer from
-   * given owner.
-   *
-   * @param _owner address to get number of tokens allowed to be transferred
-   *        from the owner of
-   * @param _spender address to get number of tokens allowed to be transferred
-   *        by the owner of
-   * @return number of tokens given spender is currently allowed to transfer
-   *         from given owner
-   */
-  function allowance (address _owner, address _spender)
-  public view returns (uint256 remaining) {
-    return allowances [_owner][_spender];
-  }
-
-  /**
-   * Mapping from addresses of token holders to the numbers of tokens belonging
-   * to these token holders.
-   */
-  mapping (address => uint256) internal accounts;
-
-  /**
-   * Mapping from addresses of token holders to the mapping of addresses of
-   * spenders to the allowances set by these token holders to these spenders.
-   */
-  mapping (address => mapping (address => uint256)) internal allowances;
-}
-
-
-/**
- * MODULE token smart contract.
- */
-contract ModuleToken is AbstractToken {
-  /**
-   * Address of the owner of this smart contract.
-   */
-  address private owner;
-
-  /**
-   * Total number of tokens in circulation.
-   */
-  uint256 tokenCount;
-
-  /**
-   * True if tokens transfers are currently frozen, false otherwise.
-   */
-  bool frozen = false;
-
-  /**
-   * Create new MODULE token smart contract, with given number of tokens issued
-   * and given to msg.sender, and make msg.sender the owner of this smart
-   * contract.
-   *
-   * @param _tokenCount number of tokens to issue and give to msg.sender
-   */
-  function ModuleToken (uint256 _tokenCount) public {
-    owner = msg.sender;
-    tokenCount = _tokenCount;
-    accounts [msg.sender] = _tokenCount;
-  }
-
-  /**
-   * Get total number of tokens in circulation.
-   *
-   * @return total number of tokens in circulation
-   */
-  function totalSupply () public view returns (uint256 supply) {
-    return tokenCount;
-  }
-
-  /**
-   * Get name of this token.
-   *
-   * @return name of this token
-   */
-  function name () public pure returns (string result) {
-    return "MODL";
-  }
-
-  /**
-   * Get symbol of this token.
-   *
-   * @return symbol of this token
-   */
-  function symbol () public pure returns (string result) {
-    return "MODL";
-  }
-
-  /**
-   * Get number of decimals for this token.
-   *
-   * @return number of decimals for this token
-   */
-  function decimals () public pure returns (uint8 result) {
-    return 18;
-  }
-
-  /**
-   * Transfer given number of tokens from message sender to given recipient.
-   *
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer to the owner of given address
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transfer (address _to, uint256 _value)
-    public returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transfer (_to, _value);
-  }
-
-  /**
-   * Transfer given number of tokens from given owner to given recipient.
-   *
-   * @param _from address to transfer tokens from the owner of
-   * @param _to address to transfer tokens to the owner of
-   * @param _value number of tokens to transfer from given owner to given
-   *        recipient
-   * @return true if tokens were transferred successfully, false otherwise
-   */
-  function transferFrom (address _from, address _to, uint256 _value)
-    public returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transferFrom (_from, _to, _value);
-  }
-
-  /**
-   * Change how many tokens given spender is allowed to transfer from message
-   * spender.  In order to prevent double spending of allowance, this method
-   * receives assumed current allowance value as an argument.  If actual
-   * allowance differs from an assumed one, this method just returns false.
-   *
-   * @param _spender address to allow the owner of to transfer tokens from
-   *        message sender
-   * @param _currentValue assumed number of tokens currently allowed to be
-   *        transferred
-   * @param _newValue number of tokens to allow to transfer
-   * @return true if token transfer was successfully approved, false otherwise
-   */
-  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
-    public returns (bool success) {
-    if (allowance (msg.sender, _spender) == _currentValue)
-      return approve (_spender, _newValue);
-    else return false;
-  }
-
-  /**
-   * Set new owner for the smart contract.
-   * May only be called by smart contract owner.
-   *
-   * @param _newOwner address of new owner of the smart contract
-   */
-  function setOwner (address _newOwner) public {
-    require (msg.sender == owner);
-
-    owner = _newOwner;
-  }
-
-  /**
-   * Freeze token transfers.
-   * May only be called by smart contract owner.
-   */
-  function freezeTransfers () public {
-    require (msg.sender == owner);
-
-    if (!frozen) {
-      frozen = true;
-      Freeze ();
+    function moduleToken(
+        uint256 _initialAmount,
+        uint8 _decimalUnits) public 
+    {
+        owner=msg.sender;//?????owner
+		if(_initialAmount<=0){
+		    totalSupply = 100000000000;   // ??????
+		    balances[owner]=100000000000;
+		}else{
+		    totalSupply = _initialAmount;   // ??????
+		    balances[owner]=_initialAmount;
+		}
+		if(_decimalUnits<=0){
+		    decimals=2;
+		}else{
+		    decimals = _decimalUnits;
+		}
+        name = "CareerOn Token"; 
+        symbol = "COT";
     }
-  }
-
-  /**
-   * Unfreeze token transfers.
-   * May only be called by smart contract owner.
-   */
-  function unfreezeTransfers () public {
-    require (msg.sender == owner);
-
-    if (frozen) {
-      frozen = false;
-      Unfreeze ();
+    
+    function changeContractName(string _newName,string _newSymbol) public {
+        require(msg.sender==owner || adminOwners[msg.sender].isValid);
+        name=_newName;
+        symbol=_newSymbol;
     }
-  }
+    
+    
+    function transfer(
+        address _to, 
+        uint256 _value) public returns (bool success) 
+    {
+        if(isTransPaused){
+            emit Transfer(msg.sender, _to, 0);//????????
+            revert();
+            return;
+        }
+        //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+		if(_to==address(this)){
+			emit Transfer(msg.sender, _to, 0);//????????
+            revert();
+            return;
+		}
+		if(balances[msg.sender] < _value || 
+			balances[_to] + _value <= balances[_to])
+		{
+			emit Transfer(msg.sender, _to, 0);//????????
+            revert();
+            return;
+		}
+        if(transferPlanList[msg.sender].isInfoValid && transferPlanList[msg.sender].transferValidValue<_value)
+		{
+			emit Transfer(msg.sender, _to, 0);//????????
+            revert();
+            return;
+		}
+        balances[msg.sender] -= _value;//???????????token??_value
+        balances[_to] += _value;//???????token??_value
+        if(transferPlanList[msg.sender].isInfoValid){
+            transferPlanList[msg.sender].transferValidValue -=_value;
+        }
+        emit Transfer(msg.sender, _to, _value);//????????
+        return true;
+    }
 
-  /**
-   * Logged when token transfers were frozen.
-   */
-  event Freeze ();
 
-  /**
-   * Logged when token transfers were unfrozen.
-   */
-  event Unfreeze ();
+    function transferFrom(
+        address _from, 
+        address _to, 
+        uint256 _value) public returns (bool success) 
+    {
+        if(isTransPaused){
+            emit Transfer(_from, _to, 0);//????????
+            revert();
+            return;
+        }
+		if(_to==address(this)){
+			emit Transfer(_from, _to, 0);//????????
+            revert();
+            return;
+		}
+        if(balances[_from] < _value ||
+			allowed[_from][msg.sender] < _value)
+		{
+			emit Transfer(_from, _to, 0);//????????
+            revert();
+            return;
+		}
+        if(transferPlanList[_from].isInfoValid && transferPlanList[_from].transferValidValue<_value)
+		{
+			emit Transfer(_from, _to, 0);//????????
+            revert();
+            return;
+		}
+        balances[_to] += _value;//??????token??_value
+        balances[_from] -= _value; //????_from??token??_value
+        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
+        if(transferPlanList[_from].isInfoValid){
+            transferPlanList[_from].transferValidValue -=_value;
+        }
+        emit Transfer(_from, _to, _value);//????????
+        return true;
+    }
+    
+    function balanceOf(address accountAddr) public constant returns (uint256 balance) {
+        return balances[accountAddr];
+    }
+
+
+    function approve(address _spender, uint256 _value) public returns (bool success) 
+    { 
+        require(msg.sender!=_spender && _value>0);
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(
+        address _owner, 
+        address _spender) public constant returns (uint256 remaining) 
+    {
+        return allowed[_owner][_spender];//??_spender?_owner????token?
+    }
+	
+	//?????????????
+	
+	//????????????????????
+	function changeOwner(address newOwner) public{
+        require(msg.sender==owner && msg.sender!=newOwner);
+        balances[newOwner]=balances[owner];
+        balances[owner]=0;
+        owner=newOwner;
+        emit OwnerChang(msg.sender,newOwner,balances[owner]);//????????????
+    }
+    
+    function setPauseStatus(bool isPaused)public{
+        if(msg.sender!=owner && !adminOwners[msg.sender].isValid){
+            revert();
+            return;
+        }
+        isTransPaused=isPaused;
+    }
+    
+    //??????????????
+	function setTransferPlan(address addr,
+	                        uint256 allowedMaxValue,
+	                        bool isValid) public
+	{
+	    if(msg.sender!=owner && !adminOwners[msg.sender].isValid){
+	        revert();
+	        return ;
+	    }
+	    transferPlanList[addr].isInfoValid=isValid;
+	    if(transferPlanList[addr].isInfoValid){
+	        transferPlanList[addr].transferValidValue=allowedMaxValue;
+	    }
+	}
+    
+    //??????????eth??????
+	function TransferEthToAddr(address _to,uint256 _value)public payable{
+        require(msg.sender==owner && !isAdminOwnersValid);
+        _to.transfer(_value);
+    }
+    
+    function createTransferAgreement(uint256 agreeMentId,
+                                      uint256 transferEthInWei,
+                                      address to) public {
+        require(adminOwners[msg.sender].isValid && 
+        transferEthAgreementList[agreeMentId].magic!=123456789 && 
+        transferEthAgreementList[agreeMentId].magic!=987654321);
+        transferEthAgreementList[agreeMentId].magic=123456789;
+        transferEthAgreementList[agreeMentId].infoOwner=msg.sender;
+        transferEthAgreementList[agreeMentId].transferEthInWei=transferEthInWei;
+        transferEthAgreementList[agreeMentId].to=to;
+        transferEthAgreementList[agreeMentId].isValid=true;
+        transferEthAgreementList[agreeMentId].signUsrList[msg.sender]=true;
+        transferEthAgreementList[agreeMentId].signedUsrCount=1;
+        
+    }
+	
+	function disableTransferAgreement(uint256 agreeMentId) public {
+		require(transferEthAgreementList[agreeMentId].infoOwner==msg.sender &&
+			    transferEthAgreementList[agreeMentId].magic==123456789);
+		transferEthAgreementList[agreeMentId].isValid=false;
+		transferEthAgreementList[agreeMentId].magic=987654321;
+	}
+	
+	function sign(uint256 agreeMentId,address to,uint256 transferEthInWei) public payable{
+		require(transferEthAgreementList[agreeMentId].magic==123456789 &&
+		transferEthAgreementList[agreeMentId].isValid &&
+		transferEthAgreementList[agreeMentId].transferEthInWei==transferEthInWei &&
+		transferEthAgreementList[agreeMentId].to==to &&
+		adminOwners[msg.sender].isValid &&
+		!transferEthAgreementList[agreeMentId].signUsrList[msg.sender]&&
+		adminUsrCount>=2
+		);
+		transferEthAgreementList[agreeMentId].signUsrList[msg.sender]=true;
+		transferEthAgreementList[agreeMentId].signedUsrCount++;
+		
+		if(transferEthAgreementList[agreeMentId].signedUsrCount<=adminUsrCount/2)
+		{
+			return;
+		}
+		to.transfer(transferEthInWei);
+		transferEthAgreementList[agreeMentId].isValid=false;
+		transferEthAgreementList[agreeMentId].magic=987654321;
+		emit onAdminTransfer(to,transferEthInWei);
+		return;
+	}
+	
+	struct needToAddAdminInfo{
+		uint256 magic;
+		mapping(address=>uint256) postedPeople;
+		uint32 postedCount;
+	}
+	mapping(address=>needToAddAdminInfo) public needToAddAdminInfoList;
+	function addAdminOwners(address usrAddr,
+					  string userName,
+					  string descInfo)public 
+	{
+		needToAddAdminInfo memory info;
+		//????????owner????????
+		if(!adminOwners[msg.sender].isValid && owner!=msg.sender){
+			revert();
+			return;
+		}
+		//????,owner?????????????
+		if(usrAddr==owner){
+			revert();
+			return;
+		}
+		//??????????????
+		if(adminOwners[usrAddr].isValid){
+			revert();
+			return;
+		}
+		//????????????
+		if(usrAddr==msg.sender){
+			revert();
+			return;
+		}
+		//?????2???owner??????2?????
+		if(adminUsrCount<2){
+			if(msg.sender!=owner){
+				revert();
+				return;
+			}
+			adminOwners[usrAddr].isValid=true;
+			adminOwners[usrAddr].userName=userName;
+			adminOwners[usrAddr].descInfo=descInfo;
+			adminUsrCount++;
+			if(adminUsrCount>=2) isAdminOwnersValid=true;
+			emit adminUsrChange(usrAddr,msg.sender,true);
+			return;
+		}
+		//???????2???owner??????????????????????????2
+		if(msg.sender==owner){
+			//?????????????????owner?????????
+			if(needToAddAdminInfoList[usrAddr].magic==123456789){
+				revert();
+				return;
+			}
+			//??owner??????????????????????????????
+			info.magic=123456789;
+			info.postedCount=0;
+			needToAddAdminInfoList[usrAddr]=info;
+			return;
+			
+		}//???????2???owner??????????????????????2
+		else if(adminOwners[msg.sender].isValid)
+		{
+			//????????????????????????
+			if(needToAddAdminInfoList[usrAddr].magic!=123456789){
+				revert();
+				return;
+			}
+			//??????????????			
+			if(needToAddAdminInfoList[usrAddr].postedPeople[msg.sender]==123456789){
+				revert();
+				return;
+			}
+			needToAddAdminInfoList[usrAddr].postedCount++;
+			needToAddAdminInfoList[usrAddr].postedPeople[msg.sender]=123456789;
+			if(adminUsrCount>=2 && 
+			   needToAddAdminInfoList[usrAddr].postedCount>adminUsrCount/2){
+				adminOwners[usrAddr].userName=userName;
+				adminOwners[usrAddr].descInfo=descInfo;
+				adminOwners[usrAddr].isValid=true;
+				needToAddAdminInfoList[usrAddr]=info;
+				adminUsrCount++;
+				emit adminUsrChange(usrAddr,msg.sender,true);
+				return;
+			}
+			
+		}else{
+			return revert();//??????????????
+		}		
+	}
+	struct needDelFromAdminInfo{
+		uint256 magic;
+		mapping(address=>uint256) postedPeople;
+		uint32 postedCount;
+	}
+	mapping(address=>needDelFromAdminInfo) public needDelFromAdminInfoList;
+	function delAdminUsrs(address usrAddr) public {
+		needDelFromAdminInfo memory info;
+		//???????????
+		if(!adminOwners[usrAddr].isValid){
+			revert();
+			return;
+		}
+		//????????4????????
+		if(adminUsrCount<4){
+			revert();
+			return;
+		}
+		//???????????????
+		if(adminUsrCount%2!=0){
+			revert();
+			return;
+		}
+		//???????????
+		if(usrAddr==msg.sender){
+			revert();
+			return;
+		}
+		if(msg.sender==owner){
+			//owner???????????
+			if(needDelFromAdminInfoList[usrAddr].magic==123456789){
+				revert();
+				return;
+			}
+			//owner??????????????????????
+			info.magic=123456789;
+			info.postedCount=0;
+			needDelFromAdminInfoList[usrAddr]=info;
+			return;
+		}
+		//?????????
+		
+		//???????????
+		if(needDelFromAdminInfoList[usrAddr].magic!=123456789){
+			revert();
+			return;
+		}
+		//???????????
+		if(needDelFromAdminInfoList[usrAddr].postedPeople[msg.sender]==123456789){
+			revert();
+			return;
+		}
+		needDelFromAdminInfoList[usrAddr].postedCount++;
+		needDelFromAdminInfoList[usrAddr].postedPeople[msg.sender]=123456789;
+		//????????????????
+		if(needDelFromAdminInfoList[usrAddr].postedCount<=adminUsrCount/2){
+			return;
+		}
+		//?????????
+		adminOwners[usrAddr].isValid=false;
+		if(adminUsrCount>=1) adminUsrCount--;
+		if(adminUsrCount<=1) isAdminOwnersValid=false;
+		needDelFromAdminInfoList[usrAddr]=info;
+		emit adminUsrChange(usrAddr,msg.sender,false);
+	}
+	
+	//????????eth???????????????????
+	function setEthPlan(address addr,uint256 _ethNum,uint256 _coinNum,bool _isValid) public {
+	    require(msg.sender==owner &&
+	        _ethNum>=0 &&
+	        _coinNum>=0 &&
+	        (_ethNum + _coinNum)>0 &&
+	        _coinNum<=balances[owner]);
+	    ethPlanList[addr].isValid=_isValid;
+	    if(ethPlanList[addr].isValid){
+	        ethPlanList[addr].ethNum=_ethNum;
+	        ethPlanList[addr].coinNum=_coinNum;
+	    }
+	}
+	
+	//??????(Wei)
+	function setCoinPrice(uint256 newPriceInWei) public returns(uint256 oldPriceInWei){
+	    require(msg.sender==owner);
+	    uint256 _old=coinPriceInWei;
+	    coinPriceInWei=newPriceInWei;
+	    return _old;
+	}
+	
+	function balanceInWei() public constant returns(uint256 nowBalanceInWei){
+	    return address(this).balance;
+	}
+	
+	function changeRecvEthStatus(bool _canRecvEthDirect) public{
+		if(msg.sender!=owner){
+			revert();
+			return;
+		}
+		canRecvEthDirect=_canRecvEthDirect;
+	}
+	
+	//????
+    //??????eth?????
+    //???????????????
+	//???????????DDOS??
+    function () public payable {
+		if(canRecvEthDirect){
+			return;
+		}
+        if(ethPlanList[msg.sender].isValid==true &&
+            msg.value>=ethPlanList[msg.sender].ethNum &&
+            ethPlanList[msg.sender].coinNum>=0 &&
+            ethPlanList[msg.sender].coinNum<=balances[owner]){
+                ethPlanList[msg.sender].isValid=false;
+                balances[owner] -= ethPlanList[msg.sender].coinNum;//???????????token??_value
+                balances[msg.sender] += ethPlanList[msg.sender].coinNum;//???????token??_value
+		        emit Transfer(this, msg.sender, ethPlanList[msg.sender].coinNum);//????????
+        }else if(!ethPlanList[msg.sender].isValid &&
+            coinPriceInWei>0 &&
+            msg.value/coinPriceInWei<=balances[owner] &&
+            msg.value/coinPriceInWei+balances[msg.sender]>balances[msg.sender]){
+            uint256 buyCount=msg.value/coinPriceInWei;
+            balances[owner] -=buyCount;
+            balances[msg.sender] +=buyCount;
+            emit Transfer(this, msg.sender, buyCount);//????????
+               
+        }else{
+            revert();
+        }
+    }
 }
