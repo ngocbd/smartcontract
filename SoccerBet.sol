@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SoccerBet at 0x1ce41d9f3e2c211d3ff301dcc4b4776151e4a9ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SoccerBet at 0xe2ef9698900e7deef586e335caa25b2d4f22af5b
 */
 pragma solidity ^0.4.18;
 
@@ -13,9 +13,7 @@ library SafeMath {
     return c;
   }
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -30,41 +28,29 @@ library SafeMath {
 }
 
 
-contract BaseGame { 
+contract BaseGame {
 	function canSetBanker() view public returns (bool _result);
     function setBanker(address _banker, uint256 _beginTime, uint256 _endTime) public returns(bool _result);
     
     string public gameName = "NO.1";
-    uint public gameType = 2004;
+    uint public gameType = 1004;
     string public officialGameUrl;
 
+    function userRefund() public  returns(bool _result);
+	
 	uint public bankerBeginTime;
 	uint public bankerEndTime;
 	address public currentBanker;
 	
-	function depositToken(uint256 _amount) public;
-	function withdrawAllToken() public;
-    function withdrawToken(uint256 _amount) public;
-    mapping (address => uint256) public userTokenOf;
-
+	mapping (address => uint256) public userEtherOf;
 }
-interface IDonQuixoteToken{
-    function withhold(address _user,  uint256 _amount) external returns (bool _result);
-    function transfer(address _to, uint256 _value) external;
-	//function canSendGameGift() view external returns(bool _result);
-    function sendGameGift(address _player) external returns (bool _result);
-	function logPlaying(address _player) external returns (bool _result);
-	function balanceOf(address _user) constant external returns(uint256 balance);
-}  
 
 
 contract Base is BaseGame{
-	using SafeMath for uint256; 
+	using SafeMath for uint256;
     uint public createTime = now;
     address public owner;
-	IDonQuixoteToken public DonQuixoteToken;
-
-    function Base() public {
+	function Base() public {
     }
 
     modifier onlyOwner {
@@ -72,7 +58,8 @@ contract Base is BaseGame{
         _;
     }
 
-    function setOwner(address _newOwner) public onlyOwner {
+
+    function setOwner(address _newOwner)  public  onlyOwner {
         owner = _newOwner;
     }
 
@@ -91,50 +78,34 @@ contract Base is BaseGame{
     function setLock()  public onlyOwner{
         globalLocked = false;
     }
-	
-	function tokenOf(address _user) view public returns(uint256 _result){
-		_result = DonQuixoteToken.balanceOf(_user);
-	}
-    
-    function depositToken(uint256 _amount) public {
+
+    function userRefund() public  returns(bool _result) {
+        return _userRefund(msg.sender);
+    }
+
+    function _userRefund(address _to) internal returns(bool _result) {
+        require (_to != 0x0);
         lock();
-        _depositToken(msg.sender, _amount);
+        uint256 amount = userEtherOf[msg.sender];
+        if(amount > 0){
+            userEtherOf[msg.sender] = 0;
+            _to.transfer(amount);
+            _result = true;
+        }
+        else{
+            _result = false;
+        }
         unLock();
-    }
-
-    function _depositToken(address _to, uint256 _amount) internal {
-        require(_to != 0x0);
-        DonQuixoteToken.withhold(_to, _amount);
-        userTokenOf[_to] = userTokenOf[_to].add(_amount);
-    }
-
-    function withdrawAllToken() public {    
-        lock();  
-		uint256 _amount = userTokenOf[msg.sender];
-        _withdrawToken(msg.sender,_amount);
-        unLock();
-    }
-	
-	function withdrawToken(uint256 _amount) public {   
-        lock();  
-        _withdrawToken(msg.sender, _amount);
-        unLock();
-    }
-	
-    function _withdrawToken(address _from, uint256 _amount) internal {
-        require(_from != 0x0);
-		require(_amount > 0 && _amount <= userTokenOf[_from]);
-		userTokenOf[_from] = userTokenOf[_from].sub(_amount);
-		DonQuixoteToken.transfer(_from, _amount);
     }
 	
 	uint public currentEventId = 1;
 
     function getEventId() internal returns(uint _result) {
         _result = currentEventId;
-        currentEventId = currentEventId.add(1); //currentEventId++
+        currentEventId++;
     }
 	
+	string public officialGameUrl;
     function setOfficialGameUrl(string _newOfficialGameUrl) public onlyOwner{
         officialGameUrl = _newOfficialGameUrl;
     }
@@ -142,22 +113,18 @@ contract Base is BaseGame{
 
 contract SoccerBet is Base
 {
-	function SoccerBet(string _gameName,uint _bankerDepositPer, address _DonQuixoteToken) public {
-		require(_DonQuixoteToken != 0x0);
+	function SoccerBet(string _gameName) public {
 		gameName = _gameName;
-		bankerDepositPer = _bankerDepositPer;
-        DonQuixoteToken = IDonQuixoteToken(_DonQuixoteToken);
         owner = msg.sender;
     }
-
+	
 	uint public unpayPooling = 0;
 	uint public losePooling = 0;
 	uint public winPooling = 0;
 	uint public samePooling = 0;
+	uint public bankerAllDeposit = 0;
 	
-	uint public bankerDepositPer = 20;
-
-    address public auction;
+	address public auction;
 	function setAuction(address _newAuction) public onlyOwner{
         auction = _newAuction;
     }
@@ -178,48 +145,48 @@ contract SoccerBet is Base
 		if(now < bankerEndTime){
 			return;
 		}
-		if(userTokenOf[this] == 0){
+		if(userEtherOf[this] == 0){
 			_result = true;
 		}
     }
 	
-	event OnSetNewBanker(uint indexed _gameID , address _caller, address _banker, uint _beginTime, uint _endTime, uint _errInfo, uint _eventTime, uint eventId);
+	event OnSetNewBanker(uint indexed _gameID, address _caller, address _banker, uint _beginTime, uint _endTime, uint _errInfo, uint _eventTime, uint eventId);
+
     function setBanker(address _banker, uint _beginTime, uint _endTime) public onlyAuction returns(bool _result)
     {
         _result = false;
         require(_banker != 0x0);
 
         if(now < bankerEndTime){
-            emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 1, now, getEventId());//"bankerEndTime > now"
+            emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 1, now, getEventId());
             return;
         }
 		
-		if(userTokenOf[this] > 0){
-			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 5, now, getEventId());//"userTokenOf[this] > 0"
+		if(userEtherOf[this] > 0){
+			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 5, now, getEventId());
 			return;
 		}
         
         if(_beginTime > now){
-			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 3, now, getEventId());//'_beginTime > now'
+			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 3, now, getEventId());
             return;
         }
 
         if(_endTime <= now){
-			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 4, now, getEventId());//'_endTime <= now'
+			emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 4, now, getEventId());
             return;
         }
-		
-		if(now < donGameGiftLineTime){
-            DonQuixoteToken.logPlaying(_banker);
-        }
+
         currentBanker = _banker;
         bankerBeginTime = _beginTime;
         bankerEndTime =  _endTime;
-	
+		
 		unpayPooling = 0;
 		losePooling = 0;
 		winPooling = 0;
 		samePooling = 0;
+		
+		bankerAllDeposit = 0;
 		
 		gameResult = 9;
 		
@@ -228,28 +195,28 @@ contract SoccerBet is Base
 		emit OnSetNewBanker(gameID, msg.sender, _banker,  _beginTime,  _endTime, 0, now, getEventId());
         _result = true;
     }
-
+	
 	string public team1;
     string public team2;
 	
-    uint public constant loseNum = 1;
+	uint public constant loseNum = 1;
     uint public constant winNum = 3;
     uint public constant sameNum = 0;
 
     uint public loseOdd;
     uint public winOdd;
     uint public sameOdd;
-
-    uint public betLastTime;
-
-    uint public playNo = 1;
+	
+	uint public betLastTime;
+	
+	uint public playNo = 1;
     uint public gameID = 0;
-
-    uint public gameBeginPlayNo;
-
-    uint public gameResult = 9;
-
-    uint  public gameBeginTime;
+	
+	uint public gameBeginPlayNo;
+	
+	uint public gameResult = 9;
+	
+	uint  public gameBeginTime;
 
     uint256 public gameMaxBetAmount;
     uint256 public gameMinBetAmount;
@@ -257,11 +224,9 @@ contract SoccerBet is Base
 	
 	uint public nextRewardPlayNo=1;
     uint public currentRewardNum = 100;
-	
-	uint public donGameGiftLineTime =  now + 90 days;
-	
+
 	address public decider;
-    function setDecider(address _decider) public onlyOwner{	
+	function setDecider(address _decider) public onlyOwner{	
         decider = _decider;
     }
     modifier onlyDecider{
@@ -271,6 +236,7 @@ contract SoccerBet is Base
 	function setGameResult(uint _gameResult) public onlyDecider{
 		require(!gameOver);
 		require(betLastTime + 90 minutes < now);
+		require(now < betLastTime + 30 days);
 		require(gameResult == 9);
 		require( _gameResult == loseNum || _gameResult == winNum || _gameResult == sameNum);
 		gameResult = _gameResult;
@@ -285,17 +251,23 @@ contract SoccerBet is Base
 
     event OnNewGame(uint indexed _gameID, address _banker , uint _betLastTime, uint _gameBeginTime, uint256 _gameMinBetAmount, uint256 _gameMaxBetAmount, uint _eventTime, uint eventId);
 	event OnGameInfo(uint indexed _gameID, string _team1, string _team2, uint _loseOdd, uint _winOdd, uint _sameOdd, uint _eventTime, uint eventId);
-    function newGame(string _team1, string _team2, uint _loseOdd, uint _winOdd, uint _sameOdd, uint _betLastTime, uint256 _gameMinBetAmount, uint256 _gameMaxBetAmount) public onlyBanker returns(bool _result){ //??
+	
+    function newGame(string _team1, string _team2, uint _loseOdd, uint _winOdd, uint _sameOdd,  uint _betLastTime, uint256 _gameMinBetAmount, uint256 _gameMaxBetAmount) public onlyBanker payable returns(bool _result){
+        if (msg.value > 0){
+            userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);
+        }
+
         require(bytes(_team1).length < 100);
 		require(bytes(_team2).length < 100);
 		
 		require(gameOver);
         require(now > bankerBeginTime);
-		require(_gameMinBetAmount >= 10000000);
+        require(_gameMinBetAmount >= 100000000000000);
         require(_gameMaxBetAmount >= _gameMinBetAmount);
 		require(now < _betLastTime);
 		require(_betLastTime+ 1 days < bankerEndTime);
-
+			
+		
         _result = _newGame(_team1, _team2, _loseOdd, _winOdd, _sameOdd, _betLastTime, _gameMinBetAmount,  _gameMaxBetAmount);
     }
 
@@ -315,7 +287,7 @@ contract SoccerBet is Base
 		gameMinBetAmount = _gameMinBetAmount;
         gameMaxBetAmount = _gameMaxBetAmount;
 		emit OnNewGame(gameID, msg.sender, betLastTime,  gameBeginTime, gameMinBetAmount,   gameMaxBetAmount, now, getEventId());
-        
+		
         gameBeginPlayNo = playNo;
         gameResult = 9;
         gameOver = false;
@@ -323,7 +295,9 @@ contract SoccerBet is Base
 		losePooling = 0;
 		winPooling = 0;
 		samePooling = 0;
-
+		
+		bankerAllDeposit = 0;
+		
         _result = true;
     }
 	
@@ -341,22 +315,26 @@ contract SoccerBet is Base
         address Player;
         uint BetNum;
         uint256 BetAmount;
-		uint loseToken;
+		uint BetTime;
         bool IsReturnAward;
+		uint ResultNO;
     }
 
     mapping (uint => betInfo) public playerBetInfoOf;
 
-    event OnPlay(uint indexed _gameID, string _gameName, address _player, uint odd, string _team1, uint _betNum, uint256 _betAmount, uint _playNo, uint _eventTime, uint eventId);
-    function play(uint _betNum, uint256 _betAmount) public returns(bool _result){ 
-        _result = _play(_betNum, _betAmount);
+    event OnPlay( uint indexed _gameID, uint indexed _playNo, address indexed _player, string _gameName, uint odd, string _team1, uint _betNum, uint256 _betAmount,  uint _eventTime, uint eventId);
+    function play(uint _betNum, uint256 _betAmount) public payable  returns(bool _result){
+        if (msg.value > 0){
+            userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);
+        }
+		_result = _play(_betNum, _betAmount);
     }
 
     function _play(uint _betNum, uint256 _betAmount) private  returns(bool _result){
         _result = false;
         require(!gameOver);
-
-        require(_betNum == loseNum || _betNum == winNum || _betNum == sameNum);
+      
+        require( loseNum == _betNum || _betNum == winNum || _betNum == sameNum);
         require(msg.sender != currentBanker);
 
         require(now < betLastTime);
@@ -365,62 +343,70 @@ contract SoccerBet is Base
         if (_betAmount > gameMaxBetAmount){
             _betAmount = gameMaxBetAmount;
         }
-
+		
 		_betAmount = _betAmount / 100 * 100;
-
-        if(userTokenOf[msg.sender] < _betAmount){
-            depositToken(_betAmount.sub(userTokenOf[msg.sender]));
-        }
-        
-        uint BankerAmount = _betAmount.mul(bankerDepositPer).div(100);
-        require(userTokenOf[msg.sender] >= _betAmount);
-        require(userTokenOf[currentBanker] >= BankerAmount);
-
-
-        uint _odd = seekOdd(_betNum,_betAmount);
+		
+		uint _odd = _seekOdd(_betNum, _betAmount);
+		
+        require(userEtherOf[msg.sender] >= _betAmount);
 
         betInfo memory bi= betInfo({
             Odd :_odd,
             Player :  msg.sender,
             BetNum : _betNum,
             BetAmount : _betAmount,
-            loseToken : 0,
-            IsReturnAward: false
+			BetTime : now,
+            IsReturnAward: false,
+			ResultNO: 9
         });
 
-        playerBetInfoOf[playNo] = bi;
-        userTokenOf[msg.sender] = userTokenOf[msg.sender].sub(_betAmount);
-		userTokenOf[this] = userTokenOf[this].add(_betAmount);
-        userTokenOf[currentBanker] = userTokenOf[currentBanker].sub(BankerAmount);
-		userTokenOf[this] = userTokenOf[this].add(BankerAmount);
-        emit OnPlay(gameID, gameName, msg.sender, _odd, team1, _betNum, _betAmount, playNo, now, getEventId());
-
-        playNo = playNo.add(1); 
-		if(now < donGameGiftLineTime){
-            DonQuixoteToken.logPlaying(msg.sender);
-        }
+         playerBetInfoOf[playNo] = bi;
+        userEtherOf[msg.sender] = userEtherOf[msg.sender].sub(_betAmount); 
+		userEtherOf[this] = userEtherOf[this].add(_betAmount);
 		
+		uint _maxpooling = _getMaxPooling();
+		if(userEtherOf[this] < _maxpooling){
+			uint BankerAmount = _maxpooling.sub(userEtherOf[this]);
+			require(userEtherOf[currentBanker] >= BankerAmount);
+			userEtherOf[currentBanker] = userEtherOf[currentBanker].sub(BankerAmount);
+			userEtherOf[this] = userEtherOf[this].add(BankerAmount);
+			bankerAllDeposit = bankerAllDeposit.add(BankerAmount);
+		}
+		
+        emit OnPlay(gameID, playNo, msg.sender, gameName, _odd, team1, _betNum, _betAmount, now, getEventId());
+
+        playNo = playNo.add(1);
         _result = true;
     }
 	
-	function seekOdd(uint _betNum, uint _betAmount) private returns (uint _odd){
+	function _seekOdd(uint _betNum, uint _betAmount) private returns (uint _odd){
 		uint allAmount = 0;
 		if(_betNum == 3){
-			allAmount = _betAmount.mul(winOdd).div(100);//allAmount = _betAmount*winOdd/100
+			allAmount = _betAmount.mul(winOdd).div(100);
 			winPooling = winPooling.add(allAmount);
 			_odd  = winOdd;
 		}else if(_betNum == 1){
-			allAmount = _betAmount.mul(loseOdd).div(100);//allAmount = _betAmount*loseOdd/100
+			allAmount = _betAmount.mul(loseOdd).div(100);
 			losePooling = losePooling.add(allAmount);
 			_odd = loseOdd;
 		}else if(_betNum == 0){
-			allAmount = _betAmount.mul(sameOdd).div(100);//allAmount = _betAmount*sameOdd/100
+			allAmount = _betAmount.mul(sameOdd).div(100);
 			samePooling = samePooling.add(allAmount);
 			_odd = sameOdd;
 		}
     }
 	
-    event OnOpenGameResult(uint indexed _gameID,uint indexed _palyNo, address _player, uint _gameResult, uint _eventTime, uint eventId);
+	function _getMaxPooling() private view returns(uint maxpooling){
+		maxpooling = winPooling;
+		if(maxpooling < losePooling){
+			maxpooling = losePooling;
+		}
+		if(maxpooling < samePooling){
+			maxpooling = samePooling;
+		}
+	}
+
+	event OnOpenGameResult(uint indexed _gameID,uint indexed _palyNo, address _player, uint _gameResult, uint _eventTime, uint eventId);
     function openGameLoop() public returns(bool _result){
 		lock();
         _result =  _openGameLoop();
@@ -438,11 +424,9 @@ contract SoccerBet is Base
 			}
 			nextRewardPlayNo = nextRewardPlayNo.add(1);
 		}
-		if(unpayPooling == 0 && _canSetGameOver()){
-			userTokenOf[currentBanker] = userTokenOf[currentBanker].add(userTokenOf[this]);
-			userTokenOf[this] = 0;
-			gameOver = true;
-		}
+		
+		_setGameOver();
+		
 		_result = true;
     }
 	
@@ -451,7 +435,7 @@ contract SoccerBet is Base
         _result =  _openGamePlayNo(_playNo);
         unLock();
     }
-	
+
     function _openGamePlayNo(uint _playNo) private returns(bool _result){
         _result = false;
 		require(_playNo >= gameBeginPlayNo && _playNo < playNo);
@@ -463,11 +447,8 @@ contract SoccerBet is Base
 		uint256 allAmount = 0;
 		_cashPrize(p, allAmount,_playNo);
 		
-		if(unpayPooling == 0 && _canSetGameOver()){
-			userTokenOf[currentBanker] = userTokenOf[currentBanker].add(userTokenOf[this]);
-			userTokenOf[this] = 0;
-			gameOver = true;
-		}
+		_setGameOver();
+		
 		_result = true;
     }
 	
@@ -480,6 +461,7 @@ contract SoccerBet is Base
     function _openGamePlayNos(uint[] _playNos) private returns(bool _result){
         _result = false;
         _checkOpenGame();
+		
 		uint256 allAmount = 0;
 		for (uint _index = 0; _index < _playNos.length; _index++) {
 			uint _playNo = _playNos[_index];
@@ -491,13 +473,11 @@ contract SoccerBet is Base
 			}
 		}
 		
-		if(unpayPooling == 0 && _canSetGameOver()){
-			userTokenOf[currentBanker] = userTokenOf[currentBanker].add(userTokenOf[this]);
-			userTokenOf[this] = 0;
-			gameOver = true;
-		}
+		_setGameOver();
+		
 		_result = true;
     }
+	
 	
 	function openGameRange(uint _beginPlayNo, uint _endPlayNo) public returns(bool _result){
 		lock();
@@ -511,6 +491,7 @@ contract SoccerBet is Base
 		require(_beginPlayNo >= gameBeginPlayNo && _endPlayNo < playNo);
 		
 		_checkOpenGame();
+		
 		uint256 allAmount = 0;
 		for (uint _indexPlayNo = _beginPlayNo; _indexPlayNo <= _endPlayNo; _indexPlayNo++) {
 			betInfo storage p = playerBetInfoOf[_indexPlayNo];
@@ -518,65 +499,27 @@ contract SoccerBet is Base
 				_cashPrize(p, allAmount,_indexPlayNo);
 			}
 		}
-		if(unpayPooling == 0 && _canSetGameOver()){
-			userTokenOf[currentBanker] = userTokenOf[currentBanker].add(userTokenOf[this]);
-			userTokenOf[this] = 0;
-			gameOver = true;
-		}
+		_setGameOver();
 		_result = true;
     }
 	
-	function _checkOpenGame() private{
+	function _checkOpenGame() private view{
 		require(!gameOver);
 		require( gameResult == loseNum || gameResult == winNum || gameResult == sameNum);
 		require(betLastTime + 90 minutes < now);
-		
-		if(unpayPooling > userTokenOf[this]){
-			uint shortOf = unpayPooling.sub(userTokenOf[this]);
-			if(shortOf > userTokenOf[currentBanker]){
-				shortOf = userTokenOf[currentBanker];
-			}
-			userTokenOf[currentBanker] = userTokenOf[currentBanker].sub(shortOf);
-			userTokenOf[this] = userTokenOf[this].add(shortOf);
-		}
 	}
 	
 	function _cashPrize(betInfo storage _p, uint256 _allAmount,uint _playNo) private{
 		if(_p.BetNum == gameResult){
 			_allAmount = _p.BetAmount.mul(_p.Odd).div(100);
-			_allAmount = _allAmount.sub(_p.loseToken);
-			if(userTokenOf[this] >= _allAmount){
-				_p.IsReturnAward = true;
-				userTokenOf[_p.Player] = userTokenOf[_p.Player].add(_allAmount);
-				userTokenOf[this] = userTokenOf[this].sub(_allAmount);
-				unpayPooling = unpayPooling.sub(_allAmount);
-				emit OnOpenGameResult(gameID,_playNo, msg.sender, gameResult, now, getEventId());
-				if(_p.BetNum == 3){
-					winPooling = winPooling.sub(_allAmount);
-				}else if(_p.BetNum == 1){
-					losePooling = losePooling.sub(_allAmount);
-				}else if(_p.BetNum == 0){
-					samePooling = samePooling.sub(_allAmount);
-				}
-			}else{
-				_p.loseToken = _p.loseToken.add(userTokenOf[this]);
-				userTokenOf[_p.Player] = userTokenOf[_p.Player].add(userTokenOf[this]);
-				unpayPooling = unpayPooling.sub(userTokenOf[this]);
-				if(_p.BetNum == 3){
-					winPooling = winPooling.sub(userTokenOf[this]);
-				}else if(_p.BetNum == 1){
-					losePooling = losePooling.sub(userTokenOf[this]);
-				}else if(_p.BetNum == 0){
-					samePooling = samePooling.sub(userTokenOf[this]);
-				}
-				
-				userTokenOf[this] = 0;
-			}
-		}else{
+			
 			_p.IsReturnAward = true;
+			_p.ResultNO = gameResult;
+			userEtherOf[this] = userEtherOf[this].sub(_allAmount);
+			unpayPooling = unpayPooling.sub(_allAmount);
+			userEtherOf[_p.Player] = userEtherOf[_p.Player].add(_allAmount);
 			emit OnOpenGameResult(gameID,_playNo, msg.sender, gameResult, now, getEventId());
-			_allAmount = _p.BetAmount.mul(_p.Odd).div(100);
-			//_allAmount = _allAmount.sub(_p.loseToken);
+			
 			if(_p.BetNum == 3){
 				winPooling = winPooling.sub(_allAmount);
 			}else if(_p.BetNum == 1){
@@ -585,33 +528,92 @@ contract SoccerBet is Base
 				samePooling = samePooling.sub(_allAmount);
 			}
 			
-			if(now < donGameGiftLineTime){
-				DonQuixoteToken.sendGameGift(_p.Player);
+		}else{
+			_p.IsReturnAward = true;
+			_p.ResultNO = gameResult;
+			emit OnOpenGameResult(gameID,_playNo, msg.sender, gameResult, now, getEventId());
+			
+			_allAmount = _p.BetAmount.mul(_p.Odd).div(100);
+			if(_p.BetNum == 3){
+				winPooling = winPooling.sub(_allAmount);
+			}else if(_p.BetNum == 1){
+				losePooling = losePooling.sub(_allAmount);
+			}else if(_p.BetNum == 0){
+				samePooling = samePooling.sub(_allAmount);
 			}
 		}
 	}
 	
-
-	function _canSetGameOver() private view returns(bool){
-		return winPooling<100 && losePooling<100 && samePooling<100;//todo
+	function _setGameOver() private{
+		if(unpayPooling == 0 && _canSetGameOver()){
+			userEtherOf[currentBanker] = userEtherOf[currentBanker].add(userEtherOf[this]);
+			userEtherOf[this] = 0;
+			gameOver = true;
+		}
 	}
 	
-    function _withdrawToken(address _from, uint256 _amount) internal {
-        require(_from != 0x0);
-		require(_from != currentBanker || gameOver);
-		if(_amount > 0 && _amount <= userTokenOf[_from]){  
-			userTokenOf[_from] = userTokenOf[_from].sub(_amount);
-			DonQuixoteToken.transfer(_from, _amount);
+	function _canSetGameOver() private view returns(bool){
+		return winPooling<100 && losePooling<100 && samePooling<100;
+	}
+	
+	function failUserRefund(uint[] _playNos) public returns (bool _result) {
+        _result = false;
+        require(!gameOver);
+		require(gameResult == 9);
+        require(betLastTime + 31 days < now);
+		for (uint _index = 0; _index < _playNos.length; _index++) {
+			uint _playNo = _playNos[_index];
+			if(_playNo >= gameBeginPlayNo && _playNo < playNo){
+				betInfo storage p = playerBetInfoOf[_playNo];
+				if(!p.IsReturnAward){
+					p.IsReturnAward = true;
+					uint256 ToUser = p.BetAmount;
+					userEtherOf[this] = userEtherOf[this].sub(ToUser);
+					userEtherOf[p.Player] =  userEtherOf[p.Player].add(ToUser);
+				}
+			}
 		}
+		if(msg.sender == currentBanker && bankerAllDeposit>0){
+			userEtherOf[this] = userEtherOf[this].sub(bankerAllDeposit);
+			userEtherOf[currentBanker] =  userEtherOf[currentBanker].add(bankerAllDeposit);
+			bankerAllDeposit = 0;
+		}
+		if(userEtherOf[this] == 0){
+			gameOver = true;
+		}
+		_result = true;
+    }
+
+	
+	event OnRefund(uint indexed _gameId, address _to, uint _amount, bool _result, uint _eventTime, uint eventId);
+	function _userRefund(address _to) internal  returns(bool _result){
+		require (_to != 0x0);
+		require(_to != currentBanker || gameOver);
+		lock();
+		uint256 amount = userEtherOf[_to];
+		if(amount > 0){
+			userEtherOf[msg.sender] = 0;
+			_to.transfer(amount);
+			_result = true;
+		}else{
+			_result = false;
+		}
+		
+		emit OnRefund(gameID, _to, amount, _result, now, getEventId());
+		unLock();                                                                            
     }
 	
-	
-	function transEther() public onlyOwner()
-    {
-        msg.sender.transfer(address(this).balance);
+	function playEtherOf() public payable {
+        if (msg.value > 0){
+            userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);                  
+        }
     }
 	
-	function () public payable {        //fall back function
+	function () public payable {
+        if(msg.value > 0){
+            userEtherOf[msg.sender] = userEtherOf[msg.sender].add(msg.value);
+			
+        }
     }
 
 }
