@@ -1,15 +1,298 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xa4e39a9e503ce2a4f7d416096cf5e2d2922f092e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x1a795d04B963c489E0Fc01897d398f1A84C15b8E
 */
 pragma solidity ^0.4.24;
 
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
+
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  function totalSupply() public view returns (uint256);
+
+  function balanceOf(address _who) public view returns (uint256);
+
+  function allowance(address _owner, address _spender)
+    public view returns (uint256);
+
+  function transfer(address _to, uint256 _value) public returns (bool);
+
+  function approve(address _spender, uint256 _value)
+    public returns (bool);
+
+  function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
+
+  event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 value
+  );
+
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20 {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev Total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+  * @dev Transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_value <= balances[msg.sender]);
+    require(_to != address(0));
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0));
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(
+    address _spender,
+    uint256 _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(
+    address _spender,
+    uint256 _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue >= oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(
+    ERC20 _token,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transfer(_to, _value));
+  }
+
+  function safeTransferFrom(
+    ERC20 _token,
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.transferFrom(_from, _to, _value));
+  }
+
+  function safeApprove(
+    ERC20 _token,
+    address _spender,
+    uint256 _value
+  )
+    internal
+  {
+    require(_token.approve(_spender, _value));
+  }
+}
+
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
+/// modified by Juwita Winadwiastuti - <juwita.winadwiastuti[at]hara.ag>
+///             Arkan Gilang - <arkan.gilang[at]hara.ag>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
-
+    /*
+     *  Events
+     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -20,125 +303,146 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
+    using SafeERC20 for ERC20;
+
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
+    mapping (uint => address) public tokens;
+    mapping (uint => bool) public tokenset;
     address[] public owners;
     uint public required;
     uint public transactionCount;
 
     struct Transaction {
         address destination;
-        uint256 value;
-        bytes data;
+        uint txType; // 0 = etherWithdraw 1 = addOwner 2 = removeOwner 10-19 = tokenWithdraw
+        uint value;
         bool executed;
     }
 
-    modifier onlyWallet() {
-        if (msg.sender != address(this))
-            throw;
-        _;
-    }
-
+    /*
+     *  Modifiers
+     */
     modifier ownerDoesNotExist(address owner) {
-        if (isOwner[owner])
-            throw;
+        require(!isOwner[owner]);
         _;
     }
 
     modifier ownerExists(address owner) {
-        if (!isOwner[owner])
-            throw;
+        require(isOwner[owner]);
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        if (transactions[transactionId].destination == 0)
-            throw;
+        require(transactions[transactionId].destination != 0);
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        if (!confirmations[transactionId][owner])
-            throw;
+        require(confirmations[transactionId][owner]);
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        if (confirmations[transactionId][owner])
-            throw;
+        require(!confirmations[transactionId][owner]);
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        if (transactions[transactionId].executed)
-            throw;
+        require(!transactions[transactionId].executed);
         _;
     }
 
     modifier notNull(address _address) {
-        if (_address == 0)
-            throw;
+        require(_address != 0);
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
-            || _required == 0
-            || ownerCount == 0)
-            throw;
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
         _;
     }
 
-    /// @dev Fallback function allows to deposit ether.
-    function()
+    modifier tokenIsSet(uint tokenId) {
+        require(tokenset[tokenId]);
+        _;
+    }
+
+    modifier tokenNotSet(uint tokenId) {
+        require(!tokenset[tokenId]);
+        _;
+    }
+
+    /// @dev Fallback function allows to deposit wei.
+    function()        
+        public
         payable
     {
         if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
+            emit Deposit(msg.sender, msg.value);
     }
 
     /*
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+    constructor()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
+        owners = [msg.sender];
+        isOwner[msg.sender] = true;
+        required = 1;
+    }
+    
+    function setToken(uint tokenId, address tokenContract)
+        public
+        tokenNotSet(tokenId)
+    {
+        tokens[tokenId]=tokenContract;
+        tokenset[tokenId]=true;
     }
 
-    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
+    /// @dev Allows to add a new owner. Transaction has to be sent by owner.
     /// @param owner Address of new owner.
     function addOwner(address owner)
-        public
-        onlyWallet
+        private
+        ownerExists(msg.sender)
         ownerDoesNotExist(owner)
         notNull(owner)
         validRequirement(owners.length + 1, required)
+        returns (bool) 
     {
         isOwner[owner] = true;
         owners.push(owner);
-        OwnerAddition(owner);
+        emit OwnerAddition(owner);
+        uint halfOwner = uint(owners.length)/2;
+        changeRequirement(halfOwner + 1);
+        return true;
     }
 
-    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
+    /// @dev Allows to remove an owner. Transaction has to be sent by owner.
     /// @param owner Address of owner.
     function removeOwner(address owner)
-        public
-        onlyWallet
+        private
         ownerExists(owner)
+        ownerExists(msg.sender)
+        returns (bool) 
     {
+        uint halfOwner = uint(owners.length - 1)/2;
+        changeRequirement(halfOwner + 1);
+
         isOwner[owner] = false;
         for (uint i=0; i<owners.length - 1; i++)
             if (owners[i] == owner) {
@@ -146,17 +450,16 @@ contract MultiSigWallet {
                 break;
             }
         owners.length -= 1;
-        if (required > owners.length)
-            changeRequirement(owners.length);
-        OwnerRemoval(owner);
+        emit OwnerRemoval(owner);
+        return true;
     }
 
-    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
+    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by owner.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
-        onlyWallet
+        ownerExists(msg.sender)
         ownerExists(owner)
         ownerDoesNotExist(newOwner)
     {
@@ -167,31 +470,70 @@ contract MultiSigWallet {
             }
         isOwner[owner] = false;
         isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
+        emit OwnerRemoval(owner);
+        emit OwnerAddition(newOwner);
     }
 
-    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
+    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by owner.
     /// @param _required Number of required confirmations.
     function changeRequirement(uint _required)
-        public
-        onlyWallet
+        private
+        ownerExists(msg.sender)
         validRequirement(owners.length, _required)
     {
         required = _required;
-        RequirementChange(_required);
+        emit RequirementChange(_required);
     }
 
-    /// @dev Allows an owner to submit and confirm a transaction.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
+    /// @dev Allows an owner to submit and confirm a withdraw transaction.
+    /// @param destination Withdraw destination address.
+    /// @param value Number of wei to withdraw.
     /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint256 value, bytes data)
+    function submitWithdrawTransaction(address destination, uint value)
         public
+        ownerExists(msg.sender)
         returns (uint transactionId)
     {
-        transactionId = addTransaction(destination, value, data);
+        transactionId = addTransaction(destination, value, 0);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to submit and confirm a withdraw token transaction.
+    /// @param tokenId token id.
+    /// @param destination Withdraw destination address.
+    /// @param value Number of token to withdraw.
+    /// @return Returns transaction ID.
+    function submitWithdrawTokenTransaction(uint tokenId, address destination, uint value)
+        public
+        ownerExists(msg.sender)
+        tokenIsSet(tokenId)
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, tokenId+10);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to submit and confirm a withdraw token transaction.
+    /// @param owner new owner.
+    /// @return Returns transaction ID.
+    function submitAddOwnerTransaction(address owner)
+        public
+        ownerExists(msg.sender)
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(owner, 0, 1);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to submit and confirm a withdraw token transaction.
+    /// @param owner old owner.
+    /// @return Returns transaction ID.
+    function submitRemoveOwnerTransaction(address owner)
+        public
+        ownerExists(msg.sender)
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(owner, 0, 2);
         confirmTransaction(transactionId);
     }
 
@@ -204,7 +546,7 @@ contract MultiSigWallet {
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
-        Confirmation(msg.sender, transactionId);
+        emit Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
     }
 
@@ -217,25 +559,57 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         confirmations[transactionId][msg.sender] = false;
-        Revocation(msg.sender, transactionId);
+        emit Revocation(msg.sender, transactionId);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-            tx.executed = true;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
+            Transaction storage txn = transactions[transactionId];
+            txn.executed = true;
+            if (txn.txType == 0 && withdraw(txn.destination, txn.value))
+                emit Execution(transactionId);
+            else if (txn.txType == 1 && addOwner(txn.destination))
+                emit Execution(transactionId);
+            else if (txn.txType == 2 && removeOwner(txn.destination))
+                emit Execution(transactionId);
+            else if (txn.txType > 3 && tokenWithdraw(txn.txType-10,txn.destination,txn.value))
+                emit Execution(transactionId);
             else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
+                emit ExecutionFailure(transactionId);
+                txn.executed = false;
             }
         }
+    }
+    
+    function tokenWithdraw(uint tokenId, address destination, uint value)
+        ownerExists(msg.sender)
+        tokenIsSet(tokenId)
+        private 
+        returns (bool) 
+    {
+        ERC20 _token = ERC20(tokens[tokenId]);
+        _token.safeTransfer(destination, value);
+        return true;
+    }
+
+    /// @dev Function to send wei to address.
+    /// @param destination Address destination to send wei.
+    /// @param value Amount of wei to send.
+    /// @return Confirmation status.
+    function withdraw(address destination, uint value) 
+        ownerExists(msg.sender)
+        private 
+        returns (bool) 
+    {
+        destination.transfer(value);
+        return true;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -260,10 +634,9 @@ contract MultiSigWallet {
      */
     /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
     /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
+    /// @param value Transaction wei value.
     /// @return Returns transaction ID.
-    function addTransaction(address destination, uint256 value, bytes data)
+    function addTransaction(address destination, uint value, uint txType)
         internal
         notNull(destination)
         returns (uint transactionId)
@@ -271,12 +644,12 @@ contract MultiSigWallet {
         transactionId = transactionCount;
         transactions[transactionId] = Transaction({
             destination: destination,
+            txType: txType,
             value: value,
-            data: data,
             executed: false
         });
         transactionCount += 1;
-        Submission(transactionId);
+        emit Submission(transactionId);
     }
 
     /*
@@ -340,122 +713,5 @@ contract MultiSigWallet {
         for (i=0; i<count; i++)
             _confirmations[i] = confirmationsTemp[i];
     }
-
-    /// @dev Returns list of transaction IDs in defined range.
-    /// @param from Index start position of transaction array.
-    /// @param to Index end position of transaction array.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Returns array of transaction IDs.
-    function getTransactionIds(uint from, uint to, bool pending, bool executed)
-        public
-        constant
-        returns (uint[] _transactionIds)
-    {
-        uint[] memory transactionIdsTemp = new uint[](transactionCount);
-        uint count = 0;
-        uint i;
-        for (i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-            {
-                transactionIdsTemp[count] = i;
-                count += 1;
-            }
-        _transactionIds = new uint[](to - from);
-        for (i=from; i<to; i++)
-            _transactionIds[i - from] = transactionIdsTemp[i];
-    }
-}
-
-/// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletWithDailyLimit is MultiSigWallet {
-
-    event DailyLimitChange(uint dailyLimit);
-
-    uint public dailyLimit;
-    uint public lastDay;
-    uint public spentToday;
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners, required number of confirmations and daily withdraw limit.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        MultiSigWallet(_owners, _required)
-    {
-        dailyLimit = _dailyLimit;
-    }
-
-    /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
-    /// @param _dailyLimit Amount in wei.
-    function changeDailyLimit(uint _dailyLimit)
-        public
-        onlyWallet
-    {
-        dailyLimit = _dailyLimit;
-        DailyLimitChange(_dailyLimit);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
-    {
-        Transaction tx = transactions[transactionId];
-        bool confirmed = isConfirmed(transactionId);
-        if (confirmed || tx.data.length == 0 && isUnderLimit(tx.value)) {
-            tx.executed = true;
-            if (!confirmed)
-                spentToday += tx.value;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
-            else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
-                if (!confirmed)
-                    spentToday -= tx.value;
-            }
-        }
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Returns if amount is within daily limit and resets spentToday after one day.
-    /// @param amount Amount to withdraw.
-    /// @return Returns if amount is under daily limit.
-    function isUnderLimit(uint amount)
-        internal
-        returns (bool)
-    {
-        if (now > lastDay + 24 hours) {
-            lastDay = now;
-            spentToday = 0;
-        }
-        if (spentToday + amount > dailyLimit || spentToday + amount < spentToday)
-            return false;
-        return true;
-    }
-
-    /*
-     * Web3 call functions
-     */
-    /// @dev Returns maximum withdraw amount.
-    /// @return Returns amount.
-    function calcMaxWithdraw()
-        public
-        constant
-        returns (uint)
-    {
-        if (now > lastDay + 24 hours)
-            return dailyLimit;
-        return dailyLimit - spentToday;
-    }
+    
 }
