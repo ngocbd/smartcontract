@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Archetypal at 0x3c149493d0B69B42d8F70D4762052ADfA2f4457c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Archetypal at 0x7b2dF125567815ac9b57DA04B620F50bc93B320C
 */
 pragma solidity ^0.4.18;
 
@@ -77,8 +77,8 @@ contract Archetypal is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "Archetypal Network";
-    string public constant symbol = "ACTPN";
-    uint public constant decimals = 18;
+    string public constant symbol = "ACTP";
+    uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8;
     uint256 public totalDistributed = 0;    
