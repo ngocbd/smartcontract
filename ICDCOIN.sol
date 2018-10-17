@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICDCOIN at 0x35f26cbc9adf5a1632694a3a7d3ba3fedefc26be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICDCOIN at 0x31a9d8d9697a9542189f9848636ad75e57583d0d
 */
 pragma solidity ^0.4.16;
 
 //interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-//???? public ??? external
+//? public  to external
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 contract ICDCOIN {
     // Public variables of the token
@@ -24,6 +24,10 @@ contract ICDCOIN {
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
 
+function () public payable {
+	emit GetEth(msg.value);
+}
+ event GetEth(uint amount);
     /**
      * Constructor function
      *
@@ -57,7 +61,7 @@ contract ICDCOIN {
         // Add the same to the recipient
         balanceOf[_to] += _value;
         //Transfer(_from, _to, _value);
-        //??? ??emit  Invoking events without "emit" prefix is deprecated.
+        // add emit  Invoking events without "emit" prefix is deprecated.
         emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
@@ -135,7 +139,7 @@ contract ICDCOIN {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        //??? ??emit  Invoking events without "emit" prefix is deprecated.
+        // add emit  Invoking events without "emit" prefix is deprecated.
         //Burn(msg.sender, _value);
         emit Burn(msg.sender, _value);
         return true;
@@ -155,7 +159,7 @@ contract ICDCOIN {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        //??? ??emit  Invoking events without "emit" prefix is deprecated.
+        // add emit  Invoking events without "emit" prefix is deprecated.
         //Burn(_from, _value);
         emit Burn(_from, _value);
         return true;
