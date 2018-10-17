@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KarmaToken at 0xf225b1be475ca4b50706db318c12380a02537394
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KarmaToken at 0x62e8301aa4090329c8bd922fcf165e0063cf42d6
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Karma' token contract
 //
-// Deployed to : 0xDD59Db170547dDBAe06C0b081713b29855937b72
-// Symbol      : KARMA
+// Deployed to : 0x62e8301aa4090329c8bd922fcf165e0063cf42d6
+// Symbol      : KMAC
 // Name        : Karma Token
-// Total supply: 100000000
+// Total supply: 10000000000
 // Decimals    : 18
 //
-// Have a good Karma.
+// Enjoy.
 //
-// (c) Created by xen on March 14, 2018.
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -116,12 +116,12 @@ contract KarmaToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function KarmaToken() public {
-        symbol = "KARMA";
-        name = "KARMA Token";
+        symbol = "KMAC";
+        name = "Karma Token";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
-        balances[0xDD59Db170547dDBAe06C0b081713b29855937b72] = _totalSupply;
-        Transfer(address(0), 0xDD59Db170547dDBAe06C0b081713b29855937b72, _totalSupply);
+        _totalSupply = 10000000000000000000000000000 ;
+        balances[0x2fD1fd25eE243103179bd046777928b0f4882E1A] = _totalSupply;
+        Transfer(address(0), 0x2fD1fd25eE243103179bd046777928b0f4882E1A, _totalSupply);
     }
 
 
