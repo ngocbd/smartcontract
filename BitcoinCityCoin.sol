@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinCityCoin at 0xc4491e81c7fe666ab95912a5140ed2348f4e9400
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinCityCoin at 0x331071d592f3a1852ac2c6988f7f85fb6ba04b5d
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.24;
 
 /**
  * @title Ownable
@@ -102,12 +102,35 @@ contract BasicToken is ERC20Basic {
     
     mapping(address => uint256) balances;
 
+    bool public freeze = false;
+    
+    address contractICOAddress;
+    
+    function setContractICOAddress(address ICOAddress) public onlyOwner {
+        contractICOAddress = ICOAddress;
+    }
+
+    /**
+    * @dev Changes the value of freeze variable.
+    */
+    function freezeToken()public onlyOwner {
+        freeze = !freeze;
+    }
+    
+    /**
+    * @dev Throws if called when contract is frozen.
+    */
+    modifier isNotFrozen(){
+        require(!freeze || msg.sender == contractICOAddress);
+        _;
+    }
+
     /**
     * @dev Transfers tokens to a specified address.
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value) isNotFrozen public returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -139,7 +162,7 @@ contract StandardToken is ERC20, BasicToken {
     * @param _to The address which you want to transfer to.
     * @param _value The amount of tokens to be transfered.
     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+    function transferFrom(address _from, address _to, uint256 _value) isNotFrozen public returns(bool) {
         require(_value <= allowed[_from][msg.sender]);
         var _allowance = allowed[_from][msg.sender];
         balances[_to] = balances[_to].add(_value);
@@ -154,7 +177,7 @@ contract StandardToken is ERC20, BasicToken {
     * @param _spender The address which will spend the funds.
     * @param _value The amount of tokens to be spent.
     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value) isNotFrozen public returns (bool) {
         require((_value > 0)&&(_value <= balances[msg.sender]));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
@@ -226,7 +249,7 @@ contract BurnableToken is MintableToken {
     * @dev Burns a specific amount of tokens.
     * @param _value The amount of token to be burned.
     */
-    function burn(uint _value) public returns (bool success) {
+    function burn(uint _value) isNotFrozen public returns (bool success) {
         require((_value > 0) && (_value <= balances[msg.sender]));
         balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -234,27 +257,12 @@ contract BurnableToken is MintableToken {
         return true;
     }
  
-    /**
-    * @dev Burns a specific amount of tokens from another address.
-    * @param _value The amount of tokens to be burned.
-    * @param _from The address which you want to burn tokens from.
-    */
-    function burnFrom(address _from, uint _value) public returns (bool success) {
-        require((balances[_from] > _value) && (_value <= allowed[_from][msg.sender]));
-        var _allowance = allowed[_from][msg.sender];
-        balances[_from] = balances[_from].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Burn(_from, _value);
-        return true;
-    }
-
     event Burn(address indexed burner, uint indexed value);
 }
 
 /**
- * @title BitcoinCityCoin
- * @dev BitcoinCityCoin is a standard ERC20 token with some additional functionality
+ * @title SimpleTokenCoin
+ * @dev SimpleToken is a standard ERC20 token with some additional functionality
  */
 contract BitcoinCityCoin is BurnableToken {
     
@@ -268,10 +276,10 @@ contract BitcoinCityCoin is BurnableToken {
     
     
     /**
-    * @dev The BitcoinCityCoin constructor mints tokens to four addresses.
+    * @dev The BitcoinCityCoin constructor mints tokens to four address.
     */
-    function SimpleTokenCoin()public {
-       balances[0xb2DeC9309Ca7047a6257fC83a95fcFc23Ab821DC] = 500000000 * 10**decimals;
+    function BitcoinCityCoin() public {
+       mint(msg.sender, 500000000 * 10**8);
     }
     
     
@@ -288,7 +296,7 @@ contract BitcoinCityCoin is BurnableToken {
      * @param tokens Amount of tokens to execute function.
      * @param data Additional data.
      */
-    function approveAndCall(uint tokens, bytes data) public returns (bool success) {
+    function approveAndCall(uint tokens, bytes data) isNotFrozen public returns (bool success) {
         approve(contractAddress, tokens);
         ApproveAndCallFallBack(contractAddress).receiveApproval(msg.sender, tokens, data);
         return true;
