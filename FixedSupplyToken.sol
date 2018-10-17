@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x35ceac3b4400765e5c2b58cbe2deca7c9ec7207d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x55fc7dacf23c349b0faeb93d2d005cb8fc22fe63
 */
 pragma solidity ^0.4.24;
 
@@ -107,10 +107,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "MMC";
-        name = "mimibit Coin";
+        symbol = "WBC";
+        name = "water block chain";
         decimals = 18;
-        _totalSupply = 2700000000 * 10**uint(decimals);
+        _totalSupply = 200000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
