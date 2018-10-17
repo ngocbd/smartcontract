@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FBC at 0xa285b6b0ddc40c20d5441e484403fd41fe46d34e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FBC at 0xa3021edfceb3ae86ff67bf92b0d87f71a4eb0219
 */
 pragma solidity ^0.4.23;
 
@@ -355,86 +355,108 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract CrowdsaleToken is MintableToken {
-  uint256 public cap = 300000000;
-  uint256 public crowdSaleCap = 210000000;
-//  uint256 public basePrice = 1500000000000000; //wei per 1 token
-  uint256 public basePrice = 15000000000000; //wei per 1 token * 100 for testing
-  uint32 public privateSaleStartDate = 1526342400; //15.05.2018 00:00
-  uint32 public privateSaleEndDate = 1529107199; //15.06.2018 23:59
-  uint32 public preIcoStartDate = 1529107200; //16.06.2018 00:00
-  uint32 public preIcoEndDate = 1531785599; //16.06.2018 00:00
-  uint32 public icoStartDate = 1533081600; //01.08.2018 00:00
-  uint32 public icoBonus1EndDate = 1533437999; //05.08.2018 23:59
-  uint32 public icoBonus2EndDate = 1533945599; //10.08.2018 23:59
-  uint32 public icoBonus3EndDate = 1534377599; //15.08.2018 23:59
-  uint32 public icoBonus4EndDate = 1534809599; //20.08.2018 23:59
-  uint32 public icoBonus5EndDate = 1535846399; //01.09.2018 23:59
-
-  enum Stages {PrivateSale, PreIco, Ico}
-  Stages currentStage;
+  uint256 public totalTokens = uint256(300000000).mul(1e4); // FEON
+  uint256 public crowdSaleCap = uint256(210000000).mul(1e4); // FEON
+  uint256 public hardCap = uint256(12000).mul(1 ether); // wei
+  uint256 public softCap = uint256(1000).mul(1 ether); // wei
+  uint256 public weiRaised; // wei
+  uint256 public basePrice = 330000000000000; // wei per 1 token
+  uint256 public refundPercent = 90; // %
+  uint256 public preIcoStartDate = 1534291200; // 15.08.2018 00:00:00
+  uint256 public preIcoEndDate = 1537919999; // 25.09.2018 23:59:59
+  uint256 public icoStartDate = 1539561600; // 15.10.2018 00:00:00
+  uint256 public icoEndDate = 1543622399; // 30.11.2018 23:59:59
+  uint256 public refundEndDate = 1543881599; // 03.12.2018 23:59:59
+  uint256 public bonusPeriod = 432000; // 5 days
+  uint256 public bonusLimit1 = uint256(45000).mul(1e4); //with decimals
+  uint256 public bonusLimit2 = uint256(30000).mul(1e4); //with decimals
+  uint256 public bonusLimit3 = uint256(10000).mul(1e4); //with decimals
+  uint256 public bonusLimit4 = uint256(3000).mul(1e4); //with decimals
+  uint256 public bonusLimit5 = uint256(25).mul(1e4); //with decimals
+  address public newOwner = 0x67f00b9B121ab98CF102c5892c14A5e696eA2CC0;
+  address public wallet = 0x3840428703BaA6C614E85CaE6167c59d8922C0FE;
+  mapping(address => uint256) contribution;
 
   constructor() public {
-    uint256 team = cap.sub(crowdSaleCap);
-    balances[owner] = team;
-    totalSupply_ = team;
-    emit Transfer(address(this), owner, team);
-    currentStage = Stages.PrivateSale;
-  }
+    owner = newOwner;
+    uint256 teamTokens = totalTokens.sub(crowdSaleCap);
+    balances[owner] = teamTokens;
+    totalSupply_ = teamTokens;
+    emit Transfer(address(this), owner, teamTokens);
+  } 
 
-  function getStage () internal returns (uint8) {
-    if (now > preIcoEndDate && currentStage != Stages.Ico) currentStage = Stages.Ico;
-    if (now > privateSaleEndDate && now <= preIcoEndDate && currentStage != Stages.PreIco) currentStage = Stages.PreIco;
-    return uint8(currentStage);
-  }
-
-  function getBonuses (uint256 _tokens) public returns (uint8) {
-    uint8 _currentStage = getStage();
-    if (_currentStage == 0) {
-      if (_tokens > 70000) return 60;
-      if (_tokens > 45000) return 50;
-      if (_tokens > 30000) return 42;
-      if (_tokens > 10000) return 36;
-      if (_tokens > 3000) return 30;
-      if (_tokens > 1000) return 25;
+  function getBonuses (uint256 _tokens) public view returns (uint256) {
+    if (now >= preIcoStartDate && now <= preIcoEndDate) {
+      if (_tokens >= bonusLimit1) return 30;
+      if (_tokens >= bonusLimit2) return 25;
+      if (_tokens >= bonusLimit3) return 20;
+      if (_tokens >= bonusLimit4) return 15;
+      if (_tokens >= bonusLimit5) return 10;
     }
-    if (_currentStage == 1) {
-      if (_tokens > 45000) return 45;
-      if (_tokens > 30000) return 35;
-      if (_tokens > 10000) return 30;
-      if (_tokens > 3000) return 25;
-      if (_tokens > 1000) return 20;
-      if (_tokens > 25) return 15;
-    }
-    if (_currentStage == 2) {
-      if (now <= icoBonus1EndDate) return 30;
-      if (now <= icoBonus2EndDate) return 25;
-      if (now <= icoBonus3EndDate) return 20;
-      if (now <= icoBonus4EndDate) return 15;
-      if (now <= icoBonus5EndDate) return 10;
+    if (now >= icoStartDate && now <= icoEndDate) {
+      if (now <= icoStartDate + bonusPeriod) return 25;
+      if (now <= icoStartDate + bonusPeriod.mul(2)) return 20;
+      if (now <= icoStartDate + bonusPeriod.mul(3)) return 15;
+      if (now <= icoStartDate + bonusPeriod.mul(4)) return 10;
+      return 5;
     }
     return 0;
   }
 
   function mint (address _to, uint256 _amount) public returns (bool) {
-    require(totalSupply_.add(_amount) <= cap);
+    _amount = _amount.mul(1e4);
+    require(totalSupply_.add(_amount) <= totalTokens);
     return super.mint(_to, _amount);
   }
 
   function () public payable {
-    uint256 tokens = msg.value.div(basePrice);
-    uint8 bonuses = getBonuses(tokens);
+    require(now >= preIcoStartDate);
+    uint256 tokens = msg.value.mul(1e4).div(basePrice);
+    uint256 bonuses = getBonuses(tokens);
     uint256 extraTokens = tokens.mul(bonuses).div(100);
     tokens = tokens.add(extraTokens);
-    require(totalSupply_.add(tokens) <= cap);
-    owner.transfer(msg.value);
+    require(totalSupply_.add(tokens) <= totalTokens);
     balances[msg.sender] = balances[msg.sender].add(tokens);
     totalSupply_ = totalSupply_.add(tokens);
+    contribution[msg.sender] = contribution[msg.sender].add(msg.value);
+    weiRaised = weiRaised.add(msg.value);
+    require(weiRaised <= hardCap);
+    if (now > icoEndDate || weiRaised > hardCap) {
+      wallet.transfer(msg.value);
+    } else if (weiRaised >= softCap) {
+      owner.transfer(msg.value);
+    }
     emit Transfer(address(this), msg.sender, tokens);
   }
-} 
+
+  function getEther () public onlyOwner {
+    require(now > refundEndDate || weiRaised >= softCap);
+    require(address(this).balance > 0);
+    owner.transfer(address(this).balance);
+  }
+
+  function setRefundPercent (uint256 _percent) public onlyOwner {
+    require(_percent > 0);
+    require(_percent <= 100);
+    refundPercent = _percent;
+  }
+
+  function getRefund () public {
+    require(balances[msg.sender] > 0);
+    require(contribution[msg.sender] > 0);
+    require(address(this).balance >= contribution[msg.sender]);
+    require(now > icoEndDate);
+    require(now < refundEndDate);
+    require(weiRaised < softCap);
+    uint256 refund = contribution[msg.sender].mul(refundPercent).div(100);
+    contribution[msg.sender] = 0;
+    balances[msg.sender] = 0;
+    msg.sender.transfer(refund);
+  }
+}
 
 contract FBC is CrowdsaleToken {
   string public constant name = "Feon Bank Coin";
   string public constant symbol = "FBC";
-  uint32 public constant decimals = 0;
+  uint32 public constant decimals = 4;
 }
