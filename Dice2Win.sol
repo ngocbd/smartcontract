@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice2Win at 0xd1ceeeefa68a6af0a5f6046132d986066c7f9426
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice2Win at 0xd1ceeee6b94de402e14f24de0871580917ede8a7
 */
 pragma solidity ^0.4.23;
 
 // * dice2.win - fair games that pay Ether.
 //
-// * Ethereum smart contract, deployed at 0xD1CEeeefA68a6aF0A5f6046132D986066c7f9426.
+// * Ethereum smart contract, deployed at 0xD1CEeee6B94DE402e14F24De0871580917ede8a7.
 //
 // * Uses hybrid commit-reveal + block hash random number generation that is immune
 //   to tampering by players, house and miners. Apart from being fully transparent,
@@ -235,10 +235,8 @@ contract Dice2Win {
         }
 
         // Winning amount and jackpot increase.
-        uint possibleWinAmount;
-        uint jackpotFee;
-
-        (possibleWinAmount, jackpotFee) = getDiceWinAmount(amount, modulo, rollUnder);
+        uint possibleWinAmount = getDiceWinAmount(amount, modulo, rollUnder);
+        uint jackpotFee = getJackpotFee(amount);
 
         // Enforce max profit limit.
         require (possibleWinAmount <= amount + maxProfit, "maxProfit limit violation.");
@@ -294,10 +292,7 @@ contract Dice2Win {
 
         // Do a roll by taking a modulo of entropy. Compute winning amount.
         uint dice = uint(entropy) % modulo;
-
-        uint diceWinAmount;
-        uint _jackpotFee;
-        (diceWinAmount, _jackpotFee) = getDiceWinAmount(amount, modulo, rollUnder);
+        uint diceWinAmount = getDiceWinAmount(amount, modulo, rollUnder);
 
         uint diceWin = 0;
         uint jackpotWin = 0;
@@ -333,13 +328,20 @@ contract Dice2Win {
             }
         }
 
+        // Tally up the win.
+        uint totalWin = diceWin + jackpotWin;
+
+        if (totalWin == 0) {
+            totalWin = 1 wei;
+        }
+
         // Log jackpot win.
         if (jackpotWin > 0) {
             emit JackpotPayment(gambler, jackpotWin);
         }
 
         // Send the funds to gambler.
-        sendFunds(gambler, diceWin + jackpotWin == 0 ? 1 wei : diceWin + jackpotWin, diceWin);
+        sendFunds(gambler, totalWin, diceWin);
 
         // Clear storage of some previous bet.
         if (cleanCommit == 0) {
@@ -366,13 +368,7 @@ contract Dice2Win {
 
         // Move bet into 'processed' state, release funds.
         bet.amount = 0;
-
-        uint diceWinAmount;
-        uint jackpotFee;
-        (diceWinAmount, jackpotFee) = getDiceWinAmount(amount, bet.modulo, bet.rollUnder);
-
-        lockedInBets -= uint128(diceWinAmount);
-        jackpotSize -= uint128(jackpotFee);
+        lockedInBets -= uint128(getDiceWinAmount(amount, bet.modulo, bet.rollUnder));
 
         // Send the refund.
         sendFunds(bet.gambler, amount, amount);
@@ -407,10 +403,8 @@ contract Dice2Win {
     }
 
     // Get the expected win amount after house edge is subtracted.
-    function getDiceWinAmount(uint amount, uint modulo, uint rollUnder) private pure returns (uint winAmount, uint jackpotFee) {
+    function getDiceWinAmount(uint amount, uint modulo, uint rollUnder) private pure returns (uint) {
         require (0 < rollUnder && rollUnder <= modulo, "Win probability out of range.");
-
-        jackpotFee = amount >= MIN_JACKPOT_BET ? JACKPOT_FEE : 0;
 
         uint houseEdge = amount * HOUSE_EDGE_PERCENT / 100;
 
@@ -418,8 +412,14 @@ contract Dice2Win {
             houseEdge = HOUSE_EDGE_MINIMUM_AMOUNT;
         }
 
-        require (houseEdge + jackpotFee <= amount, "Bet doesn't even cover house edge.");
-        winAmount = (amount - houseEdge - jackpotFee) * modulo / rollUnder;
+        require (houseEdge <= amount, "Bet doesn't even cover house edge.");
+        return (amount - houseEdge) * modulo / rollUnder;
+    }
+
+    // Get the portion of bet amount that is to be accumulated in the jackpot.
+    function getJackpotFee(uint amount) private pure returns (uint) {
+        // Do not charge the fee from bets which don't claim jackpot.
+        return amount >= MIN_JACKPOT_BET ? JACKPOT_FEE : 0;
     }
 
     // Helper routine to process the payment.
