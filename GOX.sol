@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOX at 0x84ef4fb3f64aefefaeb9196b0d7df039f01e01a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOX at 0x1c07652b65d1df2585997ff6922d428e1486a63a
 */
 pragma solidity ^0.4.24;
 
@@ -110,7 +110,7 @@ contract GOX is StandardToken { // CHANGE THIS. Update the contract name.
     function GOX() {
         balances[msg.sender] = 10000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 10000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Goldstar";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "Gstar";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "GOX";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
