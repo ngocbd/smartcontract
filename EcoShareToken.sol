@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EcoShareToken at 0x5f2eb336c18ba7a6c9349bf68af677a6e1808ab8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EcoShareToken at 0xd2b81e296d82011e10f751f138667698427cdb2a
 */
 pragma solidity ^0.4.21;
 
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -11,18 +15,26 @@ contract Ownable {
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
   constructor() public {
     owner = msg.sender;
   }
 
-  
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     emit OwnershipTransferred(owner, newOwner);
@@ -31,7 +43,11 @@ contract Ownable {
 
 }
 
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -39,10 +55,15 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-  
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
@@ -52,21 +73,27 @@ library SafeMath {
     return c;
   }
 
-  
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-   
-   
-   
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return a / b;
   }
 
-  
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
     c = a + b;
     assert(c >= a);
@@ -74,7 +101,10 @@ library SafeMath {
   }
 }
 
-
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -82,12 +112,18 @@ contract BasicToken is ERC20Basic {
 
   uint256 totalSupply_;
 
-  
+  /**
+  * @dev total number of tokens in existence
+  */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
-  
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
@@ -98,14 +134,21 @@ contract BasicToken is ERC20Basic {
     return true;
   }
 
-  
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
   function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
 }
 
-
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -113,13 +156,24 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
 
 
-  
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
@@ -132,26 +186,58 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
   function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
-  
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -165,7 +251,10 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
+/**
+ * @title Contract Spend Token
+ * @dev Trusted contracts can spend this token
+ */
 contract ContractSpendToken is Ownable, StandardToken {
   mapping (address => address) private contractToReceiver;
 
@@ -192,17 +281,25 @@ contract ContractSpendToken is Ownable, StandardToken {
 }
 
 
-
+/*
+ * EcoShareToken is a standard ERC20 token which can be used to paid for other contracts
+ */
 
 contract EcoShareToken is ContractSpendToken {
   string public constant symbol = "ECST";
-  string public constant name = "Contract Eco-Share Token";
+  string public constant name = "Eco-Share Transaction";
   uint8 public constant decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 750000000 * (10 ** uint256(decimals));
 
- 
+  // Address of token admin
   address public adminAddr;
-  
+  /**
+  * Check if address is a valid destination to transfer tokens to
+  * - must not be zero address
+  * - must not be the token address
+  * - must not be the admin's address
+  * - must not be the token offering contract address
+  */
   modifier validDestination(address to) {
     require(to != address(0x0));
     require(to != address(this));
@@ -211,25 +308,40 @@ contract EcoShareToken is ContractSpendToken {
     _;
   }
 
-  
-  constructor() public {
+  /**
+   * Token contract constructor
+   */
+  constructor(address _adminAddr) public {
     totalSupply_ = INITIAL_SUPPLY;
 
-   
+    // Mint tokens
     balances[msg.sender] = totalSupply_;
     emit Transfer(address(0x0), msg.sender, totalSupply_);
 
-   
-    adminAddr = msg.sender;
-    approve(adminAddr, totalSupply_);
+    // Approve allowance for admin account
+    if (_adminAddr != address(0x0)) {
+        adminAddr = _adminAddr;
+        approve(adminAddr, totalSupply_);
+    }
   }
 
-  
+  /**
+   * Transfer from sender to another account
+   *
+   * @param to Destination address
+   * @param value Amount of ContractFuelToken to send
+   */
   function transfer(address to, uint256 value) public validDestination(to) returns (bool) {
     return super.transfer(to, value);
   }
 
-  
+  /**
+   * Transfer from `from` account to `to` account using allowance in `from` account to the sender
+   *
+   * @param from Origin address
+   * @param to Destination address
+   * @param value Amount of EcoShareToken to send
+   */
   function transferFrom(address from, address to, uint256 value) public validDestination(to) returns (bool) {
     return super.transferFrom(from, to, value);
   }
