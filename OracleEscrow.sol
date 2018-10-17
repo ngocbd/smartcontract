@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OracleEscrow at 0x05abc997f9f4305ae8ab4ec06defbba8d48226d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OracleEscrow at 0x6851ed61e96b20bb7332287768e5ad82b9447aee
 */
 pragma solidity 0.4.23;
 
@@ -81,7 +81,7 @@ contract OracleEscrow is Ownable {
 
   // Expiration date should be a factor of days to prevent timestamp dependence.
   // https://consensys.github.io/smart-contract-best-practices/recommendations/#timestamp-dependence
-  uint256 internal constant TO_EXPIRE = 78 days;
+  uint256 internal constant TO_EXPIRE = 75 days;
 
   /** 
    * @dev The OracleEscrow constructor sets the oracle, depositor, and beneficiary addresses.
