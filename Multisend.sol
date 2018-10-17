@@ -1,43 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSend at 0xcc16643aa020fc23011c209e7d3f1abf2240ead1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSend at 0xf2a95300326adf582a43b63218742e4528f82b01
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+/* Function required from ERC20 main contract */
+contract TokenERC20 {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {}
 }
 
 contract MultiSend {
-  function multiSend(address _token, address[] addresses, uint amount) public {
-    ERC20 token = ERC20(_token);
-    for(uint i = 0; i < addresses.length; i++) {
-      require(token.transferFrom(msg.sender, addresses[i], amount));
+    TokenERC20 public _ERC20Contract;
+    address public _multiSendOwner;
+    
+    function MultiSend () {
+        address c = 0xc3761eb917cd790b30dad99f6cc5b4ff93c4f9ea; // set ERC20 contract address
+        _ERC20Contract = TokenERC20(c); 
+        _multiSendOwner = msg.sender;
     }
-  }
-  function multiSendEth(address[] addresses) public payable {
-    uint256 amount = msg.value / addresses.length;
-    for(uint i = 0; i < addresses.length; i++) {
-      addresses[i].transfer(amount);
+    
+    /* Make sure you allowed this contract enough ERC20 tokens before using this function
+    ** as ERC20 contract doesn't have an allowance function to check how much it can spend on your behalf
+    ** Use function approve(address _spender, uint256 _value)
+    */
+    function dropCoins(address[] dests, uint256 tokens) {
+        require(msg.sender == _multiSendOwner);
+        uint256 amount = tokens;
+        uint256 i = 0;
+        while (i < dests.length) {
+            _ERC20Contract.transferFrom(_multiSendOwner, dests[i], amount);
+            i += 1;
+        }
     }
-  }
+    
 }
