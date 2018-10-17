@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0xdb8459034fc97eed3d43172909e1d353e9f4d282
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0x97dd376e5ccef843f214bd6cff4196aad4f3918b
 */
-pragma solidity 0.4.23;
-
+pragma solidity 0.4.24;
 
 /**
  * @title SafeMath
@@ -107,20 +106,43 @@ interface TokenInterface {
   uint256 public weiRaised;
 
   uint256 public TOKENS_SOLD;
+  uint256 public TOKENS_BOUGHT;
   
-  uint256 public minimumContributionPresalePhase1 = uint(2).mul(10 ** 18); //2 eth is the minimum contribution in presale phase 1
-  uint256 public minimumContributionPresalePhase2 = uint(1).mul(10 ** 18); //1 eth is the minimum contribution in presale phase 2
+  uint256 public minimumContributionPhase1;
+  uint256 public minimumContributionPhase2;
+  uint256 public minimumContributionPhase3;
+  uint256 public minimumContributionPhase4;
+  uint256 public minimumContributionPhase5;
+  uint256 public minimumContributionPhase6;
   
   uint256 public maxTokensToSaleInClosedPreSale;
   
-  uint256 public bonusInPreSalePhase1;
-  uint256 public bonusInPreSalePhase2;
+  uint256 public bonusInPhase1;
+  uint256 public bonusInPhase2;
+  uint256 public bonusInPhase3;
+  uint256 public bonusInPhase4;
+  uint256 public bonusInPhase5;
+  uint256 public bonusInPhase6;
+  
   
   bool public isCrowdsalePaused = false;
   
-  uint256 public totalDurationInDays = 31 days;
+  uint256 public totalDurationInDays = 123 days;
   
-  mapping(address=>bool) isAddressWhiteListed;
+  
+  struct userInformation {
+      address userAddress;
+      uint tokensToBeSent;
+      uint ethersToBeSent;
+      bool isKYCApproved;
+      bool recurringBuyer;
+  }
+  
+  event usersAwaitingTokens(address[] users);
+  mapping(address=>userInformation) usersBuyingInformation;
+  address[] allUsers;
+  address[] u;
+  userInformation info;
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -128,23 +150,33 @@ interface TokenInterface {
    * @param value weis paid for purchase
    * @param amount amount of tokens purchased
    */
+   
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
   constructor(uint256 _startTime, address _wallet, address _tokenAddress) public 
   {
-    
     require(_wallet != 0x0);
     require(_startTime >=now);
     startTime = _startTime;  
-    
     endTime = startTime + totalDurationInDays;
     require(endTime >= startTime);
    
     owner = _wallet;
     
-    maxTokensToSaleInClosedPreSale = 60000000 * 10 ** 18;
-    bonusInPreSalePhase1 = 50;
-    bonusInPreSalePhase2 = 40;
+    bonusInPhase1 = 30;
+    bonusInPhase2 = 20;
+    bonusInPhase3 = 15;
+    bonusInPhase4 = 10;
+    bonusInPhase5 = 75;
+    bonusInPhase6 = 5;
+    
+    minimumContributionPhase1 = uint(3).mul(10 ** 17); //0.3 eth is the minimum contribution in presale phase 1
+    minimumContributionPhase2 = uint(5).mul(10 ** 16); //0.05 eth is the minimum contribution in presale phase 2
+    minimumContributionPhase3 = uint(5).mul(10 ** 16); //0.05 eth is the minimum contribution in presale phase 3
+    minimumContributionPhase4 = uint(5).mul(10 ** 16); //0.05 eth is the minimum contribution in presale phase 4
+    minimumContributionPhase5 = uint(5).mul(10 ** 16); //0.05 eth is the minimum contribution in presale phase 5
+    minimumContributionPhase6 = uint(5).mul(10 ** 16); //0.05 eth is the minimum contribution in presale phase 6
+    
     token = TokenInterface(_tokenAddress);
   }
   
@@ -154,24 +186,58 @@ interface TokenInterface {
      buyTokens(msg.sender);
     }
     
-    function determineBonus(uint tokens) internal view returns (uint256 bonus) 
+    function determineBonus(uint tokens, uint ethersSent) internal view returns (uint256 bonus) 
     {
         uint256 timeElapsed = now - startTime;
         uint256 timeElapsedInDays = timeElapsed.div(1 days);
         
-        //Closed pre-sale phase 1 (15 days)
-        if (timeElapsedInDays <15)
+        //phase 1 (16 days)
+        if (timeElapsedInDays <16)
         {
-            bonus = tokens.mul(bonusInPreSalePhase1); 
+            require(ethersSent>=minimumContributionPhase1);
+            bonus = tokens.mul(bonusInPhase1); 
             bonus = bonus.div(100);
-            require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSaleInClosedPreSale);
         }
-        //Closed pre-sale phase 2 (16 days)
-        else if (timeElapsedInDays >=15 && timeElapsedInDays <31)
+        //phase 2 (31 days)
+        else if (timeElapsedInDays >=16 && timeElapsedInDays <47)
         {
-            bonus = tokens.mul(bonusInPreSalePhase2); 
+            require(ethersSent>=minimumContributionPhase2);
+            bonus = tokens.mul(bonusInPhase2); 
             bonus = bonus.div(100);
-            require (TOKENS_SOLD.add(tokens.add(bonus)) <= maxTokensToSaleInClosedPreSale);
+        }
+         //phase 3 (15 days)
+        else if (timeElapsedInDays >=47 && timeElapsedInDays <62)
+        {
+            require(ethersSent>=minimumContributionPhase3);
+            bonus = tokens.mul(bonusInPhase3); 
+            bonus = bonus.div(100);
+        }
+        //(16 days) -- break
+        else if (timeElapsedInDays >=62 && timeElapsedInDays <78)
+        {
+           revert();
+        }
+        //phase 5 (15 days) 
+        else if (timeElapsedInDays >=78 && timeElapsedInDays <93)
+        {
+            require(ethersSent>=minimumContributionPhase4);
+            bonus = tokens.mul(bonusInPhase4); 
+            bonus = bonus.div(100);
+        }
+        //phase 6 (15 days)
+        else if (timeElapsedInDays >=93 && timeElapsedInDays <108)
+        {
+            require(ethersSent>=minimumContributionPhase5);
+            bonus = tokens.mul(bonusInPhase5); 
+            bonus = bonus.div(10);  //to cater for the 7.5 figure
+            bonus = bonus.div(100);
+        }
+         //phase 7 (15 days) 
+        else if (timeElapsedInDays >=108 && timeElapsedInDays <123)
+        {
+            require(ethersSent>=minimumContributionPhase6);
+            bonus = tokens.mul(bonusInPhase6); 
+            bonus = bonus.div(100);
         }
         else 
         {
@@ -184,32 +250,33 @@ interface TokenInterface {
   function buyTokens(address beneficiary) public payable {
     require(beneficiary != 0x0);
     require(isCrowdsalePaused == false);
-    require(isAddressWhiteListed[beneficiary]);
     require(validPurchase());
-    
-    require(isWithinContributionRange());
-    
-    require(TOKENS_SOLD<maxTokensToSaleInClosedPreSale);
-   
     uint256 weiAmount = msg.value;
     
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(ratePerWei);
-    uint256 bonus = determineBonus(tokens);
+    uint256 bonus = determineBonus(tokens,weiAmount);
     tokens = tokens.add(bonus);
     
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    token.transfer(beneficiary,tokens);
+    //if the user is first time buyer, add his entries
+    if (usersBuyingInformation[beneficiary].recurringBuyer == false)
+    {
+        info = userInformation ({ userAddress: beneficiary, tokensToBeSent:tokens, ethersToBeSent:weiAmount, isKYCApproved:false,
+                                recurringBuyer:true});
+        usersBuyingInformation[beneficiary] = info;
+        allUsers.push(beneficiary);
+    }
+    //if the user is has bought with the same address before too, update his entries
+    else 
+    {
+        info = usersBuyingInformation[beneficiary];
+        info.tokensToBeSent = info.tokensToBeSent.add(tokens);
+        info.ethersToBeSent = info.ethersToBeSent.add(weiAmount);
+        usersBuyingInformation[beneficiary] = info;
+    }
+    TOKENS_BOUGHT = TOKENS_BOUGHT.add(tokens);
     emit TokenPurchase(owner, beneficiary, weiAmount, tokens);
-    TOKENS_SOLD = TOKENS_SOLD.add(tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  function forwardFunds() internal {
-    owner.transfer(msg.value);
+    
   }
 
   // @return true if the transaction can buy tokens
@@ -245,11 +312,10 @@ interface TokenInterface {
         ratePerWei = newPrice;
     }
     
-     /**
+    /**
      * function to pause the crowdsale 
      * can only be called from owner wallet
      **/
-     
     function pauseCrowdsale() public onlyOwner {
         isCrowdsalePaused = true;
     }
@@ -262,24 +328,7 @@ interface TokenInterface {
         isCrowdsalePaused = false;
     }
     
-    /**
-     * function to check whether the sent amount is within contribution range or not
-     **/ 
-    function isWithinContributionRange() internal constant returns (bool)
-    {
-        uint timePassed = now.sub(startTime);
-        timePassed = timePassed.div(1 days);
-
-        if (timePassed<15)
-            require(msg.value>=minimumContributionPresalePhase1);
-        else if (timePassed>=15 && timePassed<31)
-            require(msg.value>=minimumContributionPresalePhase2);
-        else
-            revert();   // off time - no sales during other time periods
-            
-        return true;
-     }
-     
+   
      /**
       * function through which owner can take back the tokens from the contract
       **/ 
@@ -297,55 +346,285 @@ interface TokenInterface {
      {
          token.transfer(receiver,value);
          TOKENS_SOLD = TOKENS_SOLD.add(value);
+         TOKENS_BOUGHT = TOKENS_BOUGHT.add(value);
      }
      
      /**
-      * Function to add a single address to whitelist
-      * Can only be called by owner wallet address
+      * function to approve a single user which means the user has passed all KYC checks
+      * can only be called by the owner
       **/ 
-     function addSingleAddressToWhitelist(address whitelistedAddr) public onlyOwner
-     {
-         isAddressWhiteListed[whitelistedAddr] = true;
+     function approveSingleUser(address user) public onlyOwner {
+        usersBuyingInformation[user].isKYCApproved = true;    
      }
      
      /**
-      * Function to add multiple addresses to whitelist
-      * Can only be called by owner wallet address
-      **/ 
-     function addMultipleAddressesToWhitelist(address[] whitelistedAddr) public onlyOwner
-     {
-         for (uint i=0;i<whitelistedAddr.length;i++)
+      * function to disapprove a single user which means the user has failed the KYC checks
+      * can only be called by the owner
+      **/
+     function disapproveSingleUser(address user) public onlyOwner {
+         usersBuyingInformation[user].isKYCApproved = false;  
+     }
+     
+     /**
+      * function to approve multiple users at once 
+      * can only be called by the owner
+      **/
+     function approveMultipleUsers(address[] users) public onlyOwner {
+         
+         for (uint i=0;i<users.length;i++)
          {
-            isAddressWhiteListed[whitelistedAddr[i]] = true;
+            usersBuyingInformation[users[i]].isKYCApproved = true;    
          }
      }
      
      /**
-      * Function to remove an address from whitelist 
-      * Can only be called by owner wallet address 
-      **/ 
-     function removeSingleAddressFromWhitelist(address whitelistedAddr) public onlyOwner
-     {
-         isAddressWhiteListed[whitelistedAddr] = false;
+      * function to distribute the tokens to approved users
+      * can only be called by the owner
+      **/
+     function distributeTokensToApprovedUsers() public onlyOwner {
+        for(uint i=0;i<allUsers.length;i++)
+        {
+            if (usersBuyingInformation[allUsers[i]].isKYCApproved == true && usersBuyingInformation[allUsers[i]].tokensToBeSent>0)
+            {
+                address to = allUsers[i];
+                uint tokens = usersBuyingInformation[to].tokensToBeSent;
+                token.transfer(to,tokens);
+                if (usersBuyingInformation[allUsers[i]].ethersToBeSent>0)
+                    owner.transfer(usersBuyingInformation[allUsers[i]].ethersToBeSent);
+                TOKENS_SOLD = TOKENS_SOLD.add(usersBuyingInformation[allUsers[i]].tokensToBeSent);
+                weiRaised = weiRaised.add(usersBuyingInformation[allUsers[i]].ethersToBeSent);
+                usersBuyingInformation[allUsers[i]].tokensToBeSent = 0;
+                usersBuyingInformation[allUsers[i]].ethersToBeSent = 0;
+            }
+        }
+     }
+     
+      /**
+      * function to distribute the tokens to all users whether approved or unapproved
+      * can only be called by the owner
+      **/
+     function distributeTokensToAllUsers() public onlyOwner {
+        for(uint i=0;i<allUsers.length;i++)
+        {
+            if (usersBuyingInformation[allUsers[i]].tokensToBeSent>0)
+            {
+                address to = allUsers[i];
+                uint tokens = usersBuyingInformation[to].tokensToBeSent;
+                token.transfer(to,tokens);
+                if (usersBuyingInformation[allUsers[i]].ethersToBeSent>0)
+                    owner.transfer(usersBuyingInformation[allUsers[i]].ethersToBeSent);
+                TOKENS_SOLD = TOKENS_SOLD.add(usersBuyingInformation[allUsers[i]].tokensToBeSent);
+                weiRaised = weiRaised.add(usersBuyingInformation[allUsers[i]].ethersToBeSent);
+                usersBuyingInformation[allUsers[i]].tokensToBeSent = 0;
+                usersBuyingInformation[allUsers[i]].ethersToBeSent = 0;
+            }
+        }
      }
      
      /**
-     * Function to remove multiple addresses from whitelist 
-     * Can only be called by owner wallet address 
-     **/ 
-     function removeMultipleAddressesFromWhitelist(address[] whitelistedAddr) public onlyOwner
-     {
-        for (uint i=0;i<whitelistedAddr.length;i++)
+      * function to refund a single user in case he hasnt passed the KYC checks
+      * can only be called by the owner
+      **/
+     function refundSingleUser(address user) public onlyOwner {
+         require(usersBuyingInformation[user].ethersToBeSent > 0 );
+         user.transfer(usersBuyingInformation[user].ethersToBeSent);
+         usersBuyingInformation[user].tokensToBeSent = 0;
+         usersBuyingInformation[user].ethersToBeSent = 0;
+     }
+     
+     /**
+      * function to refund to multiple users in case they havent passed the KYC checks
+      * can only be called by the owner
+      **/
+     function refundMultipleUsers(address[] users) public onlyOwner {
+         for (uint i=0;i<users.length;i++)
          {
-            isAddressWhiteListed[whitelistedAddr[i]] = false;
+            require(usersBuyingInformation[users[i]].ethersToBeSent >0);
+            users[i].transfer(usersBuyingInformation[users[i]].ethersToBeSent);
+            usersBuyingInformation[users[i]].tokensToBeSent = 0;
+            usersBuyingInformation[users[i]].ethersToBeSent = 0;
          }
      }
+     /**
+      * function to transfer out all ethers present in the contract
+      * after calling this function all refunds would need to be done manually
+      * would use this function as a last resort
+      * can only be called by owner wallet
+      **/ 
+     function transferOutAllEthers() public onlyOwner {
+         owner.transfer(address(this).balance);
+     }
      
      /**
-      * Function to check if an address is whitelisted 
+      * function to get the top 150 users who are awaiting the transfer of tokens
+      * can only be called by the owner
+      * this function would work in read mode
       **/ 
-     function checkIfAddressIsWhiteListed(address whitelistedAddr) public view returns (bool)
-     {
-         return isAddressWhiteListed[whitelistedAddr];
+     function getUsersAwaitingForTokensTop150(bool fetch) public constant returns (address[150])  {
+          address[150] memory awaiting;
+         uint k = 0;
+         for (uint i=0;i<allUsers.length;i++)
+         {
+             if (usersBuyingInformation[allUsers[i]].isKYCApproved == true && usersBuyingInformation[allUsers[i]].tokensToBeSent>0)
+             {
+                 awaiting[k] = allUsers[i];
+                 k = k.add(1);
+                 if (k==150)
+                    return awaiting;
+             }
+         }
+         return awaiting;
      }
+     
+     /**
+      * function to get the users who are awaiting the transfer of tokens
+      * can only be called by the owner
+      * this function would work in write mode
+      **/ 
+     function getUsersAwaitingForTokens() public onlyOwner returns (address[])  {
+         delete u;
+         for (uint i=0;i<allUsers.length;i++)
+         {
+             if (usersBuyingInformation[allUsers[i]].isKYCApproved == true && usersBuyingInformation[allUsers[i]].tokensToBeSent>0)
+             {
+                 u.push(allUsers[i]);
+             }
+         }
+         emit usersAwaitingTokens(u);
+         return u;
+     }
+     
+     /**
+      * function to return the information of a single user
+      **/ 
+     function getUserInfo(address userAddress) public constant returns(uint _ethers, uint _tokens, bool _isApproved)
+     {
+         _ethers = usersBuyingInformation[userAddress].ethersToBeSent;
+         _tokens = usersBuyingInformation[userAddress].tokensToBeSent;
+         _isApproved = usersBuyingInformation[userAddress].isKYCApproved;
+         return(_ethers,_tokens,_isApproved);
+         
+     }
+     
+     /**
+      * function to clear all payables/receivables of a user
+      * can only be called by owner 
+      **/
+      function closeUser(address userAddress) public onlyOwner 
+      {
+          //instead of deleting the user from the system we are just clearing the payables/receivables
+          //if this user buys again, his entry would be updated
+          uint ethersByTheUser =  usersBuyingInformation[userAddress].ethersToBeSent;
+          usersBuyingInformation[userAddress].isKYCApproved = false;
+          usersBuyingInformation[userAddress].ethersToBeSent = 0;
+          usersBuyingInformation[userAddress].tokensToBeSent = 0;
+          usersBuyingInformation[userAddress].recurringBuyer = true;
+          owner.transfer(ethersByTheUser);
+      } 
+      
+     /**
+      * function to get a list of top 150 users that are unapproved
+      * can only be called by owner
+      * this function would work in read mode
+      **/
+      function getUnapprovedUsersTop150(bool fetch) public constant returns (address[150]) 
+      {
+         address[150] memory unapprove;
+         uint k = 0;
+         for (uint i=0;i<allUsers.length;i++)
+         {
+             if (usersBuyingInformation[allUsers[i]].isKYCApproved == false)
+             {
+                 unapprove[k] = allUsers[i];
+                 k = k.add(1);
+                 if (k==150)
+                    return unapprove;
+             }
+         }
+         return unapprove;
+      } 
+      
+       /**
+      * function to get a list of all users that are unapproved
+      * can only be called by owner
+      * this function would work in write mode
+      **/
+      function getUnapprovedUsers() public onlyOwner returns (address[]) 
+      {
+         delete u;
+         for (uint i=0;i<allUsers.length;i++)
+         {
+             if (usersBuyingInformation[allUsers[i]].isKYCApproved == false)
+             {
+                 u.push(allUsers[i]);
+             }
+         }
+         emit usersAwaitingTokens(u);
+         return u;
+      } 
+      
+      /**
+      * function to return all the users
+      **/
+      function getAllUsers(bool fetch) public constant returns (address[]) 
+      {
+          return allUsers;
+      } 
+      
+      /**
+       * function to change the address of a user
+       * this function would be used in situations where user made the transaction from one wallet
+       * but wants to receive tokens in another wallet
+       * so owner should be able to update the address
+       **/ 
+      function changeUserEthAddress(address oldEthAddress, address newEthAddress) public onlyOwner 
+      {
+          usersBuyingInformation[newEthAddress] = usersBuyingInformation[oldEthAddress];
+          for (uint i=0;i<allUsers.length;i++)
+          {
+              if (allUsers[i] == oldEthAddress)
+                allUsers[i] = newEthAddress;
+          }
+          delete usersBuyingInformation[oldEthAddress];
+      }
+      
+      /**
+       * Add a user that has paid with BTC or other payment methods
+       **/ 
+      function addUser(address userAddr, uint tokens) public onlyOwner 
+      {
+            // if first time buyer, add his details in the mapping
+            if (usersBuyingInformation[userAddr].recurringBuyer == false)
+            {
+                info = userInformation ({ userAddress: userAddr, tokensToBeSent:tokens, ethersToBeSent:0, isKYCApproved:false,
+                                recurringBuyer:true});
+                usersBuyingInformation[userAddr] = info;
+                allUsers.push(userAddr);
+            }
+            //if recurring buyer, update his mappings
+            else 
+            {
+                info = usersBuyingInformation[userAddr];
+                info.tokensToBeSent = info.tokensToBeSent.add(tokens);
+                usersBuyingInformation[userAddr] = info;
+            }
+            TOKENS_BOUGHT = TOKENS_BOUGHT.add(tokens);
+      }
+      
+      /**
+       * Set the tokens bought
+       **/ 
+      function setTokensBought(uint tokensBought) public onlyOwner 
+      {
+          TOKENS_BOUGHT = tokensBought;
+      }
+      
+      /**
+       * Returns the number of tokens who have been sold  
+       **/ 
+      function getTokensBought() public constant returns(uint) 
+      {
+          return TOKENS_BOUGHT;
+      }
+      
 }
