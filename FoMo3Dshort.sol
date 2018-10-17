@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x3664be8ec8a66e8dab9dfa48e5092f576edab746
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x123256dbf6fd663982fb6cccb0703033b8114292
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x454b6ee7e3847d51456b4146f7ae2664dbc35af4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xFaeAEBF930712BFBd498C790b96863A4bB946491);
 
 
 //==============================================================================
@@ -136,13 +136,13 @@ contract FoMo3Dshort is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO Loop";
-    string constant public symbol = "LOOP";
+    string constant public name = "GOLD COIN HEIST";
+    string constant public symbol = "HEIST";
     uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
     uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 2400 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds (SUBSTRACTS) this much to the timer
-    uint256 constant private rndMax_ = 2400 hours;                // max length a round timer can be
+    uint256 constant private rndInit_ = 500 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds (SUBSTRACTS) this much to the timer
+    uint256 constant private rndMax_ = 500 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
