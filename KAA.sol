@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KAA at 0x960e67e634af0daefbab1a47fe311004ae7b75da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KAA at 0x2ec7d84d4e996659f86037565a50aebeebbb2fd3
 */
 pragma solidity ^0.4.24;
 
@@ -74,7 +74,45 @@ contract Ownable {
   }
 }
 
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
 
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -104,7 +142,7 @@ library SafeMath {
   }
 }
 
-contract KAA is ERC20,Ownable{
+contract KAA is ERC20,Pausable{
 	using SafeMath for uint256;
 
 	//the base info of the token
@@ -138,20 +176,22 @@ contract KAA is ERC20,Ownable{
 	//???54473000000+13395000000+13395000000+8037000000=89300000000
 	uint256 public constant MAX_SUPPLY=COMMON_WITHDRAW_SUPPLY+PLATFORM_FUNDING_SUPPLY+TEAM_KEEPING+COOPERATE_REWARD;
 
-	//????
-	uint256 startTime;
+	//????????
+	uint256 public innerlockStartTime;
+	//????????
+	uint256 public outterlockStartTime;
 	//?????30??
-	uint256 unlockStepLong;
+	uint256 public unlockStepLong;
 
 	//?????
-	uint256 platformFundingSupply;
+	uint256 public platformFundingSupply;
 	//???????
-	uint256 platformFundingPerEpoch;
+	uint256 public platformFundingPerEpoch;
 
 	//?????
-	uint256 teamKeepingSupply;
+	uint256 public teamKeepingSupply;
 	//???????
-	uint256 teamKeepingPerEpoch;
+	uint256 public teamKeepingPerEpoch;
 
 	//??????????
 	uint256 public cooperateRewardSupply;
@@ -170,16 +210,21 @@ contract KAA is ERC20,Ownable{
 
      constructor() public{
 		totalSupply = 0 ;
+
 		platformFundingSupply=0;
 		teamKeepingSupply=0;
 		cooperateRewardSupply=0;
 		totalCommonWithdrawSupply=0;
 
-		platformFundingPerEpoch=372083333;
-		teamKeepingPerEpoch=372083333;
-		
-		//???? 20180818
-		startTime = 1534521600;
+		//?12??? 13395000000/12
+		platformFundingPerEpoch=1116250000*10**decimals;
+		teamKeepingPerEpoch=1116250000*10**decimals;
+
+
+		//???? 20210818
+		innerlockStartTime = 1629216000;
+		//???? 20190818
+		outterlockStartTime=1566057600;
 
 		unlockStepLong=2592000;
 
@@ -221,11 +266,10 @@ contract KAA is ERC20,Ownable{
 	function processFunding(address receiver,uint256 _value) internal
 		notReachTotalSupply(_value)
 	{
-		uint256 amount=_value;
-		totalSupply=totalSupply.add(amount);
-		balances[receiver]=balances[receiver].add(amount);
-		emit CreateKAA(receiver,amount);
-		emit Transfer(0x0, receiver, amount);
+		totalSupply=totalSupply.add(_value);
+		balances[receiver]=balances[receiver].add(_value);
+		emit CreateKAA(receiver,_value);
+		emit Transfer(0x0, receiver, _value);
 	}
 
 
@@ -242,7 +286,7 @@ contract KAA is ERC20,Ownable{
 	}
 
 
-	//?????????????36????
+	//?????????????12????
 	function withdrawToPlatformFunding(uint256 _value) external
 		onlyOwner
 		notReachPlatformFundingSupply(_value)
@@ -258,7 +302,7 @@ contract KAA is ERC20,Ownable{
 
 	}	
 
-	//???????????36????
+	//???????????12????
 	function withdrawToTeam(uint256 _value) external
 		onlyOwner
 		notReachTeamKeepingSupply(_value)	
@@ -273,7 +317,7 @@ contract KAA is ERC20,Ownable{
 		}
 	}
 
-	//?????????????36????
+	//?????????????12????
 	function withdrawToCooperate(address _to,uint256 _value) external
 		onlyOwner
 		notReachCooperateRewardSupply(_value)
@@ -286,13 +330,17 @@ contract KAA is ERC20,Ownable{
 	}
 
 	//???????
-	function canPlatformFundingWithdraw(uint256 _value)internal view returns (bool) {
-		
+	function canPlatformFundingWithdraw(uint256 _value)public view returns (bool) {
+		//?????????????false
+		if(queryNow()<innerlockStartTime){
+			return false;
+		}
+
 		//????=????-????)/????
-		uint256 epoch=now.sub(startTime).div(unlockStepLong);
-		//????36??????????36
-		if (epoch>36) {
-			epoch=36;
+		uint256 epoch=queryNow().sub(innerlockStartTime).div(unlockStepLong);
+		//????12??????????12
+		if (epoch>12) {
+			epoch=12;
 		}
 
 		//???????? = ???????*??
@@ -306,13 +354,17 @@ contract KAA is ERC20,Ownable{
 		}
 	}
 
-	function canTeamKeepingWithdraw(uint256 _value)internal view returns (bool) {
-		
+	function canTeamKeepingWithdraw(uint256 _value)public view returns (bool) {
+		//?????????????false
+		if(queryNow()<innerlockStartTime){
+			return false;
+		}
+
 		//????=????-????)/????
-		uint256 epoch=now.sub(startTime).div(unlockStepLong);
-		//????36??????????36
-		if (epoch>36) {
-			epoch=36;
+		uint256 epoch=queryNow().sub(innerlockStartTime).div(unlockStepLong);
+		//????12??????????12
+		if (epoch>12) {
+			epoch=12;
 		}
 
 		//???????? = ???????*??
@@ -327,25 +379,31 @@ contract KAA is ERC20,Ownable{
 	}
 
 
-	function clacCooperateNeedLockAmount(uint256 totalLockAmount)internal view returns (uint256) {
+	function clacCooperateNeedLockAmount(uint256 totalLockAmount)public view returns (uint256) {
+		//??????????????????
+		if(queryNow()<outterlockStartTime){
+			return totalLockAmount;
+		}		
 		
 		//????=????-????)/????
-		uint256 epoch=now.sub(startTime).div(unlockStepLong);
-		//????36??????????36
-		if (epoch>36) {
-			epoch=36;
+		uint256 epoch=queryNow().sub(outterlockStartTime).div(unlockStepLong);
+		//????12??????????12
+		if (epoch>12) {
+			epoch=12;
 		}
 
 		//????
-		uint256 remainingEpoch=uint256(36).sub(epoch);
+		uint256 remainingEpoch=uint256(12).sub(epoch);
 
-		//?????????????????/36?
-		uint256 cooperatePerEpoch= totalLockAmount.div(36);
+		//?????????????????/12?
+		uint256 cooperatePerEpoch= totalLockAmount.div(12);
 
 		//??????????????????*?????
 		return cooperatePerEpoch.mul(remainingEpoch);
 	}
-
+    function queryNow() public view returns(uint256){
+        return now;
+    }
 	function () payable external
 	{
 		revert();
@@ -354,7 +412,7 @@ contract KAA is ERC20,Ownable{
 
 
   //?????????????????????????
-  	function transfer(address _to, uint256 _value) public  returns (bool)
+  	function transfer(address _to, uint256 _value) public whenNotPaused returns (bool)
  	{
 		require(_to != address(0));
 
@@ -381,7 +439,7 @@ contract KAA is ERC20,Ownable{
 
 
   //??????????????????????-??????????????
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
+  	function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) 
   	{
 		require(_to != address(0));
 
@@ -403,7 +461,7 @@ contract KAA is ERC20,Ownable{
 		return true;
   	}
 
-  	function approve(address _spender, uint256 _value) public returns (bool) 
+  	function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) 
   	{
 		allowed[msg.sender][_spender] = _value;
 		emit Approval(msg.sender, _spender, _value);
