@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DShopQuick at 0x607bad7a2969019adE64Cb1B74F60FFFA20CC3e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DShopQuick at 0xe9b78c3a0533f6d3bb8f5c85727f6fb612f8d732
 */
 pragma solidity ^0.4.24;
 contract F3Devents {
@@ -211,8 +211,6 @@ contract F3DShopQuick is F3Devents{
         assembly {_codeLength := extcodesize(_addr)}
         require(_codeLength == 0, "sorry humans only");
         _;
-
-
     }
 
     /**
