@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0xdb6f847849765ca3ecd34e4d90f8c58b80bf5443
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x6e5ace49d0e051936fcbe63e192445c808fcd490
 */
 pragma solidity ^0.4.24;
 
@@ -746,10 +746,6 @@ contract TaskRegister is Upgradable, VanityLib {
     
     function endUpgrade() public {
         super.endUpgrade();
-
-        if (upgradableState.nextVersion != 0) {
-            upgradableState.nextVersion.transfer(address(this).balance);
-        }
     }
 
     function tasksCount() public view returns(uint) {
