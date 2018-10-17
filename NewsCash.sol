@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewsCash at 0xd066ea3b2ede4eb84a1200e0a09fc5fae86cba43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewsCash at 0x7bd30ee5584d5a518f733a09b73ac799e1cb7caa
 */
 pragma solidity ^0.4.8;
 
@@ -68,7 +68,7 @@ contract NewsCash is SafeMath{
         balanceOf[msg.sender] = 50000000000000000000000000000;              // Give the creator all initial tokens
         totalSupply = 50000000000000000000000000000;                        // Update total supply
         name = "NewsCash";                                   // Set the name for display purposes
-        symbol = "NC";                               // Set the symbol for display purposes
+        symbol = "NCH";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
 	owner = msg.sender;
     }
