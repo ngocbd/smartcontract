@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBoxToken at 0x6ea89484b983a40b1571914561a41c34c075e3af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBoxToken at 0xa4228f76abc218d981db1995b779954c78c00e99
 */
 pragma solidity ^0.4.24;
 
@@ -255,7 +255,7 @@ contract GoldBoxToken is StandardToken {
   string public symbol = "GOX";
   uint public decimals = 18;
   uint public INITIAL_SUPPLY = 200000000 * (10 ** decimals);
-  constructor () public {
+  function GoldBoxToken () public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
