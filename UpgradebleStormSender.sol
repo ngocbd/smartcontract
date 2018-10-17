@@ -1,15 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xca6709db5af91877b62fb1cbb0406dcdbd076c62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xf7325c1fada62a48323cfb0641513cb3d0be81ba
 */
-// File: contracts/EternalStorage.sol
-
 pragma solidity 0.4.24;
 
 
-/**
- * @title EternalStorage
- * @dev This contract holds all the necessary state variables to carry out the storage of any contract.
- */
 contract EternalStorage {
 
     mapping(bytes32 => uint256) internal uintStorage;
@@ -21,87 +15,44 @@ contract EternalStorage {
 
 }
 
-// File: contracts/UpgradeabilityOwnerStorage.sol
 
-
-/**
- * @title UpgradeabilityOwnerStorage
- * @dev This contract keeps track of the upgradeability owner
- */
 contract UpgradeabilityOwnerStorage {
-  // Owner of the contract
     address private _upgradeabilityOwner;
 
-    /**
-    * @dev Tells the address of the owner
-    * @return the address of the owner
-    */
     function upgradeabilityOwner() public view returns (address) {
         return _upgradeabilityOwner;
     }
 
-    /**
-    * @dev Sets the address of the owner
-    */
     function setUpgradeabilityOwner(address newUpgradeabilityOwner) internal {
         _upgradeabilityOwner = newUpgradeabilityOwner;
     }
 
 }
 
-// File: contracts/UpgradeabilityStorage.sol
-
-
-/**
- * @title UpgradeabilityStorage
- * @dev This contract holds all the necessary state variables to support the upgrade functionality
- */
 contract UpgradeabilityStorage {
-  // Version name of the current implementation
+
     string internal _version;
 
-    // Address of the current implementation
     address internal _implementation;
 
-    /**
-    * @dev Tells the version name of the current implementation
-    * @return string representing the name of the current version
-    */
     function version() public view returns (string) {
         return _version;
     }
 
-    /**
-    * @dev Tells the address of the current implementation
-    * @return address of the current implementation
-    */
     function implementation() public view returns (address) {
         return _implementation;
     }
 }
 
-// File: contracts/OwnedUpgradeabilityStorage.sol
 
 
-/**
- * @title OwnedUpgradeabilityStorage
- * @dev This is the storage necessary to perform upgradeable contracts.
- * This means, required state variables for upgradeability purpose and eternal storage per se.
- */
 contract OwnedUpgradeabilityStorage is UpgradeabilityOwnerStorage, UpgradeabilityStorage, EternalStorage {}
 
-// File: contracts/SafeMath.sol
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
+
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -111,9 +62,7 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
+
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -121,17 +70,13 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
+
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
+
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -139,90 +84,54 @@ library SafeMath {
   }
 }
 
-// File: contracts/multisender/Ownable.sol
 
 
-
-/**
- * @title Ownable
- * @dev This contract has an owner address providing basic authorization control
- */
 contract Ownable is EternalStorage {
-    /**
-    * @dev Event to show ownership has been transferred
-    * @param previousOwner representing the address of the previous owner
-    * @param newOwner representing the address of the new owner
-    */
+  
     event OwnershipTransferred(address previousOwner, address newOwner);
 
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
     modifier onlyOwner() {
         require(msg.sender == owner());
         _;
     }
 
-    /**
-    * @dev Tells the address of the owner
-    * @return the address of the owner
-    */
     function owner() public view returns (address) {
         return addressStorage[keccak256("owner")];
     }
 
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner the address to transfer ownership to.
-    */
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
         setOwner(newOwner);
     }
 
-    /**
-    * @dev Sets a new owner address
-    */
     function setOwner(address newOwner) internal {
         emit OwnershipTransferred(owner(), newOwner);
         addressStorage[keccak256("owner")] = newOwner;
     }
 }
 
-// File: contracts/multisender/Claimable.sol
 
 
 
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
+
 contract Claimable is EternalStorage, Ownable {
     function pendingOwner() public view returns (address) {
         return addressStorage[keccak256("pendingOwner")];
     }
 
-    /**
-    * @dev Modifier throws if called by any account other than the pendingOwner.
-    */
+    
     modifier onlyPendingOwner() {
         require(msg.sender == pendingOwner());
         _;
     }
 
-    /**
-    * @dev Allows the current owner to set the pendingOwner address.
-    * @param newOwner The address to transfer ownership to.
-    */
+    
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
         addressStorage[keccak256("pendingOwner")] = newOwner;
     }
 
-    /**
-    * @dev Allows the pendingOwner address to finalize the transfer.
-    */
+    
     function claimOwnership() public onlyPendingOwner {
         emit OwnershipTransferred(owner(), pendingOwner());
         addressStorage[keccak256("owner")] = addressStorage[keccak256("pendingOwner")];
@@ -230,15 +139,6 @@ contract Claimable is EternalStorage, Ownable {
     }
 }
 
-// File: contracts/multisender/UpgradebleStormSender.sol
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
     function totalSupply() public view returns (uint256);
     function balanceOf(address who) public view returns (uint256);
@@ -274,8 +174,8 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
         require(!initialized());
         setOwner(_owner);
         setArrayLimit(200);
-        setDiscountStep(0.00005 ether);
-        setFee(0.05 ether);
+        setDiscountStep(0.00002 ether);
+        setFee(0.02 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
