@@ -1,360 +1,152 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9e4689e444ce092fdfe1861ee62eec3050b0bc32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb28035c05ff4bcc980fab243069bf404ae104fe6
 */
-/*! prt.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+pragma solidity ^0.4.11;
 
-pragma solidity 0.4.24;
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        if(a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a / b;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Ownable {
-    address public owner;
-
-    event OwnershipRenounced(address indexed previousOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() { require(msg.sender == owner); _;  }
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    function _transferOwnership(address _newOwner) internal {
-        require(_newOwner != address(0));
-        emit OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
-
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipRenounced(owner);
-        owner = address(0);
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        _transferOwnership(_newOwner);
-    }
-}
-
-contract ERC20 {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    function totalSupply() public view returns(uint256);
-    function balanceOf(address who) public view returns(uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-    function transferFrom(address from, address to, uint256 value) public returns(bool);
-    function allowance(address owner, address spender) public view returns(uint256);
-    function approve(address spender, uint256 value) public returns(bool);
-}
-
-contract StandardToken is ERC20 {
-    using SafeMath for uint256;
-
-    uint256 totalSupply_;
-
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) internal allowed;
-
-    constructor(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
-
-    function totalSupply() public view returns(uint256) {
-        return totalSupply_;
-    }
-
-    function balanceOf(address _owner) public view returns(uint256) {
-        return balances[_owner];
-    }
-
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        require(_to.length == _value.length);
-
-        for(uint i = 0; i < _to.length; i++) {
-            transfer(_to[i], _value[i]);
-        }
-
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns(uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    function approve(address _spender, uint256 _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
-
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
-        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        }
-        else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-}
-
-contract MintableToken is StandardToken, Ownable {
-    bool public mintingFinished = false;
-
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    modifier canMint() { require(!mintingFinished); _; }
-    modifier hasMintPermission() { require(msg.sender == owner); _; }
-
-    function mint(address _to, uint256 _amount) hasMintPermission canMint public returns(bool) {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function finishMinting() onlyOwner canMint public returns(bool) {
-        mintingFinished = true;
-
-        emit MintFinished();
-        return true;
-    }
-}
-
-contract CappedToken is MintableToken {
-    uint256 public cap;
-
-    constructor(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
-    }
-
-    function mint(address _to, uint256 _amount) public returns(bool) {
-        require(totalSupply_.add(_amount) <= cap);
-
-        return super.mint(_to, _amount);
-    }
-}
-
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
-
-    function _burn(address _who, uint256 _value) internal {
-        require(_value <= balances[_who]);
-
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-
-        emit Burn(_who, _value);
-        emit Transfer(_who, address(0), _value);
-    }
-
-    function burn(uint256 _value) public {
-        _burn(msg.sender, _value);
-    }
-
-    function burnFrom(address _from, uint256 _value) public {
-        require(_value <= allowed[_from][msg.sender]);
-        
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        _burn(_from, _value);
-    }
-}
-
-contract Withdrawable is Ownable {
-    function withdrawEther(address _to, uint _value) onlyOwner public {
-        require(_to != address(0));
-        require(address(this).balance >= _value);
-
-        _to.transfer(_value);
-    }
-
-    function withdrawTokensTransfer(ERC20 _token, address _to, uint256 _value) onlyOwner public {
-        require(_token.transfer(_to, _value));
-    }
-
-    function withdrawTokensTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) onlyOwner public {
-        require(_token.transferFrom(_from, _to, _value));
-    }
-
-    function withdrawTokensApprove(ERC20 _token, address _spender, uint256 _value) onlyOwner public {
-        require(_token.approve(_spender, _value));
-    }
-}
-
-contract Pausable is Ownable {
-    bool public paused = false;
-
-    event Pause();
-    event Unpause();
-
-    modifier whenNotPaused() { require(!paused); _; }
-    modifier whenPaused() { require(paused); _; }
-
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
-    }
-}
-
-contract Manageable is Ownable {
-    address[] public managers;
-
-    event ManagerAdded(address indexed manager);
-    event ManagerRemoved(address indexed manager);
-
-    modifier onlyManager() { require(isManager(msg.sender)); _; }
-
-    function countManagers() view public returns(uint) {
-        return managers.length;
-    }
-
-    function getManagers() view public returns(address[]) {
-        return managers;
-    }
-
-    function isManager(address _manager) view public returns(bool) {
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function addManager(address _manager) onlyOwner public {
-        require(_manager != address(0));
-        require(!isManager(_manager));
-
-        managers.push(_manager);
-
-        emit ManagerAdded(_manager);
-    }
-
-    function removeManager(address _manager) onlyOwner public {
-        require(isManager(_manager));
-
-        uint index = 0;
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                index = i;
-            }
-        }
-
-        for(; index < managers.length - 1; index++) {
-            managers[index] = managers[index + 1];
-        }
-        
-        managers.length--;
-        emit ManagerRemoved(_manager);
-    }
-}
-
-
-contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(11380000e9) StandardToken("IQ Receipt", "IQ", 9) public {
-        
-    }
-}
-
-contract Crowdsale is Manageable, Withdrawable, Pausable {
-    using SafeMath for uint;
-
-    Token public token;
-    bool public crowdsaleClosed = false;
-
-    event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
-    event CrowdsaleClose();
-   
-    constructor() public {
-        token = new Token();
-    }
-
-    function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
-        token.mint(_to, _tokens);
-        emit ExternalPurchase(_to, _tx, _currency, _value, _rate, _tokens);
-    }
-
-    function closeCrowdsale(address _to) onlyOwner public {
-        require(!crowdsaleClosed);
-
-        token.transferOwnership(_to);
-        crowdsaleClosed = true;
-
-        emit CrowdsaleClose();
-    }
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded 
+ to a wallet
+ * as they arrive.
+ */
+interface token { function transfer(address , uint ) external; }
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward;
+
+  uint256 public price = 3000;
+
+  token tokenReward;
+
+  
+
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  constructor () public {
+    //You will change this to your wallet where you need the ETH 
+    wallet = 0x7f01CB0d8Dca3E09e82e2c093C23Ba84a134DD78;
+    //Here will come the checksum address of token we got
+    addressOfTokenUsedAsReward = 0x29A127C741eba4Dc4512Ced3360Cba3577e26Aa0;
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+  }
+
+  bool public started = true;
+
+  function startSale() public {
+    require (msg.sender == wallet);
+    started = true;
+  }
+
+  function stopSale() public {
+    require (msg.sender == wallet);
+    started = false;
+  }
+
+  function setPrice(uint256 _price) public {
+    require (msg.sender == wallet);
+    price = _price;
+  }
+  function changeWallet(address _wallet) public {
+    require (msg.sender == wallet);
+    wallet = _wallet;
+  }
+
+  function changeTokenReward(address _token) public {
+    require(msg.sender==wallet);
+    tokenReward = token(_token);
+    addressOfTokenUsedAsReward = _token;
+  }
+
+  // fallback function can be used to buy tokens
+  function () public payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+
+    // calculate token amount to be sent
+    uint256 tokens = (weiAmount) * price;//weiamount * price 
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+    
+    tokenReward.transfer(beneficiary, tokens);
+    emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = started;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  function withdrawTokens(uint256 _amount) public {
+    require (msg.sender==wallet);
+    tokenReward.transfer(wallet,_amount);
+  }
 }
