@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeLunaCoin at 0x375f2ee0f07eb52fe31566dcf5ae76e1c01b12cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeLunaCoin at 0x491ba3032fd15a8d00a7ce8b0891bd7ce9ccbb9b
 */
 pragma solidity ^0.4.18;
 
@@ -117,8 +117,8 @@ contract NeLunaCoin is ERC20Interface, Owned, SafeMath {
     function NeLunaCoin() public {
 		_devTokens = 200000000 * 10**decimals;
         _totalSupply = 1200000000 * 10**decimals;
-        balances[0x492cB5b11131DC69893b4314950e95ec23366C79] = _devTokens;
-        Transfer(address(0), 0x492cB5b11131DC69893b4314950e95ec23366C79, _devTokens);
+        balances[0xf346578f1439aea9a829a0D5662e72abB2161771] = _devTokens;
+        Transfer(address(0), 0xf346578f1439aea9a829a0D5662e72abB2161771, _devTokens);
     }
 
 
