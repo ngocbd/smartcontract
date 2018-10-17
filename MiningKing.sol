@@ -1,45 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningKing at 0xd1356a1560949050f37c3945a40d001afa1253c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiningKing at 0x0b98f937f6edd6f66b0f0a210d3dcd8ec1063cb6
 */
 pragma solidity ^0.4.18;
 
 
- 
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-    function add(uint a, uint b) internal pure returns (uint c) {
-
-        c = a + b;
-
-        require(c >= a);
-
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function sub(uint a, uint b) internal pure returns (uint c) {
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-        require(b <= a);
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-        c = a - b;
-
-    }
-
-    function mul(uint a, uint b) internal pure returns (uint c) {
-
-        c = a * b;
-
-        require(a == 0 || c / a == b);
-
-    }
-
-    function div(uint a, uint b) internal pure returns (uint c) {
-
-        require(b > 0);
-
-        c = a / b;
-
-    }
-
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
@@ -78,7 +87,10 @@ contract ERC918Interface {
 
 }
 
-
+contract mintForwarderInterface
+{
+  function mintForwarder(uint256 nonce, bytes32 challenge_digest, address[] proxyMintArray) public returns (bool success);
+}
 
 contract proxyMinterInterface
 {
@@ -110,7 +122,7 @@ contract MiningKing   {
       revert();
   }
 
-  function getKing() public returns (address king)
+  function getKing() view public returns (address king)
   {
     return miningKing;
   }
@@ -121,7 +133,7 @@ contract MiningKing   {
 
        miningKing = newKing;
 
-       TransferKing(msg.sender, newKing);
+       emit TransferKing(msg.sender, newKing);
 
    }
 
@@ -133,29 +145,57 @@ Set the king to the Ethereum Address which is encoded as 160 bits of the 256 bit
 **/
 
 //proxyMintWithKing
-   function mintForwarder(uint256 nonce, bytes32 challenge_digest, address proxyMinter) returns (bool)
+   function mintForwarder(uint256 nonce, bytes32 challenge_digest, address[] proxyMintArray) public returns (bool)
    {
 
-      bytes memory nonceBytes = uintToBytesForAddress(nonce);
+      require(proxyMintArray.length > 0);
 
-      address newKing = bytesToAddress(nonceBytes);
 
       uint previousEpochCount = ERC918Interface(minedToken).epochCount();
 
-      //Forward to another contract, typically a pool's owned  mint contract
-      require(proxyMinterInterface(proxyMinter).proxyMint(nonce, challenge_digest));
+      address proxyMinter = proxyMintArray[0];
+
+      if(proxyMintArray.length == 1)
+      {
+        //Forward to the last proxyMint contract, typically a pool's owned  mint contract
+        require(proxyMinterInterface(proxyMinter).proxyMint(nonce, challenge_digest));
+      }else{
+        //if array length is greater than 1, pop the proxyMinter from the front of the array and keep cascading down the chain...
+        address[] memory remainingProxyMintArray = popFirstFromArray(proxyMintArray);
+
+        require(mintForwarderInterface(proxyMinter).mintForwarder(nonce, challenge_digest,remainingProxyMintArray));
+      }
 
      //make sure that the minedToken really was proxy minted through the proxyMint delegate call chain
-      require(  ERC918Interface(minedToken).epochCount() == previousEpochCount.add(1) );
+      require( ERC918Interface(minedToken).epochCount() == previousEpochCount.add(1) );
 
+
+
+
+      // UNIQUE CONTRACT ACTION SPACE 
+      bytes memory nonceBytes = uintToBytesForAddress(nonce);
+
+      address newKing = bytesToAddress(nonceBytes);
+      
       miningKing = newKing;
+      // --------
 
       return true;
    }
 
 
+  function popFirstFromArray(address[] array) pure public returns (address[] memory)
+  {
+    address[] memory newArray = new address[](array.length-1);
 
- function uintToBytesForAddress(uint256 x) constant returns (bytes b) {
+    for (uint i=0; i < array.length-1; i++) {
+      newArray[i] =  array[i+1]  ;
+    }
+
+    return newArray;
+  }
+
+ function uintToBytesForAddress(uint256 x) pure public returns (bytes b) {
 
       b = new bytes(20);
       for (uint i = 0; i < 20; i++) {
@@ -166,7 +206,7 @@ Set the king to the Ethereum Address which is encoded as 160 bits of the 256 bit
     }
 
 
- function bytesToAddress (bytes b) constant returns (address) {
+ function bytesToAddress (bytes b) pure public returns (address) {
      uint result = 0;
      for (uint i = b.length-1; i+1 > 0; i--) {
        uint c = uint(b[i]);
