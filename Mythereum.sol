@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0xffb6cc6bdf151dd0a1d9ceecaf7382c76e11ddd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0xb8131617325c6f1f7729a4e2df8551cb44ddf76b
 */
 pragma solidity ^0.4.21;
 
@@ -240,12 +240,13 @@ contract Manageable {
 }
 
 contract ERC20 {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function approve(address spender, uint256 value) public returns (bool);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function totalSupply() public view returns (uint256);
+}
+
+contract AbnormalERC20 {
+  function transfer(address to, uint256 value) public;
 }
 
 contract MythereumERC20Token is ERC20 {
@@ -254,27 +255,6 @@ contract MythereumERC20Token is ERC20 {
 }
 
 contract MythereumCardToken {
-  function balanceOf(address _owner) public view returns (uint256 _balance);
-  function ownerOf(uint256 _tokenId) public view returns (address _owner);
-  function exists(uint256 _tokenId) public view returns (bool _exists);
-
-  function approve(address _to, uint256 _tokenId) public;
-  function getApproved(uint256 _tokenId) public view returns (address _operator);
-
-  function setApprovalForAll(address _operator, bool _approved) public;
-  function isApprovedForAll(address _owner, address _operator) public view returns (bool);
-
-  function transferFrom(address _from, address _to, uint256 _tokenId) public;
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId) public;
-  function safeTransferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId,
-    bytes _data
-  ) public;
-
-  function isEditionAvailable(uint8 _editionNumber) public view returns (bool);
-  function cloneCard(address _owner, uint256 _tokenId) public returns (bool);
   function mintRandomCards(
     address _owner,
     uint8 _editionNumber,
@@ -285,7 +265,6 @@ contract MythereumCardToken {
     uint256 _addedDamage,
     uint256 _addedShield
   ) public returns (bool);
-  function destroyCard(uint256 _tokenId) public returns (bool);
 }
 
 contract Mythereum is Manageable {
@@ -336,10 +315,10 @@ contract Mythereum is Manageable {
   function Mythereum() public {
     editions[0] = Edition({
       name: "Genesis",
-      sales: 3999,
+      sales: 4139,
       maxSales: 5000,
       packSize: 7,
-      packPrice: 100 finney,
+      packPrice: 177000000000000000,
       packPriceIncrease: 1 finney
     });
 
@@ -505,6 +484,15 @@ contract Mythereum is Manageable {
     require(ERC20(_token).transfer(_recipient, _amount));
   }
 
+  function transferAbnormalERC20Tokens(
+    address _token,
+    address _recipient,
+    uint256 _amount
+  ) public onlyManagement {
+    // certain ERC20s don't return bool success flags :(
+    AbnormalERC20(_token).transfer(_recipient, _amount);
+  }
+
   function addVIP(address _vip) public onlyManagement {
     isVIP[_vip] = true;
   }
@@ -628,10 +616,6 @@ contract Mythereum is Manageable {
 
     shares[msg.sender] = shares[msg.sender].minus(_numShares);
     shares[_to] = shares[_to].plus(_numShares);
-  }
-
-  function transferEntireStake(address _to) public {
-    transferShares(_to, shares[msg.sender]);
   }
 
   function _claim(address payee) internal {
