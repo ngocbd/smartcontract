@@ -1,42 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLVRCrowdsale at 0x347e451298778e02d2b0f0985c07aff677ff7b05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLVRCrowdsale at 0x01ef10e16d9a6ec00d150d52fcad6f8327851b30
 */
 pragma solidity ^0.4.16;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a / b;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 interface Token {
     function transfer(address _to, uint256 _value) external;
 }
 
 contract CLVRCrowdsale {
-
-    using SafeMath for uint256;
     
     Token public tokenReward;
     address public creator;
@@ -55,10 +26,10 @@ contract CLVRCrowdsale {
 
     constructor() public {
         creator = msg.sender;
-        startDate = 1531958400;
-        endDate = 1534636799;
+        startDate = 1528365600;
+        endDate = 1533636000;
         price = 5000;
-        tokenReward = Token(0x92f10796da1f6fab1544cF64682Cb8c15C71d5E7);
+        tokenReward = Token(0x9dEcff4Cd03DF520a5ECe828a43b184668318A5f);
     }
 
     function setOwner(address _owner) isCreator public {
@@ -93,30 +64,26 @@ contract CLVRCrowdsale {
         selfdestruct(owner);
     }
 
-    function () public payable {
+    function () payable public {
         require(msg.value > 0);
         require(now > startDate);
         require(now < endDate);
-        uint256 amount = msg.value.mul(price);
-        uint256 _diff;
+	    uint amount = msg.value * price;
 
         // period 1 : 25%
         if (now > startDate && now < startDate + 2 days) {
-            _diff = amount.div(4);
-            amount = amount.add(_diff);
+            amount += amount / 4;
         }
         
         // period 2 : 15%
-        if (now > startDate + 2 days && now < startDate + 16 days) {
-            uint256 _amount = amount.div(20);
-            _diff = _amount.mul(3);
-            amount = amount.add(_diff);
+        if (now > startDate + 2 days && now < startDate + 9 days) {
+            uint _amount = amount / 20;
+            amount += _amount * 3;
         }
 
         // period 3 : 10%
-        if (now > startDate + 16 days && now < startDate + 30 days) {
-            _diff = amount.div(10);
-            amount = amount.add(_diff);
+        if (now > startDate + 9 days && now < startDate + 23 days) {
+            amount += amount / 10;
         }
 
         tokenReward.transfer(msg.sender, amount);
