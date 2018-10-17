@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x5deaeec143cd2fd58c3ad9d6ae69e0efeaedb53c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x4a2cf32723c1572c14ab1bd4893bca71a6f754b5
 */
 pragma solidity ^0.4.13;
 
@@ -164,6 +164,7 @@ contract Htlc is DSMath {
     uint constant MAX_BATCH_ITERATIONS = 25; // Assumption block.gaslimit around 7500000
     mapping (bytes32 => Multisig) public multisigs;
     mapping (bytes32 => AtomicSwap) public atomicswaps;
+    mapping (bytes32 => bool) public isAntecedentHashedSecret;
 
     // EVENTS
 
@@ -223,7 +224,7 @@ contract Htlc is DSMath {
     }
 
     /**
-    @notice Multisig msg.value ether into a multisig and set unlockTime
+    @notice Inititate/extend multisig unlockTime and/or initiate/refund multisig deposit
     @dev Can increase deposit and/or unlockTime but not owner or authority
     @param msigId Unique (owner, authority, balance != 0) multisig identifier
     @param unlockTime Lock Ether until unlockTime in seconds.
@@ -232,6 +233,7 @@ contract Htlc is DSMath {
         public
         payable
     {
+        require(multisigs[msigId].owner == msg.sender);
         Multisig storage multisig = multisigs[msigId];
         multisig.deposit = add(multisig.deposit, msg.value);
         assert(multisig.unlockTime <= unlockTime); // Can only increase unlockTime
@@ -239,13 +241,13 @@ contract Htlc is DSMath {
     }
 
     /**
-    @notice Withdraw ether and delete the htlc swap. Equivalent to EARLY_RESOLVE in Nimiq
+    @notice Withdraw ether from the multisig. Equivalent to EARLY_RESOLVE in Nimiq
+    @dev the signature is generated using web3.eth.sign() over the unique msigId
     @param msigId Unique (owner, authority, balance != 0) multisig identifier
     @param amount Return this amount from this contract to owner
-    @param hashedMessage bytes32 hash of unique swap hash, the hash is the signed message. What is recovered is the signer address.
-    @param sig bytes signature, the signature is generated using web3.eth.sign()
+    @param sig bytes signature of the not transaction sending Authority
     */
-    function earlyResolve(bytes32 msigId, uint amount, bytes32 hashedMessage, bytes sig)
+    function earlyResolve(bytes32 msigId, uint amount, bytes sig)
         public
     {
         // Require: msg.sender == (owner or authority)
@@ -257,7 +259,7 @@ contract Htlc is DSMath {
         address otherAuthority = multisigs[msigId].owner == msg.sender ?
             multisigs[msigId].authority :
             multisigs[msigId].owner;
-        require(otherAuthority == hashedMessage.recover(sig));
+        require(otherAuthority == msigId.recover(sig));
         // Return to owner
         spendFromMultisig(msigId, amount, multisigs[msigId].owner);
     }
@@ -283,7 +285,7 @@ contract Htlc is DSMath {
     @param amount Convert this amount from multisig into swap
     @param fee Fee amount to be paid to multisig authority
     @param expirationTime Swap expiration timestamp in seconds; not more than 1 day from now
-    @param hashedSecret sha3(secret), hashed secret of swap initiator
+    @param hashedSecret sha256(secret), hashed secret of swap initiator
     @return swapId Unique (initiator, beneficiary, amount, fee, expirationTime, hashedSecret) swap identifier
     */
     function convertIntoHtlc(bytes32 msigId, address beneficiary, uint amount, uint fee, uint expirationTime, bytes32 hashedSecret)
@@ -298,6 +300,8 @@ contract Htlc is DSMath {
             expirationTime <= min(now + 1 days, multisigs[msigId].unlockTime)
         ); // Not more than 1 day or unlockTime
         require(amount > 0); // Non-empty amount as definition for active swap
+        require(!isAntecedentHashedSecret[hashedSecret]);
+        isAntecedentHashedSecret[hashedSecret] = true;
         // Account in multisig balance
         multisigs[msigId].deposit = sub(multisigs[msigId].deposit, add(amount, fee));
         // Create swap identifier
