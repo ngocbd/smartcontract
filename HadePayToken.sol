@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HadePayToken at 0x0854dcbdcd026c0b534b09608adb3f2bf6baacd0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HadePayToken at 0xd91ee7a2073adb0db073ee31efb5e8625594399f
 */
 pragma solidity ^0.4.23;
-
 
 /**
  * @title SafeMath
@@ -67,7 +66,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -86,7 +84,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
 
 /**
  * @title Basic token
@@ -131,6 +128,7 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
 
 /**
  * @title Standard ERC20 token
@@ -254,7 +252,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 contract HadePayToken is StandardToken {
 
     using SafeMath for uint256;
@@ -359,7 +356,7 @@ contract HadePayToken is StandardToken {
      nonZeroAddress(_newAddress)
      {
          serverAddress = _newAddress;
-         emit ChangeServerAddress(now, serverAddress);
+         emit ChangeOwnerAddress(now, serverAddress);
      }
 
      function getOwnerAddress() external view returns (address) {
