@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunkeyCoin at 0x18e8ac27125883b156b113c2bcbe54802a106a43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunkeyCoin at 0x06404399e748cd83f25ab163711f9f4d61cfd0e6
 */
 pragma solidity ^0.4.24;
 
@@ -87,8 +87,8 @@ contract BasicToken is ERC20Basic {
 }
 // ----------------------------------------------------------------------------
 // @title Ownable
-// @dev There are 5 role groups for FunkeyCoin [FKC].
-// If an exchange is hacked, all stolen FKC in the hacker’s wallet must be incinerated and given back to its original investors.
+// @dev There are 5 role groups for FunkeyCoin [FNK].
+// If an exchange is hacked, all stolen FNK in the hacker’s wallet must be incinerated and given back to its original investors.
 // However, incineration and reissuance of tokens for specific addresses are sensitive matters. 
 // Therefore, it requires 4 signatures: 3 C-Level personnels and Development Team Leader. 
 // Incineration and Reissuing tokens for specific addresses can only be used in case of hacking and cannot be used otherwise. 
@@ -345,7 +345,7 @@ contract BurnableToken is StandardToken, Ownable {
         emit Transfer(msg.sender, address(0), _value);
     }
     
-    // burnHackingAmount() Function only exists for the incineration of stolen FKC.
+    // burnHackingAmount() Function only exists for the incineration of stolen FNK.
     // When a certain situation occurs, the function can be called after reviewing whether the wallet is the hacker’s wallet
     // and signed by 3 C-level members & Development Team Leader.
     function burnHackingAmount(address _hackerAddress, string _reason) AllCLevelSignature public {
@@ -394,8 +394,8 @@ contract MintableToken is StandardToken, Ownable {
     }
 
     // restartMinting() Function isn’t for just simple reissuing.
-    // When the hacking occurs, all amount of FKC in the hacker's wallet
-    // is incinerated and corresponding quantity of FKC will be reissued to the victims’ wallets.
+    // When the hacking occurs, all amount of FNK in the hacker's wallet
+    // is incinerated and corresponding quantity of FNK will be reissued to the victims’ wallets.
     function restartMinting(string _reason) AllCLevelSignature cannotMint public returns (bool) {
         ClearCLevelSignature();
 
@@ -431,12 +431,12 @@ contract PausableToken is StandardToken, Pausable, BlackList {
     }
 }
 // ----------------------------------------------------------------------------
-// @Project FunkeyCoin (FKC)
-// @Creator Gi Hyeok - Ryu
+// @Project FunkeyCoin (FNK)
+// @Creator Johnson Ryu (Funkey Blockchain Core Developer)
 // @Source Code Verification (CEO : JK JUNG / CTO : SeungWoo KANG)
 // ----------------------------------------------------------------------------
 contract FunkeyCoin is PausableToken, MintableToken, BurnableToken, MultiTransferToken {
     string public name = "FunkeyCoin";
-    string public symbol = "FKC";
+    string public symbol = "FNK";
     uint256 public decimals = 18;
 }
