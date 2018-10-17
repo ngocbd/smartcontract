@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Payiza at 0x7ec33fc1b5c4847cc665236296ddb160474a2a87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Payiza at 0x297306e0e35c125a67ddb8bf07987aa65e292afb
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
+
 
 /**
  * @title SafeMath
@@ -250,10 +251,10 @@ contract Payiza is BurnableToken, Ownable {
 
 
     //you just have to touch these 4 lines don't touch anything else , else you might break the code.
-    string public constant name = "Payiza";//here you define the name
+    string public constant name = "Payiza Exchange";//here you define the name
     string public constant symbol = "PYZ";//here yuou define the symbol of token
     uint public constant decimals = 8; //just till here.
-    uint256 public constant initialSupply = 334500000 * (10 ** uint256(decimals));//500crore right yes ok let's deploy it now
+    uint256 public constant initialSupply = 330000000 * (10 ** uint256(decimals));//500crore right yes ok let's deploy it now
 
     // Constructor
     function Payiza() {
