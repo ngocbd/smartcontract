@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidity at 0x35afc160989db7b975e1e39f70c59531ef267858
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidity at 0xee7ce6d52e4485d5669497cfbcd2537b1092ed32
 */
 pragma solidity ^0.4.23;
 
@@ -34,40 +34,28 @@ library SafeMath {
 contract Token {
  
   function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
-
   function transfer(address to, uint256 tokens) public returns (bool success);
-     
+  function balanceOf(address _owner) public returns (uint256 balance);      
+
 }
 
-contract TokenLiquidityContract { 
+contract TokenLiquidityMarket { 
 
   using SafeMath for uint256;  
 
-
+  address public platform;
   address public admin;
-
   address public traded_token;
-
   
   uint256 public eth_seed_amount;
-
   uint256 public traded_token_seed_amount;
-  
   uint256 public commission_ratio;
-
   uint256 public eth_balance;
 
-  uint256 public traded_token_balance;
-
-
   bool public eth_is_seeded;
-
   bool public traded_token_is_seeded;
-  
   bool public trading_deactivated;
-
   bool public admin_commission_activated;
-
 
   modifier only_admin() {
       require(msg.sender == admin);
@@ -78,274 +66,196 @@ contract TokenLiquidityContract {
       require(trading_deactivated == false);
       _;
   }
-
   
   constructor(address _traded_token,uint256 _eth_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
-      
-    admin = tx.origin;  
-    
+    admin = tx.origin;
+    platform = msg.sender; 
     traded_token = _traded_token;
-    
     eth_seed_amount = _eth_seed_amount;
-    
     traded_token_seed_amount = _traded_token_seed_amount;
-
     commission_ratio = _commission_ratio;
-    
+  }
+
+  function change_admin(address _newAdmin) public only_admin() {
+    admin = _newAdmin;
   }
   
-  function transferTokensThroughProxyToContract(address _from, address _to, uint256 _amount) private {
+  function withdraw_arbitrary_token(address _token) public only_admin() {
+      require(_token != traded_token);
+      Token(_token).transfer(admin, Token(_token).balanceOf(address(this)));
+  }
 
-    traded_token_balance = traded_token_balance.add(_amount);
-
+  function transfer_tokens_through_proxy_to_contract(address _from, address _to, uint256 _amount) private {
     require(Token(traded_token).transferFrom(_from,_to,_amount));
-     
   }  
 
-  function transferTokensFromContract(address _to, uint256 _amount) private {
-
-    traded_token_balance = traded_token_balance.sub(_amount);
-
+  function transfer_tokens_from_contract(address _to, uint256 _amount) private {
     require(Token(traded_token).transfer(_to,_amount));
-     
   }
 
-  function transferETHToContract() private {
-
+  function transfer_eth_to_contract() private {
     eth_balance = eth_balance.add(msg.value);
-      
   }
   
-  function transferETHFromContract(address _to, uint256 _amount) private {
-
+  function transfer_eth_from_contract(address _to, uint256 _amount) private {
     eth_balance = eth_balance.sub(_amount);
-      
     _to.transfer(_amount);
-      
   }
   
   function deposit_token(uint256 _amount) private { 
-
-    transferTokensThroughProxyToContract(msg.sender, this, _amount);
-
+    transfer_tokens_through_proxy_to_contract(msg.sender, this, _amount);
   }  
 
   function deposit_eth() private { 
-
-    transferETHToContract();
-
+    transfer_eth_to_contract();
   }  
   
   function withdraw_token(uint256 _amount) public only_admin() {
-
-    transferTokensFromContract(admin, _amount);
-      
+    transfer_tokens_from_contract(admin, _amount);
   }
   
   function withdraw_eth(uint256 _amount) public only_admin() {
-      
-    transferETHFromContract(admin, _amount);
-      
+    transfer_eth_from_contract(admin, _amount);
   }
 
   function set_traded_token_as_seeded() private {
-   
     traded_token_is_seeded = true;
- 
   }
 
   function set_eth_as_seeded() private {
-
     eth_is_seeded = true;
-
   }
 
   function seed_traded_token() public only_admin() {
-
     require(!traded_token_is_seeded);
-  
     set_traded_token_as_seeded();
-
     deposit_token(traded_token_seed_amount); 
-
   }
   
   function seed_eth() public payable only_admin() {
-
     require(!eth_is_seeded);
-
     require(msg.value == eth_seed_amount);
- 
     set_eth_as_seeded();
-
     deposit_eth(); 
-
   }
 
   function seed_additional_token(uint256 _amount) public only_admin() {
-
     require(market_is_open());
-    
     deposit_token(_amount);
-
   }
 
   function seed_additional_eth() public payable only_admin() {
-  
     require(market_is_open());
-    
     deposit_eth();
-
   }
 
   function market_is_open() private view returns(bool) {
-  
     return (eth_is_seeded && traded_token_is_seeded);
-
   }
 
   function deactivate_trading() public only_admin() {
-  
     require(!trading_deactivated);
-    
     trading_deactivated = true;
-
   }
   
   function reactivate_trading() public only_admin() {
-      
     require(trading_deactivated);
-    
     trading_deactivated = false;
-    
   }
 
   function get_amount_sell(uint256 _amount) public view returns(uint256) {
- 
-    uint256 traded_token_balance_plus_amount_ = traded_token_balance.add(_amount);
-    
+    uint256 traded_token_balance_plus_amount_ = Token(traded_token).balanceOf(address(this)).add(_amount);
     return (eth_balance.mul(_amount)).div(traded_token_balance_plus_amount_);
-    
   }
 
   function get_amount_buy(uint256 _amount) public view returns(uint256) {
-
     uint256 eth_balance_plus_amount_ = eth_balance.add(_amount);
-
-    return (traded_token_balance.mul(_amount)).div(eth_balance_plus_amount_);
-
+    return (Token(traded_token).balanceOf(address(this)).mul(_amount)).div(eth_balance_plus_amount_);
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
-      
     return (_amount*(1 ether - commission_ratio))/(1 ether);  
-    
   }
 
   function activate_admin_commission() public only_admin() {
-
     require(!admin_commission_activated);
-
     admin_commission_activated = true;
-
   }
 
   function deactivate_admin_comission() public only_admin() {
-
     require(admin_commission_activated);
-
     admin_commission_activated = false;
-
   }
 
   function change_admin_commission(uint256 _new_commission_ratio) public only_admin() {
-  
      require(_new_commission_ratio != commission_ratio);
-
      commission_ratio = _new_commission_ratio;
-
   }
 
 
   function complete_sell_exchange(uint256 _amount_give) private {
-
     uint256 amount_get_ = get_amount_sell(_amount_give);
-
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-    
-    transferTokensThroughProxyToContract(msg.sender,this,_amount_give);
-
-    transferETHFromContract(msg.sender,amount_get_minus_commission_);  
-
+    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
+    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
+    transfer_tokens_through_proxy_to_contract(msg.sender,this,_amount_give);
+    transfer_eth_from_contract(msg.sender,amount_get_minus_commission_);  
+    transfer_eth_from_contract(platform, platform_commission_);     
     if(admin_commission_activated) {
-
-      uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
-
-      transferETHFromContract(admin, admin_commission_);     
-
+      transfer_eth_from_contract(admin, admin_commission_);     
     }
-    
   }
   
   function complete_buy_exchange() private {
-
     uint256 amount_give_ = msg.value;
-
     uint256 amount_get_ = get_amount_buy(amount_give_);
-
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-
-    transferETHToContract();
-
-    transferTokensFromContract(msg.sender, amount_get_minus_commission_);
-
+    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
+    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
+    transfer_eth_to_contract();
+    transfer_tokens_from_contract(msg.sender, amount_get_minus_commission_);
+    transfer_tokens_from_contract(platform, platform_commission_);
     if(admin_commission_activated) {
-
-      uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
-
-      transferTokensFromContract(admin, admin_commission_);
-
+      transfer_tokens_from_contract(admin, admin_commission_);
     }
-    
   }
   
   function sell_tokens(uint256 _amount_give) public trading_activated() {
-
     require(market_is_open());
-
     complete_sell_exchange(_amount_give);
-
   }
   
   function buy_tokens() private trading_activated() {
-
     require(market_is_open());
-
     complete_buy_exchange();
-
   }
 
-
   function() public payable {
-
     buy_tokens();
-
   }
 
 }
 
 contract TokenLiquidity { 
 
+  address public admin;
+
+  constructor() public { admin = msg.sender; }
+
   function create_a_new_market(address _traded_token, uint256 _base_token_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
+    new TokenLiquidityMarket(_traded_token, _base_token_seed_amount, _traded_token_seed_amount, _commission_ratio);
+  }
 
-    new TokenLiquidityContract(_traded_token, _base_token_seed_amount, _traded_token_seed_amount, _commission_ratio);
+  function withdraw_eth() public {
+     admin.transfer(address(this).balance);  
+  }
 
+  function withdraw_token(address _token) public {
+    Token(_token).transfer(admin, Token(_token).balanceOf(address(this)));
   }
   
   function() public payable {
-
     revert();
-
   }
 
 }
