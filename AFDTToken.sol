@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AFDTToken at 0x8eb5318e4c64e1fc885f4bc39b8ff7fcde3e1069
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AFDTToken at 0xbff63cd0fd1b6a3562667f173cc885fdd98769ad
 */
 pragma solidity ^0.4.21;
 
@@ -117,11 +117,11 @@ contract AFDTToken is TokenERC20, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "AFDT";
+        symbol = "AFDTT";
         name = "AFDChain";
         decimals = 8;
         _totalSupply = 2100000000 * 10**uint(decimals);
-        owner = 0xDAd085eB10FefC2c2ddac7dc9d22c7DBf1A78480;
+        owner = 0x1ac6bc75a9e1d32a91e025257eaefc0e8965a16f;
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
