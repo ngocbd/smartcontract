@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LAYA at 0xa43e0937ff9bb5e072acc64b9ea1d7edf6984d96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LAYA at 0xeb1f201fa95d409e3c14421bef4703bb0fa0b772
 */
 pragma solidity ^0.4.18;
 
@@ -299,15 +299,23 @@ contract Pausable is Ownable {
 
 contract PausableToken is StandardToken, Pausable {
 	function transferFrom(address from, address to, uint256 value) whenNotPaused public returns (bool) {
-		super.transferFrom(from,to,value);
+		return super.transferFrom(from,to,value);
 	}
 
 	function approve(address spender, uint256 value) whenNotPaused public returns (bool) {
-		super.approve(spender,value);
+		return super.approve(spender,value);
 	}
 
 	function transfer(address to, uint256 value) whenNotPaused public returns (bool) {
-		super.transfer(to,value);
+		return super.transfer(to,value);
+	}
+
+	function increaseApproval(address _spender, uint _addedValue) whenNotPaused public returns (bool) {
+		return super.increaseApproval(_spender,_addedValue);
+	}
+
+	function decreaseApproval(address _spender, uint _subtractedValue) whenNotPaused public returns (bool) {
+		return super.decreaseApproval(_spender,_subtractedValue);
 	}
 }
 
@@ -315,7 +323,7 @@ contract PausableToken is StandardToken, Pausable {
  * @title LAYA Token.
  */
 contract LAYA is PausableToken {
-    string public name = "LAYA Token";
+    string public name = "Laya One";
     string public symbol = "LAYA";
     uint public decimals = 8;
     string public version = "1.0";
@@ -329,7 +337,7 @@ contract LAYA is PausableToken {
 
    function burn(uint256 _value) onlyOwner public returns (bool success) {
         require(balances[msg.sender] >= _value);                   // Check if the sender has enough
-		require(_value > 0); 
+		    require(_value > 0); 
         balances[msg.sender] = balances[msg.sender].sub(_value);  // Subtract from the sender
         totalSupply_ = totalSupply_.sub(_value);                  // Updates totalSupply
         Burn(msg.sender, _value);
