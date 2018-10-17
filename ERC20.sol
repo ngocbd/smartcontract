@@ -1,140 +1,349 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x8f6625f8b6b2ab6ca32df30ec03fcc8122573947
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x24742fdf0928b17ae17e5ee7668987983a8a3070
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.8;
 
-contract Token {
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+library BobbySafeMath {
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 
+contract BobbyERC20Base {
 
-contract StandardToken is Token {
+    address public ceoAddress;
+    address public cfoAddress;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    //???????????
+    bool public paused = false;
+
+    constructor(address cfoAddr) public {
+        ceoAddress = msg.sender;
+        cfoAddress = cfoAddr;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    modifier onlyCEO() {
+        require(msg.sender == ceoAddress);
+        _;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    function setCEO(address _newCEO) public onlyCEO {
+        require(_newCEO != address(0));
+        ceoAddress = _newCEO;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+    modifier onlyCFO() {
+        require(msg.sender == cfoAddress);
+        _;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    modifier allButCFO() {
+        require(msg.sender != cfoAddress);
+        _;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+    function setCFO(address _newCFO) public onlyCEO {
+        require(_newCFO != address(0));
+        cfoAddress = _newCFO;
+    }
+
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    modifier whenPaused {
+        require(paused);
+        _;
+    }
+
+    function pause() external onlyCEO whenNotPaused {
+        paused = true;
+    }
+
+    function unpause() public onlyCEO whenPaused {
+        paused = false;
+    }
 }
 
+contract ERC20Interface {
 
-//name this contract whatever you'd like
-contract ERC20 is StandardToken {
+    //ERC20????
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+    //extend event
+    event Grant(address indexed src, address indexed dst, uint wad);    //?????????
+    event Unlock(address indexed user, uint wad);                       //????
+
+    function name() public view returns (string n);
+    function symbol() public view returns (string s);
+    function decimals() public view returns (uint8 d);
+    function totalSupply() public view returns (uint256 t);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+}
+
+//Erc????
+contract ERC20 is ERC20Interface, BobbyERC20Base {
+    using BobbySafeMath for uint256;
+
+    uint private _Thousand = 1000;
+    uint private _Billion = _Thousand * _Thousand * _Thousand;
+
+    //??????
+    string private _name = "BOBBY";     //????
+    string private _symbol = "BOBBY";   //????
+    uint8 private _decimals = 9;        //??????
+    uint256 private _totalSupply = 10 * _Billion * (10 ** uint256(_decimals));
+
+    //????????
+    struct UserToken {
+        uint index;              //????????
+        address addr;            //????
+        uint256 tokens;          //????
+
+        uint256 unlockUnit;     // ??????
+        uint256 unlockPeriod;   // ??????
+        uint256 unlockLeft;     // ???????
+        uint256 unlockLastTime; // ??????
     }
 
-    /* Public variables of the token */
+    mapping(address=>UserToken) private _balancesMap;           //????????
+    address[] private _balancesArray;                           //????????,from 1
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    uint32 private actionTransfer = 0;
+    uint32 private actionGrant = 1;
+    uint32 private actionUnlock = 2;
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    function ERC20(
-        ) {
-        balances[msg.sender] = 60000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 60000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "DAPS";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "DAPSTOKEN";                               // Set the symbol for display purposes
+    struct LogEntry {
+        uint256 time;
+        uint32  action;       // 0 ?? 1 ?? 2 ??
+        address from;
+        address to;
+        uint256 v1;
+        uint256 v2;
+        uint256 v3;
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    LogEntry[] private _logs;
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    //????????????????????????????????????????????
+    constructor(address cfoAddr) BobbyERC20Base(cfoAddr) public {
+
+        //placeholder
+        _balancesArray.push(address(0));
+
+        //??????????CEO???,?????????????????CEO??
+        //????????memory????????????????????
+        UserToken memory userCFO;
+        userCFO.index = _balancesArray.length;
+        userCFO.addr = cfoAddr;
+        userCFO.tokens = _totalSupply;
+        userCFO.unlockUnit = 0;
+        userCFO.unlockPeriod = 0;
+        userCFO.unlockLeft = 0;
+        userCFO.unlockLastTime = 0;
+        _balancesArray.push(cfoAddr);
+        _balancesMap[cfoAddr] = userCFO;
+    }
+
+    //???????view???????????????????
+    function name() public view returns (string n){
+        n = _name;
+    }
+
+    //???????
+    function symbol() public view returns (string s){
+        s = _symbol;
+    }
+
+    //???????
+    function decimals() public view returns (uint8 d){
+        d = _decimals;
+    }
+
+    //????????
+    function totalSupply() public view returns (uint256 t){
+        t = _totalSupply;
+    }
+
+    //????_owner?????
+    function balanceOf(address _owner) public view returns (uint256 balance){
+        UserToken storage user = _balancesMap[_owner];
+        balance = user.tokens.add(user.unlockLeft);
+    }
+
+    //??????????????_value???token????_to???????Transfer??
+    function transfer(address _to, uint256 _value) public returns (bool success){
+        require(!paused);
+        require(msg.sender != cfoAddress);
+        require(msg.sender != _to);
+
+        //??????????
+        if(_balancesMap[msg.sender].unlockLeft > 0){
+            UserToken storage sender = _balancesMap[msg.sender];
+            uint256 diff = now.sub(sender.unlockLastTime);
+            uint256 round = diff.div(sender.unlockPeriod);
+            if(round > 0) {
+                uint256 unlocked = sender.unlockUnit.mul(round);
+                if (unlocked > sender.unlockLeft) {
+                    unlocked = sender.unlockLeft;
+                }
+
+                sender.unlockLeft = sender.unlockLeft.sub(unlocked);
+                sender.tokens = sender.tokens.add(unlocked);
+                sender.unlockLastTime = sender.unlockLastTime.add(sender.unlockPeriod.mul(round));
+
+                emit Unlock(msg.sender, unlocked);
+                log(actionUnlock, msg.sender, 0, unlocked, 0, 0);
+            }
+        }
+
+        require(_balancesMap[msg.sender].tokens >= _value);
+        _balancesMap[msg.sender].tokens = _balancesMap[msg.sender].tokens.sub(_value);
+
+        uint index = _balancesMap[_to].index;
+        if(index == 0){
+            UserToken memory user;
+            user.index = _balancesArray.length;
+            user.addr = _to;
+            user.tokens = _value;
+            user.unlockUnit = 0;
+            user.unlockPeriod = 0;
+            user.unlockLeft = 0;
+            user.unlockLastTime = 0;
+            _balancesMap[_to] = user;
+            _balancesArray.push(_to);
+        }
+        else{
+            _balancesMap[_to].tokens = _balancesMap[_to].tokens.add(_value);
+        }
+
+        emit Transfer(msg.sender, _to, _value);
+        log(actionTransfer, msg.sender, _to, _value, 0, 0);
+        success = true;
+    }
+
+    function transferFrom(address, address, uint256) public returns (bool success){
+        require(!paused);
+        success = true;
+    }
+
+    function approve(address, uint256) public returns (bool success){
+        require(!paused);
+        success = true;
+    }
+
+    function allowance(address, address) public view returns (uint256 remaining){
+        require(!paused);
+        remaining = 0;
+    }
+
+    function grant(address _to, uint256 _value, uint256 _duration, uint256 _periods) public returns (bool success){
+        require(msg.sender != _to);
+        require(_balancesMap[msg.sender].tokens >= _value);
+        require(_balancesMap[_to].unlockLastTime == 0);
+
+        _balancesMap[msg.sender].tokens = _balancesMap[msg.sender].tokens.sub(_value);
+
+        if(_balancesMap[_to].index == 0){
+            UserToken memory user;
+            user.index = _balancesArray.length;
+            user.addr = _to;
+            user.tokens = 0;
+            user.unlockUnit = _value.div(_periods);
+            user.unlockPeriod = _duration.mul(30).mul(1 days).div(_periods);
+            /* user.unlockPeriod = _period; //for test */
+            user.unlockLeft = _value;
+            user.unlockLastTime = now;
+            _balancesMap[_to] = user;
+            _balancesArray.push(_to);
+        }
+        else{
+            _balancesMap[_to].unlockUnit = _value.div(_periods);
+            _balancesMap[_to].unlockPeriod = _duration.mul(30).mul(1 days).div(_periods);
+            /* _balancesMap[_to].unlockPeriod = _period; //for test */
+            _balancesMap[_to].unlockLeft = _value;
+            _balancesMap[_to].unlockLastTime = now;
+        }
+
+        emit Grant(msg.sender, _to, _value);
+        log(actionGrant, msg.sender, _to, _value, _duration, _periods);
+        success = true;
+    }
+
+    function getBalanceAddr(uint256 _index) public view returns(address addr){
+        require(_index < _balancesArray.length);
+        require(_index >= 0);
+        addr = _balancesArray[_index];
+    }
+
+    function getBalanceSize() public view returns(uint256 size){
+        size = _balancesArray.length;
+    }
+
+    function getLockInfo(address addr) public view returns (uint256 unlocked, uint256 unit, uint256 period, uint256 last) {
+        UserToken storage user = _balancesMap[addr];
+        unlocked = user.unlockLeft;
+        unit = user.unlockUnit;
+        period = user.unlockPeriod;
+        last = user.unlockLastTime;
+    }
+
+    function log(uint32 action, address from, address to, uint256 _v1, uint256 _v2, uint256 _v3) private {
+        LogEntry memory entry;
+        entry.action = action;
+        entry.time = now;
+        entry.from = from;
+        entry.to = to;
+        entry.v1 = _v1;
+        entry.v2 = _v2;
+        entry.v3 = _v3;
+        _logs.push(entry);
+    }
+
+    function getLogSize() public view returns(uint256 size){
+        size = _logs.length;
+    }
+
+    function getLog(uint256 _index) public view returns(uint time, uint32 action, address from, address to, uint256 _v1, uint256 _v2, uint256 _v3){
+        require(_index < _logs.length);
+        require(_index >= 0);
+        LogEntry storage entry = _logs[_index];
+        action = entry.action;
+        time = entry.time;
+        from = entry.from;
+        to = entry.to;
+        _v1 = entry.v1;
+        _v2 = entry.v2;
+        _v3 = entry.v3;
     }
 }
