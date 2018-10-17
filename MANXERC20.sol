@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANXERC20 at 0x7d4bb661561ed8db39ab30221787f5c0ab09bc28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANXERC20 at 0x432d8b3b71f9010d4f483cf9cd3377e3781ea613
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 contract ERC20Token{
     //ERC20 base standard
@@ -30,7 +30,7 @@ contract Owned{
     /**
         @dev constructor
     */
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -59,7 +59,7 @@ contract Owned{
         require(msg.sender == newOwner);
         emit OwnerUpdate(owner, newOwner);
         owner = newOwner;
-        newOwner = 0x0;
+        newOwner = address(0);
     }
 }
 
@@ -70,7 +70,7 @@ contract SafeMath {
     /**
         constructor
     */
-    function SafeMath() public{
+    constructor() public{
     }
 
        // Check if it is safe to add two numbers
@@ -101,7 +101,7 @@ contract MANXERC20 is SafeMath, ERC20Token, Owned {
     uint8 public constant decimals = 18;                                     // Set the number of decimals for display
     uint256 public constant INITIAL_SUPPLY = 10000000000 * 10 ** uint256(decimals);
     uint256 public totalSupply;
-    string public version = '1';
+    string public version = '2';
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     
@@ -110,10 +110,10 @@ contract MANXERC20 is SafeMath, ERC20Token, Owned {
         _;
     }
     
-    function MANXERC20() public {
+    constructor() public {
         totalSupply = INITIAL_SUPPLY;                              // Set the total supply
         balances[msg.sender] = INITIAL_SUPPLY;                     // Creator address is assigned all
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+        emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
     }
     
     function transfer(address _to, uint256 _value) rejectTokensToContract(_to) public returns (bool success) {
@@ -152,25 +152,22 @@ contract MANXERC20 is SafeMath, ERC20Token, Owned {
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
-        return true;
-    }
     
     function approveAndCallN(address _spender, uint256 _value, uint256 _extraNum) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
 
-        //similar to the above, the passed value is a number
-        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,uint256)"))), msg.sender, _value, this, _extraNum)) { revert(); }
+        //to avoid the EVM decoding bug, the passed value set to a number
+        if(!_spender.call(abi.encodeWithSelector(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,uint256)"))), msg.sender, _value, this, _extraNum))) { revert(); }
         return true;
+    }
+    
+    function claimTokens(address _token) onlyOwner public {
+        require(_token != address(0));
+
+        ERC20Token token = ERC20Token(_token);
+        uint balance = token.balanceOf(address(this));
+        token.transfer(owner, balance);
     }
 
 
