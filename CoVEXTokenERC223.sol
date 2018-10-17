@@ -1,154 +1,167 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoVEXTokenERC223 at 0xa1f92d575f522e7d3e055c78e0909ac0ece4e102
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoVEXTokenERC223 at 0x571df2dd34ee470b80128515835f616074d4dcc9
 */
-pragma solidity ^0.4.15;
-
-contract ERC223Interface {
-    uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function transfer(address to, uint value, bytes data);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-}
-
-contract ERC223ReceivingContract { 
-/**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
- */
-    function tokenFallback(address _from, uint _value, bytes _data);
-}
+pragma solidity ^0.4.18;
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint a, uint b) internal returns (uint) {
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint a, uint b) internal returns (uint) {
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }
 
+contract ERC223 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
 
-/**
- * @title Reference implementation of the ERC223 standard token.
- */
-contract ERC223Token is ERC223Interface {
-    using SafeMath for uint;
+  function name() constant returns (string _name);
+  function symbol() constant returns (string _symbol);
+  function decimals() constant returns (uint8 _decimals);
+  function totalSupply() constant returns (uint256 _supply);
 
-    mapping(address => uint) balances; // List of user balances.
-    
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *      or the fallback function to receive funds.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
-     */
-    function transfer(address _to, uint _value, bytes _data) {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
+  function transfer(address to, uint value) returns (bool ok);
+  function transfer(address to, uint value, bytes data) returns (bool ok);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event ERC223Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
+}
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
+contract ContractReceiver {
+  function tokenFallback(address _from, uint _value, bytes _data);
+}
 
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-        Transfer(msg.sender, _to, _value, _data);
+contract ERC223Token is ERC223 {
+  using SafeMath for uint;
+
+  mapping(address => uint) balances;
+
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 public totalSupply;
+
+
+  // Function to access name of token .
+  function name() constant returns (string _name) {
+      return name;
+  }
+  // Function to access symbol of token .
+  function symbol() constant returns (string _symbol) {
+      return symbol;
+  }
+  // Function to access decimals of token .
+  function decimals() constant returns (uint8 _decimals) {
+      return decimals;
+  }
+  // Function to access total supply of tokens .
+  function totalSupply() constant returns (uint256 _totalSupply) {
+      return totalSupply;
+  }
+
+  // Function that is called when a user or another contract wants to transfer funds .
+  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
     }
-    
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    function transfer(address _to, uint _value) {
-        uint codeLength;
-        bytes memory empty;
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
+  // Standard function transfer similar to ERC20 transfer with no _data .
+  // Added due to backwards compatibility reasons .
+  function transfer(address _to, uint _value) returns (bool success) {
 
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
+    //standard function transfer similar to ERC20 transfer with no _data
+    //added due to backwards compatibility reasons
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+}
+
+//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+  function isContract(address _addr) private returns (bool is_contract) {
+      uint length;
+      assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
         }
-        Transfer(msg.sender, _to, _value, empty);
+        if(length>0) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
-    
-    /**
-     * @dev Returns balance of the `_owner`.
-     *
-     * @param _owner   The address whose balance will be returned.
-     * @return balance Balance of the `_owner`.
-     */
-    function balanceOf(address _owner) constant returns (uint balance) {
-        return balances[_owner];
-    }
+  //function that is called when transaction target is an address
+  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+    balances[_to] = balanceOf(_to).add(_value);
+    Transfer(msg.sender, _to, _value);
+    ERC223Transfer(msg.sender, _to, _value, _data);
+    return true;
+  }
+
+  //function that is called when transaction target is a contract
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) revert();
+    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+    balances[_to] = balanceOf(_to).add(_value);
+    ContractReceiver reciever = ContractReceiver(_to);
+    reciever.tokenFallback(msg.sender, _value, _data);
+    Transfer(msg.sender, _to, _value);
+    ERC223Transfer(msg.sender, _to, _value, _data);
+    return true;
+  }
+
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
 }
 
 contract CoVEXTokenERC223 is ERC223Token{
@@ -191,8 +204,7 @@ contract CoVEXTokenERC223 is ERC223Token{
         //initially assign all tokens to the fundsWallet
         balances[fundsWallet] = totalSupply;
 
-        bytes memory empty;
-        Transfer(0x0, fundsWallet, totalSupply, empty);
+        Transfer(0x0, fundsWallet, totalSupply);
     }
 
     function() isIcoOpen checkMinMax payable{
@@ -204,19 +216,10 @@ contract CoVEXTokenERC223 is ERC223Token{
 
         etherBalance[msg.sender] = etherBalance[msg.sender].add(msg.value);
 
-        bytes memory empty;
-        Transfer(fundsWallet, msg.sender, tokenAmount, empty);
+        Transfer(fundsWallet, msg.sender, tokenAmount);
 
         // immediately transfer ether to fundsWallet
         fundsWallet.transfer(msg.value);
-    }
-
-    function transfer(address _to, uint _value){
-        return super.transfer(_to, _value);
-    }
-
-    function transfer(address _to, uint _value, bytes _data){
-        return super.transfer(_to, _value, _data);   
     }
 
     function calculateTokenAmount(uint256 weiAmount) constant returns(uint256) {
@@ -241,8 +244,7 @@ contract CoVEXTokenERC223 is ERC223Token{
       address burner = msg.sender;
       balances[burner] = balances[burner].sub(_value);
       totalSupply = totalSupply.sub(_value);
-      bytes memory empty;
-      Transfer(burner, address(0), _value, empty);
+      Transfer(burner, address(0), _value);
     }
 
     function adminAddICO(uint256 _startTimestamp, uint256 _durationSeconds, 
