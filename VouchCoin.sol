@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VouchCoin at 0x63f50e26dd578a5fd1443aff0ae3041c00bdb1c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VouchCoin at 0xb1acdf0cc0e9d59da55707dce1259a0b2a75e5c6
 */
 pragma solidity ^0.4.23;
 
@@ -256,7 +256,7 @@ contract VouchCoin is StandardToken {
   string public name = "VouchCoin";
   string public symbol = "VHC";
   uint public decimals = 8;
-  uint public INITIAL_SUPPLY = 10000000000000000 * (10 ** decimals);
+  uint public INITIAL_SUPPLY = 100000000 * (10 ** decimals);
 
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
