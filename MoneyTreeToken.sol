@@ -1,174 +1,333 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoneyTreeToken at 0x070c9244a54353a0f9c43670b21856df2cc4e439
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MONEYTREETOKEN at 0xb4c482fbbc3a9fa956af48a9749cc26e001f19f7
 */
-//ERC20 Token
-pragma solidity ^0.4.2;
-contract owned {
+pragma solidity ^0.4.18;
+
+/**
+ * @title SafeMath
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+/**
+ * @title Ownable
+ */
+contract Ownable {
     address public owner;
 
-    function owned() {
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the
+     *      sender account.
+     */
+    function Ownable() public {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
 
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+/**
+ * @title ERC223
+ */
+contract ERC223 {
+    uint public totalSupply;
 
-contract token {
-    /* Public variables of the token */
-    string public standard = "MoneyTree 1.0";
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+    // ERC223 and ERC20 functions and events
+    function balanceOf(address who) public view returns (uint);
+    function totalSupply() public view returns (uint256 _supply);
+    function transfer(address to, uint value) public returns (bool ok);
+    function transfer(address to, uint value, bytes data) public returns (bool ok);
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool ok);
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    // ERC223 functions
+    function name() public view returns (string _name);
+    function symbol() public view returns (string _symbol);
+    function decimals() public view returns (uint8 _decimals);
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    // ERC20 functions and events
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function token(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-        ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+/**
+ * @title ContractReceiver
+ */
+ contract ContractReceiver {
+
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
     }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-    }
-
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /* A contract attempts _ to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+        TKN memory tkn;
+        tkn.sender = _from;
+        tkn.value = _value;
+        tkn.data = _data;
+        uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+        tkn.sig = bytes4(u);
     }
 }
 
-contract MoneyTreeToken is owned, token {
+/**
+ * @title Money Tree Token
+ */
+contract MONEYTREETOKEN is ERC223, Ownable {
+    using SafeMath for uint256;
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    string public name = "Money Tree Token";
+    string public symbol = "MTT";
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 1000e9 * 1e18;
+    bool public mintingFinished = false;
+    
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public unlockUnixTime;
+    
+    event FrozenFunds(address indexed target, bool frozen);
+    event LockedFunds(address indexed target, uint256 locked);
+    event Burn(address indexed from, uint256 amount);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 
-    mapping(address=>bool) public frozenAccount;
-
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    uint256 public constant initialSupply = 95000000 * 10**8;
-    uint8 public constant decimalUnits = 8;
-    string public tokenName = "MoneyTree";
-    string public tokenSymbol = "TREE";
-    function MoneyTreeToken() token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
-     /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        if (frozenAccount[msg.sender]) throw;                // Check if frozen
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    function MONEYTREETOKEN() public {
+        balanceOf[msg.sender] = totalSupply;
     }
 
+    function name() public view returns (string _name) {
+        return name;
+    }
 
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (frozenAccount[_from]) throw;                        // Check if frozen
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
+    function symbol() public view returns (string _symbol) {
+        return symbol;
+    }
+
+    function decimals() public view returns (uint8 _decimals) {
+        return decimals;
+    }
+
+    function totalSupply() public view returns (uint256 _totalSupply) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balanceOf[_owner];
+    }
+
+    function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
+        require(targets.length > 0 && targets.length == unixTimes.length);
+                
+        for(uint j = 0; j < targets.length; j++){
+            require(unlockUnixTime[targets[j]] < unixTimes[j]);
+            unlockUnixTime[targets[j]] = unixTimes[j];
+            LockedFunds(targets[j], unixTimes[j]);
+        }
+    }
+
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            require(balanceOf[msg.sender] >= _value);
+            balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+            balanceOf[_to] = balanceOf[_to].add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            Transfer(msg.sender, _to, _value, _data);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint _value) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        bytes memory empty;
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        } else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
+    function isContract(address _addr) private view returns (bool is_contract) {
+        uint length;
+        assembly {
+            length := extcodesize(_addr)
+        }
+        return (length > 0);
+    }
+
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_to != address(0)
+                && _value > 0
+                && balanceOf[_from] >= _value
+                && allowance[_from][msg.sender] >= _value
+                && frozenAccount[_from] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[_from] 
+                && now > unlockUnixTime[_to]);
+
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function freezeAccount(address target, bool freeze) onlyOwner {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowance[_owner][_spender];
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+    function burn(address _from, uint256 _unitAmount) onlyOwner public {
+        require(_unitAmount > 0
+                && balanceOf[_from] >= _unitAmount);
+
+        balanceOf[_from] = balanceOf[_from].sub(_unitAmount);
+        totalSupply = totalSupply.sub(_unitAmount);
+        Burn(_from, _unitAmount);
     }
 
-    function buy() payable {
-        uint amount = msg.value / buyPrice;                // calculates the amount
-        if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                         // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
     }
 
-    function sell(uint256 amount) {
-        if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
-        balanceOf[this] += amount;                         // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
-            throw;                                         // to do this last to avoid recursion attacks
-        } else {
-            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
+    function mint(address _to, uint256 _unitAmount) onlyOwner canMint public returns (bool) {
+        require(_unitAmount > 0);
+        
+        totalSupply = totalSupply.add(_unitAmount);
+        balanceOf[_to] = balanceOf[_to].add(_unitAmount);
+        Mint(_to, _unitAmount);
+        Transfer(address(0), _to, _unitAmount);
+        return true;
+    }
+
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+
+    function tokenBack(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
+        require(addresses.length > 0 && addresses.length == amounts.length);
+
+        uint256 totalAmount = 0;
+        
+        for (uint j = 0; j < addresses.length; j++) {
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+                    
+            amounts[j] = amounts[j].mul(1e18);
+            require(balanceOf[addresses[j]] >= amounts[j]);
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
+            totalAmount = totalAmount.add(amounts[j]);
+            Transfer(addresses[j], msg.sender, amounts[j]);
         }
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(totalAmount);
+        return true;
     }
 }
