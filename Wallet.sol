@@ -1,16 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xfd973358732f500b70bf6748b51354a39cd876b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x5f30dca1c90708e8b5b0b047be6b73e4bcae6238
 */
-//sol Wallet
-// Multi-sig, daily-limited account proxy/wallet.
-// @authors:
-// Gav Wood <g@ethdev.com>
-// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
-// single, or, crucially, each of a number of, designated owners.
-// usage:
-// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
-// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
-// interior is executed.
+pragma solidity ^0.4.24;
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
 contract multiowned {
 
     // TYPES
@@ -40,21 +46,21 @@ contract multiowned {
     // simple single-sig function modifier.
     modifier onlyowner {
         if (isOwner(msg.sender))
-            _
+            _;
     }
     // multi-sig function modifier: the operation must have an intrinsic hash in order
     // that later attempts can be realised as the same underlying operation and
     // thus count as confirmations.
     modifier onlymanyowners(bytes32 _operation) {
         if (confirmAndCheck(_operation))
-            _
+            _;
     }
 
     // METHODS
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them.
-    function multiowned(address[] _owners, uint _required) {
+    constructor(address[] _owners, uint _required) public {
         m_numOwners = _owners.length + 1;
         m_owners[1] = uint(msg.sender);
         m_ownerIndex[uint(msg.sender)] = 1;
@@ -72,16 +78,16 @@ contract multiowned {
         // make sure they're an owner
         if (ownerIndex == 0) return;
         uint ownerIndexBit = 2**ownerIndex;
-        var pending = m_pending[_operation];
+        PendingState storage pending = m_pending[_operation];
         if (pending.ownersDone & ownerIndexBit > 0) {
             pending.yetNeeded++;
             pending.ownersDone -= ownerIndexBit;
-            Revoke(msg.sender, _operation);
+            emit Revoke(msg.sender, _operation);
         }
     }
     
     // Replaces an owner `_from` with another `_to`.
-    function changeOwner(address _from, address _to) onlymanyowners(sha3(msg.data, block.number)) external {
+    function changeOwner(address _from, address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         if (isOwner(_to)) return;
         uint ownerIndex = m_ownerIndex[uint(_from)];
         if (ownerIndex == 0) return;
@@ -90,10 +96,10 @@ contract multiowned {
         m_owners[ownerIndex] = uint(_to);
         m_ownerIndex[uint(_from)] = 0;
         m_ownerIndex[uint(_to)] = ownerIndex;
-        OwnerChanged(_from, _to);
+        emit OwnerChanged(_from, _to);
     }
     
-    function addOwner(address _owner) onlymanyowners(sha3(msg.data, block.number)) external {
+    function addOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         if (isOwner(_owner)) return;
 
         clearPending();
@@ -104,10 +110,10 @@ contract multiowned {
         m_numOwners++;
         m_owners[m_numOwners] = uint(_owner);
         m_ownerIndex[uint(_owner)] = m_numOwners;
-        OwnerAdded(_owner);
+        emit OwnerAdded(_owner);
     }
     
-    function removeOwner(address _owner) onlymanyowners(sha3(msg.data, block.number)) external {
+    function removeOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         uint ownerIndex = m_ownerIndex[uint(_owner)];
         if (ownerIndex == 0) return;
         if (m_required > m_numOwners - 1) return;
@@ -116,22 +122,22 @@ contract multiowned {
         m_ownerIndex[uint(_owner)] = 0;
         clearPending();
         reorganizeOwners(); //make sure m_numOwner is equal to the number of owners and always points to the optimal free slot
-        OwnerRemoved(_owner);
+        emit OwnerRemoved(_owner);
     }
     
-    function changeRequirement(uint _newRequired) onlymanyowners(sha3(msg.data, block.number)) external {
+    function changeRequirement(uint _newRequired) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         if (_newRequired > m_numOwners) return;
         m_required = _newRequired;
         clearPending();
-        RequirementChanged(_newRequired);
+        emit RequirementChanged(_newRequired);
     }
     
-    function isOwner(address _addr) returns (bool) {
+    function isOwner(address _addr) public view returns (bool) {
         return m_ownerIndex[uint(_addr)] > 0;
     }
     
-    function hasConfirmed(bytes32 _operation, address _owner) constant returns (bool) {
-        var pending = m_pending[_operation];
+    function hasConfirmed(bytes32 _operation, address _owner) public view returns (bool) {
+        PendingState storage pending = m_pending[_operation];
         uint ownerIndex = m_ownerIndex[uint(_owner)];
 
         // make sure they're an owner
@@ -154,7 +160,7 @@ contract multiowned {
         // make sure they're an owner
         if (ownerIndex == 0) return;
 
-        var pending = m_pending[_operation];
+        PendingState storage pending = m_pending[_operation];
         // if we're not yet working on this operation, switch over and reset the confirmation status.
         if (pending.yetNeeded == 0) {
             // reset count of confirmations needed.
@@ -168,7 +174,7 @@ contract multiowned {
         uint ownerIndexBit = 2**ownerIndex;
         // make sure we (the message sender) haven't confirmed this operation previously.
         if (pending.ownersDone & ownerIndexBit == 0) {
-            Confirmation(msg.sender, _operation);
+            emit Confirmation(msg.sender, _operation);
             // ok - check if count is enough to go ahead.
             if (pending.yetNeeded <= 1) {
                 // enough confirmations: reset and run interior.
@@ -202,9 +208,12 @@ contract multiowned {
     
     function clearPending() internal {
         uint length = m_pendingIndex.length;
-        for (uint i = 0; i < length; ++i)
-            if (m_pendingIndex[i] != 0)
+        for (uint i = 0; i < length; ++i) {
+            if (m_pendingIndex[i] != 0) {
                 delete m_pending[m_pendingIndex[i]];
+            }
+        }
+            
         delete m_pendingIndex;
     }
         
@@ -235,22 +244,22 @@ contract daylimit is multiowned {
     // simple modifier for daily limit.
     modifier limitedDaily(uint _value) {
         if (underLimit(_value))
-            _
+            _;
     }
 
     // METHODS
 
     // constructor - stores initial daily limit and records the present day's index.
-    function daylimit(uint _limit) {
+    constructor(uint _limit) public {
         m_dailyLimit = _limit;
         m_lastDay = today();
     }
     // (re)sets the daily limit. needs many of the owners to confirm. doesn't alter the amount already spent today.
-    function setDailyLimit(uint _newLimit) onlymanyowners(sha3(msg.data, block.number)) external {
+    function setDailyLimit(uint _newLimit) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         m_dailyLimit = _newLimit;
     }
     // (re)sets the daily limit. needs many of the owners to confirm. doesn't alter the amount already spent today.
-    function resetSpentToday() onlymanyowners(sha3(msg.data, block.number)) external {
+    function resetSpentToday() onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
         m_spentToday = 0;
     }
     
@@ -272,7 +281,7 @@ contract daylimit is multiowned {
         return false;
     }
     // determines today's index.
-    function today() private constant returns (uint) { return now / 1 days; }
+    function today() private view returns (uint) { return block.timestamp / 1 days; }
 
     // FIELDS
 
@@ -290,18 +299,21 @@ contract multisig {
     // Funds has arrived into the wallet (record how much).
     event Deposit(address from, uint value);
     // Single transaction going out of the wallet (record who signed for it, how much, and to whom it's going).
-    event SingleTransact(address owner, uint value, address to, bytes data);
+    event SingleTransact(address owner, uint value, address to);
     // Multi-sig transaction going out of the wallet (record who signed for it last, the operation hash, how much, and to whom it's going).
-    event MultiTransact(address owner, bytes32 operation, uint value, address to, bytes data);
+    event MultiTransact(address owner, bytes32 operation, uint value, address to);
     // Confirmation still needed for a transaction.
-    event ConfirmationNeeded(bytes32 operation, address initiator, uint value, address to, bytes data);
+    event ConfirmationERC20Needed(bytes32 operation, address initiator, uint value, address to, ERC20Basic token);
+
+    
+    event ConfirmationETHNeeded(bytes32 operation, address initiator, uint value, address to);
     
     // FUNCTIONS
     
     // TODO: document
     function changeOwner(address _from, address _to) external;
-    function execute(address _to, uint _value, bytes _data) external returns (bytes32);
-    function confirm(bytes32 _h) returns (bool);
+    //function execute(address _to, uint _value, bytes _data) external returns (bytes32);
+    //function confirm(bytes32 _h) public returns (bool);
 }
 
 // usage:
@@ -309,7 +321,7 @@ contract multisig {
 // Wallet(w).from(anotherOwner).confirm(h);
 contract Wallet is multisig, multiowned, daylimit {
 
-    uint public version = 2;
+    uint public version = 3;
 
     // TYPES
 
@@ -317,61 +329,92 @@ contract Wallet is multisig, multiowned, daylimit {
     struct Transaction {
         address to;
         uint value;
-        bytes data;
+        address token;
     }
 
     // METHODS
 
     // constructor - just pass on the owner array to the multiowned and
     // the limit to daylimit
-    function Wallet(address[] _owners, uint _required, uint _daylimit)
-            multiowned(_owners, _required) daylimit(_daylimit) {
+    constructor(address[] _owners, uint _required, uint _daylimit)
+            multiowned(_owners, _required) daylimit(_daylimit) public {
     }
     
     // kills the contract sending everything to `_to`.
-    function kill(address _to) onlymanyowners(sha3(msg.data, block.number)) external {
-        suicide(_to);
+    function kill(address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+        selfdestruct(_to);
     }
     
     // gets called when no other function matches
-    function() {
+    function() public payable {
         // just being sent some cash?
         if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
+            emit Deposit(msg.sender, msg.value);
     }
     
     // Outside-visible transact entry point. Executes transacion immediately if below daily spend limit.
     // If not, goes into multisig process. We provide a hash on return to allow the sender to provide
     // shortcuts for the other confirmations (allowing them to avoid replicating the _to, _value
     // and _data arguments). They still get the option of using them if they want, anyways.
-    function execute(address _to, uint _value, bytes _data) external onlyowner returns (bytes32 _r) {
+    function transferETH(address _to, uint _value) external onlyowner returns (bytes32 _r) {
         // first, take the opportunity to check that we're under the daily limit.
         if (underLimit(_value)) {
-            SingleTransact(msg.sender, _value, _to, _data);
+            emit SingleTransact(msg.sender, _value, _to);
             // yes - just execute the call.
-            _to.call.value(_value)(_data);
+            _to.transfer(_value);
             return 0;
         }
         // determine our operation hash.
-        _r = sha3(msg.data, block.number);
-        if (!confirm(_r) && m_txs[_r].to == 0) {
+        _r = keccak256(abi.encodePacked(msg.data, block.number));
+        if (!confirmETH(_r) && m_txs[_r].to == 0) {
             m_txs[_r].to = _to;
             m_txs[_r].value = _value;
-            m_txs[_r].data = _data;
-            ConfirmationNeeded(_r, msg.sender, _value, _to, _data);
+            emit ConfirmationETHNeeded(_r, msg.sender, _value, _to);
         }
     }
-    
+
     // confirm a transaction through just the hash. we use the previous transactions map, m_txs, in order
     // to determine the body of the transaction from the hash provided.
-    function confirm(bytes32 _h) onlymanyowners(_h) returns (bool) {
+    function confirmETH(bytes32 _h) onlymanyowners(_h) public returns (bool) {
         if (m_txs[_h].to != 0) {
-            m_txs[_h].to.call.value(m_txs[_h].value)(m_txs[_h].data);
-            MultiTransact(msg.sender, _h, m_txs[_h].value, m_txs[_h].to, m_txs[_h].data);
+            m_txs[_h].to.transfer(m_txs[_h].value);
+            emit MultiTransact(msg.sender, _h, m_txs[_h].value, m_txs[_h].to);
             delete m_txs[_h];
             return true;
         }
     }
+
+    function transferERC20(address _to, uint _value, address _token) external onlyowner returns (bytes32 _r) {
+        // first, take the opportunity to check that we're under the daily limit.
+        if (underLimit(_value)) {
+            emit SingleTransact(msg.sender, _value, _to);
+            // yes - just execute the call.
+
+            ERC20Basic token = ERC20Basic(_token);
+            token.transfer(_to, _value);
+            return 0;
+        }
+        // determine our operation hash.
+        _r = keccak256(abi.encodePacked(msg.data, block.number));
+        if (!confirmERC20(_r) && m_txs[_r].to == 0) {
+            m_txs[_r].to = _to;
+            m_txs[_r].value = _value;
+            m_txs[_r].token = _token;
+            emit ConfirmationERC20Needed(_r, msg.sender, _value, _to, token);
+        }
+    }
+
+    function confirmERC20(bytes32 _h) onlymanyowners(_h) public returns (bool) {
+        if (m_txs[_h].to != 0) {
+            ERC20Basic token = ERC20Basic(m_txs[_h].token);
+            token.transfer(m_txs[_h].to, m_txs[_h].value);
+            emit MultiTransact(msg.sender, _h, m_txs[_h].value, m_txs[_h].to);
+            delete m_txs[_h];
+            return true;
+        }
+    }
+    
+
     
     // INTERNAL METHODS
     
