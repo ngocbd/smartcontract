@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0xe090549e3d46aed901c64adac9771032713c21b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0xe170979cd60f6b649bc8b07629dcc82b956cd565
 */
 pragma solidity ^0.4.24;
 
@@ -100,9 +100,9 @@ contract ESSENTIA_ERC20 is Ownable {
 
 
 
-    /* Public variables for the ERC20 token */
+    // Public variables for the ESSENTIA ERC20 ESS token contract
     string public constant standard = "ESSENTIA erc20 and Genesis";
-    uint8 public constant decimals = 18; // hardcoded to be a constant
+    uint256 public constant decimals = 18;   // hardcoded to be a constant
     string public name = "ESSENTIA";
     string public symbol = "ESS";
     uint256 public totalSupply;
@@ -173,7 +173,7 @@ contract ESSENTIA_ERC20 is Ownable {
         return true;
     }
 
-    /*  and then communicate the  contract in a single tx */
+    /* Approve and then communicate the approved contract in a single tx */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
 
@@ -191,6 +191,11 @@ interface tokenRecipient {
 }
 
 
+//
+// This creates and adds two genesis pools of ESS tokens to the balance of the A and B ETH addresses
+// The A/B ESS Genesis pools are 35/65 of the A+B total ESS Token supply. Integer rounded
+//
+
 
 contract ESSENTIA is ESSENTIA_ERC20 {
 
@@ -203,8 +208,8 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
         ) public {
 
-        A = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
-        B = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
+        A = 0x9cDc027edFD6D4fa1dbe4D0Fa75B9D67f1f6c69D;
+        B = 0x9cDc027edFD6D4fa1dbe4D0Fa75B9D67f1f6c69D;
 
 
         balances[A]=balances[A].add(614359681*(uint256(10)**decimals));
@@ -214,6 +219,5 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
 
     }
-
 
 }
