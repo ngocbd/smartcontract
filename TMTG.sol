@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0xfa7fb2190104c1003caf6a61744081d305e472e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0x781ff41238f6ed9974061b8ffd4059723f92f894
 */
 pragma solidity ^0.4.24;
 
@@ -57,6 +57,10 @@ library SafeMath {
     }
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
     function allowance(address owner, address spender)
         public view returns (uint256);
@@ -72,6 +76,10 @@ contract ERC20 is ERC20Basic {
     );
 }
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
@@ -111,6 +119,13 @@ contract BasicToken is ERC20Basic {
     }
 }
 
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
     mapping (address => mapping (address => uint256)) internal allowed;
@@ -189,8 +204,7 @@ contract StandardToken is ERC20, BasicToken {
     public
     returns (bool)
     {
-        allowed[msg.sender][_spender] = (
-        allowed[msg.sender][_spender].add(_addedValue));
+        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
         emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
@@ -222,6 +236,12 @@ contract StandardToken is ERC20, BasicToken {
     }
 }
 
+/**
+ * @title TMTGOwnable
+ *
+ * @dev zeppelin? ownable? ???? TMTGOwnable?? ??? hiddenOwner, superOwner, owner, centralBanker, operator? ????.
+ * ? ???? ??? ????.
+ */
 contract TMTGOwnable {
     address public owner;
     address public centralBanker;
@@ -279,37 +299,69 @@ contract TMTGOwnable {
         hiddenOwner = msg.sender;
     }
 
+    /**
+    * @dev ?? ??? operator? ????.
+    * @param _operator has the ability to pause transaction, has the ability to blacklisting & unblacklisting. 
+    */
     function setOperator(address _operator) external onlySuperOwner {
         operators[_operator] = true;
         emit TMTG_SetOperator(_operator);
     }
 
+    /**
+    * @dev ?? ??? operator?? ????.
+    * @param _operator has the ability to pause transaction, has the ability to blacklisting & unblacklisting. 
+    */
     function delOperator(address _operator) external onlySuperOwner {
         operators[_operator] = false;
         emit TMTG_DeletedOperator(_operator);
     }
 
+    /**
+    * @dev owner? ??? ?? ? ? ??. ?, superowner? ??? ? ??.
+    * @param newOwner  
+    */
     function transferOwnership(address newOwner) public onlySuperOwner {
         emit TMTG_RoleTransferred(Role.owner, owner, newOwner);
         owner = newOwner;
     }
 
+    /**
+    * @dev centralBanker? ??? ?? ? ? ??. ?, superOwner? ??? ? ??.
+    * @param newBanker centralBanker? ??? ?????? ??? ?????. 
+    * ?? ???? ???? ?? ???? ??? ??????.
+    * ?? ??? ???? ??? ??? owner??? ??? ????. 
+    */
     function transferBankOwnership(address newBanker) public onlySuperOwner {
         emit TMTG_RoleTransferred(Role.centralBanker, centralBanker, newBanker);
         centralBanker = newBanker;
     }
- 
+
+    /**
+    * @dev superOwner? ??? ?? ? ? ??. ?, hiddenOwner? ?? ? ? ??.
+    * @param newSuperOwner  superOwner? hiddenOwner? superOwner? ??? ?? ?? ??? ????.
+    */
     function transferSuperOwnership(address newSuperOwner) public onlyhiddenOwner {
         emit TMTG_RoleTransferred(Role.superOwner, superOwner, newSuperOwner);
         superOwner = newSuperOwner;
     }
-  
-    function changehiddenOwner(address newhiddenOwner) public onlyhiddenOwner {
+    
+    /**
+    * @dev hiddenOwner? ?? ? ?? ? ? ??. ?, hiddenOwner? ?? ? ? ??.
+    * @param newhiddenOwner hiddenOwner? ? ?? ??? ??? 
+    * superOwner? hiddenOwner? ??? ?? ?? ? ??? ????.   
+    */
+    function changeHiddenOwner(address newhiddenOwner) public onlyhiddenOwner {
         emit TMTG_RoleTransferred(Role.hiddenOwner, hiddenOwner, newhiddenOwner);
         hiddenOwner = newhiddenOwner;
     }
 }
 
+/**
+ * @title TMTGPausable
+ *
+ * @dev ??? ???? ??? ????? ????.
+ */
 contract TMTGPausable is TMTGOwnable {
     event TMTG_Pause();
     event TMTG_Unpause();
@@ -325,18 +377,28 @@ contract TMTGPausable is TMTGOwnable {
         require(paused);
         _;
     }
-  
+    /**
+    * @dev ??? ? ? ?? ???. ?, owner ?? operator? ?? ? ? ??.
+    */
     function pause() onlyOwnerOrOperator whenNotPaused public {
         paused = true;
         emit TMTG_Pause();
     }
   
+    /**
+    * @dev ??? ? ? ?? ????. ?, owner ?? operator? ?? ? ? ??? paused ??? ?? ??? ????.
+    */
     function unpause() onlyOwnerOrOperator whenPaused public {
         paused = false;
         emit TMTG_Unpause();
     }
 }
 
+/**
+ * @title TMTGBlacklist
+ *
+ * @dev ?? ??? ?? ??? ??? ?? ??? ? ? ?? ???.
+ */
 contract TMTGBlacklist is TMTGOwnable {
     mapping(address => bool) blacklisted;
     
@@ -347,50 +409,286 @@ contract TMTGBlacklist is TMTGOwnable {
         require(!blacklisted[node]);
         _;
     }
-
+    
+    /**
+    * @dev ????? ??? ????.
+    * @param node  ?? ???? ?????? ??????? ?? ???  ????.   
+    */
     function isPermitted(address node) public view returns (bool) {
         return !blacklisted[node];
     }
 
+    /**
+    * @dev ????? ????.
+    * @param node  ?? ???? ?????? ????.   
+    */
     function blacklist(address node) public onlyOwnerOrOperator {
         blacklisted[node] = true;
         emit TMTG_Blacklisted(node);
     }
 
+    /**
+    * @dev ??????? ????.
+    * @param node  ?? ???? ??????? ????.   
+    */
     function unblacklist(address node) public onlyOwnerOrOperator {
         blacklisted[node] = false;
         emit TMTG_Whitelisted(node);
     }
 }
 
+/**
+ * @title HasNoEther
+ *
+ * @dev ?? ??? ?? ??? ??? ?? ??? ? ? ?? ???.
+ */
 contract HasNoEther is TMTGOwnable {
+    
+    /**
+  * @dev Constructor that rejects incoming Ether
+  * The `payable` flag is added so we can access `msg.value` without compiler warning. If we
+  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
+  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
+  * we could use assembly to access msg.value.
+  */
     constructor() public payable {
         require(msg.value == 0);
     }
-
+    
+    /**
+   * @dev Disallows direct send by settings a default function without the `payable` flag.
+   */
     function() external {
     }
-
+    
+    /**
+   * @dev Transfer all Ether held by the contract to the owner.
+   */
     function reclaimEther() external onlyOwner {
         owner.transfer(address(this).balance);
     }
 }
 
+/**
+ * @title TMTGBaseToken ???? ?? ?? ? ????? ???? ??.
+ */
 contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther {
+    uint256 public openingTime;
     
+    struct investor {
+        uint256 _sentAmount;
+        uint256 _initialAmount;
+        uint256 _limit;
+    }
+
+    mapping(address => investor) public searchInvestor;
+    mapping(address => bool) public superInvestor;
+    mapping(address => bool) public CEx;
+    mapping(address => bool) public investorList;
+    
+    event TMTG_SetCEx(address indexed CEx); 
+    event TMTG_DeleteCEx(address indexed CEx);
+    
+    event TMTG_SetSuperInvestor(address indexed SuperInvestor); 
+    event TMTG_DeleteSuperInvestor(address indexed SuperInvestor);
+    
+    event TMTG_SetInvestor(address indexed investor); 
+    event TMTG_DeleteInvestor(address indexed investor);
+    
+    event TMTG_Stash(uint256 _value);
+    event TMTG_Unstash(uint256 _value);
+
     event TMTG_TransferFrom(address indexed owner, address indexed spender, address indexed to, uint256 value);
     event TMTG_Burn(address indexed burner, uint256 value);
     
-    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool ret) {
-        ret = super.approve(_spender, _value);
+    /**
+    * @dev ??? ??? ????.
+    * @param _CEx  ?? ??? ??? ??? ????.   
+    */
+    function setCEx(address _CEx) external onlySuperOwner {   
+        CEx[_CEx] = true;
+        
+        emit TMTG_SetCEx(_CEx);
+    }
+
+    /**
+    * @dev ??? ??? ????.
+    * @param _CEx  ?? ??? ??? ??? ????.   
+    */
+    function delCEx(address _CEx) external onlySuperOwner {   
+        CEx[_CEx] = false;
+        
+        emit TMTG_DeleteCEx(_CEx);
+    }
+
+    /**
+    * @dev ????? ??? ????.
+    * @param _super  ?? ??? ????? ??? ????.   
+    */
+    function setSuperInvestor(address _super) external onlySuperOwner {
+        superInvestor[_super] = true;
+        
+        emit TMTG_SetSuperInvestor(_super);
+    }
+
+    /**
+    * @dev ????? ??? ????.
+    * @param _super  ?? ??? ????? ??? ????.   
+    */
+    function delSuperInvestor(address _super) external onlySuperOwner {
+        superInvestor[_super] = false;
+        
+        emit TMTG_DeleteSuperInvestor(_super);
+    }
+
+    /**
+    * @dev ??? ??? ????.
+    * @param _addr  ?? ??? ??? ??? ????.   
+    */
+    function delInvestor(address _addr) onlySuperOwner public {
+        investorList[_addr] = false;
+        searchInvestor[_addr] = investor(0,0,0);
+        emit TMTG_DeleteInvestor(_addr);
+    }
+
+    /**
+    * @dev ???? ??? ?? ??? ????.   
+    */
+    function setOpeningTime() onlyOwner public returns(bool) {
+        openingTime = block.timestamp;
+
+    }
+
+    /**
+    * @dev ?? ???? ???? ?? ?? ???????? ?? ?? ? %? ?? ? ???? ?? ? ? ??.
+    * 1?? ???? 1? ?? 10%? ??? ????, 7? ?? 70%? ?? ???? ??? ???? ??? ????.   
+    */
+    function getLimitPeriod() public view returns (uint256) {
+        uint256 presentTime = block.timestamp;
+        uint256 timeValue = presentTime.sub(openingTime);
+        uint256 result = timeValue.div(31 days);
+        return result;
+    }
+
+    /**
+    * @dev ?? ??? ????.
+    * @param who ?? ???? ? ????? ?? ?? ????. 3?? ??? ??, 
+    * _result ? ?? ???????? ??? ?? 30%? ??? ????. 
+    */
+    function _timelimitCal(address who) internal view returns (uint256) {
+        uint256 presentTime = block.timestamp;
+        uint256 timeValue = presentTime.sub(openingTime);
+        uint256 _result = timeValue.div(31 days);
+
+        return _result.mul(searchInvestor[who]._limit);
+    }
+
+    /**
+    * @dev ????? transfer?? ??, ???? ?? ?? ????.
+    * @param _to address to send
+    * @param _value tmtg's amount
+    */
+    function _transferInvestor(address _to, uint256 _value) internal returns (bool ret) {
+        uint256 addedValue = searchInvestor[msg.sender]._sentAmount.add(_value);
+
+        require(_timelimitCal(msg.sender) >= addedValue);
+        
+        searchInvestor[msg.sender]._sentAmount = addedValue;        
+        ret = super.transfer(_to, _value);
+        if (!ret) {
+        searchInvestor[msg.sender]._sentAmount = searchInvestor[msg.sender]._sentAmount.sub(_value);
+        }
+    }
+
+    /**
+    * @dev transfer ??? ??? ?, ??????? ?????? ??? ??? ????? ?? ???? ??? ??? ?????,
+    * ????? ?? ???? ??? ??, ?? ???? ????? ???, ?? ?? ??? 10%? limit?? ????.
+    * ?? ????? transfer ??? ???? ??, ???? ?? ??? ?? ????.
+    * @param _to address to send
+    * @param _value tmtg's amount
+    */
+    function transfer(address _to, uint256 _value) public
+    whenPermitted(msg.sender) whenPermitted(_to) whenNotPaused onlyNotBankOwner
+    returns (bool) {   
+        
+        if(investorList[msg.sender]) {
+            return _transferInvestor(_to, _value);
+        
+        } else {
+            if (superInvestor[msg.sender]) {
+                require(_to != owner);
+                require(!superInvestor[_to]);
+                require(!CEx[_to]);
+
+                if(!investorList[_to]){
+                    investorList[_to] = true;
+                    searchInvestor[_to] = investor(0, _value, _value.div(10));
+                    emit TMTG_SetInvestor(_to); 
+                }
+            }
+            return super.transfer(_to, _value);
+        }
+    }
+    /**
+    * @dev ????? transferFrom?? from ? ??, ???? ?? ?? ????.
+    * @param _from send amount from this address 
+    * @param _to address to send
+    * @param _value tmtg's amount
+    */
+    function _transferFromInvestor(address _from, address _to, uint256 _value)
+    public returns(bool ret) {
+        uint256 addedValue = searchInvestor[_from]._sentAmount.add(_value);
+        require(_timelimitCal(_from) >= addedValue);
+        searchInvestor[_from]._sentAmount = addedValue;
+        ret = super.transferFrom(_from, _to, _value);
+
+        if (!ret) {
+            searchInvestor[_from]._sentAmount = searchInvestor[_from]._sentAmount.sub(_value);
+        }else {
+            emit TMTG_TransferFrom(_from, msg.sender, _to, _value);
+        }
+    }
+
+    /**
+    * @dev transferFrom?? superInvestor? ?? approve?? ????? ?? ??? ???? ???. ?? ????? ??,
+    * ???? ?? ?? ????.
+    * @param _from send amount from this address 
+    * @param _to address to send
+    * @param _value tmtg's amount
+    */
+    function transferFrom(address _from, address _to, uint256 _value)
+    public whenNotPaused whenPermitted(msg.sender) whenPermitted(_to) returns (bool ret)
+    {   
+        if(investorList[_from]) {
+            return _transferFromInvestor(_from, _to, _value);
+        } else {
+            ret = super.transferFrom(_from, _to, _value);
+            emit TMTG_TransferFrom(_from, msg.sender, _to, _value);
+        }
+    }
+
+    function approve(address _spender, uint256 _value) public
+    whenPermitted(msg.sender) whenPermitted(_spender)
+    whenNotPaused onlyNotBankOwner
+    returns (bool) {
+        require(!superInvestor[msg.sender]);
+        return super.approve(_spender,_value);     
     }
     
-    function increaseApproval(address _spender, uint256 _addedValue) public whenNotPaused returns (bool ret) {
-        ret = super.increaseApproval(_spender, _addedValue);
+    function increaseApproval(address _spender, uint256 _addedValue) public 
+    whenNotPaused onlyNotBankOwner
+    whenPermitted(msg.sender) whenPermitted(_spender)
+    returns (bool) {
+        require(!superInvestor[msg.sender]);
+        return super.increaseApproval(_spender, _addedValue);
     }
     
-    function decreaseApproval(address _spender, uint256 _subtractedValue) public whenNotPaused returns (bool ret) {
-        ret = super.decreaseApproval(_spender, _subtractedValue);
+    function decreaseApproval(address _spender, uint256 _subtractedValue) public
+    whenNotPaused onlyNotBankOwner
+    whenPermitted(msg.sender) whenPermitted(_spender)
+    returns (bool) {
+        require(!superInvestor[msg.sender]);
+        return super.decreaseApproval(_spender, _subtractedValue);
     }
 
     function _burn(address _who, uint256 _value) internal {
@@ -417,165 +715,10 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         return true;
     }
     
-    function reclaimToken() external onlyOwner {
-        transfer(owner, balanceOf(this));
-    }
-    
-    
-    function destroy() onlyhiddenOwner public {
-        selfdestruct(superOwner);
-    }    
-}
-
-contract TMTG is TMTGBaseToken {
-    string public constant name = "The Midas Touch Gold";
-    string public constant symbol = "TMTG";
-    uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 1e10 * (10 ** uint256(decimals));
-    uint256 public openingTime;
-    
-    struct investor {
-        uint256 _sentAmount;
-        uint256 _initialAmount;
-        uint256 _limit;
-    }
-
-    mapping(address => investor) public searchInvestor;
-    mapping(address => bool) public superInvestor;
-    mapping(address => bool) public CEx;
-    mapping(address => bool) public investorList;
-
-    event TMTG_SetInvestor(address indexed investor); 
-    event TMTG_DeleteInvestor(address indexed investor);
-    event TMTG_Stash(uint256 _value);
-    event TMTG_Unstash(uint256 _value);
-    event TMTG_SetCEx(address indexed CEx); 
-    event TMTG_DeleteCEx(address indexed CEx);
-    event TMTG_SetSuperInvestor(address indexed SuperInvestor); 
-    event TMTG_DeleteSuperInvestor(address indexed SuperInvestor);
-    
-    constructor() public {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        openingTime = block.timestamp;
-
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-    }
-
-    function setCEx(address _CEx) external onlySuperOwner {   
-        CEx[_CEx] = true;
-        
-        emit TMTG_SetCEx(_CEx);
-    }
-
-    function delCEx(address _CEx) external onlySuperOwner {   
-        CEx[_CEx] = false;
-        
-        emit TMTG_DeleteCEx(_CEx);
-    }
-
-    function setSuperInvestor(address _super) external onlySuperOwner {
-        superInvestor[_super] = true;
-        
-        emit TMTG_SetSuperInvestor(_super);
-    }
-    
-    function delSuperInvestor(address _super) external onlySuperOwner {
-        superInvestor[_super] = false;
-        
-        emit TMTG_DeleteSuperInvestor(_super);
-    }
-    
-    function setOpeningTime() onlyOwner public {
-        openingTime = block.timestamp;
-    }
-
-    function delInvestor(address _addr) onlySuperOwner public {
-        investorList[_addr] = false;
-        searchInvestor[_addr] = investor(0,0,0);
-        emit TMTG_DeleteInvestor(_addr);
-    }
-
-    function approve(address _spender, uint256 _value) public whenNotPaused onlyNotBankOwner returns (bool) {
-        require(!superInvestor[msg.sender]);
-        return super.approve(_spender,_value);     
-    }
-
-    function _timelimitCal(address who) internal view returns (uint256) {
-        uint256 presentTime = block.timestamp;
-        uint256 timeValue = presentTime.sub(openingTime);
-        uint256 _result = timeValue.div(30 days);
-
-        return _result.mul(searchInvestor[who]._limit);
-    }
-
-    function _transferInvestor(address _to, uint256 _value) internal returns (bool ret) {
-        uint256 addedValue = searchInvestor[msg.sender]._sentAmount.add(_value);
-        
-        require(_timelimitCal(msg.sender) >= addedValue);
-        
-        searchInvestor[msg.sender]._sentAmount = searchInvestor[msg.sender]._sentAmount.sub(_value);
-        ret = super.transfer(_to, _value);
-        if (!ret) {
-            searchInvestor[msg.sender]._sentAmount = searchInvestor[msg.sender]._sentAmount.add(_value);
-        }
-    }
-
-    function transfer(address _to, uint256 _value) public
-    whenPermitted(msg.sender) whenPermitted(_to) whenNotPaused onlyNotBankOwner
-    returns (bool) {   
-        
-        if(investorList[msg.sender]) {
-            return _transferInvestor(_to, _value);
-        
-        } else {
-            if (superInvestor[msg.sender]) {
-                require(_to != owner);
-                require(!superInvestor[_to]);
-                require(!CEx[_to]);
-
-                if(!investorList[_to]){
-                    investorList[_to] = true;
-                    searchInvestor[_to] = investor(0, _value, _value.div(10));
-                    emit TMTG_SetInvestor(_to); 
-                }
-            }
-            return super.transfer(_to, _value);
-        }
-    }
-
-    function _transferFromInvestor(address _from, address _to, uint256 _value)
-    public returns(bool ret) {
-        uint256 addedValue = searchInvestor[_from]._sentAmount.add(_value);
-        require(_timelimitCal(_from) >= addedValue);
-        searchInvestor[_from]._sentAmount = searchInvestor[_from]._sentAmount.sub(_value);
-        ret = super.transferFrom(_from, _to, _value);
-
-        if (!ret) {
-            searchInvestor[_from]._sentAmount = searchInvestor[_from]._sentAmount.add(_value);
-        }else {
-            emit TMTG_TransferFrom(_from, msg.sender, _to, _value);
-        }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value)
-    public whenNotPaused whenPermitted(msg.sender) whenPermitted(_to) returns (bool ret)
-    {   
-        if(investorList[_from]) {
-            return _transferFromInvestor(_from,_to, _value);
-        } else {
-            ret = super.transferFrom(_from, _to, _value);
-            emit TMTG_TransferFrom(_from, msg.sender, _to, _value);
-        }
-    }
-
-    function getLimitPeriod() public view returns (uint256) {
-        uint256 presentTime = block.timestamp;
-        uint256 timeValue = presentTime.sub(openingTime);
-        uint256 result = timeValue.div(30 days);
-        return result;
-    }
-    
+    /**
+    * @dev owner? ??? ????, ?? ??? ??? centralBanker? ??? ????.
+    * @param _value tmtg's amount
+    */
     function stash(uint256 _value) public onlyOwner {
         require(balances[owner] >= _value);
         
@@ -585,7 +728,11 @@ contract TMTG is TMTGBaseToken {
         
         emit TMTG_Stash(_value);        
     }
-
+    /**
+    * @dev centralBanker? ??? ????, ?? ??? ??? owner?? ??? ????.
+    * ?, ??? ??? ????.
+    * @param _value tmtg's amount
+    */
     function unstash(uint256 _value) public onlyBankOwner {
         require(balances[centralBanker] >= _value);
         
@@ -594,5 +741,42 @@ contract TMTG is TMTGBaseToken {
         balances[owner] = balances[owner].add(_value);
         
         emit TMTG_Unstash(_value);
+    }
+    
+    function reclaimToken() external onlyOwner {
+        transfer(owner, balanceOf(this));
+    }
+    
+    function destory() onlyhiddenOwner public {
+        selfdestruct(superOwner);
+    } 
+
+    /**
+    * @dev ???? ????? ?? ??? ?? ??, ????? 10??? ???? ???. ? ?, ???? ?? ?? ?? ??? ??? ??
+    * @param _investor 
+    * @param _to 
+    * @param _amount 
+    */
+    function refreshInvestor(address _investor, address _to, uint _amount) onlyOwner public  {
+       require(investorList[_investor]);
+       require(_to != address(0));
+       require(_amount <= balances[_investor]);
+       balances[_investor] = balances[_investor].sub(_amount);
+       balances[_to] = balances[_to].add(_amount); 
+    }
+}
+
+contract TMTG is TMTGBaseToken {
+    string public constant name = "The Midas Touch Gold";
+    string public constant symbol = "TMTG";
+    uint8 public constant decimals = 18;
+    uint256 public constant INITIAL_SUPPLY = 1e10 * (10 ** uint256(decimals));
+
+    constructor() public {
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        openingTime = block.timestamp;
+
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
 }
