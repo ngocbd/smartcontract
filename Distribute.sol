@@ -1,370 +1,85 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x0cf80e6f69846a12fee265ec6afbd5d172beb2a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xdf6fbcc8a17cd1643581a436a909d29327fa7e20
 */
 pragma solidity ^0.4.24;
 
-contract Ownable {
-  address public owner;
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
   /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
-contract RBAC {
-  using Roles for Roles.Role;
+// File: contracts/Distribute.sol
 
-  mapping (string => Roles.Role) private roles;
+contract Distribute {
 
-  event RoleAdded(address indexed operator, string role);
-  event RoleRemoved(address indexed operator, string role);
+    using SafeMath for SafeMath;
 
-  /**
-   * @dev reverts if addr does not have role
-   * @param _operator address
-   * @param _role the name of the role
-   * // reverts
-   */
-  function checkRole(address _operator, string _role)
-    view
-    public
-  {
-    roles[_role].check(_operator);
-  }
+    address public netAddress = 0x88888888c84198BCc5CEb4160d13726F22c151Ab;
 
-  /**
-   * @dev determine if addr has role
-   * @param _operator address
-   * @param _role the name of the role
-   * @return bool
-   */
-  function hasRole(address _operator, string _role)
-    view
-    public
-    returns (bool)
-  {
-    return roles[_role].has(_operator);
-  }
+    address public otherAddress = 0x8e83D33aB48b110B7C3DF8C6F5D02191aF9b80FD;
 
-  /**
-   * @dev add a role to an address
-   * @param _operator address
-   * @param _role the name of the role
-   */
-  function addRole(address _operator, string _role)
-    internal
-  {
-    roles[_role].add(_operator);
-    emit RoleAdded(_operator, _role);
-  }
+    uint proportionA = 94;
+    uint proportionB = 6;
+    uint base = 100;
 
-  /**
-   * @dev remove a role from an address
-   * @param _operator address
-   * @param _role the name of the role
-   */
-  function removeRole(address _operator, string _role)
-    internal
-  {
-    roles[_role].remove(_operator);
-    emit RoleRemoved(_operator, _role);
-  }
+    constructor() public {
 
-  /**
-   * @dev modifier to scope access to a single role (uses msg.sender as addr)
-   * @param _role the name of the role
-   * // reverts
-   */
-  modifier onlyRole(string _role)
-  {
-    checkRole(msg.sender, _role);
-    _;
-  }
-
-  /**
-   * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
-   * @param _roles the names of the roles to scope access to
-   * // reverts
-   *
-   * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
-   *  see: https://github.com/ethereum/solidity/issues/2467
-   */
-  // modifier onlyRoles(string[] _roles) {
-  //     bool hasAnyRole = false;
-  //     for (uint8 i = 0; i < _roles.length; i++) {
-  //         if (hasRole(msg.sender, _roles[i])) {
-  //             hasAnyRole = true;
-  //             break;
-  //         }
-  //     }
-
-  //     require(hasAnyRole);
-
-  //     _;
-  // }
-}
-
-contract Whitelist is Ownable, RBAC {
-  string public constant ROLE_WHITELISTED = "whitelist";
-
-  /**
-   * @dev Throws if operator is not whitelisted.
-   * @param _operator address
-   */
-  modifier onlyIfWhitelisted(address _operator) {
-    checkRole(_operator, ROLE_WHITELISTED);
-    _;
-  }
-
-  /**
-   * @dev add an address to the whitelist
-   * @param _operator address
-   * @return true if the address was added to the whitelist, false if the address was already in the whitelist
-   */
-  function addAddressToWhitelist(address _operator)
-    onlyOwner
-    public
-  {
-    addRole(_operator, ROLE_WHITELISTED);
-  }
-
-  /**
-   * @dev getter to determine if address is in whitelist
-   */
-  function whitelist(address _operator)
-    public
-    view
-    returns (bool)
-  {
-    return hasRole(_operator, ROLE_WHITELISTED);
-  }
-
-  /**
-   * @dev add addresses to the whitelist
-   * @param _operators addresses
-   * @return true if at least one address was added to the whitelist,
-   * false if all addresses were already in the whitelist
-   */
-  function addAddressesToWhitelist(address[] _operators)
-    onlyOwner
-    public
-  {
-    for (uint256 i = 0; i < _operators.length; i++) {
-      addAddressToWhitelist(_operators[i]);
-    }
-  }
-
-  /**
-   * @dev remove an address from the whitelist
-   * @param _operator address
-   * @return true if the address was removed from the whitelist,
-   * false if the address wasn't in the whitelist in the first place
-   */
-  function removeAddressFromWhitelist(address _operator)
-    onlyOwner
-    public
-  {
-    removeRole(_operator, ROLE_WHITELISTED);
-  }
-
-  /**
-   * @dev remove addresses from the whitelist
-   * @param _operators addresses
-   * @return true if at least one address was removed from the whitelist,
-   * false if all addresses weren't in the whitelist in the first place
-   */
-  function removeAddressesFromWhitelist(address[] _operators)
-    onlyOwner
-    public
-  {
-    for (uint256 i = 0; i < _operators.length; i++) {
-      removeAddressFromWhitelist(_operators[i]);
-    }
-  }
-
-}
-
-contract Distribute is Whitelist {
-    using SafeERC20 for ERC20;
-
-    event TokenReleased(address indexed buyer, uint256 amount);
-
-    ERC20 public Token;
-
-    constructor(address token) public {
-        require(token != address(0));
-        Token = ERC20(token);
     }
 
-    function release(address beneficiary, uint256 amount)
-        public
-        onlyIfWhitelisted(msg.sender)
-    {
-        Token.safeTransfer(beneficiary, amount);
-        emit TokenReleased(beneficiary, amount);
+    function() payable public {
+        require(msg.value > 0);
+
+        netAddress.transfer(SafeMath.div(SafeMath.mul(msg.value, proportionA), base));
+        otherAddress.transfer(SafeMath.div(SafeMath.mul(msg.value, proportionB), base));
+
     }
 
-    function releaseMany(address[] beneficiaries, uint256[] amounts)
-        external
-        onlyIfWhitelisted(msg.sender)
-    {
-        require(beneficiaries.length == amounts.length);
-        for (uint256 i = 0; i < beneficiaries.length; i++) {
-            release(beneficiaries[i], amounts[i]);
-        }
-    }
 
-    function withdraw()
-        public
-        onlyOwner
-    {
-        Token.safeTransfer(owner, Token.balanceOf(address(this)));
-    }
-
-    function close()
-        external
-        onlyOwner
-    {
-        withdraw();
-        selfdestruct(owner);
-    }
-}
-
-library Roles {
-  struct Role {
-    mapping (address => bool) bearer;
-  }
-
-  /**
-   * @dev give an address access to this role
-   */
-  function add(Role storage role, address addr)
-    internal
-  {
-    role.bearer[addr] = true;
-  }
-
-  /**
-   * @dev remove an address' access to this role
-   */
-  function remove(Role storage role, address addr)
-    internal
-  {
-    role.bearer[addr] = false;
-  }
-
-  /**
-   * @dev check if an address has this role
-   * // reverts
-   */
-  function check(Role storage role, address addr)
-    view
-    internal
-  {
-    require(has(role, addr));
-  }
-
-  /**
-   * @dev check if an address has this role
-   * @return bool
-   */
-  function has(Role storage role, address addr)
-    view
-    internal
-    returns (bool)
-  {
-    return role.bearer[addr];
-  }
-}
-
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    require(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    require(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
-  }
 }
