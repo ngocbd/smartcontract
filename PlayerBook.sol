@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xd085acfc0fdaa418e03e8570ef9a4e25a0e14ecf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xA80aFF4455a89667de2b892aa2B0AF60aA5d2532
 */
 pragma solidity ^0.4.24;
 
@@ -14,7 +14,7 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    address private communityAddr = 0x3705B81d42199138E53FB0Ad57613ce309576077;
+    address private communityAddr = 0x82B0721A8c142C6203F4cF58f80629E15b02a504;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -46,10 +46,10 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0xC018492974D65c3B3A9FcE1B9f7577505F31A7D8;
+        plyr_[1].addr = 0x2f70dA23098d845CeB84f771129D04A79A9dB68B;
         plyr_[1].name = "daddy";
         plyr_[1].names = 1;
-        pIDxAddr_[0xC018492974D65c3B3A9FcE1B9f7577505F31A7D8] = 1;
+        pIDxAddr_[0x2f70dA23098d845CeB84f771129D04A79A9dB68B] = 1;
         pIDxName_["daddy"] = 1;
         plyrNames_[1]["daddy"] = true;
         plyrNameList_[1][1] = "daddy";
@@ -581,6 +581,29 @@ contract PlayerBook {
         
 } 
 
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? dddos ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 library NameFilter {
     
     /**
