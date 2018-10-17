@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0xacc4f39866cf8e9fd5f011378f64e566d7933522
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x846d5bafe97a82f0f9d561ba228a9e785583d1e3
 */
 pragma solidity ^0.4.24;
 
@@ -307,7 +307,6 @@ contract Zlots is ZethrShell {
         uint200 tokenValue; // Token value in uint
         uint48 blockn;      // Block number 48 bits
         uint8 tier;
-        uint divRate;
     }
 
     // Mapping because a player can do one spin at a time
@@ -344,7 +343,6 @@ contract Zlots is ZethrShell {
         spin.blockn = uint48(block.number);
         spin.tokenValue = uint200(_wagered);
         spin.tier = uint8(ZethrTierLibrary.getTier(divRate));
-        spin.divRate = divRate;
 
         // Store the roll struct - 20k gas.
         playerSpins[_tkn.sender] = spin;
@@ -377,7 +375,6 @@ contract Zlots is ZethrShell {
 
         uint profit = 0;
         uint category = 0;
-        uint playerDivrate = spin.divRate;
 
         // If the block is more than 255 blocks old, we can't get the result
         // Also, if the result has already happened, fail as well
@@ -399,7 +396,7 @@ contract Zlots is ZethrShell {
             RequestBankrollPayment(zlotsJackpot, spin.tokenValue / 100, tier);
 
             // Null out player spin
-            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0), uint(0));
+            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0));
 
             emit Loss(target, spin.blockn);
             emit LogResult(target, result, profit, spin.tokenValue, category, false);
@@ -418,7 +415,7 @@ contract Zlots is ZethrShell {
             uint8 tier = spin.tier;
 
             // Null out spins
-            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0), uint(0));
+            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0));
 
             // Pay out the winner
             ZlotsJackpotHoldingContract(zlotsJackpot).payOutWinner(target);
@@ -515,12 +512,9 @@ contract Zlots is ZethrShell {
                 emit TwoRockets(target, spin.blockn);
             }
 
-            // Subtact from contract balance their profit
-            subContractBalance(playerDivrate, profit);
-
             emit LogResult(target, result, profit, spin.tokenValue, category, true);
             tier = spin.tier;
-            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0), uint(0)); // Prevent Re-entrancy
+            playerSpins[target] = playerSpin(uint200(0), uint48(0), uint8(0)); // Prevent Re-entrancy
             RequestBankrollPayment(target, profit, tier);
           }
             
