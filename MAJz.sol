@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MAJz at 0xacb1960d726e672ed322d712c7bf293488b745e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MAJz at 0x8367b08b72a65F7310e1211D655EAE2623AF5374
 */
 pragma solidity 0.4.24;
 
@@ -13,17 +13,6 @@ pragma solidity 0.4.24;
 *                   *************************************                   *
 ****************************************************************************/
 
-/****************************************************************************
-*                       Ownership Contract                                  *
-*                       for authorization Control                           *
-*                       and 0x0 Validation                                  *
-****************************************************************************/
-contract Ownership {
-    address public _owner;
-
-    modifier onlyOwner() { require(msg.sender == _owner); _; }
-    modifier validDestination( address to ) { require(to != address(0x0)); _; }
-}
 
 /****************************************************************************
 *                       Safemath Library                                    *
@@ -41,84 +30,137 @@ library SafeMath {
     function div(uint256 a, uint256 b) internal pure returns (uint256) { return a / b; }
 }
 
+
 /****************************************************************************
-*                   Basic Token Interface                                   *
+*                   Standart ERC20 Token Interface                          *
 *                   Contains Standart Token Functionalities                 *
 ****************************************************************************/
-
-contract BasicToken {
+contract ERC20Token {
     function totalSupply() public view returns (uint256);
-    function balanceOf(address owner) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    function balanceOf(address _targetAddress) public view returns (uint256);
+    function transfer(address _targetAddress, uint256 _value) public returns (bool);
+    event Transfer(address indexed _originAddress, address indexed _targetAddress, uint256 _value);
+    
+    function allowance(address _originAddress, address _targetAddress) public view returns (uint256);
+    function approve(address _originAddress, uint256 _value) public returns (bool);
+    function transferFrom(address _originAddress, address _targetAddress, uint256 _value) public returns (bool);
+    event Approval(address indexed _originAddress, address indexed _targetAddress, uint256 _value);
 }
 
-/****************************************************************************
-*                   Token Smart Contract                                    *
-****************************************************************************/
 
-contract MAJz is BasicToken, Ownership {
+/****************************************************************************
+*                       Ownership Contract                                  *
+*                       for authorization Control                           *
+****************************************************************************/
+contract Ownership {
+    address public owner;
+
+    modifier onlyOwner() { require(msg.sender == owner); _; }
+    modifier validDestination(address _targetAddress) { require(_targetAddress != address(0x0)); _; }
+}
+
+
+/****************************************************************************
+*                       The Token Contract                                  *
+*                       with Extended funtionalities                        *
+****************************************************************************/
+contract MAJz is ERC20Token, Ownership {
     using SafeMath for uint256;
 
-    string public _symbol;
-    string public _name;
-    uint256 public _decimals;
-    uint256 public _totalSupply;
+    string public symbol;
+    string public name;
+    uint256 public decimals;
+    uint256 public totalSupply;
 
-    mapping(address => uint256) public _balances;
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) allowed;
     
-
     //Constructor of the Token
     constructor() public{
-        _symbol = "MAZ";
-        _name = "MAJz";
-        _decimals = 18;
-        _totalSupply = 560000000000000000000000000;
-        _balances[msg.sender] = _totalSupply;
-        _owner = msg.sender;
+        symbol = "MAZ";
+        name = "MAJz";
+        decimals = 18;
+        totalSupply = 560000000000000000000000000;
+        balances[msg.sender] = totalSupply;
+        owner = msg.sender;
+        emit Transfer(address(0), msg.sender, totalSupply); 
     }
 
+
+    /****************************************************************************
+    *                   Basic Token Functions                                   *
+    ****************************************************************************/
     //Returns the totalSupply
     function totalSupply() public view returns (uint256) {
-        return _totalSupply;
+        return totalSupply;
     }
     //Return the balance of an specified account
-    function balanceOf(address targetAddress) public view returns (uint256) {
-        return _balances[targetAddress];
+    function balanceOf(address _targetAddress) public view returns (uint256) {
+        return balances[_targetAddress];
     }
     
     //Transfer function. Validates targetAdress not to be 0x0
-    function transfer(address targetAddress, uint256 value) validDestination(targetAddress) public returns (bool) {
-        _balances[msg.sender] = SafeMath.sub(_balances[msg.sender], value); //SafeMath will throw if value > balance
-        _balances[targetAddress] = SafeMath.add(_balances[targetAddress], value);
-        emit Transfer(msg.sender, targetAddress, value); 
+    function transfer(address _targetAddress, uint256 _value) validDestination(_targetAddress) public returns (bool) {
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value); //SafeMath will throw if value > balance
+        balances[_targetAddress] = SafeMath.add(balances[_targetAddress], _value);
+        emit Transfer(msg.sender, _targetAddress, _value); 
         return true; 
     }
 
-    //Burn some of the tokens
-    function burnTokens(uint256 value) public onlyOwner returns (bool){
-        _balances[_owner] = SafeMath.sub(_balances[_owner], value); //SafeMath will throw if value > balance
-        _totalSupply = SafeMath.sub(_totalSupply, value); 
-        emit BurnTokens(value);
+    /****************************************************************************
+    *                   ERC20 Token Functions                                   *
+    ****************************************************************************/
+    function allowance(address _originAddress, address _targetAddress) public view returns (uint256){
+        return allowed[_originAddress][_targetAddress];
+    }
+
+    function approve(address _targetAddress, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_targetAddress] = _value;
+        emit Approval(msg.sender, _targetAddress, _value);
+        return true;
+    }
+
+    function transferFrom(address _originAddress, address _targetAddress, uint256 _value) public returns (bool) {
+        balances[_originAddress] = SafeMath.sub(balances[_originAddress], _value); //SafeMath will throw if _value> balanceOf[_originAddress]
+        allowed[_originAddress][msg.sender] = SafeMath.sub(allowed[_originAddress][msg.sender], _value); //SafeMath will throw if _value > allowance
+        balances[_targetAddress] = SafeMath.add(balances[_targetAddress], _value);
+        emit Transfer(_originAddress, _targetAddress, _value);
+        return true;
+    }
+
+    function () public payable {
+        revert();
+    }
+
+    /****************************************************************************
+    *                   Extended Functionalites                                 *
+    ****************************************************************************/
+
+    //Burn the specified amount (_value) of tokens
+    function burnTokens(uint256 _value) public onlyOwner returns (bool){
+        balances[owner] = SafeMath.sub(balances[owner], _value); //SafeMath will throw if value > balance
+        totalSupply = SafeMath.sub(totalSupply, _value);
+        emit BurnTokens(_value);
         return true;
     }
 
     //Emit new tokens
-    function emitTokens(uint256 value) public onlyOwner returns (bool){
-        _balances[_owner] = SafeMath.add(_balances[_owner], value); //SafeMath will throw if Overflow
-        _totalSupply = SafeMath.add(_totalSupply, value);
-        emit EmitTokens(value);
+    function emitTokens(uint256 _value) public onlyOwner returns (bool){
+        balances[owner] = SafeMath.add(balances[owner], _value); //SafeMath will throw if Overflow
+        totalSupply = SafeMath.add(totalSupply, _value);
+        emit EmitTokens(_value);
         return true;
     }
 
-    //Revert a transfer in case of error
-    function revertTransfer (address targetAddress, uint256 value) public onlyOwner returns (bool){
-        _balances[targetAddress] = SafeMath.sub(_balances[targetAddress], value);
-        _balances[_owner] = SafeMath.add(_balances[_owner], value);
-        emit RevertTransfer(targetAddress, value);
+    //Revert a transfer in case of error. onlyOwner
+    function revertTransfer(address _targetAddress, uint256 _value) public onlyOwner returns (bool) {
+        balances[_targetAddress] = SafeMath.sub(balances[_targetAddress], _value);
+        balances[owner] = SafeMath.add(balances[owner], _value);
+        emit RevertTransfer(_targetAddress, _value);
         return true;
     }
-    event BurnTokens(uint256 value);
-    event EmitTokens(uint256 value);
-    event RevertTransfer(address targetAddress, uint256 value);
+    
+    event RevertTransfer(address _targetAddress, uint256 _value);
+    event BurnTokens(uint256 _value);
+    event EmitTokens(uint256 _value);
 }
