@@ -1,12 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DTF at 0xc9b3b3c9f3ff68d5c75a651136c6ee2897c936aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DTF at 0x79427f229b2d3847eae9a00f1496e85a045fd410
 */
 pragma solidity ^0.4.18;
 
-/**
-* @title Decentralized Token Fund
-* @author lanyuhang https://github.com/spacelan/DTF
-*/
 
 // ----------------------------------------------------------------------------
 // Safe maths
