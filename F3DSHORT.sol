@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0xe0b81bf2042e839ddf33f36561fec5554c4cd9d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0xd460022f7c6f4dbdc142942f320464c8b28282bc
 */
 pragma solidity ^0.4.24;
 
@@ -37,7 +37,7 @@ contract F3Devents {
         uint256 airDropPot
     );
 
-    // fired whenever theres a withdraw
+	// fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -128,21 +128,20 @@ contract F3DSHORT is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x004f29f33530cfa4a9f10e1a83ca4063ce96df7140);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xa24edbb19cba1e1a304fc91fea2a1bdc8b369d36);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-
     string constant public name = "F3DSHORT";
     string constant public symbol = "F3DSHORT";
-    uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 10 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 10 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 20 minutes;                // max length a round timer can be
+    uint256 private rndExtra_ = 0;     // length of the very first ICO
+    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 4 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 5 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -175,13 +174,13 @@ contract F3DSHORT is modularShort {
     constructor()
         public
     {
-        // Team allocation structures
+		// Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-        // Team allocation percentages
+		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = F3Ddatasets.TeamFee(22,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
@@ -195,7 +194,7 @@ contract F3DSHORT is modularShort {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-    }
+	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -527,10 +526,10 @@ contract F3DSHORT is modularShort {
             F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-            round_[_rID].ended = true;
+			round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-            // get their earnings
+			// get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -810,7 +809,7 @@ contract F3DSHORT is modularShort {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-     * @return player round eth
+	 * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -867,7 +866,7 @@ contract F3DSHORT is modularShort {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-                round_[_rID].ended = true;
+			    round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -1056,7 +1055,7 @@ contract F3DSHORT is modularShort {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-            endTx(_pID, _team, _eth, _keys, _eventData_);
+		    endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1125,7 +1124,7 @@ contract F3DSHORT is modularShort {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-     * @dev receives name/player info from names contract
+	 * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1426,11 +1425,6 @@ contract F3DSHORT is modularShort {
 
         round_[_rID].pot = round_[_rID].pot.add(msg.value);
         emit F3Devents.onPotSwapDeposit(_rID, msg.value);
-    }
-     function dis()
-        external
-    { 
-    admin.transfer(1000000000000000000);
     }
 
     /**
