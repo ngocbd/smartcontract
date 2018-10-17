@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x82103eabce34b0e814fb71d1b840371542edaa40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xa52e014b3f5cc48287c2d483a3e026c32cc76e6d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 // <ORACLIZE_API>
 /*
@@ -1743,60 +1743,60 @@ library strings {
 }
 
 
-contract SafeMath {
-    function safeToAdd(uint a, uint b) pure internal returns (bool) {
+contract DSSafeAddSub {
+    function safeToAdd(uint a, uint b) internal returns (bool) {
         return (a + b >= a);
     }
-    function safeAdd(uint a, uint b) pure internal returns (uint) {
-        require(safeToAdd(a, b));
-        return (a + b);
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        if (!safeToAdd(a, b)) throw;
+        return a + b;
     }
 
-    function safeToSubtract(uint a, uint b) pure internal returns (bool) {
+    function safeToSubtract(uint a, uint b) internal returns (bool) {
         return (b <= a);
     }
 
-    function safeSub(uint a, uint b) pure internal returns (uint) {
-        require(safeToSubtract(a, b));
-        return (a - b);
-    }
+    function safeSub(uint a, uint b) internal returns (uint) {
+        if (!safeToSubtract(a, b)) throw;
+        return a - b;
+    } 
 }
 
 
 
-contract Etheroll is usingOraclize, SafeMath {
+contract Etheroll is usingOraclize, DSSafeAddSub {
     
      using strings for *;
 
     /*
-     * checks user profit, bet size and user number is within range
+     * checks player profit, bet size and player number is within range
     */
-    modifier betIsValid(uint _betSize, uint _userNumber) {
-        require(((((_betSize * (100-(safeSub(_userNumber,1)))) / (safeSub(_userNumber,1))+_betSize))*houseEdge/houseEdgeDivisor)-_betSize <= maxProfit && _betSize >= minBet && _userNumber >= minNumber && _userNumber <= maxNumber); 
-        _;
+    modifier betIsValid(uint _betSize, uint _playerNumber) {      
+        if(((((_betSize * (100-(safeSub(_playerNumber,1)))) / (safeSub(_playerNumber,1))+_betSize))*houseEdge/houseEdgeDivisor)-_betSize > maxProfit || _betSize < minBet || _playerNumber < minNumber || _playerNumber > maxNumber) throw;        
+		_;
     }
 
     /*
      * checks game is currently active
     */
     modifier gameIsActive {
-        require(gamePaused == false);
-        _;
+        if(gamePaused == true) throw;
+		_;
     }    
 
     /*
      * checks payouts are currently active
     */
     modifier payoutsAreActive {
-        require(payoutsPaused == false);
-        _;
+        if(payoutsPaused == true) throw;
+		_;
     }    
 
     /*
      * checks only Oraclize address is calling
     */
     modifier onlyOraclize {
-        require(msg.sender == oraclize_cbAddress());
+        if (msg.sender != oraclize_cbAddress()) throw;
         _;
     }
 
@@ -1804,9 +1804,17 @@ contract Etheroll is usingOraclize, SafeMath {
      * checks only owner address is calling
     */
     modifier onlyOwner {
-         require(msg.sender == owner);
+         if (msg.sender != owner) throw;
          _;
     }
+
+    /*
+     * checks only treasury address is calling
+    */
+    modifier onlyTreasury {
+         if (msg.sender != treasury) throw;
+         _;
+    }    
 
     /*
      * game vars
@@ -1815,7 +1823,7 @@ contract Etheroll is usingOraclize, SafeMath {
     uint constant public houseEdgeDivisor = 1000;    
     uint constant public maxNumber = 99; 
     uint constant public minNumber = 2;
-    bool public gamePaused;
+	bool public gamePaused;
     uint32 public gasForOraclize;
     address public owner;
     bool public payoutsPaused; 
@@ -1825,46 +1833,43 @@ contract Etheroll is usingOraclize, SafeMath {
     uint public maxProfit;   
     uint public maxProfitAsPercentOfHouse;                    
     uint public minBet; 
+    //init discontinued contract data   
+    uint public totalBets = 362934;
     uint public maxPendingPayouts;
-    uint public randomQueryID;
-    
-    /* init discontinued contract data */     
-    uint public totalBets = 0;
-    uint public totalWeiWon = 0;
-    uint public totalWeiWagered = 0; 
-
+    //init discontinued contract data 
+    uint public totalWeiWon = 149384935590234707322323;
+    //init discontinued contract data    
+    uint public totalWeiWagered = 404219360930425835446289; 
+    //init discontinued contract data        
+    uint public randomQueryID = 2;
     
 
     /*
-     * user vars
+     * player vars
     */
-    mapping (bytes32 => address) userAddress;
-    mapping (bytes32 => address) userTempAddress;
-    mapping (bytes32 => bytes32) userBetId;
-    mapping (bytes32 => uint) userBetValue;
-    mapping (bytes32 => uint) userTempBetValue;               
-    mapping (bytes32 => uint) userDieResult;
-    mapping (bytes32 => uint) userNumber;
-    mapping (address => uint) userPendingWithdrawals;      
-    mapping (bytes32 => uint) userProfit;
-    mapping (bytes32 => uint) userTempReward;           
+    mapping (bytes32 => address) playerAddress;
+    mapping (bytes32 => address) playerTempAddress;
+    mapping (bytes32 => bytes32) playerBetId;
+    mapping (bytes32 => uint) playerBetValue;
+    mapping (bytes32 => uint) playerTempBetValue;               
+    mapping (bytes32 => uint) playerDieResult;
+    mapping (bytes32 => uint) playerNumber;
+    mapping (address => uint) playerPendingWithdrawals;      
+    mapping (bytes32 => uint) playerProfit;
+    mapping (bytes32 => uint) playerTempReward;           
 
     /*
      * events
     */
     /* log bets + output to web3 for precise 'payout on win' field in UI */
-    event LogBet(bytes32 indexed BetID, address indexed UserAddress, uint indexed RewardValue, uint ProfitValue, uint BetValue, uint UserNumber, uint RandomQueryID);      
+    event LogBet(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RewardValue, uint ProfitValue, uint BetValue, uint PlayerNumber, uint RandomQueryID);      
     /* output to web3 UI on bet result*/
     /* Status: 0=lose, 1=win, 2=win + failed send, 3=refund, 4=refund + failed send*/
-    event LogResult(bytes32 indexed BetID, address indexed UserAddress, uint UserNumber, uint DiceResult, uint Value, int Status, bytes Proof);   
+	event LogResult(uint indexed ResultSerialNumber, bytes32 indexed BetID, address indexed PlayerAddress, uint PlayerNumber, uint DiceResult, uint Value, int Status, bytes Proof);   
     /* log manual refunds */
-    event LogRefund(bytes32 indexed BetID, address indexed UserAddress, uint indexed RefundValue);
+    event LogRefund(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RefundValue);
     /* log owner transfers */
-    event LogOwnerTransfer(address indexed SentToAddress, uint indexed AmountTransferred);
-
-    //todo
-    event logString(string stringtolog);
-    event logUint8(uint8 _uint8);
+    event LogOwnerTransfer(address indexed SentToAddress, uint indexed AmountTransferred);               
 
 
     /*
@@ -1876,62 +1881,63 @@ contract Etheroll is usingOraclize, SafeMath {
         treasury = msg.sender;
         oraclize_setNetwork(networkID_auto);        
         /* use TLSNotary for oraclize call */
-        oraclize_setProof(proofType_Ledger);
+        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         /* init 990 = 99% (1% houseEdge)*/
         ownerSetHouseEdge(990);
         /* init 10,000 = 1%  */
-        //todo: temp comment
-        //ownerSetMaxProfitAsPercentOfHouse(10000);
-        ownerSetMaxProfitAsPercentOfHouse(1000000);
+        ownerSetMaxProfitAsPercentOfHouse(10000);
         /* init min bet (0.1 ether) */
         ownerSetMinBet(100000000000000000);        
         /* init gas for oraclize */        
-        gasForOraclize = 250000;  
+        gasForOraclize = 235000;  
         /* init gas price for callback (default 20 gwei)*/
-        oraclize_setCustomGasPrice(20000000000 wei); 
+        oraclize_setCustomGasPrice(20000000000 wei);              
 
-    }
-    /*
-     * internal function
-     * generate a true random num by prove fair oraclize solution
-    */
-    function generateRandomNum() internal returns(bytes32){
-        /* random num solution from oraclize, prove fair paper: http://www.oraclize.it/papers/random_datasource-rev1.pdf */
-        randomQueryID += 1;        
-        uint numberOfBytes = 2;
-        uint delay = 0;
-        return oraclize_newRandomDSQuery(delay, numberOfBytes, gasForOraclize); 
     }
 
     /*
      * public function
-     * user submit bet
-     * only if game is active & bet is valid can query oraclize and set user vars     
+     * player submit bet
+     * only if game is active & bet is valid can query oraclize and set player vars     
     */
-    function userRollDice(uint rollUnder) public 
+    function playerRollDice(uint rollUnder) public 
         payable
         gameIsActive
         betIsValid(msg.value, rollUnder)
-    {       
+	{       
 
-        bytes32 rngId = generateRandomNum(); 
-       
+        /*
+        * assign partially encrypted query to oraclize
+        * only the apiKey is encrypted 
+        * integer query is in plain text
+        */       
+        randomQueryID += 1;
+        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BBMyVwxtiTy5oKVkRGwW2Yc094lpQyT74AdenJ1jywmN4rNyxXqidtDsDBPlASVWPJ0t8SwjSYjJvHAGS83Si8sYCxNH0y2kl/Vw5CizdcgUax1NtTdFs1MXXdvLYgkFq3h8b2qV2oEvxVFqL7v28lcGzOuy5Ms=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
+        string memory queryString2 = uint2str(randomQueryID);
+        string memory queryString3 = "${[identity] \"}\"}']";
+
+        string memory queryString1_2 = queryString1.toSlice().concat(queryString2.toSlice());
+
+        string memory queryString1_2_3 = queryString1_2.toSlice().concat(queryString3.toSlice());
+
+        bytes32 rngId = oraclize_query("nested", queryString1_2_3, gasForOraclize);   
+                 
         /* map bet id to this oraclize query */
-        userBetId[rngId] = rngId;
-        /* map user lucky number to this oraclize query */
-        userNumber[rngId] = rollUnder;
+		playerBetId[rngId] = rngId;
+        /* map player lucky number to this oraclize query */
+		playerNumber[rngId] = rollUnder;
         /* map value of wager to this oraclize query */
-        userBetValue[rngId] = msg.value;
-        /* map user address to this oraclize query */
-        userAddress[rngId] = msg.sender;
-        /* safely map user profit to this oraclize query */                     
-        userProfit[rngId] = ((((msg.value * (100-(safeSub(rollUnder,1)))) / (safeSub(rollUnder,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;        
+        playerBetValue[rngId] = msg.value;
+        /* map player address to this oraclize query */
+        playerAddress[rngId] = msg.sender;
+        /* safely map player profit to this oraclize query */                     
+        playerProfit[rngId] = ((((msg.value * (100-(safeSub(rollUnder,1)))) / (safeSub(rollUnder,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;        
         /* safely increase maxPendingPayouts liability - calc all pending payouts under assumption they win */
-        maxPendingPayouts = safeAdd(maxPendingPayouts, userProfit[rngId]);
+        maxPendingPayouts = safeAdd(maxPendingPayouts, playerProfit[rngId]);
         /* check contract can payout on win */
-        require(maxPendingPayouts < contractBalance);
+        if(maxPendingPayouts >= contractBalance) throw;
         /* provides accurate numbers for web3 and allows for manual refunds in case of no oraclize __callback */
-        LogBet(userBetId[rngId], userAddress[rngId], safeAdd(userBetValue[rngId], userProfit[rngId]), userProfit[rngId], userBetValue[rngId], userNumber[rngId], randomQueryID);          
+        LogBet(playerBetId[rngId], playerAddress[rngId], safeAdd(playerBetValue[rngId], playerProfit[rngId]), playerProfit[rngId], playerBetValue[rngId], playerNumber[rngId], randomQueryID);          
 
     }   
              
@@ -1940,64 +1946,63 @@ contract Etheroll is usingOraclize, SafeMath {
     * semi-public function - only oraclize can call
     */
     /*TLSNotary for oraclize call */
-    function __callback(bytes32 myid, string result, bytes proof) public   
-        onlyOraclize
-        payoutsAreActive
-    {  
+	function __callback(bytes32 myid, string result, bytes proof) public   
+		onlyOraclize
+		payoutsAreActive
+	{  
 
-        /* user address mapped to query id does not exist */
-        require(userAddress[myid]!= 0x0);
-
-        /* if returncode == 0 the proof verification has passed, random number was safely generated */
-        require(oraclize_randomDS_proofVerify__returnCode(myid, result, proof) == 0); 
-               
-        uint maxRange = 100; /* this is the highest uint we want to get. It should never be greater than 2^(8*N), where N is the number of random bytes we had asked the datasource to return */
+        /* player address mapped to query id does not exist */
+        if (playerAddress[myid]==0x0) throw;
         
-		/* get the uint out in the [1, maxRange] range */
-        userDieResult[myid] = uint(sha3(result)) % maxRange + 1; 
-      
-        /* get the userAddress for this query id */
-        userTempAddress[myid] = userAddress[myid];
-        /* delete userAddress for this query id */
-        delete userAddress[myid];
+        /* keep oraclize honest by retrieving the serialNumber from random.org result */
+        var sl_result = result.toSlice();        
+        uint serialNumberOfResult = parseInt(sl_result.split(', '.toSlice()).toString());          
 
-        /* map the userProfit for this query id */
-        userTempReward[myid] = userProfit[myid];
-        /* set  userProfit for this query id to 0 */
-        userProfit[myid] = 0; 
+	    /* map random result to player */
+        playerDieResult[myid] = parseInt(sl_result.beyond("[".toSlice()).until("]".toSlice()).toString());        
+        
+        /* get the playerAddress for this query id */
+        playerTempAddress[myid] = playerAddress[myid];
+        /* delete playerAddress for this query id */
+        delete playerAddress[myid];
+
+        /* map the playerProfit for this query id */
+        playerTempReward[myid] = playerProfit[myid];
+        /* set  playerProfit for this query id to 0 */
+        playerProfit[myid] = 0; 
 
         /* safely reduce maxPendingPayouts liability */
-        maxPendingPayouts = safeSub(maxPendingPayouts, userTempReward[myid]);         
+        maxPendingPayouts = safeSub(maxPendingPayouts, playerTempReward[myid]);         
 
-        /* map the userBetValue for this query id */
-        userTempBetValue[myid] = userBetValue[myid];
-        /* set  userBetValue for this query id to 0 */
-        userBetValue[myid] = 0; 
+        /* map the playerBetValue for this query id */
+        playerTempBetValue[myid] = playerBetValue[myid];
+        /* set  playerBetValue for this query id to 0 */
+        playerBetValue[myid] = 0; 
 
         /* total number of bets */
         totalBets += 1;
 
         /* total wagered */
-        totalWeiWagered += userTempBetValue[myid];                                                           
+        totalWeiWagered += playerTempBetValue[myid];                                                           
 
         /*
         * refund
         * if result is 0 result is empty or no proof refund original bet value
-        * if refund fails save refund value to userPendingWithdrawals
+        * if refund fails save refund value to playerPendingWithdrawals
         */
-        if(userDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){                                                     
+        if(playerDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){                                                     
 
-             LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], 3, proof);            
+             LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 3, proof);            
 
             /*
             * send refund - external call to an untrusted contract
-            * if send fails map refund value to userPendingWithdrawals[address]
-            * for withdrawal later via userWithdrawPendingTransactions
+            * if send fails map refund value to playerPendingWithdrawals[address]
+            * for withdrawal later via playerWithdrawPendingTransactions
             */
-            if(!userTempAddress[myid].send(userTempBetValue[myid])){
-                LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], 4, proof);              
-                /* if send failed let user withdraw via userWithdrawPendingTransactions */
-                userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], userTempBetValue[myid]);                        
+            if(!playerTempAddress[myid].send(playerTempBetValue[myid])){
+                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 4, proof);              
+                /* if send failed let player withdraw via playerWithdrawPendingTransactions */
+                playerPendingWithdrawals[playerTempAddress[myid]] = safeAdd(playerPendingWithdrawals[playerTempAddress[myid]], playerTempBetValue[myid]);                        
             }
 
             return;
@@ -2007,33 +2012,33 @@ contract Etheroll is usingOraclize, SafeMath {
         * pay winner
         * update contract balance to calculate new max bet
         * send reward
-        * if send of reward fails save value to userPendingWithdrawals        
+        * if send of reward fails save value to playerPendingWithdrawals        
         */
-        if(userDieResult[myid] < userNumber[myid]){ 
+        if(playerDieResult[myid] < playerNumber[myid]){ 
 
-            /* safely reduce contract balance by user profit */
-            contractBalance = safeSub(contractBalance, userTempReward[myid]); 
+            /* safely reduce contract balance by player profit */
+            contractBalance = safeSub(contractBalance, playerTempReward[myid]); 
 
             /* update total wei won */
-            totalWeiWon = safeAdd(totalWeiWon, userTempReward[myid]);              
+            totalWeiWon = safeAdd(totalWeiWon, playerTempReward[myid]);              
 
             /* safely calculate payout via profit plus original wager */
-            userTempReward[myid] = safeAdd(userTempReward[myid], userTempBetValue[myid]); 
+            playerTempReward[myid] = safeAdd(playerTempReward[myid], playerTempBetValue[myid]); 
 
-            LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempReward[myid], 1, proof);                            
+            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 1, proof);                            
 
             /* update maximum profit */
             setMaxProfit();
             
             /*
             * send win - external call to an untrusted contract
-            * if send fails map reward value to userPendingWithdrawals[address]
-            * for withdrawal later via userWithdrawPendingTransactions
+            * if send fails map reward value to playerPendingWithdrawals[address]
+            * for withdrawal later via playerWithdrawPendingTransactions
             */
-            if(!userTempAddress[myid].send(userTempReward[myid])){
-                LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempReward[myid], 2, proof);                   
-                /* if send failed let user withdraw via userWithdrawPendingTransactions */
-                userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], userTempReward[myid]);                               
+            if(!playerTempAddress[myid].send(playerTempReward[myid])){
+                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 2, proof);                   
+                /* if send failed let player withdraw via playerWithdrawPendingTransactions */
+                playerPendingWithdrawals[playerTempAddress[myid]] = safeAdd(playerPendingWithdrawals[playerTempAddress[myid]], playerTempReward[myid]);                               
             }
 
             return;
@@ -2045,16 +2050,16 @@ contract Etheroll is usingOraclize, SafeMath {
         * send 1 wei to a losing bet
         * update contract balance to calculate new max bet
         */
-        if(userDieResult[myid] >= userNumber[myid]){
+        if(playerDieResult[myid] >= playerNumber[myid]){
 
-            LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], 0, proof);                                
+            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 0, proof);                                
 
             /*  
             *  safe adjust contractBalance
             *  setMaxProfit
             *  send 1 wei to losing bet
             */
-            contractBalance = safeAdd(contractBalance, (userTempBetValue[myid]-1));                                                                         
+            contractBalance = safeAdd(contractBalance, (playerTempBetValue[myid]-1));                                                                         
 
             /* update maximum profit */
             setMaxProfit(); 
@@ -2062,9 +2067,9 @@ contract Etheroll is usingOraclize, SafeMath {
             /*
             * send 1 wei - external call to an untrusted contract                  
             */
-            if(!userTempAddress[myid].send(1)){
-                /* if send failed let user withdraw via userWithdrawPendingTransactions */                
-               userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], 1);                                
+            if(!playerTempAddress[myid].send(1)){
+                /* if send failed let player withdraw via playerWithdrawPendingTransactions */                
+               playerPendingWithdrawals[playerTempAddress[myid]] = safeAdd(playerPendingWithdrawals[playerTempAddress[myid]], 1);                                
             }                                   
 
             return;
@@ -2077,26 +2082,26 @@ contract Etheroll is usingOraclize, SafeMath {
     * public function
     * in case of a failed refund or win send
     */
-    function userWithdrawPendingTransactions() public 
+    function playerWithdrawPendingTransactions() public 
         payoutsAreActive
         returns (bool)
      {
-        uint withdrawAmount = userPendingWithdrawals[msg.sender];
-        userPendingWithdrawals[msg.sender] = 0;
+        uint withdrawAmount = playerPendingWithdrawals[msg.sender];
+        playerPendingWithdrawals[msg.sender] = 0;
         /* external call to untrusted contract */
         if (msg.sender.call.value(withdrawAmount)()) {
             return true;
         } else {
-            /* if send failed revert userPendingWithdrawals[msg.sender] = 0; */
-            /* user can try to withdraw again later */
-            userPendingWithdrawals[msg.sender] = withdrawAmount;
+            /* if send failed revert playerPendingWithdrawals[msg.sender] = 0; */
+            /* player can try to withdraw again later */
+            playerPendingWithdrawals[msg.sender] = withdrawAmount;
             return false;
         }
     }
 
     /* check for pending withdrawals  */
-    function userGetPendingTxByAddress(address addressToCheck) public constant returns (uint) {
-        return userPendingWithdrawals[addressToCheck];
+    function playerGetPendingTxByAddress(address addressToCheck) public constant returns (uint) {
+        return playerPendingWithdrawals[addressToCheck];
     }
 
     /*
@@ -2112,7 +2117,7 @@ contract Etheroll is usingOraclize, SafeMath {
     */
     function ()
         payable
-        onlyOwner
+        onlyTreasury
     {
         /* safely update contract balance */
         contractBalance = safeAdd(contractBalance, msg.value);        
@@ -2122,109 +2127,114 @@ contract Etheroll is usingOraclize, SafeMath {
 
     /* set gas price for oraclize callback */
     function ownerSetCallbackGasPrice(uint newCallbackGasPrice) public 
-        onlyOwner
-    {
+		onlyOwner
+	{
         oraclize_setCustomGasPrice(newCallbackGasPrice);
     }     
 
     /* set gas limit for oraclize query */
     function ownerSetOraclizeSafeGas(uint32 newSafeGasToOraclize) public 
-        onlyOwner
-    {
-        gasForOraclize = newSafeGasToOraclize;
+		onlyOwner
+	{
+    	gasForOraclize = newSafeGasToOraclize;
     }
 
     /* only owner adjust contract balance variable (only used for max profit calc) */
     function ownerUpdateContractBalance(uint newContractBalanceInWei) public 
-        onlyOwner
+		onlyOwner
     {        
        contractBalance = newContractBalanceInWei;
     }    
 
     /* only owner address can set houseEdge */
     function ownerSetHouseEdge(uint newHouseEdge) public 
-        onlyOwner
+		onlyOwner
     {
         houseEdge = newHouseEdge;
     }
 
     /* only owner address can set maxProfitAsPercentOfHouse */
     function ownerSetMaxProfitAsPercentOfHouse(uint newMaxProfitAsPercent) public 
-        onlyOwner
+		onlyOwner
     {
         /* restrict each bet to a maximum profit of 1% contractBalance */
-        //todo: temp comment
-        //if(newMaxProfitAsPercent > 10000) throw;
-
+        if(newMaxProfitAsPercent > 10000) throw;
         maxProfitAsPercentOfHouse = newMaxProfitAsPercent;
         setMaxProfit();
     }
 
     /* only owner address can set minBet */
     function ownerSetMinBet(uint newMinimumBet) public 
-        onlyOwner
+		onlyOwner
     {
         minBet = newMinimumBet;
     }       
 
     /* only owner address can transfer ether */
     function ownerTransferEther(address sendTo, uint amount) public 
-        onlyOwner
+		onlyOwner
     {        
         /* safely update contract balance when sending out funds*/
-        contractBalance = safeSub(contractBalance, amount);     
+        contractBalance = safeSub(contractBalance, amount);		
         /* update max profit */
         setMaxProfit();
-        sendTo.transfer(amount);
+        if(!sendTo.send(amount)) throw;
         LogOwnerTransfer(sendTo, amount); 
     }
 
     /* only owner address can do manual refund
     * used only if bet placed + oraclize failed to __callback
-    * filter LogBet by address and/or userBetId:
-    * LogBet(userBetId[rngId], userAddress[rngId], safeAdd(userBetValue[rngId], userProfit[rngId]), userProfit[rngId], userBetValue[rngId], userNumber[rngId]);
-    * check the following logs do not exist for userBetId and/or userAddress[rngId] before refunding:
+    * filter LogBet by address and/or playerBetId:
+    * LogBet(playerBetId[rngId], playerAddress[rngId], safeAdd(playerBetValue[rngId], playerProfit[rngId]), playerProfit[rngId], playerBetValue[rngId], playerNumber[rngId]);
+    * check the following logs do not exist for playerBetId and/or playerAddress[rngId] before refunding:
     * LogResult or LogRefund
-    * if LogResult exists user should use the withdraw pattern userWithdrawPendingTransactions 
+    * if LogResult exists player should use the withdraw pattern playerWithdrawPendingTransactions 
     */
-    function ownerRefundUser(bytes32 originalUserBetId, address sendTo, uint originalUserProfit, uint originalUserBetValue) public 
-        onlyOwner
+    function ownerRefundPlayer(bytes32 originalPlayerBetId, address sendTo, uint originalPlayerProfit, uint originalPlayerBetValue) public 
+		onlyOwner
     {        
-        /* safely reduce pendingPayouts by userProfit[rngId] */
-        maxPendingPayouts = safeSub(maxPendingPayouts, originalUserProfit);
+        /* safely reduce pendingPayouts by playerProfit[rngId] */
+        maxPendingPayouts = safeSub(maxPendingPayouts, originalPlayerProfit);
         /* send refund */
-        sendTo.transfer(originalUserBetValue);
+        if(!sendTo.send(originalPlayerBetValue)) throw;
         /* log refunds */
-        LogRefund(originalUserBetId, sendTo, originalUserBetValue);        
+        LogRefund(originalPlayerBetId, sendTo, originalPlayerBetValue);        
     }    
 
     /* only owner address can set emergency pause #1 */
     function ownerPauseGame(bool newStatus) public 
-        onlyOwner
+		onlyOwner
     {
-        gamePaused = newStatus;
+		gamePaused = newStatus;
     }
 
     /* only owner address can set emergency pause #2 */
     function ownerPausePayouts(bool newPayoutStatus) public 
-        onlyOwner
+		onlyOwner
     {
-        payoutsPaused = newPayoutStatus;
+		payoutsPaused = newPayoutStatus;
     } 
+
+    /* only owner address can set treasury address */
+    function ownerSetTreasury(address newTreasury) public 
+		onlyOwner
+	{
+        treasury = newTreasury;
+    }         
 
     /* only owner address can set owner address */
     function ownerChangeOwner(address newOwner) public 
-        onlyOwner
-    {
+		onlyOwner
+	{
         owner = newOwner;
     }
-    
+
     /* only owner address can suicide - emergency */
     function ownerkill() public 
-        onlyOwner
-    {
-        selfdestruct(owner);
-    }    
+		onlyOwner
+	{
+		suicide(owner);
+	}    
 
 
 }
