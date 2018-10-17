@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRCICOContract at 0xda0d1f53d54c88eb30c3b7971354010d45059db9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRCICOContract at 0xf2c2d45779856d07a9928b2dfeb50c88f45abd7f
 */
 pragma solidity 0.4.24;
 
@@ -119,7 +119,7 @@ interface TokenInterface {
   
   bool isCrowdsalePaused = false;
   
-  uint256 totalDurationInDays = 87 days;
+  uint256 totalDurationInDays = 56 days;
   
   uint256 LongTermFoundationBudgetAccumulated;
   uint256 LegalContingencyFundsAccumulated;
