@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundCrowdsale at 0x901764b6430fb54c332121994ce7ba5ddebee5e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundCrowdsale at 0xeb914da749340266ac474f930c65c2ed4df89922
 */
 pragma solidity ^0.4.18;
 
@@ -385,7 +385,7 @@ contract FundCrowdsale is Ownable, Pausable, Destructible {
             fundingGoal = 3000 * 1 ether;		// ??ETH??
             numTokenPerEth = 2833;					// ????
             maxTokenNum = fundingGoal*numTokenPerEth * 10 ** uint256(decimals);		//??ABA??
-            tokenAddress = ABAToken(0xc8de56afc94995adc37fbf1c3790354a0cfdf73d);   // ?????? token ??????????
+            tokenAddress = ABAToken(0x7C2AF3a86B4bf47E6Ee63AD9bde7B3B0ba7F95da);   // ?????? token ??????????
             
             dateTime = new DateTime();
     }
@@ -398,6 +398,9 @@ contract FundCrowdsale is Ownable, Pausable, Destructible {
      */
     function () payable public {
         require(fundAddress == msg.sender);
+        require(msg.value <= fundingGoal);
+        require(msg.value > 0);
+        
         uint amount = msg.value;
 
         // ???????
