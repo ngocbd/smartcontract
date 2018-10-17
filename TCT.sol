@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCT at 0x53864ece70ea808ce8a25632e8c67473b99fa93f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCT at 0xd2425561799564001f13bc7586936a702675dc70
 */
 pragma solidity 0.4.24;
 
@@ -13,11 +13,6 @@ contract Owned {
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public returns (bool success) {
-        owner = newOwner;
-        return true;
     }
 }
 
@@ -55,13 +50,9 @@ contract TokenERC20 {
 
     function totalSupply() view public returns (uint256 supply);
     function balanceOf(address who) view public returns (uint256 value);
-    function allowance(address owner, address spender) view public returns (uint256 _allowance);
     function transfer(address to, uint256 value) public returns (bool success);
-    function transferFrom(address from, address to, uint256 value) public returns (bool success);
-    function approve(address spender, uint256 value) public returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
 
 }
 
@@ -73,11 +64,10 @@ contract TCT is Owned, Stopped, MathTCT, TokenERC20 {
     uint256 public totalSupply;
 
     mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public frozenAccount;
 
-    event FrozenFunds(address indexed target, bool frozen);
-    event Burn(address indexed from, uint256 value);
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address from, uint256 value);
 
     constructor(string _name, string _symbol) public {
         totalSupply = 200000000 * 10 ** uint256(decimals);
@@ -94,10 +84,6 @@ contract TCT is Owned, Stopped, MathTCT, TokenERC20 {
         return balanceOf[who];
     }
 
-    function allowance(address owner, address spender) view public returns (uint256 _allowance) {
-        return allowance[owner][spender];
-    }
-
     function _transfer(address _from, address _to, uint256 _value) internal {
         require (_to != 0x0);
         require (balanceOf[_from] >= _value);
@@ -108,44 +94,8 @@ contract TCT is Owned, Stopped, MathTCT, TokenERC20 {
         emit Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) noStopped public returns(bool success) {
+    function transfer(address _to, uint256 _value) noStopped public returns (bool success) {
         _transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) noStopped public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) noStopped public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(!frozenAccount[_spender]);
-        allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function increaseApproval(address _spender, uint256 _addedValue) noStopped public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(!frozenAccount[_spender]);
-        allowance[msg.sender][_spender] = add(allowance[msg.sender][_spender], _addedValue);
-        emit Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint256 _subtractedValue) noStopped public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(!frozenAccount[_spender]);
-        uint256 oldValue = allowance[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowance[msg.sender][_spender] = 0;
-        } else {
-            allowance[msg.sender][_spender] = sub(oldValue, _subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
         return true;
     }
 
