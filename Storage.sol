@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x83783d494c648e8e19b8c4b181ec6d081ae76c22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x62514cc71a8d20f710fe0cc49e821a84e1e8fbc5
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 contract Storage {
     address owner; // This address has permission to upload data
@@ -15,10 +15,19 @@ contract Storage {
         owner = msg.sender;
     }
     
-    // Data is uploaded over many transactions, until the whole file is stored in the contract
-    function uploadData(bytes _data) public {
+    modifier onlyOwner() {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier readWrite () {
         require(readOnly != true);
+        _;
+    }
+
+    // Data is uploaded over many transactions, until the whole file is stored in the contract
+    function uploadData(bytes _data) onlyOwner readWrite public {
+
         uint startPoint;
 
         if(remainder != 0) {
@@ -56,22 +65,21 @@ contract Storage {
         remainder = loose;
     }
     // If a mistake is done during upload, reverse using erase()
-    function erase(uint _entriesToDelete) public {
-        require(msg.sender == owner);
-        require(readOnly != true);
+    function erase(uint _entriesToDelete) onlyOwner readWrite public {
+        require(_entriesToDelete != 0);
         if(data.length < _entriesToDelete) { 
             delete data;
         }
         else data.length -= _entriesToDelete;
         remainder = 0;
     }
-    function uploadFinish() public {
-        require(msg.sender == owner);
+    function uploadFinish() onlyOwner public {
         readOnly = true;
     }
 
     // This loads the entire file as a single byte array. Since it does not
     // affect the contract state, there are no gas costs
+
     function getData() public view returns (bytes){
         bytes memory result = new bytes(data.length*0x20);
         for(uint i = 0; i < data.length; i++) {
