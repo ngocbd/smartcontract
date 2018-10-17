@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0x721260010D6E40960032ac541c2a68A3731A1462
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0x4d1418ef24780be817b613885bf152f4c745c772
 */
 pragma solidity 0.4.18;
 
@@ -935,7 +935,7 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface, Utils2 {
         uint rateEthToDest;
         (reserve, rateSrcToEth) = kyberNetwork.searchBestRate(src, ETH_TOKEN_ADDRESS, srcQty);
 
-        uint ethQty = calcDestAmount(src, ETH_TOKEN_ADDRESS, srcQty, rateSrcToEth);
+        uint ethQty = calcDestAmount(src, dest, srcQty, rateSrcToEth);
 
         (reserve, rateEthToDest) = kyberNetwork.searchBestRate(ETH_TOKEN_ADDRESS, dest, ethQty);
         return rateSrcToEth * rateEthToDest / PRECISION;
