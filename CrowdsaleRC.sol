@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleRC at 0x86f91249a10f9872acc96cc352f9a914531a38e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleRC at 0xa661b095b2f17d7163fb9edcf00d323c46bbc717
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
 contract CrowdsaleRC {
     uint public createdTimestamp; uint public start; uint public deadline;
@@ -15,12 +15,12 @@ contract CrowdsaleRC {
 
     function CrowdsaleRC () public {
         createdTimestamp = block.timestamp;
-        start = 1529316000;
-        deadline = 1532080800;
+        start = 1532080800;
+        deadline = 1538301600;
         amountRaised = 0;
-        beneficiary = 0xD27eAD21C9564f122c8f84cD98a505efDf547665;
+        beneficiary = 0x72B98e23422e58EAA1268d33eAe68089eBE74567;
         owner = msg.sender;
-        maxAmount = 2000 ether;
+        maxAmount = 20000 ether;
     }
 
     function () payable public {
