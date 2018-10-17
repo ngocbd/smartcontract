@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x7e712360a438127def4f900c53ea60f137f15742
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x08531a68f5ea92e40705b0f4acecc0456f397ac2
 */
+pragma solidity ^0.4.18;
+
 /**
 * @title SafeMath
 * @dev Math operations with safety checks that throw on error
@@ -39,7 +41,7 @@ contract Ownable {
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   /**
-   * @dev The Ownable constructor sets the original owner of the contract to the sender
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
   constructor() public{
@@ -72,13 +74,13 @@ contract lockEtherPay is Ownable {
   bool public isReleased = false;
   uint256 public start_time;
   uint256 public end_time;
-  uint256 public fifty_two_weeks = 30499200;
+  uint256 public fifty_two_weeks = 30412800;
 
   event TokenReleased(address beneficiary, uint256 token_amount);
 
   constructor() public{
     token_reward = token(0xAa1ae5e57dc05981D83eC7FcA0b3c7ee2565B7D6);
-    beneficiary = 0xb1FD180530353F0b153bF04878B0E517fA996600;
+    beneficiary = 0x7F9ABcef564F6965e349D10cBED44cFaCA589FF4;
   }
 
   function tokenBalance() constant public returns (uint256){
