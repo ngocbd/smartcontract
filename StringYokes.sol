@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StringYokes at 0x8dbdbcda77cd255e8bd79ad53f1f018fd698f289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StringYokes at 0xe05e1a4e66c13f726a4cece661679cfbbb7f5d2f
 */
 library StringYokes {
     function zint_bytes32ToString(bytes32 x) public pure returns (string) {
