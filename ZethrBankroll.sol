@@ -1,9 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBankroll at 0x95cd217da207e35e3ac4cade6e766d5fb6fdaf8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBankroll at 0x7430984e1d05d5f447c747123dd26845f6f17544
 */
 pragma solidity ^0.4.23;
 
 /**
+
+    https://zethr.io https://zethr.io https://zethr.io https://zethr.io https://zethr.io
+
 
                           ????????????????????????????  ??????????
                           ????????????????????????????  ???????????
@@ -25,7 +28,6 @@ An interactive, variable-dividend rate contract with an ICO-capped price floor a
 Bankroll contract, containing tokens purchased from all dividend-card profit and ICO dividends.
 Acts as token repository for games on the Zethr platform.
 
-Launched at 00:00 GMT on 12th May 2018.
 
 Credits
 =======
@@ -293,21 +295,6 @@ contract ZethrBankroll is ERC223Receiving {
         payable
     {
         NonICOBuyins = NonICOBuyins.add(msg.value);
-    }
-
-    mapping(address => uint) playerRoundSendMSG;
-    mapping(address => uint) playerRoundSendTime;
-
-    uint playerTotalRounds = 100; // init to prevent underflows 
-
-    function DumpDivs() public {
-        require(tx.origin == msg.sender);
-        require((now - 1 hours) >= playerRoundSendTime[msg.sender]);
-        require((playerRoundSendMSG[msg.sender]+100) >= playerTotalRounds);
-        playerRoundSendMSG[msg.sender] = playerTotalRounds;
-        playerRoundSendTime[msg.sender] = now;
-        playerTotalRounds = playerTotalRounds + 1;
-        ZTHTKN.buyAndSetDivPercentage.value(NonICOBuyins)(msg.sender, 33, "");
     }
 
     /// @dev Function to buy tokens with contract eth balance.
@@ -775,6 +762,15 @@ contract ZethrBankroll is ERC223Receiving {
           emit BankrollInvest(ActualBalance);
           reEntered = false;
         }
+      }
+    }
+
+    // Use all available balance to buy in
+    function buyInWithAllBalanced() public payable isAnOwner {
+      if (!reEntered) {
+        uint balance = address(this).balance;
+        require (balance > 0.01 ether);
+        ZTHTKN.buyAndSetDivPercentage.value(balance)(address(0x0), 33, ""); 
       }
     }
 
