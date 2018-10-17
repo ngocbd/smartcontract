@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0xf8b51abb2045ca806841fe4bbeba30f2a1be3d4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0x287fc5e0c7055660b2d05b4718a049141bb7e1ee
 */
 // ----------------------------------------------------------------------------------------------
 // Developer Nechesov Andrey & ObjectMicro, Inc 
@@ -7,7 +7,7 @@
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
 
-pragma solidity ^0.4.23;    
+pragma solidity ^0.4.24;    
 
   library SafeMath {
     function mul(uint256 a, uint256 b) internal returns (uint256) {
@@ -74,9 +74,9 @@ pragma solidity ^0.4.23;
       uint256 _totalSupply = ownerSupply;  
 
       uint256 public constant token_price = 10**18*1/800; 
-      uint256 public pre_ico_start = 1528416000; // Jun 8, 2018 utc
-      uint256 public ico_start = 1531008000; // Jul 8, 2018 utc
-      uint256 public ico_finish = 1541635200; // Nov 8, 2018 utc 
+      uint256 public pre_ico_start = 1531872000; 
+      uint256 public ico_start = 1533081600; 
+      uint256 public ico_finish = 1540944000; 
       uint public constant minValuePre = 10**18*1/1000000; 
       uint public constant minValue = 10**18*1/1000000; 
       uint public constant maxValue = 3000*10**18;
