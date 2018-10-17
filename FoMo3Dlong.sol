@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x47a40aaff442b3d20773bae35199f8495ac9621f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xba5b56aeda50c1c18fd8f17544302b6a8d7e53f5
 */
 pragma solidity ^0.4.24;
 /**
@@ -192,7 +192,7 @@ contract FoMo3Dlong is modularLong {
     // DiviesInterface constant private Divies = DiviesInterface(0xe7d5f7a1afbfeb44894c1114fb021cab7e0367fd);
     // ??????
     // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x548e2295fc38b69000ff43a730933919b08c2562);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x675818227377a7b1b3047105078966daf883a0ff);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xee52e1563f25e4f638052fb971a7198b63828a43);
     // hack ????
     // F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x85C2d5079DC6C2856116C41f4EDd2E3EBBb63B5C);
 //==============================================================================
