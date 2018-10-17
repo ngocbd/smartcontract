@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0xe3a15cad61136efbcc1571fdac8badc1388e8603
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0x168a7bcf8f14ad47be7dd62bc33d1411c88ff8cd
 */
 pragma solidity ^0.4.18;
 
@@ -322,6 +322,11 @@ contract ReferToken is ColdWalletToken, StatusContract, ReferTreeContract {
         return true;
     }
 
+    function rewardMintOwner(address _to, uint256 _amount) onlyOwner public returns (bool) {
+        return rewardMint(_to, _amount);
+    }
+
+
     function payToReferer(address sender, uint256 _amount, string _key) private {
         address currentReferral = sender;
         uint currentStatus = 0;
@@ -383,13 +388,19 @@ contract ReferToken is ColdWalletToken, StatusContract, ReferTreeContract {
     }
 
     function getReferralPackageKind(bytes data) private pure returns (uint8) {
+        uint8 _kind = 0;
         if (data.length == 0) {
-            return 4;
+            _kind = 4;
         }
-        if (data.length == 1) {
-            return uint8(data[0]);
+        else if (data.length == 1) {
+            _kind = uint8(data[0]);
         }
-        return uint8(data[20]);
+        else {
+            _kind = uint8(data[20]);
+        }
+
+        require(_kind == 2 || _kind == 4);
+        return _kind;
     }
 
     function withdraw() public {
@@ -400,8 +411,8 @@ contract ReferToken is ColdWalletToken, StatusContract, ReferTreeContract {
             uint256 fee = withdrawValue.mul(packageType[userPackages[msg.sender].kindOf]['fee']).div(100);
             withdrawValue = withdrawValue.sub(fee);
             coldWalletAddress.transfer(fee);
-            userPackages[msg.sender].tokenValue = 0;
         }
+        userPackages[msg.sender].tokenValue = 0;
         msg.sender.transfer(withdrawValue);
     }
 
