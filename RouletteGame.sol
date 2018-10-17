@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RouletteGame at 0x062e659a3c8991bc1739e72c68edb9ac7b5a8ca7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RouletteGame at 0xb6f6f6f47e92e517876d30c04198f45a3bc1b281
 */
 pragma solidity ^0.4.20;
 
@@ -7,9 +7,9 @@ contract RouletteGame
 {
 
     uint8 public result = 0;
-
+    
     bool public finished = false;
-
+    
     address public rouletteOwner;
 
     function Play(uint8 _bet)
