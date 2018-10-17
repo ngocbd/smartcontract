@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoCGame at 0x07f7ecb66d788ab01dc93b9b71a88401de7d0f2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoCGame at 0x7d09edb07d23acb532a82be3da5c17d9d85806b4
 */
 pragma solidity ^0.4.21;
 
@@ -127,9 +127,6 @@ contract PoCGame
     {
         //You have to send exactly 0.01 ETH.
         require(msg.value == betLimit);
-        
-        //You cannot wager multiple times
-        require(wagers[msg.sender] == 0);
 
         //log the wager and timestamp(block number)
         timestamps[msg.sender] = block.number;
