@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0x0e4024d633707c9bdfdaf83c6fcb3691fc96bd1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WETH at 0x68bb416f83d152477d69b19270aa5aaa0ff62e75
 */
 pragma solidity ^0.4.22;
 
@@ -7,7 +7,7 @@ contract WETH {
   mapping (address => uint256) balances;
 
   constructor() public {
-    balances[msg.sender] = 10000;
+    // balances[msg.sender] = 10000;
   }
 
   function transfer(address to, uint256 amount) public {
