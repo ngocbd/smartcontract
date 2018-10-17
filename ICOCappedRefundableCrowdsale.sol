@@ -1,10 +1,388 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOCappedRefundableCrowdsale at 0xe5a9db2978818b45b01becd9c8e03f46805cf896
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOCappedRefundableCrowdsale at 0x357F69c9D7680C84c2bb26864A0F50Bc561166D0
 */
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+pragma solidity ^0.4.24;
+
+contract INotInitedOwnable {
+    
+    function init() public;
+    
+    function transferOwnership(address newOwner) public;
+}
+
+contract IOwnableUpgradeableImplementation is INotInitedOwnable {
+    
+    function transferOwnership(address newOwner) public;
+    
+    function getOwner() constant public returns(address);
+    
+    function upgradeImplementation(address _newImpl) public;
+    
+    function getImplementation() constant public returns(address);
+}
+
+contract IHookOperator is IOwnableUpgradeableImplementation {
+
+    event LogSetBalancePercentageLimit(uint256 limit);
+    event LogSetOverBalanceLimitHolder(address holderAddress, bool isHolder);
+    event LogSetUserManager(address userManagerAddress);
+    event LogSetICOToken(address icoTokenAddress);
+
+    event LogOnTransfer(address from, address to, uint tokens);
+    event LogOnMint(address to, uint256 amount);
+    event LogOnBurn(uint amount);
+    event LogOnTaxTransfer(address indexed taxableUser, uint tokensAmount);
+
+    event LogSetKYCVerificationContract(address _kycVerificationContractAddress);
+    event LogUpdateUserRatio(uint256 generationRatio, address indexed userContractAddress);
+
+    /**
+        Setters
+    */
+    function setBalancePercentageLimit(uint256 limit) public;
+    function getBalancePercentageLimit() public view returns(uint256);
+    
+    function setOverBalanceLimitHolder(address holderAddress, bool isHolder) public;
+
+    function setUserManager(address userManagerAddress) public;
+    function getUserManager() public view returns(address userManagerAddress);
+   
+    function setICOToken(address icoTokenAddress) public;
+    function getICOToken() public view returns(address icoTokenAddress);
+
+    /**
+        Main Functions
+    */
+    function onTransfer(address from, address to, uint256 tokensAmount) public;
+
+    function onMint(address to, uint256 tokensAmount) public;
+
+    function onBurn(uint256 amount) public;
+
+    function onTaxTransfer(address taxableUser, uint256 tokensAmount) public;
+
+    /**
+        KYC Verification
+    */
+    function kycVerification(address from, address to, uint256 tokensAmount) public;
+
+    function setKYCVerificationContract(address _kycVerificationContractAddress) public;
+
+    function getKYCVerificationContractAddress() public view returns(address _kycVerificationContractAddress);
+    
+    /**
+        Helper functions
+    */
+    function updateUserRatio(uint256 generationRatio, address userContractAddress) public;
+
+    function isOverBalanceLimitHolder(address holderAddress) public view returns(bool);
+
+    function isInBalanceLimit(address userAddress, uint256 tokensAmount) public view returns(bool);
+}
+
+contract IUserContract {
+    event LogNewExchangeUserCreate(uint256 _KYCStatus);
+    event LogNewUserCreate(uint256 _KYCStatus);
+    
+    event LogGenerationRatioUpdate(uint256 _generationRatio);
+    event LogKYCStatusUpdate(uint256 _KYCStatus);
+    event LogLastTransactionTimeUpdate(uint256 _lastTransactionTime);
+    event LogUserPolicyUpdate(bool _termsAndConditions, bool _AML, bool _constitution, bool _CLA);
+
+    event LogAsFounderMark();
+    event LogUserBlacklistedStatusSet(bool _blacklistedStatus);
+    event LogUserBan();
+
+    event LogDailyTransactionVolumeSendingIncrease(uint256 _currentDay, uint256 _transactionVolume);
+    event LogDailyTransactionVolumeReceivingIncrease(uint256 _currentDay, uint256 _transactionVolume);
+
+    event LogWeeklyTransactionVolumeSendingIncrease(uint256 _currentWeek, uint256 _transactionVolume);
+    event LogWeeklyTransactionVolumeReceivingIncrease(uint256 _currentWeek, uint256 _transactionVolume);
+    
+    event LogMonthlyTransactionVolumeSendingIncrease(uint256 _currentMonth, uint256 _transactionVolume);
+    event LogMonthlyTransactionVolumeReceivingIncrease(uint256 _currentMonth, uint256 _transactionVolume);
+
+    /**
+        Main Functions
+    */
+    function initExchangeUser(uint256 _KYCStatus) external;
+
+    function initKYCUser(uint256 _KYCStatus) external;
+
+    function initUser(uint256 _KYCStatus) internal;
+
+    function isValidUser() external view returns(bool);
+
+    function getUserData() external view returns
+    (
+        uint256 _generationRatio, 
+        uint256 _KYCStatus, 
+        uint256 _lastTransactionTime, 
+        bool _isBlacklistedUser,
+        bool _termsAndConditionsAcceptance,
+        bool _AMLAcceptance,
+        bool _constitutionSign,
+        bool _commonLicenseAgreementSign,
+        bool _isFounder
+    ); 
+
+    function isExchangeUser() public view returns(bool);
+
+    function updateUserPolicy(bool _termsAndConditions, bool _AML, bool _constitution, bool _CLA) external;
+
+    function isUserPolicyAccepted() public view returns(bool);
+
+    function updateGenerationRatio(uint256 _generationRatio) external;
+    
+    function updateKYCStatus(uint256 _newKYCStatus) external;
+
+    function updateLastTransactionTime(uint256 _lastTransactionTime) external;
+
+    /**
+        Founder - User
+    */
+    function markAsFounder() external;
+
+    function isFounderUser() external view returns(bool);
+
+    /**
+        Blacklisted - User
+    */
+    function setUserBlacklistedStatus(bool _shouldBeBlacklisted) external;
+
+    function isUserBlacklisted() external view returns(bool _isBlacklisted);
+    /**
+        Banned - User
+    */
+    function banUser() external;
+
+    function isUserBanned() external view returns(bool _isBanned);
+
+    /**
+        Daily transaction volume
+    */
+    function increaseDailyTransactionVolumeSending(uint256 _transactionVolume) external;
+
+    function getDailyTransactionVolumeSending() external view returns(uint256 _dailyTransactionVolume);
+
+    /**
+        Daily transaction volume - Receiving
+    */
+    function increaseDailyTransactionVolumeReceiving(uint256 _transactionVolume) external;
+
+    function getDailyTransactionVolumeReceiving() external view returns(uint256 _dailyTransactionVolume);
+
+    /**
+        Weekly transaction volume
+    */
+    function increaseWeeklyTransactionVolumeSending(uint256 _transactionVolume) external;
+
+    function getWeeklyTransactionVolumeSending() external view returns(uint256 _weeklyTransactionVolume);
+
+    /**
+        Weekly transaction volume - Receiving
+    */
+    function increaseWeeklyTransactionVolumeReceiving(uint256 _transactionVolume) external;
+
+    function getWeeklyTransactionVolumeReceiving() external view returns(uint256 _weeklyTransactionVolume);
+
+    /**
+        Monthly transaction volume
+    */
+    function increaseMonthlyTransactionVolumeSending(uint256 _transactionVolume) external;
+
+    function getMonthlyTransactionVolumeSending() external view returns(uint256 _monthlyTransactionVolume);
+
+    /**
+        Monthly transaction volume - Receiving
+    */
+    function increaseMonthlyTransactionVolumeReceiving(uint256 _transactionVolume) external;
+
+    function getMonthlyTransactionVolumeReceiving() external view returns(uint256 _monthlyTransactionVolume);
+}
+
+contract IUserManager is IOwnableUpgradeableImplementation {
+    event LogSetDataContract(address _dataContractAddress);
+    event LogSetTaxPercentage(uint256 _taxPercentage);
+    event LogSetTaxationPeriod(uint256 _taxationPeriod);
+
+    event LogSetUserFactoryContract(address _userFactoryContract);
+    event LogSetHookOperatorContract(address _HookOperatorContract);
+
+    event LogUpdateGenerationRatio(uint256 _generationRatio, address userContractAddress);
+    event LogUpdateLastTransactionTime(address _userAddress);
+
+    event LogUserAsFounderMark(address userAddress);
+
+    /**
+        Data Contract
+    */
+    function setDataContract(address _dataContractAddress) public;
+
+    function getDataContractAddress() public view returns(address _dataContractAddress);
+
+    function setTaxPercentage(uint256 _taxPercentage) public;
+
+    function setTaxationPeriod(uint256 _taxationPeriod) public;
+
+    /**
+        User Factory
+    */
+    function setUserFactoryContract(address _userFactoryContract) public;
+
+    function getUserFactoryContractAddress() public view returns(address _userFactoryContractAddress);
+    /**
+        Hook Operator
+    */
+    function setHookOperatorContract(address _HookOperatorContract) public;
+
+    function getHookOperatorContractAddress() public view returns(address _HookOperatorContractAddress);
+    
+    /**
+        Users Functions
+    */
+
+    function isUserKYCVerified(address _userAddress) public view returns(uint256 KYCStatus);
+
+    function isBlacklisted(address _userAddress) public view returns(bool _isBlacklisted);
+
+    function isBannedUser(address userAddress) public view returns(bool _isBannedUser);
+
+    function updateGenerationRatio(uint256 _generationRatio, address userContractAddress) public;
+
+    function updateLastTransactionTime(address _userAddress) public;
+
+    function getUserContractAddress(address _userAddress) public view returns(IUserContract _userContract);
+
+    function isValidUser(address userAddress) public view returns(bool);
+
+    function setCrowdsaleContract(address crowdsaleInstance) external;
+
+    function getCrowdsaleContract() external view returns(address);
+
+    function markUserAsFounder(address userAddress) external;
+}
+
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  // The token being sold
+  MintableToken public token;
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
+
+  // address where funds are collected
+  address public wallet;
+
+  // how many token units a buyer gets per wei
+  uint256 public rate;
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
+    require(_startTime >= now);
+    require(_endTime >= _startTime);
+    require(_rate > 0);
+    require(_wallet != address(0));
+
+    token = createTokenContract();
+    startTime = _startTime;
+    endTime = _endTime;
+    rate = _rate;
+    wallet = _wallet;
+  }
+
+  // creates the token to be sold.
+  // override this method to have crowdsale of a specific mintable token.
+  function createTokenContract() internal returns (MintableToken) {
+    return new MintableToken();
+  }
+
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal view returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
+  }
+
+
+}
+
+contract CappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  function validPurchase() internal view returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  // overriding Crowdsale#hasEnded to add cap logic
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+
+}
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -71,10 +449,404 @@ contract Ownable {
 
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
+contract RefundVault is Ownable {
+    using SafeMath for uint256;
+
+    /* 
+        To cover the costs for paying investor related functions by ourself as: 
+            "add investor in the whitelist" and etc.
+
+        We are getting 3% of the investor's deposit only if the soft cap
+        is not reached and the investor refund his contribution
+    */
+    uint256 public constant DEDUCTION = 3;
+    uint256 public totalDeductedValue;
+
+    enum State { Active, Refunding, Closed }
+
+    mapping (address => uint256) public deposited;
+    address public wallet;
+    State public state;
+
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+    constructor(address _wallet) public {
+        require(_wallet != address(0));
+        
+        wallet = _wallet;
+        state = State.Active;
+    }
+
+    function deposit(address investor) onlyOwner external payable {
+        require(state == State.Active);
+
+        deposited[investor] = deposited[investor].add(msg.value);
+    }
+
+    function close() onlyOwner external {
+        require(state == State.Active);
+        
+        state = State.Closed;
+        emit Closed();
+        wallet.transfer(address(this).balance);
+    }
+
+    function enableRefunds() external onlyOwner {
+        require(state == State.Active);
+
+        state = State.Refunding;
+        emit RefundsEnabled();
+    }
+
+    function refund(address investor) external {
+        require(state == State.Refunding);
+
+        uint256 depositedValue = deposited[investor];
+        uint256 deductedValue = depositedValue.mul(DEDUCTION).div(100);
+        
+        deposited[investor] = 0;
+
+        wallet.transfer(deductedValue);
+        investor.transfer(depositedValue.sub(deductedValue));
+        
+        totalDeductedValue = totalDeductedValue.add(deductedValue);
+
+        emit Refunded(investor, depositedValue);
+    }
+}
+
+contract WhitelistedCrowdsale is Ownable {
+
+    /*
+        We need a count limit for the users array, 
+        which is passed to setMultiple functions
+
+        Without the limit, the set could be so big that the transaction required gas is over the block maximum gas
+        The count is calculated on:
+            How much gas it costs to process one user
+            The maximum gas is 5 000 000
+    */
+    uint public constant MAX_INPUT_USERS_COUNT = 200;
+
+    mapping(address => uint) public preSalesSpecialUsers;
+
+    mapping(address => bool) public publicSalesSpecialUsers;
+
+    address public lister;
+
+    event LogPresalesSpecialUserSet(address userAddress, uint userRate);
+    event LogMultiplePresalesSpecialUsersSet(address[] userAddresses, uint userRate);
+    event LogPublicsalesSpecialUserAdd(address addedUser);
+    event LogMultiplePublicsalesSpecialUsersSet(address[] userAddresses);
+    event LogPublicsalesSpecialUserRemove(address removedUser);
+    event LogListerSet(address listerAddress);
+
+    modifier onlyLister() {
+        require(msg.sender == lister);
+        
+        _;
+    }
+
+    modifier notZeroAddress(address addressForValidation) {
+        require(addressForValidation != address(0));
+
+        _;
+    }
+
+    function setPreSalesSpecialUser(address user, uint userRate) external onlyLister notZeroAddress(user) {
+        preSalesSpecialUsers[user] = userRate;
+
+        emit LogPresalesSpecialUserSet(user, userRate);
+    }
+
+    function setMultiplePreSalesSpecialUsers(address[] users, uint userRate) external onlyLister {
+        require(users.length <= MAX_INPUT_USERS_COUNT);
+
+        for(uint i = 0; i < users.length; i++) { 
+            preSalesSpecialUsers[users[i]] = userRate;
+        }
+
+        emit LogMultiplePresalesSpecialUsersSet(users, userRate);
+    }
+
+    function addPublicSalesSpecialUser(address user) external onlyLister notZeroAddress(user) {
+        publicSalesSpecialUsers[user] = true;
+
+        emit LogPublicsalesSpecialUserAdd(user);
+    }
+
+    function addMultiplePublicSalesSpecialUser(address[] users) external onlyLister {
+        require(users.length <= MAX_INPUT_USERS_COUNT);
+
+        for(uint i = 0; i < users.length; i++) { 
+            publicSalesSpecialUsers[users[i]] = true;
+        }
+
+        emit LogMultiplePublicsalesSpecialUsersSet(users);
+    }
+
+    function removePublicSalesSpecialUser(address user) external onlyLister notZeroAddress(user) {
+        publicSalesSpecialUsers[user] = false;
+
+        emit LogPublicsalesSpecialUserRemove(user);
+    }
+
+    function setLister(address newLister) external onlyOwner notZeroAddress(newLister) {
+        lister = newLister;
+
+        emit LogListerSet(newLister);
+    }
+}
+
+contract FinalizableCrowdsale is Crowdsale, Ownable {
+  using SafeMath for uint256;
+
+  bool public isFinalized = false;
+
+  event Finalized();
+
+  /**
+   * @dev Must be called after crowdsale ends, to do some extra finalization
+   * work. Calls the contract's finalization function.
+   */
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+    require(hasEnded());
+
+    finalization();
+    Finalized();
+
+    isFinalized = true;
+  }
+
+  /**
+   * @dev Can be overridden to add finalization logic. The overriding function
+   * should call super.finalization() to ensure the chain of finalization is
+   * executed entirely.
+   */
+  function finalization() internal {
+  }
+}
+
+contract RefundableCrowdsale is FinalizableCrowdsale {
+    using SafeMath for uint256;
+
+    uint256 public goal;
+
+    RefundVault public vault;
+
+    constructor(uint256 _goal) public {
+        require(_goal > 0);
+        vault = new RefundVault(wallet);
+        goal = _goal;
+    }
+
+    function forwardFunds() internal {
+        vault.deposit.value(msg.value)(msg.sender);
+    }
+
+    function claimRefund() external {
+        require(isFinalized);
+        require(!goalReached());
+
+        vault.refund(msg.sender);
+    }
+
+    function finalization() internal {
+        if (goalReached()) {
+            vault.close();
+        } else {
+            vault.enableRefunds();
+        }
+
+        super.finalization();
+    }
+
+    function goalReached() public view returns (bool) {
+        return weiRaised >= goal;
+    }
+}
+
+contract ICOCrowdsale is Ownable, FinalizableCrowdsale, WhitelistedCrowdsale {
+    using SafeMath for uint256;
+
+    IUserManager public userManagerContract;
+
+    uint256 public preSalesEndDate;
+    uint256 public totalMintedBountyTokens;
+    bool public isPresalesNotEndedInAdvance = true;
+
+    uint256 public constant MIN_CONTRIBUTION_AMOUNT = 50 finney; // 0.05 ETH
+    uint256 public constant MAX_BOUNTYTOKENS_AMOUNT = 100000 * (10**18); // 100 000 tokens
+    uint256 public constant MAX_FUNDS_RAISED_DURING_PRESALE = 20000 ether;
+    
+    /*
+        The limit below allows a user to have maximum tokens balance of 2%(400 000 tokens) of the hard cap(167 000 ethers)
+        It only applies through crowdsale period
+    */
+    uint256 public constant MAX_USER_TOKENS_BALANCE = 400000 * (10**18); // 400 000 tokens
+
+    // 0.01 eth = 1 token
+    uint256 public constant REGULAR_RATE = 100;
+    uint256 public constant PUBLIC_SALES_SPECIAL_USERS_RATE = 120; // 20% bonus
+
+    uint256 public constant DEFAULT_PRESALES_DURATION = 7 weeks;
+    uint256 public constant MAX_PRESALES_EXTENSION= 12 weeks;
+
+    /*
+        The public sales periods ends:
+            PUBLIC_SALES_1_PERIOD_END = 1 weeks / Public sales 1 period starts from private sales period and expires one week after the private sales end
+            PUBLIC_SALES_2_PERIOD_END = 2 weeks / Public sales 2 period starts from public sales 1 period and expires on the 2-nd week after the private sales end
+            PUBLIC_SALES_3_PERIOD_END = 3 weeks / Public sales 3 period starts from public sales 2 period and expires on the 3-th week after the private sales end
+    */
+    uint256 public constant PUBLIC_SALES_1_PERIOD_END = 1 weeks;
+    uint256 public constant PUBLIC_SALES_2_PERIOD_END = 2 weeks;
+    uint256 public constant PUBLIC_SALES_3_PERIOD_END = 3 weeks;
+
+    uint256 public constant PUBLIC_SALES_1_RATE = 115; // 15% bonus
+    uint256 public constant PUBLIC_SALES_2_RATE = 110; // 10% bonus
+    uint256 public constant PUBLIC_SALES_3_RATE = 105; // 5% bonus
+
+    event LogBountyTokenMinted(address minter, address beneficiary, uint256 amount);
+    event LogPrivatesaleExtend(uint extensionTime);
+
+    constructor(uint256 startTime, uint256 endTime, address wallet, address hookOperatorAddress) public
+        FinalizableCrowdsale()
+        Crowdsale(startTime, endTime, REGULAR_RATE, wallet)
+    {
+        // Set default presales end date
+        preSalesEndDate = startTime.add(DEFAULT_PRESALES_DURATION);
+        
+
+        ICOTokenExtended icoToken = ICOTokenExtended(token);
+        icoToken.setHookOperator(hookOperatorAddress);
+    }
+
+    function createTokenContract() internal returns (MintableToken) {
+
+        ICOTokenExtended icoToken = new ICOTokenExtended();
+
+        icoToken.pause();
+
+        return icoToken;
+    }
+
+    function finalization() internal {
+        super.finalization();
+
+        ICOTokenExtended icoToken = ICOTokenExtended(token);
+
+        icoToken.transferOwnership(owner);
+    }
+
+    // The extensionTime is in seconds
+    function extendPreSalesPeriodWith(uint extensionTime) public onlyOwner {
+        require(extensionTime <= MAX_PRESALES_EXTENSION);
+        
+        preSalesEndDate = preSalesEndDate.add(extensionTime);
+        endTime = endTime.add(extensionTime);
+
+        emit LogPrivatesaleExtend(extensionTime);
+    }
+
+    function buyTokens(address beneficiary) public payable {
+        require(msg.value >= MIN_CONTRIBUTION_AMOUNT);
+        require(beneficiary != address(0));
+        require(validPurchase());
+
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 tokens = getTokenAmount(weiAmount, beneficiary);
+
+        // Check for maximum user's tokens amount overflow
+        uint256 beneficiaryBalance = token.balanceOf(beneficiary);
+        require(beneficiaryBalance.add(tokens) <= MAX_USER_TOKENS_BALANCE);
+
+        // // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        if(weiRaised >= MAX_FUNDS_RAISED_DURING_PRESALE && isPresalesNotEndedInAdvance){
+            preSalesEndDate = now;
+            isPresalesNotEndedInAdvance = false;
+        }
+
+        token.mint(beneficiary, tokens);
+
+        userManagerContract.markUserAsFounder(beneficiary);
+
+        emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    function getTokenAmount(uint256 weiAmount, address beneficiaryAddress) internal view returns(uint256 tokenAmount) {
+        uint256 crowdsaleRate = getRate(beneficiaryAddress);
+
+        return weiAmount.mul(crowdsaleRate);
+    }
+
+    function getRate(address beneficiary) internal view returns(uint256) {
+
+        if(now <= preSalesEndDate && weiRaised < MAX_FUNDS_RAISED_DURING_PRESALE){
+            if(preSalesSpecialUsers[beneficiary] > 0){
+                return preSalesSpecialUsers[beneficiary];
+            }
+
+            return REGULAR_RATE;
+        }
+
+        if(publicSalesSpecialUsers[beneficiary]){
+            return PUBLIC_SALES_SPECIAL_USERS_RATE;
+        }
+
+        if(now <= preSalesEndDate.add(PUBLIC_SALES_1_PERIOD_END)) {
+            return PUBLIC_SALES_1_RATE;
+        }
+
+        if(now <= preSalesEndDate.add(PUBLIC_SALES_2_PERIOD_END)) {
+            return PUBLIC_SALES_2_RATE;
+        }
+
+        if(now <= preSalesEndDate.add(PUBLIC_SALES_3_PERIOD_END)) {
+            return PUBLIC_SALES_3_RATE;
+        }
+
+        return REGULAR_RATE;
+    }
+
+    function createBountyToken(address beneficiary, uint256 amount) public onlyOwner returns(bool) {
+        require(!hasEnded());
+        require(totalMintedBountyTokens.add(amount) <= MAX_BOUNTYTOKENS_AMOUNT);
+
+        totalMintedBountyTokens = totalMintedBountyTokens.add(amount);
+        token.mint(beneficiary, amount);
+        emit LogBountyTokenMinted(msg.sender, beneficiary, amount);
+
+        return true;
+    }
+
+    function setUserManagerContract(address userManagerInstance) public onlyOwner {
+        require(userManagerInstance != address(0));
+
+        userManagerContract = IUserManager(userManagerInstance);
+    }
+}
+
+contract ICOCappedRefundableCrowdsale is CappedCrowdsale, ICOCrowdsale, RefundableCrowdsale {
+
+    constructor(uint256 startTime, uint256 endTime, uint256 hardCap, uint256 softCap, address wallet, address HookOperatorContractAddress) public
+        FinalizableCrowdsale()
+        ICOCrowdsale(startTime, endTime, wallet, HookOperatorContractAddress)
+        CappedCrowdsale(hardCap)
+        RefundableCrowdsale(softCap)
+    {
+        require(softCap <= hardCap);
+    }
+}
+
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
@@ -115,11 +887,89 @@ contract Pausable is Ownable {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+contract ExchangeOracle is Ownable, Pausable {
+
+    using SafeMath for uint;
+
+    bool public isIrisOracle = true;
+
+    uint public rate = 0;
+    uint public minWeiAmount = 1000; 
+
+    event LogRateChanged(uint oldRate, uint newRate, address changer);
+    event LogMinWeiAmountChanged(uint oldMinWeiAmount, uint newMinWeiAmount, address changer);
+
+    constructor(uint initialRate) public {
+        require(initialRate > 0);
+        rate = initialRate;
+    }
+
+    function rate() external view whenNotPaused returns(uint) {
+        return rate;
+    }
+
+    /*
+        The new rate has to be passed in format:
+            100 rate = 100 000 passed rate ( 1 ether = 100 tokens )
+            1 rate = 1 000 passed rate ( 1 ether = 1 token )
+            0.01 rate = 10 passed rate ( 100 ethers = 1 token )
+    **/
+    function setRate(uint newRate) external onlyOwner whenNotPaused returns(bool) {
+        require(newRate > 0);
+        
+        uint oldRate = rate;
+        rate = newRate;
+
+        emit LogRateChanged(oldRate, newRate, msg.sender);
+
+        return true;
+    }
+
+    /*
+        By default minWeiAmount = 1000
+        With min wei amount we can set the rate to be a float number
+
+        We use it as a multiplier because we can not pass float numbers in ethereum
+        If the token price becomes bigger than ether one, for example -> 1 token = 10 ethers
+        We will pass 100 as rate and this will be relevant to 0.1 token = 1 ether
+    **/
+    function setMinWeiAmount(uint newMinWeiAmount) external onlyOwner whenNotPaused returns(bool) {
+        require(newMinWeiAmount > 0);
+        require(newMinWeiAmount % 10 == 0); 
+
+        uint oldMinWeiAmount = minWeiAmount;
+        minWeiAmount = newMinWeiAmount;
+
+        emit LogMinWeiAmountChanged(oldMinWeiAmount, minWeiAmount, msg.sender);
+
+        return true;
+    }
+
+    function convertTokensAmountInWeiAtRate(uint tokensAmount, uint convertRate) external whenNotPaused view returns(uint) {
+
+        uint weiAmount = tokensAmount.mul(minWeiAmount);
+        weiAmount = weiAmount.div(convertRate);
+
+        if ((tokensAmount % convertRate) != 0) {
+            weiAmount++;
+        } 
+
+        return weiAmount;
+    }
+
+    function calcWeiForTokensAmount(uint tokensAmount) external view whenNotPaused returns(uint) {
+        
+        uint weiAmount = tokensAmount.mul(minWeiAmount);
+        weiAmount = weiAmount.div(rate);
+
+        if ((tokensAmount % rate) != 0) {
+            weiAmount++;
+        } 
+
+        return weiAmount;
+    }
+}
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
@@ -127,21 +977,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -172,6 +1007,33 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
+}
+
+contract BurnableToken is BasicToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract StandardToken is ERC20, BasicToken {
@@ -262,7 +1124,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -300,304 +1161,180 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+contract PausableToken is StandardToken, Pausable {
 
-/**
- * @title ICOToken
- * @dev Very simple ERC20 Token example.
- * `StandardToken` functions.
- */
-contract ICOToken is MintableToken, Pausable {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
 
-  string public constant name = "IPCHAIN Token";
-  string public constant symbol = "IP";
-  uint8 public constant decimals = 18;
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
 
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
 
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function ICOToken() public {
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
   }
 }
 
-contract Crowdsale {
-  using SafeMath for uint256;
+contract ICOToken is BurnableToken, MintableToken, PausableToken {
 
-  // The token being sold
-  MintableToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-
-    token = createTokenContract();
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
-  }
-
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract() internal returns (MintableToken) {
-    return new MintableToken();
-  }
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // Override this method to have a way to add business logic to your crowdsale when buying
-  function getTokenAmount(uint256 weiAmount) internal view returns(uint256) {
-    return weiAmount.mul(rate);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
-
+    string public constant name = "AIUR Token";
+    string public constant symbol = "AIUR";
+    uint8 public constant decimals = 18;
 }
 
-/**
- * @title FinalizableCrowdsale
- * @dev Extension of Crowdsale where an owner can do extra work
- * after finishing.
- */
-contract FinalizableCrowdsale is Crowdsale, Ownable {
-  using SafeMath for uint256;
+contract ICOTokenExtended is ICOToken {
 
-  bool public isFinalized = false;
+    address public refunder;
 
-  event Finalized();
+    IHookOperator public hookOperator;
+    ExchangeOracle public aiurExchangeOracle;
 
-  /**
-   * @dev Must be called after crowdsale ends, to do some extra finalization
-   * work. Calls the contract's finalization function.
-   */
-  function finalize() onlyOwner public {
-    require(!isFinalized);
-    require(hasEnded());
+    mapping(address => bool) public minters;
 
-    finalization();
-    Finalized();
+    uint256 public constant MIN_REFUND_RATE_DELIMITER = 2; // Refund rate has to be minimum 50% of the AIUR ExchangeOracle rate
 
-    isFinalized = true;
-  }
+    event LogRefunderSet(address refunderAddress);
+    event LogTransferOverFunds(address from, address to, uint ethersAmount, uint tokensAmount);
+    event LogTaxTransfer(address from, address to, uint amount);
+    event LogMinterAdd(address addedMinter);
+    event LogMinterRemove(address removedMinter);
 
-  /**
-   * @dev Can be overridden to add finalization logic. The overriding function
-   * should call super.finalization() to ensure the chain of finalization is
-   * executed entirely.
-   */
-  function finalization() internal {
-  }
-}
-
-/**
- * @title CappedCrowdsale
- * @dev Extension of Crowdsale with a max amount of funds raised
- */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  function CappedCrowdsale(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  // overriding Crowdsale#validPurchase to add extra cap logic
-  // @return true if investors can buy at the moment
-  function validPurchase() internal view returns (bool) {
-    bool withinCap = weiRaised.add(msg.value) <= cap;
-    return super.validPurchase() && withinCap;
-  }
-
-  // overriding Crowdsale#hasEnded to add cap logic
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    bool capReached = weiRaised >= cap;
-    return super.hasEnded() || capReached;
-  }
-
-}
-
-contract ICOCrowdsale is Ownable, Pausable, FinalizableCrowdsale {
-
-  uint256 constant PRESALE_CAP = 2727 ether;
-  uint256 constant PRESALE_RATE = 316;
-  uint256 constant PRESALE_DURATION = 23 days;
-
-  uint256 constant MAIN_SALE_START = 1527771600;
-  uint256 constant BONUS_1_CAP = PRESALE_CAP + 3636 ether;
-  uint256 constant BONUS_1_RATE = 292;
-
-  uint256 constant BONUS_2_CAP = BONUS_1_CAP + 7273 ether;
-  uint256 constant BONUS_2_RATE = 269;
-
-  uint256 constant BONUS_3_CAP = BONUS_2_CAP + 9091 ether;
-  uint256 constant BONUS_3_RATE = 257;
-
-  uint256 constant BONUS_4_CAP = BONUS_3_CAP + 10909 ether;
-  uint256 constant BONUS_4_RATE = 245;
-
-  uint256 constant NORMAL_RATE = 234;
-
-  address tokenAddress;
-
-  event LogBountyTokenMinted(address minter, address beneficiary, uint256 amount);
-
-  function ICOCrowdsale(uint256 _startTime, uint256 _endTime, address _wallet, address _tokenAddress) public
-    FinalizableCrowdsale()
-    Crowdsale(_startTime, _endTime, NORMAL_RATE, _wallet)
-  {
-    require((_endTime-_startTime) > (15 * 1 days));
-    require(_tokenAddress != address(0x0));
-    tokenAddress = _tokenAddress;
-    token = createTokenContract();
-  }
-
-  /**
-   * Invoked on initialization of the contract
-   */
-  function createTokenContract() internal returns (MintableToken) {
-    return ICOToken(tokenAddress);
-  }
-
-  function finalization() internal {
-    super.finalization();
-
-    // Un/Comment this if you have/have not paused the token contract
-    ICOToken _token = ICOToken(token);
-    if(_token.paused()) {
-      _token.unpause();
-    }
-    _token.transferOwnership(owner);
-  }
-
-  function buyTokens(address beneficiary) public payable {
-    uint256 minContributionAmount = 1 finney; // 0.001 ETH
-    require(msg.value >= minContributionAmount);
-    super.buyTokens(beneficiary);
-  }
-
-  function getRate() internal constant returns(uint256) {
-    // Pre-sale Period
-    if (now < (startTime + PRESALE_DURATION)) {
-      require(weiRaised <= PRESALE_CAP);
-      return PRESALE_RATE;
+    modifier onlyMinter(){
+        require(minters[msg.sender]);
+        
+        _;
     }
 
-    // Main sale
-    require(now >= MAIN_SALE_START);
+    modifier onlyCurrentHookOperator() {
+        require(msg.sender == address(hookOperator));
 
-    // First Bonus Period
-    if (weiRaised <= BONUS_1_CAP) {
-        return BONUS_1_RATE;
+        _;
     }
 
-    // Second Bonus Period
-    if (weiRaised <= BONUS_2_CAP) {
-        return BONUS_2_RATE;
+    modifier nonZeroAddress(address inputAddress) {
+        require(inputAddress != address(0));
+
+        _;
     }
 
-    // Third Bonus Period
-    if (weiRaised <= BONUS_3_CAP) {
-        return BONUS_3_RATE;
+    modifier onlyRefunder() {
+        require(msg.sender == refunder);
+
+        _;
     }
 
-    // Fourth Bonus Period
-    if (weiRaised <= BONUS_4_CAP) {
-        return BONUS_4_RATE;
+    constructor() public {
+        minters[msg.sender] = true;
     }
 
-    // Default Period
-    return rate;
-  }
+    function setRefunder(address refunderAddress) external onlyOwner nonZeroAddress(refunderAddress) {
+        refunder = refunderAddress;
 
-  function getTokenAmount(uint256 weiAmount) internal constant returns(uint256) {
-    uint256 _rate = getRate();
-    return weiAmount.mul(_rate);
-  }
+        emit LogRefunderSet(refunderAddress);
+    }
 
-  function createBountyToken(address beneficiary, uint256 amount) public onlyOwner returns(bool) {
-    require(!hasEnded());
-    token.mint(beneficiary, amount);
-    LogBountyTokenMinted(msg.sender, beneficiary, amount);
-    return true;
-  }
+    // Set the exchange oracle after crowdsale 
+    function setExchangeOracle(address exchangeOracleAddress) external onlyOwner nonZeroAddress(exchangeOracleAddress) {
+        aiurExchangeOracle = ExchangeOracle(exchangeOracleAddress);
+    }
 
-}
+    function setHookOperator(address hookOperatorAddress) external onlyOwner nonZeroAddress(hookOperatorAddress) {
+        hookOperator = IHookOperator(hookOperatorAddress);
+    }
 
-contract ICOCappedRefundableCrowdsale is CappedCrowdsale, ICOCrowdsale {
+    function addMinter(address minterAddress) external onlyOwner nonZeroAddress(minterAddress) {
+        minters[minterAddress] = true;    
 
+        emit LogMinterAdd(minterAddress);
+    }
 
-  function ICOCappedRefundableCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _cap, address _wallet, address _tokenAddress) public
-  	FinalizableCrowdsale()
-    ICOCrowdsale(_startTime, _endTime, _wallet, _tokenAddress)
-	CappedCrowdsale(_cap)
-	{
-	}
+    function removeMinter(address minterAddress) external onlyOwner nonZeroAddress(minterAddress) {
+        minters[minterAddress] = false;    
 
+        emit LogMinterRemove(minterAddress);
+    }
+
+    function mint(address to, uint256 tokensAmount) public onlyMinter canMint nonZeroAddress(to) returns(bool) {
+        hookOperator.onMint(to, tokensAmount);
+
+        totalSupply = totalSupply.add(tokensAmount);
+        balances[to] = balances[to].add(tokensAmount);
+
+        emit Mint(to, tokensAmount);
+        emit Transfer(address(0), to, tokensAmount);
+        return true;
+    } 
+
+    function burn(uint tokensAmount) public {
+        hookOperator.onBurn(tokensAmount);       
+
+        super.burn(tokensAmount);  
+    } 
+
+    function transfer(address to, uint tokensAmount) public nonZeroAddress(to) returns(bool) {
+        hookOperator.onTransfer(msg.sender, to, tokensAmount);
+
+        return super.transfer(to, tokensAmount);
+    }
+    
+    function transferFrom(address from, address to, uint tokensAmount) public nonZeroAddress(from) nonZeroAddress(to) returns(bool) {
+        hookOperator.onTransfer(from, to, tokensAmount);
+        
+        return super.transferFrom(from, to, tokensAmount);
+    }
+
+    /*
+        This function is used for taxation purposes and will be used after pre-defined requirement are met
+    */
+    function taxTransfer(address from, address to, uint tokensAmount) external onlyCurrentHookOperator nonZeroAddress(from) nonZeroAddress(to) returns(bool) {  
+        require(balances[from] >= tokensAmount);
+
+        transferDirectly(from, to, tokensAmount);
+
+        hookOperator.onTaxTransfer(from, tokensAmount);
+        emit LogTaxTransfer(from, to, tokensAmount);
+
+        return true;
+    }
+
+    function transferOverBalanceFunds(address from, address to, uint rate) external payable onlyRefunder nonZeroAddress(from) nonZeroAddress(to) returns(bool) {
+        require(!hookOperator.isOverBalanceLimitHolder(from));
+
+        uint256 oracleRate = aiurExchangeOracle.rate();
+        require(rate <= oracleRate.add(oracleRate.div(MIN_REFUND_RATE_DELIMITER)));
+
+        uint256 fromBalance = balanceOf(from);
+        
+        // Calculate percentage limit in tokens
+        uint256 maxTokensBalance = totalSupply.mul(hookOperator.getBalancePercentageLimit()).div(100);
+
+        require(fromBalance > maxTokensBalance);
+
+        uint256 tokensToTake = fromBalance.sub(maxTokensBalance);
+        uint256 weiToRefund = aiurExchangeOracle.convertTokensAmountInWeiAtRate(tokensToTake, rate);
+
+        require(hookOperator.isInBalanceLimit(to, tokensToTake));
+        require(msg.value == weiToRefund);
+
+        transferDirectly(from, to, tokensToTake);
+        from.transfer(msg.value);
+
+        emit LogTransferOverFunds(from, to, weiToRefund, tokensToTake);
+
+        return true;
+    }
+
+    function transferDirectly(address from, address to, uint tokensAmount) private {
+        balances[from] = balances[from].sub(tokensAmount);
+        balances[to] = balances[to].add(tokensAmount);
+    }
 }
