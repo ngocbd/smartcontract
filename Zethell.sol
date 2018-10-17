@@ -1,14 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0x52d9f3dda15c4faa3e8393b468c3d9e6086bb1ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0xe609c2d1748ef05fea135f73be1632f38f7829c9
 */
 pragma solidity ^0.4.24;
 
 /*
-* Zethell.
-*
-* Written June 2018 for Zethr (https://www.zethr.io) by Norsefire.
-* Special thanks to oguzhanox and Etherguy for assistance with debugging.
-*
+
+https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com
+                                                                                                                                                                                             
+FFFFFFFFFFFFFFFFFFFFFF                                           tttt            iiii                   
+F::::::::::::::::::::F                                        ttt:::t           i::::i                  
+F::::::::::::::::::::F                                        t:::::t            iiii                   
+FF::::::FFFFFFFFF::::F                                        t:::::t                                   
+  F:::::F       FFFFFFooooooooooo   rrrrr   rrrrrrrrr   ttttttt:::::ttttttt    iiiiiii     ssssssssss   
+  F:::::F           oo:::::::::::oo r::::rrr:::::::::r  t:::::::::::::::::t    i:::::i   ss::::::::::s  
+  F::::::FFFFFFFFFFo:::::::::::::::or:::::::::::::::::r t:::::::::::::::::t     i::::i ss:::::::::::::s 
+  F:::::::::::::::Fo:::::ooooo:::::orr::::::rrrrr::::::rtttttt:::::::tttttt     i::::i s::::::ssss:::::s
+  F:::::::::::::::Fo::::o     o::::o r:::::r     r:::::r      t:::::t           i::::i  s:::::s  ssssss 
+  F::::::FFFFFFFFFFo::::o     o::::o r:::::r     rrrrrrr      t:::::t           i::::i    s::::::s      
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t           i::::i       s::::::s   
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t    tttttt i::::i ssssss   s:::::s 
+FF:::::::FF        o:::::ooooo:::::o r:::::r                  t::::::tttt:::::ti::::::is:::::ssss::::::s
+F::::::::FF        o:::::::::::::::o r:::::r                  tt::::::::::::::ti::::::is::::::::::::::s 
+F::::::::FF         oo:::::::::::oo  r:::::r                    tt:::::::::::tti::::::i s:::::::::::ss  
+FFFFFFFFFFF           ooooooooooo    rrrrrrr                      ttttttttttt  iiiiiiii  sssssssssss    
+
+Discord:   https://discord.gg/gDtTX62                                                                                    
+
 */
 
 contract ZTHReceivingContract {
