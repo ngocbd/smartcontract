@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0xb8c587ac5a39aa2d543df1db83cd6a3f44385a54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0xdf1b19c9fb0fae3b0e6bef73ee792a72a19104e2
 */
 pragma solidity ^0.4.24;
 
@@ -16,7 +16,6 @@ contract test {
         _;
     }
     
-
     function record_human_readable_blockhash() 
         one_time_use public
     {
@@ -26,16 +25,12 @@ contract test {
         for(uint i = 0; i<wordcount; i++) {
             bytes6 word = word_sequence[i];
             bytes memory toBytes = new bytes(6);
-            
-            toBytes[0] = word[0];
-            toBytes[1] = word[1];
-            toBytes[2] = word[2];
-            toBytes[3] = word[3];
-            toBytes[4] = word[4];
-            toBytes[5] = word[5];
-
-            string memory toString = string(toBytes);
-            human_readable_blockhash[i] = toString;
+            assembly {
+                toBytes := mload(word)
+            }
+            human_readable_blockhash[i] = string(toBytes);
         }
+        
     }
+    
 }
