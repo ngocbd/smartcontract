@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RapidsToken at 0x4bf4f2ea258bf5cb69e9dc0ddb4a7a46a7c10c53
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RapidsToken at 0xe675910bbb5dfb8f5b00e8cdf2aafd61027aad41
 */
 pragma solidity ^0.4.23;
 
@@ -217,6 +217,6 @@ contract MintableToken is StandardToken, Ownable {
 
 contract RapidsToken is MintableToken {
     string public constant name = "Rapids";
-    string public constant symbol = "RPD";
+    string public constant symbol = "RAPIDS";
     uint8 public constant decimals = 18;
 }
