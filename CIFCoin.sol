@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIFCoin at 0x66572a0463f300bc0779e1f472d5f5c2fe09c562
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIFCoin at 0xb20563f76433b1f1bf5e41f33eeb76cbc26891ba
 */
 pragma solidity ^0.4.24;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.24;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public supply;
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -92,7 +92,6 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-
   function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
@@ -292,7 +291,6 @@ contract CIFCoin is PausableToken {
     string  public  constant name = "CIFCoin";
     string  public  constant symbol = "CIF";
     uint8   public  constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 41500000e18; //41.5 million
 
     modifier validDestination( address to )
     {
@@ -307,15 +305,10 @@ contract CIFCoin is PausableToken {
     {
         
         // assign the total tokens to CrowdIF
-        supply = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        emit Transfer(address(0x0), msg.sender, INITIAL_SUPPLY);
+        totalSupply = 41500000e18; //41.5 million
+        balances[msg.sender] = totalSupply;
+        emit Transfer(address(0x0), msg.sender, totalSupply);
     }
-
-    function totalSupply() constant public returns (uint256) {
-        return supply;
-    }
-    
 
     function transfer(address _to, uint _value) validDestination(_to) public returns (bool) 
     {
@@ -337,7 +330,7 @@ contract CIFCoin is PausableToken {
     function burn(uint _value) public returns (bool) 
     {
         balances[msg.sender] = balances[msg.sender].sub(_value);
-        supply = supply.sub(_value);
+        totalSupply = totalSupply.sub(_value);
         emit Burn(msg.sender, _value);
         emit Transfer(msg.sender, address(0x0), _value);
         return true;
@@ -421,7 +414,7 @@ contract CIFCoin is PausableToken {
     }
 
     function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        supply = supply.add(_amount);
+        totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Mint(_to, _amount);
         emit Transfer(address(0), _to, _amount);
