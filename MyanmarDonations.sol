@@ -1,71 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyanmarDonations at 0x618e9fba148f6583825a67f26f6068dafc13982c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyanmarDonations at 0xb651c10cfd17b269f22b0855f969b9eab7202681
 */
 pragma solidity ^0.4.24;
-
-// File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
 
 // File: node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
@@ -95,37 +31,58 @@ contract ERC20Basic {
 pragma solidity ^0.4.24;
 
 
-
-contract MyanmarDonations is Ownable {
+contract MyanmarDonations{
 
     // SENC Token Address
     address public SENC_CONTRACT_ADDRESS = 0xA13f0743951B4f6E3e3AA039f682E17279f52bc3;
-    // Exchange Wallet Address
-    address public DONATION_WALLET = 0xB4ea16258020993520F59cC786c80175C1b807D7;
+    // Donation Wallet Address
+    address public donationWallet;
     // Foundation Wallet Address
-    address public FOUNDATION_WALLET = 0x2c76E65d3b3E38602CAa2fAB56e0640D0182D8F8;
-    // Start date: 2018-08-08 10:00:00 (GMT +8)
-    uint256 public START_DATE = 1533693600;
-    // End date:   2018-08-10 18:00:00 (GMT +8)
-    uint256 public END_DATE = 1533895200;
+    address public foundationWallet;
+    // Start time for donation campaign
+    uint256 public startDate;
+    // End time for donation campaign
+    uint256 public endDate;
+    // SENC-ETH pegged rate based on EOD rate of the 8nd August from coingecko in Wei
+    uint256 public sencEthRate;
+
     // Ether hard cap
-    uint256 public ETHER_HARD_CAP = 30 ether;
-    // InfoCorp donation
-    uint256 public INFOCORP_DONATION = 30 ether;
+    uint256 public ETHER_HARD_CAP;
+    // InfoCorp committed ETH donation amount
+    uint256 public INFOCORP_DONATION;
     // Total Ether hard cap to receive
-    uint256 public TOTAL_ETHER_HARD_CAP = ETHER_HARD_CAP + INFOCORP_DONATION;
-    // SENC-ETH pegged rate based on EOD rate of the 2nd August from coingecko in Wei
-    uint256 constant public FIXED_RATE = 41369152116499 wei;
-    // 30 is the max cap in Ether
-    uint256 public SENC_HARD_CAP = ETHER_HARD_CAP * 10 ** 18 / FIXED_RATE;
+    uint256 public TOTAL_ETHER_HARD_CAP;
     // Total of SENC collected at the end of the donation
     uint256 public totalSencCollected;
     // Marks the end of the donation.
     bool public finalized = false;
 
+    uint256 public sencHardCap;
+
     modifier onlyDonationAddress() {
-        require(msg.sender == DONATION_WALLET);
+        require(msg.sender == donationWallet);
         _;
+    }
+
+    constructor(                           
+                address _donationWallet, //0xB4ea16258020993520F59cC786c80175C1b807D7
+                address _foundationWallet, //0x2c76E65d3b3E38602CAa2fAB56e0640D0182D8F8
+                uint256 _startDate, //1534125600 [2018-08-13 10:00:00 (GMT +8)]
+                uint256 _endDate, //1534327200 [2018-08-15 18:00:00 (GMT +8)]
+                uint256 _sencEthRate, // 40187198103877
+                uint256 _etherHardCap,
+                uint256 _infocorpDonation
+                ) public {
+        donationWallet = _donationWallet;
+        foundationWallet = _foundationWallet;
+        startDate = _startDate;
+        endDate = _endDate;
+        sencEthRate = _sencEthRate;
+        ETHER_HARD_CAP = _etherHardCap;
+        sencHardCap = ETHER_HARD_CAP * 10 ** 18 / sencEthRate;
+        INFOCORP_DONATION = _infocorpDonation;
+
+        TOTAL_ETHER_HARD_CAP = ETHER_HARD_CAP + INFOCORP_DONATION;
     }
 
     /// @notice Receive initial funds.
@@ -142,22 +99,22 @@ contract MyanmarDonations is Ownable {
      * hard cap reached or the campaign reached the final day.
      */
     function finalize() public onlyDonationAddress returns (bool) {
-        require(getSencBalance() >= SENC_HARD_CAP || now >= END_DATE, "SENC hard cap rached OR End date reached");
+        require(getSencBalance() >= sencHardCap || now >= endDate, "SENC hard cap rached OR End date reached");
         require(!finalized, "Donation not already finalized");
         // The Ether balance collected in Wei
         totalSencCollected = getSencBalance();
-        if (totalSencCollected >= SENC_HARD_CAP) {
+        if (totalSencCollected >= sencHardCap) {
             // Transfer of donations to the donations address
-            DONATION_WALLET.transfer(address(this).balance);
+            donationWallet.transfer(address(this).balance);
         } else {
             uint256 totalDonatedEthers = convertToEther(totalSencCollected) + INFOCORP_DONATION;
             // Transfer of donations to the donations address
-            DONATION_WALLET.transfer(totalDonatedEthers);
+            donationWallet.transfer(totalDonatedEthers);
             // Transfer ETH remaining to foundation
-            claimTokens(address(0), FOUNDATION_WALLET);
+            claimTokens(address(0), foundationWallet);
         }
         // Transfer SENC to foundation
-        claimTokens(SENC_CONTRACT_ADDRESS, FOUNDATION_WALLET);
+        claimTokens(SENC_CONTRACT_ADDRESS, foundationWallet);
         finalized = true;
         return finalized;
     }
@@ -195,8 +152,8 @@ contract MyanmarDonations is Ownable {
     }
     
     /// @notice The `setEndDate()` changes unit timestamp on wich de donations ends.
-    function setEndDate(uint256 _endDate) external onlyOwner returns (bool){
-        END_DATE = _endDate;
+    function setEndDate(uint256 _endDate) external onlyDonationAddress returns (bool){
+        endDate = _endDate;
         return true;
     }
 
@@ -204,8 +161,8 @@ contract MyanmarDonations is Ownable {
      * @notice The `convertToEther()` converts value of SENC Tokens to Ether based on pegged rate.
      * @param _value the amount of SENC to be converted.
      */
-    function convertToEther(uint256 _value) private pure returns (uint256) {
-        return _value * FIXED_RATE / 10 ** 18;
+    function convertToEther(uint256 _value) public view returns (uint256) {
+        return _value * sencEthRate / 10 ** 18;
     }
 
 }
