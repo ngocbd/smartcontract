@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CareerChainPrivateSale at 0x4b958074cee6546e29cdb3c43494e7425b85f59c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CareerChainPrivateSale at 0xac21927eaf2bf56d1c75836c07acae044ccf2412
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 
 /**
