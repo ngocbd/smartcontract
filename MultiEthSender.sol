@@ -1,48 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0xb719ddb3f493444348070f2ad64674e398846a12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0xC8CE829C5D26c2F94E5bf64F90DbDf576b24213B
 */
 pragma solidity ^0.4.24;
 
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a / b;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
     return c;
   }
 }
 
 contract MultiEthSender {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
-    event Send(uint256 _amount, address indexed _receiver);
+  event Send(uint256 _amount, address indexed _receiver);
+  
+  function() public payable {
+  }
 
-    function multiSendEth(uint256 amount, address[] list) public returns (bool){
-        uint256 _userCount = list.length;
+  function multiSendEth(
+    uint256 amount, 
+    address[] list
+  ) 
+  external 
+  returns (bool) 
+  {
 
-        require( address(this).balance > amount.mul(_userCount));
+    uint256 totalList = list.length;
+    uint256 totalAmount = amount.mul(totalList);
+    require(address(this).balance > totalAmount);
 
-        for(uint256 _i = 0; _i < _userCount; _i++){
-            list[_i].transfer(amount);
-            emit Send(amount, list[_i]);
-        }
+    for (uint256 i = 0; i < list.length; i++) {
+      require(list[i] != address(0));
+      require(list[i].send(amount));
 
-        return true;
+      emit Send(amount, list[i]);
     }
 
-    function() public payable{}
+    return true;
+  }
+
 }
