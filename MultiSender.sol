@@ -1,16 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSender at 0x67af54d9e20fe6f9dd2dfe0449ed65f97a3638de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSender at 0x3885a234f24b1a4842f1df0f1ee2f91507876851
 */
 pragma solidity ^0.4.24;
 
+contract ERC20 {
+    function transferFrom(address _from, address _to, uint _value) returns (bool success);
+}
+
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
 contract MultiSender {
-    function multiSend(uint256 amount, address[] addresses) public returns (bool) {
-        for (uint i = 0; i < addresses.length; i++) {
-            addresses[i].transfer(amount);
+    using SafeMath for uint256;
+
+    function multiSend(address tokenAddress, address[] addresses, uint256[] amounts) public payable {
+        require(addresses.length <= 100);
+        require(addresses.length == amounts.length);
+        if (tokenAddress == 0x000000000000000000000000000000000000bEEF) {
+            multisendEther(addresses, amounts);
+        } else {
+            ERC20 token = ERC20(tokenAddress);
+            //Token address
+            for (uint8 i = 0; i < addresses.length; i++) {
+                address _address = addresses[i];
+                uint256 _amount = amounts[i];
+                token.transferFrom(msg.sender, _address, _amount);
+            }
         }
     }
 
-    function () public payable {
-        
+    function multisendEther(address[] addresses, uint256[] amounts) public payable {
+        uint256 total = msg.value;
+        uint256 i = 0;
+        for (i; i < addresses.length; i++) {
+            require(total >= amounts[i]);
+            total = total.sub(amounts[i]);
+            addresses[i].transfer(amounts[i]);
+        }
     }
 }
