@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x462ae7f2ff2e072daf59d23fb858fa23aae524bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0xc2abb67e6c952d136400c278174066384d211d1a
 */
 pragma solidity ^0.4.20;
 
@@ -285,8 +285,8 @@ contract Config is Ownable, ConfigInterface
 
     function getTutorialBabyGen(uint16 _dadGen) public pure returns (uint16)
     {
-        // Tutorial pet gen is 13
-        return getBabyGen(13, _dadGen);
+        // Tutorial pet gen is 0
+        return getBabyGen(0, _dadGen);
     }
 
     function getBreedingFee(uint40 _momId, uint40 _dadId)
@@ -296,17 +296,10 @@ contract Config is Ownable, ConfigInterface
     {
         uint16 momGen = coreContract.getGeneration(_momId);
         uint16 dadGen = coreContract.getGeneration(_dadId);
+        uint16 momCooldown = coreContract.getCooldownIndex(_momId);
+        uint16 dadCooldown = coreContract.getCooldownIndex(_dadId);
 
-        if (momGen == 0 && dadGen == 0)
-        {
-            uint16 momIndex = coreContract.getCooldownIndex(_momId);
-            uint16 dadIndex = coreContract.getCooldownIndex(_dadId);
-            uint16 sum = momIndex + dadIndex;
-            return 1 finney + 3 szabo*sum*sum;
-        }
-        else
-        {
-            return 500 szabo*(momGen + dadGen + 10)/2;
-        }
+        uint256 sum = uint256(momCooldown) + dadCooldown - momGen - dadGen;
+        return 1 finney + 3 szabo*sum*sum;
     }
 }
