@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VHW at 0xe8b5f7433df23b2b993c69d49d1f473051af08f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VHW at 0x7faf5179cf3080be02e2c3da0ac34b7d5e5225df
 */
 pragma solidity ^0.4.23;
 
@@ -252,11 +252,39 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
 contract VHW is StandardToken {
   string public name = "VHW";
   string public symbol = "VHW";
   uint public decimals = 6;
-  uint public INITIAL_SUPPLY = 352500000000000 * (10 ** decimals);
+  uint public INITIAL_SUPPLY = 352500000 * (10 ** decimals);
 
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
