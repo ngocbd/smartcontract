@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Vault at 0x9711758aa54a7915ff7d5204beddb5a8e55a0217
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Vault at 0x65c0c6b4109f6ed7797efdb8bd03f03b1b641029
 */
 pragma solidity ^0.4.23;
 
@@ -433,4 +433,12 @@ contract ERC20Vault is SplitErc20Payment{
     super.depositToken(token, amount);
     pendingInvestments[msg.sender].pushRecord(new InvestmentRecord(token, now, lockPeriod, amount));
   }
+
+  function depositEtherToVault(uint lockPeriod) public payable{
+    if (pendingInvestments[msg.sender] == address(0x0)){
+      pendingInvestments[msg.sender] = new InvestmentRecordList();
+    }
+    deposit();
+    pendingInvestments[msg.sender].pushRecord(new InvestmentRecord(0, now, lockPeriod, msg.value));
+  }  
 }
