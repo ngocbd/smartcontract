@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x25f10182e043bd93a5641e13327d3805e9bb0191
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x372ce28440082152af33980eb1ac5e129221a876
 */
 pragma solidity ^0.4.4;
 
@@ -120,8 +120,8 @@ ng variables are OPTIONAL vanities. One does not have to include them.
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 140000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 140000000000000000000000000 ;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 140000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 140000000000000000 ;                        // Update total supply (100000 for example)
         name = "Brainmab";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "BRN";                               // Set the symbol for display purposes
