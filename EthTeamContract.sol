@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0xb389327f8325d9568826b0f3ca63ef613687cfab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0x7a2ac9691ce2fcffb9777311c14a82a6aec7e639
 */
 pragma solidity ^0.4.21;
 
@@ -294,16 +294,6 @@ contract EthTeamContract is StandardToken, Ownable {
         require(status != _status);
         status = _status;
         emit ChangeStatus(address(this), _status);
-    }
-
-    /**
-    * @dev Change the fee owner.
-    *
-    * @param _feeOwner The new fee owner.
-    */
-    function changeFeeOwner(address _feeOwner) onlyOwner public {
-        require(_feeOwner != feeOwner && _feeOwner != address(0));
-        feeOwner = _feeOwner;
     }
 
     /**
