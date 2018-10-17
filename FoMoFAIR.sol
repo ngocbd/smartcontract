@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoFAIR at 0xc355cbb42a48b6a63e6738c7e15a8b8918eb6654
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoFAIR at 0x49640c0b505315e28f97bf83810112c174bd924a
 */
 pragma solidity ^0.4.24;
 
@@ -130,7 +130,7 @@ contract FoMoFAIR is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xAcd1aE32f6519ED27eC245462d4154584451bb38);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xacd1ae32f6519ed27ec245462d4154584451bb38);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -1392,7 +1392,11 @@ contract FoMoFAIR is modularShort {
         if (_p3d > 0)
         {
 
-            round_[_rID].pot = round_[_rID].pot.add(_p3d);
+            uint256 _maskAmount = _p3d/2;           
+
+            round_[_rID].mask = _maskAmount.add(round_[_rID].mask);
+
+            round_[_rID].pot = round_[_rID].pot.add(_p3d.sub(_maskAmount));
 
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
