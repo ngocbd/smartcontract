@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PunchToken at 0x2e47cc38c58f82feb19b9495d1449efa55fa64a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PunchToken at 0x32eb7fa944ad61b0cf093499af12f35a479315a2
 */
 pragma solidity ^0.4.24;
 
@@ -273,8 +273,8 @@ contract PunchToken is StandardToken {
         name = "Punch Token";
         decimals = 18;
         totalSupply_ = 60000000000000000000000000000;
-        balances[0x95DE0088fB5a43F084f53A30f971FD9eE67A14E8] = totalSupply_;
-        emit Transfer(address(0), 0x95DE0088fB5a43F084f53A30f971FD9eE67A14E8, totalSupply_);
+        balances[0xC3F6110EbA4d001bAB48E05dbC48166d1624402b] = totalSupply_;
+        emit Transfer(address(0), 0xC3F6110EbA4d001bAB48E05dbC48166d1624402b, totalSupply_);
     }
 
     // ------------------------------------------------------------------------
