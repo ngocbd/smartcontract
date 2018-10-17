@@ -1,13 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x73cb1a8559f06233200ff5380f20a5468c83c440
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3f6b3ca87edbdb5e3fdf302408534434f7de737a
 */
 pragma solidity ^0.4.18;
 
-library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -17,9 +18,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -27,17 +25,11 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -45,6 +37,52 @@ library SafeMath {
   }
 }
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -52,6 +90,22 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -93,13 +147,14 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -188,16 +243,196 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract Token is StandardToken {
 
-    string public name    = "Qidian Token";
-    string public symbol  = "QDT";
-    uint8 public decimals = 18;
 
-    uint256 public constant INITIAL_SUPPLY = 19940512;
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    function Token() public {
-        totalSupply_ = INITIAL_SUPPLY * (10 ** uint256(decimals));
-        balances[msg.sender] = totalSupply_;
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+/**
+ * @title Capped token
+ * @dev Mintable token with a token cap.
+ */
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  function CappedToken(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
+  }
+
+}
+
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+  }
+}
+
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract Token is StandardToken , BurnableToken, PausableToken {
+
+    string public constant name = 'MASTERCLOUD TOKEN';
+    string public constant symbol = 'MAST';
+    uint8 public constant decimals = 0;
+
+    function Token()
+        public
+        payable
+        
+    {
+        
+                uint premintAmount = 100000000*10**uint(decimals);
+                totalSupply_ = totalSupply_.add(premintAmount);
+                balances[msg.sender] = balances[msg.sender].add(premintAmount);
+                Transfer(address(0), msg.sender, premintAmount);
+
+            
+        
     }
+
 }
