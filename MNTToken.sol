@@ -1,245 +1,342 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MNTToken at 0xa9877b1e05d035899131dbd1e403825166d09f92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MntToken at 0xCbE0B6304593F876Fe6d59A72959b0C01B863c41
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-// https://github.com/ethereum/EIPs/issues/20
+library SafeMath {
 
-contract ERC20 {
-    function totalSupply() public constant returns (uint256 supply);
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-    
-    // These generate a public event on the blockchain that will notify clients
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function mul(uint a, uint b) internal pure returns (uint) {
+        uint c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint a, uint b) internal pure returns (uint) {
+        uint c = a / b;
+        return c;
+    }
+
+    function sub(uint a, uint b) internal pure returns (uint) {
+        require(b <= a);
+        return a - b;
+    }
+
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        require(c >= a);
+        return c;
+    }
+
+    function max(uint a, uint b) internal pure returns (uint) {
+        return a >= b ? a : b;
+    }
+
+    function min(uint a, uint b) internal pure returns (uint) {
+        return a < b ? a : b;
+    }
 
 }
 
-contract Owned {
+// @title The Contract is Mongolian National MDEX Token Issue.
+//
+// @Author: Tim Wars
+// @Date: 2018.8.1
+// @Seealso: ERC20
+//
+contract MntToken {
+
+    // === Event ===
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Burn(address indexed from, uint value);
+    event TransferLocked(address indexed from, address indexed to, uint value, uint8 locktype);
+	event Purchased(address indexed recipient, uint purchase, uint amount);
+
+    // === Defined ===
+    using SafeMath for uint;
+
+    // --- Owner Section ---
     address public owner;
+    bool public frozen = false; //
 
-    function Owned() public {
-        owner = msg.sender;
-    }
+    // --- ERC20 Token Section ---
+    uint8 constant public decimals = 6;
+    uint public totalSupply = 100*10**(8+uint256(decimals));  // ***** 100 * 100 Million
+    string constant public name = "MDEX Token | Mongolia National Blockchain Digital Assets Exchange Token";
+    string constant public symbol = "MNT";
 
-    modifier onlyOwner {
+    mapping(address => uint) ownerance; // Owner Balance
+    mapping(address => mapping(address => uint)) public allowance; // Allower Balance
+
+    // --- Locked Section ---
+    uint8 LOCKED_TYPE_MAX = 2; // ***** Max locked type
+    uint private constant RELEASE_BASE_TIME = 1533686888; // ***** (2018-08-08 08:08:08) Private Lock phase start datetime (UTC seconds)
+    address[] private lockedOwner;
+    mapping(address => uint) public lockedance; // Lockeder Balance
+    mapping(address => uint8) public lockedtype; // Locked Type
+    mapping(address => uint8) public unlockedstep; // Unlocked Step
+
+    uint public totalCirculating; // Total circulating token amount
+
+    // === Modifier ===
+
+    // --- Owner Section ---
+    modifier isOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
-        owner = newOwner;
-    }
-}
-
-contract MNTToken is ERC20, Owned {
-    // Public variables of the token
-    string public name = "Media Network Token";
-    string public symbol = "MNT";
-    uint8 public decimals = 18;
-    uint256 public totalSupply = 0; // 125 * 10**6 * 10**18;
-    uint256 public maxSupply = 125 * 10**6 * 10**18;
-    address public cjTeamWallet = 0x9887c2da3aC5449F3d62d4A04372a4724c21f54C;
-
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-
-    // This creates an array with all allowances
-    mapping (address => mapping (address => uint256)) public allowance;
-
-
-    /**
-     * Constructor function
-     *
-     * Gives ownership of all initial tokens to the Coin Joker Team. Sets ownership of contract
-     */
-    function MNTToken(
-        address cjTeam
-    ) public {
-        //balanceOf[msg.sender] = totalSupply;              // Give the creator all initial tokens
-        totalEthRaised = 0;
-        /*if (cjTeam != 0) {
-            owner = cjTeam;
-        }*/
-        cjTeamWallet = cjTeam;
-    }
-	
-    function changeCJTeamWallet(address newWallet) public onlyOwner {
-        cjTeamWallet = newWallet;
+    modifier isNotFrozen() {
+        require(!frozen);
+        _;
     }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint256 _value) internal {
-        require(_to != 0x0);                               // Prevent transfer to 0x0 address
-        require(balanceOf[_from] >= _value);                // Check if the sender has enough
-        require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
+    // --- ERC20 Section ---
+    modifier hasEnoughBalance(uint _amount) {
+        require(ownerance[msg.sender] >= _amount);
+        _;
     }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        _transfer(msg.sender, _to, _value);
-        return true;
+    modifier overflowDetected(address _owner, uint _amount) {
+        require(ownerance[_owner] + _amount >= ownerance[_owner]);
+        _;
     }
 
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(
-        address _from, 
-        address _to, 
-        uint256 _value
-    ) public returns (bool success) 
+    modifier hasAllowBalance(address _owner, address _allower, uint _amount) {
+        require(allowance[_owner][_allower] >= _amount);
+        _;
+    }
+
+    modifier isNotEmpty(address _addr, uint _value) {
+        require(_addr != address(0));
+        require(_value != 0);
+        _;
+    }
+
+    modifier isValidAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    // --- Locked Section ---
+    modifier hasntLockedBalance(address _checker) {
+        require(lockedtype[_checker] == 0);
+        _;
+    }
+
+    modifier checkLockedType(uint8 _locktype) {
+        require(_locktype > 0 && _locktype <= LOCKED_TYPE_MAX);
+        _;
+    }
+
+    // === Constructor ===
+    constructor() public {
+        owner = msg.sender;
+        ownerance[msg.sender] = totalSupply;
+        totalCirculating = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
+    }
+
+    // --- ERC20 Token Section ---
+    function approve(address _spender, uint _value)
+        isNotFrozen
+        isValidAddress
+        public returns (bool success)
     {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(
-        address _spender, 
-        uint256 _value
-    ) public returns (bool success)
-    {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0); // must spend to 0 where pre approve balance.
         allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    /**
-     * Get current balance of account _owner
-     *
-     * @param _owner The owner of the account
-     */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balanceOf[_owner];
-    }
-
-    /**
-     * Get allowance from _owner to _spender
-     *
-     * @param _owner The address that authorizes to spend
-     * @param _spender The address authorized to spend
-     */
-    function allowance(
-        address _owner, 
-        address _spender
-    ) public constant returns (uint256 remaining)
+    function transferFrom(address _from, address _to, uint _value)
+        isNotFrozen
+        isValidAddress
+        overflowDetected(_to, _value)
+        public returns (bool success)
     {
-        return allowance[_owner][_spender];
+        require(ownerance[_from] >= _value);
+        require(allowance[_from][msg.sender] >= _value);
+
+        ownerance[_to] = ownerance[_to].add(_value);
+        ownerance[_from] = ownerance[_from].sub(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
-    /**
-     * Get total supply of all tokens
-     */
-    function totalSupply() public constant returns (uint256 supply) {
-        return totalSupply;
-    }
-
-    // --------------------------------
-    // Token sale variables and methods
-    // --------------------------------
-
-    bool saleHasStarted = false;
-    bool saleHasEnded = false;
-    uint256 public saleEndTime   = 1518649200; // 15.2.2018, 0:00:00, GMT+1
-    uint256 public saleStartTime = 1513435000; // 16.12.2017, 15:36:40, GMT+1
-    uint256 public maxEthToRaise = 7500 * 10**18;
-    uint256 public totalEthRaised;
-    uint256 public ethAvailable;
-    uint256 public eth2mnt = 10000; // number of MNTs you get for 1 ETH - actually for 1/10**18 of ETH
-
-    /* Issue new tokens - internal function */     
-    function _mintTokens (address _to, uint256 _amount) internal {             
-        require(balanceOf[_to] + _amount >= balanceOf[_to]); // check for overflows
-        require(totalSupply + _amount <= maxSupply);
-        totalSupply += _amount;                                      // Update total supply
-        balanceOf[_to] += _amount;                               // Set minted coins to target
-        Transfer(0x0, _to, _amount);                            // Create Transfer event from 0x
+    function balanceOf(address _owner) public
+        constant returns (uint balance)
+    {
+        balance = ownerance[_owner] + lockedance[_owner];
+        return balance;
     }
 
 
-    /* Users send ETH and enter the token sale*/  
-    function () public payable {
-        require(msg.value != 0);
-        require(!(saleHasEnded || now > saleEndTime)); // Throw if the token sale has ended
-        if (!saleHasStarted) {                                                // Check if this is the first token sale transaction   
-            if (now >= saleStartTime) {                             // Check if the token sale should start        
-                saleHasStarted = true;                                           // Set that the token sale has started         
-            } else {
-                require(false);
+    function available(address _owner) public
+        constant returns (uint)
+    {
+        return ownerance[_owner];
+    }
+
+    function transfer(address _to, uint _value) public
+        isNotFrozen
+        isValidAddress
+        isNotEmpty(_to, _value)
+        hasEnoughBalance(_value)
+        overflowDetected(_to, _value)
+        returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[_to] = ownerance[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    // --- Owner Section ---
+    function transferOwner(address _newOwner)
+        isOwner
+        public returns (bool success)
+    {
+        if (_newOwner != address(0)) {
+            owner = _newOwner;
+        }
+        return true;
+    }
+
+    function freeze()
+        isOwner
+        public returns (bool success)
+    {
+        frozen = true;
+        return true;
+    }
+
+    function unfreeze()
+        isOwner
+        public returns (bool success)
+    {
+        frozen = false;
+        return true;
+    }
+
+    function burn(uint _value)
+        isNotFrozen
+        isValidAddress
+        hasEnoughBalance(_value)
+        public returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[0x0] = ownerance[0x0].add(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalCirculating = totalCirculating.sub(_value);
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    // --- Locked Section ---
+    function transferLocked(address _to, uint _value, uint8 _locktype) public
+        isNotFrozen
+        isOwner
+        isValidAddress
+        isNotEmpty(_to, _value)
+        hasEnoughBalance(_value)
+        hasntLockedBalance(_to)
+        checkLockedType(_locktype)
+        returns (bool success)
+    {
+        require(msg.sender != _to);
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        if (_locktype == 1) {
+            lockedance[_to] = _value;
+            lockedtype[_to] = _locktype;
+            lockedOwner.push(_to);
+            totalCirculating = totalCirculating.sub(_value);
+            emit TransferLocked(msg.sender, _to, _value, _locktype);
+        } else if (_locktype == 2) {
+            uint _first = _value / 100 * 8; // prevent overflow
+            ownerance[_to] = ownerance[_to].add(_first);
+            lockedance[_to] = _value.sub(_first);
+            lockedtype[_to] = _locktype;
+            lockedOwner.push(_to);
+            totalCirculating = totalCirculating.sub(_value.sub(_first));
+            emit Transfer(msg.sender, _to, _first);
+            emit TransferLocked(msg.sender, _to, _value.sub(_first), _locktype);
+        }
+        return true;
+    }
+
+    // *****
+    // Because too many unlocking steps * accounts, it will burn lots of GAS !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // Because too many unlocking steps * accounts, it will burn lots of GAS !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // LockedType 1 : after 6 monthes / release 10 % per month; 10 steps
+    // LockedType 2 :  before 0 monthes / release 8 % per month; 11 steps / 1 step has release real balance init.
+    function unlock(address _locker, uint _delta, uint8 _locktype) private
+        returns (bool success)
+    {
+        if (_locktype == 1) {
+            if (_delta < 6 * 30 days) {
+                return false;
             }
-        }     
-     
-        if (maxEthToRaise > (totalEthRaised + msg.value)) {                 // Check if the user sent too much ETH         
-            totalEthRaised += msg.value;                                    // Add to total eth Raised
-            ethAvailable += msg.value;
-            _mintTokens(msg.sender, msg.value * eth2mnt);
-            cjTeamWallet.transfer(msg.value); 
-        } else {                                                              // If user sent to much eth       
-            uint maxContribution = maxEthToRaise - totalEthRaised;            // Calculate maximum contribution       
-            totalEthRaised += maxContribution;  
-            ethAvailable += maxContribution;
-            _mintTokens(msg.sender, maxContribution * eth2mnt);
-            uint toReturn = msg.value - maxContribution;                       // Calculate how much should be returned       
-            saleHasEnded = true;
-            msg.sender.transfer(toReturn);                                  // Refund the balance that is over the cap   
-            cjTeamWallet.transfer(msg.value-toReturn);       
+            uint _more1 = _delta.sub(6 * 30 days);
+            uint _step1 = _more1 / 30 days;
+            for(uint8 i = 0; i < 10; i++) {
+                if (unlockedstep[_locker] == i && i < 9 && i <= _step1 ) {
+                    ownerance[_locker] = ownerance[_locker].add(lockedance[_locker] / (10 - i));
+                    lockedance[_locker] = lockedance[_locker].sub(lockedance[_locker] / (10 - i));
+                    unlockedstep[_locker] = i + 1;
+                } else if (i == 9 && unlockedstep[_locker] == 9 && _step1 == 9){
+                    ownerance[_locker] = ownerance[_locker].add(lockedance[_locker]);
+                    lockedance[_locker] = 0;
+                    unlockedstep[_locker] = 0;
+                    lockedtype[_locker] = 0;
+                }
+            }
+        } else if (_locktype == 2) {
+            if (_delta < 30 days) {
+                return false;
+            }
+            uint _more2 = _delta - 30 days;
+            uint _step2 = _more2 / 30 days;
+            for(uint8 j = 0; j < 11; j++) {
+                if (unlockedstep[_locker] == j && j < 10 && j <= _step2 ) {
+                    ownerance[_locker] = ownerance[_locker].add(lockedance[_locker] / (11 - j));
+                    lockedance[_locker] = lockedance[_locker].sub(lockedance[_locker] / (11 - j));
+                    unlockedstep[_locker] = j + 1;
+                } else if (j == 10 && unlockedstep[_locker] == 10 && _step2 == 10){
+                    ownerance[_locker] = ownerance[_locker].add(lockedance[_locker]);
+                    lockedance[_locker] = 0;
+                    unlockedstep[_locker] = 0;
+                    lockedtype[_locker] = 0;
+                }
+            }
         }
-    } 
-
-    /**
-     * Withdraw the funds
-     *
-     * Sends the raised amount to the CJ Team. Mints 40% of tokens to send to the CJ team.
-     */
-    function endOfSaleFullWithdrawal() public onlyOwner {
-        if (saleHasEnded || now > saleEndTime) {
-            //if (owner.send(ethAvailable)) {
-            cjTeamWallet.transfer(this.balance);
-            ethAvailable = 0;
-            //_mintTokens (owner, totalSupply * 2 / 3);
-            _mintTokens (cjTeamWallet, 50 * 10**6 * 10**18); // CJ team gets 40% of token supply
-        }
+        return true;
     }
 
-    /**
-     * Withdraw the funds
-     *
-     * Sends partial amount to the CJ Team
-     */
-    function partialWithdrawal(uint256 toWithdraw) public onlyOwner {
-        cjTeamWallet.transfer(toWithdraw);
-        ethAvailable -= toWithdraw;
+    function lockedCounts() public view
+        returns (uint counts)
+    {
+        return lockedOwner.length;
     }
+
+    function releaseLocked() public
+        isNotFrozen
+        returns (bool success)
+    {
+        require(now > RELEASE_BASE_TIME);
+        uint delta = now - RELEASE_BASE_TIME;
+        uint lockedAmount;
+        for (uint i = 0; i < lockedOwner.length; i++) {
+            if ( lockedance[lockedOwner[i]] > 0) {
+                lockedAmount = lockedance[lockedOwner[i]];
+                unlock(lockedOwner[i], delta, lockedtype[lockedOwner[i]]);
+                totalCirculating = totalCirculating.add(lockedAmount - lockedance[lockedOwner[i]]);
+            }
+        }
+        return true;
+    }
+
+
 }
