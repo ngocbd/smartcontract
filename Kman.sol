@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kman at 0xad311ac995476ccc223dfbd42a15997a10dda9ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kman at 0xa136c92b43643a5aabf7e8fdf44f25d90bf78b9e
 */
 pragma solidity ^0.4.24;
 
@@ -43,12 +43,14 @@ contract Kman{
     ==============================*/
 
 
-   event WinnerPaid(
+   event WinnerPaid
+   (
         uint256 amount,
         address winner
     );
     
-    event StartGame(
+    event StartGame
+    (
         address player
     );
 
@@ -77,8 +79,9 @@ contract Kman{
        isOpenToPublic()
        onlyRealPeople()
       public
+      returns(bool startGame)
      {
-       
+        startGame = false;
         uint256 tokensTransferred = getTokensPaidToGame(msg.sender);
 
         // When you transfer a token to the contract, there is a 1 coin difference until you enter the next if statement
@@ -90,6 +93,8 @@ contract Kman{
             BITcontract.transfer(owner, 50000000000000000); //5% of 1 BIT
             //start the game for the player
             emit StartGame(msg.sender);
+
+            return true;
         }
         else
         {
