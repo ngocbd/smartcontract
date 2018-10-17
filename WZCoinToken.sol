@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WZCoinToken at 0x81adf4fdcb794bc0e27a702949ed80808805a46c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WZCoinToken at 0x1a980d8b8643f807a0d0acbe9b0ed2c26f03868b
 */
 pragma solidity ^0.4.18;
 
@@ -118,10 +118,10 @@ contract StandardToken is ERC20 {
 contract WZCoinToken is StandardToken {
     uint public totalSupply = 100*10**26;
     uint8 constant public decimals = 18;
-    string constant public name = "WCoin Token";
-    string constant public symbol = "WC";
+    string constant public name = "WZCoin Token";
+    string constant public symbol = "WZC";
 
-    function WZCoinToken() public {
+    function FCoinToken() public {
         balances[msg.sender] = totalSupply;
     }
 }
