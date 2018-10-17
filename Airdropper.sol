@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x3f81686a83b277ec4f781019de0280b6d6e017d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x41c01b6b7004d68a95090359bdc13067ebad2cc0
 */
 pragma solidity ^0.4.11;
 
@@ -46,12 +46,12 @@ contract ERC20 is ERC20Basic {
 
 contract Airdropper is Ownable {
 
-    function multisend(address _tokenAddr, address[] dests, uint256 value)
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
     onlyOwner
     returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
-           ERC20(_tokenAddr).transfer(dests[i], value);
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
            i += 1;
         }
         return(i);
