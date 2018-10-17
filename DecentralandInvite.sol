@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandInvite at 0x2b6a877fafd33cd3ee98e772acafe7b6cff7c33b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandInvite at 0x399caff06e6419a8a3a6d4d1d2b94cb14ddeda87
 */
 // Sources flattened with buidler v0.1.4
 pragma solidity 0.4.24;
@@ -785,9 +785,56 @@ contract Ownable {
 }
 
 
+// File openzeppelin-solidity/contracts/lifecycle/Pausable.sol@v1.10.0
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+
 // File contracts/Invite.sol
 
-contract DecentralandInvite is ERC721Token, Ownable {
+contract DecentralandInvite is ERC721Token, Ownable, Pausable {
   mapping (address => uint256) public balance;
   mapping (uint256 => bytes) public metadata;
 
@@ -815,5 +862,22 @@ contract DecentralandInvite is ERC721Token, Ownable {
     require(msg.sender == ownerOf(id));
     _setTokenURI(id, uri);
     emit URIUpdated(id, uri);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _tokenId) whenNotPaused public {
+    super.transferFrom(_from, _to, _tokenId);
+  }
+
+  function safeTransferFrom(address _from, address _to, uint256 _tokenId) whenNotPaused public {
+    super.safeTransferFrom(_from, _to, _tokenId);
+  }
+
+  function safeTransferFrom(
+    address _from,
+    address _to,
+    uint256 _tokenId,
+    bytes _data
+  ) whenNotPaused public {
+    super.safeTransferFrom(_from, _to, _tokenId, _data);
   }
 }
