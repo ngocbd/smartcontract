@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x82AEb9298f3563446aa4B21fa1907D0873Ae93AD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x5d12eAEDbdD998dDDBd15d17BEF1073Ac3257992
 */
 pragma solidity 0.4.18;
 
@@ -394,29 +394,16 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
 
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
         uint  rate;
-        uint  destQty;
-        ERC20 wrappedSrc;
-        ERC20 wrappedDest;
+        uint  dstQty;
 
         blockNumber;
 
         if (!tradeEnabled) return 0;
+        if ((ETH_TOKEN_ADDRESS != src) && (ETH_TOKEN_ADDRESS != dest)) return 0;
         if ((tradeToken != src) && (tradeToken != dest)) return 0;
 
-        if (src == ETH_TOKEN_ADDRESS) {
-            wrappedSrc = wethToken;
-            wrappedDest = dest;
-        }
-        else if (dest == ETH_TOKEN_ADDRESS) {
-            wrappedSrc = src;
-            wrappedDest = wethToken;
-        }
-        else {
-            return 0;
-        }
-
-        destQty = otc.getBuyAmount(wrappedDest, wrappedSrc, srcQty);
-        rate = destQty * PRECISION / srcQty;
+        dstQty = otc.getBuyAmount(dest, src, srcQty);
+        rate = dstQty * PRECISION / srcQty;
 
         return rate;
     }
