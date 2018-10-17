@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xfc68c50fbc83a89abdc1f7abe1ae3e8849e6ca12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc5fc46b7ed05cce3ca31f09a35d76047ce190509
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000000000000000;
-        name = 'Digital Life Technology Treasure';
-        symbol = 'DLTT';
+        totalSupply = 500000000000000000000000000;
+        name = 'PowerChain';
+        symbol = 'PWRC';
         decimals = 18;
-        balanceOf[0xD5F8fEd6F45A4a82E54e4D922C7F050B18566Cab] = totalSupply;
-        Transfer(address(0), 0xD5F8fEd6F45A4a82E54e4D922C7F050B18566Cab, totalSupply);
+        balanceOf[0x812a610fee93816153e4f1429ffedd1d0da206f0] = totalSupply;
+        Transfer(address(0), 0x812a610fee93816153e4f1429ffedd1d0da206f0, totalSupply);
     }
 }
