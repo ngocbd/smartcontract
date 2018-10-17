@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dsmall at 0x80125455029a7064709204bca2d0886f3176d7fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dsmall at 0x16b3e2e923a467c74caf1c99d2a6909ff5114152
 */
 pragma solidity ^0.4.24;
 
@@ -122,12 +122,13 @@ contract F3Devents {
 //====================================|=========================================
 
 
+
 contract FoMo3Dsmall is F3Devents {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xbe6071F8eDF96314C9a9A4d86d7C54A10a22A8c1);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x8b70f6804861cc47ACFD1aEB8e9Dd4110f45673d);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
