@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GroupsAccessManager at 0xdbf2da30cdb8b03d46752d320ed1415a56b83abb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GroupsAccessManager at 0xb75322b6687d36edbcdae9399dd26e9e45c161a8
 */
 pragma solidity ^0.4.18;
-
 
 /**
 * @title SafeMath
@@ -109,7 +108,6 @@ contract Owned {
     }
 }
 
-
 contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed from, address indexed spender, uint256 value);
@@ -161,8 +159,14 @@ contract GroupsAccessManagerEmitter {
     event GroupDeactivated(bytes32 groupName);
     event UserToGroupAdded(address user, bytes32 groupName);
     event UserFromGroupRemoved(address user, bytes32 groupName);
-}
 
+    event Error(uint errorCode);
+
+    function _emitError(uint _errorCode) internal returns (uint) {
+        Error(_errorCode);
+        return _errorCode;
+    }
+}
 
 /// @title Group Access Manager
 ///
@@ -199,13 +203,13 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
     }
 
     uint public membersCount;
-    mapping(uint => address) index2memberAddress;
-    mapping(address => uint) memberAddress2index;
+    mapping(uint => address) public index2memberAddress;
+    mapping(address => uint) public memberAddress2index;
     mapping(address => Member) address2member;
 
     uint public groupsCount;
-    mapping(uint => bytes32) index2groupName;
-    mapping(bytes32 => uint) groupName2index;
+    mapping(uint => bytes32) public index2groupName;
+    mapping(bytes32 => uint) public groupName2index;
     mapping(bytes32 => Group) groupName2group;
     mapping(bytes32 => bool) public groupsBlocked; // if groupName => true, then couldn't be used for confirmation
 
@@ -223,7 +227,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         require(_user != 0x0);
 
         if (isRegisteredUser(_user)) {
-            return USER_MANAGER_MEMBER_ALREADY_EXIST;
+            return _emitError(USER_MANAGER_MEMBER_ALREADY_EXIST);
         }
 
         uint _membersCount = membersCount.add(1);
@@ -247,7 +251,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
 
         uint _memberIndex = memberAddress2index[_user];
         if (_memberIndex == 0 || address2member[_user].groupsCount != 0) {
-            return USER_MANAGER_INVALID_INVOCATION;
+            return _emitError(USER_MANAGER_INVALID_INVOCATION);
         }
 
         uint _membersCount = membersCount;
@@ -277,7 +281,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         require(_groupName != bytes32(0));
 
         if (isGroupExists(_groupName)) {
-            return USER_MANAGER_GROUP_ALREADY_EXIST;
+            return _emitError(USER_MANAGER_GROUP_ALREADY_EXIST);
         }
 
         uint _groupsCount = groupsCount.add(1);
@@ -416,6 +420,53 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         for (uint _groupIdx = 0; _groupIdx < _groupsCount; ++_groupIdx) {
             _groups[_groupIdx] = index2groupName[_groupIdx + 1];
         }
+    }
+
+    /// @notice Gets group members
+    function getGroupMembers(bytes32 _groupName) 
+    public 
+    view 
+    returns (address[] _members) 
+    {
+        if (!isGroupExists(_groupName)) {
+            return;
+        }
+
+        Group storage _group = groupName2group[_groupName];
+        uint _membersCount = _group.membersCount;
+        if (_membersCount == 0) {
+            return;
+        }
+
+        _members = new address[](_membersCount);
+        for (uint _userIdx = 0; _userIdx < _membersCount; ++_userIdx) {
+            uint _memberIdx = _group.index2globalIndex[_userIdx + 1];
+            _members[_userIdx] = index2memberAddress[_memberIdx];
+        }
+    }
+
+    /// @notice Gets a list of groups where passed user is a member
+    function getUserGroups(address _user)
+    public
+    view
+    returns (bytes32[] _groups)
+    {
+        if (!isRegisteredUser(_user)) {
+            return;
+        }
+
+        Member storage _member = address2member[_user];
+        uint _groupsCount = _member.groupsCount;
+        if (_groupsCount == 0) {
+            return;
+        }
+
+        _groups = new bytes32[](_groupsCount);
+        for (uint _groupIdx = 0; _groupIdx < _groupsCount; ++_groupIdx) {
+            uint _groupNameIdx = _member.index2globalIndex[_groupIdx + 1];
+            _groups[_groupIdx] = index2groupName[_groupNameIdx];
+        }
+
     }
 
     // PRIVATE
