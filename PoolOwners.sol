@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x430e87a95a421437ccaa0af644ac57e22914b07a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x9106de787e1911aab43099cbc9f5693e525d7385
 */
 pragma solidity ^0.4.3;
 
@@ -313,8 +313,7 @@ contract PoolOwners is Ownable {
         Owner storage o = owners[_owner];
         if (o.shareTokens == 0) {
             whitelist[_owner] = true;
-            require(ownerMap.insert(totalOwners, uint(_owner)) == false);
-            o.key = totalOwners;
+            ownerMap.insert(totalOwners, uint(_owner));
             totalOwners += 1;
         }
         o.shareTokens = _value;
