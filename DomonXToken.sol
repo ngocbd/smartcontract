@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DomonXToken at 0xaf5737b07a04939569f0742af1ae78af6e5b29e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DomonXToken at 0xcfb706e545071d41031cce4e3358abf496a311f3
 */
 pragma solidity ^0.4.24;
 
@@ -117,10 +117,10 @@ contract DomonXToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "DBIC";
-        name = "Dubfund Big health International Chain";
+        symbol = "GV2";
+        name = "TestGV2";
         decimals = 18;
-        _totalSupply = 600000000 * 10**uint(decimals);
+        _totalSupply = 20000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
