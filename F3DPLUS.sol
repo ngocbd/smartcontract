@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0x4b4ca3e746baf3b70f5e16899675f0178f756e3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0xF0Bb254574F6aEE3b09367063E4e02aEA028Bd2a
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract F3DPLUS is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x8090c78edea718c652b29cace404949fd63839fd);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x2d457bF93D230aAfD643ea6fA11cb90D814a97b5);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
