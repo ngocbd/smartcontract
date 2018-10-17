@@ -1,9 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinSmartt at 0xf390727e28a3c0418ab05346691934994dd10513
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinSmartt at 0x442c7b3b561ed498d2c174acb4453d5d984ed6a0
 */
-pragma solidity ^0.4.24;
-
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -729,7 +726,7 @@ contract CoinSmartt is Superuser, PausableToken, CappedToken {
 
 	string public constant ROLE_MINTER = "minter";
 
-	constructor(address _minter) CappedToken(7663809523810000000000000000) {
+	constructor(address _minter) CappedToken(4907460316 ether) {
 		//constructor
 		addRole(_minter, ROLE_MINTER);
 	}
