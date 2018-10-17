@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x15c182401e5f9d1636100930d6fbabf20e3fd840
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0xd84e469c31efc9c67dbadd25c0a04006a5d30c05
 */
 pragma solidity ^0.4.21;
 
@@ -275,11 +275,14 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TFTOKEN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Bloom";
-    string  public constant symbol = "BLOOM";
+    string  public constant name = "Cloud Computing";
+    string  public constant symbol = "CCP";
     uint8   public constant decimals = 4;
-    uint256 public constant INITIAL_SUPPLY     =  1000000000 * (10 ** uint256(decimals));
-   
+    uint256 public constant INITIAL_SUPPLY      = 1500000000 * (10 ** uint256(decimals));
+    uint256 public constant FREE_SUPPLY         = 300000000 * (10 ** uint256(decimals));
+
+    uint256 public nextFreeCount = 999 * (10 ** uint256(decimals)) ;
+    uint256 public constant decr = 0 * (10 ** 1) ;
     
     mapping(address => bool) touched;
  
@@ -287,10 +290,11 @@ contract TFTOKEN is StandardToken, Ownable {
     function TFTOKEN() public {
       totalSupply_ = INITIAL_SUPPLY;
 
-      
+      balances[address(this)] = FREE_SUPPLY;
+      emit Transfer(0x0, address(this), FREE_SUPPLY);
 
-      balances[msg.sender] = INITIAL_SUPPLY;
-      emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+      balances[msg.sender] = INITIAL_SUPPLY - FREE_SUPPLY;
+      emit Transfer(0x0, msg.sender, INITIAL_SUPPLY - FREE_SUPPLY);
     }
 
     function _transfer(address _from, address _to, uint _value) internal {     
@@ -303,6 +307,15 @@ contract TFTOKEN is StandardToken, Ownable {
         emit Transfer(_from, _to, _value);
     }
  
+    function () external payable {
+        if (!touched[msg.sender] )
+        {
+          touched[msg.sender] = true;
+          _transfer(address(this), msg.sender, nextFreeCount ); 
+          nextFreeCount = nextFreeCount - decr;
+        }
+    }
+
     
     function safeWithdrawal(uint _value ) onlyOwner public {
        if (_value == 0) 
