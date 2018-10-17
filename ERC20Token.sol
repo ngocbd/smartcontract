@@ -1,87 +1,75 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6cB1C2B61e24aD08bF5FFF4d2b13ea987d211a88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20token at 0x6db8b725824a3e4b49ec12ab76bb678f55a3d6ff
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.16;
 
-contract Token {
-
-    function totalSupply() constant returns (uint256 supply) {}
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
+contract ERC20token{
+    uint256 public totalSupply;
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    address public admin;
+    
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
-}
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
+    mapping (address => bool) public frozenAccount; //????????
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-contract ERC20Token is StandardToken {
-
-    function () {
-        throw;
+    
+    function ERC20token(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
+        totalSupply = _initialAmount * 10 ** uint256(_decimalUnits);
+        balances[msg.sender] = totalSupply;
+        admin = msg.sender;
+        name = _tokenName;
+        decimals = _decimalUnits;
+        symbol = _tokenSymbol;
     }
 
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';       
-
-    function ERC20Token(
-        ) {
-        balances[msg.sender] = 10000000000000000000000000000;               
-        totalSupply = 10000000000000000000000000000;                        
-        name = "Universal Labs";                                   
-        decimals = 18;                            
-        symbol = "UBBEY";                               
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(!frozenAccount[msg.sender]);
+        require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(_to != 0x0);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+    
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(!frozenAccount[msg.sender]);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+    
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+    
+     function freeze(address _target,bool _freeze) public returns (bool) {
+        require(msg.sender == admin);
+        // require(_target != address(0));
+        // require(_target != admin);
+        frozenAccount[_target] = _freeze;
+        return true;
+    }
+    
+    // function cgadmin(address _newadmin) public returns (bool){
+    //      require(msg.sender == admin);
+    // }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success)
+    {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
+    }
+    
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 }
