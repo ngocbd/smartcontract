@@ -1,265 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd80cfd4f672c70ce3d4b1e74f6a54517fa7ac416
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x77a481abdb863e62fb2ab421b7b2f14e9fb6cfb3
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.19;
 
-// Create SafeMath Library
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract BaseToken {
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// Contract owner permissions granted only to initial sender
-contract Ownable {
-  address public owner;
-
- constructor() public {
-    owner = msg.sender;
-  }
-
-// Any call to the contract not from the creator's account will be thrown.   
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-// Allows the current owner to transfer control of the contract to a new owner.
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-  
-  function increaseApproval (address _spender, uint _addedValue) public
-    returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public 
-    returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-contract BurnableToken is StandardToken {
-
-// Invokes burn function
-    function burn(uint _value)
-        public
-    {
-        require(_value > 0);
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        emit Burn(burner, _value);
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        Transfer(_from, _to, _value);
     }
 
-    event Burn(address indexed burner, uint indexed value);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 }
 
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
 
-  bool public mintingFinished = false;
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
 
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(0x0, _to, _amount);
-    return true;
-  }
-
-// Stop minting function
-  function finishMinting() public onlyOwner returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
 }
 
-contract TokenRecipient {
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
 
-    function tokenFallback() pure internal returns (bool) {}
+    mapping (address => uint32) public airCountOf;
 
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+    }
 }
 
-contract CustomToken is MintableToken, BurnableToken {
 
-    string public constant name = "Credits";
-    string public constant symbol = "CREDS";
-    uint8 public constant decimals = 18;
 
-    constructor() public {
+contract CustomToken is BaseToken, BurnToken, AirdropToken {
+    function CustomToken() public {
+        totalSupply = 13000000000000000000;
+        name = 'TSST';
+        symbol = 'TSST';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
 
+        airAmount = 1000000000000;
+        airBegintime = 1532357897;
+        airEndtime = 1563893897;
+        airSender = 0xd922612aC99bDA2Ca758fBd95AA456D22C6FBabC;
+        airLimitCount = 1;
+
+        
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        bool result = super.transferFrom(_from, _to, _value);
-        return result;
-    }
-
-    mapping (address => bool) stopReceive;
-
-    function setStopReceive(bool stop) public {
-        stopReceive[msg.sender] = stop;
-    }
-
-    function getStopReceive() constant public returns (bool) {
-        return stopReceive[msg.sender];
-    }
-
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        bool result = super.mint(_to, _amount);
-        return result;
-    }
-
-    function burn(uint256 _value) public {
-        super.burn(_value);
-    }
-
-    function transferAndCall(address _recipient, uint256 _amount) public {
-        require(_recipient != address(0));
-        require(_amount <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_recipient] = balances[_recipient].add(_amount);
-
-        emit Transfer(msg.sender, _recipient, _amount);
+    function() public payable {
+        airdrop();
     }
 }
