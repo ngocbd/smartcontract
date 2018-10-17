@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0xeb897ad24189a911cad00c071fc7182f5753a3d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x37a857e007ba6ae7862bc5ab1104dd4396de7950
 */
 pragma solidity ^0.4.24;
 
@@ -449,72 +449,72 @@ contract VanityLib {
         return toBase58Checked(createBtcAddressHex(publicXPoint, publicYPoint), "1");
     }
 
-    // function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
-    //     return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
-    // }
+    function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
+        return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
+    }
 
-    // // https://bitcoin.stackexchange.com/questions/48586
-    // function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
-    //     require(prefix.length >= length);
+    // https://bitcoin.stackexchange.com/questions/48586
+    function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
+        require(prefix.length >= length);
         
-    //     uint8[128] memory unbase58 = [
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-    //         255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
-    //         255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
-    //         22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
-    //         255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
-    //         47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
-    //     ];
+        uint8[128] memory unbase58 = [
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+            255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
+            255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
+            22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
+            255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
+            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
+        ];
 
-    //     uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
+        uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
 
-    //     uint256 prefixValue = 0;
-    //     uint256 prefix1 = 1;
-    //     for (uint i = 0; i < length; i++) {
-    //         uint index = uint(prefix[i]);
-    //         require(index != 255);
-    //         prefixValue = prefixValue * 58 + unbase58[index];
-    //         prefix1 *= 58;
-    //     }
+        uint256 prefixValue = 0;
+        uint256 prefix1 = 1;
+        for (uint i = 0; i < length; i++) {
+            uint index = uint(prefix[i]);
+            require(index != 255);
+            prefixValue = prefixValue * 58 + unbase58[index];
+            prefix1 *= 58;
+        }
 
-    //     uint256 top = (uint256(1) << (200 - 8*leadingOnes));
-    //     uint256 total = 0;
-    //     uint256 prefixMin = prefixValue;
-    //     uint256 diff = 0;
-    //     for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
-    //         prefix1 *= 58;
-    //         prefixMin *= 58;
-    //         prefixValue = prefixValue * 58 + 57;
+        uint256 top = (uint256(1) << (200 - 8*leadingOnes));
+        uint256 total = 0;
+        uint256 prefixMin = prefixValue;
+        uint256 diff = 0;
+        for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
+            prefix1 *= 58;
+            prefixMin *= 58;
+            prefixValue = prefixValue * 58 + 57;
 
-    //         diff = 0;
-    //         if (prefixValue >= top) {
-    //             diff += prefixValue - top;
-    //         }
-    //         if (prefixMin < (top >> 8)) {
-    //             diff += (top >> 8) - prefixMin;
-    //         }
+            diff = 0;
+            if (prefixValue >= top) {
+                diff += prefixValue - top;
+            }
+            if (prefixMin < (top >> 8)) {
+                diff += (top >> 8) - prefixMin;
+            }
             
-    //         if ((58 ** digits) >= diff) {
-    //             total += (58 ** digits) - diff;
-    //         }
-    //     }
+            if ((58 ** digits) >= diff) {
+                total += (58 ** digits) - diff;
+            }
+        }
 
-    //     if (prefixMin == 0) { // if prefix is contains only ones: 111111
-    //         total = (58 ** (digits - 1)) - diff;
-    //     }
+        if (prefixMin == 0) { // if prefix is contains only ones: 111111
+            total = (58 ** (digits - 1)) - diff;
+        }
 
-    //     return (1 << 192) / total;
-    // }
+        return (1 << 192) / total;
+    }
 
-    // function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
-    //     uint leadingOnes = 1;
-    //     for (uint j = 0; j < length && prefix[j] == 49; j++) {
-    //         leadingOnes = j + 1;
-    //     }
-    //     return leadingOnes;
-    // }
+    function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
+        uint leadingOnes = 1;
+        for (uint j = 0; j < length && prefix[j] == 49; j++) {
+            leadingOnes = j + 1;
+        }
+        return leadingOnes;
+    }
 
     function isValidBicoinAddressPrefix(bytes prefixArg) public pure returns(bool) {
         if (prefixArg.length < 5) {
@@ -640,8 +640,7 @@ contract TaskRegister is Upgradable, VanityLib {
     }
 
     struct Task {
-        TaskType taskType;
-        uint256 taskId;
+        uint256 taskId; // Upper 128 bits are TaskType
         address creator;
         address referrer;
         uint256 reward;
@@ -681,24 +680,23 @@ contract TaskRegister is Upgradable, VanityLib {
         return taskIds.length;
     }
 
-    // function tasks(uint i) public view returns(Task) {
-    //     return allTasks[indexOfTaskId[taskIds[i]].sub(1)];
-    // }
+    function tasks(uint i) public view returns(uint256, address, address, uint256, bytes32, uint256, uint256, uint256) {
+        Task storage t = allTasks[indexOfTaskId[taskIds[i]].sub(1)];
+        return (t.taskId, t.creator, t.referrer, t.reward, t.data, t.requestPublicXPoint, t.requestPublicYPoint, t.answerPrivateKey);
+    }
 
     function completedTasksCount() public view returns(uint) {
         return completedTaskIds.length;
     }
 
-    // function completedTasks(uint i) public view returns(Task) {
-    //     return allTasks[indexOfTaskId[completedTaskIds[i]].sub(1)];
-    // }
+    function completedTasks(uint i) public view returns(uint256, address, address, uint256, bytes32, uint256, uint256, uint256) {
+        Task storage t = allTasks[indexOfTaskId[completedTaskIds[i]].sub(1)];
+        return (t.taskId, t.creator, t.referrer, t.reward, t.data, t.requestPublicXPoint, t.requestPublicYPoint, t.answerPrivateKey);
+    }
 
-    function getActiveTasks()
-        external
-        view
+    function getActiveTasks() external view
         returns (
-            //TaskType[] t_taskTypes,
-            uint256[] t_taskIds, // + t_taskTypes
+            uint256[] t_taskIds,
             address[] t_creators,
             //address[] t_referrers,
             uint256[] t_rewards,
@@ -708,7 +706,6 @@ contract TaskRegister is Upgradable, VanityLib {
             uint256[] t_answerPrivateKeys
         )
     {
-        //t_taskTypes = new TaskType[](allTasks.length);
         t_taskIds = new uint256[](allTasks.length);
         t_creators = new address[](allTasks.length);
         //t_referrers = new address[](allTasks.length);
@@ -721,7 +718,6 @@ contract TaskRegister is Upgradable, VanityLib {
         for (uint i = 0; i < taskIds.length; i++) {
             uint index = indexOfActiveTaskId[taskIds[i]];
             (
-                //t_taskTypes[i],
                 t_taskIds[i],
                 t_creators[i],
                 //t_referrers[i],
@@ -731,8 +727,7 @@ contract TaskRegister is Upgradable, VanityLib {
                 t_requestPublicYPoints[i],
                 t_answerPrivateKeys[i]
             ) = (
-                //allTasks[i].taskType,
-                (uint(allTasks[index].taskType) << 128) | allTasks[index].taskId,
+                allTasks[index].taskId,
                 allTasks[index].creator,
                 //allTasks[index].referrer,
                 allTasks[index].reward,
@@ -744,12 +739,9 @@ contract TaskRegister is Upgradable, VanityLib {
         }
     }
 
-    function getCompletedTasks()
-        external
-        view
+    function getCompletedTasks() external view
         returns (
-            //TaskType[] t_taskTypes,
-            uint256[] t_taskIds, // + t_taskTypes
+            uint256[] t_taskIds,
             address[] t_creators,
             //address[] t_referrers,
             uint256[] t_rewards,
@@ -759,7 +751,6 @@ contract TaskRegister is Upgradable, VanityLib {
             uint256[] t_answerPrivateKeys
         )
     {
-        //t_taskTypes = new TaskType[](allTasks.length);
         t_taskIds = new uint256[](allTasks.length);
         t_creators = new address[](allTasks.length);
         //t_referrers = new address[](allTasks.length);
@@ -772,7 +763,6 @@ contract TaskRegister is Upgradable, VanityLib {
         for (uint i = 0; i < completedTaskIds.length; i++) {
             uint index = indexOfCompletedTaskId[completedTaskIds[i]];
             (
-                //t_taskTypes[i],
                 t_taskIds[i],
                 t_creators[i],
                 //t_referrers[i],
@@ -782,8 +772,7 @@ contract TaskRegister is Upgradable, VanityLib {
                 t_requestPublicYPoints[i],
                 t_answerPrivateKeys[i]
             ) = (
-                //allTasks[i].taskType,
-                (uint(allTasks[index].taskType) << 128) | allTasks[index].taskId,
+                allTasks[index].taskId,
                 allTasks[index].creator,
                 //allTasks[index].referrer,
                 allTasks[index].reward,
@@ -822,14 +811,13 @@ contract TaskRegister is Upgradable, VanityLib {
         // Migrate tasks
 
         for (uint i = index; i < index + _size && i < tasksLength; i++) {
-            allTasks.push(Task(TaskType.BITCOIN_ADDRESS_PREFIX,0,0,0,0,bytes32(0),0,0,0));
+            allTasks.push(Task((uint(TaskType.BITCOIN_ADDRESS_PREFIX) << 128) | 0,0,0,0,bytes32(0),0,0,0));
             uint j = prev.indexOfActiveTaskId(prev.taskIds(i));
             (
-                allTasks[i].taskType,
                 allTasks[i].taskId,
                 allTasks[i].creator,
-                ,//allTasks[i].referrer,
-                ,//allTasks[i].reward,
+                allTasks[i].referrer,
+                allTasks[i].reward,
                 ,//allTasks[i].data,
                 ,//allTasks[i].requestPublicXPoint,
                 ,//allTasks[i].requestPublicYPoint,
@@ -841,27 +829,11 @@ contract TaskRegister is Upgradable, VanityLib {
         for (i = index; i < index + _size && i < tasksLength; i++) {
             j = prev.indexOfActiveTaskId(prev.taskIds(i));
             (
-                ,//allTasks[i].taskType,
-                ,//allTasks[i].taskId,
-                ,//allTasks[i].creator,
-                allTasks[i].referrer,
-                allTasks[i].reward,
-                allTasks[i].data,
-                ,//allTasks[i].requestPublicXPoint,
-                ,//allTasks[i].requestPublicYPoint,
-                 //allTasks[i].answerPrivateKey
-            ) = prev.allTasks(j);
-        }
-
-        for (i = index; i < index + _size && i < tasksLength; i++) {
-            j = prev.indexOfActiveTaskId(prev.taskIds(i));
-            (
-                ,//allTasks[i].taskType,
                 ,//allTasks[i].taskId,
                 ,//allTasks[i].creator,
                 ,//allTasks[i].referrer,
                 ,//allTasks[i].reward,
-                ,//allTasks[i].data,
+                allTasks[i].data,
                 allTasks[i].requestPublicXPoint,
                 allTasks[i].requestPublicYPoint,
                 allTasks[i].answerPrivateKey
@@ -869,10 +841,9 @@ contract TaskRegister is Upgradable, VanityLib {
         }
 
         for (i = index; i < index + _size && i < tasksLength; i++) {
-            taskIds.push(prev.taskIds(i));
+            uint taskId = prev.taskIds(i);
+            indexOfActiveTaskId[taskId] = taskIds.push(taskId);
         }
-
-        _removeAllActiveTasksWithHoles(index, index + _size);
     }
 
     function endUpgrade() public {
@@ -881,6 +852,13 @@ contract TaskRegister is Upgradable, VanityLib {
         if (upgradableState.nextVersion != 0) {
             upgradableState.nextVersion.transfer(address(this).balance);
         }
+
+        //_removeAllActiveTasksWithHoles(0, taskIds.length);
+    }
+
+    function () public payable {
+        require(msg.sender == upgradableState.prevVersion);
+        require(address(this).balance >= totalReward);
     }
 
     function payForTask(uint256 _taskId) public payable isLastestVersion {
@@ -916,8 +894,7 @@ contract TaskRegister is Upgradable, VanityLib {
 
         uint256 taskId = nextTaskId++;
         Task memory task = Task({
-            taskType: TaskType.BITCOIN_ADDRESS_PREFIX,
-            taskId: taskId,
+            taskId: (uint(TaskType.BITCOIN_ADDRESS_PREFIX) << 128) | taskId,
             creator: msg.sender,
             referrer: referrer,
             reward: 0,
@@ -941,7 +918,7 @@ contract TaskRegister is Upgradable, VanityLib {
         // Require private key to be part of address to prevent front-running attack
         require(_answerPrivateKey >> 128 == uint256(msg.sender) >> 32, "solveTask: this solution does not match miner address");
 
-        if (task.taskType == TaskType.BITCOIN_ADDRESS_PREFIX) {
+        if (TaskType(task.taskId >> 128) == TaskType.BITCOIN_ADDRESS_PREFIX) {
             ///(publicXPoint, publicYPoint) = ec.publicKey(_answerPrivateKey);
             require(ec.publicKeyVerify(_answerPrivateKey, publicXPoint, publicYPoint));
             (publicXPoint, publicYPoint) = ec.ecadd(
@@ -968,7 +945,7 @@ contract TaskRegister is Upgradable, VanityLib {
         }
         msg.sender.transfer(minerReward);
         totalReward -= taskReard;
-        
+
         _completeTask(_taskId, activeTaskIndex);
         emit TaskSolved(_taskId, minerReward);
     }
@@ -985,18 +962,18 @@ contract TaskRegister is Upgradable, VanityLib {
         taskIds.length -= 1;
     }
 
-    function _removeAllActiveTasksWithHoles(uint _from, uint _to) internal {
-        for (uint i = _from; i < _to && i < taskIds.length; i++) {
-            uint taskId = taskIds[i];
-            uint index = indexOfTaskId[taskId].sub(1);
-            delete allTasks[index];
-            delete indexOfTaskId[taskId];
-            delete indexOfActiveTaskId[taskId];
-        }
-        if (_to >= taskIds.length) {
-            taskIds.length = 0;
-        }
-    }
+    // function _removeAllActiveTasksWithHoles(uint _from, uint _to) internal {
+    //     for (uint i = _from; i < _to && i < taskIds.length; i++) {
+    //         uint taskId = taskIds[i];
+    //         uint index = indexOfTaskId[taskId].sub(1);
+    //         delete allTasks[index];
+    //         delete indexOfTaskId[taskId];
+    //         delete indexOfActiveTaskId[taskId];
+    //     }
+    //     if (_to >= taskIds.length) {
+    //         taskIds.length = 0;
+    //     }
+    // }
 
     function claim(ERC20Basic _token, address _to) public onlyOwner {
         if (_token == address(0)) {
