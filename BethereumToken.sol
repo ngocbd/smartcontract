@@ -1,7 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BethereumToken at 0xa02e3bb9cebc03952601b3724b4940e0845bebcf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BethereumToken at 0x14c926f2290044b647e1bf2072e67b495eff1905
 */
-pragma solidity ^0.4.18;
+/*
+--------------------------------------------------------------------------------
+The Bethereum [BETHER] Token Smart Contract
+
+Credit:
+Bethereum Limited
+
+ERC20: https://github.com/ethereum/EIPs/issues/20
+ERC223: https://github.com/ethereum/EIPs/issues/223
+
+MIT Licence
+--------------------------------------------------------------------------------
+*/
+
+/*
+* Contract that is working with ERC223 tokens
+*/
+
+contract ContractReceiver {
+    function tokenFallback(address _from, uint _value, bytes _data) {
+        /* Fix for Mist warning */
+        _from;
+        _value;
+        _data;
+    }
+}
 
 /**
  * @title SafeMath
@@ -75,148 +100,157 @@ contract Ownable {
 
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+contract ERC223Interface {
+    uint public totalSupply;
+    function balanceOf(address who) constant returns (uint);
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
+contract BethereumERC223 is ERC223Interface {
     using SafeMath for uint256;
 
-    mapping(address => uint256) balances;
+    /* Contract Constants */
+    string public constant _name = "Bethereum";
+    string public constant _symbol = "BETHER";
+    uint8 public constant _decimals = 18;
 
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
+    /* Contract Variables */
+    address public owner;
+    mapping(address => uint256) public balances;
+    mapping(address => mapping (address => uint256)) public allowed;
 
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+    /* Constructor initializes the owner's balance and the supply  */
+    function BethereumERC223() {
+        owner = msg.sender;
+    }
+
+    /* ERC20 Events */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed from, address indexed to, uint256 value);
+
+    /* ERC223 Events */
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+
+    /* Returns the balance of a particular account */
+    function balanceOf(address _address) constant returns (uint256 balance) {
+        return balances[_address];
+    }
+
+    /* Transfer the balance from the sender's address to the address _to */
+    function transfer(address _to, uint _value) returns (bool success) {
+        if (balances[msg.sender] >= _value
+        && _value > 0
+        && balances[_to] + _value > balances[_to]) {
+            bytes memory empty;
+            if(isContract(_to)) {
+                return transferToContract(_to, _value, empty);
+            } else {
+                return transferToAddress(_to, _value, empty);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /* Withdraws to address _to form the address _from up to the amount _value */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value
+        && allowed[_from][msg.sender] >= _value
+        && _value > 0
+        && balances[_to] + _value > balances[_to]) {
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /* Allows _spender to withdraw the _allowance amount form sender */
+    function approve(address _spender, uint256 _allowance) returns (bool success) {
+        allowed[msg.sender][_spender] = _allowance;
+        Approval(msg.sender, _spender, _allowance);
         return true;
     }
 
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-
-        uint256 _allowance = allowed[_from][msg.sender];
-
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // require (_value <= _allowance);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    /* Checks how much _spender can withdraw from _owner */
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
+    /* ERC223 Functions */
+    /* Get the contract constant _name */
+    function name() constant returns (string name) {
+        return _name;
     }
 
-    function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
+    /* Get the contract constant _symbol */
+    function symbol() constant returns (string symbol) {
+        return _symbol;
+    }
+
+    /* Get the contract constant _decimals */
+    function decimals() constant returns (uint8 decimals) {
+        return _decimals;
+    }
+
+    /* Transfer the balance from the sender's address to the address _to with data _data */
+    function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+        if (balances[msg.sender] >= _value
+        && _value > 0
+        && balances[_to] + _value > balances[_to]) {
+            if(isContract(_to)) {
+                return transferToContract(_to, _value, _data);
+            } else {
+                return transferToAddress(_to, _value, _data);
+            }
         } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+            return false;
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    }
+
+    /* Transfer function when _to represents a regular address */
+    function transferToAddress(address _to, uint _value, bytes _data) internal returns (bool success) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value, _data);
         return true;
     }
 
+    /* Transfer function when _to represents a contract address, with the caveat
+    that the contract needs to implement the tokenFallback function in order to receive tokens */
+    function transferToContract(address _to, uint _value, bytes _data) internal returns (bool success) {
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value, _data);
+        return true;
+    }
+
+    /* Infers if whether _address is a contract based on the presence of bytecode */
+    function isContract(address _address) internal returns (bool is_contract) {
+        uint length;
+        if (_address == 0) return false;
+        assembly {
+        length := extcodesize(_address)
+        }
+        if(length > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /* Stops any attempt to send Ether to this contract */
+    function () {
+        throw;
+    }
 }
 
 /**
@@ -264,14 +298,14 @@ contract Pausable is Ownable {
 }
 
 /**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
-contract PausableToken is StandardToken, Pausable {
+* @title Pausable token
+*
+* @dev StandardToken modified with pausable transfers.
+**/
+contract PausableToken is BethereumERC223, Pausable {
 
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transfer(_to, _value);
+    function transfer(address _to, uint256 _value, bytes _data) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value, _data);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
@@ -282,13 +316,6 @@ contract PausableToken is StandardToken, Pausable {
         return super.approve(_spender, _value);
     }
 
-    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
 }
 
 /**
@@ -297,7 +324,7 @@ contract PausableToken is StandardToken, Pausable {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is BethereumERC223, Ownable {
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
 
@@ -335,9 +362,6 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract BethereumToken is MintableToken, PausableToken {
-    string public constant name = "Bethereum";
-    string public constant symbol = "BTHR";
-    uint256 public constant decimals = 18;
 
     function BethereumToken(){
         pause();
@@ -432,7 +456,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
     using SafeMath for uint256;
 
     bool public isFinalized = false;
-    
+
     bool public weiCapReached = false;
 
     event Finalized();
@@ -443,7 +467,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
      */
     function finalize() onlyOwner public {
         require(!isFinalized);
-        
+
         finalization();
         Finalized();
 
@@ -459,7 +483,7 @@ contract FinalizableCrowdsale is Crowdsale, Ownable {
     }
 }
 
-contract BTHRTokenSale is FinalizableCrowdsale {
+contract BETHERTokenSale is FinalizableCrowdsale {
     using SafeMath for uint256;
 
     // Define sale
@@ -471,15 +495,12 @@ contract BTHRTokenSale is FinalizableCrowdsale {
 
     uint public constant TOKENS_FOR_PRESALE = 315000000*(1 ether / 1 wei);
 
-    uint public constant FRST_CRWDSALE_RATIO = TOKENS_FOR_PRESALE + 147875000*(1 ether / 1 wei);//30% bonus
-    uint public constant SCND_CRWDSALE_RATIO = FRST_CRWDSALE_RATIO + 110687500*(1 ether / 1 wei);//15% bonus
+    uint public BONUS_PERCENTAGE;
 
     enum Phase {
-        Created,//Inital phase after deploy
-        PresaleRunning, //Presale phase
-        Paused, //Pause phase between pre-sale and main token sale or emergency pause function
-        ICORunning, //Crowdsale phase
-        FinishingICO //Final phase when crowdsale is closed and time is up
+    Created,
+    CrowdsaleRunning,
+    Paused
     }
 
     Phase public currentPhase = Phase.Created;
@@ -487,38 +508,49 @@ contract BTHRTokenSale is FinalizableCrowdsale {
     event LogPhaseSwitch(Phase phase);
 
     // Constructor
-    function BTHRTokenSale(uint256 _end, address _wallet)
+    function BETHERTokenSale(
+    uint256 _end,
+    address _wallet
+    )
     FinalizableCrowdsale()
     Crowdsale(_end, _wallet) {
+    }
+
+    function setNewBonusScheme(uint _bonusPercentage) {
+        BONUS_PERCENTAGE = _bonusPercentage;
+    }
+
+    function mintRawTokens(address _buyer, uint256 _newTokens) public onlyOwner {
+        token.mint(_buyer, _newTokens);
     }
 
     /// @dev Lets buy you some tokens.
     function buyTokens(address _buyer) public payable {
         // Available only if presale or crowdsale is running.
-        require((currentPhase == Phase.PresaleRunning) || (currentPhase == Phase.ICORunning));
+        require(currentPhase == Phase.CrowdsaleRunning);
         require(_buyer != address(0));
         require(msg.value > 0);
         require(validPurchase());
 
         uint tokensWouldAddTo = 0;
         uint weiWouldAddTo = 0;
-        
+
         uint256 weiAmount = msg.value;
-        
+
         uint newTokens = msg.value.mul(RATE);
-        
+
         weiWouldAddTo = weiRaised.add(weiAmount);
-        
+
         require(weiWouldAddTo <= TOKEN_SALE_LIMIT);
 
         newTokens = addBonusTokens(token.totalSupply(), newTokens);
-        
+
         tokensWouldAddTo = newTokens.add(token.totalSupply());
         require(tokensWouldAddTo <= TOKENS_FOR_SALE);
-        
+
         token.mint(_buyer, newTokens);
         TokenPurchase(msg.sender, _buyer, weiAmount, newTokens);
-        
+
         weiRaised = weiWouldAddTo;
         forwardFunds();
         if (weiRaised == TOKENS_FOR_SALE){
@@ -530,89 +562,20 @@ contract BTHRTokenSale is FinalizableCrowdsale {
     // @param _totalSupply total supply of token bought during pre-sale/crowdsale
     // @param _newTokens tokens currently bought by user
     function addBonusTokens(uint256 _totalSupply, uint256 _newTokens) internal view returns (uint256) {
+        uint returnTokens;
+        uint tokens = _newTokens;
+        returnTokens = tokens.add(tokens.mul(BONUS_PERCENTAGE).div(100));
 
-        uint returnTokens = 0;
-        uint tokensToAdd = 0;
-        uint tokensLeft = _newTokens;
-
-        if(currentPhase == Phase.PresaleRunning){
-            if(_totalSupply < TOKENS_FOR_PRESALE){
-                if(_totalSupply + tokensLeft + tokensLeft.mul(50).div(100) > TOKENS_FOR_PRESALE){
-                    tokensToAdd = TOKENS_FOR_PRESALE.sub(_totalSupply);
-                    tokensToAdd = tokensToAdd.mul(100).div(150);
-                    
-                    returnTokens = returnTokens.add(tokensToAdd);
-                    returnTokens = returnTokens.add(tokensToAdd.mul(50).div(100));
-                    tokensLeft = tokensLeft.sub(tokensToAdd);
-                    _totalSupply = _totalSupply.add(tokensToAdd.add(tokensToAdd.mul(50).div(100)));
-                } else { 
-                    returnTokens = returnTokens.add(tokensLeft).add(tokensLeft.mul(50).div(100));
-                    tokensLeft = tokensLeft.sub(tokensLeft);
-                }
-            }
-        } 
-        
-        if (tokensLeft > 0 && _totalSupply < FRST_CRWDSALE_RATIO) {
-            
-            if(_totalSupply + tokensLeft + tokensLeft.mul(30).div(100)> FRST_CRWDSALE_RATIO){
-                tokensToAdd = FRST_CRWDSALE_RATIO.sub(_totalSupply);
-                tokensToAdd = tokensToAdd.mul(100).div(130);
-                returnTokens = returnTokens.add(tokensToAdd).add(tokensToAdd.mul(30).div(100));
-                tokensLeft = tokensLeft.sub(tokensToAdd);
-                _totalSupply = _totalSupply.add(tokensToAdd.add(tokensToAdd.mul(30).div(100)));
-                
-            } else { 
-                returnTokens = returnTokens.add(tokensLeft);
-                returnTokens = returnTokens.add(tokensLeft.mul(30).div(100));
-                tokensLeft = tokensLeft.sub(tokensLeft);
-            }
-        }
-        
-        if (tokensLeft > 0 && _totalSupply < SCND_CRWDSALE_RATIO) {
-            
-            if(_totalSupply + tokensLeft + tokensLeft.mul(15).div(100) > SCND_CRWDSALE_RATIO){
-
-                tokensToAdd = SCND_CRWDSALE_RATIO.sub(_totalSupply);
-                tokensToAdd = tokensToAdd.mul(100).div(115);
-                returnTokens = returnTokens.add(tokensToAdd).add(tokensToAdd.mul(15).div(100));
-                tokensLeft = tokensLeft.sub(tokensToAdd);
-                _totalSupply = _totalSupply.add(tokensToAdd.add(tokensToAdd.mul(15).div(100)));
-            } else { 
-                returnTokens = returnTokens.add(tokensLeft);
-                returnTokens = returnTokens.add(tokensLeft.mul(15).div(100));
-                tokensLeft = tokensLeft.sub(tokensLeft);
-            }
-        }
-        
-        if (tokensLeft > 0)  {
-            returnTokens = returnTokens.add(tokensLeft);
-            tokensLeft = tokensLeft.sub(tokensLeft);
-        }
         return returnTokens;
     }
 
-    function validPurchase() internal view returns (bool) {
-        bool withinPeriod = now <= endTime;
-        bool nonZeroPurchase = msg.value != 0;
-        bool isRunning = ((currentPhase == Phase.ICORunning) || (currentPhase == Phase.PresaleRunning));
-        return withinPeriod && nonZeroPurchase && isRunning;
-    }
-
     function setSalePhase(Phase _nextPhase) public onlyOwner {
-    
-        bool canSwitchPhase
-        =  (currentPhase == Phase.Created && _nextPhase == Phase.PresaleRunning)
-        || (currentPhase == Phase.PresaleRunning && _nextPhase == Phase.Paused)
-        || ((currentPhase == Phase.PresaleRunning || currentPhase == Phase.Paused)
-        && _nextPhase == Phase.ICORunning)
-        || (currentPhase == Phase.ICORunning && _nextPhase == Phase.Paused)
-        || (currentPhase == Phase.Paused && _nextPhase == Phase.PresaleRunning)
-        || (currentPhase == Phase.Paused && _nextPhase == Phase.FinishingICO)
-        || (currentPhase == Phase.ICORunning && _nextPhase == Phase.FinishingICO);
-
-        require(canSwitchPhase);
         currentPhase = _nextPhase;
         LogPhaseSwitch(_nextPhase);
+    }
+
+    function transferTokenOwnership(address _newOwner) {
+        token.transferOwnership(_newOwner);
     }
 
     // Finalize
