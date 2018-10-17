@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PVBToken at 0xcb324e4c8c1561d547c38bd1d4a3b12a405b8019
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PVBToken at 0x109a290319e2636f4a0ae0126ed9ee044a39cc1e
 */
 pragma solidity ^0.4.18;
 
@@ -209,6 +209,6 @@ contract PVBToken is  BurnableToken, DetailedERC20 {
     uint8 constant DECIMALS = 18;
     string constant NAME = "Points Value Bank";
     string constant SYM = "PVB";
-    uint256 constant MAXPVB = 50 * 10**8 * 10**18;
+    uint256 constant MAXPVB = 5 * 10**8 * 10**18;
     function PVBToken() DetailedERC20 (MAXPVB,NAME, SYM, DECIMALS) public {}
 }
