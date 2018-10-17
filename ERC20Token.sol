@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20TOKEN at 0x0dabaea13982b659ffa03c02307ce1e5a04dc657
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20TOKEN at 0x7eda98442b9c767cacb3d9979b92014e12897802
 */
 pragma solidity ^0.4.24;
 
@@ -116,29 +116,7 @@ contract ERC20TOKEN is SafeMath {
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
-
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[_from] >= _value); 
-        require(_value <= allowance[_from][msg.sender]); 
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(_from, _value);
-        return true;
-    }
     
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
-    }
 
     function transferBatch(address[] _to, uint256 _value) public returns (bool success) {
         for (uint i=0; i<_to.length; i++) {
