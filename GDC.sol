@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GDC at 0x7f4f6ad36f609883d633dd4c812a53daf17079e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GDC at 0x47060d964d3d173f8031affcf8892fee899c555e
 */
 pragma solidity ^0.4.8;
 
@@ -63,16 +63,16 @@ contract GDC is SafeMath{
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function GDC(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
+        uint256 _totalSupply,
+        string _name,
+        uint8 _decimals,
+        string _symbol
     ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+        balanceOf[msg.sender] = _totalSupply;              // Give the creator all initial tokens
+        totalSupply = _totalSupply;                        // Update total supply
+        name = _name;                                   // Set the name for display purposes
+        symbol = _symbol;                               // Set the symbol for display purposes
+        decimals = _decimals;                            // Amount of decimals for display purposes
         owner = msg.sender;
     }
 
