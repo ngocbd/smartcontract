@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract waipaytoken at 0x68c75bdedcc034450451d3f315e904e94d7dd4df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract waipaytoken at 0x7c2616879eae8226dcd4bb90b5de65a361bf667d
 */
 contract waipaytoken {
     /* Public variables of the token */
@@ -21,7 +21,7 @@ contract waipaytoken {
          initialSupply = 11000000000000000;
          name ="waipaytoken";
         decimals = 8;
-         symbol = "WT";
+         symbol = "HT";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
