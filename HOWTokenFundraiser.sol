@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOWTokenFundraiser at 0x839d06efaa98229f41792cdcf9e9aeb0a300d537
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOWTokenFundraiser at 0x78bce8a5f5227b6aa5d1c517b7b7da0e51082bd4
 */
 pragma solidity ^0.4.21;
+
+
 
 // File: contracts/library/SafeMath.sol
 
@@ -140,6 +142,220 @@ contract TokenSafe {
     }
 }
 
+// File: contracts/token/StandardToken.sol
+
+/**
+ * @title Standard Token
+ *
+ * @dev The standard abstract implementation of the ERC20 interface.
+ */
+contract StandardToken is ERC20Token {
+    using SafeMath for uint256;
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
+    
+    /**
+     * @dev The constructor assigns the token name, symbols and decimals.
+     */
+    constructor(string _name, string _symbol, uint8 _decimals) internal {
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+    }
+
+    /**
+     * @dev Get the balance of an address.
+     *
+     * @param _address The address which's balance will be checked.
+     *
+     * @return The current balance of the address.
+     */
+    function balanceOf(address _address) public view returns (uint256 balance) {
+        return balances[_address];
+    }
+
+    /**
+     * @dev Checks the amount of tokens that an owner allowed to a spender.
+     *
+     * @param _owner The address which owns the funds allowed for spending by a third-party.
+     * @param _spender The third-party address that is allowed to spend the tokens.
+     *
+     * @return The number of tokens available to `_spender` to be spent.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Give permission to `_spender` to spend `_value` number of tokens on your behalf.
+     * E.g. You place a buy or sell order on an exchange and in that example, the 
+     * `_spender` address is the address of the contract the exchange created to add your token to their 
+     * website and you are `msg.sender`.
+     *
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     *
+     * @return Whether the approval process was successful or not.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender, _spender, _value);
+
+        return true;
+    }
+
+    /**
+     * @dev Transfers `_value` number of tokens to the `_to` address.
+     *
+     * @param _to The address of the recipient.
+     * @param _value The number of tokens to be transferred.
+     */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        executeTransfer(msg.sender, _to, _value);
+
+        return true;
+    }
+
+    /**
+     * @dev Allows another contract to spend tokens on behalf of the `_from` address and send them to the `_to` address.
+     *
+     * @param _from The address which approved you to spend tokens on their behalf.
+     * @param _to The address where you want to send tokens.
+     * @param _value The number of tokens to be sent.
+     *
+     * @return Whether the transfer was successful or not.
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_value <= allowed[_from][msg.sender]);
+        
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].minus(_value);
+        executeTransfer(_from, _to, _value);
+
+        return true;
+    }
+
+    /**
+     * @dev Internal function that this reused by the transfer functions
+     */
+    function executeTransfer(address _from, address _to, uint256 _value) internal {
+        require(_to != address(0));
+        require(_value != 0 && _value <= balances[_from]);
+        
+        balances[_from] = balances[_from].minus(_value);
+        balances[_to] = balances[_to].plus(_value);
+
+        emit Transfer(_from, _to, _value);
+    }
+}
+
+// File: contracts/token/MintableToken.sol
+
+/**
+ * @title Mintable Token
+ *
+ * @dev Allows the creation of new tokens.
+ */
+contract MintableToken is StandardToken {
+    /// @dev The only address allowed to mint coins
+    address public minter;
+
+    /// @dev Indicates whether the token is still mintable.
+    bool public mintingDisabled = false;
+
+    /**
+     * @dev Event fired when minting is no longer allowed.
+     */
+    event MintingDisabled();
+
+    /**
+     * @dev Allows a function to be executed only if minting is still allowed.
+     */
+    modifier canMint() {
+        require(!mintingDisabled);
+        _;
+    }
+
+    /**
+     * @dev Allows a function to be called only by the minter
+     */
+    modifier onlyMinter() {
+        require(msg.sender == minter);
+        _;
+    }
+
+    /**
+     * @dev The constructor assigns the minter which is allowed to mind and disable minting
+     */
+    constructor(address _minter) internal {
+        minter = _minter;
+    }
+
+    /**
+    * @dev Creates new `_value` number of tokens and sends them to the `_to` address.
+    *
+    * @param _to The address which will receive the freshly minted tokens.
+    * @param _value The number of tokens that will be created.
+    */
+    function mint(address _to, uint256 _value) onlyMinter canMint public {
+        totalSupply = totalSupply.plus(_value);
+        balances[_to] = balances[_to].plus(_value);
+
+        emit Transfer(0x0, _to, _value);
+    }
+
+    /**
+    * @dev Disable the minting of new tokens. Cannot be reversed.
+    *
+    * @return Whether or not the process was successful.
+    */
+    function disableMinting() onlyMinter canMint public {
+        mintingDisabled = true;
+       
+        emit MintingDisabled();
+    }
+}
+
+// File: contracts/token/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ *
+ * @dev Allows tokens to be destroyed.
+ */
+contract BurnableToken is StandardToken {
+    /**
+     * @dev Event fired when tokens are burned.
+     *
+     * @param _from The address from which tokens will be removed.
+     * @param _value The number of tokens to be destroyed.
+     */
+    event Burn(address indexed _from, uint256 _value);
+
+    /**
+     * @dev Burnes `_value` number of tokens.
+     *
+     * @param _value The number of tokens that will be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value != 0);
+
+        address burner = msg.sender;
+        require(_value <= balances[burner]);
+
+        balances[burner] = balances[burner].minus(_value);
+        totalSupply = totalSupply.minus(_value);
+
+        emit Burn(burner, _value);
+        emit Transfer(burner, address(0), _value);
+    }
+}
+
 // File: contracts/trait/HasOwner.sol
 
 /**
@@ -201,6 +417,69 @@ contract HasOwner {
         emit OwnershipTransfer(owner, newOwner);
 
         owner = newOwner;
+    }
+}
+
+// File: contracts/token/PausableToken.sol
+
+/**
+ * @title Pausable Token
+ *
+ * @dev Allows you to pause/unpause transfers of your token.
+ **/
+contract PausableToken is StandardToken, HasOwner {
+
+    /// Indicates whether the token contract is paused or not.
+    bool public paused = false;
+
+    /**
+     * @dev Event fired when the token contracts gets paused.
+     */
+    event Pause();
+
+    /**
+     * @dev Event fired when the token contracts gets unpaused.
+     */
+    event Unpause();
+
+    /**
+     * @dev Allows a function to be called only when the token contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Pauses the token contract.
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+
+    /**
+     * @dev Unpauses the token contract.
+     */
+    function unpause() onlyOwner public {
+        require(paused);
+
+        paused = false;
+        emit Unpause();
+    }
+
+    /// Overrides of the standard token's functions to add the paused/unpaused functionality.
+
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+        return super.approve(_spender, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 }
 
@@ -420,84 +699,44 @@ contract BasicFundraiser is HasOwner, AbstractFundraiser {
     }
 }
 
-// File: contracts/fundraiser/CappedFundraiser.sol
+// File: contracts/token/StandardMintableToken.sol
 
-/**
- * @title Capped Fundraiser
- *
- * @dev Allows you to set a hard cap on your fundraiser.
- */
-contract CappedFundraiser is BasicFundraiser {
-    /// The maximum amount of ether allowed for the fundraiser.
-    uint256 public hardCap;
-
-    /**
-     * @dev The initialization method.
-     *
-     * @param _hardCap The maximum amount of ether allowed to be raised.
-     */
-    function initializeCappedFundraiser(uint256 _hardCap) internal {
-        require(_hardCap > 0);
-
-        hardCap = _hardCap;
-    }
-
-    /**
-     * @dev Adds additional check if the hard cap has been reached.
-     *
-     * @return Whether the token purchase will be allowed.
-     */
-    function validateTransaction() internal view {
-        super.validateTransaction();
-        require(totalRaised < hardCap);
-    }
-
-    /**
-     * @dev Overrides the method from the default `Fundraiser` contract
-     * to additionally check if the `hardCap` is reached.
-     *
-     * @return Whether or not the fundraiser has ended.
-     */
-    function hasEnded() public view returns (bool) {
-        return (super.hasEnded() || totalRaised >= hardCap);
+contract StandardMintableToken is MintableToken {
+    constructor(address _minter, string _name, string _symbol, uint8 _decimals)
+        StandardToken(_name, _symbol, _decimals)
+        MintableToken(_minter)
+        public
+    {
     }
 }
 
-// File: contracts/fundraiser/GasPriceLimitFundraiser.sol
+// File: contracts/fundraiser/MintableTokenFundraiser.sol
 
 /**
- * @title GasPriceLimitFundraiser
- *
- * @dev This fundraiser allows to set gas price limit for the participants in the fundraiser
+ * @title Fundraiser With Mintable Token
  */
-contract GasPriceLimitFundraiser is HasOwner, BasicFundraiser {
-    uint256 public gasPriceLimit;
-
-    event GasPriceLimitChanged(uint256 gasPriceLimit);
-
+contract MintableTokenFundraiser is BasicFundraiser {
     /**
-     * @dev This function puts the initial gas limit
+     * @dev The initialization method that creates a new mintable token.
+     *
+     * @param _name Token name
+     * @param _symbol Token symbol
+     * @param _decimals Token decimals
      */
-    function initializeGasPriceLimitFundraiser(uint256 _gasPriceLimit) internal {
-        gasPriceLimit = _gasPriceLimit;
+    function initializeMintableTokenFundraiser(string _name, string _symbol, uint8 _decimals) internal {
+        token = new StandardMintableToken(
+            address(this), // The fundraiser is the token minter
+            _name,
+            _symbol,
+            _decimals
+        );
     }
 
     /**
-     * @dev This function allows the owner to change the gas limit any time during the fundraiser
+     * @dev Mint the specific amount tokens
      */
-    function changeGasPriceLimit(uint256 _gasPriceLimit) onlyOwner() public {
-        gasPriceLimit = _gasPriceLimit;
-
-        emit GasPriceLimitChanged(_gasPriceLimit);
-    }
-
-    /**
-     * @dev The transaction is valid if the gas price limit is lifted-off or the transaction meets the requirement
-     */
-    function validateTransaction() internal view {
-        require(gasPriceLimit == 0 || tx.gasprice <= gasPriceLimit);
-
-        return super.validateTransaction();
+    function handleTokens(address _address, uint256 _tokens) internal {
+        MintableToken(token).mint(_address, _tokens);
     }
 }
 
@@ -572,224 +811,133 @@ contract IndividualCapsFundraiser is BasicFundraiser {
     }
 }
 
-// File: contracts/token/StandardToken.sol
+// File: contracts/fundraiser/GasPriceLimitFundraiser.sol
 
 /**
- * @title Standard Token
+ * @title GasPriceLimitFundraiser
  *
- * @dev The standard abstract implementation of the ERC20 interface.
+ * @dev This fundraiser allows to set gas price limit for the participants in the fundraiser
  */
-contract StandardToken is ERC20Token {
-    using SafeMath for uint256;
+contract GasPriceLimitFundraiser is HasOwner, BasicFundraiser {
+    uint256 public gasPriceLimit;
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-    
+    event GasPriceLimitChanged(uint256 gasPriceLimit);
+
     /**
-     * @dev The constructor assigns the token name, symbols and decimals.
+     * @dev This function puts the initial gas limit
      */
-    constructor(string _name, string _symbol, uint8 _decimals) internal {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
+    function initializeGasPriceLimitFundraiser(uint256 _gasPriceLimit) internal {
+        gasPriceLimit = _gasPriceLimit;
     }
 
     /**
-     * @dev Get the balance of an address.
-     *
-     * @param _address The address which's balance will be checked.
-     *
-     * @return The current balance of the address.
+     * @dev This function allows the owner to change the gas limit any time during the fundraiser
      */
-    function balanceOf(address _address) public view returns (uint256 balance) {
-        return balances[_address];
+    function changeGasPriceLimit(uint256 _gasPriceLimit) onlyOwner() public {
+        gasPriceLimit = _gasPriceLimit;
+
+        emit GasPriceLimitChanged(_gasPriceLimit);
     }
 
     /**
-     * @dev Checks the amount of tokens that an owner allowed to a spender.
-     *
-     * @param _owner The address which owns the funds allowed for spending by a third-party.
-     * @param _spender The third-party address that is allowed to spend the tokens.
-     *
-     * @return The number of tokens available to `_spender` to be spent.
+     * @dev The transaction is valid if the gas price limit is lifted-off or the transaction meets the requirement
      */
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
+    function validateTransaction() internal view {
+        require(gasPriceLimit == 0 || tx.gasprice <= gasPriceLimit);
 
-    /**
-     * @dev Give permission to `_spender` to spend `_value` number of tokens on your behalf.
-     * E.g. You place a buy or sell order on an exchange and in that example, the 
-     * `_spender` address is the address of the contract the exchange created to add your token to their 
-     * website and you are `msg.sender`.
-     *
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     *
-     * @return Whether the approval process was successful or not.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-
-        emit Approval(msg.sender, _spender, _value);
-
-        return true;
-    }
-
-    /**
-     * @dev Transfers `_value` number of tokens to the `_to` address.
-     *
-     * @param _to The address of the recipient.
-     * @param _value The number of tokens to be transferred.
-     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        executeTransfer(msg.sender, _to, _value);
-
-        return true;
-    }
-
-    /**
-     * @dev Allows another contract to spend tokens on behalf of the `_from` address and send them to the `_to` address.
-     *
-     * @param _from The address which approved you to spend tokens on their behalf.
-     * @param _to The address where you want to send tokens.
-     * @param _value The number of tokens to be sent.
-     *
-     * @return Whether the transfer was successful or not.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_value <= allowed[_from][msg.sender]);
-        
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].minus(_value);
-        executeTransfer(_from, _to, _value);
-
-        return true;
-    }
-
-    /**
-     * @dev Internal function that this reused by the transfer functions
-     */
-    function executeTransfer(address _from, address _to, uint256 _value) internal {
-        require(_to != address(0));
-        require(_value != 0 && _value <= balances[_from]);
-        
-        balances[_from] = balances[_from].minus(_value);
-        balances[_to] = balances[_to].plus(_value);
-
-        emit Transfer(_from, _to, _value);
+        return super.validateTransaction();
     }
 }
 
-// File: contracts/token/MintableToken.sol
+// File: contracts/fundraiser/CappedFundraiser.sol
 
 /**
- * @title Mintable Token
+ * @title Capped Fundraiser
  *
- * @dev Allows the creation of new tokens.
+ * @dev Allows you to set a hard cap on your fundraiser.
  */
-contract MintableToken is StandardToken {
-    /// @dev The only address allowed to mint coins
-    address public minter;
-
-    /// @dev Indicates whether the token is still mintable.
-    bool public mintingDisabled = false;
+contract CappedFundraiser is BasicFundraiser {
+    /// The maximum amount of ether allowed for the fundraiser.
+    uint256 public hardCap;
 
     /**
-     * @dev Event fired when minting is no longer allowed.
+     * @dev The initialization method.
+     *
+     * @param _hardCap The maximum amount of ether allowed to be raised.
      */
-    event MintingDisabled();
+    function initializeCappedFundraiser(uint256 _hardCap) internal {
+        require(_hardCap > 0);
 
-    /**
-     * @dev Allows a function to be executed only if minting is still allowed.
-     */
-    modifier canMint() {
-        require(!mintingDisabled);
-        _;
+        hardCap = _hardCap;
     }
 
     /**
-     * @dev Allows a function to be called only by the minter
+     * @dev Adds additional check if the hard cap has been reached.
+     *
+     * @return Whether the token purchase will be allowed.
      */
-    modifier onlyMinter() {
-        require(msg.sender == minter);
-        _;
+    function validateTransaction() internal view {
+        super.validateTransaction();
+        require(totalRaised < hardCap);
     }
 
     /**
-     * @dev The constructor assigns the minter which is allowed to mind and disable minting
+     * @dev Overrides the method from the default `Fundraiser` contract
+     * to additionally check if the `hardCap` is reached.
+     *
+     * @return Whether or not the fundraiser has ended.
      */
-    constructor(address _minter) internal {
-        minter = _minter;
-    }
-
-    /**
-    * @dev Creates new `_value` number of tokens and sends them to the `_to` address.
-    *
-    * @param _to The address which will receive the freshly minted tokens.
-    * @param _value The number of tokens that will be created.
-    */
-    function mint(address _to, uint256 _value) onlyMinter canMint public {
-        totalSupply = totalSupply.plus(_value);
-        balances[_to] = balances[_to].plus(_value);
-
-        emit Transfer(0x0, _to, _value);
-    }
-
-    /**
-    * @dev Disable the minting of new tokens. Cannot be reversed.
-    *
-    * @return Whether or not the process was successful.
-    */
-    function disableMinting() onlyMinter canMint public {
-        mintingDisabled = true;
-       
-        emit MintingDisabled();
+    function hasEnded() public view returns (bool) {
+        return (super.hasEnded() || totalRaised >= hardCap);
     }
 }
 
-// File: contracts/token/StandardMintableToken.sol
-
-contract StandardMintableToken is MintableToken {
-    constructor(address _minter, string _name, string _symbol, uint8 _decimals)
-        StandardToken(_name, _symbol, _decimals)
-        MintableToken(_minter)
-        public
-    {
-    }
-}
-
-// File: contracts/fundraiser/MintableTokenFundraiser.sol
+// File: contracts/fundraiser/FinalizableFundraiser.sol
 
 /**
- * @title Fundraiser With Mintable Token
+ * @title Finalizable Fundraiser
+ *
+ * @dev Allows the owner of this contract to finalize the fundraiser at any given time
+ * after certain conditions are met, such as hard cap reached,
+ * and also do extra work when finalized.
  */
-contract MintableTokenFundraiser is BasicFundraiser {
+contract FinalizableFundraiser is BasicFundraiser {
+    /// Flag indicating whether or not the fundraiser is finalized.
+    bool public isFinalized = false;
+
     /**
-     * @dev The initialization method that creates a new mintable token.
-     *
-     * @param _name Token name
-     * @param _symbol Token symbol
-     * @param _decimals Token decimals
+     * @dev Event fires if the finalization of the fundraiser is successful.
      */
-    function initializeMintableTokenFundraiser(string _name, string _symbol, uint8 _decimals) internal {
-        token = new StandardMintableToken(
-            address(this), // The fundraiser is the token minter
-            _name,
-            _symbol,
-            _decimals
-        );
+    event Finalized();
+
+    /**
+     * @dev Finalizes the fundraiser. Cannot be reversed.
+     */
+    function finalize() onlyOwner public {
+        require(!isFinalized);
+        require(hasEnded());
+
+        finalization();
+        emit Finalized();
+
+        isFinalized = true;
     }
 
     /**
-     * @dev Mint the specific amount tokens
+     * @dev Override this function to add extra work when a fundraiser is finalized.
+     * Don't forget to add super.finalization() to execute this part.
      */
-    function handleTokens(address _address, uint256 _tokens) internal {
-        MintableToken(token).mint(_address, _tokens);
+    function finalization() internal {
+        beneficiary.transfer(address(this).balance);
     }
+
+
+    /**
+     * @dev Do nothing, wait for finalization
+     */
+    function handleFunds(address, uint256) internal {
+    }
+    
 }
 
 // File: contracts/component/RefundSafe.sol
@@ -916,54 +1064,6 @@ contract RefundSafe is HasOwner {
     }
 }
 
-// File: contracts/fundraiser/FinalizableFundraiser.sol
-
-/**
- * @title Finalizable Fundraiser
- *
- * @dev Allows the owner of this contract to finalize the fundraiser at any given time
- * after certain conditions are met, such as hard cap reached,
- * and also do extra work when finalized.
- */
-contract FinalizableFundraiser is BasicFundraiser {
-    /// Flag indicating whether or not the fundraiser is finalized.
-    bool public isFinalized = false;
-
-    /**
-     * @dev Event fires if the finalization of the fundraiser is successful.
-     */
-    event Finalized();
-
-    /**
-     * @dev Finalizes the fundraiser. Cannot be reversed.
-     */
-    function finalize() onlyOwner public {
-        require(!isFinalized);
-        require(hasEnded());
-
-        finalization();
-        emit Finalized();
-
-        isFinalized = true;
-    }
-
-    /**
-     * @dev Override this function to add extra work when a fundraiser is finalized.
-     * Don't forget to add super.finalization() to execute this part.
-     */
-    function finalization() internal {
-        beneficiary.transfer(address(this).balance);
-    }
-
-
-    /**
-     * @dev Do nothing, wait for finalization
-     */
-    function handleFunds(address, uint256) internal {
-    }
-    
-}
-
 // File: contracts/fundraiser/RefundableFundraiser.sol
 
 /**
@@ -1045,104 +1145,6 @@ contract RefundableFundraiser is FinalizableFundraiser {
     }
 }
 
-// File: contracts/token/BurnableToken.sol
-
-/**
- * @title Burnable Token
- *
- * @dev Allows tokens to be destroyed.
- */
-contract BurnableToken is StandardToken {
-    /**
-     * @dev Event fired when tokens are burned.
-     *
-     * @param _from The address from which tokens will be removed.
-     * @param _value The number of tokens to be destroyed.
-     */
-    event Burn(address indexed _from, uint256 _value);
-
-    /**
-     * @dev Burnes `_value` number of tokens.
-     *
-     * @param _value The number of tokens that will be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value != 0);
-
-        address burner = msg.sender;
-        require(_value <= balances[burner]);
-
-        balances[burner] = balances[burner].minus(_value);
-        totalSupply = totalSupply.minus(_value);
-
-        emit Burn(burner, _value);
-        emit Transfer(burner, address(0), _value);
-    }
-}
-
-// File: contracts/token/PausableToken.sol
-
-/**
- * @title Pausable Token
- *
- * @dev Allows you to pause/unpause transfers of your token.
- **/
-contract PausableToken is StandardToken, HasOwner {
-
-    /// Indicates whether the token contract is paused or not.
-    bool public paused = false;
-
-    /**
-     * @dev Event fired when the token contracts gets paused.
-     */
-    event Pause();
-
-    /**
-     * @dev Event fired when the token contracts gets unpaused.
-     */
-    event Unpause();
-
-    /**
-     * @dev Allows a function to be called only when the token contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-    /**
-     * @dev Pauses the token contract.
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
-
-    /**
-     * @dev Unpauses the token contract.
-     */
-    function unpause() onlyOwner public {
-        require(paused);
-
-        paused = false;
-        emit Unpause();
-    }
-
-    /// Overrides of the standard token's functions to add the paused/unpaused functionality.
-
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-}
-
 // File: contracts/Fundraiser.sol
 
 /**
@@ -1176,12 +1178,12 @@ contract HOWTokenSafe is TokenSafe {
     // Group "A"
     init(
       0, // Group Id
-      1532779200 // Release date = 28 Jul 2018 12:00 UTC
+      1534170000 // Release date = 13 Aug 2018 14:20 UTC
     );
     add(
       0, // Group Id
       0xCD3367edbf18C379FA6FBD9D2C206DbB83A816AD, // Token Safe Entry Address
-      53500000000000000000000000  // Allocated tokens
+      78150000000000000000000000  // Allocated tokens
     );
   }
 }
@@ -1204,10 +1206,10 @@ contract HOWTokenFundraiser is MintableTokenFundraiser, IndividualCapsFundraiser
     );
 
     tokenSafe = new HOWTokenSafe(token);
-    MintableToken(token).mint(address(tokenSafe), 53500000000000000000000000);
+    MintableToken(token).mint(address(tokenSafe), 78150000000000000000000000);
 
     initializeBasicFundraiser(
-      1532777400, // Start date = 28 Jul 2018 11:30 UTC
+      1534169700, // Start date = 13 Aug 2018 14:15 UTC
       1538143200,  // End date = 28 Sep 2018 14:00 UTC
       50000, // Conversion rate = 50000 HOW per 1 ether
       0xCD3367edbf18C379FA6FBD9D2C206DbB83A816AD     // Beneficiary
@@ -1215,7 +1217,7 @@ contract HOWTokenFundraiser is MintableTokenFundraiser, IndividualCapsFundraiser
 
     initializeIndividualCapsFundraiser(
       (0.01 ether), // Minimum contribution
-      (10 ether)  // Maximum individual cap
+      (15 ether)  // Maximum individual cap
     );
 
     initializeGasPriceLimitFundraiser(
@@ -1225,11 +1227,11 @@ contract HOWTokenFundraiser is MintableTokenFundraiser, IndividualCapsFundraiser
     
 
     initializeCappedFundraiser(
-      (1070 ether) // Hard cap
+      (1563 ether) // Hard cap
     );
 
     initializeRefundableFundraiser(
-      (213 ether)  // Soft cap
+      (313 ether)  // Soft cap
     );
     
     
