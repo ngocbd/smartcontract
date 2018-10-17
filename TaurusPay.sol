@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaurusPay at 0x19540ece04fc7a5e66697f49905fd2b0cae60bf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaurusPay at 0x0781326c6569042641b4043079e7b8572c8cb5da
 */
 pragma solidity ^0.4.24;
 
@@ -244,7 +244,7 @@ contract TaurusPay is StandardToken {
     string public constant name = "TaurusPay Token";
     string public constant symbol = "TAPT";
     uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 950**6 * (10**uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 950 * 10**6 * (10**uint256(decimals));
     address public owner;
     mapping (address => bool) public contractUsers;
     bool public mintingFinished;
