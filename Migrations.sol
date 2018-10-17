@@ -1,29 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x3aaa249971bb18e2a257b536cc2ab2f91582bb96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xc2c58a79db674f8f75190e0f1e18f3c8ea7d4554
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.15;
 
+// File: contracts/Migrations.sol
 
-// Provided by Truffle.
 contract Migrations {
+  address public owner;
+  uint256 public last_completed_migration;
 
-    address public owner;
-    uint public last_completed_migration;
+  modifier restricted() {
+    if (msg.sender == owner)
+      _;
+  }
 
-    modifier restricted() {
-        if (msg.sender == owner) _;
-    }
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    function Migrations() public {
-        owner = msg.sender;
-    }
+  function setCompleted(uint completed) restricted public {
+    last_completed_migration = completed;
+  }
 
-    function setCompleted(uint completed) public restricted {
-        last_completed_migration = completed;
-    }
-
-    function upgrade(address new_address) public restricted {
-        Migrations upgraded = Migrations(new_address);
-        upgraded.setCompleted(last_completed_migration);
-    }
+  function upgrade(address new_address) restricted public {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
 }
