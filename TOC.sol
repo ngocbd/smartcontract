@@ -1,105 +1,143 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0x853f93ede7f5414b28b8b9c0dec55b501c913f0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0x7a66391d2b0a9d087a77fb4acd3e19c59a76e940
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-/*SPEND APPROVAL ALERT INTERFACE*/
-interface tokenRecipient { 
-function receiveApproval(address _from, uint256 _value, 
-address _token, bytes _extraData) external; 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
 }
+contract Ownable {
+    address public owner;
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-contract TOC {
-/*tokenchanger.io*/
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert();
+        }
+        _;
+    }
 
-/*TOC TOKEN*/
-string public name;
-string public symbol;
-uint8 public decimals;
-uint256 public totalSupply;
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 
-/*user coin balance*/
-mapping (address => uint256) public balances;
-/*user coin allowances*/
-mapping(address => mapping (address => uint256)) public allowed;
-
-/*EVENTS*/		
-/*broadcast token transfers on the blockchain*/
-event Transfer(address indexed from, address indexed to, uint256 value);
-/*broadcast token spend approvals on the blockchain*/
-event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-/*MINT TOKEN*/
-constructor() public {
-name = "Token Changer";
-symbol = "TOC";
-decimals = 18;
-/*one billion base units*/
-totalSupply = 10**27;
-balances[msg.sender] = totalSupply; 
+    function destruct() public onlyOwner {
+        selfdestruct(owner);
+    }
 }
-
-/*INTERNAL TRANSFER*/
-function _transfer(address _from, address _to, uint _value) internal {    
-/*prevent transfer to invalid address*/    
-if(_to == 0x0) revert();
-/*check if the sender has enough value to send*/
-if(balances[_from] < _value) revert(); 
-/*check for overflows*/
-if(balances[_to] + _value < balances[_to]) revert();
-/*compute sending and receiving balances before transfer*/
-uint PreviousBalances = balances[_from] + balances[_to];
-/*substract from sender*/
-balances[_from] -= _value;
-/*add to the recipient*/
-balances[_to] += _value; 
-/*check integrity of transfer operation*/
-assert(balances[_from] + balances[_to] == PreviousBalances);
-/*broadcast transaction*/
-emit Transfer(_from, _to, _value); 
+contract ERC20Basic {
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public;
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-/*PUBLIC TRANSFERS*/
-function transfer(address _to, uint256 _value) external returns (bool){
-_transfer(msg.sender, _to, _value);
-return true;
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public;
+    function approve(address spender, uint256 value) public;
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
 
-/*APPROVE THIRD PARTY SPENDING*/
-function approve(address _spender, uint256 _value) public returns (bool success){
-/*update allowance record*/    
-allowed[msg.sender][_spender] = _value;
-/*broadcast approval*/
-emit Approval(msg.sender, _spender, _value); 
-return true;                                        
-}
+    mapping(address => uint256) balances;
+    uint256 public totalSupply;
 
-/*THIRD PARTY TRANSFER*/
-function transferFrom(address _from, address _to, uint256 _value) 
-external returns (bool success) {
-/*check if the message sender can spend*/
-require(_value <= allowed[_from][msg.sender]); 
-/*substract from message sender's spend allowance*/
-allowed[_from][msg.sender] -= _value;
-/*transfer tokens*/
-_transfer(_from, _to, _value);
-return true;
-}
+    modifier onlyPayloadSize(uint256 size) {
+        if(msg.data.length < size + 4) {
+            revert();
+        }
+        _;
+    }
 
-/*APPROVE SPEND ALLOWANCE AND CALL SPENDER*/
-function approveAndCall(address _spender, uint256 _value, 
- bytes _extraData) external returns (bool success) {
-tokenRecipient 
-spender = tokenRecipient(_spender);
-if(approve(_spender, _value)) {
-spender.receiveApproval(msg.sender, _value, this, _extraData);
-}
-return true;
-}
+    function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+    }
 
-/*INVALID TRANSACTIONS*/
-function () payable external{
-revert();  
-}
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-}/////////////////////////////////end of toc token contract
+}
+contract StandardToken is BasicToken, ERC20 {
+
+    mapping (address => mapping (address => uint256)) allowed;
+
+    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(3 * 32) {
+        var _allowance = allowed[_from][msg.sender];
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public {
+        if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+}
+contract TOC is StandardToken, Ownable {
+
+    string public constant name = "Tourism Chain";
+    string public constant symbol = "TOC";
+    uint256 public constant decimals = 8;
+
+    function TOC() public {
+        owner = msg.sender;
+        totalSupply=100000000000000000;
+        balances[owner]=totalSupply;
+    }
+
+    function () public {
+        revert();
+    }
+}
