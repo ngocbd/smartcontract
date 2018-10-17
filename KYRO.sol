@@ -1,326 +1,274 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYRO at 0x168b8196d5d9b09ad294e8d231ee720310d89196
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KYRO at 0x9a6ce5ba4abaaa5081b8735a259d71456dd3d840
 */
 pragma solidity ^0.4.18;
 
+// ----------------------------------------------------------------------------
+// 'KYRO TOKEN' CROWDSALE token contract
+//
+// Deployed to : 0x3734c3109D0ACA78e1800Aa292Cc56ee16529fDB
+// Symbol      : KRO
+// Name        : KYRO Token
+// Total supply: 2,000,000,000
+// Decimals    : 8
+//
+// Enjoy.
+//
+// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
+
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
+
+    /**
+    * Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
         return c;
     }
 
+    /**
+    * Integer division of two numbers, truncating the quotient.
+    */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
+        // uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+        return a / b;
     }
 
+    /**
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
+    /**
+    * Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
         assert(c >= a);
         return c;
     }
+}
 
-    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
+contract AltcoinToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
 contract ERC20Basic {
     uint256 public totalSupply;
-
-    bool public transfersEnabled;
-
-    function balanceOf(address who) public view returns (uint256);
-
+    function balanceOf(address who) public constant returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
-
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC20 {
-    uint256 public totalSupply;
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    bool public transfersEnabled;
+contract KYRO is ERC20 {
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
 
-    function balanceOf(address _owner) public constant returns (uint256 balance);
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;    
 
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+    string public constant name = "KYRO Token";
+    string public constant symbol = "KRO";
+    uint public constant decimals = 8;
+    
+    uint256 public totalSupply = 2000000000e8;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 1800000e8;
+    uint256 public constant minContribution = 0.0001 ether / 100; // 0.01 ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
 
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
+    event Airdrop(address indexed _owner, uint _amount, uint _balance);
 
-    mapping(address => uint256) balances;
+    event TokensPerEthUpdated(uint _tokensPerEth);
+    
+    event Burn(address indexed burner, uint256 value);
 
-    /**
-    * @dev protection against short address attack
-    */
-    modifier onlyPayloadSize(uint numwords) {
-        assert(msg.data.length == numwords * 32 + 4);
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
         _;
     }
-
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public onlyPayloadSize(2) returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        require(transfersEnabled);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping(address => mapping(address => uint256)) internal allowed;
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(3) returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        require(transfersEnabled);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public onlyPayloadSize(2) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-contract KYRO is StandardToken {
-
-    string public constant name = "KYRO";
-    string public constant symbol = "KR";
-    uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 3 * 10**9 * (10**uint256(decimals));
-    uint256 public weiRaised;
-    uint256 public tokenAllocated;
-    address public owner;
-    bool public saleToken = true;
-
-    event OwnerChanged(address indexed previousOwner, address indexed newOwner);
-    event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
-    event TokenLimitReached(uint256 tokenRaised, uint256 purchasedToken);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    function KYRO() public {
-        totalSupply = INITIAL_SUPPLY;
-        owner = msg.sender;
-        //owner = msg.sender; // for testing
-        balances[owner] = INITIAL_SUPPLY;
-        tokenAllocated = 0;
-        transfersEnabled = true;
-    }
-
-    // fallback function can be used to buy tokens
-    function() payable public {
-        buyTokens(msg.sender);
-    }
-
-    function buyTokens(address _investor) public payable returns (uint256){
-        require(_investor != address(0));
-        require(saleToken == true);
-        address wallet = owner;
-        uint256 weiAmount = msg.value;
-        uint256 tokens = validPurchaseTokens(weiAmount);
-        if (tokens == 0) {revert();}
-        weiRaised = weiRaised.add(weiAmount);
-        tokenAllocated = tokenAllocated.add(tokens);
-        mint(_investor, tokens, owner);
-
-        TokenPurchase(_investor, weiAmount, tokens);
-        wallet.transfer(weiAmount);
-        return tokens;
-    }
-
-    function validPurchaseTokens(uint256 _weiAmount) public returns (uint256) {
-        uint256 addTokens = getTotalAmountOfTokens(_weiAmount);
-        if (addTokens > balances[owner]) {
-            TokenLimitReached(tokenAllocated, addTokens);
-            return 0;
-        }
-        return addTokens;
-    }
-
-    /**
-    * If the user sends 0 ether, he receives 500tokens.
-    * If he sends 0.001 ether, he receives 2000tokens
-    * If he sends 0.005 ether he receives 22,000tokens
-    * If he sends 0.01ether, he receives 48,000 tokens
-    * If he sends 0.02ether he receives 100000tokens
-    * If he sends 0.05ether, he receives 270,000tokens
-    */
-    function getTotalAmountOfTokens(uint256 _weiAmount) internal pure returns (uint256) {
-        uint256 amountOfTokens = 0;
-        if(_weiAmount == 0){
-            amountOfTokens = 500 * (10**uint256(decimals));
-        }
-        if( _weiAmount == 0.001 ether){
-            amountOfTokens = 2000 * 10**3 * (10**uint256(decimals));
-        }
-        if( _weiAmount == 0.005 ether){
-            amountOfTokens = 22 * 10**3 * (10**uint256(decimals));
-        }
-        if( _weiAmount == 0.01 ether){
-            amountOfTokens = 48 * 10**3 * (10**uint256(decimals));
-        }
-        if( _weiAmount == 0.02 ether){
-            amountOfTokens = 100 * 10**3 * (10**uint256(decimals));
-        }
-        if( _weiAmount == 0.05 ether){
-            amountOfTokens = 270 * 10**3 * (10**uint256(decimals));
-        }
-        return amountOfTokens;
-    }
-
-
-    function mint(address _to, uint256 _amount, address _owner) internal returns (bool) {
-        require(_to != address(0));
-        require(_amount <= balances[_owner]);
-
-        balances[_to] = balances[_to].add(_amount);
-        balances[_owner] = balances[_owner].sub(_amount);
-        Transfer(_owner, _to, _amount);
-        return true;
-    }
-
+    
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
+    
+    
+    
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
 
-    function changeOwner(address _newOwner) onlyOwner public returns (bool){
-        require(_newOwner != address(0));
-        OwnerChanged(owner, _newOwner);
-        owner = _newOwner;
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);        
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+
         return true;
     }
 
-    function startSale() public onlyOwner {
-        saleToken = true;
+    function doAirdrop(address _participant, uint _amount) internal {
+
+        require( _amount > 0 );      
+
+        require( totalDistributed < totalSupply );
+        
+        balances[_participant] = balances[_participant].add(_amount);
+        totalDistributed = totalDistributed.add(_amount);
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+
+        // log
+        emit Airdrop(_participant, _amount, balances[_participant]);
+        emit Transfer(address(0), _participant, _amount);
     }
 
-    function stopSale() public onlyOwner {
-        saleToken = false;
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
+        doAirdrop(_participant, _amount);
     }
 
-    function enableTransfers(bool _transfersEnabled) onlyOwner public {
-        transfersEnabled = _transfersEnabled;
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
+        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
     }
 
-    /**
-     * Peterson's Law Protection
-     * Claim tokens
-     */
-    function claimTokens() public onlyOwner {
-        owner.transfer(this.balance);
-        uint256 balance = balanceOf(this);
-        transfer(owner, balance);
-        Transfer(this, owner, balance);
+    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
+        tokensPerEth = _tokensPerEth;
+        emit TokensPerEthUpdated(_tokensPerEth);
+    }
+           
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr  public {
+        uint256 tokens = 0;
+
+        require( msg.value >= minContribution );
+
+        require( msg.value > 0 );
+        
+        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
+        address investor = msg.sender;
+        
+        if (tokens > 0) {
+            distr(investor, tokens);
+        }
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        AltcoinToken t = AltcoinToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        address myAddress = this;
+        uint256 etherBalance = myAddress.balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
     }
 }
