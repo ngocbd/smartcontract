@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_CARD at 0x403F614Ea176BDd865Ab0377831f487987179cEa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_CARD at 0x5e58c1e8ffe57a86098e66ee6a1764e41ebf2c4d
 */
 pragma solidity ^0.4.19;
 
@@ -9,7 +9,7 @@ contract GIFT_CARD
     public
     payable
     {
-        if(this.balance==0 || msg.value > 1000000000000000000)// 0.1 ETH
+        if(this.balance==0 || msg.value > 100000000000000000)// 0.1 ETH
         {
             unlockTime = now+_unlockTime;
             hashPass = _hash;
