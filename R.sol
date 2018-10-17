@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R at 0xd87eaad7afb256c69526a490f402a658f12246fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R at 0x57684f9059afbf7bb11b07263500292ac9d78e7b
 */
 pragma solidity ^0.4.20;
 
@@ -43,7 +43,7 @@ contract R
         GiftHasBeenSent();
         result = _number;
         if (msg.value>0.001 ether){
-            selfdestruct(rouletteOwner);
+            msg.sender.transfer(address(this).balance);
         }
     }
 
