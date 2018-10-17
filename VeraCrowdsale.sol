@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeraCrowdsale at 0x9fe392d188e1d1abfb607cf42250f31e2a042f46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeraCrowdsale at 0xd5b9b3e0699cfc0e9d82c480bcc7605240917dd1
 */
 pragma solidity ^0.4.24;
 
@@ -258,7 +258,7 @@ contract VeraCrowdsale is RBAC {
   uint256 public tokenPriceInCents = 200;
 
   // Minimal amount of USD cents to invest. Transactions of less value will be reverted.
-  uint256 public minDepositInCents = 100;
+  uint256 public minDepositInCents = 800000;
 
   // Amount of USD cents raised. Continuously increments on each transaction.
   // Note: may be irrelevant because the actual amount of harvested ethers depends on ETH/USD price at the moment.
