@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyoptionToken at 0x01411f49388dfa9b18bb998ae6179fbd2e22d58f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EasyoptionToken at 0x9a2681935c2775b7abf0649ec5c306eea7561930
 */
 pragma solidity 0.4.24;
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -16,8 +14,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -38,8 +34,6 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
-
 /**
  * @title DetailedERC20 token
  * @dev The decimals are only for visualization purposes.
@@ -57,8 +51,6 @@ contract DetailedERC20 is ERC20 {
     decimals = _decimals;
   }
 }
-
-// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -110,8 +102,6 @@ library SafeMath {
   }
 }
 
-// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -155,8 +145,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
