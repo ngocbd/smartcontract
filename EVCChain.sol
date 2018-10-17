@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EVCChain at 0xD272aB73f0AD293Df1E15da02Eabf06a7fFc2501
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EVCChain at 0xa973ad75a72c842b0a90aa0ec029a8267cdd5edf
 */
 pragma solidity ^0.4.15;
 
@@ -144,7 +144,7 @@ contract StandardToken is ERC20, BasicToken {
 contract EVCChain is StandardToken {
 
   string public constant name = "EVC Chain";
-  string public constant symbol = "EVC";
+  string public constant symbol = "EVCC";
   uint8 public constant decimals = 18;
 
 
@@ -158,17 +158,17 @@ contract EVCChain is StandardToken {
     
 
     //Investors 32%
-    balances[0x5456118857653C15CFC5c42aFBA128eF198e2feB] = 320000000 * (10 ** uint256(decimals));
-    emit Transfer(msg.sender, 0x5456118857653C15CFC5c42aFBA128eF198e2feB, 320000000 * (10 ** uint256(decimals)));
+    balances[0x158CeaeEad026C6d0B18205ABF580d9AaD905520] = 320000000 * (10 ** uint256(decimals));
+    emit Transfer(msg.sender, 0x158CeaeEad026C6d0B18205ABF580d9AaD905520, 320000000 * (10 ** uint256(decimals)));
 
     //Fundation 48% 
-    balances[0xaa98eb0cb8389b118995aad028a28ca3f53923d3] = 480000000 * (10 ** uint256(decimals));
-    emit Transfer(msg.sender,0xaa98eb0cb8389b118995aad028a28ca3f53923d3, 480000000 * (10 ** uint256(decimals)));
+    balances[0x7161431BfCECd83D45982fA1C6ed9878e2395468] = 480000000 * (10 ** uint256(decimals));
+    emit Transfer(msg.sender,0x7161431BfCECd83D45982fA1C6ed9878e2395468, 480000000 * (10 ** uint256(decimals)));
 
     
     //Core Team 20%
-    balances[0x514D1A6BAE6D0d9f8879fd221F9702Ff511454Aa] = 200000000 * (10 ** uint256(decimals));
-    emit Transfer(msg.sender, 0x514D1A6BAE6D0d9f8879fd221F9702Ff511454Aa, 200000000 * (10 ** uint256(decimals)));
+    balances[0xE05A7C3f9A956B921F42dFf5B4eB8170E5C6b2FC] = 200000000 * (10 ** uint256(decimals));
+    emit Transfer(msg.sender, 0xE05A7C3f9A956B921F42dFf5B4eB8170E5C6b2FC, 200000000 * (10 ** uint256(decimals)));
     
   }
 
