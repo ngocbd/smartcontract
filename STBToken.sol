@@ -1,13 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STBToken at 0x4b30d120fca686ba384a275064548446dfd8c850
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STBToken at 0x73393ffcc698ccdbfe4ece51cf0e1aad12724490
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -17,9 +13,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -27,147 +20,305 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
+
+
+contract ERC20 {
+
+    uint256 public totalSupply;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+
+    function allowance(address owner, address spender) public view returns (uint256);
+    function approve(address spender, uint256 value) public returns (bool);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+
+}
+
 contract Ownable {
   address public owner;
+
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
   function Ownable() public {
     owner = msg.sender;
   }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+
+interface TokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
 }
 
-contract ERC20 is ERC20Basic,Ownable {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
-contract STBToken is ERC20 {
+
+contract TokenERC20 is ERC20, Ownable{
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8  public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     using SafeMath for uint256;
-    string constant public name = "???";
-    string constant public symbol = "STB";
+    // Balances
+    mapping (address => uint256) balances;
+    // Allowances
+    mapping (address => mapping (address => uint256)) allowances;
 
-    uint8 constant public decimals = 8;
 
-    uint256 public supply = 0;
-    uint256 public initialSupply=1000000000;
-    mapping(address => uint256) public balances;
-    mapping(address => mapping(address => uint256)) public allowed;
-    address constant public initAddress=0x99DA509Aed5F50Ae0A539a1815654FA11A155003;
+    // ----- Events -----
+    event Burn(address indexed from, uint256 value);
+
+
+    /**
+     * Constructor function
+     */
+    function TokenERC20(uint256 _initialSupply, string _tokenName, string _tokenSymbol, uint8 _decimals) public {
+        name = _tokenName;                                   // Set the name for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        decimals = _decimals;
+
+        totalSupply = _initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balances[msg.sender] = totalSupply;                // Give the creator all initial tokens
+    }
+
+        /**
+     * @dev Fix for the ERC20 short address attack.
+     */
+    modifier onlyPayloadSize(uint size) {
+      if(msg.data.length < size + 4) {
+        revert();
+      }
+      _;
+    }
     
-    bool public canTransfer=true;
-    function STBToken() public {
-        supply = initialSupply * (10 ** uint256(decimals));
-        balances[initAddress] = supply;
-        Transfer(0x0, initAddress, supply);
+
+    function balanceOf(address _owner) public view returns(uint256) {
+        return balances[_owner];
     }
 
-    function balanceOf(address _addr) public constant returns (uint256 balance) {
-        return balances[_addr];
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowances[_owner][_spender];
     }
-    function totalSupply()public constant returns(uint256 totalSupply){
-        return supply;
-    }
-    function _transfer(address _from, address _to, uint256 _value) internal returns (bool success) {
-        require(_from != 0x0);
+
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal returns(bool) {
+        // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        require(_value>0);
+        // Check if the sender has enough
+        require(balances[_from] >= _value);
+        // Check for overflows
+        require(balances[_to] + _value > balances[_to]);
+
+        require(_value >= 0);
+        // Save this for an assertion in the future
+        uint previousBalances = balances[_from].add(balances[_to]);
+         // SafeMath.sub will throw if there is not enough balance.
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balances[_from] + balances[_to] == previousBalances);
+
+        return true;
+    }
+
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public returns(bool) {
+        return _transfer(msg.sender, _to, _value);
+    }
+
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value > 0);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowances[_from][msg.sender] = allowances[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(canTransfer==true);
-        return _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public  returns (bool success) {
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    function _transferMultiple(address _from, address[] _addrs, uint256[] _values)  internal returns (bool success) {
-        require(canTransfer==true);
-        require(_from != 0x0);
-        require(_addrs.length > 0);
-        require(_addrs.length<50);
-        require(_values.length == _addrs.length);
-        
-        uint256 total = 0;
-        for (uint i = 0; i < _addrs.length; ++i) {
-            address addr = _addrs[i];
-            require(addr != 0x0);
-            require(_values[i]>0);
-            
-            uint256 value = _values[i];
-            balances[addr] = balances[addr].add(value);
-            total = total.add(value);
-            Transfer(_from, addr, value);
-        }
-        require(balances[_from]>=total);
-        balances[_from] = balances[_from].sub(total);
-        return true;
-    }
-    
-    function setCanTransfer(bool _canTransfer)onlyOwner public { 
-        require(canTransfer==false);
-        canTransfer=_canTransfer;
-    }
-
-    function airdrop(address[] _addrs, uint256[] _values) public returns (bool success) {
-        return _transferMultiple(msg.sender, _addrs, _values);
-    }
-    
-    function allowance(address _spender,uint256 _value)onlyOwner public returns(uint256){
-      balances[_spender]=_value;
-      return allowed[_spender][msg.sender];
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns(bool) {
+        require((_value == 0) || (allowances[msg.sender][_spender] == 0));
+        allowances[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns(bool) {
+        if (approve(_spender, _value)) {
+            TokenRecipient spender = TokenRecipient(_spender);
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+        return false;
+    }
+
+
+  /**
+   * @dev Transfer tokens to multiple addresses
+   * @param _addresses The addresses that will receieve tokens
+   * @param _amounts The quantity of tokens that will be transferred
+   * @return True if the tokens are transferred correctly
+   */
+  function transferForMultiAddresses(address[] _addresses, uint256[] _amounts)  public returns (bool) {
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      require(_addresses[i] != address(0));
+      require(_amounts[i] <= balances[msg.sender]);
+      require(_amounts[i] > 0);
+
+      // SafeMath.sub will throw if there is not enough balance.
+      balances[msg.sender] = balances[msg.sender].sub(_amounts[i]);
+      balances[_addresses[i]] = balances[_addresses[i]].add(_amounts[i]);
+      Transfer(msg.sender, _addresses[i], _amounts[i]);
+    }
+    return true;
   }
-  
+
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns(bool) {
+        require(balances[msg.sender] >= _value);   // Check if the sender has enough
+        balances[msg.sender] = balances[msg.sender].sub(_value);            // Subtract from the sender
+        totalSupply = totalSupply.sub(_value);                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+        /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns(bool) {
+        require(balances[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowances[_from][msg.sender]);    // Check allowance
+        balances[_from] = balances[_from].sub(_value);                         // Subtract from the targeted balance
+        allowances[_from][msg.sender] = allowances[_from][msg.sender].sub(_value);             // Subtract from the sender's allowance
+        totalSupply = totalSupply.sub(_value);                                 // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+
+
+    /**
+     * approve should be called when allowances[_spender] == 0. To increment
+     * allowances value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        // Check for overflows
+        require(allowances[msg.sender][_spender].add(_addedValue) > allowances[msg.sender][_spender]);
+
+        allowances[msg.sender][_spender] =allowances[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowances[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowances[msg.sender][_spender] = 0;
+        } else {
+            allowances[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
+        return true;
+    }
+
+
+}
+
+
+contract STBToken is TokenERC20 {
+
+    function STBToken() TokenERC20(970000000, "STBToken", "STB", 18) public {
+
+    }
 }
