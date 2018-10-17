@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEMACOIN at 0x355fe0ab58b04db6451ee2ac0c6077b3c57fe9b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WEMACOIN at 0x3252c4ccc83586e15f98762824e4c3dead2d202f
 */
 pragma solidity ^0.4.18;
 
