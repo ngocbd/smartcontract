@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Maths at 0xb5f1efa8a3267cce1aea000dd2cc7a0778aa8299
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Maths at 0xc65927de6f160b4760facb4f043974583a5d3de5
 */
 pragma solidity ^0.4.21;
 
@@ -19,6 +19,8 @@ library Maths {
     uint256 addendB
   ) public pure returns (uint256 sum) {
     sum = addendA + addendB;
+    assert(sum - addendB == addendA);
+    return sum;
   }
 
   /**
@@ -33,6 +35,7 @@ library Maths {
   ) public pure returns (uint256 difference) {
     assert(minuend >= subtrahend);
     difference = minuend - subtrahend;
+    return difference;
   }
 
   /**
@@ -48,6 +51,7 @@ library Maths {
     if (factorA == 0 || factorB == 0) return 0;
     product = factorA * factorB;
     assert(product / factorA == factorB);
+    return product;
   }
 
   /**
@@ -75,6 +79,7 @@ library Maths {
   ) public pure returns (uint256 quotient) {
     quotient = dividend / divisor;
     assert(quotient * divisor == dividend);
+    return quotient;
   }
 
   /**
@@ -116,6 +121,7 @@ library Maths {
     uint256 b
   ) public pure returns (uint256 result) {
     result = a <= b ? a : b;
+    return result;
   }
 
   /**
@@ -129,6 +135,7 @@ library Maths {
     uint256 b
   ) public pure returns (uint256 result) {
     result = a >= b ? a : b;
+    return result;
   }
 
   /**
@@ -139,6 +146,7 @@ library Maths {
    */
   function isLessThan(uint256 a, uint256 b) public pure returns (bool isTrue) {
     isTrue = a < b;
+    return isTrue;
   }
 
   /**
@@ -149,6 +157,7 @@ library Maths {
    */
   function isAtMost(uint256 a, uint256 b) public pure returns (bool isTrue) {
     isTrue = a <= b;
+    return isTrue;
   }
 
   /**
@@ -159,6 +168,7 @@ library Maths {
    */
   function isGreaterThan(uint256 a, uint256 b) public pure returns (bool isTrue) {
     isTrue = a > b;
+    return isTrue;
   }
 
   /**
@@ -169,5 +179,6 @@ library Maths {
    */
   function isAtLeast(uint256 a, uint256 b) public pure returns (bool isTrue) {
     isTrue = a >= b;
+    return isTrue;
   }
 }
