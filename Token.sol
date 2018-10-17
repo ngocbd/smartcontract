@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9e9a9e06e6b5ac65597c6a08eead33b42f6bbd29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd9c9a7a5086cc2f9ae01299d18337808cf48a3d4
 */
 /*! cuto.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
@@ -326,7 +326,7 @@ contract Manageable is Ownable {
 
 
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(6000000 * 1e8) StandardToken("Cuprum", "CUTO", 8) public {
+    constructor() CappedToken(6000000 * 1e8) StandardToken("Cuprum Token", "CUPRUM", 8) public {
     }
 }
 
