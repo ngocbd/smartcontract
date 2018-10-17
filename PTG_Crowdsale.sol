@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PTG_Crowdsale at 0xfc1a3520232e655493a2c53fae67b6388c48c918
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PTG_Crowdsale at 0x28366676b83579766c52041e69816cd1a13c8b57
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -174,12 +174,6 @@ contract PTG_Crowdsale is Pausable {
   // Amount of wei raised
   uint256 public weiRaised;
   
-  // Min amount of wei an investor can send
-  uint256 public minInvest;
-  
-  // Max amount of wei an investor can send
-  uint256 public maxInvest;
-  
   // Crowdsale opening time
   uint256 public openingTime;
   
@@ -199,13 +193,11 @@ contract PTG_Crowdsale is Pausable {
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
   constructor() public {
-    rate = 20;
+    rate = 10;
     wallet = owner;
-    token = ERC20(0x7C2C75adcEE243e3874938aE8a71fA08020088a3);
-    minInvest = 0.1 * 1 ether;
-    maxInvest = 20 * 1 ether;
+    token = ERC20(0x88cDF00f95d31904600b2cd8110b95ac970E0E2F);
     duration = 60 days;
-    openingTime = 1529035200;  // Determined by start()
+    openingTime = 1534291200;  // Determined by start()
     closingTime = openingTime + duration;  // Determined by start()
   }
   
@@ -271,7 +263,7 @@ contract PTG_Crowdsale is Pausable {
    */
   function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal whenNotPaused {
     require(_beneficiary != address(0));
-    require(_weiAmount >= minInvest && _weiAmount <= maxInvest);
+    require(_weiAmount != 0);
     require(now >= openingTime && now <= closingTime);
   }
 
