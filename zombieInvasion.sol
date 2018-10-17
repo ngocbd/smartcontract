@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieInvasion at 0x0b5271ae4e4492fe1f4e4879e68f28b42d966289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieInvasion at 0x516da7f1cb6a3e89082e880f4402f9026b207fd5
 */
 pragma solidity ^0.4.16;
 pragma solidity ^0.4.18;
@@ -106,7 +106,7 @@ contract zombieMain {
 contract zombieInvasion is Ownable{
     using SafeMath for uint256;
     
-    zombieToken zombietoken = zombieToken(0x83B8C8A08938B878017fDF0Ec0A689313F75739D);
+    zombieToken zombietoken = zombieToken(0x2Bb48FE71ba5f73Ab1c2B9775cfe638400110d34);
     zombieMain zombiemain = zombieMain(0x58fd762F76D57C6fC2a480F6d26c1D03175AD64F);
 
     struct Zombie {
@@ -142,8 +142,8 @@ contract zombieInvasion is Ownable{
     mapping (uint=>Zombie) public zombies;
     mapping (bytes32=>Team) public teams;
 
-    event StartInvasion(bytes32 indexed teamhash, uint _areaId,uint[] _zombieId);
-    event AwardInvation(bytes32 indexed teamhash, bool InvationResult, uint ZOBRevenue);
+    event StartInvasion(bytes32 indexed teamhash, uint _areaId,uint[] _zombieId,address player);
+    event AwardInvation(bytes32 indexed teamhash, bool InvationResult, uint ZOBRevenue, address player);
 
     modifier onlyOwnerOf(uint[] _zombieId) {
       require(zombiemain.checkAllOwner(_zombieId, msg.sender));
@@ -180,7 +180,7 @@ contract zombieInvasion is Ownable{
     require(teams[teamHash].areaID == 0);
     teams[teamHash] = Team(false,_areaId,_zombieId,uint32(now+areas[_areaId].duration),msg.sender,teamHash,block.number + 1);
     
-    StartInvasion(teamHash, _areaId, _zombieId);
+    StartInvasion(teamHash, _areaId, _zombieId, msg.sender);
   }
 
   function awardInvation(bytes32 _teamId) public {
@@ -201,7 +201,7 @@ contract zombieInvasion is Ownable{
     if(totalStar<areas[teams[_teamId].areaID].starLimit){
         dieNumber = totalStar*9500/(areas[teams[_teamId].areaID].starLimit)+totalUndeadsTime*10;
     }else{
-        dieNumber = totalStar*100/(areas[teams[_teamId].areaID].starLimit)+9500+totalUndeadsTime;
+        dieNumber = totalStar*100/(areas[teams[_teamId].areaID].starLimit)+9400+totalUndeadsTime;
     }
 
     if(dieNumber <= uint(keccak256(teams[_teamId].teamHash, now, block.blockhash(block.number-1),block.blockhash(teams[_teamId].blocknumber))) % 10000) {
@@ -211,7 +211,7 @@ contract zombieInvasion is Ownable{
         zombies[zb[ii]].undeadsTime = 0;
         zombies[zb[ii]].notAtHome = false;
       }
-      AwardInvation(_teamId, false, 0);
+      AwardInvation(_teamId, false, 0, msg.sender);
     } else {
       //Win
       for(uint16 ii = 0; ii<zb.length; ii++){
@@ -219,7 +219,7 @@ contract zombieInvasion is Ownable{
         zombies[zb[ii]].notAtHome = false;
       }
       zombietoken.mint(teams[_teamId].Owner, areas[teams[_teamId].areaID].ZOBRevenue);
-      AwardInvation(_teamId, true, areas[teams[_teamId].areaID].ZOBRevenue);
+      AwardInvation(_teamId, true, areas[teams[_teamId].areaID].ZOBRevenue, msg.sender);
     }
 
     teams[_teamId].isCharge = true;
