@@ -1,49 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferWallet at 0x0fe54467e8c773be601aa6123bb27d641b0b8f7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferWallet at 0x01e0f57c42bf976676ea1daa1b04d69aba6bdaf3
 */
-pragma solidity ^0.4.23;
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -55,9 +13,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -92,6 +54,74 @@ library SafeMath {
 }
 
 
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+
+
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -106,26 +136,20 @@ contract ERC20BasicInterface {
     uint8 public decimals;
 }
 
+
 contract BatchTransferWallet is Ownable {
     using SafeMath for uint256;
-    ERC20BasicInterface public token;
 
     event LogWithdrawal(address indexed receiver, uint amount);
-
-    // constructor
-    constructor(address _tokenAddress) public {
-        token = ERC20BasicInterface(_tokenAddress);
-    }
 
     /**
     * @dev Send token to multiple address
     * @param _investors The addresses of EOA that can receive token from this contract.
     * @param _tokenAmounts The values of token are sent from this contract.
     */
-    function batchTransfer(address[] _investors, uint256[] _tokenAmounts) public onlyOwner {
-        if (_investors.length != _tokenAmounts.length || _investors.length == 0) {
-            revert();
-        }
+    function batchTransfer(address _tokenAddress, address[] _investors, uint256[] _tokenAmounts) public {
+        ERC20BasicInterface token = ERC20BasicInterface(_tokenAddress);
+        require(_investors.length == _tokenAmounts.length && _investors.length != 0);
 
         uint decimalsForCalc = 10 ** uint256(token.decimals());
 
@@ -140,7 +164,8 @@ contract BatchTransferWallet is Ownable {
     * @dev Withdraw the amount of token that is remaining in this contract.
     * @param _address The address of EOA that can receive token from this contract.
     */
-    function withdraw(address _address) public onlyOwner {
+    function withdraw(address _tokenAddress,address _address) public onlyOwner {
+        ERC20BasicInterface token = ERC20BasicInterface(_tokenAddress);
         uint tokenBalanceOfContract = token.balanceOf(this);
 
         require(_address != address(0) && tokenBalanceOfContract > 0);
@@ -152,7 +177,8 @@ contract BatchTransferWallet is Ownable {
     * @dev return token balance this contract has
     * @return _address token balance this contract has.
     */
-    function balanceOfContract() public view returns (uint) {
-        return token.balanceOf(this);
+    function balanceOfContract(address _tokenAddress,address _address) public view returns (uint) {
+        ERC20BasicInterface token = ERC20BasicInterface(_tokenAddress);
+        return token.balanceOf(_address);
     }
 }
