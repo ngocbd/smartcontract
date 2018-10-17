@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrineChain at 0xd9dbd7818611436d88a0a90d5cbd24d6603a2358
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrineChain at 0x6e9bd981c217be137312a34ee06bcdf8eb2b890f
 */
 pragma solidity ^0.4.20;
 
@@ -51,10 +51,10 @@ contract TrineChain is ERC20 {
     mapping (address => uint256) locknum; 
 
     string public constant name = "TrineChain";
-    string public constant symbol = "TRCOS";
+    string public constant symbol = "TRCON";
     uint public constant decimals = 18;
     uint256 _Rate = 10 ** decimals;    
-    uint256 public totalSupply = 270000000 * _Rate;
+    uint256 public totalSupply = 1000000000 * _Rate;
     
 
 
@@ -85,7 +85,7 @@ contract TrineChain is ERC20 {
 
     function lock(address _to, uint256 _amount) private returns (bool) {
         require(owner != _to);
-        require(_amount > 0);
+        require(_amount >= 0);
         require(_amount * _Rate  <= balances[_to]);
         locknum[_to]=_amount * _Rate;
         Locked(_to, _amount * _Rate);
