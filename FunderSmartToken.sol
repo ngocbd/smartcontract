@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0x0216a774D40296B54d95352ce5B0460343B7d199
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0x51c028bc9503874d74965638a4632A266d31f61F
 */
 pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
@@ -168,6 +168,8 @@ contract SecureERC20 is ERC20 {
 
 contract FsTKToken {
 
+  enum DelegateMode { PublicMsgSender, PublicTxOrigin, PrivateMsgSender, PrivateTxOrigin }
+
   event Consume(address indexed from, uint256 value, bytes32 challenge);
   event IncreaseNonce(address indexed from, uint256 nonce);
   event SetupDirectDebit(address indexed debtor, address indexed receiver, DirectDebitInfo info);
@@ -207,10 +209,11 @@ contract FsTKToken {
   function delegateTransferAndCall(
     uint256 nonce,
     uint256 fee,
+    uint256 gasAmount,
     address to,
     uint256 value,
     bytes data,
-    address delegator,
+    DelegateMode mode,
     uint8 v,
     bytes32 r,
     bytes32 s
@@ -238,10 +241,6 @@ contract ERC20Like is SecureERC20, FsTKToken {
   modifier canDelegate {
     require(isDelegateEnable);
      _;
-  }
-  modifier notThis(address _address) {
-    require(_address != address(this));
-    _;
   }
 
   bool public erc20ApproveChecking;
@@ -396,12 +395,12 @@ contract ERC20Like is SecureERC20, FsTKToken {
     public
     payable
     liquid
-    notThis(to)
     returns (bool)
   {
     require(
-      transfer(to, value) &&
-      data.length >= 68
+      to != address(this) &&
+      data.length >= 68 &&
+      transfer(to, value)
     );
     assembly {
         mstore(add(data, 36), value)
@@ -422,10 +421,11 @@ contract ERC20Like is SecureERC20, FsTKToken {
   function delegateTransferAndCall(
     uint256 nonce,
     uint256 fee,
+    uint256 gasAmount,
     address to,
     uint256 value,
     bytes data,
-    address delegator,
+    DelegateMode mode,
     uint8 v,
     bytes32 r,
     bytes32 s
@@ -433,35 +433,71 @@ contract ERC20Like is SecureERC20, FsTKToken {
     public
     liquid
     canDelegate
-    notThis(to)
     returns (bool)
   {
-    address signer = ecrecover(
-      keccak256(abi.encodePacked(nonce, fee, to, value, data, delegator)),
-      v,
-      r,
-      s
-    );
+    require(to != address(this));
+    address signer;
+    address relayer;
+    if (mode == DelegateMode.PublicMsgSender) {
+      signer = ecrecover(
+        keccak256(abi.encodePacked(this, nonce, fee, gasAmount, to, value, data, mode, address(0))),
+        v,
+        r,
+        s
+      );
+      relayer = msg.sender;
+    } else if (mode == DelegateMode.PublicTxOrigin) {
+      signer = ecrecover(
+        keccak256(abi.encodePacked(this, nonce, fee, gasAmount, to, value, data, mode, address(0))),
+        v,
+        r,
+        s
+      );
+      relayer = tx.origin;
+    } else if (mode == DelegateMode.PrivateMsgSender) {
+      signer = ecrecover(
+        keccak256(abi.encodePacked(this, nonce, fee, gasAmount, to, value, data, mode, msg.sender)),
+        v,
+        r,
+        s
+      );
+      relayer = msg.sender;
+    } else if (mode == DelegateMode.PrivateTxOrigin) {
+      signer = ecrecover(
+        keccak256(abi.encodePacked(this, nonce, fee, gasAmount, to, value, data, mode, tx.origin)),
+        v,
+        r,
+        s
+      );
+      relayer = tx.origin;
+    } else {
+      revert();
+    }
+
     Account storage signerAccount = accounts[signer];
-    require(
-      nonce == signerAccount.nonce &&
-      (delegator == address(0) || delegator == msg.sender)
-    );
+    require(nonce == signerAccount.nonce);
     emit IncreaseNonce(signer, signerAccount.nonce += 1);
 
     signerAccount.balance = signerAccount.balance.sub(value.add(fee));
     accounts[to].balance += value;
-    emit Transfer(signer, to, value);
-    accounts[msg.sender].balance += fee;
-    emit Transfer(signer, msg.sender, fee);
+    if (fee != 0) {
+      accounts[relayer].balance += fee;
+      emit Transfer(signer, relayer, fee);
+    }
 
-    if (!to.isAccount()) {
-      require(data.length >= 68);
+    if (!to.isAccount() && data.length >= 68) {
       assembly {
         mstore(add(data, 36), value)
         mstore(add(data, 68), signer)
       }
-      require(to.call(data));
+      if (to.call.gas(gasAmount)(data)) {
+        emit Transfer(signer, to, value);
+      } else {
+        signerAccount.balance += value;
+        accounts[to].balance -= value;
+      }
+    } else {
+      emit Transfer(signer, to, value);
     }
 
     return true;
