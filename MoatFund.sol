@@ -1,151 +1,189 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoatFund at 0x259081e129bed7a71e34b519cdc8c30c07674750
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoatFund at 0x4470887011bbf1e196b62020266aa5ae1081bd70
 */
-pragma solidity ^0.4.18;
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-
-    address public owner;
-    address public secondOwner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier bothOwner() {
-        require(msg.sender == owner || msg.sender == secondOwner);
-        _;
-    }
-
-    function changeSecOwner(address targetAddress) public bothOwner {
-        require(targetAddress != address(0));
-        secondOwner = targetAddress;
-    }
-
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) public bothOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-}
+pragma solidity ^0.4.24;
 
 interface token {
-    function transfer(address receiver, uint amount) public returns (bool);
-    function redeemToken(uint256 _mtcTokens, address _from) public;
+    function transfer(address receiver, uint amount) external returns(bool);
+    function balanceOf(address who) external returns(uint256);
+    function transferFrom(address _from, address _to, uint256 _value) external returns(bool);
 }
 
-contract addressKeeper is Ownable {
-    address public tokenAddress;
-    address public boardAddress;
-    address public teamAddress;
-    function setTokenAdd(address addr) onlyOwner public {
-        tokenAddress = addr;
+interface AddressRegistry {
+    function getAddr(string AddrName) external returns(address);
+}
+
+contract Registry {
+    address public RegistryAddress;
+    modifier onlyAdmin() {
+        require(msg.sender == getAddress("admin"));
+        _;
     }
-    function setBoardAdd(address addr) onlyOwner public {
-        boardAddress = addr;
-    }
-    function setTeamAdd(address addr) onlyOwner public {
-        teamAddress = addr;
+    function getAddress(string AddressName) internal view returns(address) {
+        AddressRegistry aRegistry = AddressRegistry(RegistryAddress);
+        address realAddress = aRegistry.getAddr(AddressName);
+        require(realAddress != address(0));
+        return realAddress;
     }
 }
 
-contract MoatFund is addressKeeper {
+contract Deposit is Registry {
 
-    // wei per MTC
-    // 1 ETH = 5000 MTC
-    // 1 MTC = 200000000000000 wei
-    uint256 public mtcRate; // in wei
-    bool public mintBool;
-    uint256 public minInvest; // minimum investment in wei
-
-    uint256 public redeemRate;     // When redeeming, 1MTC=fixed ETH
-    bool public redeemBool;
-
-    uint256 public ethRaised;       // ETH deposited in owner's address
-    uint256 public ethRedeemed;     // ETH transferred from owner's address
-
-    // function to start minting MTC
-    function startMint(uint256 _rate, bool canMint, uint256 _minWeiInvest) onlyOwner public {
-        minInvest = _minWeiInvest;
-        mtcRate = _rate;
-        mintBool = canMint;
+    bool public Paused;
+    function setPause(bool isPaused) onlyAdmin public {
+        Paused = isPaused;
+    }
+    modifier paused() {
+        require(!Paused);
+        _;
     }
 
-    // function to redeem ETH from MTC
-    function startRedeem(uint256 _rate, bool canRedeem) onlyOwner public {
-        redeemRate = _rate;
-        redeemBool = canRedeem;
+    event eDeposit(address Investor, uint value);
+
+    // wei per MTU // rate will be 0 to stop minting
+    uint256 public claimRate;
+    uint256 public ethRaised;
+    uint256 public unClaimedEther;
+    uint256 public ClaimingTimeLimit;
+    bool public isCharged = true;
+
+    mapping(address => uint256) public Investors;
+
+    function setCharge(bool chargeBool) onlyAdmin public {
+        isCharged = chargeBool;
     }
 
-    function () public payable {
-        transferToken();
+    function SetClaimRate(uint256 weiAmt) onlyAdmin public {
+        claimRate = weiAmt;
+        // 7 days into seconds to currenct time in unix epoch seconds
+        ClaimingTimeLimit = block.timestamp + 7 * 24 * 60 * 60;
     }
 
-    // function called from MoatFund.sol
-    function transferToken() public payable {
-        if (msg.sender != owner &&
-            msg.sender != tokenAddress &&
-            msg.sender != boardAddress) {
-                require(mintBool);
-                require(msg.value >= minInvest);
+    // accepting deposits
+    function () paused public payable {
+        require(block.timestamp > ClaimingTimeLimit);
+        Investors[msg.sender] += msg.value;
+        unClaimedEther += msg.value;
+        emit eDeposit(msg.sender, msg.value);
+    }
 
-                uint256 MTCToken = (msg.value / mtcRate);
-                uint256 teamToken = (MTCToken / 20);
+    function getClaimEst(address Claimer) public view returns(uint256 ClaimEstimate) {
+        uint NoOfMTU = Investors[Claimer] / claimRate;
+        return NoOfMTU;
+    }
 
-                ethRaised += msg.value;
-
-                token tokenTransfer = token(tokenAddress);
-                tokenTransfer.transfer(msg.sender, MTCToken);
-                tokenTransfer.transfer(teamAddress, teamToken);
+    // claim your MTU or Ether
+    function ClaimMTU(bool claim) paused public {
+        uint256 ethVal = Investors[msg.sender];
+        require(ethVal >= claimRate);
+        if (claim) {
+            require(claimRate > 0);
+            require(block.timestamp < ClaimingTimeLimit);
+            ethRaised += ethVal;
+            uint256 claimTokens = ethVal / claimRate;
+            address tokenAddress = getAddress("unit");
+            token tokenTransfer = token(tokenAddress);
+            tokenTransfer.transfer(msg.sender, claimTokens);
+            if (isCharged) {getAddress("team").transfer(ethVal / 20);}
+        } else {
+            msg.sender.transfer(ethVal);
         }
+        Investors[msg.sender] -= ethVal;
+        unClaimedEther -= ethVal;
     }
 
-    // calculate value of MTC that can be redeemed from the ETH
-    function redeem(uint256 _mtcTokens) public {
-        if (msg.sender != owner) {
-            require(redeemBool);
+}
 
-            token tokenBalance = token(tokenAddress);
-            tokenBalance.redeemToken(_mtcTokens, msg.sender);
+contract Redeem is Deposit {
 
-            uint256 weiVal = (_mtcTokens * redeemRate);
-            ethRedeemed += weiVal;                                  // adds the value of transferred ETH to the redeemed ETH till now
-            // it need to stay last for reentery attack purpose
-            msg.sender.transfer(weiVal);                            // transfer the amount of ETH
+    event eAllowedMTU(address LeavingAway, uint NoOfTokens);
+    event eRedeem(address Investor, uint NoOfTokens, uint withdrawVal);
+
+    // wei per MTU // rate will be 0 to stop redeeming
+    uint256 public redeemRate;
+    uint256 public ethRedeemed;
+    uint256 public unRedeemedMTU;
+    uint256 public RedeemingTimeLimit;
+
+    mapping(address => uint256) public Redeemer;    
+    
+    function SetRedeemRate(uint256 weiAmt) onlyAdmin public {
+        redeemRate = weiAmt;
+        // 7 days into seconds to currenct time in unix epoch seconds
+        RedeemingTimeLimit = block.timestamp + 7 * 24 * 60 * 60;
+    }
+
+    // allow MTU transfer
+    function DepositMTU(uint256 NoOfTokens) paused public {
+        require(block.timestamp > RedeemingTimeLimit);
+        address tokenAddress = getAddress("unit");
+        token tokenFunction = token(tokenAddress);
+        tokenFunction.transferFrom(msg.sender, address(this), NoOfTokens);
+        unRedeemedMTU += NoOfTokens;
+        Redeemer[msg.sender] += NoOfTokens;
+        emit eAllowedMTU(msg.sender, NoOfTokens);
+    }
+
+    // redeem MTU
+    function RedeemMTU(bool redeem) paused public {
+        uint256 AppliedUnits = Redeemer[msg.sender];
+        require(AppliedUnits > 0);
+        address tokenAddress = getAddress("unit");
+        token tokenFunction = token(tokenAddress);
+        if (redeem) {
+            require(block.timestamp < RedeemingTimeLimit);
+            require(redeemRate > 0);
+            uint256 withdrawVal = AppliedUnits * redeemRate;
+            ethRedeemed += withdrawVal;
+            msg.sender.transfer(withdrawVal);
+            emit eRedeem(msg.sender, AppliedUnits, withdrawVal);
+        } else {
+            tokenFunction.transfer(msg.sender, AppliedUnits);
         }
+        Redeemer[msg.sender] = 0;
+        unRedeemedMTU -= AppliedUnits;
     }
 
-    function sendETHtoBoard(uint _wei) onlyOwner public {
-        boardAddress.transfer(_wei);
+    function getRedeemEst(address Claimer, uint256 NoOfTokens) public view returns(uint256 RedeemEstimate) {
+        uint WithdrawEther = redeemRate * NoOfTokens;
+        return WithdrawEther;
     }
 
-    function collectERC20(address tokenAddress, uint256 amount) onlyOwner public {
-        token tokenTransfer = token(tokenAddress);
-        tokenTransfer.transfer(owner, amount);
+}
+
+contract MoatFund is Redeem {
+
+    event eNonIssueDeposits(address sender, uint value);
+
+    constructor(uint256 PrevRaisedEther, address rAddress) public {
+        ethRaised = PrevRaisedEther; // the ether raised value of previous smart contract
+        RegistryAddress = rAddress;
+    }
+
+    // for non issuance deposits
+    function NonIssueDeposits() public payable {
+        emit eNonIssueDeposits(msg.sender, msg.value);
+    }
+
+    function SendEtherToBoard(uint256 weiAmt) onlyAdmin public {
+        require(address(this).balance > unClaimedEther);        
+        getAddress("board").transfer(weiAmt);
+    }
+
+    function SendEtherToAsset(uint256 weiAmt) onlyAdmin public {
+        require(address(this).balance > unClaimedEther);
+        getAddress("asset").transfer(weiAmt);
+    }
+
+    function SendEtherToDex(uint256 weiAmt) onlyAdmin public {
+        require(address(this).balance > unClaimedEther);        
+        getAddress("dex").transfer(weiAmt);
+    }
+
+    function SendERC20ToAsset(address tokenAddress) onlyAdmin public {
+        token tokenFunctions = token(tokenAddress);
+        uint256 tokenBal = tokenFunctions.balanceOf(address(this));
+        tokenFunctions.transfer(getAddress("asset"), tokenBal);
     }
 
 }
