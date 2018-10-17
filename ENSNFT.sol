@@ -1,27 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENSNFT at 0xb52511f49f3ed76ad1f77998985ee452f29ba0fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENSNFT at 0x4278f978ace505eb27565c91116427cb99fda837
 */
-pragma solidity ^0.4.24;
-
-// File: zeppelin-solidity/contracts/introspection/ERC165.sol
-
-/**
- * @title ERC165
- * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md
- */
-interface ERC165 {
-
-  /**
-   * @notice Query if a contract implements an interface
-   * @param _interfaceId The interface identifier, as specified in ERC-165
-   * @dev Interface identification is specified in ERC-165. This function
-   * uses less than 30,000 gas.
-   */
-  function supportsInterface(bytes4 _interfaceId)
-    external
-    view
-    returns (bool);
-}
+pragma solidity ^0.4.23;
 
 // File: zeppelin-solidity/contracts/token/ERC721/ERC721Basic.sol
 
@@ -29,76 +9,23 @@ interface ERC165 {
  * @title ERC721 Non-Fungible Token Standard basic interface
  * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
-contract ERC721Basic is ERC165 {
-
-  bytes4 internal constant InterfaceId_ERC721 = 0x80ac58cd;
-  /*
-   * 0x80ac58cd ===
-   *   bytes4(keccak256('balanceOf(address)')) ^
-   *   bytes4(keccak256('ownerOf(uint256)')) ^
-   *   bytes4(keccak256('approve(address,uint256)')) ^
-   *   bytes4(keccak256('getApproved(uint256)')) ^
-   *   bytes4(keccak256('setApprovalForAll(address,bool)')) ^
-   *   bytes4(keccak256('isApprovedForAll(address,address)')) ^
-   *   bytes4(keccak256('transferFrom(address,address,uint256)')) ^
-   *   bytes4(keccak256('safeTransferFrom(address,address,uint256)')) ^
-   *   bytes4(keccak256('safeTransferFrom(address,address,uint256,bytes)'))
-   */
-
-  bytes4 internal constant InterfaceId_ERC721Exists = 0x4f558e79;
-  /*
-   * 0x4f558e79 ===
-   *   bytes4(keccak256('exists(uint256)'))
-   */
-
-  bytes4 internal constant InterfaceId_ERC721Enumerable = 0x780e9d63;
-  /**
-   * 0x780e9d63 ===
-   *   bytes4(keccak256('totalSupply()')) ^
-   *   bytes4(keccak256('tokenOfOwnerByIndex(address,uint256)')) ^
-   *   bytes4(keccak256('tokenByIndex(uint256)'))
-   */
-
-  bytes4 internal constant InterfaceId_ERC721Metadata = 0x5b5e139f;
-  /**
-   * 0x5b5e139f ===
-   *   bytes4(keccak256('name()')) ^
-   *   bytes4(keccak256('symbol()')) ^
-   *   bytes4(keccak256('tokenURI(uint256)'))
-   */
-
-  event Transfer(
-    address indexed _from,
-    address indexed _to,
-    uint256 indexed _tokenId
-  );
-  event Approval(
-    address indexed _owner,
-    address indexed _approved,
-    uint256 indexed _tokenId
-  );
-  event ApprovalForAll(
-    address indexed _owner,
-    address indexed _operator,
-    bool _approved
-  );
+contract ERC721Basic {
+  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+  event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
   function balanceOf(address _owner) public view returns (uint256 _balance);
   function ownerOf(uint256 _tokenId) public view returns (address _owner);
   function exists(uint256 _tokenId) public view returns (bool _exists);
 
   function approve(address _to, uint256 _tokenId) public;
-  function getApproved(uint256 _tokenId)
-    public view returns (address _operator);
+  function getApproved(uint256 _tokenId) public view returns (address _operator);
 
   function setApprovalForAll(address _operator, bool _approved) public;
-  function isApprovedForAll(address _owner, address _operator)
-    public view returns (bool);
+  function isApprovedForAll(address _owner, address _operator) public view returns (bool);
 
   function transferFrom(address _from, address _to, uint256 _tokenId) public;
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId)
-    public;
-
+  function safeTransferFrom(address _from, address _to, uint256 _tokenId) public;
   function safeTransferFrom(
     address _from,
     address _to,
@@ -116,14 +43,7 @@ contract ERC721Basic is ERC165 {
  */
 contract ERC721Enumerable is ERC721Basic {
   function totalSupply() public view returns (uint256);
-  function tokenOfOwnerByIndex(
-    address _owner,
-    uint256 _index
-  )
-    public
-    view
-    returns (uint256 _tokenId);
-
+  function tokenOfOwnerByIndex(address _owner, uint256 _index) public view returns (uint256 _tokenId);
   function tokenByIndex(uint256 _index) public view returns (uint256);
 }
 
@@ -133,8 +53,8 @@ contract ERC721Enumerable is ERC721Basic {
  * @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
 contract ERC721Metadata is ERC721Basic {
-  function name() external view returns (string _name);
-  function symbol() external view returns (string _symbol);
+  function name() public view returns (string _name);
+  function symbol() public view returns (string _symbol);
   function tokenURI(uint256 _tokenId) public view returns (string);
 }
 
@@ -151,37 +71,29 @@ contract ERC721 is ERC721Basic, ERC721Enumerable, ERC721Metadata {
 /**
  * @title ERC721 token receiver interface
  * @dev Interface for any contract that wants to support safeTransfers
- * from ERC721 asset contracts.
+ *  from ERC721 asset contracts.
  */
 contract ERC721Receiver {
   /**
    * @dev Magic value to be returned upon successful reception of an NFT
-   *  Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`,
+   *  Equals to `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`,
    *  which can be also obtained as `ERC721Receiver(0).onERC721Received.selector`
    */
-  bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
+  bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
 
   /**
    * @notice Handle the receipt of an NFT
    * @dev The ERC721 smart contract calls this function on the recipient
-   * after a `safetransfer`. This function MAY throw to revert and reject the
-   * transfer. Return of other than the magic value MUST result in the
-   * transaction being reverted.
-   * Note: the contract address is always the message sender.
-   * @param _operator The address which called `safeTransferFrom` function
-   * @param _from The address which previously owned the token
-   * @param _tokenId The NFT identifier which is being transferred
+   *  after a `safetransfer`. This function MAY throw to revert and reject the
+   *  transfer. This function MUST use 50,000 gas or less. Return of other
+   *  than the magic value MUST result in the transaction being reverted.
+   *  Note: the contract address is always the message sender.
+   * @param _from The sending address
+   * @param _tokenId The NFT identifier which is being transfered
    * @param _data Additional data with no specified format
-   * @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+   * @return `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`
    */
-  function onERC721Received(
-    address _operator,
-    address _from,
-    uint256 _tokenId,
-    bytes _data
-  )
-    public
-    returns(bytes4);
+  function onERC721Received(address _from, uint256 _tokenId, bytes _data) public returns(bytes4);
 }
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
@@ -195,43 +107,39 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
       return 0;
     }
-
-    c = _a * _b;
-    assert(c / _a == _b);
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
     return c;
   }
 }
@@ -246,11 +154,11 @@ library AddressUtils {
   /**
    * Returns whether the target address is a contract
    * @dev This function will return false if invoked during the constructor of a contract,
-   * as the code is not actually created until after the constructor finishes.
-   * @param _addr address to check
+   *  as the code is not actually created until after the constructor finishes.
+   * @param addr address to check
    * @return whether the target address is a contract
    */
-  function isContract(address _addr) internal view returns (bool) {
+  function isContract(address addr) internal view returns (bool) {
     uint256 size;
     // XXX Currently there is no better way to check if there is a contract in an address
     // than to check the size of the code at that address.
@@ -258,63 +166,10 @@ library AddressUtils {
     // for more details about how this works.
     // TODO Check this again before the Serenity release, because all addresses will be
     // contracts then.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly { size := extcodesize(_addr) }
+    assembly { size := extcodesize(addr) }  // solium-disable-line security/no-inline-assembly
     return size > 0;
   }
 
-}
-
-// File: zeppelin-solidity/contracts/introspection/SupportsInterfaceWithLookup.sol
-
-/**
- * @title SupportsInterfaceWithLookup
- * @author Matt Condon (@shrugs)
- * @dev Implements ERC165 using a lookup table.
- */
-contract SupportsInterfaceWithLookup is ERC165 {
-
-  bytes4 public constant InterfaceId_ERC165 = 0x01ffc9a7;
-  /**
-   * 0x01ffc9a7 ===
-   *   bytes4(keccak256('supportsInterface(bytes4)'))
-   */
-
-  /**
-   * @dev a mapping of interface id to whether or not it's supported
-   */
-  mapping(bytes4 => bool) internal supportedInterfaces;
-
-  /**
-   * @dev A contract implementing SupportsInterfaceWithLookup
-   * implement ERC165 itself
-   */
-  constructor()
-    public
-  {
-    _registerInterface(InterfaceId_ERC165);
-  }
-
-  /**
-   * @dev implement supportsInterface(bytes4) using a lookup table
-   */
-  function supportsInterface(bytes4 _interfaceId)
-    external
-    view
-    returns (bool)
-  {
-    return supportedInterfaces[_interfaceId];
-  }
-
-  /**
-   * @dev private method for registering an interface
-   */
-  function _registerInterface(bytes4 _interfaceId)
-    internal
-  {
-    require(_interfaceId != 0xffffffff);
-    supportedInterfaces[_interfaceId] = true;
-  }
 }
 
 // File: zeppelin-solidity/contracts/token/ERC721/ERC721BasicToken.sol
@@ -323,14 +178,13 @@ contract SupportsInterfaceWithLookup is ERC165 {
  * @title ERC721 Non-Fungible Token Standard basic implementation
  * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
-contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
-
+contract ERC721BasicToken is ERC721Basic {
   using SafeMath for uint256;
   using AddressUtils for address;
 
-  // Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+  // Equals to `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`
   // which can be also obtained as `ERC721Receiver(0).onERC721Received.selector`
-  bytes4 private constant ERC721_RECEIVED = 0x150b7a02;
+  bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
 
   // Mapping from token ID to owner
   mapping (uint256 => address) internal tokenOwner;
@@ -344,12 +198,22 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
   // Mapping from owner to operator approvals
   mapping (address => mapping (address => bool)) internal operatorApprovals;
 
-  constructor()
-    public
-  {
-    // register the supported interfaces to conform to ERC721 via ERC165
-    _registerInterface(InterfaceId_ERC721);
-    _registerInterface(InterfaceId_ERC721Exists);
+  /**
+   * @dev Guarantees msg.sender is owner of the given token
+   * @param _tokenId uint256 ID of the token to validate its ownership belongs to msg.sender
+   */
+  modifier onlyOwnerOf(uint256 _tokenId) {
+    require(ownerOf(_tokenId) == msg.sender);
+    _;
+  }
+
+  /**
+   * @dev Checks msg.sender can transfer a token, by being owner, approved, or operator
+   * @param _tokenId uint256 ID of the token to validate
+   */
+  modifier canTransfer(uint256 _tokenId) {
+    require(isApprovedOrOwner(msg.sender, _tokenId));
+    _;
   }
 
   /**
@@ -375,7 +239,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Returns whether the specified token exists
-   * @param _tokenId uint256 ID of the token to query the existence of
+   * @param _tokenId uint256 ID of the token to query the existance of
    * @return whether the token exists
    */
   function exists(uint256 _tokenId) public view returns (bool) {
@@ -385,9 +249,9 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Approves another address to transfer the given token ID
-   * The zero address indicates there is no approved address.
-   * There can only be one approved address per token at a given time.
-   * Can only be called by the token owner or an approved operator.
+   * @dev The zero address indicates there is no approved address.
+   * @dev There can only be one approved address per token at a given time.
+   * @dev Can only be called by the token owner or an approved operator.
    * @param _to address to be approved for the given token ID
    * @param _tokenId uint256 ID of the token to be approved
    */
@@ -396,14 +260,16 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
     require(_to != owner);
     require(msg.sender == owner || isApprovedForAll(owner, msg.sender));
 
-    tokenApprovals[_tokenId] = _to;
-    emit Approval(owner, _to, _tokenId);
+    if (getApproved(_tokenId) != address(0) || _to != address(0)) {
+      tokenApprovals[_tokenId] = _to;
+      emit Approval(owner, _to, _tokenId);
+    }
   }
 
   /**
    * @dev Gets the approved address for a token ID, or zero if no address set
    * @param _tokenId uint256 ID of the token to query the approval of
-   * @return address currently approved for the given token ID
+   * @return address currently approved for a the given token ID
    */
   function getApproved(uint256 _tokenId) public view returns (address) {
     return tokenApprovals[_tokenId];
@@ -411,7 +277,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Sets or unsets the approval of a given operator
-   * An operator is allowed to transfer all tokens of the sender on their behalf
+   * @dev An operator is allowed to transfer all tokens of the sender on their behalf
    * @param _to operator address to set the approval
    * @param _approved representing the status of the approval to be set
    */
@@ -427,33 +293,19 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
    * @param _operator operator address which you want to query the approval of
    * @return bool whether the given operator is approved by the given owner
    */
-  function isApprovedForAll(
-    address _owner,
-    address _operator
-  )
-    public
-    view
-    returns (bool)
-  {
+  function isApprovedForAll(address _owner, address _operator) public view returns (bool) {
     return operatorApprovals[_owner][_operator];
   }
 
   /**
    * @dev Transfers the ownership of a given token ID to another address
-   * Usage of this method is discouraged, use `safeTransferFrom` whenever possible
-   * Requires the msg sender to be the owner, approved, or operator
+   * @dev Usage of this method is discouraged, use `safeTransferFrom` whenever possible
+   * @dev Requires the msg sender to be the owner, approved, or operator
    * @param _from current owner of the token
    * @param _to address to receive the ownership of the given token ID
    * @param _tokenId uint256 ID of the token to be transferred
   */
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId
-  )
-    public
-  {
-    require(isApprovedOrOwner(msg.sender, _tokenId));
+  function transferFrom(address _from, address _to, uint256 _tokenId) public canTransfer(_tokenId) {
     require(_from != address(0));
     require(_to != address(0));
 
@@ -466,12 +318,11 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Safely transfers the ownership of a given token ID to another address
-   * If the target address is a contract, it must implement `onERC721Received`,
-   * which is called upon a safe transfer, and return the magic value
-   * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
-   * the transfer is reverted.
-   *
-   * Requires the msg sender to be the owner, approved, or operator
+   * @dev If the target address is a contract, it must implement `onERC721Received`,
+   *  which is called upon a safe transfer, and return the magic value
+   *  `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`; otherwise,
+   *  the transfer is reverted.
+   * @dev Requires the msg sender to be the owner, approved, or operator
    * @param _from current owner of the token
    * @param _to address to receive the ownership of the given token ID
    * @param _tokenId uint256 ID of the token to be transferred
@@ -482,6 +333,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
     uint256 _tokenId
   )
     public
+    canTransfer(_tokenId)
   {
     // solium-disable-next-line arg-overflow
     safeTransferFrom(_from, _to, _tokenId, "");
@@ -489,11 +341,11 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Safely transfers the ownership of a given token ID to another address
-   * If the target address is a contract, it must implement `onERC721Received`,
-   * which is called upon a safe transfer, and return the magic value
-   * `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`; otherwise,
-   * the transfer is reverted.
-   * Requires the msg sender to be the owner, approved, or operator
+   * @dev If the target address is a contract, it must implement `onERC721Received`,
+   *  which is called upon a safe transfer, and return the magic value
+   *  `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`; otherwise,
+   *  the transfer is reverted.
+   * @dev Requires the msg sender to be the owner, approved, or operator
    * @param _from current owner of the token
    * @param _to address to receive the ownership of the given token ID
    * @param _tokenId uint256 ID of the token to be transferred
@@ -506,6 +358,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
     bytes _data
   )
     public
+    canTransfer(_tokenId)
   {
     transferFrom(_from, _to, _tokenId);
     // solium-disable-next-line arg-overflow
@@ -519,28 +372,14 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
    * @return bool whether the msg.sender is approved for the given token ID,
    *  is an operator of the owner, or is the owner of the token
    */
-  function isApprovedOrOwner(
-    address _spender,
-    uint256 _tokenId
-  )
-    internal
-    view
-    returns (bool)
-  {
+  function isApprovedOrOwner(address _spender, uint256 _tokenId) internal view returns (bool) {
     address owner = ownerOf(_tokenId);
-    // Disable solium check because of
-    // https://github.com/duaraghav8/Solium/issues/175
-    // solium-disable-next-line operator-whitespace
-    return (
-      _spender == owner ||
-      getApproved(_tokenId) == _spender ||
-      isApprovedForAll(owner, _spender)
-    );
+    return _spender == owner || getApproved(_tokenId) == _spender || isApprovedForAll(owner, _spender);
   }
 
   /**
    * @dev Internal function to mint a new token
-   * Reverts if the given token ID already exists
+   * @dev Reverts if the given token ID already exists
    * @param _to The address that will own the minted token
    * @param _tokenId uint256 ID of the token to be minted by the msg.sender
    */
@@ -552,7 +391,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Internal function to burn a specific token
-   * Reverts if the token does not exist
+   * @dev Reverts if the token does not exist
    * @param _tokenId uint256 ID of the token being burned by the msg.sender
    */
   function _burn(address _owner, uint256 _tokenId) internal {
@@ -563,7 +402,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Internal function to clear current approval of a given token ID
-   * Reverts if the given address is not indeed the owner of the token
+   * @dev Reverts if the given address is not indeed the owner of the token
    * @param _owner owner of the token
    * @param _tokenId uint256 ID of the token to be transferred
    */
@@ -571,6 +410,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
     require(ownerOf(_tokenId) == _owner);
     if (tokenApprovals[_tokenId] != address(0)) {
       tokenApprovals[_tokenId] = address(0);
+      emit Approval(_owner, address(0), _tokenId);
     }
   }
 
@@ -598,7 +438,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
 
   /**
    * @dev Internal function to invoke `onERC721Received` on a target address
-   * The call is not executed if the target address is not a contract
+   * @dev The call is not executed if the target address is not a contract
    * @param _from address representing the previous owner of the given token ID
    * @param _to target address that will receive the tokens
    * @param _tokenId uint256 ID of the token to be transferred
@@ -617,8 +457,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
     if (!_to.isContract()) {
       return true;
     }
-    bytes4 retval = ERC721Receiver(_to).onERC721Received(
-      msg.sender, _from, _tokenId, _data);
+    bytes4 retval = ERC721Receiver(_to).onERC721Received(_from, _tokenId, _data);
     return (retval == ERC721_RECEIVED);
   }
 }
@@ -631,8 +470,7 @@ contract ERC721BasicToken is SupportsInterfaceWithLookup, ERC721Basic {
  * Moreover, it includes approve all functionality using operator terminology
  * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
-contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
-
+contract ERC721Token is ERC721, ERC721BasicToken {
   // Token name
   string internal name_;
 
@@ -640,7 +478,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
   string internal symbol_;
 
   // Mapping from owner to list of owned token IDs
-  mapping(address => uint256[]) internal ownedTokens;
+  mapping (address => uint256[]) internal ownedTokens;
 
   // Mapping from token ID to index of the owner tokens list
   mapping(uint256 => uint256) internal ownedTokensIndex;
@@ -657,20 +495,16 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
   /**
    * @dev Constructor function
    */
-  constructor(string _name, string _symbol) public {
+  function ERC721Token(string _name, string _symbol) public {
     name_ = _name;
     symbol_ = _symbol;
-
-    // register the supported interfaces to conform to ERC721 via ERC165
-    _registerInterface(InterfaceId_ERC721Enumerable);
-    _registerInterface(InterfaceId_ERC721Metadata);
   }
 
   /**
    * @dev Gets the token name
    * @return string representing the token name
    */
-  function name() external view returns (string) {
+  function name() public view returns (string) {
     return name_;
   }
 
@@ -678,13 +512,13 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
    * @dev Gets the token symbol
    * @return string representing the token symbol
    */
-  function symbol() external view returns (string) {
+  function symbol() public view returns (string) {
     return symbol_;
   }
 
   /**
    * @dev Returns an URI for a given token ID
-   * Throws if the token ID does not exist. May return an empty string.
+   * @dev Throws if the token ID does not exist. May return an empty string.
    * @param _tokenId uint256 ID of the token to query
    */
   function tokenURI(uint256 _tokenId) public view returns (string) {
@@ -698,14 +532,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
    * @param _index uint256 representing the index to be accessed of the requested tokens list
    * @return uint256 token ID at the given index of the tokens list owned by the requested address
    */
-  function tokenOfOwnerByIndex(
-    address _owner,
-    uint256 _index
-  )
-    public
-    view
-    returns (uint256)
-  {
+  function tokenOfOwnerByIndex(address _owner, uint256 _index) public view returns (uint256) {
     require(_index < balanceOf(_owner));
     return ownedTokens[_owner][_index];
   }
@@ -720,7 +547,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
 
   /**
    * @dev Gets the token ID at a given index of all the tokens in this contract
-   * Reverts if the index is greater or equal to the total number of tokens
+   * @dev Reverts if the index is greater or equal to the total number of tokens
    * @param _index uint256 representing the index to be accessed of the tokens list
    * @return uint256 token ID at the given index of the tokens list
    */
@@ -731,7 +558,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
 
   /**
    * @dev Internal function to set the token URI for a given token
-   * Reverts if the token ID does not exist
+   * @dev Reverts if the token ID does not exist
    * @param _tokenId uint256 ID of the token to set its URI
    * @param _uri string URI to assign
    */
@@ -760,27 +587,24 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
   function removeTokenFrom(address _from, uint256 _tokenId) internal {
     super.removeTokenFrom(_from, _tokenId);
 
-    // To prevent a gap in the array, we store the last token in the index of the token to delete, and
-    // then delete the last slot.
     uint256 tokenIndex = ownedTokensIndex[_tokenId];
     uint256 lastTokenIndex = ownedTokens[_from].length.sub(1);
     uint256 lastToken = ownedTokens[_from][lastTokenIndex];
 
     ownedTokens[_from][tokenIndex] = lastToken;
-    // This also deletes the contents at the last position of the array
-    ownedTokens[_from].length--;
-
+    ownedTokens[_from][lastTokenIndex] = 0;
     // Note that this will handle single-element arrays. In that case, both tokenIndex and lastTokenIndex are going to
     // be zero. Then we can make sure that we will remove _tokenId from the ownedTokens list since we are first swapping
     // the lastToken to the first position, and then dropping the element placed in the last position of the list
 
+    ownedTokens[_from].length--;
     ownedTokensIndex[_tokenId] = 0;
     ownedTokensIndex[lastToken] = tokenIndex;
   }
 
   /**
    * @dev Internal function to mint a new token
-   * Reverts if the given token ID already exists
+   * @dev Reverts if the given token ID already exists
    * @param _to address the beneficiary that will own the minted token
    * @param _tokenId uint256 ID of the token to be minted by the msg.sender
    */
@@ -793,7 +617,7 @@ contract ERC721Token is SupportsInterfaceWithLookup, ERC721BasicToken, ERC721 {
 
   /**
    * @dev Internal function to burn a specific token
-   * Reverts if the token does not exist
+   * @dev Reverts if the token does not exist
    * @param _owner owner of the token to burn
    * @param _tokenId uint256 ID of the token being burned by the msg.sender
    */
