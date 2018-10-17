@@ -1,40 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroChainToken at 0x0775a2ec852ed6f9d9659621d32f908c96915469
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroChainToken at 0x4c7bc4d7c5e2ed2f14f8722b7ded6c615d578c1e
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ZCHAIN' token contract
+// 'ZCHAIN' 'ZeroChainToken' token contract
 //
-// Deployed to : 0xe939134e28d2263b51ddeedd14fe8bb24387ce66
 // Symbol      : ZCHAIN
 // Name        : ZeroChain Network
-// Total supply: 1000000000
+// Total supply: 10,000,000,000.000000000000
 // Decimals    : 18
 //
 // Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
+    function sub(uint a, uint b) internal pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+    function mul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
+    function div(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -99,10 +97,12 @@ contract Owned {
 
 
 // ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
+// ERC20 Token, with the addition of symbol, name and decimals and an
+// initial ZCHAIN supply
 // ----------------------------------------------------------------------------
-contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
+contract ZeroChainToken is ERC20Interface, Owned {
+    using SafeMath for uint;
+
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -119,9 +119,9 @@ contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
         symbol = "ZCHAIN";
         name = "ZeroChain Network";
         decimals = 18;
-        _totalSupply = 10000000000000000000000000000;
-        balances[0x5A86f0cafD4ef3ba4f0344C138afcC84bd1ED222] = _totalSupply;
-        Transfer(address(0), 0x5A86f0cafD4ef3ba4f0344C138afcC84bd1ED222, _totalSupply);
+        _totalSupply = 10000000000 * 10**uint(decimals);
+        balances[owner] = _totalSupply;
+        Transfer(address(0), owner, _totalSupply);
     }
 
 
@@ -134,7 +134,7 @@ contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
+    // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -142,20 +142,20 @@ contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
+    // Transfer the balance from token owner's account to `to` account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
         Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
@@ -170,18 +170,18 @@ contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
+    // Transfer `tokens` from the `from` account to the `to` account
     // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
+    // for spending from the `from` account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
         Transfer(from, to, tokens);
         return true;
     }
@@ -197,9 +197,9 @@ contract ZeroChainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
