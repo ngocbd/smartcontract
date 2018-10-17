@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTycoonIGO at 0xfb673f08fc82807b4d0e139e794e3b328d63551f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTycoonIGO at 0xc10547e5edd1275407fa655466be77254f66f951
 */
 pragma solidity ^0.4.20;
+
 
 contract AccessAdmin {
     bool public isPaused = false;
