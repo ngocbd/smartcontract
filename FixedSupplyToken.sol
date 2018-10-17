@@ -1,21 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x80d09da032f4293b1f1295274509cb76c2a5dc42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x35ceac3b4400765e5c2b58cbe2deca7c9ec7207d
 */
 pragma solidity ^0.4.24;
-
-// ----------------------------------------------------------------------------
-// 'FIXED' 'Example Fixed Supply Token' token contract
-//
-// Symbol      : FIXED
-// Name        : Example Fixed Supply Token
-// Total supply: 1,000,000.000000000000000000
-// Decimals    : 18
-//
-// Enjoy.
-//
-// (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
-// ----------------------------------------------------------------------------
-
 
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -111,16 +97,20 @@ contract FixedSupplyToken is ERC20Interface, Owned {
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
+    
+	mapping(address => bool) public frozenAccount;  
+	
+	event FrozenFunds(address target, bool frozen);
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "VAAC";
-        name = "Visa Application Chain";
+        symbol = "MMC";
+        name = "mimibit Coin";
         decimals = 18;
-        _totalSupply = 210000000 * 10**uint(decimals);
+        _totalSupply = 2700000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
@@ -166,6 +156,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
+        
+        require(!frozenAccount[msg.sender]); 
         return true;
     }
 
@@ -184,6 +176,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
         emit Transfer(from, to, tokens);
+        
+        require(!frozenAccount[from]);
         return true;
     }
 
@@ -224,4 +218,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
+    
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
+    }
+    
 }
