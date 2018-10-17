@@ -1,151 +1,160 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MYToken at 0x7c4e4c46352598699d493ad31d52e0f76ae8877f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x68f8927b9656c4278f2623323169f54517a38838
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.8;
+contract owned {
 
-contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+    address public owner;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function owned() {
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+        owner = msg.sender;
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    }
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
+    modifier onlyOwner {
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+        if (msg.sender != owner) throw;
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+        _;
+
+    }
+        
+    function transferOwnership(address newOwner) onlyOwner {
+
+        owner = newOwner;
+
+    }
+
 }
 
-/*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see ProToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
+contract MyToken is owned{
 
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
+    string public standard = 'Token 0.1';
 
-contract StandardToken is Token {
+    string public name;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    string public symbol;
+
+    uint8 public decimals;
+
+    uint256 public totalSupply;
+
+        uint256 public sellPrice;
+
+        uint256 public buyPrice;
+
+        uint minBalanceForAccounts;  
+
+    mapping (address => uint256) public balanceOf;
+
+        mapping (address => bool) public frozenAccount;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+        event FrozenFunds(address target, bool frozen);
+
+    function MyToken(uint256 initialSupply,string tokenName,uint8 decimalUnits,string tokenSymbol,address centralMinter) {
+
+    if(centralMinter != 0 ) owner = msg.sender;
+
+        balanceOf[msg.sender] = initialSupply;
+
+        totalSupply = initialSupply;
+
+        name = tokenName;
+
+        symbol = tokenSymbol;
+
+        decimals = decimalUnits;
+
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    function transfer(address _to, uint256 _value) {
+
+            if (frozenAccount[msg.sender]) throw;
+
+        if (balanceOf[msg.sender] < _value) throw;
+
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+
+        if(msg.sender.balance<minBalanceForAccounts) sell((minBalanceForAccounts-msg.sender.balance)/sellPrice);
+
+        if(_to.balance<minBalanceForAccounts)      _to.send(sell((minBalanceForAccounts-_to.balance)/sellPrice));
+
+        balanceOf[msg.sender] -= _value;
+
+        balanceOf[_to] += _value;
+
+        Transfer(msg.sender, _to, _value);
+
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+        function mintToken(address target, uint256 mintedAmount) onlyOwner {
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+            balanceOf[target] += mintedAmount;
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
+            totalSupply += mintedAmount;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
+            Transfer(0, owner, mintedAmount);
 
-contract MYToken is StandardToken {
+            Transfer(owner, target, mintedAmount);
 
-    function () {
-        //if ether is sent to this address, send it back.
-        revert();
-    }
+        }
 
-    /* Public variables of the token */
+        function freezeAccount(address target, bool freeze) onlyOwner {
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'Dif1.0';     //ProToken 1.0 standard. Just an arbitrary versioning scheme.
+            frozenAccount[target] = freeze;
 
-    function MYToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
+            FrozenFunds(target, freeze);
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
-    }
+        function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+
+            sellPrice = newSellPrice;
+
+            buyPrice = newBuyPrice;
+
+        }
+
+        function buy() returns (uint amount){
+
+            amount = msg.value / buyPrice;
+
+            if (balanceOf[this] < amount) throw;
+
+            balanceOf[msg.sender] += amount;
+
+            balanceOf[this] -= amount;
+
+            Transfer(this, msg.sender, amount);
+
+            return amount;
+
+        }
+
+        function sell(uint amount) returns (uint revenue){
+
+            if (balanceOf[msg.sender] < amount ) throw;
+
+            balanceOf[this] += amount;
+
+            balanceOf[msg.sender] -= amount;
+
+            revenue = amount * sellPrice;
+
+            msg.sender.send(revenue);
+
+            Transfer(msg.sender, this, amount);
+
+            return revenue;
+
+        }
+
+        function setMinBalance(uint minimumBalanceInFinney) onlyOwner {
+
+            minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
+
+        }
+        
 }
