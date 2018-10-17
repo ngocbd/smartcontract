@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeplerTokenCrowdsale at 0x4781d98e2e168fd88eedd449d135fa222d221a22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeplerTokenCrowdsale at 0x124635bfe95ba690fc095f6f3a0bdeac62fab8e1
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.16;
 
 interface token {
   function transfer(address receiver, uint amount) external;
@@ -69,7 +69,7 @@ contract KeplerTokenCrowdsale is Ownable {
         uint256 etherPrice,
         address addressOfTokenUsedAsReward
     ) public {
-        TokensPerETH = etherPrice * 150 / 125;
+        TokensPerETH = etherPrice * 130 / 125;
         tokenReward = token(addressOfTokenUsedAsReward);
     }
 
@@ -81,11 +81,11 @@ contract KeplerTokenCrowdsale is Ownable {
     }
 
     function changeEtherPrice(uint256 newEtherPrice) onlyOwner public {
-        TokensPerETH = newEtherPrice * 150 / 125 ;
+        TokensPerETH = newEtherPrice * 130 / 125 ;
     }
 
     function withdraw(uint256 value) onlyOwner public {
-        uint256 amount = value * 1 ether / 100;
+        uint256 amount = value * 1 ether;
         owner.transfer(amount);
         emit FundTransfer(owner, amount, false);
     }
