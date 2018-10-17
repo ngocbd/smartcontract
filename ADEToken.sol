@@ -1,378 +1,266 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADEToken at 0xfaec92138718c3f5bedd43800b392edb2e436cc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADEToken at 0x54a2a7c9ff039af7412223405534c174d304d835
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-// ----------------------------------------------------------------------------
-// 'ADE' 'AdeCoin' token contract
-//
-// Symbol      : ADE
-// Name        : AdeCoin
-// Total supply: Generated from contributions
-// Decimals    : 8
-//
-// ----------------------------------------------------------------------------
+library SafeMath {
 
-
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
         c = a * b;
-        require(a == 0 || c / a == b);
+        assert(c / a == b);
+        return c;
     }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
+contract BaseToken {
+    using SafeMath for uint256;
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event TransferSell(address indexed from, uint tokens, uint eth);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != address(0));
+        require(balanceOf[_from] >= _value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(_from, _to, _value);
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 }
 
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
+contract Ownable {
     address public owner;
-    address public newOwner;
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+    event OwnershipRenounced(address indexed previousOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
-        newOwner = address(0);
+    }
+
+    function renounceOwnership() public onlyOwner {
+        OwnershipRenounced(owner);
+        owner = address(0);
     }
 }
 
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
 
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals
-// Receives ETH and generates tokens
-// ----------------------------------------------------------------------------
-contract ADEToken is ERC20Interface, Owned, SafeMath {
-    string public symbol;
-    string public name;
-    uint8 public decimals;
-    uint public totalSupply;
-    uint public sellRate;
-    uint public buyRate;
-    
-    uint private lockRate = 30 days;
-    
-    struct lockPosition{
-        uint time;
-        uint count;
-        uint releaseRate;
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender, _value);
+        return true;
     }
-    
-    mapping(address => lockPosition) private lposition;
-    
-    // locked account dictionary that maps addresses to boolean
-    mapping (address => bool) private lockedAccounts;
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-    
-    modifier is_not_locked(address _address) {
-        if (lockedAccounts[_address] == true) revert();
-        _;
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(_from, _value);
+        return true;
     }
-    
-    modifier validate_address(address _address) {
-        if (_address == address(0)) revert();
-        _;
-    }
-    
-    modifier is_locked(address _address) {
-        if (lockedAccounts[_address] != true) revert();
-        _;
-    }
-    
-    modifier validate_position(address _address,uint count) {
-        if(balances[_address] < count * 10**uint(decimals)) revert();
-        if(lposition[_address].count > 0 && (balances[_address] - (count * 10**uint(decimals))) < lposition[_address].count && now < lposition[_address].time) revert();
-        checkPosition(_address,count);
-        _;
-    }
-    function checkPosition(address _address,uint count) private view {
-        if(lposition[_address].releaseRate < 100 && lposition[_address].count > 0){
-            uint _rate = safeDiv(100,lposition[_address].releaseRate);
-            uint _time = lposition[_address].time;
-            uint _tmpRate = lposition[_address].releaseRate;
-            uint _tmpRateAll = 0;
-            uint _count = 0;
-            for(uint _a=1;_a<=_rate;_a++){
-                if(now >= _time){
-                    _count = _a;
-                    _tmpRateAll = safeAdd(_tmpRateAll,_tmpRate);
-                    _time = safeAdd(_time,lockRate);
-                }
-            }
-            if(_count < _rate && lposition[_address].count > 0 && (balances[_address] - count * 10**uint(decimals)) < (lposition[_address].count - safeDiv(lposition[_address].count*_tmpRateAll,100)) && now >= lposition[_address].time) revert();   
+}
+
+contract AirdropToken is BaseToken, Ownable {
+    uint256 public airAmount;
+    address public airSender;
+    uint256 public airLimitCount;
+
+    mapping (address => uint256) public airCountOf;
+
+    event Airdrop(address indexed from, uint256 indexed count, uint256 tokenValue);
+
+    function airdrop() public {
+        require(airAmount > 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
         }
-    }
-    
-    event _lockAccount(address _add);
-    event _unlockAccount(address _add);
-    
-    function () public payable{
-        require(owner != msg.sender);
-        require(buyRate > 0);
-        
-        require(msg.value >= 0.1 ether && msg.value <= 1000 ether);
-        uint tokens;
-        
-        tokens = msg.value / (1 ether * 1 wei / buyRate);
-        
-        
-        require(balances[owner] >= tokens * 10**uint(decimals));
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens * 10**uint(decimals));
-        balances[owner] = safeSub(balances[owner], tokens * 10**uint(decimals));
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] = airCountOf[msg.sender].add(1);
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
     }
 
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function ADEToken(uint _sellRate,uint _buyRate) public payable {
+    function changeAirAmount(uint256 newAirAmount) public onlyOwner {
+        airAmount = newAirAmount;
+    }
+
+    function changeAirLimitCount(uint256 newAirLimitCount) public onlyOwner {
+        airLimitCount = newAirLimitCount;
+    }
+}
+
+contract LockToken is BaseToken {
+    struct LockMeta {
+        uint256 remain;
+        uint256 endtime;
+    }
+    
+    mapping (address => LockMeta[]) public lockedAddresses;
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(balanceOf[_from] >= _value);
+        uint256 remain = balanceOf[_from].sub(_value);
+        uint256 length = lockedAddresses[_from].length;
+        for (uint256 i = 0; i < length; i++) {
+            LockMeta storage meta = lockedAddresses[_from][i];
+            if(block.timestamp < meta.endtime && remain < meta.remain){
+                revert();
+            }
+        }
+        super._transfer(_from, _to, _value);
+    }
+}
+
+contract ADEToken is BaseToken, BurnToken, AirdropToken, LockToken {
+
+    function ADEToken() public {
+        totalSupply = 36000000000000000;
+        name = "ADE Token";
         symbol = "ADE";
-        name = "AdeCoin";
         decimals = 8;
-        totalSupply = 2000000000 * 10**uint(decimals);
-        balances[owner] = totalSupply;
-        Transfer(address(0), owner, totalSupply);
-        sellRate = _sellRate;
-        buyRate = _buyRate;
-    }
+		
+        owner = msg.sender;
 
+        airAmount = 100000000;
+        airSender = 0x8888888888888888888888888888888888888888;
+        airLimitCount = 1;
 
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return totalSupply  - balances[address(0)];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public is_not_locked(msg.sender) is_not_locked(to) validate_position(msg.sender,tokens / (10**uint(decimals))) returns (bool success) {
-        require(to != msg.sender);
-        require(tokens > 0);
-        require(balances[msg.sender] >= tokens);
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public is_not_locked(msg.sender) is_not_locked(spender) validate_position(msg.sender,tokens / (10**uint(decimals))) returns (bool success) {
-        require(spender != msg.sender);
-        require(tokens > 0);
-        require(balances[msg.sender] >= tokens);
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public is_not_locked(msg.sender) is_not_locked(from) is_not_locked(to) validate_position(from,tokens / (10**uint(decimals))) returns (bool success) {
-        require(transferFromCheck(from,to,tokens));
-        return true;
-    }
-    
-    function transferFromCheck(address from,address to,uint tokens) private returns (bool success) {
-        require(tokens > 0);
-        require(from != msg.sender && msg.sender != to && from != to);
-        require(balances[from] >= tokens && allowed[from][msg.sender] >= tokens);
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-    
-
-    // ------------------------------------------------------------------------
-    // Sall a token from a contract
-    // ------------------------------------------------------------------------
-    function sellCoin(address seller, uint amount) public onlyOwner is_not_locked(seller) validate_position(seller,amount){
-        require(balances[seller] >= amount * 10**uint(decimals));
-        require(sellRate > 0);
-        require(seller != msg.sender);
-        uint tmpAmount = amount * (1 ether * 1 wei / sellRate);
+        //?????
+        balanceOf[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7] = 3600000000000000;
+        Transfer(address(0), 0xf03A4f01713F38EB7d63C6e691C956E8C56630F7, 3600000000000000);
+        //??? ? 2019/06/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 3600000000000000, endtime: 1559923200}));
+        //2019/06/08 00:00:00 ? 2019/07/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 3240000000000000, endtime: 1562515200}));
+        //2019/07/08 00:00:00 ? 2019/08/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 2880000000000000, endtime: 1565193600}));
+        //2019/08/08 00:00:00 ? 2019/09/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 2520000000000000, endtime: 1567872000}));
+        //2019/09/08 00:00:00 ? 2019/10/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 2160000000000000, endtime: 1570464000}));
+        //2019/10/08 00:00:00 ? 2019/11/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 1800000000000000, endtime: 1573142400}));
+        //2019/11/08 00:00:00 ? 2019/12/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 1440000000000000, endtime: 1575734400}));
+        //2019/12/08 00:00:00 ? 2020/01/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 1080000000000000, endtime: 1578412800}));
+        //2020/01/08 00:00:00 ? 2020/02/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 720000000000000, endtime: 1581091200}));
+        //2020/02/08 00:00:00 ? 2020/03/07 23:59:59
+        lockedAddresses[0xf03A4f01713F38EB7d63C6e691C956E8C56630F7].push(LockMeta({remain: 360000000000000, endtime: 1583596800}));
         
-        balances[owner] += amount * 10**uint(decimals);
-        balances[seller] -= amount * 10**uint(decimals);
-        
-        seller.transfer(tmpAmount);
-        TransferSell(seller, amount * 10**uint(decimals), tmpAmount);
-    }
-    
-    // set rate
-    function setRate(uint _buyRate,uint _sellRate) public onlyOwner {
-        require(_buyRate > 0);
-        require(_sellRate > 0);
-        require(_buyRate < _sellRate);
-        buyRate = _buyRate;
-        sellRate = _sellRate;
-    }
-    
-    //set lock position
-    function setLockPostion(address _add,uint _count,uint _time,uint _releaseRate) public is_not_locked(_add) onlyOwner {
-        require(_time > now);
-        require(_count > 0);
-        require(_releaseRate > 0 && _releaseRate <= 100);
-        require(_releaseRate == 2 || _releaseRate == 4 || _releaseRate == 5 || _releaseRate == 10 || _releaseRate == 20 || _releaseRate == 25 || _releaseRate == 50);
-        require(balances[_add] >= _count * 10**uint(decimals));
-        lposition[_add].time = _time;
-        lposition[_add].count = _count * 10**uint(decimals);
-        lposition[_add].releaseRate = _releaseRate;
-    }
-    
-    // lockAccount
-    function lockStatus(address _owner) public is_not_locked(_owner)  validate_address(_owner) onlyOwner {
-        lockedAccounts[_owner] = true;
-        _lockAccount(_owner);
-    }
+        //????
+        balanceOf[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20] = 3600000000000000;
+        Transfer(address(0), 0x76d2dbf2b1e589ff28EcC9203EA781f490696d20, 3600000000000000);
+        //??? ? 2018/12/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 3600000000000000, endtime: 1544198400}));
+        //2018/12/08 00:00:00 ? 2019/01/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 3240000000000000, endtime: 1546876800}));
+        //2019/01/08 00:00:00 ? 2019/02/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 2880000000000000, endtime: 1549555200}));
+        //2019/02/08 00:00:00 ? 2019/03/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 2520000000000000, endtime: 1551974400}));
+        //2019/03/08 00:00:00 ? 2019/04/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 2160000000000000, endtime: 1554652800}));
+        //2019/04/08 00:00:00 ? 2019/05/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 1800000000000000, endtime: 1557244800}));
+        //2019/05/08 00:00:00 ? 2019/06/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 1440000000000000, endtime: 1559923200}));
+        //2019/06/08 00:00:00 ? 2019/07/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 1080000000000000, endtime: 1562515200}));
+        //2019/07/08 00:00:00 ? 2019/08/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 720000000000000, endtime: 1565193600}));
+        //2019/08/08 00:00:00 ? 2019/09/07 23:59:59
+        lockedAddresses[0x76d2dbf2b1e589ff28EcC9203EA781f490696d20].push(LockMeta({remain: 360000000000000, endtime: 1567872000}));
 
-    /// @notice only the admin is allowed to unlock accounts.
-    /// @param _owner the address of the account to be unlocked
-    function unlockStatus(address _owner) public is_locked(_owner) validate_address(_owner) onlyOwner {
-        lockedAccounts[_owner] = false;
-        _unlockAccount(_owner);
-    }
-    
-    //get lockedaccount
-    function getLockStatus(address _owner) public view returns (bool _lockStatus) {
-        return lockedAccounts[_owner];
-    }
-    
-    //get lockPosition info
-    function getLockPosition(address _add) public view returns(uint time,uint count,uint rate,uint scount) {
-        
-        return (lposition[_add].time,lposition[_add].count,lposition[_add].releaseRate,positionScount(_add));
-    }
-    
-    function positionScount(address _add) private view returns (uint count){
-        uint _rate = safeDiv(100,lposition[_add].releaseRate);
-        uint _time = lposition[_add].time;
-        uint _tmpRate = lposition[_add].releaseRate;
-        uint _tmpRateAll = 0;
-        for(uint _a=1;_a<=_rate;_a++){
-            if(now >= _time){
-                _tmpRateAll = safeAdd(_tmpRateAll,_tmpRate);
-                _time = safeAdd(_time,lockRate);
-            }
-        }
-        
-        return (lposition[_add].count - safeDiv(lposition[_add].count*_tmpRateAll,100));
-    }
+        //????
+        balanceOf[0x62d545CD7e67abA36e92c46cfA764c0f1626A9Ae] = 3600000000000000;
+        Transfer(address(0), 0x62d545CD7e67abA36e92c46cfA764c0f1626A9Ae, 3600000000000000);
 
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+        //??
+        balanceOf[0x8EaA35b0794ebFD412765DFb2Faa770Abae0f36b] = 10800000000000000;
+        Transfer(address(0), 0x8EaA35b0794ebFD412765DFb2Faa770Abae0f36b, 10800000000000000);
+
+        //???
+        balanceOf[0x8ECeAd3B4c2aD7C4854a42F93A956F5e3CAE9Fd2] = 3564000000000000;
+        Transfer(address(0), 0x8ECeAd3B4c2aD7C4854a42F93A956F5e3CAE9Fd2, 3564000000000000);
+        //??? ? 2018/09/07 23:59:59
+        lockedAddresses[0x8ECeAd3B4c2aD7C4854a42F93A956F5e3CAE9Fd2].push(LockMeta({remain: 1663200000000000, endtime: 1536336000}));
+        //2018/09/08 00:00:00 ? 2018/12/07 23:59:59
+        lockedAddresses[0x8ECeAd3B4c2aD7C4854a42F93A956F5e3CAE9Fd2].push(LockMeta({remain: 1188000000000000, endtime: 1544198400}));
+
+        //???
+        balanceOf[0xC458A9017d796b2b4b76b416f814E1A8Ce82e310] = 10836000000000000;
+        Transfer(address(0), 0xC458A9017d796b2b4b76b416f814E1A8Ce82e310, 10836000000000000);
+        //??? ? 2018/09/07 23:59:59
+        lockedAddresses[0xC458A9017d796b2b4b76b416f814E1A8Ce82e310].push(LockMeta({remain: 2167200000000000, endtime: 1536336000}));
+    }
+    
+    function() public {
+        airdrop();
     }
 }
