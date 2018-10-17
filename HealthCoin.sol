@@ -1,139 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HealthCoin at 0xc9b40918a235946b3b9649c8b0719ff57c2f74ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HealthCoin at 0x02f65ca1b619b6a659ea383bba6f5ffca212aca0
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
-library safeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf(address who) constant returns (uint value);
-    function allowance(address owner, address spender) constant returns (uint _allowance);
+contract HealthCoin {
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
 
-    function transfer(address to, uint value) returns (bool ok);
-    function transferFrom(address from, address to, uint value) returns (bool ok);
-    function approve(address spender, uint value) returns (bool ok);
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-}
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
 
-contract HealthCoin is ERC20{
-	uint initialSupply = 500000;
-	string public constant name = "HealthCoin";
-	string public constant symbol = "HLC";
-	uint USDExchangeRate = 300;
-	uint price = 30;
-	address HealthCoinAddress;
-
-	mapping (address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	
-	modifier onlyOwner{
-    if (msg.sender == HealthCoinAddress) {
-		  _;
-		}
-	}
-
-	function totalSupply() constant returns (uint256) {
-		return initialSupply;
+    function HealthCoin(
+        uint256 initialSupply
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = "HealthCoin"; 
+        symbol = "HCoin";
     }
 
-	function balanceOf(address _owner) constant returns (uint256 balance) {
-		return balances[_owner];
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  function transfer(address _to, uint256 _value) returns (bool success) {
-    if (balances[msg.sender] >= _value && _value > 0) {
-      balances[msg.sender] -= _value;
-      balances[_to] += _value;
-      Transfer(msg.sender, _to, _value);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-      balances[_to] += _value;
-      balances[_from] -= _value;
-      allowed[_from][msg.sender] -= _value;
-      Transfer(_from, _to, _value);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  function approve(address _spender, uint256 _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-	function HealthCoin() {
-        HealthCoinAddress = msg.sender;
-        balances[HealthCoinAddress] = initialSupply;
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
     }
 
-	function setUSDExchangeRate (uint rate) onlyOwner{
-		USDExchangeRate = rate;
-	}
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
 
-	function () payable{
-	    uint amountInUSDollars = safeMath.div(safeMath.mul(msg.value, USDExchangeRate),10**18);
-	    uint valueToPass = safeMath.div(amountInUSDollars, price);
-    	if (balances[HealthCoinAddress] >= valueToPass && valueToPass > 0) {
-          balances[msg.sender] = safeMath.add(balances[msg.sender],valueToPass);
-          balances[HealthCoinAddress] = safeMath.sub(balances[HealthCoinAddress],valueToPass);
-          Transfer(HealthCoinAddress, msg.sender, valueToPass);
-        } 
-	}
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
 
-	function withdraw(uint amount) onlyOwner{
-        HealthCoinAddress.transfer(amount);
-	}
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value; 
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value); 
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value; 
+        totalSupply -= _value;  
+        emit Burn(_from, _value);
+        return true;
+    }
 }
