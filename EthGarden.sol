@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthGarden at 0x72Ee07223aD92dfd9e37cE03aD795b1aEddD28b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthGarden at 0x8ec9a6fd403fdd9fc2a1ffd8e365032f7081786a
 */
 pragma solidity ^0.4.18;
 
@@ -14,8 +14,8 @@ contract EthGarden{
     
     mapping (address => uint256) public affiliateCommision;
     
-    address dev = 0xaF9C025Ce6322A23ac00301C714f4F42895c9818;
-    address promoter = 0xaF9C025Ce6322A23ac00301C714f4F42895c9818;
+    address dev = 0x4ffE17a2A72bC7422CB176bC71c04EE6D87cE329;
+    address promoter = 0x4ffE17a2A72bC7422CB176bC71c04EE6D87cE329;
     
     function investETH(address referral) public payable {
         
