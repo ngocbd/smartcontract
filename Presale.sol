@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x51bc4acffefe8ad28c8122c77eb06ede12e82961
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x757f9a1ca2d3af327111c786ef923e67ab586b03
 */
 // v7
 
@@ -164,7 +164,7 @@ contract PreSale  is Ownable {
    * @dev Constructor of Presale contract
    */
   constructor() public {
-    tkn = TokenContract(0x5313E9783E5b56389b14Cd2a99bE9d283a03f8c6);                    // address of the token contract
+    tkn = TokenContract(0x95c5bf2e68b76F2276221A8FFc9c47a49E9405Ec);                    // address of the token contract
     investorsStorage = InvestorsStorage(0x15c7c30B980ef442d3C811A30346bF9Dd8906137);      // address of the storage contract
     minInvestment = 100 finney;
     updatePrice(5000);
