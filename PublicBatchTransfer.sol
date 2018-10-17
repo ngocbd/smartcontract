@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicBatchTransfer at 0xf45d4dd1cc92440172a8704b98f87f62844a33a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicBatchTransfer at 0xaa5eb02bdaf93190922365f4e6326e1131dde3e4
 */
 pragma solidity ^0.4.18;
+
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
     assert(token.transfer(to, value));
@@ -15,6 +16,7 @@ library SafeERC20 {
     assert(token.approve(spender, value));
   }
 }
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
@@ -80,7 +82,7 @@ contract WalletUsage is HasWallet {
     /**
       * ????????eth.
       */
-    bool public keepEth = true;
+    bool public keepEth;
 
 
     /**
@@ -107,7 +109,7 @@ contract PublicBatchTransfer is WalletUsage {
 
     uint256 public fee;
 
-    function PublicBatchTransfer(address walletAddress,uint256 _fee) public{
+    function PublicBatchTransfer(address walletAddress,uint256 _fee){
         require(walletAddress != address(0));
         setWallet(walletAddress);
         setFee(_fee);
