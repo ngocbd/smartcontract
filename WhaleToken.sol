@@ -1,16 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0x5be26e5d10f94cf2af7d09ee30f961c8bb6e64f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0x554ce35a973a1317f71885696cbe4ddf8af177ab
 */
 pragma solidity ^0.4.24;
 
 library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        assert(c >= a);
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        assert(b <= a);
-        c = a - b;
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
     }
 }
 
@@ -21,8 +23,8 @@ interface tokenRecipient {
 contract WhaleConfig {
     using SafeMath for uint;
 
-    string internal constant TOKEN_NAME     = "Whale Chain";
-    string internal constant TOKEN_SYMBOL   = "WAT";
+    string internal constant TOKEN_NAME     = "Whale Token";
+    string internal constant TOKEN_SYMBOL   = "WATB";
     uint8  internal constant TOKEN_DECIMALS = 18;
     uint   internal constant INITIAL_SUPPLY = 20*1e8 * 10 ** uint(TOKEN_DECIMALS);
 }
@@ -156,7 +158,7 @@ contract TokenERC20 {
 }
 
 contract WhaleToken is Lockable, TokenERC20 {
-    string public version = "v1.0.1";
+    string public version = "v1.0.2";
     
     mapping (address => bool) public frozenAccount;
 
@@ -201,21 +203,6 @@ contract WhaleToken is Lockable, TokenERC20 {
 
         emit LogFrozenAccount(_target, false);
         return true;
-    }
-    
-    function withdrawContractToken(uint _value) onlyOwner public returns (bool) {
-        _transfer(this, msg.sender, _value);
-
-        emit LogWithdrawContractToken(msg.sender, _value);
-        return true;
-    }
-    
-    function getContractBalance() public constant returns(uint blance) {
-        blance = balanceOf[this];
-    }
-    
-    function getBalance(address _owner) onlyOwner public constant returns(uint blance) {
-        blance = balanceOf[_owner];
     }
     
     function () payable public { revert(); }
