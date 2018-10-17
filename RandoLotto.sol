@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x68512f25c762a61047e652c51c71757593a2e9e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0xf40b50f05c68779141632436b839566fea1db616
 */
 pragma solidity 0.4.24;
 
@@ -96,13 +96,13 @@ contract RandoLotto {
     function bid() public payable returns (uint256, uint256, uint256) {
         // Humans only unlike F3D
         require(msg.sender == tx.origin);
-        require(msg.value == 0.01 ether);
+        require(msg.value == 0.001 ether);
 
         checkRoundEnd();
 
         // Add monies to pot
         devFee = devFee + (msg.value / 100);
-        uint256 toAdd = msg.value - (msg.value / 100);
+        uint256 toAdd = msg.value - devFee;
         hourPot = hourPot + (toAdd / 3);
         dayPot = dayPot + (toAdd / 3);
         weekPot = weekPot + (toAdd - ((toAdd/3) + (toAdd/3)));
@@ -145,7 +145,7 @@ contract RandoLotto {
         if (now > hourPotExpiration) {
             uint256 hourToSend = hourPot / 2;
             hourPot = hourPot - hourToSend;
-            hourPotLeader.send(hourToSend);
+            hourPotLeader.transfer(hourToSend);
             hourPotLeader = msg.sender;
             hourPotHighscore = 0;
             hourPotExpiration = now + 1 hours;
@@ -154,7 +154,7 @@ contract RandoLotto {
         if (now > dayPotExpiration) {
             uint256 dayToSend = dayPot / 2;
             dayPot = dayPot - dayToSend;
-            dayPotLeader.send(dayToSend);
+            dayPotLeader.transfer(dayToSend);
             dayPotLeader = msg.sender;
             dayPotHighscore = 0;
             dayPotExpiration = now + 1 days;
@@ -163,7 +163,7 @@ contract RandoLotto {
         if (now > weekPotExpiration) {
             uint256 weekToSend = weekPot / 2;
             weekPot = weekPot - weekToSend;
-            weekPotLeader.send(weekToSend);
+            weekPotLeader.transfer(weekToSend);
             weekPotLeader = msg.sender;
             weekPotHighscore = 0;
             weekPotExpiration = now + 1 weeks;
