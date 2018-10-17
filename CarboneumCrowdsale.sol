@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0x65e151d4e56261b4672bdebd76d7045030b38292
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0x88b6d8d018118f6da4842fae44d39e2bc52b75aa
 */
 pragma solidity ^0.4.18;
 
@@ -471,7 +471,7 @@ contract IndividuallyCappedCrowdsale is Crowdsale, Ownable {
   }
 
   /**
-   * @dev Returns the cap of a specific user.
+   * @dev Returns the cap of a specific user. 
    * @param _beneficiary Address whose cap is to be checked
    * @return Current cap for individual user
    */
@@ -520,43 +520,76 @@ contract IndividuallyCappedCrowdsale is Crowdsale, Ownable {
  * IndividuallyCappedCrowdsale - Crowdsale with per-user caps.
  * TimedCrowdsale - Crowdsale accepting contributions only within a time frame.
  */
-contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, IndividuallyCappedCrowdsale, TimedCrowdsale, PostDeliveryCrowdsale {
+contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, IndividuallyCappedCrowdsale, TimedCrowdsale {
 
-  uint256 public pre_sale_end;
+  uint256 public iconRate;
+
+  ERC20 public iconToken;
 
   function CarboneumCrowdsale(
     uint256 _openingTime,
     uint256 _closingTime,
     uint256 _rate,
+    uint256 _iconRate,
     address _tokenWallet,
     address _fundWallet,
     uint256 _cap,
     ERC20 _token,
-    uint256 _preSaleEnd) public
+    ERC20 _iconToken) public
   AllowanceCrowdsale(_tokenWallet)
   Crowdsale(_rate, _fundWallet, _token)
   CappedCrowdsale(_cap)
   TimedCrowdsale(_openingTime, _closingTime)
   {
-    require(_preSaleEnd < _closingTime);
-    pre_sale_end = _preSaleEnd;
+    require(_iconToken != address(0));
+    require(_iconRate > 0);
+    iconToken = _iconToken;
+    iconRate = _iconRate;
   }
+
+  /**
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value Icon token paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchaseWithIcon(
+    address indexed purchaser,
+    address indexed beneficiary,
+    uint256 value,
+    uint256 amount
+  );
 
   function setRate(uint256 _rate) external onlyOwner {
     rate = _rate;
   }
 
-  /**
-   * @dev Add bonus to pre-sale period.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    if (now < pre_sale_end) {// solium-disable-line security/no-block-members
-      // Bonus 8%
-      return _weiAmount.mul(rate + (rate * 8 / 100));
-    }
-    return _weiAmount.mul(rate);
+  function setIconRate(uint256 _iconRate) external onlyOwner {
+    iconRate = _iconRate;
   }
 
+  function buyTokensWithIcon(address _beneficiary, uint256 _iconAmount) external {
+    // Calculate Carboneum token to receive.
+    uint256 tokenAmount = iconRate.mul(_iconAmount);
+    uint256 weiAmount = tokenAmount.div(rate);
+
+    // Validate purchase.
+    _preValidatePurchase(_beneficiary, weiAmount);
+
+    // Update cap.
+    contributions[_beneficiary] = contributions[_beneficiary].add(weiAmount);
+
+    // Transfer ICON token to Carboneum fund address.
+    require(iconToken.transferFrom(msg.sender, wallet, _iconAmount));
+
+    // Transfer Carboneum token from token owner to sender.
+    _deliverTokens(_beneficiary, tokenAmount);
+
+    TokenPurchaseWithIcon(
+      msg.sender,
+      _beneficiary,
+      _iconAmount,
+      tokenAmount);
+  }
 }
