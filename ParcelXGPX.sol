@@ -1,21 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x0c6154cc75f0b2b2312c52974c69c1621b6e5b5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x7d3a19604bc1341b411474272bd6dff5761e3153
 */
-pragma solidity ^0.4.19;
-
-// File: contracts\Convertible.sol
-
-/**
- * Exchange all my ParcelX token to mainchain GPX
- */
-contract Convertible {
-
-    function convertMainchainGPX(string destinationAccount, string extra) external returns (bool);
-  
-    // ParcelX deamon program is monitoring this event. 
-    // Once it triggered, ParcelX will transfer corresponding GPX to destination account
-    event Converted(address indexed who, string destinationAccount, uint256 amount, string extra);
-}
+pragma solidity 0.4.19;
 
 // File: contracts\ERC20.sol
 
@@ -63,7 +49,7 @@ contract MultiOwnable {
 
     mapping (bytes32 => uint) internal m_pendings;
 
-    event AcceptConfirm(address indexed who, uint confirmTotal);
+    event AcceptConfirm(bytes32 operation, address indexed who, uint confirmTotal);
     
     // constructor is given number of sigs required to do protected "multiOwner" transactions
     function MultiOwnable (address[] _multiOwners, uint _multiRequires) public {
@@ -121,7 +107,7 @@ contract MultiOwnable {
             }
         }
         
-        AcceptConfirm(currentUser, confirmTotal);
+        AcceptConfirm(operation, currentUser, confirmTotal);
 
         if (confirmTotal >= m_multiRequires) {
             delete m_pendings[operation];
@@ -208,6 +194,20 @@ library SafeMath {
     }
 }
 
+// File: contracts\Convertible.sol
+
+/**
+ * Exchange all my ParcelX token to mainchain GPX
+ */
+contract Convertible {
+
+    function convertMainchainGPX(string destinationAccount, string extra) external returns (bool);
+  
+    // ParcelX deamon program is monitoring this event. 
+    // Once it triggered, ParcelX will transfer corresponding GPX to destination account
+    event Converted(address indexed who, string destinationAccount, uint256 amount, string extra);
+}
+
 // File: contracts\ParcelXGPX.sol
 
 /**
@@ -217,17 +217,20 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
 
     using SafeMath for uint256;
   
-    string public constant name = "ParcelX Token";
+    string public constant name = "ParcelX";
     string public constant symbol = "GPX";
     uint8 public constant decimals = 18;
-    uint256 public constant TOTAL_SUPPLY = uint256(1000000000) * (uint256(10) ** decimals);  // 10,0000,0000
 
-    address internal tokenPool;      // Use a token pool holding all GPX. Avoid using sender address.
+    // Great China - 25000 ETH * int(1 / 0.000268) = 93275000
+    uint256 public constant TOTAL_SUPPLY = uint256(93275000) * (uint256(10) ** decimals);
+    
+    address internal tokenPool = address(0);      // Use a token pool holding all GPX. Avoid using sender address.
     mapping(address => uint256) internal balances;
     mapping (address => mapping (address => uint256)) internal allowed;
 
     function ParcelXGPX(address[] _multiOwners, uint _multiRequires) 
         MultiOwnable(_multiOwners, _multiRequires) public {
+        require(tokenPool == address(0));
         tokenPool = this;
         require(tokenPool != address(0));
         balances[tokenPool] = TOTAL_SUPPLY;
@@ -339,7 +342,7 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
 
     /**
      * FEATURE 6): Budget control
-     * Malloc GPX for airdrops, marketing-events, etc 
+     * Malloc GPX for airdrops, marketing-events, bonus, etc 
      */
     function mallocBudget(address _admin, uint256 _value) mostOwner(keccak256(msg.data)) external returns (bool) {
         require(_admin != address(0));
@@ -353,20 +356,25 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
     
     function execute(address _to, uint256 _value, string _extra) mostOwner(keccak256(msg.data)) external returns (bool){
         require(_to != address(0));
-        Withdraw(_to, _value, msg.sender, _extra);
         _to.transfer(_value);   // Prevent using call() or send()
+        Withdraw(_to, _value, msg.sender, _extra);
         return true;
     }
 
     /**
-     * FEATURE 5): Convertible implements
+     * FEATURE 5): 'Convertible' implements
+     * Below actions would be performed after token being converted into mainchain:
+     * - KYC / AML
+     * - Unsold tokens are discarded.
+     * - Tokens sold with bonus will be locked for a period (see Whitepaper).
+     * - Token distribution for team will be locked for a period (see Whitepaper).
      */
     function convertMainchainGPX(string destinationAccount, string extra) external returns (bool) {
-        require(bytes(destinationAccount).length > 10 && bytes(destinationAccount).length < 128);
+        require(bytes(destinationAccount).length > 10 && bytes(destinationAccount).length < 1024);
         require(balances[msg.sender] > 0);
         uint256 amount = balances[msg.sender];
         balances[msg.sender] = 0;
-        balances[tokenPool] = balances[tokenPool].add(amount);   // recycle ParcelX to tokenPool's init account
+        balances[tokenPool] = balances[tokenPool].add(amount);   // return GPX to tokenPool - the init account
         Converted(msg.sender, destinationAccount, amount, extra);
         return true;
     }
