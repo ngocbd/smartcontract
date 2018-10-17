@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0x698674f7537ea6194caa4eb4b9129cd3c395ada8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0x8a25079d2449f264099e8cc278f61ce6fe319b69
 */
 pragma solidity ^0.4.16;
 
@@ -17,8 +17,8 @@ contract Neulaut {
     
 
     function Neulaut() {
-        owner = msg.sender;
         balances[owner] = totalSupply;
+        owner = msg.sender;
     }
     
     function() payable {
