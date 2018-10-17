@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoDuelCoin at 0x87a5a7522467b7c9911f24721bb6942f3bc700eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoDuelCoin at 0xec0dc71b3e5fc3f8ddfc655e800ae6d9b55f993f
 */
 pragma solidity ^0.4.21;
   
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
     
-contract CryptoDuelCoin is StandardToken { //Update the contract name.
+contract CryptoDuelCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -108,12 +108,12 @@ contract CryptoDuelCoin is StandardToken { //Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function CryptoDuelCoin() {
-        balances[msg.sender] = 75000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. 
-        totalSupply = 75000000000000000000000000000;                        // Update total supply (1000 for example)
-        name = "CryptoDuelCoin";                                   // Set the name for display purposes
-        decimals = 18;                                               // Amount of decimals for display purposes
-        symbol = "CDC";                                             // Set the symbol for display purposes
-        unitsOneEthCanBuy = 12500000;                                      // Set the price of your token for the ICO
+        balances[msg.sender] = 75000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 75000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "CryptoDuelCoin";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "CDC";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 12500000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
@@ -142,7 +142,4 @@ contract CryptoDuelCoin is StandardToken { //Update the contract name.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-    
-    
-    
 }
