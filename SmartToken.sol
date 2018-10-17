@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0xd33996d55fd5c5dabf5ec7eb24a94b57263de169
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x4319f9130848544afB97e92cb3Ea9fdb4b0A0B2a
 */
-pragma solidity ^0.4.18;
-
 /*
     Utilities & Common Modifiers
 */
@@ -10,18 +8,12 @@ contract Utils {
     /**
         constructor
     */
-    constructor() public {
+    function Utils() public {
     }
 
     // verifies that an amount is greater than zero
     modifier greaterThanZero(uint256 _amount) {
         require(_amount > 0);
-        _;
-    }
-
-    // verifies a is greater than b
-    modifier greaterThan(uint256 _a, uint256 _b) {
-        require(_a >= _b);
         _;
     }
 
@@ -81,16 +73,27 @@ contract Utils {
     }
 }
 
+
 /*
     Owned contract interface
 */
 contract IOwned {
     // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public pure returns (address) {}
+    function owner() public view returns (address) {}
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
 }
+
+
+
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
 
 /*
     Provides support and utilities for contract ownership
@@ -137,12 +140,7 @@ contract Owned is IOwned {
     }
 }
 
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
-}
+
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -177,22 +175,25 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
+
 /*
     ERC20 Standard Token interface
 */
 contract IERC20Token {
     // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public pure returns (string) {}
-    function symbol() public pure returns (string) {}
-    function decimals() public pure returns (uint8) {}
-    function totalSupply() public pure returns (uint256) {}
-    function balanceOf(address _owner) public pure returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public pure returns (uint256) { _owner; _spender; }
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
 
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
+
+
 
 /**
     ERC20 Standard Token implementation
@@ -294,6 +295,8 @@ contract ERC20Token is IERC20Token, Utils {
     }
 }
 
+
+
 /*
     Smart Token interface
 */
@@ -303,6 +306,7 @@ contract ISmartToken is IOwned, IERC20Token {
     function destroy(address _from, uint256 _amount) public;
 }
 
+
 /*
     Smart Token v0.3
 
@@ -310,10 +314,8 @@ contract ISmartToken is IOwned, IERC20Token {
 */
 contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
     string public version = '0.3';
-    bool public transfersEnabled = true;    // true if transfer/transferFrom are enabled, false if not
 
-    mapping (address => bool) isFrozen;
-    uint256 public constant MAX_SUPPLY = 10000000000000000000000000000; // ten billion
+    bool public transfersEnabled = true;    // true if transfer/transferFrom are enabled, false if not
 
     // triggered when a smart token is deployed - the _token address is defined for forward compatibility, in case we want to trigger the event from a factory
     event NewSmartToken(address _token);
@@ -325,12 +327,13 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
     /**
         @dev constructor
 
-        @param _name       token namez
+        @param _name       token name
         @param _symbol     token short symbol, minimum 1 character
+        @param _decimals   for display purposes only
     */
-    function SmartToken(string _name, string _symbol)
+    function SmartToken(string _name, string _symbol, uint8 _decimals)
         public
-        ERC20Token(_name, _symbol, 18)
+        ERC20Token(_name, _symbol, _decimals)
     {
         emit NewSmartToken(address(this));
     }
@@ -338,18 +341,6 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
     // allows execution only when transfers aren't disabled
     modifier transfersAllowed {
         assert(transfersEnabled);
-        _;
-    }
-
-    // check if the address is frozen
-    modifier notFrozen(address _address) {
-        assert(isFrozen[_address] == false);
-        _;
-    }
-
-    // check if the address is frozen
-    modifier notReachCap(uint256 _amount) {
-        assert(safeAdd(totalSupply, _amount) <= MAX_SUPPLY);
         _;
     }
 
@@ -364,17 +355,6 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
     }
 
     /**
-        @dev freeze/unfreeze account
-        can only be called by the contract owner
-
-        @param _address    user address to freeze
-        @param _freezeOrNot true means freeze, false means unfreeze
-    */
-    function freeze(address _address, bool _freezeOrNot) public ownerOnly {
-        isFrozen[_address] = _freezeOrNot;
-    }
-
-    /**
         @dev increases the token supply and sends the new tokens to an account
         can only be called by the contract owner
 
@@ -386,7 +366,6 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
         ownerOnly
         validAddress(_to)
         notThis(_to)
-        notReachCap(_amount)
     {
         totalSupply = safeAdd(totalSupply, _amount);
         balanceOf[_to] = safeAdd(balanceOf[_to], _amount);
@@ -403,8 +382,7 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
         @param _amount     amount to decrease the supply by
     */
     function destroy(address _from, uint256 _amount) public {
-        require(msg.sender == _from || msg.sender == owner);
-        // validate input
+        require(msg.sender == _from || msg.sender == owner); // validate input
 
         balanceOf[_from] = safeSub(balanceOf[_from], _amount);
         totalSupply = safeSub(totalSupply, _amount);
@@ -425,12 +403,7 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
 
         @return true if the transfer was successful, false if it wasn't
     */
-    function transfer(address _to, uint256 _value)
-        public
-        transfersAllowed
-        notFrozen(msg.sender)
-        returns (bool success)
-    {
+    function transfer(address _to, uint256 _value) public transfersAllowed returns (bool success) {
         assert(super.transfer(_to, _value));
         return true;
     }
@@ -446,12 +419,7 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
 
         @return true if the transfer was successful, false if it wasn't
     */
-    function transferFrom(address _from, address _to, uint256 _value)
-        public
-        transfersAllowed
-        notFrozen(_from)
-        returns (bool success)
-    {
+    function transferFrom(address _from, address _to, uint256 _value) public transfersAllowed returns (bool success) {
         assert(super.transferFrom(_from, _to, _value));
         return true;
     }
