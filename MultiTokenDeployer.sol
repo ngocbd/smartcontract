@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0xa8c39434c0d5e0fc4fcf8d243eed45219fd21137
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x270aac03fdee71f4a589890e51f070ee719b9fe5
 */
 pragma solidity ^0.4.24;
 
@@ -355,6 +355,18 @@ contract BasicMultiToken is StandardToken, DetailedERC20 {
         emit Transfer(address(0), _to, _amount);
     }
 
+    function allTokens() public view returns(ERC20[]) {
+        return tokens;
+    }
+
+    function allBalances() public view returns(uint256[]) {
+        uint256[] memory balances = new uint256[](tokens.length);
+        for (uint i = 0; i < tokens.length; i++) {
+            balances[i] = tokens[i].balanceOf(this);
+        }
+        return balances;
+    }
+
 }
 
 // File: contracts/ERC228.sol
@@ -440,6 +452,26 @@ contract MultiToken is BasicMultiToken, ERC228 {
         emit Change(_fromToken, _toToken, msg.sender, _amount, returnAmount);
     }
 
+    function allWeights() public view returns(uint256[]) {
+        uint256[] memory result = new uint256[](tokens.length);
+        for (uint i = 0; i < tokens.length; i++) {
+            result[i] = weights[tokens[i]];
+        }
+        return result;
+    }
+
+}
+
+// File: contracts/FeeMultiToken.sol
+
+contract FeeMultiToken is MultiToken {
+    function init(ERC20[] _tokens, uint256[] _weights, string _name, string _symbol, uint8 _decimals) public {
+        super.init(_tokens, _weights, _name, _symbol, 18);
+    }
+
+    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns(uint256 returnAmount) {
+        returnAmount = super.getReturn(_fromToken, _toToken, _amount).mul(998).div(1000); // 0.2% exchange fee
+    }
 }
 
 // File: contracts/registry/IDeployer.sol
@@ -459,7 +491,7 @@ contract MultiTokenDeployer is IDeployer {
             (data[0] == 0x18 && data[1] == 0x2a && data[2] == 0x54 && data[3] == 0x15)
         );
 
-        mtkn = new MultiToken();
+        mtkn = new FeeMultiToken();
         require(mtkn.call(data));
     }
 }
