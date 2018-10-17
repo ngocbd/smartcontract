@@ -1,252 +1,114 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NGToken at 0x8505185d59ca2b1381a727c3429098c62b18e71a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NGToken at 0xbc485332f19fda29c854b605476435abd39eb6ef
 */
-pragma solidity ^0.4.18;
- 
-interface ERC20 {
-	//ERC-20 Token Standard https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-	
-	function name() public view returns (string);
-	function symbol() public view returns (string);
-	function decimals() public view returns (uint8);
-	function totalSupply() public view returns (uint256);
-	function balanceOf(address _owner) public view returns (uint256);
-	function transfer(address _to, uint256 _value) public returns (bool success);
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-	function approve(address _spender, uint256 _value) public returns (bool success);
-	function allowance(address _owner, address _spender) public view returns (uint256);
-	
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
+pragma solidity ^0.4.11;
 
-interface TokenRecipient { 
-	function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; 
-}
+contract NGToken {
 
-interface ERC223Receiver {
-    function tokenFallback(address _from, uint256 _value, bytes _data) public;
-}
+    function NGToken() {}
+    
+    address public niceguy1 = 0x589A1E14208433647863c63fE2C736Ce930B956b;
+    address public niceguy2 = 0x583f354B6Fff4b11b399Fad8b3C2a73C16dF02e2;
+    address public niceguy3 = 0x6609867F516A15273678d268460B864D882156b6;
+    address public niceguy4 = 0xA4CA81EcE0d3230c6f8CCD0ad94f5a5393f76Af8;
+    address public owner = msg.sender;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalContribution = 0;
+    uint256 public totalBonusTokensIssued = 0;
+    uint256 public totalSupply = 0;
+    bool public purchasingAllowed = true;
 
-contract ERC223 is ERC20 {
-	//ERC223 token standard https://github.com/Dexaran/ERC223-token-standard
-	
-	function transfer(address _to, uint256 _value, bytes _data) public returns (bool success);
-	function transfer(address _to, uint256 _value, bytes _data, string _customFallback) public returns (bool success);
-	
-	event Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
-}
+    function name() constant returns (string) { return "Nice Guy Token"; }
+    function symbol() constant returns (string) { return "NGT"; }
+    function decimals() constant returns (uint256) { return 18; }
+    
+    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
+    
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (2 * 32) + 4) { throw; }
 
-contract NGToken is ERC223 {
-	string constant private NAME 			= "NEO Genesis Token";
-	string constant private SYMBOL	 		= "NGT";
-	uint8 constant private DECIMALS 		= 18;
-	uint256 constant private INITIAL_SUPPLY	= 20000000000 * (10 ** uint256(DECIMALS));
-	uint256 private totalBurned				= 0;
-	mapping(address => uint256) private balances;
-	mapping(address => mapping(address => uint256)) private allowed;
-	
-	function NGToken() public {
-	  balances[msg.sender] = INITIAL_SUPPLY;
-	}
-	
-	//ERC20
-	function name() public view returns (string) {
-		return NAME;
-	}
-	
-	function symbol() public view returns (string) {
-		return SYMBOL;
-	}
-	
-	function decimals() public view returns (uint8) {
-		return DECIMALS;
-	}
-	
-	function totalSupply() public view returns (uint256) {
-		return INITIAL_SUPPLY - totalBurned;
-	}
+        if (_value == 0) { return false; }
 
-	function balanceOf(address _owner) public view returns (uint256) {
-		return balances[_owner];
-	}
-	
-	function transfer(address _to, uint256 _value) public returns (bool success) {
-		if (isContract(_to)) {
-			bytes memory empty;
-			return transferToContract(_to, _value, empty);
-		} else {
-			require(_to != address(0x0));
-			require(balances[msg.sender] >= _value);
-			balances[msg.sender] -= _value;
-			balances[_to] += _value;
-			Transfer(msg.sender, _to, _value);
-			// Transfer(msg.sender, _to, _value, _data);
-		}
-		return true;
-	}
+        uint256 fromBalance = balances[msg.sender];
 
-	function multipleTransfer(address[] _to, uint256 _value) public returns (bool success) {
-		require(_value * _to.length > 0);
-		require(balances[msg.sender] >= _value * _to.length);
-		balances[msg.sender] -= _value * _to.length;
-		for (uint256 i = 0; i < _to.length; ++i) {
-		 	balances[_to[i]] += _value;
-		 	Transfer(msg.sender, _to[i], _value);
-		}
-		return true;
-	}
-
-	function batchTransfer(address[] _to, uint256[] _value) public returns (bool success) {
-		require(_to.length > 0);
-		require(_value.length > 0);
-		require(_to.length == _value.length);
-		for (uint256 i = 0; i < _to.length; ++i) {
-			address to = _to[i];
-			uint256 value = _value[i];
-			require(balances[msg.sender] >= value);
-			balances[msg.sender] -= value;
-		 	balances[to] += value;
-		 	Transfer(msg.sender, to, value);
-		}
-		return true;
-	}
-
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-		require(_to != address(0x0));
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_from] -= _value;
-        balances[_to] += _value;
-		allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-		bytes memory empty;
-		Transfer(_from, _to, _value, empty);
-        return true;
-	}
-	
-	function approve(address _spender, uint256 _value) public returns (bool success) {
-		//https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/
-		//force to 0 before calling "approve" again
-		require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-		
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-	}
-	
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        TokenRecipient spender = TokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+        
+        if (sufficientFunds && !overflowed) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            
+            Transfer(msg.sender, _to, _value);
             return true;
+        } else { return false; }
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
+
+        bool sufficientFunds = fromBalance >= _value;
+        bool sufficientAllowance = allowance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            
+            allowed[_from][msg.sender] -= _value;
+            
+            Transfer(_from, _to, _value);
+            return true;
+        } else { 
+            return false; 
         }
-		return false;
     }
-
-	function increaseApproval(address _spender, uint256 _addValue) public returns (bool) {
-		allowed[msg.sender][_spender] += _addValue;
-		Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-		return true;
-	}
-
-	function decreaseApproval(address _spender, uint256 _subValue) public returns (bool) {
-		if (_subValue > allowed[msg.sender][_spender]) {
-		  allowed[msg.sender][_spender] = 0;
-		} else {
-		  allowed[msg.sender][_spender] -= _subValue;
-		}
-		Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-		return true;
-	}	
-	
-	function allowance(address _owner, address _spender) public view returns (uint256) {
-		return allowed[_owner][_spender];
-	}
-	
-	//ERC233
-	function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
-		if (isContract(_to)) {
-			return transferToContract(_to, _value, _data);
-		} else {
-			return transferToAddress(_to, _value, _data);
-		}
-	}
-
-	function transfer(address _to, uint256 _value, bytes _data, string _customFallback) public returns (bool success) {
-		if (isContract(_to)) {
-			require(_to != address(0x0));
-			require(balances[msg.sender] >= _value);
-			balances[msg.sender] -= _value;
-			balances[_to] += _value;
-			assert(_to.call.value(0)(bytes4(keccak256(_customFallback)), msg.sender, _value, _data));
-			Transfer(msg.sender, _to, _value);
-			Transfer(msg.sender, _to, _value, _data);
-			return true;
-		} else {
-			return transferToAddress(_to, _value, _data);
-		}
-	}
-
-    function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
-		require(_to != address(0x0));
-		require(balances[msg.sender] >= _value);
-		balances[msg.sender] -= _value;
-		balances[_to] += _value;
-		Transfer(msg.sender, _to, _value);
-		Transfer(msg.sender, _to, _value, _data);
-		return true;
-    }
-
-    function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
-		require(_to != address(0x0));
-		require(balances[msg.sender] >= _value);
-		balances[msg.sender] -= _value;
-		balances[_to] += _value;
-		ERC223Receiver receiver = ERC223Receiver(_to);
-		receiver.tokenFallback(msg.sender, _value, _data);
-        Transfer(msg.sender, _to, _value);
-        Transfer(msg.sender, _to, _value, _data);
+    
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;        
+        Approval(msg.sender, _spender, _value);
         return true;
     }
-
-	function isContract(address _addr) private view returns (bool) {
-        // if (_addr == address(0x0))
-		// 	return false;
-        uint256 length;
-        assembly {
-            length := extcodesize(_addr)
-        }
-		return (length > 0);
-    }
-	
-	//Burn
-    event Burn(address indexed burner, uint256 value, uint256 currentSupply, bytes data);
-
-    function burn(uint256 _value, bytes _data) public returns (bool success) {
-		require(balances[msg.sender] >= _value);
-		balances[msg.sender] -= _value;
-		totalBurned += _value;
-		Burn(msg.sender, _value, totalSupply(), _data);
-		return true;
+    
+    function allowance(address _owner, address _spender) constant returns (uint256) {
+        return allowed[_owner][_spender];
     }
 
-    function burnFrom(address _from, uint256 _value, bytes _data) public returns (bool success) {
-		if (transferFrom(_from, msg.sender, _value)) {
-			return burn(_value, _data);
-		}
-        return false;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function enablePurchasing() {
+        if (msg.sender != owner) { throw; }
+
+        purchasingAllowed = true;
     }
 
-	function initialSupply() public pure returns (uint256) {
-		return INITIAL_SUPPLY;
-	}
+    function disablePurchasing() {
+        if (msg.sender != owner) { throw; }
 
-	function currentBurned() public view returns (uint256) {
-		return totalBurned;
-	}
+        purchasingAllowed = false;
+    }
 
-	//Stop
-	function () public {
-        require(false);
+    function() payable {
+        if (!purchasingAllowed) { throw; }
+        
+        if (msg.value == 0) { return; }
+
+        niceguy4.transfer(msg.value/4.0);
+        niceguy3.transfer(msg.value/4.0);
+        niceguy2.transfer(msg.value/4.0);
+        niceguy1.transfer(msg.value/4.0);
+
+        totalContribution += msg.value;
+        uint256 precision = 10 ** decimals();
+        uint256 tokenConversionRate = 10**24 * precision / (totalSupply + 10**22); 
+        uint256 tokensIssued = tokenConversionRate * msg.value / precision;
+        totalSupply += tokensIssued;
+        balances[msg.sender] += tokensIssued;
+        Transfer(address(this), msg.sender, tokensIssued);
     }
 }
