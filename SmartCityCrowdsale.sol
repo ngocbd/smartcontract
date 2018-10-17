@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityCrowdsale at 0xa5b1685b23db36859611cac03e0c68daf0e3c0a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityCrowdsale at 0x3dc3a98f275c05fd7abea52eafa3df881ce64dfc
 */
 pragma solidity ^0.4.18;
 
@@ -24,7 +24,7 @@ contract SmartCityCrowdsale {
 	
 	address public owner; // Owner address
 
-	mapping (address => bool) whitelist; // useers whithelist
+	mapping (address => bool) whitelist; // users whithelist
 
     mapping(address => uint256) public balances; // the array of users along with amounts invested
 	
