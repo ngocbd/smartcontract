@@ -1,7 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrProxy at 0xA63c2427E3d77d207027bE63DAA21EFB7112bc34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrProxy at 0x66388ec3dd48c9a9d26dd501e6c8ba27aee420f0
 */
 pragma solidity ^0.4.24;
+
+/**
+
+https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com
+
+                                                                                                        
+FFFFFFFFFFFFFFFFFFFFFF                                           tttt            iiii                   
+F::::::::::::::::::::F                                        ttt:::t           i::::i                  
+F::::::::::::::::::::F                                        t:::::t            iiii                   
+FF::::::FFFFFFFFF::::F                                        t:::::t                                   
+  F:::::F       FFFFFFooooooooooo   rrrrr   rrrrrrrrr   ttttttt:::::ttttttt    iiiiiii     ssssssssss   
+  F:::::F           oo:::::::::::oo r::::rrr:::::::::r  t:::::::::::::::::t    i:::::i   ss::::::::::s  
+  F::::::FFFFFFFFFFo:::::::::::::::or:::::::::::::::::r t:::::::::::::::::t     i::::i ss:::::::::::::s 
+  F:::::::::::::::Fo:::::ooooo:::::orr::::::rrrrr::::::rtttttt:::::::tttttt     i::::i s::::::ssss:::::s
+  F:::::::::::::::Fo::::o     o::::o r:::::r     r:::::r      t:::::t           i::::i  s:::::s  ssssss 
+  F::::::FFFFFFFFFFo::::o     o::::o r:::::r     rrrrrrr      t:::::t           i::::i    s::::::s      
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t           i::::i       s::::::s   
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t    tttttt i::::i ssssss   s:::::s 
+FF:::::::FF        o:::::ooooo:::::o r:::::r                  t::::::tttt:::::ti::::::is:::::ssss::::::s
+F::::::::FF        o:::::::::::::::o r:::::r                  tt::::::::::::::ti::::::is::::::::::::::s 
+F::::::::FF         oo:::::::::::oo  r:::::r                    tt:::::::::::tti::::::i s:::::::::::ss  
+FFFFFFFFFFF           ooooooooooo    rrrrrrr                      ttttttttttt  iiiiiiii  sssssssssss    
+                                                                                                        
+Discord:   https://discord.gg/gDtTX62
+
 
 /** Proxy contract to buy tokens on Zethr,
  *  because we forgot to add the onTokenBuy event to Zethr.
@@ -9,7 +34,7 @@ pragma solidity ^0.4.24;
  *  can properly track and display Zethr token buys.
 **/
 contract ZethrProxy {
-    ZethrInterface zethr = ZethrInterface(address(0x145bf25DC666239030934b28D34fD0dB7Cf1b583));
+    ZethrInterface zethr = ZethrInterface(address(0x573e869cA9355299cDdb3a912D444F137ded397c));
     address owner = msg.sender;
     
     event onTokenPurchase(
@@ -18,7 +43,6 @@ contract ZethrProxy {
         uint tokensMinted,
         address indexed referredBy
     );
-
     
     function buyTokensWithProperEvent(address _referredBy, uint8 divChoice) public payable {
         // Query token balance before & after to see how much we bought
