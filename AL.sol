@@ -1,9 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AL at 0xc6DA76380aE0cc99de8c813098b36B52c29F48Fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AL at 0x2fa9441B5ee69C024d54845fBbd756241485F492
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
+library SafeMath {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    if (_a == 0) {
+      return 0;
+    }
+    uint256 c = _a * _b;
+    require(c / _a == _b);
+    return c;
+  }
+
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    require(_b > 0); 
+    uint256 c = _a / _b;
+    return c;
+  }
+
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    require(_b <= _a);
+    uint256 c = _a - _b;
+    return c;
+  }
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    uint256 c = _a + _b;
+    require(c >= _a);
+    return c;
+  }
+
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
+}
+
 
 contract owned {
     address public owner;
@@ -62,9 +97,9 @@ contract TokenERC20 {
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);
         // Add the same to the recipient
-        balanceOf[_to] += _value;
+        balanceOf[_to] = SafeMath.add(balanceOf[_to],_value);
         emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
@@ -76,13 +111,14 @@ contract TokenERC20 {
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = SafeMath.sub(allowance[_from][msg.sender],_value);
         _transfer(_from, _to, _value);
         return true;
     }
-
+    
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
+        require((_value == 0) || (allowance[msg.sender][_spender] == 0));
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -99,19 +135,19 @@ contract TokenERC20 {
 
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        balanceOf[msg.sender] = SafeMath.sub(balanceOf[msg.sender],_value);            // Subtract from the sender
+        totalSupply = SafeMath.sub(totalSupply,_value);                                // Updates totalSupply
         emit Burn(msg.sender, _value);
         return true;
     }
 
 
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
+        require(balanceOf[_from] >= _value);                                                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);                                    // Check allowance
+        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);                           // Subtract from the targeted balance
+        allowance[_from][msg.sender] = SafeMath.sub(allowance[_from][msg.sender],_value);   // Subtract from the sender's allowance
+        totalSupply = SafeMath.sub(totalSupply,_value);                                     // Update totalSupply
         emit Burn(_from, _value);
         return true;
     }
@@ -134,19 +170,19 @@ contract AL is owned, TokenERC20 {
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-        require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        require (_to != 0x0);                                              // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value);                              // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]);                // Check for overflows
+        require(!frozenAccount[_from]);                                    // Check if sender is frozen
+        require(!frozenAccount[_to]);                                      // Check if recipient is frozen
+        balanceOf[_from] = SafeMath.sub(balanceOf[_from],_value);          // Subtract from the sender
+        balanceOf[_to] = SafeMath.add(balanceOf[_to],_value);              // Add the same to the recipient
         emit Transfer(_from, _to, _value);
     }
 
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
+        balanceOf[target] = SafeMath.add(balanceOf[target],mintedAmount);
+        totalSupply = SafeMath.add(totalSupply,mintedAmount); 
         emit Transfer(0, this, mintedAmount);
         emit Transfer(this, target, mintedAmount);
     }
