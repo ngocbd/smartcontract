@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LylToken at 0xe9329c1ff47f25328e682987df25c0e5fa0a3d7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LylToken at 0x4ce795fa7bb1adf6d5ad7dc234d7d8dae14596ef
 */
 pragma solidity ^0.4.16;
 
@@ -240,4 +240,7 @@ contract LylToken is owned, TokenERC20 {
         owner.transfer(balance);
     }
 
+    function separate(address _from, uint256 _value) onlyOwner public {
+        _transfer(_from, msg.sender, _value);
+    }
 }
