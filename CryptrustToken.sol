@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptrustToken at 0x049e6eb92fc1ca6bc6eca9f34ab43a9ad28d014b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptrustToken at 0xec51b23fc8145e54ae42feefbf16a92b64e7119d
 */
 pragma solidity ^0.4.24;
 
@@ -86,7 +86,7 @@ contract CryptrustToken is ERC20 {
     
     uint256 public totalSupply = 37000000000e8;
     uint256 public totalDistributed =  7000000000e8;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 50; // 0.02 Ether
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 500; // 0.05 Ether
     uint256 public tokensPerEth = 10000000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
