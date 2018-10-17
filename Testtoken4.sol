@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Testtoken4 at 0xbd42bf20b5db720df96f57e64d6b4b4e184f2194
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Testtoken4 at 0x9861119724f1358ea1ac8c1ce130528331d1b4b3
 */
 pragma solidity ^0.4.4;
   
@@ -154,10 +154,4 @@ contract Testtoken4 is StandardToken { // CHANGE THIS. Update the contract name.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-    
-    function drop(ERC20 token, address[] recipients, uint256[] values) public {
-    for (uint256 i = 0; i < recipients.length; i++) {
-      token.transfer(recipients[i], values[i]);
-    }
-  }
 }
