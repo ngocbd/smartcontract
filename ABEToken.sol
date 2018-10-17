@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABEToken at 0x64c8dd01056ab8c1c8e1b704eca60d9aa34cfb54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABEToken at 0x3ab4a815876d035f79554fd433ec937edaa3081c
 */
 pragma solidity ^0.4.24;
 
@@ -16,7 +16,7 @@ contract ABEToken {
     event Burn(address indexed from, uint256 value);
 
     constructor() public {
-        totalSupply = 50000000 * 10 ** uint256(decimals);
+        totalSupply = 500000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
         name = "ABE TOKEN";
         symbol = "ABE";
