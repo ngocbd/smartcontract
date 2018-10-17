@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x4f29f33530cfa4a9f10e1a83ca4063ce96df7149
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x4183e3813dc897069144d306fc8159fb30176a76
 */
 pragma solidity ^0.4.24;
 /*
@@ -121,12 +121,7 @@ contract PlayerBook {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
-
-    modifier onlyDevs() 
-    {
-        require(admin == msg.sender, "msg sender is not a dev");
-        _;
-    }
+   
     
     modifier isRegisteredGame()
     {
@@ -581,7 +576,6 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
@@ -598,7 +592,6 @@ contract PlayerBook {
     }
     
     function setRegistrationFee(uint256 _fee)
-        onlyDevs()
         public
     {
       registrationFee_ = _fee;
