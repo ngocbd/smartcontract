@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomContract at 0xb3fb0e8a58ada850dad5ee8e084352fb014b381f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomContract at 0x29a63b622ad9b77563932d0d5d51177e4f7c3c3c
 */
 pragma solidity ^0.4.18;
 
@@ -112,7 +112,7 @@ contract CustomContract is Ownable {
     }
     
     function() public payable {
-        require(msg.value == 1e15);
+        require(msg.value == 1e16);
         buyTokens(msg.sender);
     }
     
