@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lescovex_ISC at 0x3b0c374f7520749c7efbf8b0930905d6fe474c0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lescovex_ISC at 0xdc33d6c4997ed9c6f07644eca9c0ba72a6882052
 */
 pragma solidity ^0.4.24;
 
 /*
-    Copyright 2018, Vicent Nos & Enrique Santos
+    Copyright 2018, Vicent Nos, Enrique Santos & Mireia Puig
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,9 +80,7 @@ contract Ownable {
 //////////////////////////////////////////////////////////////
 
 contract LescovexERC20 is Ownable {
-
     using SafeMath for uint256;
-
 
     mapping (address => uint256) public balances;
 
@@ -96,11 +94,10 @@ contract LescovexERC20 is Ownable {
         uint256 length;
     }
 
-
-
     /* Public variables for the ERC20 token */
     string public constant standard = "ERC20 Lescovex ISC Income Smart Contract";
     uint8 public constant decimals = 8; // hardcoded to be a constant
+    uint256 public holdMax = 100;
     uint256 public totalSupply;
     uint256 public holdTime;
     string public name;
@@ -115,26 +112,55 @@ contract LescovexERC20 is Ownable {
     }
 
     function holdedOf(address _owner) public view returns (uint256) {
-        uint i = 0;
-        uint256 tokenAmount = 0;
-        uint256 len = holded[_owner].length;
-        uint256 maxHoldStart = block.number - holdTime;
+        // Returns the valid holded amount of _owner (see function hold),
+        // where valid means that the amount is holded more than requiredTime
+        uint256 requiredTime = block.timestamp - holdTime;
 
-        while (i < len && holded[_owner].time[i] < maxHoldStart){
-               tokenAmount += holded[_owner].amount[i];
-               i++;
+        // Check of the initial values for the search loop.
+        uint256 iValid = 0;                         // low index in test range
+        uint256 iNotValid = holded[_owner].length;  // high index in test range
+        if (iNotValid == 0                          // empty array of holds
+        || holded[_owner].time[iValid] >= requiredTime) { // not any valid holds
+            return 0;
         }
-        return tokenAmount;
+
+        // Binary search of the highest index with a valid hold time
+        uint256 i = iNotValid / 2;  // index of pivot element to test
+        while (i > iValid) {  // while there is a higher one valid
+            if (holded[_owner].time[i] < requiredTime) {
+                iValid = i;   // valid hold
+            } else {
+                iNotValid = i; // not valid hold
+            }
+            i = (iNotValid + iValid) / 2;
+        }
+        return holded[_owner].amount[iValid];
     }
 
     function hold(address _to, uint256 _value) internal {
-        holded[_to].amount.push(_value);
-        holded[_to].time.push(block.number);
+        assert(holded[_to].length < holdMax);
+        // holded[_owner].amount[] is the accumulated sum of holded amounts,
+        // sorted from oldest to newest.
+        uint256 len = holded[_to].length;
+        uint256 accumulatedValue = (len == 0 ) ?
+            _value :
+            _value + holded[_to].amount[len - 1];
+
+        // records the accumulated holded amount
+        holded[_to].amount.push(accumulatedValue);
+        holded[_to].time.push(block.timestamp);
         holded[_to].length++;
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function setHoldTime(uint256 _value) external onlyOwner{
+      holdTime = _value;
+    }
 
+    function setHoldMax(uint256 _value) external onlyOwner{
+      holdMax = _value;
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
         // SafeMath.sub will throw if there is not enough balance.
@@ -150,9 +176,6 @@ contract LescovexERC20 is Ownable {
         return true;
     }
 
-
-
-
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
         require(_value <= balances[_from]);
@@ -166,7 +189,6 @@ contract LescovexERC20 is Ownable {
         hold(_to,_value);
 
         balances[_to] = balances[_to].add(_value);
-
 
         emit Transfer(_from, _to, _value);
         return true;
@@ -243,10 +265,6 @@ contract Lescovex_ISC is LescovexERC20 {
 
     }
 
-    function () public {
-
-    }
-
     function deposit() external payable onlyOwner returns(bool success) {
         contractBalance = contractAddr.balance;
         //executes event to reflect the changes
@@ -256,11 +274,9 @@ contract Lescovex_ISC is LescovexERC20 {
     }
 
     function withdrawReward() external {
-    
         uint256 ethAmount = (holdedOf(msg.sender) * contractBalance) / totalSupply;
 
         require(ethAmount > 0);
-
 
         //executes event to register the changes
         emit LogWithdrawal(msg.sender, ethAmount);
