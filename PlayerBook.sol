@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x0433c529bb7fa84f18dfe49f0234c6815bd441fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xa392c209ba2ee375cfed30d5f65663f71005f457
 */
 pragma solidity ^0.4.24;
 /*
@@ -35,16 +35,24 @@ interface PlayerBookReceiverInterface {
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
+contract F3Devents {
+	event onLTestStr
+	(
+		string log
+	);
+}
 
-contract PlayerBook {
+contract modularShort is F3Devents {}
+
+contract PlayerBook is modularShort {
     using NameFilter for string;
     using SafeMath for uint256;
 
     address private admin = msg.sender;
-//==============================================================================
-//     _| _ _|_ _    _ _ _|_    _   .
-//    (_|(_| | (_|  _\(/_ | |_||_)  .
-//=============================|================================================
+    //==============================================================================
+    //     _| _ _|_ _    _ _ _|_    _   .
+    //    (_|(_| | (_|  _\(/_ | |_||_)  .
+    //=============================|================================================
     uint256 public registrationFee_ = 10 finney;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
@@ -62,54 +70,54 @@ contract PlayerBook {
         uint256 laff;
         uint256 names;
     }
-//==============================================================================
-//     _ _  _  __|_ _    __|_ _  _  .
-//    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
-//==============================================================================
+    //==============================================================================
+    //     _ _  _  __|_ _    __|_ _  _  .
+    //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
+    //==============================================================================
     constructor()
-        public
+    public
     {
         // premine the dev names (sorry not sorry)
-            // No keys are purchased with this method, it's simply locking our addresses,
-            // PID's and names for referral codes.
-        plyr_[1].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
+        // No keys are purchased with this method, it's simply locking our addresses,
+        // PID's and names for referral codes.
+        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 1;
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
 
-        plyr_[2].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
         plyr_[2].name = "mantso";
         plyr_[2].names = 1;
-        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 2;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
         pIDxName_["mantso"] = 2;
         plyrNames_[2]["mantso"] = true;
         plyrNameList_[2][1] = "mantso";
 
-        plyr_[3].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
         plyr_[3].name = "sumpunk";
         plyr_[3].names = 1;
-        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 3;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
         pIDxName_["sumpunk"] = 3;
         plyrNames_[3]["sumpunk"] = true;
         plyrNameList_[3][1] = "sumpunk";
 
-        plyr_[4].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
+        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         plyr_[4].name = "inventor";
         plyr_[4].names = 1;
-        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 4;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
         pIDxName_["inventor"] = 4;
         plyrNames_[4]["inventor"] = true;
         plyrNameList_[4][1] = "inventor";
 
         pID_ = 4;
     }
-//==============================================================================
-//     _ _  _  _|. |`. _  _ _  .
-//    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
-//==============================================================================
+    //==============================================================================
+    //     _ _  _  _|. |`. _  _ _  .
+    //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
+    //==============================================================================
     /**
      * @dev prevents contracts from interacting with fomo3d
      */
@@ -122,21 +130,16 @@ contract PlayerBook {
         _;
     }
 
-    modifier onlyDevs()
-    {
-        require(admin == msg.sender, "msg sender is not a dev");
-        _;
-    }
 
     modifier isRegisteredGame()
     {
         require(gameIDs_[msg.sender] != 0);
         _;
     }
-//==============================================================================
-//     _    _  _ _|_ _  .
-//    (/_\/(/_| | | _\  .
-//==============================================================================
+    //==============================================================================
+    //     _    _  _ _|_ _  .
+    //    (/_\/(/_| | | _\  .
+    //==============================================================================
     // fired whenever a player registers a name
     event onNewName
     (
@@ -150,14 +153,14 @@ contract PlayerBook {
         uint256 amountPaid,
         uint256 timeStamp
     );
-//==============================================================================
-//     _  _ _|__|_ _  _ _  .
-//    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
-//=====_|=======================================================================
+    //==============================================================================
+    //     _  _ _|__|_ _  _ _  .
+    //    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
+    //=====_|=======================================================================
     function checkIfNameValid(string _nameStr)
-        public
-        view
-        returns(bool)
+    public
+    view
+    returns(bool)
     {
         bytes32 _name = _nameStr.nameFilter();
         if (pIDxName_[_name] == 0)
@@ -165,10 +168,10 @@ contract PlayerBook {
         else
             return (false);
     }
-//==============================================================================
-//     _    |_ |. _   |`    _  __|_. _  _  _  .
-//    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
-//====|=========================================================================
+    //==============================================================================
+    //     _    |_ |. _   |`    _  __|_. _  _  _  .
+    //    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
+    //====|=========================================================================
     /**
      * @dev registers a name.  UI will always display the last name you registered.
      * but you will still own all previously registered names to use as affiliate
@@ -192,9 +195,9 @@ contract PlayerBook {
      * (this might cost a lot of gas)
      */
     function registerNameXID(string _nameString, uint256 _affCode, bool _all)
-        isHuman()
-        public
-        payable
+    isHuman()
+    public
+    payable
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -227,9 +230,9 @@ contract PlayerBook {
     }
 
     function registerNameXaddr(string _nameString, address _affCode, bool _all)
-        isHuman()
-        public
-        payable
+    isHuman()
+    public
+    payable
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -267,9 +270,9 @@ contract PlayerBook {
     }
 
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
-        isHuman()
-        public
-        payable
+    isHuman()
+    public
+    payable
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -315,8 +318,8 @@ contract PlayerBook {
      * @param _gameID game id
      */
     function addMeToGame(uint256 _gameID)
-        isHuman()
-        public
+    isHuman()
+    public
     {
         require(_gameID <= gID_, "silly player, that game doesn't exist yet");
         address _addr = msg.sender;
@@ -338,8 +341,8 @@ contract PlayerBook {
      * -functionhash- 0x0c6940ea
      */
     function addMeToAllGames()
-        isHuman()
-        public
+    isHuman()
+    public
     {
         address _addr = msg.sender;
         uint256 _pID = pIDxAddr_[_addr];
@@ -365,8 +368,8 @@ contract PlayerBook {
      * @param _nameString the name you want to use
      */
     function useMyOldName(string _nameString)
-        isHuman()
-        public
+    isHuman()
+    public
     {
         // filter name, and get pID
         bytes32 _name = _nameString.nameFilter();
@@ -379,12 +382,12 @@ contract PlayerBook {
         plyr_[_pID].name = _name;
     }
 
-//==============================================================================
-//     _ _  _ _   | _  _ . _  .
-//    (_(_)| (/_  |(_)(_||(_  .
-//=====================_|=======================================================
+    //==============================================================================
+    //     _ _  _ _   | _  _ . _  .
+    //    (_(_)| (/_  |(_)(_||(_  .
+    //=====================_|=======================================================
     function registerNameCore(uint256 _pID, address _addr, uint256 _affID, bytes32 _name, bool _isNewPlayer, bool _all)
-        private
+    private
     {
         // if names already has been used, require that current msg sender owns the name
         if (pIDxName_[_name] != 0)
@@ -411,13 +414,13 @@ contract PlayerBook {
         // fire event
         emit onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
     }
-//==============================================================================
-//    _|_ _  _ | _  .
-//     | (_)(_)|_\  .
-//==============================================================================
+    //==============================================================================
+    //    _|_ _  _ | _  .
+    //     | (_)(_)|_\  .
+    //==============================================================================
     function determinePID(address _addr)
-        private
-        returns (bool)
+    private
+    returns (bool)
     {
         if (pIDxAddr_[_addr] == 0)
         {
@@ -431,51 +434,51 @@ contract PlayerBook {
             return (false);
         }
     }
-//==============================================================================
-//   _   _|_ _  _ _  _ |   _ _ || _  .
-//  (/_>< | (/_| | |(_||  (_(_|||_\  .
-//==============================================================================
+    //==============================================================================
+    //   _   _|_ _  _ _  _ |   _ _ || _  .
+    //  (/_>< | (/_| | |(_||  (_(_|||_\  .
+    //==============================================================================
     function getPlayerID(address _addr)
-        isRegisteredGame()
-        external
-        returns (uint256)
+    isRegisteredGame()
+    external
+    returns (uint256)
     {
         determinePID(_addr);
         return (pIDxAddr_[_addr]);
     }
     function getPlayerName(uint256 _pID)
-        external
-        view
-        returns (bytes32)
+    external
+    view
+    returns (bytes32)
     {
         return (plyr_[_pID].name);
     }
     function getPlayerLAff(uint256 _pID)
-        external
-        view
-        returns (uint256)
+    external
+    view
+    returns (uint256)
     {
         return (plyr_[_pID].laff);
     }
     function getPlayerAddr(uint256 _pID)
-        external
-        view
-        returns (address)
+    external
+    view
+    returns (address)
     {
         return (plyr_[_pID].addr);
     }
     function getNameFee()
-        external
-        view
-        returns (uint256)
+    external
+    view
+    returns (uint256)
     {
         return(registrationFee_);
     }
     function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
+    isRegisteredGame()
+    external
+    payable
+    returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -504,10 +507,10 @@ contract PlayerBook {
         return(_isNewPlayer, _affID);
     }
     function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
+    isRegisteredGame()
+    external
+    payable
+    returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -540,10 +543,10 @@ contract PlayerBook {
         return(_isNewPlayer, _affID);
     }
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
+    isRegisteredGame()
+    external
+    payable
+    returns(bool, uint256)
     {
         // make sure name fees paid
         require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
@@ -576,32 +579,30 @@ contract PlayerBook {
         return(_isNewPlayer, _affID);
     }
 
-//==============================================================================
-//   _ _ _|_    _   .
-//  _\(/_ | |_||_)  .
-//=============|================================================================
+    //==============================================================================
+    //   _ _ _|_    _   .
+    //  _\(/_ | |_||_)  .
+    //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyDevs()
-        public
+    public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
-            gID_++;
-            bytes32 _name = _gameNameStr.nameFilter();
-            gameIDs_[_gameAddress] = gID_;
-            gameNames_[_gameAddress] = _name;
-            games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
+        gID_++;
+        bytes32 _name = _gameNameStr.nameFilter();
+        gameIDs_[_gameAddress] = gID_;
+        gameNames_[_gameAddress] = _name;
+        games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
 
-            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+        games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+        games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+        games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
 
     function setRegistrationFee(uint256 _fee)
-        onlyDevs()
-        public
+    public
     {
-      registrationFee_ = _fee;
+        registrationFee_ = _fee;
     }
 
 }
@@ -642,9 +643,9 @@ library NameFilter {
      * @return reprocessed string in bytes32 format
      */
     function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
+    internal
+    pure
+    returns(bytes32)
     {
         bytes memory _temp = bytes(_input);
         uint256 _length = _temp.length;
@@ -678,12 +679,12 @@ library NameFilter {
             } else {
                 require
                 (
-                    // require character is a space
+                // require character is a space
                     _temp[i] == 0x20 ||
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                // OR lowercase a-z
+                (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
+                // or 0-9
+                (_temp[i] > 0x2f && _temp[i] < 0x3a),
                     "string contains invalid characters"
                 );
                 // make sure theres not 2x spaces in a row
@@ -722,9 +723,9 @@ library SafeMath {
     * @dev Multiplies two numbers, throws on overflow.
     */
     function mul(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
+    internal
+    pure
+    returns (uint256 c)
     {
         if (a == 0) {
             return 0;
@@ -738,9 +739,9 @@ library SafeMath {
     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256)
+    internal
+    pure
+    returns (uint256)
     {
         require(b <= a, "SafeMath sub failed");
         return a - b;
@@ -750,9 +751,9 @@ library SafeMath {
     * @dev Adds two numbers, throws on overflow.
     */
     function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
+    internal
+    pure
+    returns (uint256 c)
     {
         c = a + b;
         require(c >= a, "SafeMath add failed");
@@ -763,9 +764,9 @@ library SafeMath {
      * @dev gives square root of given x.
      */
     function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y)
+    internal
+    pure
+    returns (uint256 y)
     {
         uint256 z = ((add(x,1)) / 2);
         y = x;
@@ -780,9 +781,9 @@ library SafeMath {
      * @dev gives square. multiplies x by x
      */
     function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
+    internal
+    pure
+    returns (uint256)
     {
         return (mul(x,x));
     }
@@ -791,9 +792,9 @@ library SafeMath {
      * @dev x to the power of y
      */
     function pwr(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
+    internal
+    pure
+    returns (uint256)
     {
         if (x==0)
             return (0);
