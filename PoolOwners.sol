@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x08ae17c53f3002985f67d952f92fa2f3d17581ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x430e87a95a421437ccaa0af644ac57e22914b07a
 */
 pragma solidity ^0.4.3;
 
@@ -23,19 +23,21 @@ contract Ownable {
     owner = msg.sender;
   }
 
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner, "Sender not authorised.");
     _;
   }
+
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
     emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -49,10 +51,10 @@ contract Ownable {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -60,16 +62,16 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract ERC677 is ERC20 {
-  function transferAndCall(address to, uint value, bytes data) public returns (bool success);
+    function transferAndCall(address to, uint value, bytes data) public returns (bool success);
 
-  event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
 }
 
 /**
@@ -102,48 +104,117 @@ library SafeMath {
   }
 }
 
+/**
+    @title ItMap, a solidity iterable map
+    @dev Credit to: https://gist.github.com/ethers/7e6d443818cbc9ad2c38efa7c0f363d1
+ */
+library itmap {
+    struct entry {
+        // Equal to the index of the key of this item in keys, plus 1.
+        uint keyIndex;
+        uint value;
+    }
+
+    struct itmap {
+        mapping(uint => entry) data;
+        uint[] keys;
+    }
+    
+    function insert(itmap storage self, uint key, uint value) internal returns (bool replaced) {
+        entry storage e = self.data[key];
+        e.value = value;
+        if (e.keyIndex > 0) {
+            return true;
+        } else {
+            e.keyIndex = ++self.keys.length;
+            self.keys[e.keyIndex - 1] = key;
+            return false;
+        }
+    }
+    
+    function remove(itmap storage self, uint key) internal returns (bool success) {
+        entry storage e = self.data[key];
+        if (e.keyIndex == 0)
+            return false;
+        
+        if (e.keyIndex < self.keys.length) {
+            // Move an existing element into the vacated key slot.
+            self.data[self.keys[self.keys.length - 1]].keyIndex = e.keyIndex;
+            self.keys[e.keyIndex - 1] = self.keys[self.keys.length - 1];
+            self.keys.length -= 1;
+            delete self.data[key];
+            return true;
+        }
+    }
+    
+    function contains(itmap storage self, uint key) internal view returns (bool exists) {
+        return self.data[key].keyIndex > 0;
+    }
+    
+    function size(itmap storage self) internal view returns (uint) {
+        return self.keys.length;
+    }
+    
+    function get(itmap storage self, uint key) internal view returns (uint) {
+        return self.data[key].value;
+    }
+    
+    function getKey(itmap storage self, uint idx) internal view returns (uint) {
+        return self.keys[idx];
+    }
+}
+
+/**
+    @title PoolOwners, the crowdsale contract for LinkPool ownership
+ */
 contract PoolOwners is Ownable {
 
-    mapping(uint64 => address)  private ownerAddresses;
-    mapping(address => bool)    private whitelist;
+    using SafeMath for uint256;
+    using itmap for itmap.itmap;
 
-    mapping(address => uint256) public ownerPercentages;
-    mapping(address => uint256) public ownerShareTokens;
+    struct Owner {
+        uint256 key;
+        uint256 percentage;
+        uint256 shareTokens;
+        mapping(address => uint256) balance;
+    }
+    mapping(address => Owner) public owners;
+
+    struct Distribution {
+        address token;
+        uint256 amount;
+        uint256 owners;
+        uint256 claimed;
+        mapping(address => bool) claimedAddresses;
+    }
+    mapping(uint256 => Distribution) public distributions;
+
     mapping(address => uint256) public tokenBalance;
+    mapping(address => uint256) public totalReturned;
 
-    mapping(address => mapping(address => uint256)) private balances;
+    mapping(address => bool) private whitelist;
 
-    uint64  public totalOwners = 0;
-    uint16  public distributionMinimum = 20;
+    itmap.itmap ownerMap;
+    
+    uint256 public totalContributed     = 0;
+    uint256 public totalOwners          = 0;
+    uint256 public totalDistributions   = 0;
+    bool    public distributionActive   = false;
+    uint256 public distributionMinimum  = 20 ether;
+    uint256 public precisionMinimum     = 0.04 ether;
+    bool    public locked               = false;
+    address public wallet;
 
-    bool   private contributionStarted = false;
-    bool   private distributionActive = false;
-
-    // Public Contribution Variables
-    uint256 private ethWei = 1000000000000000000; // 1 ether in wei
-    uint256 private valuation = ethWei * 4000; // 1 ether * 4000
-    uint256 private hardCap = ethWei * 1000; // 1 ether * 1000
-    address private wallet;
-    bool    private locked = false;
-
-    uint256 public totalContributed = 0;
-
-    // The contract hard-limit is 0.04 ETH due to the percentage precision, lowest % possible is 0.001%
-    // It's been set at 0.2 ETH to try and minimise the sheer number of contributors as that would up the distribution GAS cost
-    uint256 private minimumContribution = 200000000000000000; // 0.2 ETH
-
-    /**
-        Events
-     */
+    bool    private contributionStarted = false;
+    uint256 private valuation           = 4000 ether;
+    uint256 private hardCap             = 996.96 ether;
 
     event Contribution(address indexed sender, uint256 share, uint256 amount);
-    event TokenDistribution(address indexed token, uint256 amount);
+    event ClaimedTokens(address indexed owner, address indexed token, uint256 amount, uint256 claimedStakers, uint256 distributionId);
+    event TokenDistributionActive(address indexed token, uint256 amount, uint256 distributionId, uint256 amountOfOwners);
     event TokenWithdrawal(address indexed token, address indexed owner, uint256 amount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner, uint256 amount);
-
-    /**
-        Modifiers
-     */
+    event TokenDistributionComplete(address indexed token, uint256 amountOfOwners);
 
     modifier onlyWhitelisted() {
         require(whitelist[msg.sender]);
@@ -151,208 +222,293 @@ contract PoolOwners is Ownable {
     }
 
     /**
-        Contribution Methods
+        @dev Constructor set set the wallet initally
+        @param _wallet Address of the ETH wallet
      */
+    constructor(address _wallet) public {
+        require(_wallet != address(0));
+        wallet = _wallet;
+    }
 
-    // Fallback, redirects to contribute
-    function() public payable { contribute(msg.sender); }
+    /**
+        @dev Fallback function, redirects to contribution
+        @dev Transfers tokens to LP wallet address
+     */
+    function() public payable {
+        require(contributionStarted, "Contribution phase hasn't started");
+        require(whitelist[msg.sender], "You are not whitelisted");
+        contribute(msg.sender, msg.value); 
+        wallet.transfer(msg.value);
+    }
 
-    function contribute(address sender) internal {
-        // Make sure the shares aren't locked
-        require(!locked);
+    /**
+        @dev Manually set a contribution, used by owners to increase owners amounts
+        @param _sender The address of the sender to set the contribution for you
+        @param _amount The amount that the owner has sent
+     */
+    function setContribution(address _sender, uint256 _amount) public onlyOwner() { contribute(_sender, _amount); }
 
-        // Ensure the contribution phase has started
-        require(contributionStarted);
+    /**
+        @dev Registers a new contribution, sets their share
+        @param _sender The address of the wallet contributing
+        @param _amount The amount that the owner has sent
+     */
+    function contribute(address _sender, uint256 _amount) private {
+        require(!locked, "Crowdsale period over, contribution is locked");
+        require(!distributionActive, "Cannot contribute when distribution is active");
+        require(_amount >= precisionMinimum, "Amount needs to be above the minimum contribution");
+        require(hardCap >= _amount, "Your contribution is greater than the hard cap");
+        require(_amount % precisionMinimum == 0, "Your amount isn't divisible by the minimum precision");
+        require(hardCap >= totalContributed.add(_amount), "Your contribution would cause the total to exceed the hardcap");
 
-        // Make sure they're in the whitelist
-        require(whitelist[sender]);
+        totalContributed = totalContributed.add(_amount);
+        uint256 share = percent(_amount, valuation, 5);
 
-        // Assert that the contribution is above or equal to the minimum contribution
-        require(msg.value >= minimumContribution);
-
-        // Make sure the contribution isn't above the hard cap
-        require(hardCap >= msg.value);
-
-        // Ensure the amount contributed is cleanly divisible by the minimum contribution
-        require((msg.value % minimumContribution) == 0);
-
-        // Make sure the contribution doesn't exceed the hardCap
-        require(hardCap >= SafeMath.add(totalContributed, msg.value));
-
-        // Increase the total contributed
-        totalContributed = SafeMath.add(totalContributed, msg.value);
-
-        // Calculated share
-        uint256 share = percent(msg.value, valuation, 5);
-
-        // Calculate and set the contributors % holding
-        if (ownerPercentages[sender] != 0) { // Existing contributor
-            ownerShareTokens[sender] = SafeMath.add(ownerShareTokens[sender], msg.value);
-            ownerPercentages[sender] = SafeMath.add(share, ownerPercentages[sender]);
-        } else { // New contributor
-            ownerAddresses[totalOwners] = sender;
+        Owner storage o = owners[_sender];
+        if (o.percentage != 0) { // Existing owner
+            o.shareTokens = o.shareTokens.add(_amount);
+            o.percentage = o.percentage.add(share);
+        } else { // New owner
+            require(ownerMap.insert(totalOwners, uint(_sender)) == false);
+            o.key = totalOwners;
             totalOwners += 1;
-            ownerPercentages[sender] = share;
-            ownerShareTokens[sender] = msg.value;
+            o.shareTokens = _amount;
+            o.percentage = share;
         }
 
-        // Transfer the ether to the wallet
-        wallet.transfer(msg.value);
+        if (!whitelist[msg.sender]) {
+            whitelist[msg.sender] = true;
+        }
 
-        // Fire event
-        emit Contribution(sender, share, msg.value);
+        emit Contribution(_sender, share, _amount);
     }
 
-    // Add a wallet to the whitelist
-    function whitelistWallet(address contributor) external onlyOwner() {
-        // Is it actually an address?
-        require(contributor != address(0));
-
-        // Add address to whitelist
-        whitelist[contributor] = true;
+    /**
+        @dev Whitelist a wallet address
+        @param _owner Wallet of the owner
+     */
+    function whitelistWallet(address _owner) external onlyOwner() {
+        require(!locked, "Can't whitelist when the contract is locked");
+        require(_owner != address(0), "Empty address");
+        whitelist[_owner] = true;
     }
 
-    // Start the contribution
+    /**
+        @dev Start the distribution phase
+     */
     function startContribution() external onlyOwner() {
-        require(!contributionStarted);
+        require(!contributionStarted, "Contribution has started");
         contributionStarted = true;
     }
 
     /**
-        Public Methods
+        @dev Manually set a share directly, used to set the LinkPool members as owners
+        @param _owner Wallet address of the owner
+        @param _value The equivalent contribution value
      */
+    function setOwnerShare(address _owner, uint256 _value) public onlyOwner() {
+        require(!locked, "Can't manually set shares, it's locked");
+        require(!distributionActive, "Cannot set owners share when distribution is active");
 
-    // Set the owners share per owner, the balancing of shares is done externally
-    function setOwnerShare(address owner, uint256 value) public onlyOwner() {
-        // Make sure the shares aren't locked
-        require(!locked);
-
-        if (ownerShareTokens[owner] == 0) {
-            whitelist[owner] = true;
-            ownerAddresses[totalOwners] = owner;
+        Owner storage o = owners[_owner];
+        if (o.shareTokens == 0) {
+            whitelist[_owner] = true;
+            require(ownerMap.insert(totalOwners, uint(_owner)) == false);
+            o.key = totalOwners;
             totalOwners += 1;
         }
-        ownerShareTokens[owner] = value;
-        ownerPercentages[owner] = percent(value, valuation, 5);
+        o.shareTokens = _value;
+        o.percentage = percent(_value, valuation, 5);
     }
 
-    // Non-Standard token transfer, doesn't confine to any ERC
-    function sendOwnership(address receiver, uint256 amount) public onlyWhitelisted() {
-        // Require they have an actual balance
-        require(ownerShareTokens[msg.sender] > 0);
+    /**
+        @dev Transfer part or all of your ownership to another address
+        @param _receiver The address that you're sending to
+        @param _amount The amount of ownership to send, for your balance refer to `ownerShareTokens`
+     */
+    function sendOwnership(address _receiver, uint256 _amount) public onlyWhitelisted() {
+        Owner storage o = owners[msg.sender];
+        Owner storage r = owners[_receiver];
 
-        // Require the amount to be equal or less to their shares
-        require(ownerShareTokens[msg.sender] >= amount);
+        require(o.shareTokens > 0, "You don't have any ownership");
+        require(o.shareTokens >= _amount, "The amount exceeds what you have");
+        require(!distributionActive, "Distribution cannot be active when sending ownership");
+        require(_amount % precisionMinimum == 0, "Your amount isn't divisible by the minimum precision amount");
 
-        // Deduct the amount from the owner
-        ownerShareTokens[msg.sender] = SafeMath.sub(ownerShareTokens[msg.sender], amount);
+        o.shareTokens = o.shareTokens.sub(_amount);
 
-        // Remove the owner if the share is now 0
-        if (ownerShareTokens[msg.sender] == 0) {
-            ownerPercentages[msg.sender] = 0;
-            whitelist[receiver] = false; 
-            
-        } else { // Recalculate percentage
-            ownerPercentages[msg.sender] = percent(ownerShareTokens[msg.sender], valuation, 5);
+        if (o.shareTokens == 0) {
+            o.percentage = 0;
+            require(ownerMap.remove(o.key) == true);
+        } else {
+            o.percentage = percent(o.shareTokens, valuation, 5);
         }
-
-        // Add the new share holder
-        if (ownerShareTokens[receiver] == 0) {
-            whitelist[receiver] = true;
-            ownerAddresses[totalOwners] = receiver;
+        if (r.shareTokens == 0) {
+            whitelist[_receiver] = true;
+            require(ownerMap.insert(totalOwners, uint(_receiver)) == false);
             totalOwners += 1;
         }
-        ownerShareTokens[receiver] = SafeMath.add(ownerShareTokens[receiver], amount);
-        ownerPercentages[receiver] = SafeMath.add(ownerPercentages[receiver], percent(amount, valuation, 5));
+        r.shareTokens = r.shareTokens.add(_amount);
+        r.percentage = r.percentage.add(percent(_amount, valuation, 5));
 
-        emit OwnershipTransferred(msg.sender, receiver, amount);
+        emit OwnershipTransferred(msg.sender, _receiver, _amount);
     }
 
-    // Lock the shares so contract owners cannot change them
+    /**
+        @dev Lock the contribution/shares methods
+     */
     function lockShares() public onlyOwner() {
-        require(!locked);
+        require(!locked, "Shares already locked");
         locked = true;
     }
 
-    // Distribute the tokens in the contract to the contributors/creators
-    function distributeTokens(address token) public onlyWhitelisted() {
-        // Is this method already being called?
-        require(!distributionActive);
+    /**
+        @dev Start the distribution phase in the contract so owners can claim their tokens
+        @param _token The token address to start the distribution of
+     */
+    function distributeTokens(address _token) public onlyWhitelisted() {
+        require(!distributionActive, "Distribution is already active");
         distributionActive = true;
 
-        // Get the token address
-        ERC677 erc677 = ERC677(token);
+        ERC677 erc677 = ERC677(_token);
 
-        // Has the contract got a balance?
-        uint256 currentBalance = erc677.balanceOf(this) - tokenBalance[token];
-        require(currentBalance > ethWei * distributionMinimum);
+        uint256 currentBalance = erc677.balanceOf(this) - tokenBalance[_token];
+        require(currentBalance > distributionMinimum, "Amount in the contract isn't above the minimum distribution limit");
 
-        // Add the current balance on to the total returned
-        tokenBalance[token] = SafeMath.add(tokenBalance[token], currentBalance);
+        totalDistributions++;
+        Distribution storage d = distributions[totalDistributions]; 
+        d.owners = ownerMap.size();
+        d.amount = currentBalance;
+        d.token = _token;
+        d.claimed = 0;
+        totalReturned[_token] += currentBalance;
 
-        // Loop through stakers and add the earned shares
-        // This is GAS expensive, but unless complex more bug prone logic was added there is no alternative
-        // This is due to the percentages needed to be calculated for all at once, or the amounts would differ
-        for (uint64 i = 0; i < totalOwners; i++) {
-            address owner = ownerAddresses[i];
+        emit TokenDistributionActive(_token, currentBalance, totalDistributions, d.owners);
+    }
 
-            // If the owner still has a share
-            if (ownerShareTokens[owner] > 0) {
-                // Calculate and transfer the ownership of shares with a precision of 5, for example: 12.345%
-                balances[owner][token] = SafeMath.add(SafeMath.div(SafeMath.mul(currentBalance, ownerPercentages[owner]), 100000), balances[owner][token]);
-            }
+    /**
+        @dev Claim tokens by a owner address to add them to their balance
+        @param _owner The address of the owner to claim tokens for
+     */
+    function claimTokens(address _owner) public {
+        Owner storage o = owners[_owner];
+        Distribution storage d = distributions[totalDistributions]; 
+
+        require(o.shareTokens > 0, "You need to have a share to claim tokens");
+        require(distributionActive, "Distribution isn't active");
+        require(!d.claimedAddresses[_owner], "Tokens already claimed for this address");
+
+        address token = d.token;
+        uint256 tokenAmount = d.amount.mul(o.percentage).div(100000);
+        o.balance[token] = o.balance[token].add(tokenAmount);
+        tokenBalance[token] = tokenBalance[token].add(tokenAmount);
+
+        d.claimed++;
+        d.claimedAddresses[_owner] = true;
+
+        emit ClaimedTokens(_owner, token, tokenAmount, d.claimed, totalDistributions);
+
+        if (d.claimed == d.owners) {
+            distributionActive = false;
+            emit TokenDistributionComplete(token, totalOwners);
         }
-        distributionActive = false;
-
-        // Emit the event
-        emit TokenDistribution(token, currentBalance);
     }
 
-    // Withdraw tokens from the owners balance
-    function withdrawTokens(address token, uint256 amount) public {
-        // Can't withdraw nothing
-        require(amount > 0);
+    /**
+        @dev Withdraw tokens from your contract balance
+        @param _token The token address for token claiming
+        @param _amount The amount of tokens to withdraw
+     */
+    function withdrawTokens(address _token, uint256 _amount) public {
+        require(_amount > 0, "You have requested for 0 tokens to be withdrawn");
 
-        // Assert they're withdrawing what is in their balance
-        require(balances[msg.sender][token] >= amount);
+        Owner storage o = owners[msg.sender];
+        Distribution storage d = distributions[totalDistributions]; 
 
-        // Substitute the amounts
-        balances[msg.sender][token] = SafeMath.sub(balances[msg.sender][token], amount);
-        tokenBalance[token] = SafeMath.sub(tokenBalance[token], amount);
+        if (distributionActive && !d.claimedAddresses[msg.sender]) {
+            claimTokens(msg.sender);
+        }
+        require(o.balance[_token] >= _amount, "Amount requested is higher than your balance");
 
-        // Transfer the tokens
-        ERC677 erc677 = ERC677(token);
-        require(erc677.transfer(msg.sender, amount) == true);
+        o.balance[_token] = o.balance[_token].sub(_amount);
+        tokenBalance[_token] = tokenBalance[_token].sub(_amount);
 
-        // Emit the event
-        emit TokenWithdrawal(token, msg.sender, amount);
+        ERC677 erc677 = ERC677(_token);
+        require(erc677.transfer(msg.sender, _amount) == true);
+
+        emit TokenWithdrawal(_token, msg.sender, _amount);
     }
 
-    // Sets the minimum balance needed for token distribution
-    function setDistributionMinimum(uint16 minimum) public onlyOwner() {
-        distributionMinimum = minimum;
+    /**
+        @dev Set the minimum amount to be of transfered in this contract to start distribution
+        @param _minimum The minimum amount
+     */
+    function setDistributionMinimum(uint256 _minimum) public onlyOwner() {
+        distributionMinimum = _minimum;
     }
 
-    // Sets the contribution ETH wallet
+    /**
+        @dev Set the wallet address to receive the crowdsale contributions
+        @param _wallet The wallet address
+     */
     function setEthWallet(address _wallet) public onlyOwner() {
         wallet = _wallet;
     }
 
-    // Is an account whitelisted?
-    function isWhitelisted(address contributor) public view returns (bool) {
-        return whitelist[contributor];
-    }
-
-    // Get the owners token balance
-    function getOwnerBalance(address token) public view returns (uint256) {
-        return balances[msg.sender][token];
+    /**
+        @dev Returns whether the address is whitelisted
+        @param _owner The address of the owner
+     */
+    function isWhitelisted(address _owner) public view returns (bool) {
+        return whitelist[_owner];
     }
 
     /**
-        Private Methods
-    */
+        @dev Returns the contract balance of the sender for a given token
+        @param _token The address of the ERC token
+     */
+    function getOwnerBalance(address _token) public view returns (uint256) {
+        Owner storage o = owners[msg.sender];
+        return o.balance[_token];
+    }
 
-    // Credit to Rob Hitchens: https://stackoverflow.com/a/42739843
+    /**
+        @dev Returns a owner, all the values in the struct
+        @param _owner Address of the owner
+     */
+    function getOwner(address _owner) public view returns (uint256, uint256, uint256) {
+        Owner storage o = owners[_owner];
+        return (o.key, o.shareTokens, o.percentage);
+    }
+
+    /**
+        @dev Returns the current amount of active owners, ie share above 0
+     */
+    function getCurrentOwners() public view returns (uint) {
+        return ownerMap.size();
+    }
+
+    /**
+        @dev Returns owner address based on the key
+        @param _key The key of the address in the map
+     */
+    function getOwnerAddress(uint _key) public view returns (address) {
+        return address(ownerMap.get(_key));
+    }
+
+    /**
+        @dev Returns whether a owner has claimed their tokens
+        @param _owner The address of the owner
+        @param _dId The distribution id
+     */
+    function hasClaimed(address _owner, uint256 _dId) public view returns (bool) {
+        Distribution storage d = distributions[_dId]; 
+        return d.claimedAddresses[_owner];
+    }
+
+    /**
+        @dev Credit to Rob Hitchens: https://stackoverflow.com/a/42739843
+     */
     function percent(uint numerator, uint denominator, uint precision) private pure returns (uint quotient) {
         uint _numerator = numerator * 10 ** (precision+1);
         uint _quotient = ((_numerator / denominator) + 5) / 10;
