@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xafa1ae00ab5aabe9d3f028c0ead4f8e10114408d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x9fa668f5e5572ea04db6eff1a62eb39ff7fb809e
 */
 pragma solidity ^0.4.24;
-
-pragma solidity ^0.4.24;
-
-pragma solidity ^0.4.20;
 
 contract CutieCoreInterface
 {
@@ -408,7 +404,7 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         _removeAuction(_cutieId);
 
         // Transfer proceeds to seller (if there are any!)
-        if (price > 0) {
+        if (price > 0 && seller != address(coreContract)) {
             uint128 fee = _computeFee(price);
             uint128 sellerValue = price - fee;
 
