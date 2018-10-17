@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EONToken at 0xd17ae10682201cc9ac51cd8600bea2cbd93e7b3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EONToken at 0xf81607fc57129517ae68807b3f70bb9c7d992965
 */
 pragma solidity ^0.4.23;
 
@@ -58,12 +58,16 @@ contract ControllablePause is Pausable {
     mapping(address => bool) public transferWhiteList;
     
     modifier whenControllablePaused() {
-        require(paused || transferWhiteList[msg.sender]);
+        if (!paused) {
+            require(transferWhiteList[msg.sender]);
+        }
         _;
     }
     
     modifier whenControllableNotPaused() {
-        require(!paused || transferWhiteList[msg.sender]);
+        if (paused) {
+            require(transferWhiteList[msg.sender]);
+        }
         _;
     }
     
