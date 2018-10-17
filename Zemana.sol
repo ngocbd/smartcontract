@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zemana at 0xcf1309ad43619f8867ba14eb6c76a8ddcb5e1230
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zemana at 0x63e89a05a3185100aa05eae9b5e15b00f4a1687d
 */
 pragma solidity ^0.4.18;
 
@@ -110,7 +110,7 @@ contract Zemana is ERC20 {
     }
     
     
-    function Zemana () public {
+    function QuantumPay () public {
         owner = msg.sender;    
         distr(owner, totalDistributed);
     }
