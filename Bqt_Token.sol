@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0x8ea493bd683eef6687f60c3151ccd090815b6f78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0xf8b51abb2045ca806841fe4bbeba30f2a1be3d4e
 */
 // ----------------------------------------------------------------------------------------------
 // Developer Nechesov Andrey & ObjectMicro, Inc 
@@ -126,6 +126,12 @@ pragma solidity ^0.4.23;
           _;
       }
 
+      // Functions change owner
+      function changeOwner(address _owner) onlyOwner returns (bool result) {                    
+          owner = _owner;
+          return true;
+      }            
+
       // Functions change moderator
       function changeModerator(address _moderator) onlyOwner returns (bool result) {                    
           moderator = _moderator;
@@ -135,7 +141,7 @@ pragma solidity ^0.4.23;
       // Constructor
       function Bqt_Token() {
           //owner = msg.sender;
-          owner = 0xC73e37cbf5120E4Fa112ec6751B72d4aC02CEACa;
+          owner = 0x3d143e5f256a4fbc16ef23b29aadc0db67bf0ec2;
           moderator = 0x788C45Dd60aE4dBE5055b5Ac02384D5dc84677b0;
           balances[owner] = ownerSupply;
       }
