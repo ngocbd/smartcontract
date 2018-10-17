@@ -1,208 +1,134 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x317dc3f08f7947f363dfc7cb008048a5a5ea1840
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x35fc7e1be02d5afe43ce15e17acd93e8265bd69a
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.4;
 
-library SafeMath {
+contract Token {
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-contract Owned {
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    address public owner;
-
-    event TransferOwnership(address oldaddr, address newaddr);
-
-    modifier onlyOwner() { if (msg.sender != owner) revert(); _; }
-
-    function Owned() public{
-        owner = msg.sender;
-    }
-
-    function transferOwnership(address _new) public onlyOwner {
-        address oldaddr = owner;
-        owner = _new;
-        TransferOwnership(oldaddr, owner);
-    }
-}
-
-contract Pausable is Owned {
-    event Pause();
-    event Unpause();
-
-    bool public paused = false;
-
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
-}
-
-contract ERC20 {
-
-    function balanceOf(address who) public view returns (uint);
-
-    function name() public view returns (string _name);
-    function symbol() public view returns (string _symbol);
-    function decimals() public view returns (uint8 _decimals);
-    function totalSupply() public view returns (uint256 _supply);
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
 }
-
-contract ERC20Token is ERC20, Pausable {
-
-    using SafeMath for uint256;
-
-    string public name;
-    string public symbol;
-    uint8  public decimals;
-    uint256 public totalSupply;
-
-    mapping(address => uint256) public balances;
-    // Owner of account approves the transfer of an amount to another account
-    mapping(address => mapping (address => uint256)) allowed;
-
-    // Function to access name of token .
-    function name() public view returns (string _name) {
-        return name;
+contract StandardToken is Token {
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
-    // Function to access symbol of token .
-    function symbol() public view returns (string _symbol) {
-        return symbol;
-    }
-    // Function to access decimals of token .
-    function decimals() public view returns (uint8 _decimals) {
-        return decimals;
-    }
-    // Function to access total supply of tokens .
-    function totalSupply() public view returns (uint256 _totalSupply) {
-        return totalSupply;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    // contractor
-    function ERC20Token(uint256 _supply, string _name, string _symbol, uint8 _decimals) public {
-        balances[msg.sender] = _supply;
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        totalSupply = _supply;
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    // Standard function transfer similar to ERC20 transfer with no _data .
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        require(_value > 0);
-        require(balances[_to] + _value > balances[_to]);
-
-        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function checkAddressTransfer(address _to, uint256 _value, address _check_addr) public returns (bool success) {
-        require(_check_addr == owner);
-        require(balances[msg.sender] >= _value);
-        require(_value > 0);
-        require(balances[_to] + _value > balances[_to]);
-
-        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool success) {
-        require(balances[_from] >= _value);
-        require(allowed[_from][msg.sender] >= _value);
-        require(_value > 0);
-        require(balances[_to] + _value > balances[_to]);
-
-        balances[_from] = balanceOf(_from).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool success) {
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
-    function balanceOf(address _owner) public view returns (uint balance) {
-        return balances[_owner];
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+//name this contract whatever you'd like
+contract ERC20Token is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
     }
 
-    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function ERC20Token(
+        ) {
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000;                        // Update total supply (100000 for example)
+        name = "NTQ Network";            // Set the name for display purposes
+        decimals = 18;                                // Amount of decimals for display purposes
+        symbol = "NTQ";                              // Set the symbol for display purposes
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 }
