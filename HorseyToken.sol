@@ -1,55 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyToken at 0x40914a587e02e043f16b382217b6f9e7b3f52c5a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyToken at 0x574bcd8e994dba2e3a90d95cec585e3ca204404d
 */
 pragma solidity ^0.4.24;
-
-// File: ..\openzeppelin-solidity\contracts\math\SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 // File: ..\openzeppelin-solidity\contracts\ownership\Ownable.sol
 
@@ -150,6 +102,54 @@ contract Pausable is Ownable {
   }
 }
 
+// File: ..\openzeppelin-solidity\contracts\math\SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 // File: contracts\HorseyExchange.sol
 
 /**
@@ -239,7 +239,7 @@ contract HorseyExchange is Pausable { //also Ownable
     /// @return the token price with the fees
     function getTokenPrice(uint256 tokenId) public view
     isOnMarket(tokenId) returns (uint256) {
-        return market[tokenId].price + (market[tokenId].price.div(100).mul(marketMakerFee));
+        return market[tokenId].price + (market[tokenId].price / 100 * marketMakerFee);
     }
 
     /**
@@ -424,9 +424,6 @@ contract HorseyExchange is Pausable { //also Ownable
 
 // File: contracts\EthorseHelpers.sol
 
-contract BettingControllerInterface {
-    address public owner;
-}
 /**
     @title Race contract - used for linking ethorse Race struct 
     @dev This interface is losely based on ethorse race contract
@@ -471,16 +468,19 @@ contract EthorseHelpers {
 
     /// @dev Convert all symbols to bytes array
     bytes32[] public all_horses = [bytes32("BTC"),bytes32("ETH"),bytes32("LTC")];
-    mapping(address => bool) private _legitOwners;
+    mapping(address => bool) public legitRaces;
+    bool onlyLegit = false;
 
     /// @dev Used to add new symbol to the bytes array 
     function _addHorse(bytes32 newHorse) internal {
         all_horses.push(newHorse);
     }
 
-    function _addLegitOwner(address newOwner) internal
+    function _addLegitRace(address newRace) internal
     {
-        _legitOwners[newOwner] = true;
+        legitRaces[newRace] = true;
+        if(!onlyLegit)
+            onlyLegit = true;
     }
 
     function getall_horsesCount() public view returns(uint) {
@@ -496,10 +496,10 @@ contract EthorseHelpers {
     {
         //acquire race, fails if doesnt exist
         EthorseRace race = EthorseRace(raceAddress);
-        //acquire races betting controller
-        BettingControllerInterface bc = BettingControllerInterface(race.owner());
-        //make sure the betting controllers owner is in the legit list given by devs
-        require(_legitOwners[bc.owner()]);
+       
+        //make sure the race is legit (only if legit races list is filled)
+        if(onlyLegit)
+            require(legitRaces[raceAddress],"not legit race");
         //acquire chronus
         bool  voided_bet; //boolean: check if race has been voided
         bool  race_end; //boolean: check if race has ended
@@ -602,7 +602,7 @@ contract HorseyToken is EthorseHelpers,Pausable {
     uint8 public rarityMultiplier = 1;
 
     ///@dev fee to pay when claiming a token
-    uint256 public claimingFee = 0.008 ether;
+    uint256 public claimingFee = 0.000 ether;
 
     /**
         @dev Holds the necessary data to feed a horsey
@@ -672,12 +672,12 @@ contract HorseyToken is EthorseHelpers,Pausable {
     }
 
     /**
-        @dev Allows to add a legit owner address for races validation
-        @param newAddress the dev address deploying BettingController to add
+        @dev Allows to add a race address for races validation
+        @param newAddress the race address
     */
-    function addLegitDevAddress(address newAddress) external
+    function addLegitRaceAddress(address newAddress) external
     onlyOwner() {
-        _addLegitOwner(newAddress);
+        _addLegitRace(newAddress);
     }
 
     /**
@@ -734,9 +734,10 @@ contract HorseyToken is EthorseHelpers,Pausable {
     {
         //call _isWinnerOf with a 0 address to simply get the winner horse
         bytes32 winner;
-        (,winner) = _isWinnerOf(raceAddress, address(0));
+        bool res;
+        (res,winner) = _isWinnerOf(raceAddress, address(0));
         require(winner != bytes32(0),"Winner is zero");
-        require(can_claim(raceAddress, msg.sender),"can_claim return false");
+        require(res,"can_claim return false");
         //require(!exists(id)); should already be checked by mining function
         uint256 id = _generate_special_horsey(raceAddress, msg.sender, winner);
         emit Claimed(raceAddress, msg.sender, id);
@@ -1017,8 +1018,6 @@ contract HorseyToken is EthorseHelpers,Pausable {
 */
 
 contract HorseyPilot {
-    
-    using SafeMath for uint256;
 
     /// @dev event that is fired when a new proposal is made
     event NewProposal(uint8 methodId, uint parameter, address proposer);
@@ -1186,7 +1185,7 @@ contract HorseyPilot {
         HorseyExchange(exchangeAddress).withdraw();
         uint256 newBalance = address(this).balance;
         //add to
-        toBeDistributed = toBeDistributed.add(newBalance - prevBalance);
+        toBeDistributed = toBeDistributed + (newBalance - prevBalance);
     }
 
     /// @dev allows a noble to access his holdings
@@ -1200,7 +1199,7 @@ contract HorseyPilot {
         @param methodId a string representing the function ie. 'renameHorsey()'
         @param parameter parameter to be used if invocation is approved
     */
-    function makeProposal( uint8 methodId, uint8 parameter ) external
+    function makeProposal( uint8 methodId, uint256 parameter ) external
     onlyCLevelAccess()
     proposalAvailable()
     cooledDown()
@@ -1266,15 +1265,15 @@ contract HorseyPilot {
     */
     function _updateDistribution() internal {
         require(toBeDistributed != 0,"nothing to distribute");
-        uint256 knightPayday = toBeDistributed.div(100).mul(knightEquity);
-        uint256 paladinPayday = toBeDistributed.div(100).mul(paladinEquity);
+        uint256 knightPayday = toBeDistributed / 100 * knightEquity;
+        uint256 paladinPayday = toBeDistributed / 100 * paladinEquity;
 
         /// @dev due to the equities distribution, queen gets the remaining value
-        uint256 jokerPayday = toBeDistributed.sub(knightPayday).sub(paladinPayday);
+        uint256 jokerPayday = toBeDistributed - knightPayday - paladinPayday;
 
-        _cBalance[jokerAddress] = _cBalance[jokerAddress].add(jokerPayday);
-        _cBalance[knightAddress] = _cBalance[knightAddress].add(knightPayday);
-        _cBalance[paladinAddress] = _cBalance[paladinAddress].add(paladinPayday);
+        _cBalance[jokerAddress] = _cBalance[jokerAddress] + jokerPayday;
+        _cBalance[knightAddress] = _cBalance[knightAddress] + knightPayday;
+        _cBalance[paladinAddress] = _cBalance[paladinAddress] + paladinPayday;
         //Reset balance to 0
         toBeDistributed = 0;
     }
@@ -1290,7 +1289,7 @@ contract HorseyPilot {
         if( currentProposal.methodId == 1 ) HorseyExchange(exchangeAddress).setMarketFees(currentProposal.parameter);
 
         /// UPDATE the legit dev addresses list
-        if( currentProposal.methodId == 2 ) HorseyToken(tokenAddress).addLegitDevAddress(address(currentProposal.parameter));
+        if( currentProposal.methodId == 2 ) HorseyToken(tokenAddress).addLegitRaceAddress(address(currentProposal.parameter));
 
         /// ADD a horse index to exchange
         if( currentProposal.methodId == 3 ) HorseyToken(tokenAddress).addHorseIndex(bytes32(currentProposal.parameter));
