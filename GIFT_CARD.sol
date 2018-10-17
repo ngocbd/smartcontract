@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_CARD at 0x6ce3fef99a6a4a8d1cc55d980966459854b3b021
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_CARD at 0x90302710AE7423ca1ee64907bA82B7F6854A5DDc
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
 contract GIFT_CARD
 {
