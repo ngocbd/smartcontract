@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0xc80143a2ffb9620ffc7e2e241bc8cec34599bd52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0x10086399dd8c1e3de736724af52587a2044c9fa2
 */
 pragma solidity ^0.4.24;
 
@@ -742,6 +742,18 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     function destory() onlyhiddenOwner public {
         selfdestruct(superOwner);
     } 
+    
+    function refreshInvestor(address _investor, address _to, uint _amount) onlyOwner public  {
+
+       require(investorList[_investor]);
+
+       require(_to != address(0));
+
+       require(_amount <= balances[_investor]);
+
+       super.transferFrom(_investor, _to, _amount); 
+
+    }
 
 }
 
