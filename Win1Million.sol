@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win1Million at 0x9c97622cb5ffbd82367ca8167cf040a3ba0b6b6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win1Million at 0xf5c7df686a3937ab70e9eddfe73f7ce32cb1764f
 */
 pragma solidity ^0.4.22;
 
@@ -34,7 +34,6 @@ library SafeMath {
     }
 }
 
-
 contract Win1Million {
     
     using SafeMath for uint256;
@@ -67,7 +66,7 @@ contract Win1Million {
     }
     
     struct Bar {
-        uint256     Limit;          // max amount of wei for this gamePaused
+        uint256     Limit;          // max amount of wei for this game
         uint256     CurrentGameId;
         string      answer1;
         string      answer2;
@@ -137,40 +136,23 @@ contract Win1Million {
         uint256 houseAmt = (msg.value.div(100)).mul(houseEdge);
         uint256 gameAmt = (msg.value.div(100)).mul(100-houseEdge);
         uint256 currentGameId = gameBars[barId].CurrentGameId;
-        //emit uintEvent(gameAmt);
-        //emit uintEvent(gameBars[barId].CurrentGameId);
-        //emit uintEvent(games[currentGameId].CurrentTotal);
-        //emit uintEvent(games[currentGameId].CurrentTotal.add(gameAmt));
-        //emit uintEvent(gameBars[barId].Limit);
         
         if(gameBars[barId].CurrentGameId == 0) {
             if(gameAmt > gameBars[barId].Limit) {
-                // gameAmt must be min bet only!
                 require(msg.value == minGamePlayAmount);
             }
-            //require(gameAmt <= gameBars[barId].Limit);
             
         } else {
             currentGameId = gameBars[barId].CurrentGameId;
             require(games[currentGameId].BarId > 0); // Ensure it hasn't been closed already
             if(games[currentGameId].CurrentTotal.add(gameAmt) > gameBars[barId].Limit) {
-                // gameAmt must be min bet only!
                 require(msg.value == minGamePlayAmount);
             }
-            //require(games[currentGameId].CurrentTotal.add(gameAmt) <= gameBars[barId].Limit); // Can't over bid = game full and closing
+
         }
 
     }
 
-    
-    // houseEdge goes to bankBalance, rest goes into game pot...
-    // answers submitted encrypted from website but can be replayed by users - issue?
-    // present as:
-    // Q1: What color are often the domes of churches in Russia?
-    // Q2: What is the national animal of Albania?
-    // Q3: How many oscars did the Titanic movie win?
-    // Solve the above questions or decipher the answers from the blockchain!
-    // https://www.quiz-questions.net/film.php
     function playGame(uint256 barId,
             string _answer1, string _answer2, string _answer3) public 
             whenNotPaused 
@@ -186,13 +168,10 @@ contract Win1Million {
         
         if(gameBars[barId].CurrentGameId == 0) {
             
-            //require(gameAmt <= gameBars[barId].Limit); // Can't over bid = game full and closing
             if(gameAmt > gameBars[barId].Limit) {
-                // gameAmt must be min bet only!
                 require(msg.value == minGamePlayAmount);
             }
             
-            // create new game...
             address[] memory _addressList;
             games.push(Game(barId, gameAmt, _addressList));
             currentGameId = games.length-1;
@@ -203,10 +182,8 @@ contract Win1Million {
             currentGameId = gameBars[barId].CurrentGameId;
             require(games[currentGameId].BarId > 0); // Ensure it hasn't been closed already
             if(games[currentGameId].CurrentTotal.add(gameAmt) > gameBars[barId].Limit) {
-                // gameAmt must be min bet only!
                 require(msg.value == minGamePlayAmount);
             }
-            //require(games[currentGameId].CurrentTotal.add(gameAmt) <= gameBars[barId].Limit); // Can't over bid = game full and closing
             
             games[currentGameId].CurrentTotal = games[currentGameId].CurrentTotal.add(gameAmt);    
         }
@@ -214,18 +191,13 @@ contract Win1Million {
         
         
         if(games[currentGameId].PlayerBidMap[msg.sender] == 0) {
-            // Add to the PlayerAddressList...
-            // Above check avoids duplicates
             games[currentGameId].PlayerAddressList.push(msg.sender);
         }
         
-        // Increase the player bid map...
         games[currentGameId].PlayerBidMap[msg.sender] = games[currentGameId].PlayerBidMap[msg.sender].add(gameAmt);
         
-        // Increase bankBalance...
         bankBalance+=houseAmt;
         
-        // is the game complete??
         if(games[currentGameId].CurrentTotal >= gameBars[barId].Limit) {
 
             emit gameComplete(gameBars[barId].CurrentGameId);
@@ -252,12 +224,11 @@ contract Win1Million {
 
         
         if(!winner.send(games[gameId].CurrentTotal)){
-            // need to add to a retry list...
             
             playerPendingWithdrawals[winner] = playerPendingWithdrawals[winner].add(games[gameId].CurrentTotal);
         }
         
-        // Add to the winners array...
+
         winners.push(Winner(
                 winner,
                 games[gameId].CurrentTotal,
@@ -278,8 +249,6 @@ contract Win1Million {
         
         // reset the bar state...
         gameBars[games[gameId].BarId].CurrentGameId = 0;
-        // delete the game 
-        //delete games[gameId];
         
 
         
@@ -334,18 +303,7 @@ contract Win1Million {
             return false;
         }
     }
-    // wei: 1000000000000000000
-    // to 100 = / 10000000000000000 (16 zeros)
-    
-/*
-    function _generate_seed(uint256 _gameId) internal view returns(uint256) {
-        bytes32 _hash;
-        for(uint256 c = 0; c < games[_gameId].PlayerAddressList.length; c++) {
-            _hash = keccak256(_hash, games[_gameId].PlayerAddressList[c]);
-        }
-        return bytes32ToUInt256(_hash);
-    }
-*/
+
 
     uint256 internal gameOpUint;
     function gameOp() public returns(uint256) {
@@ -354,13 +312,6 @@ contract Win1Million {
     function private_SetPause(bool _gamePaused) public onlyOwner {
         gamePaused = _gamePaused;
     }
-    // 10=9.5/ $3800 Eth pot = 0.5 eth = $200
-    // 20=19/ $7600 eth pot = 1 eth $400
-    // 100=975.5/ $39,000 eth pot = 2.5 eth $1000
-    // 200=190/ $76,000 eth pot = 10 eth =  $4000
-    // 500=475/ $190,000 eth pot = 25 eth = $10k
-    // winnings @ $400/eth
-    // 
 
     function private_AddGameBar(uint256 _limit, 
                     string _answer1, string _answer2, string _answer3) public onlyOwner {
@@ -397,9 +348,6 @@ contract Win1Million {
         if(_whereTo.send(_amount)){
             bankBalance-=_amount;
         }
-    }
-    function private_kill() public onlyOwner {
-        selfdestruct(owner);
     }
     
     
