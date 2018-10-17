@@ -1,37 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xdb840c263b27a693d5c6349b4d3ad07be0e72d62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xa7048b0015876a613ac5ec3f2065a669f49d9dc9
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team JUST presents..
-* Proof Of Sunny Decree
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+* EMPIREX Continious contract 
+* Ticker : EMX
+* Website: Empirex.io
 */
 
 contract Hourglass {
@@ -136,21 +111,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Investing Cratocix";
-    string public symbol = "VINV";
+    string public name = "Empirex";
+    string public symbol = "EMX";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 4;
+    uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 50 tokens)
-    uint256 public stakingRequirement = 50e18;
+    // proof of stake (defaults at 100 tokens)
+    uint256 public stakingRequirement = 5e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = .51 ether;
-    uint256 constant internal ambassadorQuota_ = .5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
+    uint256 constant internal ambassadorQuota_ = 20 ether;
     
     
     
@@ -169,7 +144,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -182,8 +157,11 @@ contract Hourglass {
     function Hourglass()
         public
     {
+        // add administrators here
+        administrators[0x9e8f7c4444a95cee64e5b8bf5c7856d5937a5f9f0d25ef5cead2cb227102baf3] = true;
         
-        ambassadors_[0xA72393CED6d615E9928FB443f42092f1dBb39c07] = true;
+        
+
     }
     
      
