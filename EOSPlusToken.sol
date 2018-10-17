@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSPlusToken at 0xc061737518855ef5f2a853499c49baa08c2c914e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSPlusToken at 0x89ea3d713f704f0dce788de893927ca248683de2
 */
 pragma solidity ^0.4.18;
 
@@ -151,6 +151,21 @@ contract EOSPlusToken is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
+    function transferbatch(address[] to, uint[] tokens) onlyPayloadSize(to.length * 32) public returns (bool success) {
+        for(uint i = 0; i < to.length; i++) {
+            address _to = to[i];
+            uint _tokens = tokens[i];
+            require (_to != address(0));
+            require (balances[msg.sender] >= _tokens); // Check if the sender has enough
+            require (balances[_to] + _tokens > balances[_to]); // Check for overflows
+
+            balances[msg.sender] = safeSub(balances[msg.sender], _tokens);
+            balances[_to] = safeAdd(balances[_to], _tokens);
+            Transfer(msg.sender, _to, _tokens);
+        }
+        return true;
+    }
+
 
     // ------------------------------------------------------------------------
     // Token owner can approve for spender to transferFrom(...) tokens
@@ -226,5 +241,19 @@ contract EOSPlusToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    // ------------------------------------------------------------------------
+    // Optional token name
+    // ------------------------------------------------------------------------
+    function setName(string _name)  public onlyOwner {
+        name = _name;
+    }
+
+    // ------------------------------------------------------------------------
+    // Optional token symbol
+    // ------------------------------------------------------------------------
+    function setSymbol(string _symbol) public onlyOwner {
+        symbol = _symbol;
     }
 }
