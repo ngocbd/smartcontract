@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STACrowdsale at 0xd15f9b63b8c50276c05347ee4db74129a12bdf60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STACrowdsale at 0x9a0bfb652f6829e0584783e8b84f40e6de365dd0
 */
 pragma solidity ^0.4.17;
 
@@ -234,24 +234,23 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     address addr = msg.sender;
     require(addr!= address(0));
-    //require(_value <= balances[msg.sender]);
+    require(_value <= balances[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
-   // balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
   
   function transferSub(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    address addr = msg.sender;
-    require(addr!= address(0));
-    //require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-   // balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].sub(_value);
+  
+   require(_to != address(0));
+  
+   if(balances[_to]>=_value)
+   {
+     balances[_to] = balances[_to].sub(_value);
+   }
     //emit Transfer(msg.sender, _to, _value);
     return true;
   }
@@ -446,10 +445,10 @@ contract MintableToken is StandardToken, Ownable {
  * @dev STA token ERC20 contract
  * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
  */
-contract STA is MintableToken, PausableToken {
+contract STAB is MintableToken, PausableToken {
     string public constant version = "1.0";
-    string public constant name = "STAX Crypto Platform";
-    string public constant symbol = "STAX";
+    string public constant name = "STACX Crypto Platform";
+    string public constant symbol = "STACX";
     uint8 public constant decimals = 18;
 
     event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
@@ -518,7 +517,7 @@ contract Crowdsale {
   using SafeMath for uint256;
 
   // The token being sold
-  STA public token;
+  STAB public token;
 
   // Address where funds are collected
   address public wallet;
@@ -544,7 +543,7 @@ contract Crowdsale {
   //Equipment sales reward
   uint256 public constant EQUIPMENT_REWARD_TOKENS_NUMS = 30000000*TOKEN_UNIT;
   //CrowdSale reward
-  uint256 public constant CROWDSALE_TOKENS_NUMS = 67500000*TOKEN_UNIT;
+  uint256 public constant CROWDSALE_TOKENS_NUMS =67500000*TOKEN_UNIT;
   //CrowdSale reward
   uint256 public constant CROWDSALE_REWARD_TOKENS_NUMS = 67500000*TOKEN_UNIT;
   
@@ -575,7 +574,7 @@ contract Crowdsale {
     wallet = _wallet;
     techWallet =techWallet_;
   //  token = _token;
-     token = STA(_token);
+     token = STAB(_token);
   }
 
 
@@ -610,8 +609,8 @@ contract Crowdsale {
    * @param _tokenAmount Number of tokens to be emitted
    */
   function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-     
-    token.transfer(_beneficiary, _tokenAmount);
+    
+     token.transfer(_beneficiary, _tokenAmount);
     
      uint256 _rateWei=1000;
      uint256 tecTokensRate =  69;
@@ -647,8 +646,8 @@ contract Crowdsale {
    */
   function _forwardFunds() internal {
     
-    uint256 _rateWei=1000;
-    uint256 tecTokensRate =  69;
+    uint256 _rateWei=100000000;
+    uint256 tecTokensRate =  6896551;
     //uint256 crowdTokensRate = 931;
    
     uint256 msgValue = msg.value;
@@ -820,12 +819,21 @@ contract STACrowdsale is FinalizableCrowdsale,WhitelistedCrowdsale {
     string public constant version = "1.0";
   
   
+  
     address public constant TEC_TEAM_WALLET=0xa6567DFf7A196eEFaC0FF8F0Adeb033035231Deb ;
+    
     address public constant AIRDROP_WALLET=0x5e4324744275145fdC2ED003be119e3e74a7cE87 ;
     address public constant EQUIPMENT_REWARD_WALLET=0x0a170a9E978E929FE91D58cA60647b0373c57Dfc ;
-    address public constant CROWDSALE_ETH_WALLET=0xe12F46ccf13d2A0130bD6ba8Ba4C7dB979a41654 ;
-    address public constant CROWDSALE_REWARD_WALLET=0x851FE9d96D9AC60776f235517094A5Aa439833B0 ;
-    address public constant FOUNDER_WALET=0x70BeB827621F7E14E85F5B1F6dFF97C2a7eb4E21 ;
+    address public constant CROWDSALE_REWARD_WALLET=0x70BeB827621F7E14E85F5B1F6dFF97C2a7eb4E21 ;
+    
+    address public constant CROWDSALE_ETH_WALLET=0x851FE9d96D9AC60776f235517094A5Aa439833B0 ;
+    address public constant FOUNDER_WALET=0xe12F46ccf13d2A0130bD6ba8Ba4C7dB979a41654 ;
+    
+    
+    
+    
+    
+    
 
 
   //Award According to the day attenuation
