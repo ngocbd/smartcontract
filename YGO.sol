@@ -1,220 +1,125 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YGO at 0x1d085c7716118e5c99ab1c35c1cffdacffe454b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ygo at 0xbab6f30c81209433a3ced28ca8e19256440547d9
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract ygo {
+    address public owner;
+    string public name;
+    string public symbol;
+    uint public decimals;
+    uint256 public totalSupply;
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-contract Ownable {
-  address public owner;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    bool lock = false;
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract YGO is ERC20,Ownable{
-	using SafeMath for uint256;
-
-	//the base info of the token
-	string public constant name="Yu Gi Oh";
-	string public constant symbol="YGO";
-	string public constant version = "1.0";
-	uint256 public constant decimals = 18;
-
-    mapping(address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	uint256 public constant MAX_SUPPLY=500000000*10**decimals;
-	uint256 public constant INIT_SUPPLY=450000000*10**decimals;
-
-	uint256 public constant autoAirdropAmount=200*10**decimals;
-	uint256 public alreadyAutoAirdropAmount;
-
-	uint256 public airdropSupply;
-	mapping(address => bool) touched;
-
-
-	function YGO(){
-		airdropSupply = 0;
-		totalSupply = INIT_SUPPLY;
-		balances[msg.sender] = INIT_SUPPLY;
-		Transfer(0x0, msg.sender, INIT_SUPPLY);
-	}
-
-	modifier totalSupplyNotReached(uint256 _ethContribution,uint rate){
-		assert(totalSupply.add(_ethContribution.mul(rate)) <= MAX_SUPPLY);
-		_;
-	}
-
-    function airdrop(address [] _holders,uint256 paySize) external
-    	onlyOwner 
-	{
-        uint256 count = _holders.length;
-        assert(paySize.mul(count) <= balanceOf(msg.sender));
-        for (uint256 i = 0; i < count; i++) {
-            transfer(_holders [i], paySize);
-			airdropSupply = airdropSupply.add(paySize);
-        }
+    constructor(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol,
+        uint decimalUnits
+    ) public {
+        owner = msg.sender;
+        name = tokenName;
+        symbol = tokenSymbol; 
+        decimals = decimalUnits;
+        totalSupply = initialSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
     }
 
-	function () payable external
-	{
-	}
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
-	function etherProceeds() external
-		onlyOwner
+    modifier isLock {
+        require(!lock);
+        _;
+    }
+    
+    function setLock(bool _lock) onlyOwner public{
+        lock = _lock;
+    }
 
-	{
-		if(!msg.sender.send(this.balance)) revert();
-	}
-
-	function processFunding(address receiver,uint256 _value,uint256 fundingRate) internal
-		totalSupplyNotReached(_value,fundingRate)
-
-	{
-		uint256 tokenAmount = _value.mul(fundingRate);
-		totalSupply=totalSupply.add(tokenAmount);
-		balances[receiver] += tokenAmount;  // safeAdd not needed; bad semantics to use here
-		Transfer(0x0, receiver, tokenAmount);
-	}
-
-  	function transfer(address _to, uint256 _value) public  returns (bool)
- 	{
-		require(_to != address(0));
-
-        if( !touched[msg.sender] && totalSupply.add(autoAirdropAmount) <= MAX_SUPPLY ){
-            touched[msg.sender] = true;
-            balances[msg.sender] = balances[msg.sender].add( autoAirdropAmount );
-            totalSupply = totalSupply.add( autoAirdropAmount );
-            alreadyAutoAirdropAmount=alreadyAutoAirdropAmount.add(autoAirdropAmount);
-
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
-        
-        require(_value <= balances[msg.sender]);
+    }
+ 
 
-		// SafeMath.sub will throw if there is not enough balance.
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-  	}
+    function _transfer(address _from, address _to, uint _value) isLock internal {
+        require (_to != 0x0);
+        require (balanceOf[_from] >= _value);
+        require (balanceOf[_to] + _value > balanceOf[_to]);
+        require(!frozenAccount[_from]);
+        require(!frozenAccount[_to]);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(_from, _to, _value);
+    }
 
-  	function balanceOf(address _owner) public constant returns (uint256 balance) 
-  	{
-        if( totalSupply.add(autoAirdropAmount) <= MAX_SUPPLY ){
-            if( touched[_owner] ){
-                return balances[_owner];
-            }
-            else{
-                return balances[_owner].add(autoAirdropAmount);
-            }
-        } else {
-            return balances[_owner];
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function burn(uint256 _value) onlyOwner public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
+        require(balanceOf[_from] >= _value); 
+        require(_value <= allowance[_from][msg.sender]); 
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        emit Burn(_from, _value);
+        return true;
+    }
+
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        uint256 _amount = mintedAmount * 10 ** uint256(decimals);
+        balanceOf[target] += _amount;
+        totalSupply += _amount;
+        emit Transfer(this, target, _amount);
+    }
+    
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
+    }
+
+    function transferBatch(address[] _to, uint256 _value) public returns (bool success) {
+        for (uint i=0; i<_to.length; i++) {
+            _transfer(msg.sender, _to[i], _value);
         }
-  	}
-
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-  	{
-		require(_to != address(0));
-        
-        if( !touched[_from] && totalSupply.add(autoAirdropAmount) <= MAX_SUPPLY ){
-            touched[_from] = true;
-            balances[_from] = balances[_from].add( autoAirdropAmount );
-            totalSupply = totalSupply.add( autoAirdropAmount );
-            alreadyAutoAirdropAmount=alreadyAutoAirdropAmount.add(autoAirdropAmount);
-        }
-        
-        require(_value <= balances[_from]);
-
-
-		uint256 _allowance = allowed[_from][msg.sender];
-		balances[_from] = balances[_from].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-		return true;
-  	}
-
-  	function approve(address _spender, uint256 _value) public returns (bool) 
-  	{
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-  	}
-
-  	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
-  	{
-		return allowed[_owner][_spender];
-  	}
-
-	  
+        return true;
+    }
 }
