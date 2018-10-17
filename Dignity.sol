@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0xc554d49dd442cd907524ca998f0cf98ce7846e2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x644a75449a81ef3740c79c93fd9bf9cb1e768c7f
 */
 pragma solidity ^0.4.18;
 
@@ -103,8 +103,8 @@ contract Dignity is ERC20Interface, Owned, SafeMath {
         name = "Dignity";
         decimals = 8;
         _totalSupply = 300000000000000000;
-        balances[0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5] = _totalSupply;
-        emit Transfer(address(0), 0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5, _totalSupply);
+        balances[msg.sender] = _totalSupply;
+        emit Transfer(address(0), msg.sender, _totalSupply);
     }
 
     // ------------------------------------------------------------------------
