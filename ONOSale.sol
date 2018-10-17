@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONOSale at 0xdbdf54969a4e943bb8c7dd9f04ea853bca018301
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONOSale at 0x6693bc7a3f8875b36c9bbe57c4917a1506e5a327
 */
 pragma solidity ^0.4.24;
 contract DSNote {
@@ -581,7 +581,7 @@ contract ONOSale is DSExec, DSMath, DSAuthList {
         uint round = currRound();
         
         assert(time() >= openTime && round <= numberOfRounds);
-        assert(msg.value >= 1 ether);
+        assert(msg.value >= 0.1 ether);
 
         userBuys[round][msg.sender] = add(userBuys[round][msg.sender], msg.value);
         dailyTotals[round] = add(dailyTotals[round], msg.value);
