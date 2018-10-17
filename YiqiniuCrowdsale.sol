@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YiqiniuCrowdsale at 0xd01a503337c3a8c86c0eb9b31e1d1f18a085d39d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YiqiniuCrowdsale at 0xaf81fe7b506d07e0a87b6dead5302781520a0e22
 */
 pragma solidity ^0.4.18;
 
@@ -187,8 +187,8 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract YiqiniuToken is MintableToken {
-    string public constant name		= 'YiqiniuToken';
-    string public constant symbol	= 'YQN';
+    string public constant name		= 'Yiqiniu';
+    string public constant symbol	= 'KEY';
     uint256 public constant decimals	= 18;
     event Burned(address indexed burner, uint256 value);
     
@@ -209,9 +209,9 @@ contract CrowdsaleConfig {
     uint256 public constant PUBLIC_SALE_TOKEN_CAP   = TOTAL_SUPPLY_CAP / 100 * 30;
     uint256 public constant AGENCY_TOKEN_CAP        = TOTAL_SUPPLY_CAP / 100 * 20;
     uint256 public constant TEAM_TOKEN_CAP          = TOTAL_SUPPLY_CAP / 100 * 50;
-    address public constant TEAM_ADDR		    = 0xfB39831DE614384887b775299af811275D08A9b6;
+    address public constant TEAM_ADDR		    = 0xd589737E4CbeC49E862D3A54c75aF16e27dD8fC1;
     address public constant AGENCY_ADDR	            = 0xc849e7225fF088e187136A670662e36adE5A89FC;
-    address public constant WALLET_ADDR	            = 0x1c4139797D88eb0F86126aC5EE21eB9F2b9eE417;
+    address public constant WALLET_ADDR	            = 0xd589737E4CbeC49E862D3A54c75aF16e27dD8fC1;
 }
 
 contract YiqiniuCrowdsale is Ownable, CrowdsaleConfig{
@@ -223,7 +223,7 @@ contract YiqiniuCrowdsale is Ownable, CrowdsaleConfig{
 
     uint64 public startTime;
     uint64 public endTime;
-    uint256 public rate = 100000;
+    uint256 public rate = 10000;
     uint256 public goalSale;
     uint256 public totalPurchased = 0;
     bool public CrowdsaleEnabled = false;
