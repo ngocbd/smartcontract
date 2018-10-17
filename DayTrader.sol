@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0x722ab587b0f710cf60c19d89b31127a616eed97b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0xa2c5718723161f48fe1be09bee40a8fa347df520
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 
-contract DayTrader {
+contract DayTrader{
   // Bag sold event
   event BagSold(
     uint256 bagId,
@@ -18,8 +18,8 @@ contract DayTrader {
   // Address of the contract creator
   address public contractOwner;
 
-  // Default timeout is 4 hours
   uint256 public timeout = 24 hours;
+  // Default timeout is 4 hours
 
   // Default starting price is 0.005 ether
   uint256 public startingPrice = 0.005 ether;
@@ -41,11 +41,8 @@ contract DayTrader {
 
   function DayTrader() public {
     contractOwner = msg.sender;
+    createBag(125);
     createBag(150);
-	createBag(150);
-	createBag(150);
-	createBag(200);
-	createBag(200);
 	createBag(200);
   }
 
@@ -129,7 +126,6 @@ contract DayTrader {
     // Pay previous tokenOwner if owner is not contract
     if (oldOwner != address(this)) {
       oldOwner.transfer(payment);
-      
     }
 
     // Trigger BagSold event
