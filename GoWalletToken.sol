@@ -1,267 +1,317 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoWalletToken at 0x240fa29c2cebc097cc69700bf6449026d789a70a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoWalletToken at 0x82e9d98ea9ae74ec8efcdf82c209f95455e76d5b
 */
-pragma solidity ^0.4.18;
+/*
 
-/**
- * @title SafeMath
- */
-library SafeMath {
+GoWalletToken Official Token Contract 
 
-    /**
-    * Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+GoWalletToken – This is the future. A digital wallet that will be developed through a cellphone application that contains unique codes for every specific user for a much secure and convenient way of paying.
 
-    /**
-    * Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+Website: https://gowalletproject.com
 
-    /**
-    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
 
-    /**
-    * Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
+*/
 
-contract AltcoinToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
+pragma solidity 0.4.18;
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract GoWalletToken {
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract GoWalletToken is ERC20 {
+    string public symbol = "GWT";
+    string public name = "GoWalletToken";
+    uint8 public constant decimals = 18;
+    uint256 _totalSupply = 1000000000;	
+	uint256 _FreeGWT = 250;
+    uint256 _ML1 = 2;
+    uint256 _ML2 = 3;
+	uint256 _ML3 = 4;
+    uint256 _LimitML1 = 3e15;
+    uint256 _LimitML2 = 6e15;
+	uint256 _LimitML3 = 9e15;
+	uint256 _MaxDistribPublicSupply = 450000000;
+    uint256 _OwnerDistribSupply = 0;
+    uint256 _CurrentDistribPublicSupply = 0;	
+    uint256 _ExtraTokensPerETHSended = 2000000;
     
-    using SafeMath for uint256;
-    address owner = msg.sender;
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;    
-
-    string public constant name = "GoWalletToken";
-    string public constant symbol = "GWT";
-    uint public constant decimals = 8;
-    
-    uint256 public totalSupply = 1000000000e8;
-    uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 5000000e8;
-    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
+	address _DistribFundsReceiverAddress = 0xa32D6A1d4ab78e82fd91A4D3289C25614a7241df;
+    address _remainingTokensReceiverAddress = 0xa32D6A1d4ab78e82fd91A4D3289C25614a7241df;
+    address owner = 0xa32D6A1d4ab78e82fd91A4D3289C25614a7241df;
+	
+	
+    bool setupDone = false;
+    bool IsDistribRunning = false;
+    bool DistribStarted = false;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
+    event Burn(address indexed _owner, uint256 _value);
 
-    event Airdrop(address indexed _owner, uint _amount, uint _balance);
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
+    mapping(address => bool) public Claimed;
 
-    event TokensPerEthUpdated(uint _tokensPerEth);
-    
-    event Burn(address indexed burner, uint256 value);
-
-    bool public distributionFinished = false;
-    
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
-    }
-    
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-    
-    
-    function GoWalletToken () public {
+
+    function GoWalletToken() public {
         owner = msg.sender;
-        uint256 devTokens = 450000000e8;
-        distr(owner, devTokens);
-    }
-    
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-    
-
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        emit DistrFinished();
-        return true;
-    }
-    
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);        
-        balances[_to] = balances[_to].add(_amount);
-        emit Distr(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-
-        return true;
     }
 
-    function doAirdrop(address _participant, uint _amount) internal {
+    function() public payable {
+        if (IsDistribRunning) {
+            uint256 _amount;
+            if (((_CurrentDistribPublicSupply + _amount) > _MaxDistribPublicSupply) && _MaxDistribPublicSupply > 0) revert();
+            if (!_DistribFundsReceiverAddress.send(msg.value)) revert();
+            if (Claimed[msg.sender] == false) {
+                _amount = _FreeGWT * 1e18;
+                _CurrentDistribPublicSupply += _amount;
+                balances[msg.sender] += _amount;
+                _totalSupply += _amount;
+                Transfer(this, msg.sender, _amount);
+                Claimed[msg.sender] = true;
+            }
 
-        require( _amount > 0 );      
-
-        require( totalDistributed < totalSupply );
-        
-        balances[_participant] = balances[_participant].add(_amount);
-        totalDistributed = totalDistributed.add(_amount);
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-
-        // log
-        emit Airdrop(_participant, _amount, balances[_participant]);
-        emit Transfer(address(0), _participant, _amount);
-    }
-
-    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
-        doAirdrop(_participant, _amount);
-    }
-
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
-        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
-    }
-
-    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
-        tokensPerEth = _tokensPerEth;
-        emit TokensPerEthUpdated(_tokensPerEth);
-    }
            
-    function () external payable {
-        getTokens();
-     }
-    
-    function getTokens() payable canDistr  public {
-        uint256 tokens = 0;
 
-        require( msg.value >= minContribution );
+            if (msg.value >= 9e15) {
+            _amount = msg.value * _ExtraTokensPerETHSended * 4;
+            } else {
+                if (msg.value >= 6e15) {
+                    _amount = msg.value * _ExtraTokensPerETHSended * 3;
+                } else {
+                    if (msg.value >= 3e15) {
+                        _amount = msg.value * _ExtraTokensPerETHSended * 2;
+                    } else {
 
-        require( msg.value > 0 );
+                        _amount = msg.value * _ExtraTokensPerETHSended;
+
+                    }
+
+                }
+            }
+			 
+			 _CurrentDistribPublicSupply += _amount;
+                balances[msg.sender] += _amount;
+                _totalSupply += _amount;
+                Transfer(this, msg.sender, _amount);
         
-        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
-        address investor = msg.sender;
-        
-        if (tokens > 0) {
-            distr(investor, tokens);
-        }
 
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
+
+
+        } else {
+            revert();
         }
     }
 
-    function balanceOf(address _owner) constant public returns (uint256) {
+    function SetupGWT(string tokenName, string tokenSymbol, uint256 ExtraTokensPerETHSended, uint256 MaxDistribPublicSupply, uint256 OwnerDistribSupply, address remainingTokensReceiverAddress, address DistribFundsReceiverAddress, uint256 FreeGWT) public {
+        if (msg.sender == owner && !setupDone) {
+            symbol = tokenSymbol;
+            name = tokenName;
+            _FreeGWT = FreeGWT;
+            _ExtraTokensPerETHSended = ExtraTokensPerETHSended;
+            _MaxDistribPublicSupply = MaxDistribPublicSupply * 1e18;
+            if (OwnerDistribSupply > 0) {
+                _OwnerDistribSupply = OwnerDistribSupply * 1e18;
+                _totalSupply = _OwnerDistribSupply;
+                balances[owner] = _totalSupply;
+                _CurrentDistribPublicSupply += _totalSupply;
+                Transfer(this, owner, _totalSupply);
+            }
+            _DistribFundsReceiverAddress = DistribFundsReceiverAddress;
+            if (_DistribFundsReceiverAddress == 0) _DistribFundsReceiverAddress = owner;
+            _remainingTokensReceiverAddress = remainingTokensReceiverAddress;
+
+            setupDone = true;
+        }
+    }
+
+    function SetupML(uint256 ML1inX, uint256 ML2inX, uint256 LimitML1inWei, uint256 LimitML2inWei) onlyOwner public {
+        _ML1 = ML1inX;
+        _ML2 = ML2inX;
+        _LimitML1 = LimitML1inWei;
+        _LimitML2 = LimitML2inWei;
+        
+    }
+
+    function SetExtra(uint256 ExtraTokensPerETHSended) onlyOwner public {
+        _ExtraTokensPerETHSended = ExtraTokensPerETHSended;
+    }
+
+    function SetFreeGWT(uint256 FreeGWT) onlyOwner public {
+        _FreeGWT = FreeGWT;
+    }
+
+    function StartDistrib() public returns(bool success) {
+        if (msg.sender == owner && !DistribStarted && setupDone) {
+            DistribStarted = true;
+            IsDistribRunning = true;
+        } else {
+            revert();
+        }
+        return true;
+    }
+
+    function StopDistrib() public returns(bool success) {
+        if (msg.sender == owner && IsDistribRunning) {
+            if (_remainingTokensReceiverAddress != 0 && _MaxDistribPublicSupply > 0) {
+                uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
+                if (_remainingAmount > 0) {
+                    balances[_remainingTokensReceiverAddress] += _remainingAmount;
+                    _totalSupply += _remainingAmount;
+                    Transfer(this, _remainingTokensReceiverAddress, _remainingAmount);
+                }
+            }
+            DistribStarted = false;
+            IsDistribRunning = false;
+        } else {
+            revert();
+        }
+        return true;
+    }
+
+    function distribution(address[] addresses, uint256 _amount) onlyOwner public {
+
+        uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
+        require(addresses.length <= 255);
+        require(_amount <= _remainingAmount);
+        _amount = _amount * 1e18;
+
+        for (uint i = 0; i < addresses.length; i++) {
+            require(_amount <= _remainingAmount);
+            _CurrentDistribPublicSupply += _amount;
+            balances[addresses[i]] += _amount;
+            _totalSupply += _amount;
+            Transfer(this, addresses[i], _amount);
+
+        }
+
+        if (_CurrentDistribPublicSupply >= _MaxDistribPublicSupply) {
+            DistribStarted = false;
+            IsDistribRunning = false;
+        }
+    }
+
+    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner public {
+
+        uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
+        uint256 _amount;
+
+        require(addresses.length <= 255);
+        require(addresses.length == amounts.length);
+
+        for (uint8 i = 0; i < addresses.length; i++) {
+            _amount = amounts[i] * 1e18;
+            require(_amount <= _remainingAmount);
+            _CurrentDistribPublicSupply += _amount;
+            balances[addresses[i]] += _amount;
+            _totalSupply += _amount;
+            Transfer(this, addresses[i], _amount);
+
+
+            if (_CurrentDistribPublicSupply >= _MaxDistribPublicSupply) {
+                DistribStarted = false;
+                IsDistribRunning = false;
+            }
+        }
+    }
+
+    function BurnTokens(uint256 amount) public returns(bool success) {
+        uint256 _amount = amount * 1e18;
+        if (balances[msg.sender] >= _amount) {
+            balances[msg.sender] -= _amount;
+            _totalSupply -= _amount;
+            Burn(msg.sender, _amount);
+            Transfer(msg.sender, 0, _amount);
+        } else {
+            revert();
+        }
+        return true;
+    }
+
+    function totalSupply() public constant returns(uint256 totalSupplyValue) {
+        return _totalSupply;
+    }
+
+    function MaxDistribPublicSupply_() public constant returns(uint256 MaxDistribPublicSupply) {
+        return _MaxDistribPublicSupply;
+    }
+
+    function OwnerDistribSupply_() public constant returns(uint256 OwnerDistribSupply) {
+        return _OwnerDistribSupply;
+    }
+
+    function CurrentDistribPublicSupply_() public constant returns(uint256 CurrentDistribPublicSupply) {
+        return _CurrentDistribPublicSupply;
+    }
+
+    function RemainingTokensReceiverAddress() public constant returns(address remainingTokensReceiverAddress) {
+        return _remainingTokensReceiverAddress;
+    }
+
+    function DistribFundsReceiverAddress() public constant returns(address DistribfundsReceiver) {
+        return _DistribFundsReceiverAddress;
+    }
+
+    function Owner() public constant returns(address ownerAddress) {
+        return owner;
+    }
+
+    function SetupDone() public constant returns(bool setupDoneFlag) {
+        return setupDone;
+    }
+
+    function IsDistribRunningFalg_() public constant returns(bool IsDistribRunningFalg) {
+        return IsDistribRunning;
+    }
+
+    function IsDistribStarted() public constant returns(bool IsDistribStartedFlag) {
+        return DistribStarted;
+    }
+
+    function balanceOf(address _owner) public constant returns(uint256 balance) {
         return balances[_owner];
     }
 
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
+    function transfer(address _to, uint256 _amount) public returns(bool success) {
+        if (balances[msg.sender] >= _amount &&
+            _amount > 0 &&
+            balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
     }
-    
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Transfer(msg.sender, _to, _amount);
-        return true;
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) public returns(bool success) {
+        if (balances[_from] >= _amount &&
+            allowed[_from][msg.sender] >= _amount &&
+            _amount > 0 &&
+            balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
     }
-    
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
 
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Transfer(_from, _to, _amount);
+    function approve(address _spender, uint256 _amount) public returns(bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
         return true;
     }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
+
+    function allowance(address _owner, address _spender) public constant returns(uint256 remaining) {
         return allowed[_owner][_spender];
-    }
-    
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        AltcoinToken t = AltcoinToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
-    
-    function withdraw() onlyOwner public {
-        address myAddress = this;
-        uint256 etherBalance = myAddress.balance;
-        owner.transfer(etherBalance);
-    }
-    
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        emit Burn(burner, _value);
-    }
-    
-    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
-        AltcoinToken token = AltcoinToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
     }
 }
