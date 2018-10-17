@@ -1,148 +1,226 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRCToken at 0x318a74cfb30fbc1747a60e9fd4dbc034d00da04d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRCToken at 0x5721b3568ab3323608a4f7d440316b23157d6bcb
 */
-pragma solidity 0.4.11;
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+pragma solidity ^0.4.18;
 
-  function div(uint256 a, uint256 b) internal returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+// ----------------------------------------------------------------------------
+// 'BRC' token contract
+//
+// Deployed to : 0x63f91cF1B5Dd18f05B38EF8F60c506179Fefd673
+// Symbol      : BRC
+// Name        : BRC Token
+// Total supply: 50000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
 
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
 
-  function add(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-}
-contract Ownable {
-  address public owner;
-  
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-  }
-  
-  function kill() onlyOwner {
-     selfdestruct(owner);
-  }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
-contract ERC20Basic {
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value);
-  function approve(address spender, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
-  uint256 public totalSupply;
 
-  modifier onlyPayloadSize(uint256 size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-  }
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
+    function Owned() public {
+        owner = msg.sender;
+    }
 
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 }
-contract StandardToken is BasicToken, ERC20 {
 
-  mapping (address => mapping (address => uint256)) allowed;
 
-  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-  }
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract BRCToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
 
-  function approve(address _spender, uint256 _value) {
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
 
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function BRCToken() public {
+        symbol = "BRC";
+        name = "BRC Token";
+        decimals = 18;
+        _totalSupply = 50000000000000000000000000;
+        balances[0x63f91cF1B5Dd18f05B38EF8F60c506179Fefd673] = _totalSupply;
+        Transfer(address(0), 0x63f91cF1B5Dd18f05B38EF8F60c506179Fefd673, _totalSupply);
+    }
 
-}
-contract BRCToken is StandardToken, Ownable {
 
-  string public constant name = "Blockracing";
-  string public constant symbol = "BRC";
-  uint256 public constant decimals = 8;
-  
-  
-  function BRCToken(){
-    owner = msg.sender;
-    totalSupply=13200000000000000;
-    balances[owner]=totalSupply;
-  }
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
 
-  function () {
-    throw;
-  }
 
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
