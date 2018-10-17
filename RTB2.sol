@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0xb1f40bdd1a17429cea058719b9dd4a271a5a51b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB2 at 0x01e13ae1ee71234964c4b1118d97db1de4efb632
 */
 pragma solidity ^0.4.23;
 
@@ -167,12 +167,13 @@ contract RTB2 is shareProfit {
 
     function _transfer(address _from, address _to, uint256 _value) internal returns (bool) {
         require(_to != address(0), "Receiver address cannot be null");
+        require(_from != _to);
         require(_value > 0 && _value <= balances[_from]);
         uint256 newToVal = balances[_to] + _value;
         assert(newToVal >= balances[_to]);
         uint256 newFromVal = balances[_from] - _value;
-        balances[_from] =  newFromVal;
         balances[_to] = newToVal;
+        balances[_from] =  newFromVal;
         uint256 temp = _value.mul(profit);
         changeProfit[_from] = changeProfit[_from].add(temp);
         received[_to] = received[_to].add(temp);
@@ -180,7 +181,7 @@ contract RTB2 is shareProfit {
         return true;
     }
     
-    function buy(uint256 _amount) external payable{
+    function buy(uint256 _amount) external onlyHuman payable{
         require(_amount > 0);
         uint256 _money = _amount.mul(price);
         require(msg.value == _money);
