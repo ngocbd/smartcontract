@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0x54529a070b8950c82279bb8df0b416a824ed3858
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0xf77237b0c9f44ec3aa6a4810bfad7389f22801c9
 */
 pragma solidity ^0.4.18;
-
+ 
 contract Ownable {
     
     address public owner;
@@ -10,27 +10,27 @@ contract Ownable {
     function Ownable() public {
         owner = msg.sender;
     }
-
+ 
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
+ 
     function transferOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
     }
     
 }
-
+ 
 contract SimpleTokenCoin is Ownable {
     
-    string public constant name = "Vozik coin";
+    string public constant name = "Another Shit Coin";
     
-    string public constant symbol = "VZC";
+    string public constant symbol = "SBC";
     
     uint32 public constant decimals = 18;
     
-    uint public totalSupply = 1000000;
+    uint public totalSupply = 0;
     
     mapping (address => uint) balances;
     
@@ -45,7 +45,7 @@ contract SimpleTokenCoin is Ownable {
     function balanceOf(address _owner) public constant returns (uint balance) {
         return balances[_owner];
     }
-
+ 
     function transfer(address _to, uint _value) public returns (bool success) {
         if(balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[msg.sender] -= _value; 
