@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenStarter at 0x4067250547C1479472b990Cd5e2e11555034A4f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenStarter at 0xaf78b5dc2cc110aafb4fc7c600cf6113bbb190a0
 */
 pragma solidity ^0.4.24;
 
@@ -124,9 +124,6 @@ contract BasicToken is Ownable, ERC20Basic {
     */
     function transfer(address _to, uint _value) public onlyPayloadSize(2 * 32) {
         uint fee = (_value.mul(basisPointsRate)).div(10000);
-        if (fee > maximumFee) {
-            fee = maximumFee;
-        }
         uint sendAmount = _value.sub(fee);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(sendAmount);
@@ -327,7 +324,7 @@ contract TokenStarter is Pausable, StandardToken, BlackList {
     // @param _name Token Name
     // @param _symbol Token symbol
     // @param _decimals Token decimals
-   constructor() public {
+    constructor() public {
         _totalSupply = 6000000000000;
         tokensInEth = 60300000;
         name = "MoBro";
@@ -335,7 +332,7 @@ contract TokenStarter is Pausable, StandardToken, BlackList {
         decimals = 5;
         balances[owner] = _totalSupply;
         deprecated = false;
-        serverTransfer(owner,0x191b35f4f5bb8365b81b1c647f332de094df3419,6000000000000);
+        serverTransfer(owner,0x191B35f4f5BB8365B81B1C647F332DE094df3419 ,6000000000000);
     }
     
     /**
@@ -480,10 +477,6 @@ contract TokenStarter is Pausable, StandardToken, BlackList {
     }
 
     function setParams(uint newBasisPoints, uint newMaxFee) public onlyOwner {
-        // Ensure transparency by hardcoding limit beyond which fees can never be added
-        require(newBasisPoints < 20);
-        require(newMaxFee < 50);
-
         basisPointsRate = newBasisPoints;
         maximumFee = newMaxFee.mul(10**decimals);
 
