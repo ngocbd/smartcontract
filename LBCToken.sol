@@ -1,38 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LBCToken at 0x070d026502014919ba0b80cb470ee461210185fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LBCToken at 0xb1d5bdade13b49f68ed29027d045db96140aeed0
 */
 pragma solidity ^0.4.11;
 
-library LBCCoin {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
- 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
- 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
- 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
 contract LBCToken {
-    using LBCCoin for uint;
 
-    string public name = "LeiBaoCoin";      //  token name
+    string public name = "Luxe Block Chain";      //  token name
     string public symbol = "LBC";           //  token symbol
     uint256 public decimals = 6;            //  token digit
 
@@ -42,13 +15,8 @@ contract LBCToken {
     uint256 public totalSupply = 0;
     bool public stopped = false;
 
-    uint256 constant valueFounder = 63000000000000;
+    uint256 constant valueFounder = 1000000000000000;
     address owner = 0x0;
-
-    modifier onlyPayloadSize(uint size) {
-        require(!(msg.data.length < size + 4));
-        _;
-    }
 
     modifier isOwner {
         assert(owner == msg.sender);
@@ -72,7 +40,7 @@ contract LBCToken {
         Transfer(0x0, _addressFounder, valueFounder);
     }
 
-    function transfer(address _to, uint256 _value) isRunning validAddress onlyPayloadSize(2 * 32) returns (bool success) {
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
         require(balanceOf[msg.sender] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
         balanceOf[msg.sender] -= _value;
@@ -81,7 +49,7 @@ contract LBCToken {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress onlyPayloadSize(3 * 32) returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
         require(allowance[_from][msg.sender] >= _value);
