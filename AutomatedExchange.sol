@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AutomatedExchange at 0xac1a2952942e2751772eb7c6c57d4bdf21090465
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AutomatedExchange at 0x7edd7e5a4ce499ea498d5c076f744f52ae00f81b
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -30,7 +30,7 @@ contract AutomatedExchange is ApproveAndCallFallBack{
 
     uint256 PSN=100000000000000;
     uint256 PSNH=50000000000000;
-    address vrfAddress=0x9E129e47213589C5Da4d92CC6Bb056425d60b0e1; //0xe0832c4f024D2427bBC6BD0C4931096d2ab5CCaF;//0x64F82571C326487cac31669F1e797EA0c9650879;
+    address vrfAddress=0x96357e75B7Ccb1a7Cf10Ac6432021AEa7174c803; //0x9E129e47213589C5Da4d92CC6Bb056425d60b0e1; //0xe0832c4f024D2427bBC6BD0C4931096d2ab5CCaF;//0x64F82571C326487cac31669F1e797EA0c9650879;
     VerifyToken vrfcontract=VerifyToken(vrfAddress);
     event BoughtToken(uint tokens,uint eth,address indexed to);
     event SoldToken(uint tokens,uint eth,address indexed to);
