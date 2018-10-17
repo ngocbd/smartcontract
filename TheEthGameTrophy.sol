@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheEthGameTrophy at 0x402958173d273cFb6FEa43c5b55fc53160Cf4eCd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheEthGameTrophy at 0x115B2e7BcCa6fE01f2B54d5F2630d27cf5A5990D
 */
 contract TheEthGameTrophy {
     string public name; 
