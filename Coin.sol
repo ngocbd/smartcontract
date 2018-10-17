@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x6ab36640474e10e27ed86fb009a488f68a5f269d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0xb9a944dec5cf3be2a0aa392fc3318258c7c54d47
 */
 pragma solidity ^0.4.4;
 
@@ -201,7 +201,7 @@ contract StandardToken is ERC20, SafeMathLib {
  * First envisioned by Golem and Lunyr projects.
  * Taken and inspired from https://tokenmarket.net
  */
-contract JcashUpgradeableToken is StandardToken {
+contract CMBUpgradeableToken is StandardToken {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -236,7 +236,7 @@ contract JcashUpgradeableToken is StandardToken {
   /**
    * Do not allow construction without upgrade master set.
    */
-  function JcashUpgradeableToken(address _upgradeMaster) {
+  function CMBUpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
 
@@ -397,31 +397,33 @@ contract ReleasableToken is ERC20, Ownable {
 }
 
 
-contract Coin is JcashUpgradeableToken, ReleasableToken {
+contract Coin is CMBUpgradeableToken, ReleasableToken {
 
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   /* name of the token */
-  string public name = "JCASH";
+  string public name = "Creatium";
 
   /* symbol of the token */
-  string public symbol = "JCASH";
+  string public symbol = "CMB";
 
   /* token decimals to handle fractions */
   uint public decimals = 18;
 
 /* initial token supply */
   uint public totalSupply = 2000000000 * (10 ** decimals);
-  uint public onSaleTokens = 224000000 * (10 ** decimals);
+  uint public onSaleTokens = 30000000 * (10 ** decimals);
 
-  uint256 pricePerToken = 276014352700000; //1 Eth = 276014352700000 JCASH (0.2 USD = 1 jCASH)
+  uint256 pricePerToken = 295898260100000; //1 Eth = 276014352700000 CMB (0.2 USD = 1 CMB)
 
-  uint minETH = 0 * 10**decimals; // 0.2760143527 ether  (1000 jCASH)
-  uint maxETH = 500 * 10**decimals; // 138.0071764 ether  (500000 jCASH)
+
+  uint minETH = 0 * 10**decimals;
+  uint maxETH = 500 * 10**decimals; 
 
 
   //Crowdsale running
   bool public isCrowdsaleOpen=false;
+  
 
   uint tokensForPublicSale = 0;
 
@@ -429,7 +431,7 @@ contract Coin is JcashUpgradeableToken, ReleasableToken {
 
   
 
-  function Coin() JcashUpgradeableToken(msg.sender) {
+  function Coin() CMBUpgradeableToken(msg.sender) {
 
     owner = msg.sender;
     contractAddress = address(this);
@@ -464,7 +466,7 @@ contract Coin is JcashUpgradeableToken, ReleasableToken {
 
 
 
-  /* A dispense feature to allocate some addresses with Jcash tokens
+  /* A dispense feature to allocate some addresses with CMB tokens
   * calculation done using token count
   *  Can be called only by owner
   */
