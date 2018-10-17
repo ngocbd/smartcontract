@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ivtk at 0xd06f2a2feaf5d7d3e83faf06cc275294cebdf14d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ivtk at 0x25aa20f3e1d9ebf251e3626876802f571cb9cbdd
 */
 pragma solidity ^0.4.7;
 
@@ -200,21 +200,18 @@ contract Ownable {
          
 
 contract ivtk is SupportsInterfaceWithLookup, ERC721Basic, Ownable {
-    mapping (bytes32 => string) public dbCustomer;
-    
     struct invoiceInfo {
-        bytes32[] aErc20Tx;
         bytes32 custID;
         bytes32 docDate;
         bytes32 invDate;
-        uint qty;
-        uint salePrice2dec;
-        uint amtExc2dec;
-        uint amtInc2dec;
+        bytes32[] aErc20Tx;
+        uint[] aQty;
+        uint[] aSalePrice2dec;
+        uint[] aAmtExc2dec;
+        uint[] aAmtInc2dec;
     }
     
     invoiceInfo[] aInvoices;
-    mapping (bytes32 => uint) mTxRelateWithTokenID;
     
 
     string public name;
@@ -240,9 +237,7 @@ contract ivtk is SupportsInterfaceWithLookup, ERC721Basic, Ownable {
   
     
     constructor() public {
-        dbCustomer["ET1218"] = "?????? ???????????????? ?????";
-        
-        name = "IV Token";
+        name = "IV TokenII";
         symbol = "iv";
         
         // register the supported interfaces to conform to ERC721 via ERC165
@@ -255,71 +250,67 @@ contract ivtk is SupportsInterfaceWithLookup, ERC721Basic, Ownable {
         return true;
     }
     
-    function getTokenIDRelateWithTx(bytes32 _tx) public view returns (uint) {
-        return mTxRelateWithTokenID[_tx];
-    }
     
     function totalSupply() public view returns (uint256) {
         return aInvoices.length;
     }
     
     function getItemByTokenID(uint256 _tokenId) public view returns (
-        bytes32[] aErc20Tx,
         bytes32 custID,
         bytes32 docDate,
         bytes32 invDate,
-        uint qty,
-        uint salePrice2dec,
-        uint amtExc2dec,
-        uint amtInc2dec
+        bytes32[] aErc20Tx,
+        uint[] aQty,
+        uint[] aSalePrice2dec,
+        uint[] aAmtExc2dec,
+        uint[] aAmtInc2dec
         ) {
         
         require(_tokenId > 0);
         
         invoiceInfo storage ivInfo = aInvoices[_tokenId - 1];
+        
         return (
-            ivInfo.aErc20Tx,
             ivInfo.custID,
             ivInfo.docDate,
             ivInfo.invDate,
-            ivInfo.qty,
-            ivInfo.salePrice2dec,
-            ivInfo.amtExc2dec,
-            ivInfo.amtInc2dec
+            ivInfo.aErc20Tx,
+            ivInfo.aQty,
+            ivInfo.aSalePrice2dec,
+            ivInfo.aAmtExc2dec,
+            ivInfo.aAmtInc2dec
         );
     }
     
     
     function addData(
-        bytes32[] aErc20Tx,
         bytes32 custID,
         bytes32 docDate,
         bytes32 invDate,
-        uint qty,
-        uint salePrice2dec,
-        uint amtExc2dec,
-        uint amtInc2dec
+        bytes32[] aErc20Tx,
+        uint[] aQty,
+        uint[] aSalePrice2dec,
+        uint[] aAmtExc2dec,
+        uint[] aAmtInc2dec
         ) 
         public 
         onlyOwner
         {
-        
+            
+            
         
         invoiceInfo memory ivInfo = invoiceInfo({
-            aErc20Tx: aErc20Tx,
             custID: custID,
             docDate: docDate,
             invDate: invDate,
-            qty: qty,
-            salePrice2dec: salePrice2dec,
-            amtExc2dec: amtExc2dec,
-            amtInc2dec: amtInc2dec
+            aErc20Tx: aErc20Tx,
+            aQty: aQty,
+            aSalePrice2dec: aSalePrice2dec,
+            aAmtExc2dec: aAmtExc2dec,
+            aAmtInc2dec: aAmtInc2dec
         });
         
         uint256 _tokenID = aInvoices.push(ivInfo);
-        for(uint256 i=0; i<aErc20Tx.length; i++) {
-            mTxRelateWithTokenID[aErc20Tx[i]] = _tokenID;
-        }
         
         addTokenTo(msg.sender, _tokenID);
         emit Transfer(address(0), msg.sender, _tokenID);
