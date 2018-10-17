@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0x205f841f40cca82b8370391f727a8fa3f301f9ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0xef4a7cd27e310314ec9af5473c95eb647e4d42a3
 */
 pragma solidity ^0.4.24;
 
@@ -194,15 +194,19 @@ contract ERC20 {
   );
 }
 
-contract AddressesFilterFeature is Ownable {}
-contract ERC20Basic {}
-contract BasicToken is ERC20Basic {}
-contract StandardToken is ERC20, BasicToken {}
-contract MintableToken is AddressesFilterFeature, StandardToken {}
+contract PercentRateProvider {}
+contract PercentRateFeature is Ownable, PercentRateProvider {}
+contract InvestedProvider is Ownable {}
+contract WalletProvider is Ownable {}
+contract RetrieveTokensFeature is Ownable {}
+contract TokenProvider is Ownable {}
+contract MintTokensInterface is TokenProvider {}
+contract MintTokensFeature is MintTokensInterface {}
 
-contract Token is MintableToken {
-      function mint(address, uint256) public returns (bool);
+contract CommonSale is PercentRateFeature, InvestedProvider, WalletProvider, RetrieveTokensFeature, MintTokensFeature {
+      function mintTokensExternal(address, uint) public;
 }
+
 /**
  * @title CrowdsaleWPTByRounds
  * @dev This is an example of a fully fledged crowdsale.
@@ -230,7 +234,7 @@ contract CrowdsaleWPTByRounds is Ownable {
   address public wallet;
 
   // Address of tokens minter
-  Token public minterContract;
+  CommonSale public minterContract;
 
   // How many token units a buyer gets per wei.
   // The rate is the conversion between wei and the smallest and indivisible token unit.
@@ -254,7 +258,7 @@ contract CrowdsaleWPTByRounds is Ownable {
    * @param _minterAddr the minter address
    */
   function setMinter(address _minterAddr) public onlyOwner {
-    minterContract = Token(_minterAddr);
+    minterContract = CommonSale(_minterAddr);
   }
 
   /**
@@ -281,9 +285,9 @@ contract CrowdsaleWPTByRounds is Ownable {
     );
 
 constructor () public {
-    rate = 400;
+    rate = 400;//_rate;
     wallet = 0xeA9cbceD36a092C596e9c18313536D0EEFacff46;
-    cap = 400000000000000000000000;
+    cap = 200000;
     openingTime = 1534558186;
     closingTime = 1535320800;
 
@@ -313,31 +317,10 @@ constructor () public {
   }
 
    /**
-   * @dev Set token address.
-   */
-  function setToken(ERC20 _token) public onlyOwner {
-    token = _token;
-  }
-
-   /**
-   * @dev Set address od deposit wallet.
-   */
-  function setWallet(address _wallet) public onlyOwner {
-    wallet = _wallet;
-  }
-
-   /**
    * @dev Change minimal amount of investment.
    */
   function changeMinInvest(uint256 newMinValue) public onlyOwner {
     rate = newMinValue;
-  }
-
-   /**
-   * @dev Set cap for current round.
-   */
-  function setCap(uint256 _newCap) public onlyOwner {
-    cap = _newCap;
   }
 
    /**
@@ -397,7 +380,7 @@ constructor () public {
     // update state
     tokensRaised = tokensRaised.add(tokens);
 
-    minterContract.mint(_beneficiary, tokens);
+    minterContract.mintTokensExternal(_beneficiary, tokens);
     
     emit TokenPurchase(
       msg.sender,
@@ -412,7 +395,7 @@ constructor () public {
   /**
    * @dev Extend parent behavior requiring purchase to respect the funding cap.
    * @param _beneficiary Token purchaser
-   *  _weiAmount Amount of wei contributed
+   * @param _weiAmount Amount of wei contributed
    */
   function _preValidatePurchase(address _beneficiary, uint256 _weiAmount)
   internal
