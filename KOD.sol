@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KOD at 0xdc8f359b6a458331737bf6dfecb09d15e90d4db4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KOD at 0x3ba32b88323639b4a499bb40f7bad5a929c3f9c0
 */
 pragma solidity ^0.4.20;
 
@@ -10,11 +10,11 @@ pragma solidity ^0.4.20;
 * ->Exchange : kodicia.github.io
 * -> What?
 * Incorporated the strong points of different POW{x}, best config:
-* [?] 20% dividends for token purchase, shared among all token holders.
-* [?] 10% dividends for token transfer, shared among all token holders.
-* [?] 20% dividends for token selling.
+* [?] 10% dividends for token purchase, shared among all token holders.
+* [?] 3% dividends for token transfer, shared among all token holders.
+* [?] 10% dividends for token selling.
 * [?] 7% dividends is given to referrer.
-* [?] 50 tokens to activate Masternodes.
+* [?] 100 tokens to activate Masternodes.
 *
 */
 
@@ -82,28 +82,28 @@ contract KOD {
     =            CONFIGURABLES            =
     =====================================*/
 
-    string public name = "KODICIA";
-    string public symbol = "KOD";
+    string public name = "KODICIA1A";
+    string public symbol = "KOD1A";
     uint8 constant public decimals = 18;
 
-    /// @dev 15% dividends for token purchase
-    uint8 constant internal entryFee_ = 20;
+    /// @dev 10% dividends for token purchase
+    uint8 constant internal entryFee_ = 10;
 
-    /// @dev 10% dividends for token transfer
-    uint8 constant internal transferFee_ = 10;
+    /// @dev 3% dividends for token transfer
+    uint8 constant internal transferFee_ = 3;
 
-    /// @dev 20% dividends for token selling
-    uint8 constant internal exitFee_ = 20;
+    /// @dev 10% dividends for token selling
+    uint8 constant internal exitFee_ = 10;
 
     /// @dev 35% of entryFee_ (i.e. 7% dividends) is given to referrer
     uint8 constant internal refferalFee_ = 35;
 
     uint256 constant internal tokenPriceInitial_ = 0.00180000 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2 ** 64;
 
-    /// @dev proof of stake (defaults at 50 tokens)
-    uint256 public stakingRequirement = 50e18;
+    /// @dev proof of stake (defaults at 100 tokens)
+    uint256 public stakingRequirement = 100e18;
 
 
    /*=================================
