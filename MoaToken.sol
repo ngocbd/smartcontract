@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoaToken at 0x9d69e10bbc9c841818cae2bcca5363c66e010ef4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOATOKEN at 0x8a4184de727d459b831fd2e44f0540e926828bf3
 */
 pragma solidity ^0.4.23;
 
@@ -133,7 +133,7 @@ contract BasicToken is ERC20Basic {
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
-
+  
   /**
   * @dev Gets the balance of the specified address.
   * @param _owner The address to query the the balance of.
@@ -358,9 +358,14 @@ contract MintableToken is StandardToken, Ownable {
 
   bool public mintingFinished = false;
 
+  uint256 public maxMintQuantity;
+  
+  bool public isLimitMint = false;
 
   modifier canMint() {
+  	
     require(!mintingFinished);
+    
     _;
   }
 
@@ -368,6 +373,7 @@ contract MintableToken is StandardToken, Ownable {
     require(msg.sender == owner);
     _;
   }
+
 
   /**
    * @dev Function to mint tokens
@@ -384,12 +390,36 @@ contract MintableToken is StandardToken, Ownable {
     public
     returns (bool)
   {
+	    
+	require(maxMintQuantity>=totalSupply_.add(_amount));
+  	
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     emit Mint(_to, _amount);
     emit Transfer(address(0), _to, _amount);
     return true;
   }
+
+	/**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function mintArray(address[] _to, uint256[] _value) public  returns (bool) {
+    
+    uint cnt = _to.length;
+    uint cntVal = _value.length;
+    
+    require(cnt >0);
+    require(cnt == cntVal);
+    
+    for (uint i = 0; i < cnt; i++) {
+    	mint(_to[i],_value[i]);
+    }
+    
+    return true;
+  }
+
 
   /**
    * @dev Function to stop minting new tokens.
@@ -505,11 +535,14 @@ contract PausableToken is StandardToken, Pausable {
  * @dev Very simple ERC20 Token that can be minted.
  * It is meant to be used in a crowdsale contract.
  */
-contract MoaToken is MintableToken,PausableToken,BurnableToken {
+contract MOATOKEN is MintableToken,PausableToken,BurnableToken {
 
   // solium-disable-next-line uppercase
-  string public constant name = "MOA Token";
+  string public constant name = "MOA TOKEN";
   string public constant symbol = "MOA"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
+  constructor()public {
+    maxMintQuantity=2100000000000000000000000000;
+  }
 
 }
