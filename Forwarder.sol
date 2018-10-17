@@ -1,72 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x97f599b5ab34dd6223a0a80c2794c04cddf59488
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0x4ab5435c86ebe9262d642f945ca28bea499c1fe8
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.14;
 
 /**
- * @title Ownable
- * @dev Adds onlyOwner modifier. Subcontracts should implement checkOwner to check if caller is owner.
+ * Contract that exposes the needed erc20 token functions
  */
-contract Ownable {
-    modifier onlyOwner() {
-        checkOwner();
-        _;
-    }
 
-    function checkOwner() internal;
+contract ERC20Interface {
+  // Send _value amount of tokens to address _to
+  function transfer(address _to, uint256 _value) returns (bool success);
+  // Get the account balance of another account with address _owner
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
 /**
- * @title OwnableImpl
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * Contract that will forward any incoming Ether to its creator
  */
-contract OwnableImpl is Ownable {
-    address public owner;
+contract Forwarder {
+  // Address to which any funds sent to this contract will be forwarded
+  address public parentAddress;
+  event ForwarderDeposited(address from, uint value, bytes data);
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event TokensFlushed(
+    address tokenContractAddress, // The contract address of the token
+    uint value // Amount of token sent
+  );
 
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function OwnableImpl() public {
-        owner = msg.sender;
+  /**
+   * Create the contract, and set the destination address to that of the creator
+   */
+  function Forwarder() {
+    parentAddress = msg.sender;
+  }
+
+  /**
+   * Modifier that will execute internal code block only if the sender is a parent of the forwarder contract
+   */
+  modifier onlyParent {
+    if (msg.sender != parentAddress) {
+      throw;
     }
+    _;
+  }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    function checkOwner() internal {
-        require(msg.sender == owner);
+  /**
+   * Default function; Gets called when Ether is deposited, and forwards it to the destination address
+   */
+  function() payable {
+    if (!parentAddress.call.value(msg.value)(msg.data))
+      throw;
+    // Fire off the deposited event if we can forward it  
+    ForwarderDeposited(msg.sender, msg.value, msg.data);
+  }
+
+  /**
+   * Execute a token transfer of the full balance from the forwarder token to the main wallet contract
+   * @param tokenContractAddress the address of the erc20 token contract
+   */
+  function flushTokens(address tokenContractAddress) onlyParent {
+    ERC20Interface instance = ERC20Interface(tokenContractAddress);
+    var forwarderAddress = address(this);
+    var forwarderBalance = instance.balanceOf(forwarderAddress);
+    if (forwarderBalance == 0) {
+      return;
     }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    if (!instance.transfer(parentAddress, forwarderBalance)) {
+      throw;
     }
-}
+    TokensFlushed(tokenContractAddress, forwarderBalance);
+  }
 
-contract EtherReceiver {
-	function receiveWithData(bytes _data) payable public;
-}
-
-contract Forwarder is OwnableImpl {
-	function withdraw(address to, uint256 value) onlyOwner public {
-		to.transfer(value);
-	}
-
-	function forward(address to, bytes data, uint256 value) payable public {
-		uint256 toTransfer = value - value / 100;
-		if (msg.value > toTransfer) {
-			EtherReceiver(to).receiveWithData.value(toTransfer)(data);
-		} else {
-			EtherReceiver(to).receiveWithData.value(msg.value)(data);
-		}
-	}
+  /**
+   * It is possible that funds were sent to this address before the contract was deployed.
+   * We can flush those funds to the destination address.
+   */
+  function flush() {
+    if (!parentAddress.call.value(this.balance)())
+      throw;
+  }
 }
