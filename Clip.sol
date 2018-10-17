@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLIP at 0x0404561bdfb03984da88a04e698e2214de5379ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLIP at 0xd10dd32ddb3bcdce999e28d6d505ae5d611f903f
 */
 pragma solidity ^0.4.18;
 
@@ -241,7 +241,7 @@ contract CLIP is ERC223, Ownable {
     /**
      * @dev Constructor is called only once and can not be called again
      */
-    function ClipToken() public {
+    function CryptoHarborExchange() public {
         owner = 0xA980B73726F8BC0AdC96A837433e6c49CDFD7f27;
 
         balanceOf[Firstsale] = totalSupply.mul(65).div(100);
