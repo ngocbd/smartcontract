@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x9a93dc602e9e9c1f452bb7ddcb66cb4d55e2417f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x15247cf99b5870f54ea17e85e1af8667a58a6644
 */
 pragma solidity ^0.4.24;
 
@@ -14,8 +14,7 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    address private admin = msg.sender;
-    address private admin2;
+    address private communityAddr = 0xD2F3F49CBEb8B8A23E6174B28643856dac70EB23;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -41,41 +40,49 @@ contract PlayerBook {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================    
-    constructor(address founder) 
-    public 
+    constructor()
+        public
     {
-        admin2 = founder;
-         // No keys are purchased with this method, it's simply locking our addresses,
-        // PID's and names for referral codes.
-        plyr_[1].addr = 0x7e474fe5Cfb720804860215f407111183cbc2f85;
-        plyr_[1].name = "kenny";
+        // premine the dev names (sorry not sorry)
+            // No keys are purchased with this method, it's simply locking our addresses,
+            // PID's and names for referral codes.
+        plyr_[1].addr = 0x945Da75110a805C53209E809005c9ceF129DA012;
+        plyr_[1].name = "daddy";
         plyr_[1].names = 1;
-        pIDxAddr_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = 1;
-        pIDxName_["kenny"] = 1;
-        plyrNames_[1]["kenny"] = true;
-        plyrNameList_[1][1] = "kenny";
+        pIDxAddr_[0x945Da75110a805C53209E809005c9ceF129DA012] = 1;
+        pIDxName_["daddy"] = 1;
+        plyrNames_[1]["daddy"] = true;
+        plyrNameList_[1][1] = "daddy";
+        
+        plyr_[2].addr = 0x8A4cF0969f8b5D286b87C3713E8908C033A0f020;
+        plyr_[2].name = "player1";
+        plyr_[2].names = 1;
+        pIDxAddr_[0x8A4cF0969f8b5D286b87C3713E8908C033A0f020] = 2;
+        pIDxName_["player1"] = 2;
+        plyrNames_[2]["player1"] = true;
+        plyrNameList_[2][1] = "player1";
+        
+        pID_ = 2;
     }
-   
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
 //==============================================================================    
     /**
-     * @dev prevents contracts from interacting
+     * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
         address _addr = msg.sender;
         uint256 _codeLength;
         
         assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0);
-        require(_addr == tx.origin);
+        require(_codeLength == 0, "sorry humans only");
         _;
     }
-   
-    modifier onlyAdmin()
+    
+    modifier onlyCommunity() 
     {
-        require(msg.sender == admin);
+        require(msg.sender == communityAddr, "msg sender is not the community");
         _;
     }
     
@@ -148,7 +155,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -164,7 +171,7 @@ contract PlayerBook {
         
         // manage affiliate residuals
         // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code
+        // player tried to use their own pID as an affiliate code, lolz
         if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) 
         {
             // update last affiliate 
@@ -183,7 +190,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -223,7 +230,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -269,10 +276,10 @@ contract PlayerBook {
         isHuman()
         public
     {
-        require(_gameID <= gID_);
+        require(_gameID <= gID_, "silly player, that game doesn't exist yet");
         address _addr = msg.sender;
         uint256 _pID = pIDxAddr_[_addr];
-        require(_pID != 0);
+        require(_pID != 0, "hey there buddy, you dont even have an account");
         uint256 _totalNames = plyr_[_pID].names;
         
         // add players profile and most recent name
@@ -284,10 +291,34 @@ contract PlayerBook {
                 games_[_gameID].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
     }
     
-    
+    /**
+     * @dev players, use this to push your player profile to all registered games.
+     * -functionhash- 0x0c6940ea
+     */
+    function addMeToAllGames()
+        isHuman()
+        public
+    {
+        address _addr = msg.sender;
+        uint256 _pID = pIDxAddr_[_addr];
+        require(_pID != 0, "hey there buddy, you dont even have an account");
+        uint256 _laff = plyr_[_pID].laff;
+        uint256 _totalNames = plyr_[_pID].names;
+        bytes32 _name = plyr_[_pID].name;
+        
+        for (uint256 i = 1; i <= gID_; i++)
+        {
+            games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
+            if (_totalNames > 1)
+                for (uint256 ii = 1; ii <= _totalNames; ii++)
+                    games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
+        }
+                
+    }
     
     /**
-     * @dev players use this to change back to one of your old names.  
+     * @dev players use this to change back to one of your old names.  tip, you'll
+     * still need to push that info to existing games.
      * -functionhash- 0xb9291296
      * @param _nameString the name you want to use 
      */
@@ -300,7 +331,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[msg.sender];
         
         // make sure they own the name 
-        require(plyrNames_[_pID][_name] == true);
+        require(plyrNames_[_pID][_name] == true, "umm... thats not a name you own");
         
         // update their current name 
         plyr_[_pID].name = _name;
@@ -315,7 +346,7 @@ contract PlayerBook {
     {
         // if names already has been used, require that current msg sender owns the name
         if (pIDxName_[_name] != 0)
-            require(plyrNames_[_pID][_name] == true);
+            require(plyrNames_[_pID][_name] == true, "sorry that names already taken");
         
         // add name to player profile, registry, and name book
         plyr_[_pID].name = _name;
@@ -326,9 +357,9 @@ contract PlayerBook {
             plyr_[_pID].names++;
             plyrNameList_[_pID][plyr_[_pID].names] = _name;
         }
-        uint256 founderFee = (address(this).balance / 2);
-        admin.transfer(founderFee);
-        admin2.transfer(founderFee);
+        
+        // registration fee goes directly to community rewards
+        communityAddr.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -405,7 +436,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -415,7 +446,7 @@ contract PlayerBook {
         
         // manage affiliate residuals
         // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code
+        // player tried to use their own pID as an affiliate code, lolz
         uint256 _affID = _affCode;
         if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID) 
         {
@@ -437,7 +468,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -446,7 +477,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[_addr];
         
         // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own
+        // if no affiliate code was given or player tried to use their own, lolz
         uint256 _affID;
         if (_affCode != address(0) && _affCode != _addr)
         {
@@ -473,7 +504,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_);
+        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -482,7 +513,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[_addr];
         
         // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own
+        // if no affiliate code was given or player tried to use their own, lolz
         uint256 _affID;
         if (_affCode != "" && _affCode != _name)
         {
@@ -508,28 +539,55 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyAdmin()
+     onlyCommunity()
         public
     {
-        require(gameIDs_[_gameAddress] == 0);
+        require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
+
             gID_++;
             bytes32 _name = _gameNameStr.nameFilter();
             gameIDs_[_gameAddress] = gID_;
             gameNames_[_gameAddress] = _name;
             games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
+        
+            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
     
     function setRegistrationFee(uint256 _fee)
-        onlyAdmin()
+     onlyCommunity()
         public
-
     {
-      registrationFee_ = _fee;
+            registrationFee_ = _fee;
     }
         
 } 
 
-
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? dddos ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 library NameFilter {
     
     /**
@@ -551,14 +609,14 @@ library NameFilter {
         uint256 _length = _temp.length;
         
         //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0);
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
         // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20);
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
         // make sure first two characters are not 0x
         if (_temp[0] == 0x30)
         {
-            require(_temp[1] != 0x78);
-            require(_temp[1] != 0x58);
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
         }
         
         // create a bool to track if we have a non number character
@@ -584,10 +642,12 @@ library NameFilter {
                     // OR lowercase a-z
                     (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
                     // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a));
+                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                    "string contains invalid characters"
+                );
                 // make sure theres not 2x spaces in a row
                 if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20);
+                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
                 
                 // see if we have a character other than a number
                 if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
@@ -595,7 +655,7 @@ library NameFilter {
             }
         }
         
-        require(_hasNonNumber == true);
+        require(_hasNonNumber == true, "string cannot be only numbers");
         
         bytes32 _ret;
         assembly {
@@ -608,7 +668,7 @@ library NameFilter {
 /**
  * @title SafeMath v0.1.9
  * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * change notes:  original SafeMath library from OpenZeppelin modified by dddos
  * - added sqrt
  * - added sq
  * - added pwr 
