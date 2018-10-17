@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0xc3237200538782e0e932db4db026288c229a6b14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0x4ca603803d7819cdb2c86fe146f213dfc4a5b8cf
 */
 pragma solidity ^0.4.24;
 
@@ -139,7 +139,7 @@ contract F3DPLUS is modularShort {
     string constant public symbol = "f3dplus";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 5 minutes;                // round timer starts at this
+    uint256 constant private rndInit_ = 3 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 5 minutes;                // max length a round timer can be
 //==============================================================================
