@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0xc07b4dadeb18a6c5b62b92115ffa3aa28a13b641
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0xa6e6b847bef276f67e7d726616d6521e4e439e30
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
 // 'LIFECOIN' token contract
 //
 // Deployed to : 0xD133cc957d41C0cd62ed6175155B2E54F951eA79
-// Symbol      : LIFE
-// Name        : LIFECOIN Token
+// Symbol      : LFC
+// Name        : LIFECOIN
 // Total supply: 3000000000000
 // Decimals    : 18
 //
@@ -116,7 +116,7 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function LIFECOIN() public {
-        symbol = "LIFE";
+        symbol = "LFC";
         name = "LIFECOIN";
         decimals = 18;
         _totalSupply = 3000000000000000000000000000000;
@@ -160,7 +160,7 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -171,7 +171,7 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    // 
+    //
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
