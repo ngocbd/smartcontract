@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x97f76edb9d631590558b5c23f27a2a4711c0c964
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x473c2d69c006db8a5d3fc68437c3df6fd020a45d
 */
 // File: contracts/EternalStorage.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
+pragma solidity 0.4.24;
 
 
 /**
@@ -26,8 +26,7 @@ contract EternalStorage {
 // File: contracts/UpgradeabilityOwnerStorage.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 /**
@@ -58,8 +57,7 @@ contract UpgradeabilityOwnerStorage {
 // File: contracts/UpgradeabilityStorage.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 /**
@@ -93,8 +91,7 @@ contract UpgradeabilityStorage {
 // File: contracts/OwnedUpgradeabilityStorage.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 
@@ -110,8 +107,7 @@ contract OwnedUpgradeabilityStorage is UpgradeabilityOwnerStorage, Upgradeabilit
 // File: contracts/SafeMath.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 /**
@@ -163,8 +159,7 @@ library SafeMath {
 // File: contracts/multisender/Ownable.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 
@@ -209,7 +204,7 @@ contract Ownable is EternalStorage {
     * @dev Sets a new owner address
     */
     function setOwner(address newOwner) internal {
-        OwnershipTransferred(owner(), newOwner);
+        emit OwnershipTransferred(owner(), newOwner);
         addressStorage[keccak256("owner")] = newOwner;
     }
 }
@@ -217,8 +212,7 @@ contract Ownable is EternalStorage {
 // File: contracts/multisender/Claimable.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 
@@ -254,7 +248,7 @@ contract Claimable is EternalStorage, Ownable {
     * @dev Allows the pendingOwner address to finalize the transfer.
     */
     function claimOwnership() public onlyPendingOwner {
-        OwnershipTransferred(owner(), pendingOwner());
+        emit OwnershipTransferred(owner(), pendingOwner());
         addressStorage[keccak256("owner")] = addressStorage[keccak256("pendingOwner")];
         addressStorage[keccak256("pendingOwner")] = address(0);
     }
@@ -263,8 +257,7 @@ contract Claimable is EternalStorage, Ownable {
 // File: contracts/multisender/UpgradebleStormSender.sol
 
 // Roman Storm Multi Sender
-// To Use this Dapp: https://poanetwork.github.io/multisender
-pragma solidity 0.4.20;
+// To Use this Dapp: https://rstormsf.github.io/multisender
 
 
 
@@ -319,11 +312,11 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
     }
  
     function txCount(address customer) public view returns(uint256) {
-        return uintStorage[keccak256("txCount", customer)];
+        return uintStorage[keccak256(abi.encodePacked("txCount", customer))];
     }
 
     function arrayLimit() public view returns(uint256) {
-        return uintStorage[keccak256("arrayLimit")];
+        return uintStorage[keccak256(abi.encodePacked("arrayLimit"))];
     }
 
     function setArrayLimit(uint256 _newLimit) public onlyOwner {
@@ -363,31 +356,51 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
     }
 
     function multisendToken(address token, address[] _contributors, uint256[] _balances) public hasFee payable {
-        uint256 total = 0;
+        if (token == 0x000000000000000000000000000000000000bEEF){
+            multisendEther(_contributors, _balances);
+        } else {
+            uint256 total = 0;
+            require(_contributors.length <= arrayLimit());
+            ERC20 erc20token = ERC20(token);
+            uint8 i = 0;
+            for (i; i < _contributors.length; i++) {
+                erc20token.transferFrom(msg.sender, _contributors[i], _balances[i]);
+                total += _balances[i];
+            }
+            setTxCount(msg.sender, txCount(msg.sender).add(1));
+            emit Multisended(total, token);
+        }
+    }
+
+    function multisendEther(address[] _contributors, uint256[] _balances) public payable {
+        uint256 total = msg.value;
+        uint256 userfee = currentFee(msg.sender);
+        require(total >= userfee);
         require(_contributors.length <= arrayLimit());
-        ERC20 erc20token = ERC20(token);
-        uint8 i = 0;
+        total = total.sub(userfee);
+        uint256 i = 0;
         for (i; i < _contributors.length; i++) {
-            erc20token.transferFrom(msg.sender, _contributors[i], _balances[i]);
-            total += _balances[i];
+            require(total >= _balances[i]);
+            total = total.sub(_balances[i]);
+            _contributors[i].transfer(_balances[i]);
         }
         setTxCount(msg.sender, txCount(msg.sender).add(1));
-        Multisended(total, token);
+        emit Multisended(msg.value, 0x000000000000000000000000000000000000bEEF);
     }
 
     function claimTokens(address _token) public onlyOwner {
         if (_token == 0x0) {
-            owner().transfer(this.balance);
+            owner().transfer(address(this).balance);
             return;
         }
         ERC20 erc20token = ERC20(_token);
         uint256 balance = erc20token.balanceOf(this);
         erc20token.transfer(owner(), balance);
-        ClaimedTokens(_token, owner(), balance);
+        emit ClaimedTokens(_token, owner(), balance);
     }
     
     function setTxCount(address customer, uint256 _txCount) private {
-        uintStorage[keccak256("txCount", customer)] = _txCount;
+        uintStorage[keccak256(abi.encodePacked("txCount", customer))] = _txCount;
     }
 
 }
