@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x6b249bc0d18f43897ac1b140514b903edadbd22e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xd03e9ad94f346b1691a99ba9d022b7592ef27d19
 */
 pragma solidity ^0.4.24;
 
@@ -103,8 +103,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "BIC";
-        name = "beauty industry coin";
+        symbol = "TBC";
+        name = "thousand businesses coin";
         decimals = 18;
         _totalSupply = 300000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
