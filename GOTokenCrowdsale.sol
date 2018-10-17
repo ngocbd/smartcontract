@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOTokenCrowdsale at 0x05a40435e4e6ecdabd630ba8593d50b6b6ce14f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOTokenCrowdsale at 0xa5a5106a63e8777e238c30eac2864f51028e1c6f
 */
 pragma solidity ^0.4.19;
 
@@ -261,7 +261,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract GOToken is MintableToken {	
     
-  string public constant name = "2GO Token";
+  string public constant name = "GO Token";
    
   string public constant symbol = "2GO";
     
@@ -530,6 +530,7 @@ contract GOTokenCrowdsale is CommonCrowdsale {
     addMilestone(7, 30);
     addMilestone(21, 15);
     addMilestone(56, 0);
+    transferOwnership(0xC4ecaF5986c88C752bf6E73C1b48b251c2125700);
   }
 
 }
