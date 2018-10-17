@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEN at 0x7a6542e629630a6A2C89cccE098386DCeC39f6cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XEN at 0x7bcbf788c3b5c86298198d2a974db70fa76a0eb2
 */
 pragma solidity ^0.4.19;
 
@@ -73,7 +73,7 @@ contract XEN is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 100000000e8;
-    uint256 public totalDistributed = 10000000e8;
+    uint256 public totalDistributed = 50000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value;
 
