@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xa5ed5555ead9e4d5d030331b0e4a7ee58b29227d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x227756286ae76a42c1335aee60463a7cedeaef74
 */
 /* solium-disable security/no-block-members */
 
@@ -174,13 +174,13 @@ contract TokenVesting is Ownable{
   uint256 public cliff;
   uint256 public start;
   uint256 public duration;
- 
+  address public rollback;
   bool public revocable;
   
   uint256 public currentBalance;
   bool public initialized = false;
   
-  uint256 public constant initialTokens = 1000000 * 10**18;
+  uint256 public constant initialTokens = 1000000*10**8;
   
   
   mapping (address => uint256) public released;
@@ -204,6 +204,7 @@ contract TokenVesting is Ownable{
     uint256 _cliff,
     uint256 _duration,
     bool _revocable,
+    address _rollback,
     ERC20Basic _token
     
   )
@@ -218,6 +219,7 @@ contract TokenVesting is Ownable{
     cliff = _start.add(_cliff);
     start = _start;
     token = _token;
+    rollback = _rollback;
 
     
   }
@@ -247,6 +249,7 @@ contract TokenVesting is Ownable{
   
   
   function release() public {
+    require(initialized);
     uint256 unreleased = releasableAmount();
 
     require(unreleased > 0);
@@ -267,10 +270,10 @@ contract TokenVesting is Ownable{
 
     uint256 unreleased = releasableAmount();
     uint256 refund = balance.sub(unreleased);
-
+    
     revoked[token] = true;
 
-    token.safeTransfer(owner, refund);
+    token.safeTransfer(rollback, refund);
 
     emit Revoked();
   }
@@ -282,7 +285,7 @@ contract TokenVesting is Ownable{
 
 
   function vestedAmount() public returns (uint256) {
-    require(initialized);
+    
     currentBalance = token.balanceOf(this);
     totalBalance = currentBalance.add(released[token]);
     if (block.timestamp < cliff) {
