@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOWTokenFundraiser at 0x78bce8a5f5227b6aa5d1c517b7b7da0e51082bd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOWTokenFundraiser at 0xd166d58c086e086ba95113400ed7d021f11e78b7
 */
 pragma solidity ^0.4.21;
-
 
 
 // File: contracts/library/SafeMath.sol
@@ -1178,12 +1177,12 @@ contract HOWTokenSafe is TokenSafe {
     // Group "A"
     init(
       0, // Group Id
-      1534170000 // Release date = 13 Aug 2018 14:20 UTC
+      1534895100 // Release date = 21 Aug 2018 23:45 UTC
     );
     add(
       0, // Group Id
       0xCD3367edbf18C379FA6FBD9D2C206DbB83A816AD, // Token Safe Entry Address
-      78150000000000000000000000  // Allocated tokens
+      150000000000000000000000000  // Allocated tokens
     );
   }
 }
@@ -1206,18 +1205,18 @@ contract HOWTokenFundraiser is MintableTokenFundraiser, IndividualCapsFundraiser
     );
 
     tokenSafe = new HOWTokenSafe(token);
-    MintableToken(token).mint(address(tokenSafe), 78150000000000000000000000);
+    MintableToken(token).mint(address(tokenSafe), 150000000000000000000000000);
 
     initializeBasicFundraiser(
-      1534169700, // Start date = 13 Aug 2018 14:15 UTC
-      1538143200,  // End date = 28 Sep 2018 14:00 UTC
+      1534946400, // Start date = 22 Aug 2018 14:00 UTC
+      1541772000,  // End date = 09 Nov 2018 14:00 UTC
       50000, // Conversion rate = 50000 HOW per 1 ether
       0xCD3367edbf18C379FA6FBD9D2C206DbB83A816AD     // Beneficiary
     );
 
     initializeIndividualCapsFundraiser(
       (0.01 ether), // Minimum contribution
-      (15 ether)  // Maximum individual cap
+      (20 ether)  // Maximum individual cap
     );
 
     initializeGasPriceLimitFundraiser(
@@ -1227,11 +1226,11 @@ contract HOWTokenFundraiser is MintableTokenFundraiser, IndividualCapsFundraiser
     
 
     initializeCappedFundraiser(
-      (1563 ether) // Hard cap
+      (3000 ether) // Hard cap
     );
 
     initializeRefundableFundraiser(
-      (313 ether)  // Soft cap
+      (800 ether)  // Soft cap
     );
     
     
