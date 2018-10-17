@@ -1,30 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LC at 0x48de9c6454d9da324d7908a6472ca4fb77a3e4fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LC at 0x87bae1df174b6708598cb6ab9bdff08a15f4608d
 */
 pragma solidity ^0.4.16;
-
+ 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-
+ 
 contract LC {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-
+ 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-
+ 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
+ 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
-
+ 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
@@ -38,7 +38,7 @@ contract LC {
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
-
+ 
     /**
      * Internal transfer, only can be called by this contract
      */
@@ -59,7 +59,7 @@ contract LC {
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
-
+ 
     /**
      * Transfer tokens
      *
@@ -71,11 +71,11 @@ contract LC {
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
-
+ 
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` in behalf of `_from`
+     * Send `_value` tokens to `_to` on behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -87,11 +87,11 @@ contract LC {
         _transfer(_from, _to, _value);
         return true;
     }
-
+ 
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -101,11 +101,11 @@ contract LC {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
-
+ 
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -120,7 +120,7 @@ contract LC {
             return true;
         }
     }
-
+ 
     /**
      * Destroy tokens
      *
@@ -135,7 +135,7 @@ contract LC {
         Burn(msg.sender, _value);
         return true;
     }
-
+ 
     /**
      * Destroy tokens from other account
      *
