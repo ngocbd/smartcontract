@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistributor at 0x5e8f56633d257ad11ca590e02f2a90ee95ccc4df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistributor at 0x38b40f36f62ed95539c1ab81928bc45b36f5fb71
 */
 pragma solidity ^0.4.18;
 
@@ -61,7 +61,7 @@ contract Ownable {
 
 contract MintTokensInterface {
     
-  function mint(address _to, uint256 _amount) public returns (bool);
+   function mintTokensExternal(address to, uint tokens) public;
     
 }
 
@@ -71,7 +71,7 @@ contract TokenDistributor is Ownable {
 
   bool public stopContract = false;
     
-  MintTokensInterface public crowdsale = MintTokensInterface(0x2D3E7D4870a51b918919E7B851FE19983E4c38d5);
+  MintTokensInterface public crowdsale = MintTokensInterface(0x8DD9034f7cCC805bDc4D593A01f6A2E2EB94A67a);
   
   mapping(address => bool) public authorized;
 
@@ -99,11 +99,11 @@ contract TokenDistributor is Ownable {
   }
     
   function mintBatch(address[] wallets, uint[] tokens) public onlyOwner {
-    for(uint i=0; i<wallets.length; i++) crowdsale.mint(wallets[i], tokens[i]);
+    for(uint i=0; i<wallets.length; i++) crowdsale.mintTokensExternal(wallets[i], tokens[i]);
   }
 
   function mintAuthorizedBatch(address[] wallets, uint[] tokens) public onlyAuthorized {
-    for(uint i=0; i<wallets.length; i++) crowdsale.mint(wallets[i], tokens[i]);
+    for(uint i=0; i<wallets.length; i++) crowdsale.mintTokensExternal(wallets[i], tokens[i]);
   }
 
   function isContract(address addr) public view returns(bool) {
@@ -124,7 +124,7 @@ contract TokenDistributor is Ownable {
       isItContract = isContract(wallet);
       if(!isItContract || (isItContract && !stopContract)) {
         reward = tokens[i];
-        crowdsale.mint(wallet, reward);
+        crowdsale.mintTokensExternal(wallet, reward);
         if(balances[wallet] == 0) {
           rewardHolders.push(wallet);
         }
