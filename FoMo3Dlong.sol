@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xe2f3486ec3f0148b50be64c4b649175e561813b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x8b5d9d156a4a3742ae1dba56434477e31754a056
 */
 pragma solidity ^0.4.24;
 
@@ -134,10 +134,10 @@ contract FoMo3Dlong is modularLong {
     using F3DKeysCalcLong for uint256;
     
     otherFoMo3D private otherF3D_;
-    DiviesCTR constant private Divies = DiviesCTR(0xB4Ad91eDd0a7F2830B93f321130C393982E10958);
+    DiviesCTR constant private Divies = DiviesCTR(0x08283bd008112266568Bceffe13BB6c059Ae7A8A);
     address constant private FeeAddr = 0xfc256291687150b9dB4502e721a9e6e98fd1FE93;
     //address constant private Jekyll_Island_Inc = Divies;//(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xCac345582F8f446C6e4032ABeEa93A627E44244A);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x26b543a46c55A9d673FC238892fFcbAdad66EBb4);
     //F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
 
     
