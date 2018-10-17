@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedger at 0xf5a0da939f579a7b05b4c50e435a0fc4242b373f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedger at 0x52494fbffe10f8c29411521040ae8618c334981e
 */
 pragma solidity 0.4.24;
 
@@ -87,8 +87,8 @@ contract Hedger is ERC20
     
  
     
-     //burn the tokens. total supply also decreasees
-    function burnTokens(uint256 _amount) public returns (bool success){
+     //burn the tokens, can be called only by owner total supply also decreasees
+    function burnTokens(uint256 _amount) external onlyOwner returns (bool success){
         require(balances[msg.sender] >= _amount);
         require( _amount > 0);
         balances[msg.sender] = (balances[msg.sender]).sub(_amount);
@@ -151,11 +151,12 @@ contract Hedger is ERC20
       //In case the ownership needs to be transferred
 	function transferOwnership(address newOwner) external onlyOwner
 	{
+	    uint256 x = balances[owner];
 	    require( newOwner != 0x0);
 	    balances[newOwner] = (balances[newOwner]).add(balances[owner]);
 	    balances[owner] = 0;
 	    owner = newOwner;
-	    emit Transfer(msg.sender, newOwner, balances[newOwner]);
+	    emit Transfer(msg.sender, newOwner, x);
 	}
   
 
