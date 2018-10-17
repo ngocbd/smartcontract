@@ -1,34 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arbitrator at 0xba313f80d9a23fa5eeea4beda94f87b35c74cb04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arbitrator at 0xdcdede29a2b83176ab478dc0f9b08b7c01ac5f58
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
-
-contract Owned {
-    address public owner;
-
-    function Owned() 
-    public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) 
-        onlyOwner 
-    public {
-        owner = newOwner;
-    }
+library SafeMath32 {
+  function add(uint32 a, uint32 b) internal pure returns (uint32) {
+    uint32 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
@@ -58,12 +40,24 @@ library SafeMath {
   }
 }
 
-library SafeMath32 {
-  function add(uint32 a, uint32 b) internal pure returns (uint32) {
-    uint32 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract Owned {
+    address public owner;
+
+    function Owned() 
+    public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) 
+        onlyOwner 
+    public {
+        owner = newOwner;
+    }
 }
 
 contract BalanceHolder {
@@ -84,8 +78,6 @@ contract BalanceHolder {
     }
 
 }
-
-
 contract RealityCheck is BalanceHolder {
 
     using SafeMath for uint256;
@@ -201,6 +193,7 @@ contract RealityCheck is BalanceHolder {
 
     uint256 nextTemplateID = 0;
     mapping(uint256 => uint256) public templates;
+    mapping(uint256 => bytes32) public template_hashes;
     mapping(bytes32 => Question) public questions;
     mapping(bytes32 => Claim) question_claims;
     mapping(bytes32 => Commitment) public commitments;
@@ -235,6 +228,15 @@ contract RealityCheck is BalanceHolder {
         _;
     }
 
+    modifier stateOpenOrPendingArbitration(bytes32 question_id) {
+        require(questions[question_id].timeout > 0); // Check existence
+        uint32 finalize_ts = questions[question_id].finalize_ts;
+        require(finalize_ts == UNANSWERED || finalize_ts > uint32(now));
+        uint32 opening_ts = questions[question_id].opening_ts;
+        require(opening_ts == 0 || opening_ts <= uint32(now)); 
+        _;
+    }
+
     modifier stateFinalized(bytes32 question_id) {
         require(isFinalized(question_id));
         _;
@@ -264,7 +266,6 @@ contract RealityCheck is BalanceHolder {
     public {
         createTemplate('{"title": "%s", "type": "bool", "category": "%s"}');
         createTemplate('{"title": "%s", "type": "uint", "decimals": 18, "category": "%s"}');
-        createTemplate('{"title": "%s", "type": "int", "decimals": 18, "category": "%s"}');
         createTemplate('{"title": "%s", "type": "single-select", "outcomes": [%s], "category": "%s"}');
         createTemplate('{"title": "%s", "type": "multiple-select", "outcomes": [%s], "category": "%s"}');
         createTemplate('{"title": "%s", "type": "datetime", "category": "%s"}');
@@ -290,6 +291,7 @@ contract RealityCheck is BalanceHolder {
     public returns (uint256) {
         uint256 id = nextTemplateID;
         templates[id] = block.number;
+        template_hashes[id] = keccak256(content);
         LogNewTemplate(id, msg.sender, content);
         nextTemplateID = id.add(1);
         return id;
@@ -426,12 +428,13 @@ contract RealityCheck is BalanceHolder {
     /// Updates the current answer unless someone has since supplied a new answer with a higher bond
     /// msg.sender is intentionally not restricted to the user who originally sent the commitment; 
     /// For example, the user may want to provide the answer+nonce to a third-party service and let them send the tx
+    /// NB If we are pending arbitration, it will be up to the arbitrator to wait and see any outstanding reveal is sent
     /// @param question_id The ID of the question
     /// @param answer The answer, encoded as bytes32
     /// @param nonce The nonce that, combined with the answer, recreates the answer_hash you gave in submitAnswerCommitment()
     /// @param bond The bond that you paid in your submitAnswerCommitment() transaction
     function submitAnswerReveal(bytes32 question_id, bytes32 answer, uint256 nonce, uint256 bond) 
-        stateOpen(question_id)
+        stateOpenOrPendingArbitration(question_id)
     external {
 
         bytes32 answer_hash = keccak256(answer, nonce);
@@ -472,9 +475,11 @@ contract RealityCheck is BalanceHolder {
     /// @dev The arbitrator contract is trusted to only call this if they've been paid, and tell us who paid them.
     /// @param question_id The ID of the question
     /// @param requester The account that requested arbitration
-    function notifyOfArbitrationRequest(bytes32 question_id, address requester) 
+    /// @param max_previous If specified, reverts if a bond higher than this was submitted after you sent your transaction.
+    function notifyOfArbitrationRequest(bytes32 question_id, address requester, uint256 max_previous) 
         onlyArbitrator(question_id)
         stateOpen(question_id)
+        previousBondMustNotBeatMaxPrevious(question_id, max_previous)
     external {
         questions[question_id].is_pending_arbitration = true;
         LogNotifyOfArbitrationRequest(question_id, requester);
@@ -733,10 +738,6 @@ contract RealityCheck is BalanceHolder {
         withdraw();
     }
 }
-
-
-
-
 contract Arbitrator is Owned {
 
     RealityCheck public realitycheck;
@@ -841,7 +842,8 @@ contract Arbitrator is Owned {
     /// @dev The bounty can be paid only in part, in which case the last person to pay will be considered the payer
     /// Will trigger an error if the notification fails, eg because the question has already been finalized
     /// @param question_id The question in question
-    function requestArbitration(bytes32 question_id) 
+    /// @param max_previous If specified, reverts if a bond higher than this was submitted after you sent your transaction.
+    function requestArbitration(bytes32 question_id, uint256 max_previous) 
     external payable returns (bool) {
 
         uint256 arbitration_fee = getDisputeFee(question_id);
@@ -851,7 +853,7 @@ contract Arbitrator is Owned {
         uint256 paid = arbitration_bounties[question_id];
 
         if (paid >= arbitration_fee) {
-            realitycheck.notifyOfArbitrationRequest(question_id, msg.sender);
+            realitycheck.notifyOfArbitrationRequest(question_id, msg.sender, max_previous);
             LogRequestArbitration(question_id, msg.value, msg.sender, 0);
             return true;
         } else {
