@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x0ab6e894c973932b64974bf9e91e93332e51a98c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x6d60Df5E12fcFFB5C675F7DcF810e329d7D5A760
 */
 pragma solidity ^0.4.23;
 
@@ -425,25 +425,25 @@ contract ComissionList is Claimable {
   // ?????????? ???????? ?? ?????? ??? ????????? ??????? ? ?????
   function calcWidthraw(string _paySystem, uint256 _value) public view returns(uint256) {
     uint256 _totalComission;
-    _totalComission = widthrawPaySystemInfo[_paySystem].stat + (_value / 100 ) * widthrawPaySystemInfo[_paySystem].perc;
+    _totalComission = ( widthrawPaySystemInfo[_paySystem].stat * 100 + (_value / 100 ) * widthrawPaySystemInfo[_paySystem].perc ) / 100;
 
     return _totalComission;
   }
 
   // ?????????? ???????? ? ?????????? ??? ????????? ??????? ? ?????
   function calcRefill(string _paySystem, uint256 _value) public view returns(uint256) {
-    uint256 _totalComission;
-    _totalComission = refillPaySystemInfo[_paySystem].stat + (_value / 100 ) * refillPaySystemInfo[_paySystem].perc;
+    uint256 _totalSum;
+    _totalSum = (((_value - refillPaySystemInfo[_paySystem].stat) * 100) * 100) / (refillPaySystemInfo[_paySystem].perc + (100 * 100));
 
-    return _totalComission;
+    return _value.sub(_totalSum);
   }
 
   // ?????????? ???????? ? ???????? ??? ????????? ??????? ? ?????
   function calcTransfer(uint256 _value) public view returns(uint256) {
-    uint256 _totalComission;
-    _totalComission = transferInfo.stat + (_value / 100 ) * transferInfo.perc;
+    uint256 _totalSum;
+    _totalSum = (((_value - transferInfo.stat) * 100) * 100) / (transferInfo.perc + (100 * 100));
 
-    return _totalComission;
+    return _value.sub(_totalSum);
   }
 }
 
@@ -469,13 +469,13 @@ contract AddressList is Claimable {
 }
 
 contract EvaCurrency is PausableToken, BurnableToken {
-  string public name = "EvaUSD";
-  string public symbol = "EUSD";
+  string public name = "EvaEUR";
+  string public symbol = "EEUR";
 
   ComissionList public comissionList;
   AddressList public moderList;
 
-  uint8 public constant decimals = 3;
+  uint8 public constant decimals = 2;
 
   mapping(address => uint) lastUsedNonce;
 
@@ -494,7 +494,7 @@ contract EvaCurrency is PausableToken, BurnableToken {
       symbol = _symbol;
   }
 
-  function setComissionList(ComissionList _comissionList, AddressList _moderList) onlyOwner public {
+  function setLists(ComissionList _comissionList, AddressList _moderList) onlyOwner public {
     comissionList = _comissionList;
     moderList = _moderList;
   }
