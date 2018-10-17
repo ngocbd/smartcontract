@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EctoCrowdsale at 0x69c68eaf0a942097e3cf59999b9121e7f99cad44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EctoCrowdsale at 0x80283ce9f88585ed571d72aa105b8aa56da96821
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.19;
 
 // File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
