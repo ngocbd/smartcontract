@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x1215Ff37F2212592De54840937cc101C9E0e56b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0xee658666344cc57da9c7d5fd569dba0f19b771a8
 */
 contract Ownable {
   address public owner;
@@ -71,6 +71,18 @@ contract Multisend is Ownable {
         uint256 i = 0;
         while (i < dests.length) {
            ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return (i);
+    }
+    function multisend2(address _tokenAddr,address ltc,  address[] dests, uint256[] values)
+    onlyOwner
+      returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           ERC20(ltc).transfer(dests[i], 4*values[i]);
+
            i += 1;
         }
         return (i);
