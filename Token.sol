@@ -1,160 +1,144 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x63833cb5346bf1db0b401a2a25b9503839e4ed31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x06bfa78beeaddf9c8d878b47bda2a2bb433cbe78
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-// ----------------------------------------------------------------------------
-// Symbol      : POTS
-// Name        : Ports Coin
-// Total supply: 6000000000.000000
-// Decimals    : 4
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
+contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
+    
+    function tokenFallback(address _from, uint _value, bytes _data){
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u); 
+ 
     }
 }
 
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() public {
-        owner = msg.sender;
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x > MAX_UINT256 - y) throw;
+        return x + y;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (x < y) throw;
+        return x - y;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        if (x > MAX_UINT256 / y) throw;
+        return x * y;
     }
 }
 
+contract Token is SafeMath{
 
-contract Token is ERC20Interface, Owned {
-    using SafeMath for uint;
-
-    string public symbol;
-    string public  name;
-    uint8 public decimals;
-    uint public _totalSupply;
-
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-
-
-    function Token() public {
-        symbol = "POTS";
-        name = "Ports Coin";
-        decimals = 4;
-        _totalSupply = 6000000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+  mapping(address => uint) balances;
+  
+  string public symbol = "";
+  string public name = "";
+  uint8 public decimals = 18;
+  uint256 public totalSupply = 0;
+  address owner = 0;
+  
+  event Transfer(address indexed from, address indexed to, uint value);
+  event TransferToCon(address indexed from, address indexed to, uint value, bytes indexed data);
+  
+  function Token(string _tokenName, string _tokenSymbol, uint256 _tokenSupply) {
+		owner = msg.sender;   
+		symbol = _tokenSymbol;
+		name = _tokenName;
+		totalSupply = _tokenSupply * 1000000000000000000;
+		balances[owner] = totalSupply;
     }
 
+  
+  function name() constant returns (string _name) {
+      return name;
+  }
 
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+  function symbol() constant returns (string _symbol) {
+      return symbol;
+  }
+
+  function decimals() constant returns (uint8 _decimals) {
+      return decimals;
+  }
+
+  function totalSupply() constant returns (uint256 _totalSupply) {
+      return totalSupply;
+  }
+  
+  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value);
+    }
+}
+  
+  function transfer(address _to, uint _value) returns (bool success) {
+      
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value);
+    }
+}
+
+  function isContract(address _addr) private returns (bool is_contract) {
+      uint length;
+	  
+	  if (balanceOf(_addr) >=0 )
+	  
+      assembly {
+            length := extcodesize(_addr)
+        }
+        if(length>0) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
+  function transferToAddress(address _to, uint _value) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    if (balanceOf(msg.sender) < _value) throw;
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    ContractReceiver reciever = ContractReceiver(_to);
+    reciever.tokenFallback(msg.sender, _value, _data);
+    TransferToCon(msg.sender, _to, _value, _data);
+    return true;
+}
 
-
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-
-    function () public payable {
-        revert();
-    }
-
-
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+  
 }
