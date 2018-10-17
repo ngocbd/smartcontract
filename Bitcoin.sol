@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcoin at 0xcf9b7ce5a25a1439804b437dad7aee496c5283ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitCoin at 0xa33274b924e439c119e36e0f2186de074634d12c
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Bitcoin' CROWDSALE contract
+// 'BTC' token contract
 //
-// Deployed to : 0x4b893170c761adb54369ea3df57bb69383258a62
+// Deployed to : 0xa33274b924e439c119e36e0f2186de074634d12c
 // Symbol      : BTC
-// Name        : Bitcoin
-// Total supply: 210000000
+// Name        : BTC Token
+// Total supply: 10000000000
 // Decimals    : 18
 //
 // Enjoy.
 //
-// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -102,14 +102,11 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract Bitcoin is ERC20Interface, Owned, SafeMath {
+contract BitCoin is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
-    uint public startDate;
-    uint public bonusEnds;
-    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -118,13 +115,13 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Bitcoin() public {
+    function BitCoin() public {
         symbol = "BTC";
-        name = "Bitcoin";
+        name = "BitCoin";
         decimals = 18;
-        bonusEnds = now + 1 weeks;
-        endDate = now + 207 weeks;
-
+        _totalSupply = 20000000000000000000000 ;
+        balances[0x2fD1fd25eE243103179bd046777928b0f4882E1A] = _totalSupply;
+        Transfer(address(0), 0x2fD1fd25eE243103179bd046777928b0f4882E1A, _totalSupply);
     }
 
 
@@ -137,7 +134,7 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -145,7 +142,7 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
@@ -158,12 +155,12 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -173,10 +170,10 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    //
+    // Transfer tokens from the from account to the to account
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -200,9 +197,9 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -211,23 +208,13 @@ contract Bitcoin is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
+
     // ------------------------------------------------------------------------
-    // 100 Bitcoins 1 ETH
+    // Don't accept ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        require(now >= startDate && now <= endDate);
-        uint tokens;
-        if (now <= bonusEnds) {
-            tokens = msg.value * 110;
-        } else {
-            tokens = msg.value * 100;
-        }
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        _totalSupply = safeAdd(_totalSupply, tokens);
-        Transfer(address(0), msg.sender, tokens);
-        owner.transfer(msg.value);
+        revert();
     }
-
 
 
     // ------------------------------------------------------------------------
