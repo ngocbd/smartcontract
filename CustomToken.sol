@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x10d2d5b3c8c2e1239135a77bde370a14ca32f0e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x57ef9b789c2144a6291911e129e422de54a68d3d
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000;
-        name = 'Almighty Diamonds';
-        symbol = 'ADP';
-        decimals = 4;
-        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
-        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
+        totalSupply = 1000000000000000000000000000;
+        name = 'SharedComputingPower';
+        symbol = 'SCP';
+        decimals = 18;
+        balanceOf[0x696423542f85B50fF3CA396A317De3abCb82f1c2] = totalSupply;
+        Transfer(address(0), 0x696423542f85B50fF3CA396A317De3abCb82f1c2, totalSupply);
     }
 }
