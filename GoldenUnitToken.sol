@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldenUnitToken at 0xc1e42f1bd2c4423936132dc1636ace7c5e95aa48
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldenUnitToken at 0xa37f7405d7d6752acc018b8017896610b1ef3572
 */
 /**
  *   Golden Union - Blockchain platform for direct investment in gold mining
@@ -177,7 +177,7 @@ contract GoldenUnitToken is StandardToken {
     string public constant name = "Golden Unite Token";
     string public constant symbol = "GUT";
     uint32 public constant decimals = 18;
-    uint256 public INITIAL_SUPPLY = 50000 * 1 ether;
+    uint256 public INITIAL_SUPPLY = 100000 * 1 ether;
     address public CrowdsaleAddress;
     
     event Mint(address indexed to, uint256 amount);
