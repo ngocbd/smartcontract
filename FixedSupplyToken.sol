@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x26d5a274106f850e408e137fff9e940a7f549acc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x912a209540221579fbc434ae9da90581ce5ff8e3
 */
 pragma solidity ^0.4.24;
 
@@ -186,9 +186,9 @@ contract FixedSupplyToken is ERC20Interface, Owned {
 
     constructor() public {
 
-        symbol = "ROCKS";
+        symbol = "ROCK";
 
-        name = "Moon Rocks";
+        name = "Moon Rock";
 
         decimals = 0;
 
