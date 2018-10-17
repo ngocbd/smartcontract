@@ -1,155 +1,161 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRONTToken at 0xade69b220cb5b25ba76d88d91fc540d7fad9ea9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FrontToken at 0xc8a074de1c6bf01a75cd29892c91b6c354200f75
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface token {
+    function transfer(address receiver, uint amount) external;
+}
 
-contract FRONTToken {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
+contract FrontToken {
 
-    // This creates an array with all balances
+
+    string public name = "FrontierCoin";      //  token name
+    string public symbol = "FRONT";           //  token symbol
+    uint256 public decimals = 6;            //  token digit
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    uint256 public totalSupply = 0;
+    bool feed = false;
+    uint256 constant valueFounder = 100000000000000000;
+    uint256 constant valuePub = 100000000000000000;
+    address owner = 0x0;
+    bool public crowdsaleClosed = false;
+    token tokenReward;
+    uint256 public amountRaised;
+    uint256 public tpe;
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function FRONTToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    function SetTPE(uint256 _value) public isOwner {
+        tpe = _value;
     }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    function ToggleFeed(bool enabled) public isOwner {
+        feed = enabled;
     }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
     }
 
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
     }
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
+    function ChangeOwner(address _newOwner) public {
+        owner = _newOwner;
     }
 
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+    function FrontToken() public {
+        owner = msg.sender;
+        totalSupply = valueFounder + valuePub;
+        balanceOf[msg.sender] = valueFounder;
+        balanceOf[this] = valuePub;
+        Transfer(0x0, msg.sender, valueFounder);
+        Transfer(0x0, this, valuePub);
+        tokenReward = token(this);
+        tpe = 10000000;
+    }
+
+    function ToggleCrowdsale(bool enabled) public isOwner {
+        crowdsaleClosed = enabled;
+    }
+
+    function () payable public {
+        require(!crowdsaleClosed);
+        uint ethAmount = msg.value;
+        uint256 tokens = ethAmount * tpe / 0.000001 ether;
+        balanceOf[msg.sender] += tokens;
+        amountRaised += ethAmount;
+        Transfer(this, msg.sender, tokens);
+    }
+
+    function transfer(address _to, uint256 _value) validAddress public returns (bool success) {
+        if(feed) {
+            uint256 fee = div(_value, 97);
+            uint256 newValue = _value - fee;
+            require(balanceOf[msg.sender] >= newValue);
+            require(balanceOf[_to] + newValue >= balanceOf[_to]);
+            balanceOf[msg.sender] -= newValue;
+            balanceOf[_to] += newValue;
+            Transfer(msg.sender, _to, newValue);
+            balanceOf[owner] += fee;
+            Transfer(msg.sender, owner, fee);
         }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        else {
+            require(balanceOf[msg.sender] >= _value);
+            require(balanceOf[_to] + _value >= balanceOf[_to]);
+            balanceOf[msg.sender] -= _value;
+            balanceOf[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+        }
         return true;
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+    function transferFrom(address _from, address _to, uint256 _value) validAddress public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
         return true;
     }
+
+    function approve(address _spender, uint256 _value) validAddress public returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function setName(string _name) isOwner public {
+        name = _name;
+    }
+    function setSymbol(string _symbol) isOwner public {
+        symbol = _symbol;
+    }
+
+    function burn(uint256 _value) public {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[0x0] += _value;
+        Transfer(msg.sender, 0x0, _value);
+    }
+
+    function ethReverse(uint256 _value) isOwner public {
+        owner.transfer(_value);
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
