@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XfiniteUtility at 0x16c42864f03678042224df986d6dd9e15de3efc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XfiniteUtility at 0xe5c7cf9ac513ba5fef0c0032b52190c8b7427de7
 */
 pragma solidity ^0.4.4;
 
@@ -74,7 +74,7 @@ contract XfiniteUtility is StandardToken {
     uint256 public totalEthInWei;
     address public fundsWallet;
 
-    function XfiniteUtility() {
+    function XfinityUtility() {
         balances[msg.sender] = 4000000000000000000000000000;
         totalSupply = 4000000000000000000000000000;
         name = "XfiniteUtility";
