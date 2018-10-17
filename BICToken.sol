@@ -1,8 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BicToken at 0x41e2da06e90e0a86227d5bce5617eec4d16e4e26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BicToken at 0xe527ddfc6360d13a987dd2ed65ee19b73f6e6c52
 */
 pragma solidity ^0.4.24;
+
 // Math operations with safety checks
+
 contract SafeMath {
   function safeMathMul(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a * b;
@@ -35,6 +37,7 @@ contract SafeMath {
   }
 }
 
+
 contract BicToken is SafeMath{
     string public name;
     string public symbol;
@@ -61,9 +64,9 @@ contract BicToken is SafeMath{
     constructor(uint256 initialSupply,string tokenName,uint8 decimalUnits,string tokenSymbol ) {
         balanceOf[msg.sender] = initialSupply;  // Gives the creator all initial tokens            
         totalSupply = initialSupply;                    // Update total supply    
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               
-        decimals = decimalUnits;                            
+        name = tokenName;                                   // Set the token name
+        symbol = tokenSymbol;                               // Set the token symbol
+        decimals = decimalUnits;                            // Amount of decimals
         owner = msg.sender;
     }
 
