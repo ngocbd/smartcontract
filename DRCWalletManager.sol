@@ -1,7 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletManager at 0xdda80deeb2db6d63247b9be73bacd00184fbc83f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCWalletManager at 0x01d6208f95cf2292c350fc8bb1b1f29230352675
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.13;
+
+interface IDRCWalletMgrParams {
+    function singleWithdrawMin() external returns (uint256); // min value of single withdraw
+    function singleWithdrawMax() external returns (uint256); // Max value of single withdraw
+    function dayWithdraw() external returns (uint256); // Max value of one day of withdraw
+    function monthWithdraw() external returns (uint256); // Max value of one month of withdraw
+    function dayWithdrawCount() external returns (uint256); // Max number of withdraw counting
+
+    function chargeFee() external returns (uint256); // the charge fee for withdraw
+    function chargeFeePool() external returns (address); // the address that will get the returned charge fees.
+}
 
 library SafeMath {
 
@@ -80,40 +91,7 @@ contract Ownable {
 
 }
 
-contract Autonomy is Ownable {
-    address public congress;
-    bool init = false;
-
-    modifier onlyCongress() {
-        require(msg.sender == congress);
-        _;
-    }
-
-    /**
-     * @dev initialize a Congress contract address for this token 
-     *
-     * @param _congress address the congress contract address
-     */
-    function initialCongress(address _congress) onlyOwner public {
-        require(!init);
-        require(_congress != address(0));
-        congress = _congress;
-        init = true;
-    }
-
-    /**
-     * @dev set a Congress contract address for this token
-     * must change this address by the last congress contract 
-     *
-     * @param _congress address the congress contract address
-     */
-    function changeCongress(address _congress) onlyCongress public {
-        require(_congress != address(0));
-        congress = _congress;
-    }
-}
-
-contract withdrawable is Ownable {
+contract Withdrawable is Ownable {
     event ReceiveEther(address _from, uint256 _value);
     event WithdrawEther(address _to, uint256 _value);
     event WithdrawToken(address _token, address _to, uint256 _value);
@@ -176,22 +154,6 @@ contract withdrawable is Ownable {
     // }
 }
 
-contract Destructible is Ownable {
-
-  function Destructible() public payable { }
-
-  /**
-   * @dev Transfers the current balance to the owner and terminates the contract.
-   */
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-
-  function destroyAndSend(address _recipient) onlyOwner public {
-    selfdestruct(_recipient);
-  }
-}
-
 contract TokenDestructible is Ownable {
 
   function TokenDestructible() public payable { }
@@ -246,49 +208,7 @@ contract Claimable is Ownable {
   }
 }
 
-contract OwnerContract is Claimable {
-    Claimable public ownedContract;
-    address internal origOwner;
-
-    /**
-     * @dev bind a contract as its owner
-     *
-     * @param _contract the contract address that will be binded by this Owner Contract
-     */
-    function bindContract(address _contract) onlyOwner public returns (bool) {
-        require(_contract != address(0));
-        ownedContract = Claimable(_contract);
-        origOwner = ownedContract.owner();
-
-        // take ownership of the owned contract
-        ownedContract.claimOwnership();
-
-        return true;
-    }
-
-    /**
-     * @dev change the owner of the contract from this contract address to the original one. 
-     *
-     */
-    function transferOwnershipBack() onlyOwner public {
-        ownedContract.transferOwnership(origOwner);
-        ownedContract = Claimable(address(0));
-        origOwner = address(0);
-    }
-
-    /**
-     * @dev change the owner of the contract from this contract address to another one. 
-     *
-     * @param _nextOwner the contract address that will be next Owner of the original Contract
-     */
-    function changeOwnershipto(address _nextOwner)  onlyOwner public {
-        ownedContract.transferOwnership(_nextOwner);
-        ownedContract = Claimable(address(0));
-        origOwner = address(0);
-    }
-}
-
-contract DepositWithdraw is Claimable, withdrawable {
+contract DepositWithdraw is Claimable, Withdrawable {
     using SafeMath for uint256;
 
     /**
@@ -368,24 +288,33 @@ contract DepositWithdraw is Claimable, withdrawable {
         emit ReceiveDeposit(_from, _value, _token, _extraData);
     }
 
-    /**
-	 * @dev withdraw tokens, send tokens to target
-     *
-     * @param _token the token address that will be withdraw
-     * @param _params the limitation parameters for withdraw
-     * @param _time the timstamp of the withdraw time
-	 * @param _to is where the tokens will be sent to
-	 *        _value is the number of the token
-     *        _fee is the amount of the transferring costs
-     *        _tokenReturn is the address that return back the tokens of the _fee
-	 */
-    function withdrawToken(address _token, address _params, uint256 _time, address _to, uint256 _value, uint256 _fee, address _tokenReturn) public onlyOwner returns (bool) {
-        require(_to != address(0));
-        require(_token != address(0));
-        require(_value > _fee);
-        // require(_tokenReturn != address(0));
+    // function authorize(address _token, address _spender, uint256 _value) onlyOwner public returns (bool) {
+    //     ERC20 tk = ERC20(_token);
+    //     require(tk.approve(_spender, _value));
 
-        DRCWalletMgrParams params = DRCWalletMgrParams(_params);
+    //     return true;
+    // }
+
+    /**
+     * @dev record withdraw into this contract
+     *
+     * @param _time the timstamp of the withdraw time
+     * @param _to is where the tokens will be sent to
+     * @param _value is the number of the token
+     */
+    function recordWithdraw(uint256 _time, address _to, uint256 _value) onlyOwner public {    
+        withdrRecs.push(TransferRecord(_time, _to, _value));
+    }
+
+    /**
+     * @dev check if withdraw amount is not valid
+     *
+     * @param _params the limitation parameters for withdraw
+     * @param _value is the number of the token
+     * @param _time the timstamp of the withdraw time
+     */
+    function checkWithdrawAmount(address _params, uint256 _value, uint256 _time) public returns (bool) {
+        IDRCWalletMgrParams params = IDRCWalletMgrParams(_params);
         require(_value <= params.singleWithdrawMax());
         require(_value >= params.singleWithdrawMin());
 
@@ -412,6 +341,28 @@ contract DepositWithdraw is Claimable, withdrawable {
             monthWithdrawRec.value = _value;
         }
 
+        return true;
+    }
+
+    /**
+	 * @dev withdraw tokens, send tokens to target
+     *
+     * @param _token the token address that will be withdraw
+     * @param _params the limitation parameters for withdraw
+     * @param _time the timstamp of the withdraw time
+	 * @param _to is where the tokens will be sent to
+	 *        _value is the number of the token
+     *        _fee is the amount of the transferring costs
+     *        _tokenReturn is the address that return back the tokens of the _fee
+	 */
+    function withdrawToken(address _token, address _params, uint256 _time, address _to, uint256 _value, uint256 _fee, address _tokenReturn) public onlyOwner returns (bool) {
+        require(_to != address(0));
+        require(_token != address(0));
+        require(_value > _fee);
+        // require(_tokenReturn != address(0));
+
+        require(checkWithdrawAmount(_params, _value, _time));
+
         ERC20 tk = ERC20(_token);
         uint256 realAmount = _value.sub(_fee);
         require(tk.transfer(_to, realAmount));
@@ -419,7 +370,7 @@ contract DepositWithdraw is Claimable, withdrawable {
             require(tk.transfer(_tokenReturn, _fee));
         }
 
-        withdrRecs.push(TransferRecord(_time, _to, realAmount));
+        recordWithdraw(_time, _to, realAmount);
         emit WithdrawToken(_token, _to, realAmount);
 
         return true;
@@ -478,7 +429,49 @@ contract DepositWithdraw is Claimable, withdrawable {
     }
 }
 
-contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDestructible {
+contract OwnerContract is Claimable {
+    Claimable public ownedContract;
+    address internal origOwner;
+
+    /**
+     * @dev bind a contract as its owner
+     *
+     * @param _contract the contract address that will be binded by this Owner Contract
+     */
+    function bindContract(address _contract) onlyOwner public returns (bool) {
+        require(_contract != address(0));
+        ownedContract = Claimable(_contract);
+        origOwner = ownedContract.owner();
+
+        // take ownership of the owned contract
+        ownedContract.claimOwnership();
+
+        return true;
+    }
+
+    /**
+     * @dev change the owner of the contract from this contract address to the original one. 
+     *
+     */
+    function transferOwnershipBack() onlyOwner public {
+        ownedContract.transferOwnership(origOwner);
+        ownedContract = Claimable(address(0));
+        origOwner = address(0);
+    }
+
+    /**
+     * @dev change the owner of the contract from this contract address to another one. 
+     *
+     * @param _nextOwner the contract address that will be next Owner of the original Contract
+     */
+    function changeOwnershipto(address _nextOwner)  onlyOwner public {
+        ownedContract.transferOwnership(_nextOwner);
+        ownedContract = Claimable(address(0));
+        origOwner = address(0);
+    }
+}
+
+contract DRCWalletManager is OwnerContract, Withdrawable, TokenDestructible {
     using SafeMath for uint256;
     
     /**
@@ -500,15 +493,15 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
     }
 
     mapping (address => DepositRepository) depositRepos;
-    mapping (address => address) walletDeposits;
+    mapping (address => address) public walletDeposits;
     mapping (address => bool) public frozenDeposits;
 
     ERC20 public tk; // the token will be managed
-    DRCWalletMgrParams params; // the parameters that the management needs
+    IDRCWalletMgrParams public params; // the parameters that the management needs
     
     event CreateDepositAddress(address indexed _wallet, address _deposit);
-    event FrozenTokens(address indexed _deposit, uint256 _value);
-    event ChangeDefaultWallet(address indexed _oldWallet, address _newWallet);
+    event FrozenTokens(address indexed _deposit, bool _freeze, uint256 _value);
+    // event ChangeDefaultWallet(address indexed _oldWallet, address _newWallet);
 
     /**
 	 * @dev withdraw tokens, send tokens to target default wallet
@@ -521,7 +514,7 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
         require(_walletParams != address(0));
 
         tk = ERC20(_token);
-        params = DRCWalletMgrParams(_walletParams);
+        params = IDRCWalletMgrParams(_walletParams);
         return true;
     }
     
@@ -541,6 +534,8 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
         // depositRepos[_deposit].balance = 0;
         depositRepos[_deposit].frozen = 0;
 
+        // deposWithdr.authorize(address(tk), this, 1e27); // give authorization to owner contract
+
         emit CreateDepositAddress(_wallet, address(deposWithdr));
         return deposWithdr;
     }
@@ -550,12 +545,12 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
      *
      * @param _wallet the binded default withdraw wallet address
 	 */
-    function getDepositAddress(address _wallet) onlyOwner public view returns (address) {
-        require(_wallet != address(0));
-        address deposit = walletDeposits[_wallet];
+    // function getDepositAddress(address _wallet) onlyOwner public view returns (address) {
+    //     require(_wallet != address(0));
+    //     address deposit = walletDeposits[_wallet];
 
-        return deposit;
-    }
+    //     return deposit;
+    // }
     
     /**
 	 * @dev get deposit balance and frozen amount by using the deposit address
@@ -621,7 +616,7 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
 
         WithdrawWallet[] storage withdrawWalletList = depositRepos[deposit].withdrawWallets;
         withdrawWalletList[0].walletAddr = _newWallet;
-        emit ChangeDefaultWallet(_oldWallet, _newWallet);
+        // emit ChangeDefaultWallet(_oldWallet, _newWallet);
 
         return true;
     }
@@ -630,37 +625,34 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
 	 * @dev freeze the tokens in the deposit address
      *
      * @param _deposit the deposit address
+     * @param _freeze to freeze or release
      * @param _value the amount of tokens need to be frozen
 	 */
-    function freezeTokens(address _deposit, uint256 _value) onlyOwner public returns (bool) {
+    function freezeTokens(address _deposit, bool _freeze, uint256 _value) onlyOwner public returns (bool) {
         require(_deposit != address(0));
         
-        frozenDeposits[_deposit] = true;
-        depositRepos[_deposit].frozen = _value;
+        frozenDeposits[_deposit] = _freeze;
+        if (_freeze) {
+            depositRepos[_deposit].frozen = depositRepos[_deposit].frozen.add(_value);
+        } else {
+            require(_value <= depositRepos[_deposit].frozen);
+            depositRepos[_deposit].frozen = depositRepos[_deposit].frozen.sub(_value);
+        }
 
-        emit FrozenTokens(_deposit, _value);
+        emit FrozenTokens(_deposit, _freeze, _value);
         return true;
     }
     
     /**
-	 * @dev withdraw the tokens from the deposit address with charge fee
+	 * @dev withdraw the tokens from the deposit address to default wallet with charge fee
      *
      * @param _deposit the deposit address
      * @param _time the timestamp the withdraw occurs
      * @param _value the amount of tokens need to be frozen
 	 */
-    function withdrawWithFee(address _deposit, uint256 _time, uint256 _value) onlyOwner public returns (bool) {
-        require(_deposit != address(0));
-
-        uint256 _balance = tk.balanceOf(_deposit);
-        require(_value <= _balance);
-
-        // depositRepos[_deposit].balance = _balance;
-        uint256 frozenAmount = depositRepos[_deposit].frozen;
-        require(_value <= _balance.sub(frozenAmount));
-
-        DepositWithdraw deposWithdr = DepositWithdraw(_deposit);
-        return (deposWithdr.withdrawTokenToDefault(address(tk), address(params), _time, _value, params.chargeFee(), params.chargeFeePool()));
+    function withdrawWithFee(address _deposit, uint256 _time, uint256 _value, bool _check) onlyOwner public returns (bool) {    
+        WithdrawWallet[] storage withdrawWalletList = depositRepos[_deposit].withdrawWallets;
+        return withdrawWithFee(_deposit, _time, withdrawWalletList[0].name, withdrawWalletList[0].walletAddr, _value, _check);
     }
     
     /**
@@ -673,13 +665,38 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
     function checkWithdrawAddress(address _deposit, bytes32 _name, address _to) public view returns (bool, bool) {
         uint len = depositRepos[_deposit].withdrawWallets.length;
         for (uint i = 0; i < len; i = i.add(1)) {
-            WithdrawWallet storage wallet = depositRepos[_deposit].withdrawWallets[i];
+            WithdrawWallet memory wallet = depositRepos[_deposit].withdrawWallets[i];
             if (_name == wallet.name) {
                 return(true, (_to == wallet.walletAddr));
+            }
+            if (_to == wallet.walletAddr) {
+                return(true, true);
             }
         }
 
         return (false, true);
+    }
+    
+    /**
+	 * @dev withdraw tokens from this contract, send tokens to target withdraw wallet
+     *
+     * @param _deposWithdr the deposit contract that will record withdrawing
+     * @param _time the timestamp occur the withdraw record
+     * @param _to the address the token will be transfer to 
+     * @param _value the token transferred value
+	 */
+    function withdrawFromThis(DepositWithdraw _deposWithdr, uint256 _time, address _to, uint256 _value) private returns (bool) {
+        uint256 fee = params.chargeFee();
+        uint256 realAmount = _value.sub(fee);
+        address tokenReturn = params.chargeFeePool();
+        if (tokenReturn != address(0) && fee > 0) {
+            require(tk.transfer(tokenReturn, fee));
+        }
+
+        require (tk.transfer(_to, realAmount));
+        _deposWithdr.recordWithdraw(_time, _to, realAmount);
+
+        return true;
     }
 
     /**
@@ -721,97 +738,22 @@ contract DRCWalletManager is OwnerContract, withdrawable, Destructible, TokenDes
             return false;
         }
 
-        if (!_check && _value > available) {
-            tk.transfer(_deposit, _value.sub(available));
-            // _value = _value.sub(available);
-        }
-
         DepositWithdraw deposWithdr = DepositWithdraw(_deposit);
+        /**
+         * if deposit address doesn't have enough tokens to withdraw, 
+         * then withdraw from this contract. Record in deposit contract.
+         */
+        if (_value > available) {
+            require(deposWithdr.checkWithdrawAmount(address(params), _value, _time));
+            require(deposWithdr.withdrawToken(address(tk), this, available));
+            
+            require(withdrawFromThis(deposWithdr, _time, _to, _value));
+            return true;
+        }
+        
         return (deposWithdr.withdrawToken(address(tk), address(params), _time, _to, _value, params.chargeFee(), params.chargeFeePool()));        
     }
 
-}
-
-contract DRCWalletMgrParams is Claimable, Autonomy, Destructible {
-    uint256 public singleWithdrawMin; // min value of single withdraw
-    uint256 public singleWithdrawMax; // Max value of single withdraw
-    uint256 public dayWithdraw; // Max value of one day of withdraw
-    uint256 public monthWithdraw; // Max value of one month of withdraw
-    uint256 public dayWithdrawCount; // Max number of withdraw counting
-
-    uint256 public chargeFee; // the charge fee for withdraw
-    address public chargeFeePool; // the address that will get the returned charge fees.
-
-
-    function initialSingleWithdrawMax(uint256 _value) onlyOwner public {
-        require(!init);
-
-        singleWithdrawMax = _value;
-    }
-
-    function initialSingleWithdrawMin(uint256 _value) onlyOwner public {
-        require(!init);
-
-        singleWithdrawMin = _value;
-    }
-
-    function initialDayWithdraw(uint256 _value) onlyOwner public {
-        require(!init);
-
-        dayWithdraw = _value;
-    }
-
-    function initialDayWithdrawCount(uint256 _count) onlyOwner public {
-        require(!init);
-
-        dayWithdrawCount = _count;
-    }
-
-    function initialMonthWithdraw(uint256 _value) onlyOwner public {
-        require(!init);
-
-        monthWithdraw = _value;
-    }
-
-    function initialChargeFee(uint256 _value) onlyOwner public {
-        require(!init);
-
-        chargeFee = _value;
-    }
-
-    function initialChargeFeePool(address _pool) onlyOwner public {
-        require(!init);
-
-        chargeFeePool = _pool;
-    }    
-
-    function setSingleWithdrawMax(uint256 _value) onlyCongress public {
-        singleWithdrawMax = _value;
-    }   
-
-    function setSingleWithdrawMin(uint256 _value) onlyCongress public {
-        singleWithdrawMin = _value;
-    }
-
-    function setDayWithdraw(uint256 _value) onlyCongress public {
-        dayWithdraw = _value;
-    }
-
-    function setDayWithdrawCount(uint256 _count) onlyCongress public {
-        dayWithdrawCount = _count;
-    }
-
-    function setMonthWithdraw(uint256 _value) onlyCongress public {
-        monthWithdraw = _value;
-    }
-
-    function setChargeFee(uint256 _value) onlyCongress public {
-        chargeFee = _value;
-    }
-
-    function setChargeFeePool(address _pool) onlyCongress public {
-        chargeFeePool = _pool;
-    }
 }
 
 contract ERC20Basic {
