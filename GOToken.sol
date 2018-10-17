@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOToken at 0x849de371420b4e1002418b93d7dca95472ba04b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOToken at 0x00603fd28964766e9351c0827e2938cf4fb20d8d
 */
 pragma solidity ^0.4.19;
 
@@ -261,9 +261,9 @@ contract MintableToken is StandardToken, Ownable {
 
 contract GOToken is MintableToken {	
     
-  string public constant name = "GO Token";
+  string public constant name = "2GO Token";
    
-  string public constant symbol = "GO";
+  string public constant symbol = "2GO";
     
   uint32 public constant decimals = 18;
 
@@ -521,9 +521,9 @@ contract CommonCrowdsale is Ownable {
 contract GOTokenCrowdsale is CommonCrowdsale {
 
   function GOTokenCrowdsale() public {
-    hardcap = 114000000000000000000000;
-    price = 5000000000000000000000;
-    start = 1513342800;
+    hardcap = 54000000000000000000000;
+    price = 50000000000000000000000;
+    start = 1530230400;
     wallet = 0x727436A7E7B836f3AB8d1caF475fAfEaeb25Ff27;
     bountyTokensWallet = 0x38e4f2A7625A391bFE59D6ac74b26D8556d6361E;
     foundersTokensWallet = 0x76A13d4F571107f363FF253E80706DAcE889aDED;
