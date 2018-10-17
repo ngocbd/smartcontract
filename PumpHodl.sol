@@ -1,52 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PumpHodl at 0xa8d859f36cb259d4e84afbd4f3cfa54ea5d65736
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PUMPHODL at 0x7444e28d8d8db540054271b1e9a9c2573aaf01b7
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract ForeignToken {
@@ -68,32 +46,35 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract PumpHodl is ERC20 {
+interface Token { 
+    function distr(address _to, uint256 _value) public returns (bool);
+    function totalSupply() constant public returns (uint256 supply);
+    function balanceOf(address _owner) constant public returns (uint256 balance);
+}
+
+contract PUMPHODL is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
 
     mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;    
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public blacklist;
 
-    string public constant name = "PumpHodl";
-    string public constant symbol = "PHDL";
+    string public constant name = "PUMPHODL";
+    string public constant symbol = "PHOD";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 15000000000e8;
-    uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 2000; // 0.0005 Ether
-    uint256 public tokensPerEth = 15000000e8;
+    uint256 public totalSupply = 1000000000e8;
+    uint256 public totalDistributed = 300000000e8;
+    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
+    uint256 public value;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
-
-    event Airdrop(address indexed _owner, uint _amount, uint _balance);
-
-    event TokensPerEthUpdated(uint _tokensPerEth);
     
     event Burn(address indexed burner, uint256 value);
 
@@ -109,9 +90,14 @@ contract PumpHodl is ERC20 {
         _;
     }
     
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
+        _;
+    }
     
-    function PumpHodl () public {
-        owner = msg.sender;    
+    function PUMPHODL () public {
+        owner = msg.sender;
+        value = 10000e8;
         distr(owner, totalDistributed);
     }
     
@@ -121,80 +107,112 @@ contract PumpHodl is ERC20 {
         }
     }
     
+    function enableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = false;
+        }
+    }
+
+    function disableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = true;
+        }
+    }
 
     function finishDistribution() onlyOwner canDistr public returns (bool) {
         distributionFinished = true;
-        emit DistrFinished();
+        DistrFinished();
         return true;
     }
     
     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);        
-        balances[_to] = balances[_to].add(_amount);
-        emit Distr(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-
-        return true;
-    }
-
-    function doAirdrop(address _participant, uint _amount) internal {
-
-        require( _amount > 0 );      
-
-        require( totalDistributed < totalSupply );
-        
-        balances[_participant] = balances[_participant].add(_amount);
         totalDistributed = totalDistributed.add(_amount);
-
+        totalRemaining = totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        Distr(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+        
         if (totalDistributed >= totalSupply) {
             distributionFinished = true;
         }
-
-        // log
-        emit Airdrop(_participant, _amount, balances[_participant]);
-        emit Transfer(address(0), _participant, _amount);
     }
-
-    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
-        doAirdrop(_participant, _amount);
+    
+    function airdrop(address[] addresses) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(value <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(value <= totalRemaining);
+            distr(addresses[i], value);
+        }
+	
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
     }
-
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
-        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
+    
+    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(amount <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(amount <= totalRemaining);
+            distr(addresses[i], amount);
+        }
+	
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
     }
+    
+    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
 
-    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
-        tokensPerEth = _tokensPerEth;
-        emit TokensPerEthUpdated(_tokensPerEth);
+        require(addresses.length <= 255);
+        require(addresses.length == amounts.length);
+        
+        for (uint8 i = 0; i < addresses.length; i++) {
+            require(amounts[i] <= totalRemaining);
+            distr(addresses[i], amounts[i]);
+            
+            if (totalDistributed >= totalSupply) {
+                distributionFinished = true;
+            }
+        }
     }
-           
+    
     function () external payable {
-        getTokens();
+            getTokens();
      }
     
-    function getTokens() payable canDistr  public {
-        uint256 tokens = 0;
-
-        // minimum contribution
-        require( msg.value >= MIN_CONTRIBUTION );
-
-        require( msg.value > 0 );
-
-        // get baseline number of tokens
-        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
-        address investor = msg.sender;
+    function getTokens() payable canDistr onlyWhitelist public {
         
-        if (tokens > 0) {
-            distr(investor, tokens);
+        if (value > totalRemaining) {
+            value = totalRemaining;
+        }
+        
+        require(value <= totalRemaining);
+        
+        address investor = msg.sender;
+        uint256 toGive = value;
+        
+        distr(investor, toGive);
+        
+        if (toGive > 0) {
+            blacklist[investor] = true;
         }
 
         if (totalDistributed >= totalSupply) {
             distributionFinished = true;
         }
+        
+        value = value.div(100000).mul(99999);
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
-        return balances[_owner];
+	    return balances[_owner];
     }
 
     // mitigates the ERC20 short address attack
@@ -210,7 +228,7 @@ contract PumpHodl is ERC20 {
         
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
-        emit Transfer(msg.sender, _to, _amount);
+        Transfer(msg.sender, _to, _amount);
         return true;
     }
     
@@ -223,7 +241,7 @@ contract PumpHodl is ERC20 {
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
-        emit Transfer(_from, _to, _amount);
+        Transfer(_from, _to, _amount);
         return true;
     }
     
@@ -231,7 +249,7 @@ contract PumpHodl is ERC20 {
         // mitigates the ERC20 spend/approval race condition
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
     
@@ -246,8 +264,7 @@ contract PumpHodl is ERC20 {
     }
     
     function withdraw() onlyOwner public {
-        address myAddress = this;
-        uint256 etherBalance = myAddress.balance;
+        uint256 etherBalance = this.balance;
         owner.transfer(etherBalance);
     }
     
@@ -260,7 +277,7 @@ contract PumpHodl is ERC20 {
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
         totalDistributed = totalDistributed.sub(_value);
-        emit Burn(burner, _value);
+        Burn(burner, _value);
     }
     
     function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
@@ -268,4 +285,6 @@ contract PumpHodl is ERC20 {
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
+
+
 }
