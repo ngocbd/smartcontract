@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0xe180b13d2a44e0e82ffb00fad84d453abc108483
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0xcf5348846a062d0ee82dd53e1763c2d14e0168a8
 */
 pragma solidity ^0.4.24;
 
@@ -36,7 +36,7 @@ contract POOHMOevents {
         uint256 potAmount
     );
 
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -174,13 +174,13 @@ contract POOHMO is POOHMOevents {
         flushDivs = whaleContract;
         PlayerBook = PlayerBookInterface(playerbook);
 
-		//no teams... only POOH-heads
+        //no teams... only POOH-heads
         // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = POOHMODatasets.TeamFee(47,10);   //30% to pot, 10% to aff, 2% to com, 1% potSwap
        
 
         potSplit_[0] = POOHMODatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-	}
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -492,10 +492,10 @@ contract POOHMO is POOHMOevents {
             POOHMODatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -775,7 +775,7 @@ contract POOHMO is POOHMOevents {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-	 * @return player round eth
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -832,7 +832,7 @@ contract POOHMO is POOHMOevents {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -968,7 +968,7 @@ contract POOHMO is POOHMOevents {
             _eventData_ = distributeInternal(_rID, _pID, _eth, 0, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-		    endTx(_pID, 0, _eth, _keys, _eventData_);
+            endTx(_pID, 0, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1037,7 +1037,7 @@ contract POOHMO is POOHMOevents {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract
+     * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1191,10 +1191,9 @@ contract POOHMO is POOHMOevents {
         rID_++;
         _rID++;
         round_[_rID].strt = now;
-        round_[_rID].end = now.add(timerLengths[determineNextRoundLength()]);
+        rndMax_ = timerLengths[determineNextRoundLength()];
+        round_[_rID].end = now.add(rndMax_);
         round_[_rID].pot = _res;
-
-        rndMax_ = round_[_rID].end;
 
         return(_eventData_);
     }
