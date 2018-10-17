@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x723c7bca7ed11ab6a18b84c1ff5b979fec00f54e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x34cf249455304ca05096cd8737b1b16a885de30d
 */
 pragma solidity ^0.4.24;
 
@@ -138,7 +138,7 @@ contract PlayCoinKey is modularKey {
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    string constant public name = "PlayCoin Game";
+    string constant public name = "PlayCoin Key";
     string constant public symbol = "PCK";
     uint256 private rndExtra_ = 2 minutes;     // length of the very first ICO 
     uint256 private rndGap_ = 15 minutes;         // length of ICO phase, set to 1 year for EOS.
@@ -165,7 +165,6 @@ contract PlayCoinKey is modularKey {
 //****************
 // PLAYER DATA 
 //****************
-    mapping (address => uint256) private blacklist_;
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => PCKdatasets.Player) public plyr_;   // (pID => data) player data
@@ -188,10 +187,6 @@ contract PlayCoinKey is modularKey {
     constructor()
         public
     {
-
-        // blacklist
-        blacklist_[0xB04B473418b6f09e5A1f809Ae2d01f14211e03fF] = 1;
-
         // Team allocation structures
         // 0 = whales
         // 1 = bears
@@ -253,27 +248,10 @@ contract PlayCoinKey is modularKey {
         require(msg.sender == admin, "onlyAdmins failed - msg.sender is not an admin");
         _;
     }
-
-    modifier notBlacklist() {
-        require(blacklist_[msg.sender] == 0, "bad man,shut!");
-        _;
-    }
 //==============================================================================
 //     _    |_ |. _   |`    _  __|_. _  _  _  .
 //    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
 //====|=========================================================================
-    function addBlacklist(address _black,bool _in) onlyAdmins() public {
-        if( _in ){
-            blacklist_[_black] = 1 ;
-        } else {
-            delete blacklist_[_black];
-        }
-    }
-
-    function getBlacklist(address _black) onlyAdmins() public view returns(bool) {
-        return blacklist_[_black] > 0;
-    }
-
     function kill () onlyAdmins() public {
         require(round_[rID_].ended == true && closed_ == true, "the round is active or not close");
         selfdestruct(admin);
@@ -929,7 +907,7 @@ contract PlayCoinKey is modularKey {
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
      */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, PCKdatasets.EventReturns memory _eventData_) notBlacklist() private {
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, PCKdatasets.EventReturns memory _eventData_) private {
 
         // setup local rID
         uint256 _rID = rID_;
@@ -1383,15 +1361,13 @@ contract PlayCoinKey is modularKey {
         _eventData_.PCPAmount = _p3d;
         _eventData_.newPot = _res;
         
-        // clear pot
-        round_[_rID].pot = 0;
         // start next round
         //rID_++;
         _rID++;
         round_[_rID].ended = false;
         round_[_rID].strt = now;
         round_[_rID].end = now.add(rndInit_).add(rndGap_);
-        round_[_rID].pot = (round_[_rID].pot).add(_res);
+        round_[_rID].pot = _res;
         
         return(_eventData_);
     }
