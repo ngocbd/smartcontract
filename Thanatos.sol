@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thanatos at 0x5ccf03b4d9bcdfc02bcfb2c5215add55ff6d63f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thanatos at 0xa3076afebed9558e3c09e7bbb913f611a1547619
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Thanatos' token contract
 //
-// Deployed to : 0x6c006229023Ae8E0dB69F6EBE53EAFA57Bc6E00d
+// Deployed to : 0x4634B71d85be147421BBF39404f4ABB13303F935
 // Symbol      : THAN
 // Name        : Thanatos
-// Total supply: 10000000000
+// Total supply: 1000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -119,9 +119,9 @@ contract Thanatos is ERC20Interface, Owned, SafeMath {
         symbol = "THAN";
         name = "Thanatos";
         decimals = 18;
-        _totalSupply = 100000000000000000000000000;
-        balances[0x6c006229023Ae8E0dB69F6EBE53EAFA57Bc6E00d] = _totalSupply;
-        Transfer(address(0), 0x6c006229023Ae8E0dB69F6EBE53EAFA57Bc6E00d, _totalSupply);
+        _totalSupply = 1000000000000000000000000000000;
+        balances[0x4634B71d85be147421BBF39404f4ABB13303F935] = _totalSupply;
+        Transfer(address(0), 0x4634B71d85be147421BBF39404f4ABB13303F935, _totalSupply);
     }
 
 
