@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xbc83e77e15aa600f447d9421ce84c21298eae93b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xee7f6f97857cb098624e3fb50008311d34ae15ca
 */
 pragma solidity ^0.4.15;
 
@@ -9,8 +9,10 @@ contract Factory{
     address private creator;
 
     // Addresses of owners
-    address[] public owners = [0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555, 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121, 0x680d821fFE703762E7755c52C2a5E8556519EEDc];
-
+    address private owner1 = 0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555;
+    address private owner2 = 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121;
+    address private owner3 = 0x680d821fFE703762E7755c52C2a5E8556519EEDc;
+  
     //List of deployed Forwarders
     address[] public deployed_forwarders;
     
@@ -22,11 +24,9 @@ contract Factory{
   
     //Only owners can generate a forwarder
     modifier onlyOwnerOrCreator {
-      require(msg.sender == owners[0] || msg.sender == owners[1] || msg.sender == owners[2] || msg.sender == creator);
+      require(msg.sender == owner1 || msg.sender == owner2 || msg.sender == owner3 || msg.sender == creator);
       _;
     }
-    
-    event ForwarderCreated(address to);
   
     //Constructor
     constructor() public {
@@ -39,8 +39,6 @@ contract Factory{
         deployed_forwarders.push(new_forwarder);
         last_forwarder_created = new_forwarder;
         forwarders_count += 1;
-        
-        emit ForwarderCreated(new_forwarder);
     }
     
     //Get deployed forwarders
@@ -56,7 +54,9 @@ contract Forwarder {
   address private parentAddress = 0x7aeCf441966CA8486F4cBAa62fa9eF2D557f9ba7;
   
   // Addresses of people who can flush ethers and tokenContractAddress
-  address[] private owners = [0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555, 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121, 0x680d821fFE703762E7755c52C2a5E8556519EEDc];
+  address private owner1 = 0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555;
+  address private owner2 = 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121;
+  address private owner3 = 0x680d821fFE703762E7755c52C2a5E8556519EEDc;
   
   event ForwarderDeposited(address from, uint value, bytes data);
 
@@ -64,14 +64,13 @@ contract Forwarder {
    * Create the contract.
    */
   constructor() public {
-
   }
 
   /**
    * Modifier that will execute internal code block only if the sender is among owners.
    */
   modifier onlyOwner {
-    require(msg.sender == owners[0] || msg.sender == owners[1] || msg.sender == owners[2]);
+    require(msg.sender == owner1 || msg.sender == owner2 || msg.sender == owner3);
     _;
   }
 
