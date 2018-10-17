@@ -1,35 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtMuseumV1 at 0x9167794156d7d370c0056aa1e54b1525190b0147
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtMuseumV1 at 0x10d50c232ea456dbfd53db3f2ed854256e2e69e0
 */
-pragma solidity ^0.4.18;
-
-// File: contracts/LikeCoinInterface.sol
-
-//    Copyright (C) 2017 LikeCoin Foundation Limited
-//
-//    This file is part of LikeCoin Smart Contract.
-//
-//    LikeCoin Smart Contract is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    LikeCoin Smart Contract is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with LikeCoin Smart Contract.  If not, see <http://www.gnu.org/licenses/>.
+/*
+//    Copyright Countryside Company Limited
+*/
 
 pragma solidity ^0.4.18;
-
-contract LikeCoinInterface {
-	function balanceOf(address _owner) public constant returns (uint256 balance);
-	function transfer(address _to, uint256 _value) public returns (bool success);
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-	function approve(address _spender, uint256 _value) public returns (bool success);
-}
 
 // File: contracts/Ownable.sol
 
@@ -94,6 +70,15 @@ contract Ownable {
 		operator = _operator;
 	}
 
+}
+
+// File: contracts/LikeCoinInterface.sol
+
+contract LikeCoinInterface {
+	function balanceOf(address _owner) public constant returns (uint256 balance);
+	function transfer(address _to, uint256 _value) public returns (bool success);
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+	function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
 // File: contracts/ArtMuseumBase.sol
@@ -233,40 +218,14 @@ contract ArtMuseumBase is Ownable {
 		return like.balanceOf(this) - reserved;
 	}
 
+	function getNumArtworksXType() public constant returns(uint32[] _numArtworksXType) {
+		_numArtworksXType = numArtworksXType;
+	}
+
 
 }
 
 // File: contracts/oraclizeAPI.sol
-
-// <ORACLIZE_API>
-/*
-Copyright (c) 2015-2016 Oraclize SRL
-Copyright (c) 2016 Oraclize LTD
-
-
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
 
 // This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
 
@@ -446,44 +405,6 @@ contract usingOraclize { // is ArtMuseumBase {
 }
 
 // File: contracts/strings.sol
-
-/*
- * @title String & slice utility library for Solidity contracts.
- * @author Nick Johnson <arachnid@notdot.net>
- *
- * @dev Functionality in this library is largely implemented using an
- *      abstraction called a 'slice'. A slice represents a part of a string -
- *      anything from the entire string to a single character, or even no
- *      characters at all (a 0-length slice). Since a slice only has to specify
- *      an offset and a length, copying and manipulating slices is a lot less
- *      expensive than copying and manipulating the strings they reference.
- *
- *      To further reduce gas costs, most functions on slice that need to return
- *      a slice modify the original one instead of allocating a new one; for
- *      instance, `s.split(".")` will return the text up to the first '.',
- *      modifying s to only contain the remainder of the string after the '.'.
- *      In situations where you do not want to modify the original slice, you
- *      can make a copy first with `.copy()`, for example:
- *      `s.copy().split(".")`. Try and avoid using this idiom in loops; since
- *      Solidity has no memory management, it will result in allocating many
- *      short-lived slices that are later discarded.
- *
- *      Functions that return two slices come in two versions: a non-allocating
- *      version that takes the second slice as an argument, modifying it in
- *      place, and an allocating version that allocates and returns the second
- *      slice; see `nextRune` for example.
- *
- *      Functions that have to copy string data will return strings rather than
- *      slices; these can be cast back to slices for further processing if
- *      required.
- *
- *      For convenience, some functions are provided with non-modifying
- *      variants that create a new slice and return both; for instance,
- *      `s.splitNew('.')` leaves s unmodified, and returns two values
- *      corresponding to the left and right parts of the string.
- */
-
-pragma solidity ^0.4.14;
 
 library strings {
 	struct slice {
@@ -678,7 +599,6 @@ contract ArtMuseumV1 is ArtMuseumBase, usingOraclize {
 	/** oraclize callback **/
 	event newOraclizeCallback(bytes32 nextStealId, string result, uint32 killed, uint128 killedValue, uint128 distValue,uint oraclizeFee,uint gaslimit,uint exchange);
 
-
 	function initOraclize() public onlyOwner {
 		if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
 			oraclize_setNetwork();
@@ -689,7 +609,7 @@ contract ArtMuseumV1 is ArtMuseumBase, usingOraclize {
 		queryType = "WolframAlpha";
 		oraclizeGas = 150000;
 		oraclizeGasExtraArtwork = 14000;
-		etherExchangeLikeCoin = 100000;
+		etherExchangeLikeCoin = 50000;
 		oldestExtraStealProbability = [3,5,10,15,30,50];
 		numOfTimesSteal = 1;
 	}
@@ -816,11 +736,68 @@ contract ArtMuseumV1 is ArtMuseumBase, usingOraclize {
 	}
 	
 	/**
-	 * manually triggers the steal
+	 * manually triggers the steal ( by oraclize )
 	 * */
 	function triggerStealManually(uint32 inseconds) public payable ownerOrOperator {
 		require((nextStealTimestamp) < now); // avoid two scheduled callback, asssume max 5mins wait to callback when trigger
 		triggerSteal(inseconds, (oraclizeGas + oraclizeGasExtraArtwork * numArtworks));
+	}
+
+	/**
+	 * manually triggers the steal ( by our script )
+	 * */
+	function triggerStealManually2(string result) public payable ownerOrOperator {
+		uint gaslimit = gasleft();
+		oraclizeFee = (gaslimit) * tx.gasprice + oraclizeFee;
+		require(nextStealTimestamp < now); // avoid two scheduled callback, asssume max 5mins wait to callback when trigger
+		uint32 howmany;
+		uint128 pot;
+		uint gasCost;
+		uint128 distpot;
+		uint oraclizeFeeTmp = 0; // for event log
+		if (numArtworks<=1) {
+			removeArtworksByString("",0);
+			distribute(0);
+			oraclizeFeeTmp = oraclizeFee;
+		} else {
+			howmany = numArtworks < 100 ? (numArtworks < 10 ? (numArtworks < 2 ? 0 : 1) : numArtworks / 10) : 10; //do not kill more than 10%, but at least one
+			pot = removeArtworksByString(result,howmany);
+			gasCost = ((oraclizeFee * etherExchangeLikeCoin) / 1 ether) * 1 ether;
+			if (pot > gasCost)
+				distpot = uint128(pot - gasCost);
+			distribute(distpot); //distribute the pot minus the oraclize gas costs
+			oraclizeFeeTmp = oraclizeFee;
+			oraclizeFee = 0;
+		}
+		emit newOraclizeCallback(0x0,result,howmany,pot,distpot,oraclizeFeeTmp,gaslimit,etherExchangeLikeCoin);
+	}
+
+	/**
+	 * manually triggers the steal ( by our script with specific gas )
+	 * */
+	function triggerStealManually3(string result,uint gaslimit) public payable ownerOrOperator {
+		oraclizeFee = (gaslimit) * tx.gasprice + oraclizeFee;
+		require(nextStealTimestamp < now); // avoid two scheduled callback, asssume max 5mins wait to callback when trigger
+		uint32 howmany;
+		uint128 pot;
+		uint gasCost;
+		uint128 distpot;
+		uint oraclizeFeeTmp = 0; // for event log
+		if (numArtworks<=1) {
+			removeArtworksByString("",0);
+			distribute(0);
+			oraclizeFeeTmp = oraclizeFee;
+		} else {
+			howmany = numArtworks < 100 ? (numArtworks < 10 ? (numArtworks < 2 ? 0 : 1) : numArtworks / 10) : 10; //do not kill more than 10%, but at least one
+			pot = removeArtworksByString(result,howmany);
+			gasCost = ((oraclizeFee * etherExchangeLikeCoin) / 1 ether) * 1 ether;
+			if (pot > gasCost)
+				distpot = uint128(pot - gasCost);
+			distribute(distpot); //distribute the pot minus the oraclize gas costs
+			oraclizeFeeTmp = oraclizeFee;
+			oraclizeFee = 0;
+		}
+		emit newOraclizeCallback(0x0,result,howmany,pot,distpot,oraclizeFeeTmp,gaslimit,etherExchangeLikeCoin);
 	}
 
 
@@ -975,10 +952,6 @@ contract ArtMuseumV1 is ArtMuseumBase, usingOraclize {
 
 	
 	/****************** GETTERS *************************/
-
-	function getNumArtworksXType() public constant returns(uint32[] _numArtworksXType) {
-		_numArtworksXType = numArtworksXType;
-	}
 
 	function get30Artworks(uint16 startIndex) public constant returns(uint32[] artworkIds,uint8[] types,uint32[] sequenceNumbers, uint128[] artworkValues,address[] players) {
 		uint32 endIndex = startIndex + 30 > numArtworks ? numArtworks : startIndex + 30;
