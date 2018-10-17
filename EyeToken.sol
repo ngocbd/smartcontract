@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EyeToken at 0x3dad0c9bc7a87e64593c4c0363aa3a33e20c093d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EyeToken at 0x69CEF154bc6EE9373Ff9520D7392a174108Fb5b5
 */
 pragma solidity 0.4.24;
 
@@ -122,7 +122,7 @@ contract EyeToken is ERC20, Ownable {
         uint until;
     }
 
-    string public name = "EyeCoin";
+    string public name = "EYE Token";
     string public symbol = "EYE";
     uint8 public decimals = 18;
 
@@ -188,7 +188,7 @@ contract EyeToken is ERC20, Ownable {
      * @param _from The address to transfer from.
      */
     modifier allowTransfer(address _from) {
-        assert(!isICO);
+        require(!isICO, "ICO phase");
         if (frozenAccounts[_from].frozen) {
             require(frozenAccounts[_from].until != 0 && frozenAccounts[_from].until < now, "Frozen account");
             delete frozenAccounts[_from];
@@ -213,7 +213,7 @@ contract EyeToken is ERC20, Ownable {
     * @param _value The amount to be transferred.
     */
     function transferICO(address _to, uint256 _value) public onlyOwner returns (bool) {
-        assert(isICO);
+        require(isICO, "Not ICO phase");
         require(_to != address(0), "Zero address 'To'");
         require(_value <= balances[wallet], "Not enought balance");
         balances[wallet] = balances[wallet].sub(_value);
