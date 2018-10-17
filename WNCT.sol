@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WNCT at 0xb4caeb542a927b55b7777c9c5b23f49835fee326
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WNCT at 0x2958ff9b325135374605b4e6987140a53394c6a6
 */
 pragma solidity ^0.4.16;
 contract WNCT  {
@@ -17,7 +17,7 @@ contract WNCT  {
     function WNCT() public {
         balances[msg.sender] = 100000000000000;               // Give the creator all initial tokens
         totalSupply = 100000000000000;                        // Update total supply
-        name = "Wellnewss Chain";                                   // Set the name for display purposes
+        name = "Wellness Chain";                                   // Set the name for display purposes
         decimals =4;                            // Amount of decimals for display purposes
         symbol = "WNCT";                               // Set the symbol for display purposes
     }
