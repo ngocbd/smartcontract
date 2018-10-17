@@ -1,44 +1,133 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x192e606e24d3ef48003078401af248f82f99a634
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x97550CE17666bB49349EF0E50f9fDb88353EDb64
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
+
+// File: contracts/library/SafeMath.sol
+
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * - added sqrt
+ * - added sq
+ * - added pwr 
+ * - changed asserts to requires with error log outputs
+ * - removed div, its useless
+ */
+library SafeMath {
+    
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) 
+        internal 
+        pure 
+        returns (uint256 c) 
+    {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+    
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256) 
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c) 
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+    
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y) 
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y) 
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+    
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+    
+    /**
+     * @dev x to the power of y 
+     */
+    function pwr(uint256 x, uint256 y)
+        internal 
+        pure 
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else 
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
+    }
+}
+
+// File: contracts/Hourglass.sol
 
 /*
-* Team JUST presents..
-* ====================================*
-* _____     _ _ _ _____    ___ ____   * 
-*|  _  |___| | | |  |  |  |_  |    \  *
-*|   __| . | | | |     |  |_  |  |  | * 
-*|__|  |___|_____|__|__|  |___|____/  *
-*                                     *
-* ====================================*
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+        __                   __       __
+ .-----|  |--.---.-.--------|__.-----|  |--.
+ |  _  |    <|  _  |        |  |  _  |    <
+ |_____|__|__|___._|__|__|__|__|   __|__|__|
+                               |__|
 */
+
 
 contract Hourglass {
     /*=================================
@@ -66,44 +155,47 @@ contract Hourglass {
     // -> kill the contract
     // -> change the price of tokens
     modifier onlyAdministrator(){
-        address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+        //bytes32 name =  keccak256(msg.sender);
+        require(administrators[msg.sender], "must in administrators");
         _;
     }
     
     
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
-    // result: healthy longevity.
-    modifier antiEarlyWhale(uint256 _amountOfEthereum){
-        address _customerAddress = msg.sender;
-        
-        // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
-        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
-            require(
-                // is the customer in the ambassador list?
-                ambassadors_[_customerAddress] == true &&
-                
-                // does the customer purchase exceed the max ambassador quota?
-                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
-                
-            );
-            
-            // updated the accumulated quota    
-            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
-        
-            // execute
-            _;
-        } else {
-            // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
-            _;    
-        }
-        
+    modifier ceilingNotReached() {
+        require(okamiCurrentPurchase_ < okamiTotalPurchase_);
+        _;
+    }  
+
+    modifier isActivated() {
+        require(activated == true, "its not ready yet"); 
+        _;
     }
-    
-    
+
+    modifier isInICO() {
+        require(inICO == true, "its not in ICO."); 
+        _;
+    }
+
+    modifier isNotInICO() {
+        require(inICO == false, "its not in ICO."); 
+        _;
+    }
+
+    /**
+     * @dev prevents contracts from interacting with 
+     */
+    modifier isHuman() {
+        address _addr = msg.sender;
+        require (_addr == tx.origin);
+        
+        uint256 _codeLength;
+        
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "sorry humans only");
+        _;
+    }
+
+
     /*==============================
     =            EVENTS            =
     ==============================*/
@@ -142,42 +234,47 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PowH3D";
-    string public symbol = "P3D";
+    string public name = "OkamiPK";
+    string public symbol = "OPK";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
+    uint256 constant internal tokenPriceInitial_ =  0.0007 ether; //0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
-    
+    uint256 constant public icoPrice_ = 0.002 ether; 
     // proof of stake (defaults at 100 tokens)
     uint256 public stakingRequirement = 100e18;
     
     // ambassador program
-    mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
+
+    //todo
+    uint256 constant public okamiMinPurchase_ = 5 ether;
+    uint256 constant public okamiMaxPurchase_ = 10 ether;
+    uint256 constant public okamiTotalPurchase_ = 500 ether;
     
+    mapping(address => uint256) internal okamis_;
+    uint256 public okamiCurrentPurchase_ = 0;
     
+    bool public inICO = false;
+    bool public activated = false;
     
    /*================================
     =            DATASETS            =
     ================================*/
     // amount of shares for each address (scaled number)
-    mapping(address => uint256) internal tokenBalanceLedger_;
-    mapping(address => uint256) internal referralBalance_;
-    mapping(address => int256) internal payoutsTo_;
-    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
+    //TODO: public->internal
+    mapping(address => uint256) public tokenBalanceLedger_;
+    mapping(address => uint256) public referralBalance_;
+    mapping(address => int256) public payoutsTo_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
-    mapping(bytes32 => bool) public administrators;
+    mapping(address => bool) public administrators;
     
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
-    
-
+    // okami 
+    //TODO: public->internal
+    mapping(address => uint256) public okamiFunds_;
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
@@ -185,25 +282,89 @@ contract Hourglass {
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    function Hourglass()
+    constructor()
         public
     {
         // add administrators here
-        administrators[keccak256(0x24e0162606d558ac113722adc6597b434089adb7)] = true;     
-        ambassadors_[0x24e0162606d558ac113722adc6597b434089adb7] = true;        
+        //TODO:
+        //administrators[0x00D8E8CCb4A29625D299798036825f3fa349f2b4] = true;
+        //
+        administrators[0x00A32C09c8962AEc444ABde1991469eD0a9ccAf7] = true;
+        administrators[0x00aBBff93b10Ece374B14abb70c4e588BA1F799F] = true;
+                    
+        //TODO: 
+        uint256 count = SafeMath.mul(SafeMath.div(10**18, icoPrice_), 10**18);
+
+        tokenBalanceLedger_[0x0a3Ed0E874b4E0f7243937cD0545bFEcBa0f4548] = 50*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 50*count);
+
+        tokenBalanceLedger_[0x00c9d3bd82fEa0464DC284Ca870A76eE7386C63d] = 30*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 30*count);
+
+        tokenBalanceLedger_[0x00De30E1A0E82750ea1f96f6D27e112f5c8A352D] = 10*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 10*count);
+
+        tokenBalanceLedger_[0x0070349db8EF73DeF5A1Aa838B7d81FD0742867b] = 4*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 4*count);
+
+        //
+        tokenBalanceLedger_[0x26042eb2f06D419093313ae2486fb40167Ba349C] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
+        tokenBalanceLedger_[0x8d60d529c435e2A4c67FD233c49C3F174AfC72A8] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
+        tokenBalanceLedger_[0xF9f24b9a5FcFf3542Ae3361c394AD951a8C0B3e1] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
+        tokenBalanceLedger_[0x9ca974f2c49d68bd5958978e81151e6831290f57] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
+        tokenBalanceLedger_[0xf22978ed49631b68409a16afa8e123674115011e] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
+        tokenBalanceLedger_[0x00b22a1D6CFF93831Cf2842993eFBB2181ad78de] = 1*count;
+        tokenSupply_ = SafeMath.add(tokenSupply_, 1*count);
 
     }
     
-     
+    function activate()
+        onlyAdministrator()
+        public
+    {
+
+        // can only be ran once
+        require(activated == false, "already activated");
+        
+        // activate the contract 
+        activated = true;
+        
+        inICO = true;
+    }
+
+    function endICO()
+        onlyAdministrator()
+        public
+    {
+
+        // can only be ran once
+        require(inICO == true, "must true before");
+        
+        inICO = false;
+        
+    }
+
+
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
     function buy(address _referredBy)
+        isActivated()
+        isHuman()
         public
         payable
         returns(uint256)
     {
-        purchaseTokens(msg.value, _referredBy);
+        if( inICO){
+            purchaseTokensInICO(msg.value, _referredBy);
+        }else{
+            purchaseTokens(msg.value, _referredBy);
+        }
     }
     
     /**
@@ -211,10 +372,16 @@ contract Hourglass {
      * Unfortunately we cannot use a referral address this way.
      */
     function()
+        isActivated()
+        isHuman()
         payable
         public
     {
-        purchaseTokens(msg.value, 0x0);
+        if( inICO){
+            purchaseTokensInICO(msg.value, 0x0);
+        }else{
+            purchaseTokens(msg.value, 0x0);
+        }
     }
     
     /**
@@ -239,7 +406,7 @@ contract Hourglass {
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
         
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
     /**
@@ -248,7 +415,7 @@ contract Hourglass {
     function exit()
         public
     {
-        // get token count for caller & sell them all
+        // ` token count for caller & sell them all
         address _customerAddress = msg.sender;
         uint256 _tokens = tokenBalanceLedger_[_customerAddress];
         if(_tokens > 0) sell(_tokens);
@@ -279,13 +446,14 @@ contract Hourglass {
         _customerAddress.transfer(_dividends);
         
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
     
     /**
      * Liquifies tokens to ethereum.
      */
     function sell(uint256 _amountOfTokens)
+        isNotInICO()
         onlyBagholders()
         public
     {
@@ -313,7 +481,7 @@ contract Hourglass {
         }
         
         // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
     
     
@@ -322,6 +490,7 @@ contract Hourglass {
      * Remember, there's a 10% fee here as well.
      */
     function transfer(address _toAddress, uint256 _amountOfTokens)
+        isNotInICO()
         onlyBagholders()
         public
         returns(bool)
@@ -330,9 +499,9 @@ contract Hourglass {
         address _customerAddress = msg.sender;
         
         // make sure we have the requested tokens
-        // also disables transfers until ambassador phase is over
+        // also disables transfers until ico phase is over
         // ( we dont want whale premines )
-        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+        require(!inICO && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         
         // withdraw all outstanding dividends first
         if(myDividends(true) > 0) withdraw();
@@ -358,28 +527,18 @@ contract Hourglass {
         profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
         
         // fire event
-        Transfer(_customerAddress, _toAddress, _taxedTokens);
+        emit Transfer(_customerAddress, _toAddress, _taxedTokens);
         
         // ERC20
         return true;
        
     }
     
-    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
-    /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
-     */
-    function disableInitialStage()
-        onlyAdministrator()
-        public
-    {
-        onlyAmbassadors = false;
-    }
-    
+
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(bytes32 _identifier, bool _status)
+    function setAdministrator(address _identifier, bool _status)
         onlyAdministrator()
         public
     {
@@ -427,7 +586,7 @@ contract Hourglass {
         view
         returns(uint)
     {
-        return this.balance;
+        return address(this).balance;
     }
     
     /**
@@ -559,11 +718,50 @@ contract Hourglass {
     }
     
     
+    function purchaseTokensInICO(uint256 _incomingEthereum, address _referredBy)
+        isInICO()
+        ceilingNotReached()
+        internal
+        returns(uint256)
+    {   
+        address _customerAddress = msg.sender;
+        uint256 _oldFundETH = okamiFunds_[_customerAddress];
+
+        require(_incomingEthereum > 0, "no money");
+        require( (_oldFundETH >= okamiMinPurchase_) || _incomingEthereum >= okamiMinPurchase_, "min 5 eth");
+        require(SafeMath.add(_oldFundETH, _incomingEthereum) <= okamiMaxPurchase_, "max 10 eth");
+
+        uint256 _newFundETH = _incomingEthereum;
+        if( SafeMath.add(_newFundETH, okamiCurrentPurchase_) > okamiTotalPurchase_){
+            _newFundETH = SafeMath.sub(okamiTotalPurchase_, okamiCurrentPurchase_);
+            msg.sender.transfer(SafeMath.sub(_incomingEthereum, _newFundETH));
+        }
+
+        uint256 _amountOfTokens =  SafeMath.mul(SafeMath.div(_newFundETH, icoPrice_), 10**18);
+
+        // add tokens to the pool
+        tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+ 
+        // update circulating supply & the ledger address for the customer
+        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        okamiFunds_[_customerAddress]  = SafeMath.add(okamiFunds_[_customerAddress], _newFundETH);
+        okamiCurrentPurchase_ = SafeMath.add(okamiCurrentPurchase_, _newFundETH);
+
+        if( okamiCurrentPurchase_ >= okamiTotalPurchase_){
+            inICO = false;
+        }
+
+        // fire event
+        emit onTokenPurchase(_customerAddress, _newFundETH, _amountOfTokens, _referredBy);
+        
+    }
+
+
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
-        antiEarlyWhale(_incomingEthereum)
+        isNotInICO()
         internal
         returns(uint256)
     {
@@ -629,7 +827,7 @@ contract Hourglass {
         payoutsTo_[_customerAddress] += _updatedPayouts;
         
         // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
         
         return _amountOfTokens;
     }
@@ -708,51 +906,5 @@ contract Hourglass {
             y = z;
             z = (x / z + z) / 2;
         }
-    }
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
     }
 }
