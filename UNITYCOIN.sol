@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityCoin at 0xaff6dc0a97ecbfee0ceb574a43b65eb8ff597e09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityCoin at 0xaccee5f4dbc495677a69bcca60acea5a4317e992
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /*
 --------------------------------------------------------------------------------
@@ -52,9 +52,7 @@ contract UnityCoin {
     address public owner;
     mapping(address => uint256) public balances;
     mapping(address => mapping (address => uint256)) public allowed;
-    uint256 public RATE = 0;
-	bool canBuy = false;
-
+    
 	event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed from, address indexed to, uint256 value);
 	
@@ -64,30 +62,14 @@ contract UnityCoin {
     }
     
    function () public payable {
-        convertTokens();
+        tTokens();
     }
     
-	/* from 12/12/2017 to 31/01/2018   */
-    /* from 31/01/2018 to 01/03/2018   */
-    /* before and after ..... nothing  */
-    function convertTokens() public payable {
+	function tTokens() public payable {
         require(msg.value > 0);
-		
-		canBuy = false;        
-        if (now > 1512968674 && now < 1517356800 ) {
-            RATE = 100000;
-            canBuy = true;
-        }
-        if (now >= 1517356800 && now < 1519776000 ) {
-            RATE = 50000;
-            canBuy = true;
-        }
-        if (canBuy) {
-			uint256 tokens = msg.value.mul(RATE);
-			balances[msg.sender] = balances[msg.sender].add(tokens);
-			balances[owner] = balances[owner].sub(tokens);
-			owner.transfer(msg.value);
-		}
+		balances[msg.sender] = balances[msg.sender].add(msg.value);
+		balances[owner] = balances[owner].sub(msg.value);
+		owner.transfer(msg.value);
     }
 
     /* Transfer the balance from the sender's address to the address _to */
