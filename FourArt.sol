@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FourArt at 0x635d767cb1df59053d34852758bafbba889ad3f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FourArt at 0x0944393abcfc9879cedc19e070c056f70703f9b8
 */
 /**
  * 4art ERC20 StandardToken
@@ -187,7 +187,7 @@ contract FourArt is StandardToken, Owned {
     address private bountyAddress;
     address private affiliateAddress;
     address private miscAddress;
-
+    
     function FourArt(
         address _founderAddress1, 
         address _founderAddress2,
@@ -237,6 +237,10 @@ contract FourArt is StandardToken, Owned {
         TeamAdviserPartner[teamAddress] = true;     
         TeamAdviserPartner[adviserAddress] = true;  
         TeamAdviserPartner[partnershipAddress] = true;
+    }
+    
+    // desposit funds to smart contract
+    function () public payable {
     }
 
     // Set buy and sell price of 1 token in eth.
