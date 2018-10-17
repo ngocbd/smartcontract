@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RightAndRoles at 0x1b3d9eaf7df2afd3841e9848a593554e93edf29c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RightAndRoles at 0x513d608345235519d9ebd1aa6c10bce65d9cf5a5
 */
 pragma solidity ^0.4.21;
 
-// Project: imigize.io (original)
-// v13, 2018-06-19
+// Project: alehub.io
+// v11, 2018-07-17
 // This code is the property of CryptoB2B.io
 // Copying in whole or in part is prohibited.
 // Authors: Ivan Fedorov and Dmitry Borodin
@@ -66,7 +66,7 @@ contract RightAndRoles is IRightAndRoles {
     // @ When it is launched automatically  -
     // @ Who can call the function          staff (all 7+ roles)
     function changeWallet(address _wallet, uint8 _role) external {
-        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && managerPowerful));
+        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && (managerPowerful || _role == 0)));
         emit WalletChanged(wallets[_role][0],_wallet,_role);
         uint16 roleMask = uint16(2)**_role;
         address[] storage tmp = wallets[_role];
