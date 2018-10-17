@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnooKarma at 0x5e6c3565c2a7b048f22e62e41fc829811d8de2ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnooKarma at 0xfd8a88ad07195f603cbc48653c559b63831210d8
 */
 pragma solidity 0.4.24;
 
@@ -148,6 +148,8 @@ contract SnooKarma {
         redeemedKarma[username] = karma;
         //The Redeem event is triggered
         emit Redeem(username, msg.sender, newUserKarma);
+        //Update token holder balance on chain explorers
+        emit Transfer(0x0, msg.sender, newUserKarma);
     }
     
     //This function is a workaround because this.redeemedKarma cannot be public
