@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BiotheumToken at 0x3a806a4acee20b8bc987eb1f857a3b1c04f460f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BiotheumToken at 0x87e82834ad27b9d21674db79de0fcfaea9f1c81f
 */
 //Fully function ERC 20
 // 
@@ -87,7 +87,7 @@ contract BiotheumToken is ERC20Interface, Owned {
 
     string public symbol;
     string public  name;
-    //uint8 public decimals; change it to 18 as suggested
+    uint8 public decimals; 
     uint public totalSupply;
 
     mapping(address => uint) balances;
@@ -97,11 +97,12 @@ contract BiotheumToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    constructor(string _symbol, string _name,  uint _totalSupply ) public {
+    constructor(string _symbol, string _name, uint8 _decimals,  uint _totalSupply ) public {
         symbol = _symbol;
         name = _name;
-        totalSupply = _totalSupply * 10**uint(18);
-        balances[owner] = _totalSupply;
+        decimals = _decimals;
+        totalSupply = _totalSupply * 10**uint(_decimals);
+        balances[owner] = totalSupply;
         emit Transfer(address(0), owner, totalSupply);
     }
 
