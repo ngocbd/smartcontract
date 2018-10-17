@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0xcd85f4fd1c87d6ba898b697c13ded067e5041a32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0xa6b6cba3a9f54b9b900add306024c0a27af4034c
 */
 pragma solidity ^0.4.24;
 
@@ -118,6 +118,7 @@ contract ESSENTIA_PE is Ownable {
     // Constant to simplify the conversion of token amounts into integer form
     uint256 public tokenUnit = uint256(10)**decimals;
 
+    TokenCHK essToken;
 
 
     //
@@ -145,7 +146,7 @@ contract ESSENTIA_PE is Ownable {
         ) public {
         FWDaddrETH = toETHaddr;
         ESSgenesis = addrESSgenesis;
-
+        essToken = TokenCHK(addrESSgenesis);
     }
 
 
@@ -193,7 +194,6 @@ contract ESSENTIA_PE is Ownable {
 
         require(block.timestamp < pubEnd);          // Require the current unixtime to be lower than the END unixtime
         require(msg.value > 0);                     // Require the sender to send an ETH tx higher than 0
-        require(msg.value <= msg.sender.balance);   // Require the sender to have sufficient ETH balance for the tx
 
         // Requiring this to avoid going out of tokens, aka we are getting just true/false from the transfer call
         require(msg.value + totalSold <= maxCap);
@@ -202,7 +202,7 @@ contract ESSENTIA_PE is Ownable {
         uint256 tokenAmount = (msg.value * tokenUnit) / tokenPrice;
 
         // Requiring sufficient token balance on this contract to accept the tx
-        require(tokenAmount<=TokenCHK(ESSgenesis).balanceOf(contractAddr));
+        require(tokenAmount <= essToken.balanceOf(this));
 
         transferBuy(msg.sender, tokenAmount);       // Instruct the accounting function
         totalSold = totalSold.add(msg.value);       // Account for the total contributed/sold
