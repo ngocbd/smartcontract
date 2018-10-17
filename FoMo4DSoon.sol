@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo4DSoon at 0xB8aBc1490c4fD684015354D04c34a33C73536dB3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo4DSoon at 0x4f0b09be4032772ff023ab374b45c615ffd3f4e5
 */
 pragma solidity ^0.4.24;
 contract F4Devents {
@@ -120,7 +120,7 @@ contract FoMo4DSoon is F4Devents{
     using F4DKeysCalcFast for uint256;
     
     address private owner_;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xeB367060583fd067Edec36202339360071e617Db);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xeEd618C15d12C635C3C319aEe7BDED2E2879AEa0);
     string constant public name = "Fomo4D Soon";
     string constant public symbol = "F4D";
 	uint256 private rndGap_ = 60 seconds;                       // length of ICO phase, set to 1 year for EOS.
@@ -980,13 +980,14 @@ contract FoMo4DSoon is F4Devents{
             emit F4Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
             _gen = _gen.add(_aff);
+            _aff = 0;
         }
 
         // add gen share to rounds ICO phase gen tracker (will be distributed 
         // when round starts)
         round_[_rID].icoGen = _gen.add(round_[_rID].icoGen);
         
-        uint256 _pot = (_eth.sub(((_eth.mul(14)) / 100))).sub(_gen);
+        uint256 _pot = (_eth.sub(((_eth.mul(14)) / 100))).sub(_gen).sub(_aff);
         
         // add eth to pot
         round_[_rID].pot = _pot.add(round_[_rID].pot);
@@ -1072,9 +1073,25 @@ contract FoMo4DSoon is F4Devents{
             return(  (((round_[_rIDlast].mask).mul(plyrRnds_[_pID][_rIDlast].keys)) / (1000000000000000000)).sub(plyrRnds_[_pID][_rIDlast].mask)  );
         else
             if (now > round_[_rIDlast].strt + rndGap_ && round_[_rIDlast].eth == 0)
-                return(  (((((round_[_rIDlast].icoGen).mul(1000000000000000000)) / (round_[_rIDlast].ico).keys()).mul(calcPlayerICOPhaseKeys(_pID, _rIDlast))) / (1000000000000000000)).sub(plyrRnds_[_pID][_rIDlast].mask)  );
+                return(
+                      (
+                          (
+                              (
+                                  (
+                                      (round_[_rIDlast].icoGen).mul(1000000000000000000)
+                                    ) / (round_[_rIDlast].ico).keys()
+                              ).mul(calcPlayerICOPhaseKeys(_pID, _rIDlast))
+                          ) / (1000000000000000000)
+                        ).sub(plyrRnds_[_pID][_rIDlast].mask)  
+                      );
             else
-                return(  (((round_[_rIDlast].mask).mul(calcPlayerICOPhaseKeys(_pID, _rIDlast))) / (1000000000000000000)).sub(plyrRnds_[_pID][_rIDlast].mask)  );
+                return(  
+                        (
+                            (
+                                (round_[_rIDlast].mask).mul(calcPlayerICOPhaseKeys(_pID, _rIDlast))
+                            ) / (1000000000000000000)
+                        ).sub(plyrRnds_[_pID][_rIDlast].mask)  
+                    );
         // otherwise return earnings based on keys owed from ICO phase
         // (this would be a scenario where they only buy during ICO phase, and never 
         // buy/reload during round)
@@ -1474,13 +1491,14 @@ contract FoMo4DSoon is F4Devents{
             emit F4Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
             _gen = _gen.add(_aff);
+            _aff = 0;
         }
         
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share))
         _eth = _eth.sub(((_eth.mul(14)) / 100));
         
         // calculate pot 
-        uint256 _pot = _eth.sub(_gen);
+        uint256 _pot = _eth.sub(_gen).sub(_aff);
         
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
