@@ -1,9 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract P4 at 0x5b8ad60798ec10ad36e52625ff881801240c491a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract P4 at 0x72a73495b769682d7b09a9641fa1a95e308fbe08
 */
 pragma solidity ^0.4.21;
 
 // File: contracts/P4RTYRelay.sol
+
+/*
+ * Visit: https://p4rty.io
+ * Discord: https://discord.gg/7y3DHYF
+ * Copyright Mako Labs LLC 2018 All Rights Reseerved
+*/
 
 interface P4RTYRelay {
     /**
@@ -12,6 +18,20 @@ interface P4RTYRelay {
     * @param tokenAmount Number of tokens to be minted
     */
     function relay(address beneficiary, uint256 tokenAmount) external;
+}
+
+// File: contracts/ReinvestProxy.sol
+
+/*
+ * Visit: https://p4rty.io
+ * Discord: https://discord.gg/7y3DHYF
+ * Copyright Mako Labs LLC 2018 All Rights Reseerved
+*/
+interface ReinvestProxy {
+
+    /// @dev Converts all incoming ethereum to tokens for the caller,
+    function reinvestFor(address customer) external payable;
+
 }
 
 // File: openzeppelin-solidity/contracts/math/SafeMath.sol
@@ -104,6 +124,84 @@ contract Ownable {
 
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Whitelist.sol
+
+/**
+ * @title Whitelist
+ * @dev The Whitelist contract has a whitelist of addresses, and provides basic authorization control functions.
+ * @dev This simplifies the implementation of "user permissions".
+ */
+contract Whitelist is Ownable {
+  mapping(address => bool) public whitelist;
+
+  event WhitelistedAddressAdded(address addr);
+  event WhitelistedAddressRemoved(address addr);
+
+  /**
+   * @dev Throws if called by any account that's not whitelisted.
+   */
+  modifier onlyWhitelisted() {
+    require(whitelist[msg.sender]);
+    _;
+  }
+
+  /**
+   * @dev add an address to the whitelist
+   * @param addr address
+   * @return true if the address was added to the whitelist, false if the address was already in the whitelist
+   */
+  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (!whitelist[addr]) {
+      whitelist[addr] = true;
+      emit WhitelistedAddressAdded(addr);
+      success = true;
+    }
+  }
+
+  /**
+   * @dev add addresses to the whitelist
+   * @param addrs addresses
+   * @return true if at least one address was added to the whitelist,
+   * false if all addresses were already in the whitelist
+   */
+  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (addAddressToWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+  /**
+   * @dev remove an address from the whitelist
+   * @param addr address
+   * @return true if the address was removed from the whitelist,
+   * false if the address wasn't in the whitelist in the first place
+   */
+  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (whitelist[addr]) {
+      whitelist[addr] = false;
+      emit WhitelistedAddressRemoved(addr);
+      success = true;
+    }
+  }
+
+  /**
+   * @dev remove addresses from the whitelist
+   * @param addrs addresses
+   * @return true if at least one address was removed from the whitelist,
+   * false if all addresses weren't in the whitelist in the first place
+   */
+  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (removeAddressFromWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+}
+
 // File: contracts/P4.sol
 
 /*
@@ -133,7 +231,7 @@ contract Ownable {
  * [?] 100 tokens to activate referral links; .1 ETH
 */
 
-contract P4 is Ownable {
+contract P4 is Whitelist {
 
 
     /*=================================
@@ -141,13 +239,13 @@ contract P4 is Ownable {
     =================================*/
 
     /// @dev Only people with tokens
-    modifier onlyBagholders {
+    modifier onlyTokenHolders {
         require(myTokens() > 0);
         _;
     }
 
     /// @dev Only people with profits
-    modifier onlyStronghands {
+    modifier onlyDivis {
         require(myDividends(true) > 0);
         _;
     }
@@ -180,6 +278,12 @@ contract P4 is Ownable {
         uint256 tokensMinted
     );
 
+    event onReinvestmentProxy(
+        address indexed customerAddress,
+        address indexed destinationAddress,
+        uint256 ethereumReinvested
+    );
+
     event onWithdraw(
         address indexed customerAddress,
         uint256 ethereumWithdrawn
@@ -197,25 +301,21 @@ contract P4 is Ownable {
     =            CONFIGURABLES            =
     =====================================*/
 
-    string public name = "P4";
-    string public symbol = "P4";
-    uint8 constant public decimals = 18;
-
     /// @dev 15% dividends for token purchase
-    uint8 constant internal entryFee_ = 15;
+    uint256  internal entryFee_ = 15;
 
     /// @dev 1% dividends for token transfer
-    uint8 constant internal transferFee_ = 1;
+    uint256  internal transferFee_ = 1;
 
     /// @dev 5% dividends for token selling
-    uint8 constant internal exitFee_ = 5;
+    uint256  internal exitFee_ = 5;
 
-    /// @dev 30% of entryFee_ (i.e. 4.5% dividends) is given to referrer
-    uint8 constant internal refferalFee_ = 30;
+    /// @dev 30% of entryFee_  is given to referrer
+    uint256  internal referralFee_ = 30;
 
-    /// @dev 20% of entryFee (i.e. 3% dividends) is given to maintainer
-    uint8 constant internal maintenanceFee = 20;
-    address internal maintenanceAddress;
+    /// @dev 20% of entryFee/exit fee is given to maintainer
+    uint256  internal maintenanceFee = 20;
+    address  internal maintenanceAddress;
 
     uint256 constant internal tokenRatio_ = 1000;
     uint256 constant internal magnitude = 2 ** 64;
@@ -244,15 +344,12 @@ contract P4 is Ownable {
     =            PUBLIC FUNCTIONS           =
     =======================================*/
 
-    constructor(address relayAddress) Ownable() public {
-        updateRelay(relayAddress);
+    constructor(address relayAddress)  public {
+
+        relay = P4RTYRelay(relayAddress);
+
         //assume caller as default
         updateMaintenanceAddress(msg.sender);
-    }
-
-    function updateRelay (address relayAddress) onlyOwner public {
-        //Set the relay
-        relay = P4RTYRelay(relayAddress);
     }
 
     function updateMaintenanceAddress(address maintenance) onlyOwner public {
@@ -260,11 +357,21 @@ contract P4 is Ownable {
     }
 
     /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
+    function buyFor(address _customerAddress, address _referredBy) onlyWhitelisted public payable returns (uint256) {
+        setReferral(_referredBy);
+        return purchaseTokens(_customerAddress, msg.value);
+    }
+
+    /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
     function buy(address _referredBy) public payable returns (uint256) {
+        setReferral(_referredBy);
+        return purchaseTokens(msg.sender, msg.value);
+    }
+
+    function setReferral(address _referredBy) internal {
         if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
             referrals[msg.sender]=_referredBy;
         }
-        return purchaseTokens(msg.value);
     }
 
     /**
@@ -272,16 +379,16 @@ contract P4 is Ownable {
      *  Unfortunately we cannot use a referral address this way.
      */
     function() payable public {
-        purchaseTokens(msg.value);
+        purchaseTokens(msg.sender, msg.value);
     }
 
     /// @dev Converts all of caller's dividends to tokens.
-    function reinvest() onlyStronghands public {
+    function reinvest() onlyDivis public {
+        address _customerAddress = msg.sender;
+
         // fetch dividends
         uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
 
-        // pay out the dividends virtually
-        address _customerAddress = msg.sender;
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
 
         // retrieve ref. bonus
@@ -289,10 +396,30 @@ contract P4 is Ownable {
         referralBalance_[_customerAddress] = 0;
 
         // dispatch a buy order with the virtualized "withdrawn dividends"
-        uint256 _tokens = purchaseTokens(_dividends);
+        uint256 _tokens = purchaseTokens(_customerAddress, _dividends);
 
         // fire event
         emit onReinvestment(_customerAddress, _dividends, _tokens);
+    }
+
+    function reinvestByProxy(address _customerAddress) onlyWhitelisted public {
+        // fetch dividends
+        uint256 _dividends = dividendsOf(_customerAddress); // retrieve ref. bonus later in the code
+
+
+        payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+
+        // retrieve ref. bonus
+        _dividends += referralBalance_[_customerAddress];
+        referralBalance_[_customerAddress] = 0;
+
+        // dispatch a buy order with the virtualized "withdrawn dividends"
+        ReinvestProxy reinvestProxy =  ReinvestProxy(msg.sender);
+        reinvestProxy.reinvestFor.value(_dividends)(_customerAddress);
+
+        emit  onReinvestmentProxy(_customerAddress, msg.sender, _dividends);
+
+
     }
 
     /// @dev Alias of sell() and withdraw().
@@ -307,9 +434,10 @@ contract P4 is Ownable {
     }
 
     /// @dev Withdraws all of the callers earnings.
-    function withdraw() onlyStronghands public {
-        // setup data
+    function withdraw() onlyDivis public {
+
         address _customerAddress = msg.sender;
+        // setup data
         uint256 _dividends = myDividends(false); // get ref. bonus later in the code
 
         // update dividend tracker
@@ -326,16 +454,22 @@ contract P4 is Ownable {
         emit onWithdraw(_customerAddress, _dividends);
     }
 
+
     /// @dev Liquifies tokens to ethereum.
-    function sell(uint256 _amountOfTokens) onlyBagholders public {
-        // setup data
+    function sell(uint256 _amountOfTokens) onlyTokenHolders public {
         address _customerAddress = msg.sender;
-        // russian hackers BTFO
+
+
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+
+
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
+        uint256 _maintenance = SafeMath.div(SafeMath.mul(_undividedDividends,maintenanceFee),100);
+        //maintenance and referral come out of the exitfee
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _maintenance);
+        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _undividedDividends);
 
         // burn the sold tokens
         tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
@@ -344,6 +478,10 @@ contract P4 is Ownable {
         // update dividends tracker
         int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
         payoutsTo_[_customerAddress] -= _updatedPayouts;
+
+
+        //Apply maintenance fee as a referral
+        referralBalance_[maintenanceAddress] = SafeMath.add(referralBalance_[maintenanceAddress], _maintenance);
 
         // dividing by zero is a bad idea
         if (tokenSupply_ > 0) {
@@ -360,8 +498,8 @@ contract P4 is Ownable {
      * @dev Transfer tokens from the caller to a new holder.
      *  Remember, there's a 15% fee here as well.
      */
-    function transfer(address _toAddress, uint256 _amountOfTokens) onlyBagholders external returns (bool) {
-        // setup
+    function transfer(address _toAddress, uint256 _amountOfTokens) onlyTokenHolders external returns (bool){
+
         address _customerAddress = msg.sender;
 
         // make sure we have the requested tokens
@@ -429,6 +567,12 @@ contract P4 is Ownable {
      *  The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
      *  But in the internal calculations, we want them separate.
      */
+    /**
+     * @dev Retrieve the dividends owned by the caller.
+     *  If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
+     *  The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
+     *  But in the internal calculations, we want them separate.
+     */
     function myDividends(bool _includeReferralBonus) public view returns (uint256) {
         address _customerAddress = msg.sender;
         return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
@@ -445,7 +589,7 @@ contract P4 is Ownable {
     }
 
     /// @dev Return the sell price of 1 individual token.
-    function sellPrice() public pure returns (uint256) {
+    function sellPrice() public view returns (uint256) {
         uint256 _ethereum = tokensToEthereum_(1e18);
         uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, exitFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
@@ -455,7 +599,7 @@ contract P4 is Ownable {
     }
 
     /// @dev Return the buy price of 1 individual token.
-    function buyPrice() public pure returns (uint256) {
+    function buyPrice() public view returns (uint256) {
         uint256 _ethereum = tokensToEthereum_(1e18);
         uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, entryFee_), 100);
         uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
@@ -465,7 +609,7 @@ contract P4 is Ownable {
     }
 
     /// @dev Function for the frontend to dynamically retrieve the price scaling of buy orders.
-    function calculateTokensReceived(uint256 _ethereumToSpend) public pure returns (uint256) {
+    function calculateTokensReceived(uint256 _ethereumToSpend) public view returns (uint256) {
         uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, entryFee_), 100);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
@@ -488,13 +632,12 @@ contract P4 is Ownable {
     ==========================================*/
 
     /// @dev Internal function to actually purchase the tokens.
-    function purchaseTokens(uint256 _incomingEthereum) internal returns (uint256) {
+    function purchaseTokens(address _customerAddress, uint256 _incomingEthereum) internal returns (uint256) {
         // data setup
-        address _customerAddress = msg.sender;
-        address _referredBy = referrals[msg.sender];
+        address _referredBy = referrals[_customerAddress];
         uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, entryFee_), 100);
         uint256 _maintenance = SafeMath.div(SafeMath.mul(_undividedDividends,maintenanceFee),100);
-        uint256 _referralBonus = SafeMath.div(SafeMath.mul(_undividedDividends, refferalFee_), 100);
+        uint256 _referralBonus = SafeMath.div(SafeMath.mul(_undividedDividends, referralFee_), 100);
         //maintenance and referral come out of the buyin
         uint256 _dividends = SafeMath.sub(_undividedDividends, SafeMath.add(_referralBonus,_maintenance));
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
@@ -502,7 +645,7 @@ contract P4 is Ownable {
         uint256 _fee = _dividends * magnitude;
         uint256 _tokenAllocation = SafeMath.div(_incomingEthereum,2);
 
-        // no point in continuing execution if OP is a poorfag russian hacker
+
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
         // (or hackers)
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
