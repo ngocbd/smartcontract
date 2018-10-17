@@ -1,234 +1,254 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocalToken at 0x344005c29af957567f0b40950b425ed018b92170
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocalToken at 0xe0b38482164468a11558606e98d9985e57814cd9
 */
-pragma solidity  ^0.4.21;
+pragma solidity ^0.4.18;
 
+// ----------------------------------------------------------------------------
+// 'LocalToken' CROWDSALE token contract
+//
+// Deployed to : 0xceb584ee9b7e1568acc0ecfb5a23b590e64551cd
+// Symbol      : LOT
+// Name        : Local Token
+// Total supply: 2000000000
+// Decimals    : 18
+//
+// A music-backed ERC20 Token that is the digital representation of the Local playlist
+//
+// (c) by Ivy Music LLC - Garfield Ivy Maitland, Oghenefego Ahia, Janice Lee, Bryan Rodriguez. The MIT License.
+// ----------------------------------------------------------------------------
 
-contract DSMath {
-    uint constant DENOMINATOR = 10000;
-    uint constant DECIMALS = 18;
-    uint constant WAD = 10**DECIMALS;
+// Total: 2 billion Local Tokens (LOT)
+// 1 billion tokens: team musical ownership
+// 900 million tokens to be sold in crowdsale
+// 10 million tokens: community development
+// 20 million tokens: community engagement
+// 10 million tokens: community engagement
+// 10 million tokens: community faucet
 
-    modifier condition(bool _condition) {
-        require(_condition);
-        _;
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-	
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-	
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
 
-contract Token is DSMath {
-    string  public symbol;
-    uint256 public decimals;
-    string  public name;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
     address public owner;
+    address public newOwner;
 
-    uint256 internal _supply;
-    mapping (address => uint256) internal _balances;
-    mapping (address => mapping (address => uint256)) private _approvals;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    event LogSetOwner(address indexed owner_);
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner_, address indexed spender, uint value);
-
-    modifier auth {
-        require(isAuthorized(msg.sender));
-        _;
-    }
-
-    function Token() internal {
+    function Owned() public {
         owner = msg.sender;
     }
 
-    function totalSupply() public constant returns (uint256) {
-        return _supply;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    function balanceOf(address src) public constant returns (uint256) {
-        return _balances[src];
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
     }
-
-    function allowance(address src, address guy) public constant returns (uint256) {
-        return _approvals[src][guy];
-    }
-
-    function transfer(address dst, uint wad) public returns (bool) {
-        require(_balances[msg.sender] >= wad);
-
-        _balances[msg.sender] = sub(_balances[msg.sender], wad);
-        _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(msg.sender, dst, wad);
-
-        return true;
-    }
-
-    function transferFrom(address src, address dst, uint wad) public returns (bool) {
-        require(_balances[src] >= wad);
-        require(_approvals[src][msg.sender] >= wad);
-
-        _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(src, dst, wad);
-
-        return true;
-    }
-
-    function approve(address guy, uint256 wad) public returns (bool) {
-        _approvals[msg.sender][guy] = wad;
-        emit Approval(msg.sender, guy, wad);
-        return true;
-    }
-
-    function mint(uint wad)
-    public
-    auth
-    {
-        _balances[msg.sender] = add(_balances[msg.sender], wad);
-        _supply = add(_supply, wad);
-    }
-
-    function setOwner(address owner_)
-        public
-        auth
-    {
-        owner = owner_;
-        emit LogSetOwner(owner);
-    }
-
-    function isAuthorized(address src) internal constant returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else {
-            return false;
-        }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0xceb584ee9b7e1568acc0ecfb5a23b590e64551cd);
     }
 }
 
 
-// Universal Token
-contract UniversalToken is Token {
-    uint public xactionFeeNumerator;
-    uint public xactionFeeShare;
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract LocalToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+    uint public startDate;
+    uint public bonusEnds;
+    uint public endDate;
+    uint256 public totalEthers;
+    uint256 public constant CAP = 2 ether;
 
-    function UniversalToken( 
-        uint initialSupply,
-        uint feeMult,
-        uint feeShare ) public
-        condition(initialSupply > 1000)
-        condition(feeMult > 0)
-    {
-        symbol = "PMT";
-        name = "Universal Evangelist Token - by Pure Money Tech";
-        decimals = DECIMALS;
-		_supply = mul(initialSupply, WAD);
-		owner = msg.sender;
-        xactionFeeNumerator = feeMult;
-        xactionFeeShare = feeShare;
-		_balances[owner] = _supply;
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function LocalToken() public {
+        symbol = "LOT";
+        name = "Local Token";
+        decimals = 18;
+        bonusEnds = now;
+        endDate = now + 30 minutes;
+
     }
 
-    function modifyTransFee(uint _xactionFeeMult) public
-        auth
-        condition(_xactionFeeMult >= 0)
-        condition(DENOMINATOR > 4 * _xactionFeeMult)
-    {
-        xactionFeeNumerator = _xactionFeeMult;
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0xceb584ee9b7e1568acc0ecfb5a23b590e64551cd)];
     }
 
-    function modifyFeeShare(uint _share) public
-        auth
-        condition(_share >= 0)
-        condition(DENOMINATOR > 3 * _share)
-    {
-        xactionFeeShare = _share;
-    }
-}
 
-
-// Local Token
-contract LocalToken is Token {
-
-    string  public localityCode;
-    uint    public taxRateNumerator = 0;
-    address public govtAccount = 0;
-    address public pmtAccount = 0;
-    UniversalToken public universalToken;
-
-    function LocalToken(
-            uint _maxTokens,
-            uint _taxRateMult,
-			string _tokenSymbol,
-			string _tokenName,
-            string _localityCode,
-            address _govt,
-            address _pmt,
-            address _universalToken
-            ) public
-            condition(_maxTokens > 10)
-            condition(DENOMINATOR > mul(_taxRateMult, 2))
-            condition((_taxRateMult > 0 && _govt != 0) || _taxRateMult == 0)
-            condition(_universalToken != 0)
-    {
-        universalToken = UniversalToken(_universalToken);
-        require(msg.sender == universalToken.owner());
-		decimals = DECIMALS;
-		symbol = _tokenSymbol;
-		name = _tokenName;
-        localityCode = _localityCode;
-        _supply = mul(_maxTokens, WAD);
-        govtAccount = _govt;
-        pmtAccount = _pmt;
-		owner = msg.sender;
-        if (_taxRateMult > 0) {
-            taxRateNumerator = _taxRateMult;
-        }
-		_balances[owner] = _supply;
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-    function modifyLocality(string newLocality) public
-        auth
-    {
-        localityCode = newLocality;
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        // Cannot transfer before crowdsale ends or cap reached
+        require(now > endDate || totalEthers == CAP);
+
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
     }
 
-	function modifyTaxRate(uint _taxMult) public
-        auth
-		condition(DENOMINATOR > 2 * _taxMult)
-    {
-		taxRateNumerator = _taxMult;
-	}
 
-    // To reset gvtAccount when taxRateNumerator is not zero, 
-    // must reset taxRateNumerator first.
-    // To set govtAccount when taxRateNumerator is zero,
-    // must set taxRateNumerator first to non-zero value.
-    function modifyGovtAccount(address govt) public
-        auth
-        condition((taxRateNumerator > 0 && govt != 0) ||
-                (taxRateNumerator == 0 && govt == 0))
-    {
-        govtAccount = govt;
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    function modifyPMTAccount(address _pmt) public
-        auth
-    {
-        pmtAccount = _pmt;
+
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        // Cannot transfer before crowdsale ends or cap reached
+        require(now > endDate || totalEthers == CAP);
+
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 1,000,000,000 LOT Tokens per 1 ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        require(now >= startDate && now <= endDate);
+        // Add ETH raised to total
+        totalEthers = safeAdd(totalEthers, msg.value);
+        // Cannot exceed cap
+        require(totalEthers <= CAP);
+
+        uint tokens;
+        tokens = msg.value * 1000000000;
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        _totalSupply = 2000000000000000000000000000;
+        Transfer(address(0xceb584ee9b7e1568acc0ecfb5a23b590e64551cd), msg.sender, tokens);
+        owner.transfer(msg.value);
+    }
+
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
