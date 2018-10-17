@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinGame at 0x9ed316840b559b71bfbaeb076c714bb52fa36d07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITCOINGAME at 0xeA42ca879e46e905cd9fcF64BbdfC57D5BBcd005
 */
-contract BitcoinGame {
+contract BITCOINGAME {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
@@ -16,11 +16,11 @@ contract BitcoinGame {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function BitcoinGame() {
+    function BITCOINGAME() {
 
-         initialSupply = 21000000;
-         name ="BitcoinGame";
-        decimals = 0;
+         initialSupply = 21000000000000000000000000;
+         name ="BITCOINGAME";
+        decimals = 18;
          symbol = "BGAME";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
