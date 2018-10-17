@@ -1,33 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x8dda1689a97a01f1bfe8b03ad4166c31df31a3b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x1dd1ef4696b14c82eb199f7bb13f2f0059cb6382
 */
 pragma solidity ^0.4.24;
-/*
- * -PlayerBook - v0.3.14
- * ????????????   ?? ???????  ????????????????????????
- *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
- *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
- *                                  _____                      _____
- *                                 (, /     /)       /) /)    (, /      /)          /)
- *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
- *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
- *          ? ?                /   /          .-/ _____   (__ /
- *                            (__ /          (_/ (, /                                      /)™
- *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
- * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
- * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
- * ?  ??????????????? ?                                        (_/
- *     ______   _                                 ______                 _          
- *====(_____ \=| |===============================(____  \===============| |=============*
- *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
- *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
- *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
- *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
- *                        (____/
- * ????????????????????????  ???????????? ????????????                       
- * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?                      
- * ????????? ? ???? ???? ?   ???????????? ????????????    
- */
 
 
 interface PlayerBookReceiverInterface {
@@ -40,7 +14,9 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    address private admin = msg.sender;
+    address private manager = msg.sender;
+    address private community1 = 0x28a52B6FB427cf299b67f68835c7A37Bf80db915;
+    address private community2 = 0x366b8C3Dd186A29dCaA9C148F39cdf741997A168;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -72,37 +48,37 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
-        plyr_[1].name = "justo";
+        plyr_[1].addr = 0xdb81a5EFd600B87e31C31C64bc1F73E98a7Ed6D7;
+        plyr_[1].name = "alice";
         plyr_[1].names = 1;
-        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
-        pIDxName_["justo"] = 1;
-        plyrNames_[1]["justo"] = true;
-        plyrNameList_[1][1] = "justo";
+        pIDxAddr_[0xdb81a5EFd600B87e31C31C64bc1F73E98a7Ed6D7] = 1;
+        pIDxName_["alice"] = 1;
+        plyrNames_[1]["alice"] = true;
+        plyrNameList_[1][1] = "alice";
         
-        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
-        plyr_[2].name = "mantso";
+        plyr_[2].addr = 0x4a81569789c65258a9bC727c3990E48bdF97809c;
+        plyr_[2].name = "bob";
         plyr_[2].names = 1;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
-        pIDxName_["mantso"] = 2;
-        plyrNames_[2]["mantso"] = true;
-        plyrNameList_[2][1] = "mantso";
+        pIDxAddr_[0x4a81569789c65258a9bC727c3990E48bdF97809c] = 2;
+        pIDxName_["bob"] = 2;
+        plyrNames_[2]["bob"] = true;
+        plyrNameList_[2][1] = "bob";
         
-        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
-        plyr_[3].name = "sumpunk";
+        plyr_[3].addr = 0xf5E59B09Fc926abEff0B16989fc649E29cd9dE7B;
+        plyr_[3].name = "clark";
         plyr_[3].names = 1;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
-        pIDxName_["sumpunk"] = 3;
-        plyrNames_[3]["sumpunk"] = true;
-        plyrNameList_[3][1] = "sumpunk";
+        pIDxAddr_[0xf5E59B09Fc926abEff0B16989fc649E29cd9dE7B] = 3;
+        pIDxName_["clark"] = 3;
+        plyrNames_[3]["clark"] = true;
+        plyrNameList_[3][1] = "clark";
         
-        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
-        plyr_[4].name = "inventor";
+        plyr_[4].addr = 0x15Bed2Fd45d1B4C43bFdA83205167E037e147d97;
+        plyr_[4].name = "dog";
         plyr_[4].names = 1;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
-        pIDxName_["inventor"] = 4;
-        plyrNames_[4]["inventor"] = true;
-        plyrNameList_[4][1] = "inventor";
+        pIDxAddr_[0x15Bed2Fd45d1B4C43bFdA83205167E037e147d97] = 4;
+        pIDxName_["dog"] = 4;
+        plyrNames_[4]["dog"] = true;
+        plyrNameList_[4][1] = "dog";
         
         pID_ = 4;
     }
@@ -121,7 +97,12 @@ contract PlayerBook {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
-   
+    
+    modifier onlyManager() 
+    {
+        require(msg.sender == manager, "msg sender is not the manager");
+        _;
+    }
     
     modifier isRegisteredGame()
     {
@@ -396,7 +377,8 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        admin.transfer(address(this).balance);
+        community1.transfer(address(this).balance/2);
+        community2.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -576,9 +558,11 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
+     onlyManager()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
+
             gID_++;
             bytes32 _name = _gameNameStr.nameFilter();
             gameIDs_[_gameAddress] = gID_;
@@ -592,9 +576,10 @@ contract PlayerBook {
     }
     
     function setRegistrationFee(uint256 _fee)
+     onlyManager()
         public
     {
-      registrationFee_ = _fee;
+            registrationFee_ = _fee;
     }
         
 } 
@@ -619,7 +604,7 @@ contract PlayerBook {
 *=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
 *
 * ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? dog ?
 * ????????? ? ???? ???? ?   ???????????? ????????????
 */
 library NameFilter {
@@ -702,7 +687,7 @@ library NameFilter {
 /**
  * @title SafeMath v0.1.9
  * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * change notes:  original SafeMath library from OpenZeppelin modified by dog
  * - added sqrt
  * - added sq
  * - added pwr 
