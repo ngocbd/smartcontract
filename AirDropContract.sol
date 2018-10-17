@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x3cd9024168e6240b4f18b466d9bea9f8efc66004
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x8b8aaf37e44e87cc1285a822c767104b28dc0d58
 */
 pragma solidity ^0.4.24;
 
@@ -92,30 +92,19 @@ contract AirDropContract is Ownable {
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
     function() payable public {
+        require(collectorAddress != 0x0);
         require(totalAirDropToken > 0);
-        require(balanceOf[msg.sender] == 0);
-        uint256 amount = getCurrentCandyAmount();
-        require(amount > 0);
 
-        totalAirDropToken = totalAirDropToken.sub(amount);
-        balanceOf[msg.sender] = amount;
+        uint256 weiAmount = msg.value;
+        uint256 amount = weiAmount.mul(23000);
 
-        tokenRewardContract.transfer(msg.sender, amount * 1e18);
-        emit FundTransfer(msg.sender, amount, true);
-    }
+        totalAirDropToken = totalAirDropToken.sub(amount.div(1e18));
+        tokenRewardContract.transfer(msg.sender, amount);
 
-    function getCurrentCandyAmount() private view returns (uint256 amount){
-        if (totalAirDropToken >= 10e6) {
-            return 200;
-        } else if (totalAirDropToken >= 2.5e6) {
-            return 150;
-        } else if (totalAirDropToken >= 0.5e6) {
-            return 100;
-        } else if (totalAirDropToken >= 50) {
-            return 50;
-        } else {
-            return 0;
-        }
+        address wallet = collectorAddress;
+        wallet.transfer(weiAmount);
+
+        //emit FundTransfer(msg.sender, amount, true);
     }
 
     /**
