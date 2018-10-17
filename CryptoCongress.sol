@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCongress at 0x0c322e8d90151c88ebb97baa3dda6425ed047dea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCongress at 0xb509a146243be41759f5ea1fdf874c1897d0aa44
 */
 /*
 
@@ -13,9 +13,11 @@
               |___/|_|                               |___/                   
 
 
-CryptoCongress smart contract launched 15 August 2018. Official address is "cryptocongress.eth"
+CryptoCongress smart contract 
 
-Token and voting code begins on line 1028. 
+The official address is "cryptocongress.eth"
+
+Token and voting code begins on line 1030
 
 */
 
@@ -1105,7 +1107,7 @@ contract usingOraclize {
         uint256 public totalSupply = 0;
         uint256 public totalSupplyFromCrowdsale = 0;
 
-        uint256 public constant tokenExchangeRate = 30; // 30 CC tokens per 1 ETH purchased at crowdsale
+        uint256 public constant tokenExchangeRate = 50; // 50 CC tokens per 1 ETH purchased at crowdsale
         uint256 public constant tokenCreationCap =  131583 * (10**3) * 10**decimals;  // 131,583,000 tokens
         
         event InitialAllotmentRecorded(string username, uint256 initialAllotment);
@@ -1176,7 +1178,7 @@ contract usingOraclize {
             // // 15 byte "CryptoCongress + 42 byte address"
             require (resultBytes.length == 57);
             
-            // // First 16 bytes must be "#CryptoCongress " (ending whitespace included)
+            // // First 16 bytes must be "CryptoCongress " (ending whitespace included)
             // // In hex = 0x 43 72 79 70 74 6f 43 6f 6e 67 72 65 73 73 20
             require (resultBytes[0] == 0x43);
             require (resultBytes[1] == 0x72); 
@@ -1199,16 +1201,26 @@ contract usingOraclize {
             require (resultBytes[15] == 0x30);
             require (resultBytes[16] == 0x78);
             
-            uint addrUint = 0;
+            // Convert bytes to an address
+            uint160 iaddr = 0;
+            uint160 b1;
+            uint160 b2;
             
-            for (uint i = resultBytes.length-1; i+1 > 15; i--) {
-                uint d = uint(resultBytes[i]);
-                uint to_inc = d * ( 15 ** ((resultBytes.length - i-1) * 2));
-                addrUint += to_inc;
+            for (uint i=0; i<40; i+=2){
+                iaddr *= 256;
+                b1 = uint160(resultBytes[i+17]);
+                b2 = uint160(resultBytes[i+18]);
+                if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+                else if ((b1 >= 65)&&(b1 <= 70)) b1 -= 55;
+                else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+                if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+                else if ((b2 >= 65)&&(b2 <= 70)) b2 -= 55;
+                else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+                iaddr += (b1*16+b2);
             }
-        
-            address addr =  address(addrUint);
             
+            address addr = address(iaddr);
+        
             uint256 tokenAllotment = initialAllotments[validQueryIds[myid]];
             uint256 checkedSupply = safeAdd(totalSupply, tokenAllotment);
             require (tokenCreationCap > checkedSupply); // extra safe
@@ -1262,15 +1274,17 @@ contract usingOraclize {
           assert (ethFundDeposit.send(amount));  
         }
 
+        // 20,000 tokens required to Propose
         function propose(string _ID, string _description, string _data) {
           require(bytes(_ID).length < 281 && bytes(_description).length < 281 && bytes(_data).length < 281);
-          require (balances[msg.sender] > 70000000000000000000000);
+          require (balances[msg.sender] > 20000000000000000000000);
           Proposal(_ID, _description, _data);
         }
 
+        // 5,000 tokens required to Vote
         function vote(string _proposalID, string _vote, string _data) {
           require(bytes(_proposalID).length < 281 && bytes(_vote).length < 281 && bytes(_data).length < 281);
-          require (balances[msg.sender] > 50000000000000000000000);
+          require (balances[msg.sender] > 5000000000000000000000);
           Vote(_proposalID, _vote, _data);
         }
 
