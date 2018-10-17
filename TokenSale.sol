@@ -1,368 +1,339 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xa5a4e16c8d2cbbf2d4b63c87ef80c3528e043f15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xf0da021c1862ec33e0fa851d2a0aa454f9b3ddcf
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.18;
 
-// File: contracts/CCLToken.sol
+contract Token {
 
-// modified from Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017.
-// The MIT Licence.
+  function totalSupply () constant returns (uint256 _totalSupply);
+
+  function balanceOf (address _owner) constant returns (uint256 balance);
+
+  function transfer (address _to, uint256 _value) returns (bool success);
+
+  function transferFrom (address _from, address _to, uint256 _value) returns (bool success);
+
+  function approve (address _spender, uint256 _value) returns (bool success);
+
+  function allowance (address _owner, address _spender) constant returns (uint256 remaining);
+
+  event Transfer (address indexed _from, address indexed _to, uint256 _value);
+
+  event Approval (address indexed _owner, address indexed _spender, uint256 _value);
+}
 
 contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
+  uint256 constant private MAX_UINT256 =
+  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+  function safeAdd (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x <= MAX_UINT256 - y);
+    return x + y;
+  }
+
+  function safeSub (uint256 x, uint256 y) constant internal returns (uint256 z) {
+    assert (x >= y);
+    return x - y;
+  }
+
+  function safeMul (uint256 x, uint256 y)  constant internal  returns (uint256 z) {
+    if (y == 0) return 0; // Prevent division by zero at the next line
+    assert (x <= MAX_UINT256 / y);
+    return x * y;
+  }
+  
+  
+   function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+  
 }
 
 
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+contract AbstractToken is Token, SafeMath {
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+  function AbstractToken () {
+    // Do nothing
+  }
+ 
+  function balanceOf (address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
+
+  function transfer (address _to, uint256 _value) returns (bool success) {
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom (address _from, address _to, uint256 _value)  returns (bool success) {
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false;
+
+    allowances [_from][msg.sender] =
+      safeSub (allowances [_from][msg.sender], _value);
+
+    if (_value > 0 && _from != _to) {
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (_from, _to, _value);
+    return true;
+  }
+
+ 
+  function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  
+  function allowance (address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
 }
 
 
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
+contract BNNToken is AbstractToken {
+    
+     address public owner;
+     
+     uint256 tokenCount = 0;
+     
+     bool frozen = false;
+     
+     uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+     
+	uint public constant _decimals = (10**18);
+     
+    modifier onlyOwner() {
+	    require(owner == msg.sender);
+	    _;
+	}
+     
+     function BNNToken() {
+         owner = msg.sender;
+         createTokens(100 * (10**24));
+     }
+     
+     function totalSupply () constant returns (uint256 _totalSupply) {
+        return tokenCount;
+     }
+     
+    function name () constant returns (string result) {
+		return "BananCoin";
+	}
+	
+	function symbol () constant returns (string result) {
+		return "BNN";
+	}
+	
+	function decimals () constant returns (uint result) {
+        return 18;
+    }
+    
+    function transfer (address _to, uint256 _value) returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
+  }
+
+  
+  function transferFrom (address _from, address _to, uint256 _value)
+    returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+  
+  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
+    returns (bool success) {
+    if (allowance (msg.sender, _spender) == _currentValue)
+      return approve (_spender, _newValue);
+    else return false;
+  }
+
+  function burnTokens (uint256 _value) returns (bool success) {
+    if (_value > accounts [msg.sender]) return false;
+    else if (_value > 0) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      tokenCount = safeSub (tokenCount, _value);
+      return true;
+    } else return true;
+  }
 
 
-contract Owned {
-    address public owner;
-    address public newOwner;
+  function createTokens (uint256 _value) returns (bool success) {
+    require (msg.sender == owner);
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() public {
-        owner = msg.sender;
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    return true;
+  }
+
+
+  function setOwner (address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      Freeze ();
+    }
+  }
+
+
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      Unfreeze ();
+    }
+  }
+
+  event Freeze ();
+
+  event Unfreeze ();
+
+}
+
+
+contract TokenSale is BNNToken  {
+ 
+    enum State { PRIVATE_SALE, PRE_ICO, ICO_FIRST, ICO_SECOND, STOPPED, CLOSED }
+    
+    // 0 , 1 , 2 , 3 , 4 , 5
+    
+    State public currentState = State.STOPPED;
+
+    uint public tokenPrice = 250000000000000; // wei , 0.00025 eth , 0.12 usd
+    uint public _minAmount = 0.01 ether;
+	
+    address public beneficiary;
+	
+	uint256 private BountyFound = 10 * (10**24);
+	uint256 private SaleFound = 70 * (10**24);
+	uint256 private PartnersFound = 5 * (10**24);
+	uint256 private TeamFound = 15 * (10**24);
+	
+	uint256 public totalSold = 0;
+	
+	uint256 private _hardcap = 2500 ether;
+	uint256 private _softcap = 400 ether;
+	
+	bool private _allowedTransfers = true;
+	
+	
+	modifier minAmount() {
+        require(msg.value >= _minAmount);
         _;
     }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
+    
+    modifier saleIsOn() {
+        require(currentState != State.STOPPED && currentState != State.CLOSED && totalSold < SaleFound);
+        _;
     }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+    
+	function TokenSale() {
+	    owner = msg.sender;
+	    beneficiary = msg.sender;
+	}
+	
+	function setState(State _newState) public onlyOwner {
+	    require(currentState != State.CLOSED);
+	    currentState = _newState;
+	}
+	
+	function setMinAmount(uint _new) public onlyOwner {
+	    _minAmount = _new;
+	}
+	
+	function allowTransfers() public onlyOwner {
+		_allowedTransfers = true;		
+	}
+	
+	function stopTransfers() public onlyOwner {
+		_allowedTransfers = false;
+	}
+	
+	function stopSale() public onlyOwner {
+	    currentState = State.CLOSED;
+	}
+	
+    function setBeneficiaryAddress(address _new) public onlyOwner {
+        beneficiary = _new;
     }
-}
-
-contract CCLToken is ERC20Interface, Owned, SafeMath {
-    string public symbol;
-    string public  name;
-    uint8 public decimals;
-    uint public _totalSupply;
-
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-
-
-    function CCLToken() public {
-        symbol = "CCL";
-        name = "CyClean Token";
-        decimals = 18;
-        _totalSupply = 4000000000000000000000000000; //4,000,000,000
-        balances[0xf835bF0285c99102eaedd684b4401272eF36aF65] = _totalSupply;
-        Transfer(address(0), 0xf835bF0285c99102eaedd684b4401272eF36aF65, _totalSupply);
-    }
-
-
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
-    }
-
-
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
+    
+    function setTokenPrice(uint _price) public onlyOwner {
+        tokenPrice = _price;
     }
 
-
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
+	function transferPayable(address _address, uint _amount) private returns (bool) {
+	    
+	    if(SaleFound < _amount) return false;
+	    
+	    accounts[_address] = safeAdd(accounts[_address], _amount);
+	    accounts[owner] = safeSub(accounts[owner], _amount);
+	    
+	    totalSold = safeAdd(totalSold, _amount);
+	    
+	    return true;
+	    
+	}
+	
+	
+	function buyBNNTokens() public saleIsOn() minAmount() payable {
+	  
+	    
+	    uint tokens = get_tokens_count(msg.value);
+		require(transferPayable(msg.sender , tokens));
+		if(_allowedTransfers) {
+			beneficiary.transfer(msg.value);
+	    }
+	    
+	}
+	
+	
+	function get_tokens_count(uint _amount) private returns (uint) {
+	    
+	     uint currentPrice = tokenPrice;
+	     uint tokens = safeDiv( safeMul(_amount, _decimals), currentPrice ) ;
+            return tokens;
+	    
+	}
+	
+	
+	function() external payable {
+      buyBNNTokens();
     }
-
-
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-
-    function () public payable {
-        revert();
-    }
-
-
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
-}
-
-// File: contracts/ICOEngineInterface.sol
-
-contract ICOEngineInterface {
-
-    // false if the ico is not started, true if the ico is started and running, true if the ico is completed
-    function started() public view returns(bool);
-
-    // false if the ico is not started, false if the ico is started and running, true if the ico is completed
-    function ended() public view returns(bool);
-
-    // time stamp of the starting time of the ico, must return 0 if it depends on the block number
-    function startTime() public view returns(uint);
-
-    // time stamp of the ending time of the ico, must retrun 0 if it depends on the block number
-    function endTime() public view returns(uint);
-
-    // Optional function, can be implemented in place of startTime
-    // Returns the starting block number of the ico, must return 0 if it depends on the time stamp
-    // function startBlock() public view returns(uint);
-
-    // Optional function, can be implemented in place of endTime
-    // Returns theending block number of the ico, must retrun 0 if it depends on the time stamp
-    // function endBlock() public view returns(uint);
-
-    // returns the total number of the tokens available for the sale, must not change when the ico is started
-    function totalTokens() public view returns(uint);
-
-    // returns the number of the tokens available for the ico. At the moment that the ico starts it must be equal to totalTokens(),
-    // then it will decrease. It is used to calculate the percentage of sold tokens as remainingTokens() / totalTokens()
-    function remainingTokens() public view returns(uint);
-
-    // return the price as number of tokens released for each ether
-    function price() public view returns(uint);
-}
-
-// File: contracts/SafeMath.sol
-
-library SafeMathLib {
-    function add(uint a, uint b) internal pure returns (uint) {
-        uint c = a + b;
-        assert(c>=a && c>=b);
-        return c;
-    }
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-}
-
-// File: contracts/KYCBase.sol
-
-// Abstract base contract
-contract KYCBase {
-    using SafeMathLib for uint256;
-
-    mapping (address => bool) public isKycSigner;
-    mapping (uint64 => uint256) public alreadyPayed;
-
-    event KycVerified(address indexed signer, address buyerAddress, uint64 buyerId, uint maxAmount);
-    event ThisCheck(KYCBase base, address sender);
-    constructor ( address[] kycSigners) internal {
-        for (uint i = 0; i < kycSigners.length; i++) {
-            isKycSigner[kycSigners[i]] = true;
-        }
-    }
-
-    // Must be implemented in descending contract to assign tokens to the buyers. Called after the KYC verification is passed
-    function releaseTokensTo(address buyer) internal returns(bool);
-
-    // This method can be overridden to enable some sender to buy token for a different address
-    function senderAllowedFor(address buyer)
-        internal view returns(bool)
-    {
-        return buyer == msg.sender;
-    }
-
-    function buyTokensFor(address buyerAddress, uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
-        public payable returns (bool)
-    {
-        require(senderAllowedFor(buyerAddress));
-        return buyImplementation(buyerAddress, buyerId, maxAmount, v, r, s);
-    }
-
-    function buyTokens(uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
-        public payable returns (bool)
-    {
-        return buyImplementation(msg.sender, buyerId, maxAmount, v, r, s);
-    }
-
-    function buyImplementation(address buyerAddress, uint64 buyerId, uint maxAmount, uint8 v, bytes32 r, bytes32 s)
-        private returns (bool)
-    {
-        // check the signature
-        bytes32 hash = sha256(abi.encodePacked("Eidoo icoengine authorization", this, buyerAddress, buyerId, maxAmount));
-        emit ThisCheck(this, msg.sender);
-        //bytes32 hash = sha256("Eidoo icoengine authorization", this, buyerAddress, buyerId, maxAmount);
-        address signer = ecrecover(hash, v, r, s);
-        if (!isKycSigner[signer]) {
-            revert();
-        } else {
-            uint256 totalPayed = alreadyPayed[buyerId].add(msg.value);
-            require(totalPayed <= maxAmount);
-            alreadyPayed[buyerId] = totalPayed;
-            emit KycVerified(signer, buyerAddress, buyerId, maxAmount);
-            return releaseTokensTo(buyerAddress);
-        }
-    }
-
-    // No payable fallback function, the tokens must be buyed using the functions buyTokens and buyTokensFor
-    function () public {
-        revert();
-    }
-}
-
-// File: contracts/TokenSale.sol
-
-contract TokenSale is ICOEngineInterface, KYCBase {
-    using SafeMathLib for uint;
-
-    event ReleaseTokensToCalled(address buyer);
-
-    event ReleaseTokensToCalledDetail(address wallet, address buyer, uint amount, uint remainingTokensValue);
-    event SenderCheck(address sender);
-
-    CCLToken public token;
-    address public wallet;
-
-    // from ICOEngineInterface
-    uint private priceValue;
-    function price() public view returns(uint) {
-        return priceValue;
-    }
-
-    // from ICOEngineInterface
-    uint private startTimeValue;
-    function startTime() public view returns(uint) {
-        return startTimeValue;
-    }
-
-    // from ICOEngineInterface
-    uint private endTimeValue;
-    function endTime() public view returns(uint) {
-        return endTimeValue;
-    }
-    // from ICOEngineInterface
-    uint private totalTokensValue;
-    function totalTokens() public view returns(uint) {
-        return totalTokensValue;
-    }
-
-    // from ICOEngineInterface
-    uint private remainingTokensValue;
-    function remainingTokens() public view returns(uint) {
-        return remainingTokensValue;
-    }
-
-
-    /**
-     *  After you deployed the SampleICO contract, you have to call the ERC20
-     *  approve() method from the _wallet account to the deployed contract address to assign
-     *  the tokens to be sold by the ICO.
-     */
-    constructor ( address[] kycSigner, CCLToken _token, address _wallet, uint _startTime, uint _endTime, uint _price, uint _totalTokens)
-        public KYCBase(kycSigner)
-    {
-        token = _token;
-        wallet = _wallet;
-        //emit WalletCheck(_wallet);
-        startTimeValue = _startTime;
-        endTimeValue = _endTime;
-        priceValue = _price;
-        totalTokensValue = _totalTokens;
-        remainingTokensValue = _totalTokens;
-    }
-
-    // from KYCBase
-    function releaseTokensTo(address buyer) internal returns(bool) {
-        //emit SenderCheck(msg.sender);
-        require(now >= startTimeValue && now < endTimeValue);
-        uint amount = msg.value.mul(priceValue);
-        remainingTokensValue = remainingTokensValue.sub(amount);
-        emit ReleaseTokensToCalledDetail(wallet, buyer, amount, remainingTokensValue);
-
-        wallet.transfer(msg.value);
-        //require(this == token.owner());
-        token.transferFrom(wallet, buyer, amount);
-        emit ReleaseTokensToCalled(buyer);
-        return true;
-    }
-
-    // from ICOEngineInterface
-    function started() public view returns(bool) {
-        return now >= startTimeValue;
-    }
-
-    // from ICOEngineInterface
-    function ended() public view returns(bool) {
-        return now >= endTimeValue || remainingTokensValue == 0;
-    }
-
-    function senderAllowedFor(address buyer)
-        internal view returns(bool)
-    {
-        bool value = super.senderAllowedFor(buyer);
-        return value;
-    }
+	
+    
 }
