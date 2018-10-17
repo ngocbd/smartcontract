@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BugXToken at 0xa24a5df9770377af5a5dde1bd45b87f44dcc6df4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BugXToken at 0xe03718b49c3f10578587fd826f4f704f57a5f840
 */
 pragma solidity 0.4.24;
 
@@ -367,10 +367,10 @@ contract BugXToken is StandardToken {
     */
 
     // metadata
-    string  public constant name = "BUGX2.0";
-    string  public constant symbol = "BUGX";
+    string  public constant name = "BUGX Token";
+    string  public constant symbol = "BUX";
     uint256 public constant decimals = 18;
-    string  public version = "2.0";
+    string  public version = "1.0";
 
     // contracts
     address public newContractAddr;         // the new contract for BUGX token updates;
