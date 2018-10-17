@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockClout at 0x08daf7a5604c256aa96c00053747ab71f400c57e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockClout at 0xe635a560ab35f6a44a1b9bcd27098d4d88986af6
 */
 pragma solidity ^0.4.19;
 
 /*
-* BlockClout.com - Cryptocurrency Asset Management and A.I. Trading Bot
+* BlockClout.com - Cryptocurrency Asset Management and A.I. Arbitrage Trading Bot
 *
 *
 * This the authentic token contract for BlockClout. 
@@ -108,10 +108,10 @@ contract BlockClout is StandardToken {
     function BlockClout() {
         balances[msg.sender] = 112000000000000000000000000;
         totalSupply = 112000000000000000000000000;
-        name = "Block Clout";
+        name = "Block Clout Token";
         decimals = 18;
         symbol = "BCTK";
-        unitsOneEthCanBuy = 15000;
+        unitsOneEthCanBuy = 112000;
         fundsWallet = msg.sender;
     }
 
