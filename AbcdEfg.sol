@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0xa8106238a1a1545046e5a69ca5848c37b746c557
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0xb6d204c5a89a5f7516629f37915e8becc7f680db
 */
 pragma solidity 0.4.24;
 
@@ -11,10 +11,10 @@ contract AbcdEfg {
   uint256 private markId = 0;
 
   mapping (uint256 => bytes) public marks;
-  string public name = "abcdEfg";
-  string public symbol = "a2g";
-  uint8 public decimals = 0;
-  string public memo = "Fit in the words here!Fit in the words here!Fit in the words here!Fit in the words here!";
+  string public constant name = "abcdEfg";
+  string public constant symbol = "a2g";
+  uint8 public constant decimals = 0;
+  string public constant memo = "Fit in the words here!Fit in the words here!Fit in the words here!Fit in the words here!";
 
   event Transfer(
     address indexed from,
