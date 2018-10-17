@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaurusPay at 0x0781326c6569042641b4043079e7b8572c8cb5da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaurusPay at 0xc3e329ca5380c6b416cf095ed1a662c378a2b630
 */
 pragma solidity ^0.4.24;
 
@@ -241,7 +241,7 @@ contract StandardToken is ERC20, ERC223Token {
 
 contract TaurusPay is StandardToken {
 
-    string public constant name = "TaurusPay Token";
+    string public constant name = "TaurusPay";
     string public constant symbol = "TAPT";
     uint8 public constant decimals = 18;
     uint256 public constant INITIAL_SUPPLY = 950 * 10**6 * (10**uint256(decimals));
