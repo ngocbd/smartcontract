@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x54ecd72bbdcca74479149b1350eb25c20c43a068
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9d7be12dac03ce6e3e5193e9c81039331c2f72b3
 */
 pragma solidity ^0.4.21;
 
@@ -372,8 +372,8 @@ contract PausableToken is StandardToken, Pausable {
 
 
 contract Token is MintableToken, PausableToken {
-  string public constant name = "TCCX Token";
-  string public constant symbol = "TCCX";
+  string public constant name = "OLOLO Token";
+  string public constant symbol = "OLOLO";
   uint8 public constant decimals = 18;
   string public constant version = "H0.1"; //human 0.1 standard. Just an arbitrary versioning scheme.
 }
