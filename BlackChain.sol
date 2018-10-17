@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlackChain at 0x2527767c5328e8fd847f0e21ce2ae5a695a40113
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlackChain at 0x96330cb9f0785fed098c365863d558da91a6d7aa
 */
 pragma solidity ^0.4.24;
 
@@ -24,9 +24,11 @@ library SafeMath {
 contract BlackChain {
     using SafeMath for uint256;
 
-    uint256 public costPerTicket = 7500000000000000;    // Init with 0.0075 ETH per bet
-    uint256 public maxCost = 25000000000000000;         // Price increase every 7 days until 0.025 ETH
+    uint256 public costPerTicket = 75000000000000000;    // Init with 0.005 ETH per bet
+    uint256 public maxCost = 25000000000000000;         // Price increase every 7 days until 0.03 ETH
+    // test 2.0
     uint256 constant public expireDate = 1543622400;    // Contract refused to get any more bets after Dec 1, 2018
+    // uint256 constant public expireDate = 1533027600;
 
     bool public confirmed;
     bool public announced;
