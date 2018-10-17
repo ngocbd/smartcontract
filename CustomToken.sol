@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xad6e54e1177f9e412b713e8072160610a42b487f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc6610e05b0fc1b70885f65bc49b62fcc68aba329
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'PALINDACoin';
-        symbol = 'PLD';
+        totalSupply = 10000000000000000000000000000;
+        name = 'EOSFaith';
+        symbol = 'EOF';
         decimals = 18;
-        balanceOf[0x57cad6a4c83286406fd0fc9218931b3b83853e65] = totalSupply;
-        Transfer(address(0), 0x57cad6a4c83286406fd0fc9218931b3b83853e65, totalSupply);
+        balanceOf[0x3b9c13afe557b06a53a7f8ee0c9d80c9c48815c8] = totalSupply;
+        Transfer(address(0), 0x3b9c13afe557b06a53a7f8ee0c9d80c9c48815c8, totalSupply);
     }
 }
