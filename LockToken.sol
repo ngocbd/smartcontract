@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockToken at 0x242bfb2de391868d8fea792d4c1be73c05241c38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockToken at 0xaa1d9ec02199e274b92b8c70e02c4b958461f5c2
 */
 pragma solidity ^0.4.18;
 
 /**
-* @title SafeMath
-* @dev Math operations with safety checks that throw on error
-*/
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -66,7 +66,7 @@ contract Ownable {
 }
 
 contract LockToken is Ownable {
-    using SafeMath for uint256;
+	using SafeMath for uint256;
 
   token token_reward;
   address public beneficiary;
@@ -87,19 +87,19 @@ contract LockToken is Ownable {
   }
 
   function lock(uint256 lockTime) public onlyOwner returns (bool){
-      require(!isLocked);
-      require(tokenBalance() > 0);
-      start_time = now;
-      end_time = lockTime;
-      isLocked = true;
+  	require(!isLocked);
+  	require(tokenBalance() > 0);
+  	start_time = now;
+  	end_time = lockTime;
+  	isLocked = true;
   }
 
   function lockOver() constant public returns (bool){
-      uint256 current_time = now;
-    return current_time > end_time;
+  	uint256 current_time = now;
+	return current_time > end_time;
   }
 
-    function release() onlyOwner public{
+	function release() onlyOwner public{
     require(isLocked);
     require(!isReleased);
     require(lockOver());
