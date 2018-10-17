@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyDropTokenMgr at 0xfafdab023c55ddb91a7403d35d06dde03bbcb91e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyDropTokenMgr at 0x5e314712181d62c143d2d5f782103647d2c407f4
 */
 pragma solidity ^0.4.24;
+
+interface itoken {
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) external returns (bool);
+}
 
 library SafeMath {
 
@@ -132,14 +136,27 @@ contract Claimable is Ownable {
   }
 }
 
-contract SimpleFlyDropToken is Claimable {
+contract FlyDropToken is Claimable {
     using SafeMath for uint256;
 
     ERC20 internal erc20tk;
+    bytes[] internal approveRecords;
 
-    function setToken(address _token) onlyOwner public {
-        require(_token != address(0));
+    event ReceiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
+
+    /**
+     * @dev receive approval from an ERC20 token contract, take a record
+     *
+     * @param _from address The address which you want to send tokens from
+     * @param _value uint256 the amounts of tokens to be sent
+     * @param _token address the ERC20 token address
+     * @param _extraData bytes the extra data for the record
+     */
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
         erc20tk = ERC20(_token);
+        require(erc20tk.transferFrom(_from, this, _value)); // transfer tokens to this contract
+        approveRecords.push(_extraData);
+        emit ReceiveApproval(_from, _value, _token, _extraData);
     }
 
     /**
@@ -159,6 +176,37 @@ contract SimpleFlyDropToken is Claimable {
         }
 
         return (i);
+    }
+
+    /**
+     * @dev Send tokens to other multi addresses in one function
+     *
+     * @param _from address The address which you want to send tokens from
+     * @param _destAddrs address The addresses which you want to send tokens to
+     * @param _values uint256 the amounts of tokens to be sent
+     */
+    function multiSendFrom(address _from, address[] _destAddrs, uint256[] _values) onlyOwner public returns (uint256) {
+        require(_destAddrs.length == _values.length);
+
+        uint256 i = 0;
+        for (; i < _destAddrs.length; i = i.add(1)) {
+            if (!erc20tk.transferFrom(_from, _destAddrs[i], _values[i])) {
+                break;
+            }
+        }
+
+        return (i);
+    }
+
+    /**
+     * @dev get records about approval
+     *
+     * @param _ind uint the index of record
+     */
+    function getApproveRecord(uint _ind) onlyOwner public view returns (bytes) {
+        require(_ind < approveRecords.length);
+
+        return approveRecords[_ind];
     }
 }
 
@@ -197,7 +245,7 @@ contract FlyDropTokenMgr is DelayedClaimable {
     using SafeMath for uint256;
 
     address[] dropTokenAddrs;
-    SimpleFlyDropToken currentDropTokenContract;
+    FlyDropToken currentDropTokenContract;
     // mapping(address => mapping (address => uint256)) budgets;
 
     /**
@@ -207,11 +255,13 @@ contract FlyDropTokenMgr is DelayedClaimable {
      * @param _from address The address which you want to send tokens from
      * @param _value uint256 the amounts of tokens to be sent
      * @param _token address the ERC20 token address
+     * @param _extraData bytes the extra data for the record
      */
     function prepare(uint256 _rand,
                      address _from,
                      address _token,
-                     uint256 _value) onlyOwner public returns (bool) {
+                     uint256 _value,
+                     bytes _extraData) onlyOwner public returns (bool) {
         require(_token != address(0));
         require(_from != address(0));
         require(_rand > 0);
@@ -221,17 +271,16 @@ contract FlyDropTokenMgr is DelayedClaimable {
         }
 
         if (_rand > dropTokenAddrs.length) {
-            SimpleFlyDropToken dropTokenContract = new SimpleFlyDropToken();
+            FlyDropToken dropTokenContract = new FlyDropToken();
             dropTokenAddrs.push(address(dropTokenContract));
             currentDropTokenContract = dropTokenContract;
         } else {
-            currentDropTokenContract = SimpleFlyDropToken(dropTokenAddrs[_rand.sub(1)]);
+            currentDropTokenContract = FlyDropToken(dropTokenAddrs[_rand.sub(1)]);
         }
 
-        currentDropTokenContract.setToken(_token);
-        return ERC20(_token).transferFrom(_from, currentDropTokenContract, _value);
+        ERC20(_token).transferFrom(_from, this, _value);
         // budgets[_token][_from] = budgets[_token][_from].sub(_value);
-        // return itoken(_token).approveAndCall(currentDropTokenContract, _value, _extraData);
+        return itoken(_token).approveAndCall(currentDropTokenContract, _value, _extraData);
         // return true;
     }
 
