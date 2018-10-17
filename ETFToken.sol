@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETFToken at 0x8e28dd419642e407a2817b975e5d664ead9385a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtfToken at 0x7df697f6825578388504264ea9e401a5d15e8934
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -39,56 +39,10 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
 }
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
@@ -102,11 +56,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -116,13 +70,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -132,8 +86,8 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -151,19 +105,6 @@ contract ERC20Basic {
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 // File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
@@ -195,10 +136,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -207,10 +147,23 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 // File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
@@ -241,7 +194,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -257,7 +210,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -283,7 +236,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -304,264 +257,167 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-// File: contracts/ETFToken.sol
+// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
-library AddressArrayUtils {
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    /// @return Returns index and ok of the first occurrence starting from index 0
-    function index(address[] addresses, address a) internal pure returns (uint, bool) {
-        for (uint i = 0; i < addresses.length; i++) {
-            if (addresses[i] == a) {
-                return (i, true);
-            }
-        }
-        return (0, false);
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+// File: contracts/token/MintableTokenWithMinters.sol
+
+/**
+ * @title Mintable Token with minters
+ * @dev MintableToken, mintable by appointed minters
+ */
+contract MintableTokenWithMinters is MintableToken {
+
+    mapping (address => bool) public minters;
+
+    event MinterAdded(address indexed minter);
+    event MinterRemoved(address indexed minter);
+
+    /**
+    * @dev Throws if called by any account other than the minter.
+    */
+    modifier onlyMinter() {
+        require(minters[msg.sender] == true);
+        _;
+    }
+
+    /**
+    * @dev The MintableToken constructor sets the first `minter` of the contract to the owner
+    * account.
+    */
+    function MintableTokenWithMinters() public {
+        minters[owner] = true; // owner is minter
+    }
+
+    /**
+    * @dev Function to mint tokens
+    * @param _to The address to send new tokens to.
+    * @param _amount The amount of tokens to mint.
+    * @return A boolean that indicates if the operation was successful.
+    */
+    function mint(address _to, uint256 _amount) public onlyMinter canMint returns (bool) {
+        // return super.mint(_to, _amount); // not used due to onlyOwner modifier
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    /**
+    * @dev Allows the owner to add a new minter.
+    * @param newMinter The address to add as a minter.
+    */
+    function addMinter(address newMinter) public onlyOwner {
+        require(newMinter != address(0)); // not empty
+        require(minters[newMinter] != true); // not already a minter
+        emit MinterAdded(newMinter);
+        minters[newMinter] = true;
+    }
+
+    /**
+    * @dev Allows the owner to remove an existing minter.
+    * @param minter The address to remove as a minter.
+    */
+    function removeMinter(address minter) public onlyOwner {
+        require(minter != owner); // cannot remove owner
+        require(minters[minter] == true); // already a minter
+        emit MinterRemoved(minter);
+        delete minters[minter];
     }
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
 
-/// @title A decentralized ETF-like ERC20 which gives the owner a claim to the
-/// underlying assets
-/// @notice ETF Tokens are transferable, and can be created and redeemed by
-/// anyone. To create, a user must approve the contract to move the underlying
-/// tokens, then call `create()`.
-/// @author Daniel Que and Quan Pham
-contract ETFToken is StandardToken, Pausable {
-    using SafeMath for uint256;
-    using AddressArrayUtils for address[];
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
 
-    uint8 constant public decimals = 18;
-    struct TokenInfo {
-        address addr;
-        uint256 tokenUnits;
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+// File: contracts/EtfToken.sol
+
+/**
+ * @title FCTF 10 Coins token
+ */
+contract EtfToken is MintableTokenWithMinters, BurnableToken {
+
+    string public constant name = "FCTF 10 Coins";
+    string public constant symbol = "10COINS";
+    uint8 public constant decimals = 8;
+
+    function EtfToken() public {
+        totalSupply_ = 0;
     }
-    uint256 private granularity_;
-    TokenInfo[] public tokens;
-
-    event Mint(address indexed to, uint256 amount);
-    event Burn(address indexed from, uint256 amount);
-
-    /// @notice Requires value to be divisible by granularity
-    /// @param value Number to be checked
-    modifier requireMultiple(uint256 value) {
-        require((value % granularity_) == 0);
-        _;
-    }
-
-    /// @notice Requires value to be non-zero
-    /// @param value Number to be checked
-    modifier requireNonZero(uint256 value) {
-        require(value > 0);
-        _;
-    }
-
-    /// @notice Initializes contract with a list of ERC20 token addresses and
-    /// corresponding minimum number of units
-    /// required for a creation unit
-    /// @param addresses Addresses of the underlying ERC20 token contracts
-    /// @param tokenUnits Number of token base units required per grain
-    /// @param _granularity Smallest part of the token that's not divisible
-    function ETFToken(
-        address[] addresses,
-        uint256[] tokenUnits,
-        uint256 _granularity
-    ) public {
-        require(addresses.length > 0 && addresses.length < 256);
-        require(tokenUnits.length > 0);
-        require(addresses.length == tokenUnits.length);
-        require(_granularity >= 1);
-
-        granularity_ = _granularity;
-
-        for (uint i = 0; i < addresses.length; i++) {
-            tokens.push(TokenInfo({
-                addr: addresses[i],
-                tokenUnits: tokenUnits[i]
-            }));
-        }
-    }
-
-    /// @notice Returns the granularity
-    /// @dev Granularity concept is similar to the one described by EIP777
-    /// @return granularity_ Granularity of the ETF token
-    function granularity() external view returns(uint256) { return granularity_; }
-
-    /// @notice Creates ETF tokens in exchange for underlying tokens. Before
-    /// calling, underlying tokens must be approved to be moved by the ETF Token
-    /// contract. The amount of approved tokens required depends on
-    /// baseUnitsToCreate.
-    /// @dev If any underlying tokens' `transferFrom` fails (eg. the token is
-    /// frozen), create will no longer work. At this point a token upgrade will
-    /// be necessary.
-    /// @param baseUnitsToCreate Number of base units to create
-    function create(uint256 baseUnitsToCreate)
-        external
-        whenNotPaused()
-        requireNonZero(baseUnitsToCreate)
-        requireMultiple(baseUnitsToCreate)
-    {
-        // Check overflow
-        require((totalSupply_ + baseUnitsToCreate) > totalSupply_);
-
-        for (uint8 i = 0; i < tokens.length; i++) {
-            TokenInfo memory tokenInfo = tokens[i];
-            ERC20 erc20 = ERC20(tokenInfo.addr);
-            transferUnderlyingTokensWhenCreate(erc20, tokenInfo.tokenUnits, baseUnitsToCreate);
-        }
-
-        mint(msg.sender, baseUnitsToCreate);
-    }
-
-    /// @notice Redeems ETF Token in return for underlying tokens
-    /// @param baseUnitsToRedeem Number of units to redeem in lowest base size
-    /// @param tokensToSkip Underlying token addresses to skip redemption for.
-    /// Intended to be used to skip frozen or broken tokens which would prevent
-    /// all underlying tokens from being withdrawn due to a revert. Skipped
-    /// tokens will be left in the ETF Token contract and will be unclaimable.
-    function redeem(uint256 baseUnitsToRedeem, address[] tokensToSkip)
-        external
-        whenNotPaused()
-        requireNonZero(baseUnitsToRedeem)
-        requireMultiple(baseUnitsToRedeem)
-    {
-        require((totalSupply_ >= baseUnitsToRedeem));
-        require((balances[msg.sender] >= baseUnitsToRedeem));
-
-        // Burn before to prevent re-entrancy
-        burn(msg.sender, baseUnitsToRedeem);
-
-        for (uint8 i = 0; i < tokens.length; i++) {
-            TokenInfo memory tokenInfo = tokens[i];
-            ERC20 erc20 = ERC20(tokenInfo.addr);
-            uint index;
-            bool ok;
-            (index, ok) = tokensToSkip.index(tokenInfo.addr);
-            if (ok) {
-                continue;
-            }
-            transferUnderlyingTokensWhenRedeem(erc20, tokenInfo.tokenUnits, baseUnitsToRedeem);
-        }
-    }
-
-    /// @return tokenAddresses Underlying token addresses
-    function tokenAddresses() external view returns (address[]){
-        address[] memory tokenAddresses = new address[](tokens.length);
-        for (uint i = 0; i < tokens.length; i++) {
-            tokenAddresses[i] = tokens[i].addr;
-        }
-        return tokenAddresses;
-    }
-
-    /// @return tokenUnits Number of token base units required per grain
-    function tokenUnits() external view returns (uint256[]){
-        uint256[] memory tokenUnits = new uint256[](tokens.length);
-        for (uint i = 0; i < tokens.length; i++) {
-            tokenUnits[i] = tokens[i].tokenUnits;
-        }
-        return tokenUnits;
-    }
-
-    // @dev Mints new ETF tokens
-    // @param to
-    // @param amount
-    // @return ok
-    function mint(address to, uint256 amount) internal returns (bool) {
-        totalSupply_ = totalSupply_.add(amount);
-        balances[to] = balances[to].add(amount);
-        Mint(to, amount);
-        Transfer(address(0), to, amount);
-        return true;
-    }
-
-    // @dev Burns ETF tokens
-    // @param from
-    // @param amount
-    // @return ok
-    function burn(address from, uint256 amount) internal returns (bool) {
-        totalSupply_ = totalSupply_.sub(amount);
-        balances[from] = balances[from].sub(amount);
-        Burn(from, amount);
-        Transfer(from, address(0), amount);
-        return true;
-    }
-
-    // @dev Helper to transfer underlying tokens during creation
-    // @param erc20 Underlying token instance with ERC20 interface
-    // @param tokenUnits Number of token base units required per grain
-    // @param baseUnitsToCreate Number of base units to create
-    function transferUnderlyingTokensWhenCreate(
-        ERC20 erc20,
-        uint256 tokenUnits,
-        uint256 baseUnitsToCreate
-    ) internal {
-        uint256 amount = baseUnitsToCreate.mul(tokenUnits);
-        require(erc20.transferFrom(msg.sender, address(this), amount));
-    }
-
-    // @dev Helper to transfer underlying tokens during redemption
-    // @param erc20 Underlying token instance with ERC20 interface
-    // @param tokenUnits Number of token base units required per grain
-    // @param baseUnitsToRedeem Number of base units to redeem
-    function transferUnderlyingTokensWhenRedeem(
-        ERC20 erc20,
-        uint256 tokenUnits,
-        uint256 baseUnitsToRedeem
-    ) internal {
-        uint256 amount = baseUnitsToRedeem.mul(tokenUnits);
-        require(erc20.transfer(msg.sender, amount));
-    }
-
-    // @notice Look up token info
-    // @param token Token address to look up
-    // @return (tokenUnits, ok) Units of underlying token, and whether the
-    // operation was successful
-    function getTokenUnits(address token) internal view returns (uint256, bool) {
-        for (uint i = 0; i < tokens.length; i++) {
-            if (tokens[i].addr == token) {
-                return (tokens[i].tokenUnits, true);
-            }
-        }
-        return (0, false);
-    }
-
-    /// @notice Owner: Withdraw excess funds which don't belong to ETF Token
-    /// holders
-    /// @param token ERC20 token address to withdraw
-    function withdrawExcessToken(address token)
-        external
-        onlyOwner
-    {
-        ERC20 erc20 = ERC20(token);
-        uint256 withdrawAmount;
-        uint256 amountOwned = erc20.balanceOf(address(this));
-        uint256 tokenUnits;
-        bool ok;
-        (tokenUnits, ok) = getTokenUnits(token);
-        if (ok) {
-            withdrawAmount = amountOwned.sub(totalSupply_.div(granularity_).mul(tokenUnits));
-        } else {
-            withdrawAmount = amountOwned;
-        }
-        require(erc20.transfer(owner, withdrawAmount));
-    }
-
-    /// @notice Owner: Withdraw Ether
-    function withdrawEther()
-        external
-        onlyOwner
-    {
-        owner.transfer(this.balance);
-    }
-
-    /// @notice Fallback function
-    function() external payable {
-    }
-
 }
