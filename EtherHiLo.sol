@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x06e24feeaab8ff9b436dc466351852e972eef3ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x8e4254c212c521c5f88a1f039338e067a06b1dfa
 */
+pragma solidity ^0.4.11;
 pragma solidity ^0.4.24;
 
 
@@ -1351,7 +1352,7 @@ contract usingOraclize {
 // </ORACLIZE_API>
 
 
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.11;
 
 /// @title EtherHiLo
 /// @dev the contract than handles the EtherHiLo app
@@ -1361,10 +1362,10 @@ contract EtherHiLo is usingOraclize, Ownable {
     uint8 constant FAILED_ROLE = 69;
 
     // settings
-    uint public rngCallbackGas = 500000;
-    uint public minBet = 100 finney;
-    uint public maxBetThresholdPct = 75;
-    bool public gameRunning = false;
+    uint public rngCallbackGas;
+    uint public minBet;
+    uint public maxBetThresholdPct;
+    bool public gameRunning;
 
     // state
     uint public balanceInPlay;
@@ -1420,7 +1421,7 @@ contract EtherHiLo is usingOraclize, Ownable {
         address player = msg.sender;
         uint bet = msg.value;
 
-        require(player != address(0));
+        require(player != address(0), "Invalid player");
         require(gamesInProgress[player].state == GameState.None
                 || gamesInProgress[player].state == GameState.Finished,
                 "Invalid game state");
@@ -1448,7 +1449,7 @@ contract EtherHiLo is usingOraclize, Ownable {
     function finishGame(BetDirection direction) public {
         address player = msg.sender;
 
-        require(player != address(0));
+        require(player != address(0), "Invalid player");
         require(gamesInProgress[player].state == GameState.WaitingForDirection,
             "Invalid game state");
 
@@ -1673,10 +1674,10 @@ contract EtherHiLo is usingOraclize, Ownable {
     // cleans up a player abandoned game, but only if it's
     // greater than 24 hours old.
     function cleanupAbandonedGame(address player) public onlyOwner {
-        require(player != address(0));
+        require(player != address(0), "Invalid player");
 
         Game storage game = gamesInProgress[player];
-        require(game.player != address(0));
+        require(game.player != address(0), "Invalid game player");
 
         game.player.transfer(game.bet);
         delete gamesInProgress[game.player];
@@ -1685,7 +1686,6 @@ contract EtherHiLo is usingOraclize, Ownable {
     // set RNG callback gas
     function setRNGCallbackGasConfig(uint gas, uint price) public onlyOwner {
         rngCallbackGas = gas;
-        oraclize_setProof(proofType_Ledger);
         oraclize_setCustomGasPrice(price);
     }
 
