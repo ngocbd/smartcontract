@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0x6bab873688c784818fb74274b85a7312d35f1238
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0x67275ae079d653a17fd18fed5d6f90a2e070c9ee
 */
 pragma solidity ^0.4.24;
 
@@ -252,11 +252,11 @@ contract EQUIToken is StandardToken, BurnableToken {
   uint256 private constant INITIAL_SUPPLY = 250000000 ether;
 
   /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
+   * @dev Constructor that gives msg.sender all  of existing tokens.
    */
   constructor() public {
       totalSupply_ = INITIAL_SUPPLY;
-      balances[0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4] = INITIAL_SUPPLY;
-      emit Transfer(0x0,0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4, INITIAL_SUPPLY);
+      balances[msg.sender] = INITIAL_SUPPLY;
+      emit Transfer(0x0,msg.sender, INITIAL_SUPPLY);
   }
 }
