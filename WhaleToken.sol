@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0xa8a14e8f85af67c580df121b1dc348dbb9794332
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0x5be26e5d10f94cf2af7d09ee30f961c8bb6e64f6
 */
 pragma solidity ^0.4.24;
 
@@ -11,15 +11,6 @@ library SafeMath {
     function sub(uint a, uint b) internal pure returns (uint c) {
         assert(b <= a);
         c = a - b;
-    }
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        assert(a == 0 || c / a == b);
-    }
-    function div(uint a, uint b) internal pure returns (uint c) {
-        assert(b > 0);
-        c = a / b;
-        assert(a == b * c + a % b);
     }
 }
 
@@ -50,10 +41,12 @@ contract Ownable is WhaleConfig {
         ceo = msg.sender;
     }
     
-    function changeCEO(address _owner) onlyOwner public returns (bool success) {
+    function changeCEO(address _owner) onlyOwner public returns (bool) {
         require(_owner != address(0));
+        
         emit LogChangeCEO(ceo, _owner);
         ceo = _owner;
+        
         return true;
     }
 
@@ -62,48 +55,12 @@ contract Ownable is WhaleConfig {
     }
 }
 
-contract Pausable is Ownable {
-    bool public paused = false;
-    
-    event LogPause();
-    event LogUnpause();
-    
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-    
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-    
-    modifier whenConditionalPassing() {
-        if(!isOwner(msg.sender)) {
-            require(!paused);
-        }
-        _;
-    }
-    
-    function pause() onlyOwner whenNotPaused public returns (bool success) {
-        paused = true;
-        emit LogPause();
-        return true;
-    }
-  
-    function unpause() onlyOwner whenPaused public returns (bool success) {
-        paused = false;
-        emit LogUnpause();
-        return true;
-    }
-}
-
-contract Lockable is Pausable {
+contract Lockable is Ownable {
     mapping (address => bool) public locked;
     
     event LogLockup(address indexed target);
     
-    function lockup(address _target) onlyOwner public returns (bool success) {
+    function lockup(address _target) onlyOwner public returns (bool) {
 	    require( !isOwner(_target) );
 
         locked[_target] = true;
@@ -123,8 +80,8 @@ contract TokenERC20 {
     string public name;
     string public symbol;
     uint8 public decimals;
-
     uint public totalSupply;
+    
     mapping (address => uint) public balanceOf;
     mapping (address => mapping (address => uint)) public allowance;
 
@@ -142,8 +99,8 @@ contract TokenERC20 {
         name = _tokenName;
         symbol = _tokenSymbol;
         decimals = _tokenDecimals;
-        
         totalSupply = _initialSupply;
+        
         balanceOf[msg.sender] = totalSupply;
         
         emit ERC20Token(msg.sender, name, symbol, decimals, totalSupply);
@@ -153,33 +110,43 @@ contract TokenERC20 {
         require(_to != address(0));
         require(balanceOf[_from] >= _value);
         require(SafeMath.add(balanceOf[_to], _value) > balanceOf[_to]);
+        
         uint previousBalances = SafeMath.add(balanceOf[_from], balanceOf[_to]);
         balanceOf[_from] = balanceOf[_from].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
+        
         emit Transfer(_from, _to, _value);
+        
         assert(SafeMath.add(balanceOf[_from], balanceOf[_to]) == previousBalances);
         return true;
     }
     
-    function transfer(address _to, uint _value) public returns (bool success) {
+    function transfer(address _to, uint _value) public returns (bool) {
         return _transfer(msg.sender, _to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     
+    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
+        require(_value <= allowance[_from][msg.sender]);
+        
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
+        
         emit TransferFrom(_from, _to, msg.sender, _value);
         return true;
     }
 
-    function approve(address _spender, uint _value) public returns (bool success) {
+    function approve(address _spender, uint _value) public returns (bool) {
         allowance[msg.sender][_spender] = _value;
+        
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
+    function allowance(address _owner, address _spender) public view returns (uint) {
+        return allowance[_owner][_spender];
+    }
+
+    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
@@ -189,7 +156,7 @@ contract TokenERC20 {
 }
 
 contract WhaleToken is Lockable, TokenERC20 {
-    string public version = "v1.0";
+    string public version = "v1.0.1";
     
     mapping (address => bool) public frozenAccount;
 
@@ -200,7 +167,7 @@ contract WhaleToken is Lockable, TokenERC20 {
     
     constructor() TokenERC20(TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, INITIAL_SUPPLY) public {}
 
-    function _transfer(address _from, address _to, uint _value) whenConditionalPassing internal returns (bool success) {
+    function _transfer(address _from, address _to, uint _value) internal returns (bool) {
         require(!frozenAccount[_from]); 
         require(!frozenAccount[_to]);
         require(!isLockup(_from));
@@ -209,42 +176,41 @@ contract WhaleToken is Lockable, TokenERC20 {
         return super._transfer(_from, _to, _value);
     }
     
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
         require(!frozenAccount[msg.sender]);
         require(!isLockup(msg.sender));
         return super.transferFrom(_from, _to, _value);
     }
     
-    function freezeAccount(address _target) onlyOwner public returns (bool success) {
+    function freezeAccount(address _target) onlyOwner public returns (bool) {
+        require(_target != address(0));
         require(!isOwner(_target));
         require(!frozenAccount[_target]);
+
         frozenAccount[_target] = true;
+
         emit LogFrozenAccount(_target, true);
         return true;
     }
     
-    function unfreezeAccount(address _target) onlyOwner public returns (bool success) {
+    function unfreezeAccount(address _target) onlyOwner public returns (bool) {
+        require(_target != address(0));
         require(frozenAccount[_target]);
+
         frozenAccount[_target] = false;
+
         emit LogFrozenAccount(_target, false);
         return true;
     }
     
-    function burn(uint _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            
-        totalSupply = totalSupply.sub(_value);                      
-        emit LogBurn(msg.sender, _value);
-        return true;
-    }
-    
-    function withdrawContractToken(uint _value) onlyOwner public returns (bool success) {
+    function withdrawContractToken(uint _value) onlyOwner public returns (bool) {
         _transfer(this, msg.sender, _value);
+
         emit LogWithdrawContractToken(msg.sender, _value);
         return true;
     }
     
-    function getContractBalanceOf() public constant returns(uint blance) {
+    function getContractBalance() public constant returns(uint blance) {
         blance = balanceOf[this];
     }
     
