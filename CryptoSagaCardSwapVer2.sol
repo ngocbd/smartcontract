@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaCardSwapVer2 at 0x6a5309dc905e85ce88f33bcd4d4d9a03ac68f847
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaCardSwapVer2 at 0xcc862f25b2f725c0666d67774c47c63c9a3af150
 */
 pragma solidity ^0.4.18;
 
@@ -1674,7 +1674,7 @@ contract CryptoSagaCardSwapVer2 is CryptoSagaCardSwap, Pausable{
   {
     require(_upper > _lower);
 
-    seed = uint32(keccak256(keccak256(block.blockhash(block.number), seed), now));
+    seed = uint32(keccak256(keccak256(block.blockhash(block.number - 1), seed), now));
     return seed % (_upper - _lower) + _lower;
   }
 
