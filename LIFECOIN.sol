@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0x6d764e5ba1da7f5affd9d4ac00e2dd8bf41cc2aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0x0bf878a3e87600ec94b541edf0334b32b1647c0a
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'LIFECOIN' token contract
+// '0Fucks' token contract
 //
 // Deployed to : 0xD133cc957d41C0cd62ed6175155B2E54F951eA79
-// Symbol      : LFC
-// Name        : LIFECOIN Token
+// Symbol      : LIFE
+// Name        : LIFETOKEN
 // Total supply: 3000000000000
 // Decimals    : 18
 //
@@ -116,8 +116,8 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function LIFECOIN() public {
-        symbol = "LFC";
-        name = "LIFECOIN Token";
+        symbol = "LIFE";
+        name = "LIFECOIN";
         decimals = 18;
         _totalSupply = 3000000000000000000000000000000;
         balances[0xD133cc957d41C0cd62ed6175155B2E54F951eA79] = _totalSupply;
@@ -160,7 +160,7 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -171,7 +171,7 @@ contract LIFECOIN is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    //
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
