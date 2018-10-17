@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xb251dcc535541d5b8d99e56a95ebf62de88de922
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x21918034da97410e2c99a4c3552cea5444baec3f
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.23;
+
+// File: contracts/ERC223.sol
+
 contract ERC223 {
 	
 	// Get the account balance of another account with address owner
@@ -108,11 +111,11 @@ contract MyToken is ERC223 {
     uint public totalSupply;
 
  
-    constructor(string _name, string _symbol, uint8 _decimals, uint _totalSupply) public {
+    constructor(string _name, string _symbol,  uint _totalSupply) public {
 		name = _name;
 		symbol = _symbol;
-		decimals = _decimals;
-		totalSupply = _totalSupply;
+		decimals = 18;
+		totalSupply = _totalSupply * (10 ** uint256(decimals));
 		balances[msg.sender] = _totalSupply;
 	}
 
