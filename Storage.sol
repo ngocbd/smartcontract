@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x2cff66af98e056bf5b8214d8006997078248b694
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x83783d494c648e8e19b8c4b181ec6d081ae76c22
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.21;
 
 contract Storage {
     address owner; // This address has permission to upload data
@@ -11,7 +11,7 @@ contract Storage {
     
     bool readOnly; // Set the contract to read only once upload is finished
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
     }
     
@@ -19,10 +19,11 @@ contract Storage {
     function uploadData(bytes _data) public {
         require(msg.sender == owner);
         require(readOnly != true);
-        uint startPoint = 32 - remainder;
+        uint startPoint;
 
         if(remainder != 0) {
 
+            startPoint = 32 - remainder;
             bytes memory rest = new bytes(32);
             for(uint i = 0; i < remainder; i++) {
                 rest[i] = data[data.length - 1][i];
@@ -58,7 +59,11 @@ contract Storage {
     function erase(uint _entriesToDelete) public {
         require(msg.sender == owner);
         require(readOnly != true);
-        data.length = data.length - _entriesToDelete;
+        if(data.length < _entriesToDelete) { 
+            delete data;
+        }
+        else data.length -= _entriesToDelete;
+        remainder = 0;
     }
     function uploadFinish() public {
         require(msg.sender == owner);
