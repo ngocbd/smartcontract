@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MB at 0x7ab1fc79f319718690e9c883bac910f8e289ce8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MB at 0x71d101f114b58d91160d81132cbaef7ad60968dc
 */
 pragma solidity ^0.4.20;
 
 contract MB {
 
-  string public name = "MicroChain";
+  string public name = "MircoChain";
   string public symbol = "MB";
   uint public decimals = 18;
   uint public INITIAL_SUPPLY = 100000000000000000000000000000;
