@@ -1,659 +1,387 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x1393F1fb2E243Ee68Efe172eBb6831772633A926
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenFactory at 0x24def1ec5f8201b4ba07703589290ef500dc2620
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.18;
 
-interface Token {
-    function totalSupply() constant external returns (uint256 ts);
-    function balanceOf(address _owner) constant external returns (uint256 balance);
-    function transfer(address _to, uint256 _value) external returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
-    function approve(address _spender, uint256 _value) external returns (bool success);
-    function allowance(address _owner, address _spender) constant external returns (uint256 remaining);
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
-interface Baliv {
-    function getPrice(address fromToken_, address toToken_) external view returns(uint256);
+
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
 }
 
-contract TokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
-}
 
-contract SafeMath {
-    function safeAdd(uint x, uint y)
-        internal
-        pure
-    returns(uint) {
-        uint256 z = x + y;
-        require((z >= x) && (z >= y));
+
+
+/*
+    Utilities & Common Modifiers
+*/
+contract Utils {
+
+    // verifies that an amount is greater than zero
+    modifier greaterThanZero(uint256 _amount) {
+        require(_amount > 0);
+        _;
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
+    }
+
+    // Overflow protected math functions
+
+    /**
+        @dev returns the sum of _x and _y, asserts if the calculation overflows
+
+        @param _x   value 1
+        @param _y   value 2
+
+        @return sum
+    */
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
         return z;
     }
 
-    function safeSub(uint x, uint y)
-        internal
-        pure
-    returns(uint) {
-        require(x >= y);
-        uint256 z = x - y;
-        return z;
+    /**
+        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+
+        @param _x   minuend
+        @param _y   subtrahend
+
+        @return difference
+    */
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
     }
 
-    function safeMul(uint x, uint y)
-        internal
-        pure
-    returns(uint) {
-        uint z = x * y;
-        require((x == 0) || (z / x == y));
-        return z;
-    }
-    
-    function safeDiv(uint x, uint y)
-        internal
-        pure
-    returns(uint) {
-        require(y > 0);
-        return x / y;
-    }
+    /**
+        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
 
-    function random(uint N, uint salt)
-        internal
-        view
-    returns(uint) {
-        bytes32 hash = keccak256(block.number, msg.sender, salt);
-        return uint(hash) % N;
+        @param _x   factor 1
+        @param _y   factor 2
+
+        @return product
+    */
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
     }
 }
 
-contract Authorization {
-    mapping(address => bool) internal authbook;
-    address[] public operators;
-    address public owner;
-    bool public powerStatus = true;
-    function Authorization()
-        public
-        payable
-    {
-        owner = msg.sender;
-        assignOperator(msg.sender);
-    }
-    modifier onlyOwner
-    {
-        assert(msg.sender == owner);
-        _;
-    }
-    modifier onlyOperator
-    {
-        assert(checkOperator(msg.sender));
-        _;
-    }
-    modifier onlyActive
-    {
-        assert(powerStatus);
-        _;
-    }
-    function powerSwitch(
-        bool onOff_
-    )
-        public
-        onlyOperator
-    {
-        powerStatus = onOff_;
-    }
-    function transferOwnership(address newOwner_)
-        onlyOwner
-        public
-    {
-        owner = newOwner_;
-    }
-    
-    function assignOperator(address user_)
-        public
-        onlyOwner
-    {
-        if(user_ != address(0) && !authbook[user_]) {
-            authbook[user_] = true;
-            operators.push(user_);
-        }
-    }
-    
-    function dismissOperator(address user_)
-        public
-        onlyOwner
-    {
-        delete authbook[user_];
-        for(uint i = 0; i < operators.length; i++) {
-            if(operators[i] == user_) {
-                operators[i] = operators[operators.length - 1];
-                operators.length -= 1;
-            }
-        }
-    }
 
-    function checkOperator(address user_)
-        public
-        view
-    returns(bool) {
-        return authbook[user_];
-    }
-}
 
-contract StandardToken is SafeMath {
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+/**
+    ERC20 Standard Token implementation
+*/
+contract ERC20Token is IERC20Token, Utils {
+    string public standard = "Token 0.1";
+    string public name = "";
+    string public symbol = "";
+    uint8 public decimals = 0;
+    uint256 public totalSupply = 0;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Issue(address indexed _to, uint256 indexed _value);
-    event Burn(address indexed _from, uint256 indexed _value);
 
-    /* constructure */
-    function StandardToken() public payable {}
+    /**
+        @dev constructor
 
-    /* Send coins */
-    function transfer(
-        address to_,
-        uint256 amount_
-    )
-        public
-    returns(bool success) {
-        if(balances[msg.sender] >= amount_ && amount_ > 0) {
-            balances[msg.sender] = safeSub(balances[msg.sender], amount_);
-            balances[to_] = safeAdd(balances[to_], amount_);
-            emit Transfer(msg.sender, to_, amount_);
-            return true;
-        } else {
-            return false;
-        }
+        @param _name        token name
+        @param _symbol      token symbol
+        @param _decimals    decimal points, for display purposes
+    */
+    constructor(string _name, string _symbol, uint8 _decimals) public {
+        require(bytes(_name).length > 0 && bytes(_symbol).length > 0); // validate input
+
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
     }
 
-    /* A contract attempts to get the coins */
-    function transferFrom(
-        address from_,
-        address to_,
-        uint256 amount_
-    ) public returns(bool success) {
-        if(balances[from_] >= amount_ && allowed[from_][msg.sender] >= amount_ && amount_ > 0) {
-            balances[to_] = safeAdd(balances[to_], amount_);
-            balances[from_] = safeSub(balances[from_], amount_);
-            allowed[from_][msg.sender] = safeSub(allowed[from_][msg.sender], amount_);
-            emit Transfer(from_, to_, amount_);
-            return true;
-        } else {
-            return false;
-        }
-    }
+    /**
+        @dev send coins
+        throws on any error rather then return a false flag to minimize user errors
 
-    function balanceOf(
-        address _owner
-    )
-        constant
-        public
-    returns (uint256 balance) {
-        return balances[_owner];
-    }
+        @param _to      target address
+        @param _value   transfer amount
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(
-        address _spender,
-        uint256 _value
-    )
+        @return true if the transfer was successful, false if it wasn't
+    */
+    function transfer(address _to, uint256 _value)
         public
-    returns (bool success) {
-        assert((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        validAddress(_to)
+        returns (bool success)
+    {
+        balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], _value);
+        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(
-        address _spender,
-        uint256 _value,
-        bytes _extraData
-    )
+    /**
+        @dev an account/contract attempts to get the coins
+        throws on any error rather then return a false flag to minimize user errors
+
+        @param _from    source address
+        @param _to      target address
+        @param _value   transfer amount
+
+        @return true if the transfer was successful, false if it wasn't
+    */
+    function transferFrom(address _from, address _to, uint256 _value)
         public
-    returns (bool success) {    
-        if (approve(_spender, _value)) {
-            TokenRecipient(_spender).receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
+        validAddress(_from)
+        validAddress(_to)
+        returns (bool success)
+    {
+        allowance[_from][msg.sender] = safeSub(allowance[_from][msg.sender], _value);
+        balanceOf[_from] = safeSub(balanceOf[_from], _value);
+        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
-    function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    /**
+        @dev allow another account/contract to spend some tokens on your behalf
+        throws on any error rather then return a false flag to minimize user errors
+
+        also, to minimize the risk of the approve/transferFrom attack vector
+        (see https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/), approve has to be called twice
+        in 2 separate transactions - once to change the allowance to 0 and secondly to change it to the new allowance value
+
+        @param _spender approved address
+        @param _value   allowance amount
+
+        @return true if the approval was successful, false if it wasn't
+    */
+    function approve(address _spender, uint256 _value)
+        public
+        validAddress(_spender)
+        returns (bool success)
+    {
+        // if the allowance isn't 0, it can only be updated to 0 to prevent an allowance change immediately after withdrawal
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
     }
 }
 
-contract XPAAssetToken is StandardToken, Authorization {
-    // metadata
-    address[] public burners;
-    string public name;
-    string public symbol;
-    uint256 public defaultExchangeRate;
-    uint256 public constant decimals = 18;
 
-    // constructor
-    function XPAAssetToken(
-        string symbol_,
-        string name_,
-        uint256 defaultExchangeRate_
-    )
-        public
-    {
-        totalSupply = 0;
-        symbol = symbol_;
-        name = name_;
-        defaultExchangeRate = defaultExchangeRate_ > 0 ? defaultExchangeRate_ : 0.01 ether;
+
+
+
+
+
+
+
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
+
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    constructor () public {
+        owner = msg.sender;
     }
 
-    function transferOwnership(
-        address newOwner_
-    )
-        onlyOwner
-        public
-    {
-        owner = newOwner_;
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
     }
 
-    function create(
-        address user_,
-        uint256 amount_
-    )
-        public
-        onlyOperator
-    returns(bool success) {
-        if(amount_ > 0 && user_ != address(0)) {
-            totalSupply = safeAdd(totalSupply, amount_);
-            balances[user_] = safeAdd(balances[user_], amount_);
-            emit Issue(owner, amount_);
-            emit Transfer(owner, user_, amount_);
-            return true;
-        }
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
     }
 
-    function burn(
-        uint256 amount_
-    )
-        public
-    returns(bool success) {
-        require(allowToBurn(msg.sender));
-        if(amount_ > 0 && balances[msg.sender] >= amount_) {
-            balances[msg.sender] = safeSub(balances[msg.sender], amount_);
-            totalSupply = safeSub(totalSupply, amount_);
-            emit Transfer(msg.sender, owner, amount_);
-            emit Burn(owner, amount_);
-            return true;
-        }
+    function setOwner(address _newOwner) public ownerOnly {
+        emit OwnerUpdate(owner, _newOwner);
+        owner = _newOwner;
     }
 
-    function burnFrom(
-        address user_,
-        uint256 amount_
-    )
-        public
-    returns(bool success) {
-        require(allowToBurn(msg.sender));
-        if(balances[user_] >= amount_ && allowed[user_][msg.sender] >= amount_ && amount_ > 0) {
-            balances[user_] = safeSub(balances[user_], amount_);
-            totalSupply = safeSub(totalSupply, amount_);
-            allowed[user_][msg.sender] = safeSub(allowed[user_][msg.sender], amount_);
-            emit Transfer(user_, owner, amount_);
-            emit Burn(owner, amount_);
-            return true;
-        }
-    }
-
-    function getDefaultExchangeRate(
-    )
-        public
-        view
-    returns(uint256) {
-        return defaultExchangeRate;
-    }
-
-    function getSymbol(
-    )
-        public
-        view
-    returns(bytes32) {
-        return keccak256(symbol);
-    }
-
-    function assignBurner(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        for(uint256 i = 0; i < burners.length; i++) {
-            if(burners[i] == account_) {
-                return;
-            }
-        }
-        burners.push(account_);
-    }
-
-    function dismissBunner(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        for(uint256 i = 0; i < burners.length; i++) {
-            if(burners[i] == account_) {
-                burners[i] = burners[burners.length - 1];
-                burners.length -= 1;
-            }
-        }
-    }
-
-    function allowToBurn(
-        address account_
-    )
-        public
-        view
-    returns(bool) {
-        if(checkOperator(account_)) {
-            return true;
-        }
-        for(uint256 i = 0; i < burners.length; i++) {
-            if(burners[i] == account_) {
-                return true;
-            }
-        }
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
     }
 }
 
-contract TokenFactory is Authorization {
-    string public version = "0.5.0";
+/*
+    We consider every contract to be a 'token holder' since it's currently not possible
+    for a contract to deny receiving tokens.
 
-    event eNominatingExchange(address);
-    event eNominatingXPAAssets(address);
-    event eNominatingETHAssets(address);
-    event eCancelNominatingExchange(address);
-    event eCancelNominatingXPAAssets(address);
-    event eCancelNominatingETHAssets(address);
-    event eChangeExchange(address, address);
-    event eChangeXPAAssets(address, address);
-    event eChangeETHAssets(address, address);
-    event eAddFundAccount(address);
-    event eRemoveFundAccount(address);
+    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
+    the owner to send tokens that were sent to the contract by mistake back to their sender.
+*/
+contract TokenHolder is ITokenHolder, Owned, Utils {
 
-    address[] public assetTokens;
-    address[] public fundAccounts;
-    address public exchange = 0x008ea74569c1b9bbb13780114b6b5e93396910070a;
-    address public exchangeOldVersion = 0x0013b4b9c415213bb2d0a5d692b6f2e787b927c211;
-    address public XPAAssets = address(0);
-    address public ETHAssets = address(0);
-    address public candidateXPAAssets = address(0);
-    address public candidateETHAssets = address(0);
-    address public candidateExchange = address(0);
-    uint256 public candidateTillXPAAssets = 0;
-    uint256 public candidateTillETHAssets = 0;
-    uint256 public candidateTillExchange = 0;
-    address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
-    address public ETH = address(0);
+    /**
+        @dev withdraws tokens held by the contract and sends them to an account
+        can only be called by the owner
 
-     /* constructor */
-    function TokenFactory(
-        address XPAAddr, 
-        address balivAddr
-    ) public {
-        XPA = XPAAddr;
-        exchange = balivAddr;
-    }
-
-    function createToken(
-        string symbol_,
-        string name_,
-        uint256 defaultExchangeRate_
-    )
+        @param _token   ERC20 token contract address
+        @param _to      account to receive the new amount
+        @param _amount  amount to withdraw
+    */
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
         public
-    returns(address) {
-        require(msg.sender == XPAAssets);
-        bool tokenRepeat = false;
-        address newAsset;
-        for(uint256 i = 0; i < assetTokens.length; i++) {
-            if(XPAAssetToken(assetTokens[i]).getSymbol() == keccak256(symbol_)){
-                tokenRepeat = true;
-                newAsset = assetTokens[i];
-                break;
-            }
-        }
-        if(!tokenRepeat){
-            newAsset = new XPAAssetToken(symbol_, name_, defaultExchangeRate_);
-            XPAAssetToken(newAsset).assignOperator(XPAAssets);
-            XPAAssetToken(newAsset).assignOperator(ETHAssets);
-            for(uint256 j = 0; j < fundAccounts.length; j++) {
-                XPAAssetToken(newAsset).assignBurner(fundAccounts[j]);
-            }
-            assetTokens.push(newAsset);
-        }
-        return newAsset;
-    }
-
-    // set to candadite, after 7 days set to exchange, set again after 7 days
-    function setExchange(
-        address exchange_
-    )
-        public
-        onlyOperator
+        ownerOnly
+        validAddress(_token)
+        validAddress(_to)
+        notThis(_to)
     {
-        require(
-            exchange_ != address(0)
-        );
-        if(
-            exchange_ == exchange &&
-            candidateExchange != address(0)
-        ) {
-            emit eCancelNominatingExchange(candidateExchange);
-            candidateExchange = address(0);
-            candidateTillExchange = 0;
-        } else if(
-            exchange == address(0)
-        ) {
-            // initial value
-            emit eChangeExchange(address(0), exchange_);
-            exchange = exchange_;
-            exchangeOldVersion = exchange_;
-        } else if(
-            exchange_ != candidateExchange &&
-            candidateTillExchange + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingExchange(exchange_);
-            candidateExchange = exchange_;
-            candidateTillExchange = block.timestamp + 86400 * 7;
-        } else if(
-            exchange_ == candidateExchange &&
-            candidateTillExchange < block.timestamp
-        ) {
-            // set to exchange
-            emit eChangeExchange(exchange, candidateExchange);
-            exchangeOldVersion = exchange;
-            exchange = candidateExchange;
-            candidateExchange = address(0);
-        }
+        assert(_token.transfer(_to, _amount));
     }
+}
 
-    function setXPAAssets(
-        address XPAAssets_
-    )
+
+
+
+
+
+
+
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
+
+
+contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
+    string public version = "";
+    bool public transfersEnabled = true;
+    event NewSmartToken(address _token);
+    event Issuance(uint256 _amount);
+    event Destruction(uint256 _amount);
+
+    constructor(string _name, string _symbol, uint8 _decimals)
         public
-        onlyOperator
+        ERC20Token(_name, _symbol, _decimals)
     {
-        require(
-            XPAAssets_ != address(0)
-        );
-        if(
-            XPAAssets_ == XPAAssets &&
-            candidateXPAAssets != address(0)
-        ) {
-            emit eCancelNominatingXPAAssets(candidateXPAAssets);
-            candidateXPAAssets = address(0);
-            candidateTillXPAAssets = 0;
-        } else if(
-            XPAAssets == address(0)
-        ) {
-            // initial value
-            emit eChangeXPAAssets(address(0), XPAAssets_);
-            XPAAssets = XPAAssets_;
-        } else if(
-            XPAAssets_ != candidateXPAAssets &&
-            candidateTillXPAAssets + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingXPAAssets(XPAAssets_);
-            candidateXPAAssets = XPAAssets_;
-            candidateTillXPAAssets = block.timestamp + 86400 * 7;
-        } else if(
-            XPAAssets_ == candidateXPAAssets &&
-            candidateTillXPAAssets < block.timestamp
-        ) {
-            // set to XPAAssets
-            emit eChangeXPAAssets(XPAAssets, candidateXPAAssets);
-            dismissTokenOperator(XPAAssets);
-            assignTokenOperator(candidateXPAAssets);
-            XPAAssets = candidateXPAAssets;
-            candidateXPAAssets = address(0);
-        }
+        emit NewSmartToken(address(this));
     }
 
-    function setETHAssets(
-        address ETHAssets_
-    )
+    modifier transfersAllowed {
+        assert(transfersEnabled);
+        _;
+    }
+
+    function disableTransfers(bool _disable) public ownerOnly {
+        transfersEnabled = !_disable;
+    }
+
+    function issue(address _to, uint256 _amount)
         public
-        onlyOperator
+        ownerOnly
+        validAddress(_to)
+        notThis(_to)
     {
-        require(
-            ETHAssets_ != address(0)
-        );
-        if(
-            ETHAssets_ == ETHAssets &&
-            candidateETHAssets != address(0)
-        ) {
-            emit eCancelNominatingETHAssets(candidateETHAssets);
-            candidateETHAssets = address(0);
-            candidateTillETHAssets = 0;
-        } else if(
-            ETHAssets == address(0)
-        ) {
-            // initial value
-            ETHAssets = ETHAssets_;
-        } else if(
-            ETHAssets_ != candidateETHAssets &&
-            candidateTillETHAssets + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingETHAssets(ETHAssets_);
-            candidateETHAssets = ETHAssets_;
-            candidateTillETHAssets = block.timestamp + 86400 * 7;
-        } else if(
-            ETHAssets_ == candidateETHAssets &&
-            candidateTillETHAssets < block.timestamp
-        ) {
-            // set to ETHAssets
-            emit eChangeETHAssets(ETHAssets, candidateETHAssets);
-            dismissTokenOperator(ETHAssets);
-            assignTokenOperator(candidateETHAssets);
-            ETHAssets = candidateETHAssets;
-            candidateETHAssets = address(0);
-        }
+        totalSupply = safeAdd(totalSupply, _amount);
+        balanceOf[_to] = safeAdd(balanceOf[_to], _amount);
+
+        emit Issuance(_amount);
+        emit Transfer(this, _to, _amount);
     }
 
-    function addFundAccount(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        for(uint256 i = 0; i < fundAccounts.length; i++) {
-            if(fundAccounts[i] == account_) {
-                return;
-            }
-        }
-        for(uint256 j = 0; j < assetTokens.length; j++) {
-            XPAAssetToken(assetTokens[i]).assignBurner(account_);
-        }
-        emit eAddFundAccount(account_);
-        fundAccounts.push(account_);
+    function destroy(address _from, uint256 _amount) public {
+        require(msg.sender == _from || msg.sender == owner);
+
+        balanceOf[_from] = safeSub(balanceOf[_from], _amount);
+        totalSupply = safeSub(totalSupply, _amount);
+
+        emit Transfer(_from, this, _amount);
+        emit Destruction(_amount);
     }
 
-    function removeFundAccount(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        uint256 i = 0;
-        uint256 j = 0;
-        for(i = 0; i < fundAccounts.length; i++) {
-            if(fundAccounts[i] == account_) {
-                for(j = 0; j < assetTokens.length; j++) {
-                    XPAAssetToken(assetTokens[i]).dismissBunner(account_);
-                }
-                fundAccounts[i] = fundAccounts[fundAccounts.length - 1];
-                fundAccounts.length -= 1;
-            }
-        }
+    function transfer(address _to, uint256 _value) public transfersAllowed returns (bool success) {
+        assert(super.transfer(_to, _value));
+        return true;
     }
 
-    function getPrice(
-        address token_
-    ) 
-        public
-        view
-    returns(uint256) {
-        uint256 currPrice = Baliv(exchange).getPrice(XPA, token_);
-        if(currPrice == 0) {
-            currPrice = XPAAssetToken(token_).getDefaultExchangeRate();
-        }
-        return currPrice;
+    function transferFrom(address _from, address _to, uint256 _value) public transfersAllowed returns (bool success) {
+        assert(super.transferFrom(_from, _to, _value));
+        return true;
     }
+}
 
-    function getAssetLength(
-    )
-        public
-        view
-    returns(uint256) {
-        return assetTokens.length;
-    }
 
-    function getAssetToken(
-        uint256 index_
-    )
-        public
-        view
-    returns(address) {
-        return assetTokens[index_];
-    }
+contract TokenFactory {
 
-    function assignTokenOperator(address user_)
-        internal
-    {
-        if(user_ != address(0)) {
-            for(uint256 i = 0; i < assetTokens.length; i++) {
-                XPAAssetToken(assetTokens[i]).assignOperator(user_);
-            }
-        }
-    }
-    
-    function dismissTokenOperator(address user_)
-        internal
-    {
-        if(user_ != address(0)) {
-            for(uint256 i = 0; i < assetTokens.length; i++) {
-                XPAAssetToken(assetTokens[i]).dismissOperator(user_);
-            }
-        }
+    address public lastTokenCreated;
+
+    function newToken(string _name, string _symbol, uint _initialSupply) public {
+        SmartToken smartToken = new SmartToken(_name, _symbol, 18);
+        smartToken.issue(msg.sender, _initialSupply);
+        smartToken.setOwner(msg.sender);
+        lastTokenCreated = address(smartToken);
     }
 }
