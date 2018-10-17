@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0xd63f1f0a7d08e213f9a9e8aa5ec1eea799d6e906
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0x978b15cd40f7286d674258588af4635dce055282
 */
 pragma solidity ^0.4.24;
 //==============================================================================
@@ -131,9 +131,8 @@ contract FoMoGame is modularLong {
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
 
-    //ForwarderInterface constant private Team_Forwarder = ForwarderInterface(0xBd4C9aB2F3e241F1291D55af51CB0D949077B591);
     address private team = 0xBd01103c36f400344b427Cb51934B765007e16f6;
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x9d937dC68eD3604954D5ea8433563DF6526B1687);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xB066135b92A122225bf786C38BC5d2284BE7A27e);
     
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -143,9 +142,9 @@ contract FoMoGame is modularLong {
     string constant public symbol = "FGame";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
+    uint256 constant private rndInit_ = 12 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 15 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -187,17 +186,18 @@ contract FoMoGame is modularLong {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(45,0);   //32% to pot, 20% to aff, 2% to com, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(32,0);   //45% to pot, 20% to aff, 2% to com, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(20,0);   //57% to pot, 20% to aff, 2% to com, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(45,0);   //32% to pot, 20% to aff, 2% to com, 1% to air drop pot
         fees_[2] = F3Ddatasets.TeamFee(57,0);  //20% to pot, 20% to aff, 2% to com, 1% to air drop pot
         fees_[3] = F3Ddatasets.TeamFee(39,0);   //38% to pot, 20% to aff, 2% to com, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(30,0);  //48% to winner, 20% to next round, 2% to com
+        // What's the difference
+        potSplit_[0] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
         potSplit_[1] = F3Ddatasets.PotSplit(45,0);   //48% to winner, 5% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(35,0);  //48% to winner, 15% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(45,0);  //48% to winner, 5% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -965,13 +965,13 @@ contract FoMoGame is modularLong {
             _eventData_ = managePlayer(_pID, _eventData_);
 
         // early round eth limiter
-        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
-        {
-            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
-            uint256 _refund = _eth.sub(_availableLimit);
-            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
-            _eth = _availableLimit;
-        }
+        // if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
+        // {
+        //     uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+        //     uint256 _refund = _eth.sub(_availableLimit);
+        //     plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
+        //     _eth = _availableLimit;
+        // }
 
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000)
