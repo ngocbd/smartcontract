@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGCSnakesAndLadders at 0xcb11a83af0862a42dd71164bcec6608095d4d235
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGCSnakesAndLadders at 0xaffc736c30f409b1bf3afa868aecb882072b7002
 */
 pragma solidity ^0.4.24;
 
@@ -114,10 +114,12 @@ contract EGCSnakesAndLadders {
             points = points.add(position_coins);
         }
 
-        total = total.add(1);
-
+        if (msg.sender != owner) {
+            total = total.add(1);
+            users[owner].points = users[owner].points.add(1);
+        }
+        
         seed = random.mul(uint(blockhash(block.number - 1)) % 20);
-        users[owner].points = users[owner].points.add(1);
         total_points = total.add(points);
 
         users[msg.sender].position = position;
