@@ -1,56 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YeedToken at 0x6f7a4bac3315b5082f793161a22e26666d22717f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YeedToken at 0xca2796f9f61dc7b238aab043971e49c6164df375
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.24;
+
 /**
-    ERC20 Interface
-    @author DongOk Peter Ryu - <odin@yggdrash.io>
-*/
+ * @title ERC20 Interface
+ */
 contract ERC20 {
-    function totalSupply() public constant returns (uint supply);
-    function balanceOf( address who ) public constant returns (uint value);
-    function allowance( address owner, address spender ) public constant returns (uint _allowance);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    function transfer( address to, uint value) public returns (bool ok);
-    function transferFrom( address from, address to, uint value) public returns (bool ok);
-    function approve( address spender, uint value ) public returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 /**
-    LOCKABLE TOKEN
-    @author DongOk Peter Ryu - <odin@yggdrash.io>
-*/
+ * @title Lockable Token
+ * @author info@yggdrash.io
+ */
 contract Lockable {
-    uint public creationTime;
-    bool public lock;
     bool public tokenTransfer;
     address public owner;
-    mapping( address => bool ) public unlockaddress;
-    // lockaddress List
-    mapping( address => bool ) public lockaddress;
 
-    // LOCK EVENT
-    event Locked(address lockaddress,bool status);
-    // UNLOCK EVENT
-    event Unlocked(address unlockedaddress, bool status);
+    /**
+     * @dev They can transfer even if tokenTranser flag is false.
+     */
+    mapping(address => bool) public unlockAddress;
 
+    /**
+     * @dev They cannot transfer even if tokenTransfer flag is true.
+     */
+    mapping(address => bool) public lockAddress;
 
-    // if Token transfer
+    event Locked(address lockAddress, bool status);
+    event Unlocked(address unlockedAddress, bool status);
+
+    /**
+     * @dev check whether can tranfer tokens or not.
+     */
     modifier isTokenTransfer {
-        // if token transfer is not allow
         if(!tokenTransfer) {
-            require(unlockaddress[msg.sender]);
+            require(unlockAddress[msg.sender]);
         }
         _;
     }
 
-    // This modifier check whether the contract should be in a locked
-    // or unlocked state, then acts and updates accordingly if
-    // necessary
+    /**
+     * @dev check whether registered in lockAddress or not
+     */
     modifier checkLock {
-        assert(!lockaddress[msg.sender]);
+        require(!lockAddress[msg.sender]);
         _;
     }
 
@@ -60,197 +63,296 @@ contract Lockable {
         _;
     }
 
-    function Lockable()
+    constructor()
     public
     {
-        creationTime = now;
         tokenTransfer = false;
         owner = msg.sender;
     }
 
-    // Lock Address
-    function lockAddress(address target, bool status)
+    /**
+     * @dev add or remove in lockAddress(blacklist)
+     */
+    function setLockAddress(address target, bool status)
     external
     isOwner
     {
         require(owner != target);
-        lockaddress[target] = status;
-        Locked(target, status);
+        lockAddress[target] = status;
+        emit Locked(target, status);
     }
 
-    // UnLock Address
-    function unlockAddress(address target, bool status)
+    /**
+     * @dev add or remove in unlockAddress(whitelist)
+     */
+    function setUnlockAddress(address target, bool status)
     external
     isOwner
     {
-        unlockaddress[target] = status;
-        Unlocked(target, status);
+        unlockAddress[target] = status;
+        emit Unlocked(target, status);
     }
 }
 
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint a, uint b) internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-}
 /**
-    YGGDRASH Token
-    @author DongOk Peter Ryu - <odin@yggdrash.io>
-*/
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+/**
+ * @title YGGDRASH Token Contract.
+ * @author info@yggdrash.io
+ * @notice This contract is the updated version that fixes the unlocking bug.
+ * This source code is audited by external auditors.
+ */
 contract YeedToken is ERC20, Lockable {
 
-    // ADD INFORMATION
     string public constant name = "YGGDRASH";
     string public constant symbol = "YEED";
-    uint8 public constant decimals = 18;  // 18 is the most common number of decimal places
+    uint8 public constant decimals = 18;
 
-    using SafeMath for uint;
+    /**
+     * @dev If this flag is true, admin can use enableTokenTranfer(), emergencyTransfer().
+     */
+    bool public adminMode;
 
-    mapping( address => uint ) _balances;
-    mapping( address => mapping( address => uint ) ) _approvals;
-    uint _supply;
-    address public walletAddress;
+    using SafeMath for uint256;
 
-    event TokenBurned(address burnAddress, uint amountOfTokens);
-    event TokenTransfer();
+    mapping(address => uint256) internal _balances;
+    mapping(address => mapping(address => uint256)) internal _approvals;
+    uint256 internal _supply;
 
-    modifier onlyFromWallet {
-        require(msg.sender != walletAddress);
+    event TokenBurned(address burnAddress, uint256 amountOfTokens);
+    event SetTokenTransfer(bool transfer);
+    event SetAdminMode(bool adminMode);
+    event EmergencyTransfer(address indexed from, address indexed to, uint256 value);
+
+    modifier isAdminMode {
+        require(adminMode);
         _;
     }
 
-    function YeedToken( uint initial_balance, address wallet)
+    constructor(uint256 initial_balance)
     public
     {
-        require(wallet != 0);
         require(initial_balance != 0);
-        _balances[msg.sender] = initial_balance;
         _supply = initial_balance;
-        walletAddress = wallet;
+        _balances[msg.sender] = initial_balance;
+        emit Transfer(address(0), msg.sender, initial_balance);
     }
 
-    function totalSupply() public constant returns (uint supply) {
+    function totalSupply()
+    public
+    view
+    returns (uint256) {
         return _supply;
     }
 
-    function balanceOf( address who ) public constant returns (uint value) {
+    function balanceOf(address who)
+    public
+    view
+    returns (uint256) {
         return _balances[who];
     }
 
-    function allowance(address owner, address spender) public constant returns (uint _allowance) {
-        return _approvals[owner][spender];
-    }
-
-    function transfer( address to, uint value)
+    function transfer(address to, uint256 value)
     public
     isTokenTransfer
     checkLock
-    returns (bool success) {
-
-        require( _balances[msg.sender] >= value );
+    returns (bool) {
+        require(to != address(0));
+        require(_balances[msg.sender] >= value);
 
         _balances[msg.sender] = _balances[msg.sender].sub(value);
         _balances[to] = _balances[to].add(value);
-        Transfer( msg.sender, to, value );
+        emit Transfer(msg.sender, to, value);
         return true;
     }
 
-    function transferFrom( address from, address to, uint value)
+    function allowance(address owner, address spender)
+    public
+    view
+    returns (uint256) {
+        return _approvals[owner][spender];
+    }
+
+    function transferFrom(address from, address to, uint256 value)
     public
     isTokenTransfer
     checkLock
     returns (bool success) {
-        // if you don't have enough balance, throw
-        require( _balances[from] >= value );
-        // if you don't have approval, throw
-        require( _approvals[from][msg.sender] >= value );
-        // transfer and return true
-        _approvals[from][msg.sender] = _approvals[from][msg.sender].sub(value);
+        require(!lockAddress[from]);
+        require(_balances[from] >= value);
+        require(_approvals[from][msg.sender] >= value);
         _balances[from] = _balances[from].sub(value);
         _balances[to] = _balances[to].add(value);
-        Transfer( from, to, value );
+        _approvals[from][msg.sender] = _approvals[from][msg.sender].sub(value);
+        emit Transfer(from, to, value);
         return true;
     }
 
-    function approve(address spender, uint value)
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param spender The address which will spend the funds.
+     * @param value The amount of tokens to be spent.
+     */
+    function approve(address spender, uint256 value)
     public
     checkLock
-    returns (bool success) {
+    returns (bool) {
         _approvals[msg.sender][spender] = value;
-        Approval( msg.sender, spender, value );
+        emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    // burnToken burn tokensAmount for sender balance
-    function burnTokens(uint tokensAmount)
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint256 _addedValue)
     public
-    isTokenTransfer
+    checkLock
+    returns (bool) {
+        _approvals[msg.sender][_spender] = (
+        _approvals[msg.sender][_spender].add(_addedValue));
+        emit Approval(msg.sender, _spender, _approvals[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint256 _subtractedValue)
+    public
+    checkLock
+    returns (bool) {
+        uint256 oldValue = _approvals[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            _approvals[msg.sender][_spender] = 0;
+        } else {
+            _approvals[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, _approvals[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Burn tokens can only use by owner
+     */
+    function burnTokens(uint256 tokensAmount)
+    public
+    isAdminMode
+    isOwner
     {
-        require( _balances[msg.sender] >= tokensAmount );
+        require(_balances[msg.sender] >= tokensAmount);
 
         _balances[msg.sender] = _balances[msg.sender].sub(tokensAmount);
         _supply = _supply.sub(tokensAmount);
-        TokenBurned(msg.sender, tokensAmount);
-
+        emit TokenBurned(msg.sender, tokensAmount);
     }
 
-
-    function enableTokenTransfer()
+    /**
+     * @dev Set the tokenTransfer flag.
+     * If true, 
+     * - unregistered lockAddress can transfer()
+     * - registered lockAddress can not transfer()
+     * If false, 
+     * - registered unlockAddress & unregistered lockAddress 
+     * - can transfer(), unregistered unlockAddress can not transfer()
+     */
+    function setTokenTransfer(bool _tokenTransfer)
     external
-    onlyFromWallet
+    isAdminMode
+    isOwner
     {
-        tokenTransfer = true;
-        TokenTransfer();
+        tokenTransfer = _tokenTransfer;
+        emit SetTokenTransfer(tokenTransfer);
     }
 
-    function disableTokenTransfer()
-    external
-    onlyFromWallet
+    function setAdminMode(bool _adminMode)
+    public
+    isOwner
     {
-        tokenTransfer = false;
-        TokenTransfer();
+        adminMode = _adminMode;
+        emit SetAdminMode(adminMode);
     }
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () public payable {
-        revert();
-    }
+    /**
+     * @dev In emergency situation, 
+     * admin can use emergencyTransfer() for protecting user's token.
+     */
+    function emergencyTransfer(address emergencyAddress)
+    public
+    isAdminMode
+    isOwner
+    returns (bool success) {
+        require(emergencyAddress != owner);
+        _balances[owner] = _balances[owner].add(_balances[emergencyAddress]);
 
+        emit Transfer(emergencyAddress, owner, _balances[emergencyAddress]);
+        emit EmergencyTransfer(emergencyAddress, owner, _balances[emergencyAddress]);
+    
+        _balances[emergencyAddress] = 0;
+        return true;
+    }
 }
