@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0xfc2c858d2dc582a7db9d25224fe11ba0dd1533ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0x0decb54cd44375cb5cb486cec40f209c7d37d26d
 */
 pragma solidity ^0.4.18;
 
@@ -104,7 +104,7 @@ contract SparksterToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function SparksterToken() public {
-        symbol = "SPRK";
+        symbol = "SRPK";
         name = "Sparkster Token";
         decimals = 18;
         _totalSupply = 435000000000000000000000000;
