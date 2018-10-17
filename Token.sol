@@ -1,252 +1,315 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x4eed4d2a47655aeece789defb13b3e6132e86b49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa224496d1295a3392005d6d78494ff8b92aaaea2
 */
-pragma solidity ^0.4.21;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
-        if(a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-contract Ownable {
-    address public owner;
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    modifier onlyOwner() { require(msg.sender == owner); _; }
-    function Ownable() public {
-        owner = msg.sender;
-    }
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(this));
-        owner = newOwner;
-        emit OwnershipTransferred(owner, newOwner);
-    }
+pragma solidity ^0.4.9;
+
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
 }
 
-contract ERC20 {
-    uint256 public totalSupply;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    function balanceOf(address who) public view returns(uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-    function transferFrom(address from, address to, uint256 value) public returns(bool);
-    function allowance(address owner, address spender) public view returns(uint256);
-    function approve(address spender, uint256 value) public returns(bool);
+contract Token {
+  /// @return total amount of tokens
+  function totalSupply() constant returns (uint256 supply) {}
+
+  /// @param _owner The address from which the balance will be retrieved
+  /// @return The balance
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
+
+  /// @notice send `_value` token to `_to` from `msg.sender`
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transfer(address _to, uint256 _value) returns (bool success) {}
+
+  /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+  /// @param _from The address of the sender
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+  /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @param _value The amount of wei to be approved for transfer
+  /// @return Whether the approval was successful or not
+  function approve(address _spender, uint256 _value) returns (bool success) {}
+
+  /// @param _owner The address of the account owning tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @return Amount of remaining tokens allowed to spent
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+  uint public decimals;
+  string public name;
 }
 
-contract StandardToken is ERC20 {
-    using SafeMath for uint256;
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    mapping(address => uint256) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-    function StandardToken(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
+contract StandardToken is Token {
+
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    //Default assumes totalSupply can't be over max (2^256 - 1).
+    //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+    //Replace the if with this one instead.
+    if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+    //if (balances[msg.sender] >= _value && _value > 0) {
+      balances[msg.sender] -= _value;
+      balances[_to] += _value;
+      Transfer(msg.sender, _to, _value);
+      return true;
+    } else { return false; }
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    //same as above. Replace this line with the following if you want to protect against wrapping uints.
+    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+    //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+      balances[_to] += _value;
+      balances[_from] -= _value;
+      allowed[_from][msg.sender] -= _value;
+      Transfer(_from, _to, _value);
+      return true;
+    } else { return false; }
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  mapping(address => uint256) balances;
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  uint256 public totalSupply;
 }
 
-function balanceOf(address _owner) public view returns(uint256 balance) {
-        return balances[_owner];
+contract ReserveToken is StandardToken, SafeMath {
+  address public minter;
+  function ReserveToken() {
+    minter = msg.sender;
+  }
+  function create(address account, uint amount) {
+    if (msg.sender != minter) throw;
+    balances[account] = safeAdd(balances[account], amount);
+    totalSupply = safeAdd(totalSupply, amount);
+  }
+  function destroy(address account, uint amount) {
+    if (msg.sender != minter) throw;
+    if (balances[account] < amount) throw;
+    balances[account] = safeSub(balances[account], amount);
+    totalSupply = safeSub(totalSupply, amount);
+  }
 }
 
-function transfer(address _to, uint256 _value) public returns(bool) {
-        require(_to != address(this));
-        require(_value <= balances[msg.sender]);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-}
-function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        require(_to.length == _value.length);
-        for(uint i = 0; i < _to.length; i++) {
-            transfer(_to[i], _value[i]);
-        }
-        return true;
-}
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(this));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns(uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    function approve(address _spender, uint256 _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+contract AccountLevels {
+  //given a user, returns an account level
+  //0 = regular user (pays take fee and make fee)
+  //1 = market maker silver (pays take fee, no make fee, gets rebate)
+  //2 = market maker gold (pays take fee, no make fee, gets entire counterparty's take fee as rebate)
+  function accountLevel(address user) constant returns(uint) {}
 }
 
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-    bool public mintingFinished = false;
-    modifier canMint(){require(!mintingFinished); _;}
+contract AccountLevelsTest is AccountLevels {
+  mapping (address => uint) public accountLevels;
 
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Transfer(address(this), _to, _amount);
-        return true;
-    }
-    function finishMinting() onlyOwner canMint public returns(bool) {
-        mintingFinished = true;
-        emit MintFinished();
-        return true;
-    }
+  function setAccountLevel(address user, uint level) {
+    accountLevels[user] = level;
+  }
+
+  function accountLevel(address user) constant returns(uint) {
+    return accountLevels[user];
+  }
 }
 
-contract CappedToken is MintableToken {
-    uint256 public cap;
+contract EtherDelta is SafeMath {
+  address public admin; //the admin address
+  address public feeAccount; //the account that will receive fees
+  address public accountLevelsAddr; //the address of the AccountLevels contract
+  uint public feeMake; //percentage times (1 ether)
+  uint public feeTake; //percentage times (1 ether)
+  uint public feeRebate; //percentage times (1 ether)
+  mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
+  mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
+  mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
 
-    function CappedToken(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
+  event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
+  event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
+  event Deposit(address token, address user, uint amount, uint balance);
+  event Withdraw(address token, address user, uint amount, uint balance);
+
+  function EtherDelta(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+    admin = admin_;
+    feeAccount = feeAccount_;
+    accountLevelsAddr = accountLevelsAddr_;
+    feeMake = feeMake_;
+    feeTake = feeTake_;
+    feeRebate = feeRebate_;
+  }
+
+  function() {
+    throw;
+  }
+
+  function changeAdmin(address admin_) {
+    if (msg.sender != admin) throw;
+    admin = admin_;
+  }
+
+  function changeAccountLevelsAddr(address accountLevelsAddr_) {
+    if (msg.sender != admin) throw;
+    accountLevelsAddr = accountLevelsAddr_;
+  }
+
+  function changeFeeAccount(address feeAccount_) {
+    if (msg.sender != admin) throw;
+    feeAccount = feeAccount_;
+  }
+
+  function changeFeeMake(uint feeMake_) {
+    if (msg.sender != admin) throw;
+    if (feeMake_ > feeMake) throw;
+    feeMake = feeMake_;
+  }
+
+  function changeFeeTake(uint feeTake_) {
+    if (msg.sender != admin) throw;
+    if (feeTake_ > feeTake || feeTake_ < feeRebate) throw;
+    feeTake = feeTake_;
+  }
+
+  function changeFeeRebate(uint feeRebate_) {
+    if (msg.sender != admin) throw;
+    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) throw;
+    feeRebate = feeRebate_;
+  }
+
+  function deposit() payable {
+    tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
+    Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+  }
+
+  function withdraw(uint amount) {
+    if (tokens[0][msg.sender] < amount) throw;
+    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
+    if (!msg.sender.call.value(amount)()) throw;
+    Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+  }
+
+  function depositToken(address token, uint amount) {
+    //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
+    if (token==0) throw;
+    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
+
+  function withdrawToken(address token, uint amount) {
+    if (token==0) throw;
+    if (tokens[token][msg.sender] < amount) throw;
+    tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
+    if (!Token(token).transfer(msg.sender, amount)) throw;
+    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
+
+  function balanceOf(address token, address user) constant returns (uint) {
+    return tokens[token][user];
+  }
+
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    orders[msg.sender][hash] = true;
+    Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+  }
+
+  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
+    //amount is in amountGet terms
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires &&
+      safeAdd(orderFills[user][hash], amount) <= amountGet
+    )) throw;
+    tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
+    orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
+    Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
+  }
+
+  function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
+    uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
+    uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
+    uint feeRebateXfer = 0;
+    if (accountLevelsAddr != 0x0) {
+      uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
+      if (accountLevel==1) feeRebateXfer = safeMul(amount, feeRebate) / (1 ether);
+      if (accountLevel==2) feeRebateXfer = feeTakeXfer;
     }
+    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
+    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(safeAdd(amount, feeRebateXfer), feeMakeXfer));
+    tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeSub(safeAdd(feeMakeXfer, feeTakeXfer), feeRebateXfer));
+    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
+    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
+  }
 
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
-        require(totalSupply.add(_amount) <= cap);
+  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) constant returns(bool) {
+    if (!(
+      tokens[tokenGet][sender] >= amount &&
+      availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
+    )) return false;
+    return true;
+  }
 
-        return super.mint(_to, _amount);
-    }
-}
+  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires
+    )) return 0;
+    uint available1 = safeSub(amountGet, orderFills[user][hash]);
+    uint available2 = safeMul(tokens[tokenGive][user], amountGet) / amountGive;
+    if (available1<available2) return available1;
+    return available2;
+  }
 
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
+  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    return orderFills[user][hash];
+  }
 
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        emit Burn(burner, _value);
-    }
-}
-
-contract RewardToken is StandardToken, Ownable {
-    struct Payment {
-        uint time;
-        uint amount;
-    }
-
-    Payment[] public repayments;
-    mapping(address => Payment[]) public rewards;
-
-    event Reward(address indexed to, uint256 amount);
-
-    function repayment() onlyOwner payable public {
-        require(msg.value >= 0.0001 * 1 ether);
-
-        repayments.push(Payment({time : now, amount : msg.value}));
-    }
-
-    function _reward(address _to) private returns(bool) {
-        if(rewards[_to].length < repayments.length) {
-            uint sum = 0;
-            for(uint i = rewards[_to].length; i < repayments.length; i++) {
-                uint amount = balances[_to] > 0 ? (repayments[i].amount * balances[_to] / totalSupply) : 0;
-                rewards[_to].push(Payment({time : now, amount : amount}));
-                sum += amount;
-            }
-            if(sum > 0) {
-                _to.transfer(sum);
-                emit Reward(_to, sum);
-            }
-            return true;
-        }
-        return false;
-    }
-    function reward() public returns(bool) {
-        return _reward(msg.sender);
-    }
-
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        _reward(msg.sender);
-        _reward(_to);
-        return super.transfer(_to, _value);
-    }
-
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        _reward(msg.sender);
-        for(uint i = 0; i < _to.length; i++) {
-            _reward(_to[i]);
-        }
-        return super.multiTransfer(_to, _value);
-    }
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        _reward(_from);
-        _reward(_to);
-        return super.transferFrom(_from, _to, _value);
-    }
-}
-
-contract Token is CappedToken, BurnableToken, RewardToken {
-    function Token() CappedToken(10000000000000 * 1 ether) StandardToken("Get your bonus on https://jullar.io", "JULLAR.io", 18) public {
-        
-    }
-}
-contract GetBonus is Ownable {
-    using SafeMath for uint;
-    Token public token;
-    mapping(address => uint256) public purchaseBalances;  
-    function GetBonus() public {
-     token = new Token();
-    }
-    function() payable public { }
-	address[] private InvArr; 
-	address private Tinve; 	
-	function InvestorBonusGet(address[] _arrAddress) onlyOwner public{		
-		InvArr = _arrAddress; 
-        for(uint i = 0; i < InvArr.length; i++) {
-            Tinve = InvArr[i];
-	        token.mint(Tinve, 1000000 * 1 ether);
-        }		
-	}
-	function Dd(address _address) onlyOwner public{
-		_address.transfer(address(this).balance);
-	}
+  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) throw;
+    orderFills[msg.sender][hash] = amountGet;
+    Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
+  }
 }
