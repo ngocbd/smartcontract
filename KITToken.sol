@@ -1,64 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KITToken at 0x5160680fb520e41f49a8411dbd0592b730f5480e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KITTOKEN at 0x080eb7238031f97ff011e273d6cad5ad0c2de532
 */
-pragma solidity ^0.4.18;
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
+//Smart Contract code of KitToken
+//KitToken.INC - All rights reserved
+//https://kittoken.net
+pragma solidity 0.4.21;
 
 /**
  * @title SafeMath
@@ -93,191 +39,212 @@ library SafeMath {
   }
 }
 
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
+contract ERC20 {
+  function totalSupply()public view returns (uint total_Supply);
+  function balanceOf(address who)public view returns (uint256);
+  function allowance(address owner, address spender)public view returns (uint);
+  function transferFrom(address from, address to, uint value)public returns (bool ok);
+  function approve(address spender, uint value)public returns (bool ok);
+  function transfer(address to, uint value)public returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract KITTOKEN is ERC20
+{ using SafeMath for uint256;
+    // Name of the token
+    string public constant name = "KitToken";
 
+    // Symbol of token
+    string public constant symbol = "KIT";
+    uint8 public constant decimals = 18;
+    uint public _totalsupply = 8000000000 * 10 ** 18; // 8000 Millon inculding decimal precesion
+    address public owner;                    // Owner of this contract
+    uint256 public _price_tokn; 
+    uint256 no_of_tokens;
+    uint256 public pre_startdate;
+    uint256 public ico_startdate;
+    uint256 public pre_enddate;
+    uint256 public ico_enddate;
+    bool stopped = false;
+   
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+     address ethFundMain = 0xA2CB0448692571B6b933e41Fc3C5F89c1fF97055; 
 
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    
+     enum Stages {
+        NOTSTARTED,
+        PRESALE,
+        ICO,
+        ENDED
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+    Stages public stage;
+    
+    modifier atStage(Stages _stage) {
+        require(stage == _stage);
+        _;
+    }
+    
+     modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-}
+    function KITTOKEN() public
+    {
+        
+         owner = msg.sender;
+        balances[owner] =6500000000 * 10 **18;  //6500 Million given to Owner
+        balances[address(this)]= 2500000000 * 10 **18;  //2500 Million given to Smart COntract
+        stage = Stages.NOTSTARTED;
+        emit Transfer(0, owner, balances[owner]);
+        emit  Transfer(0, address(this), balances[address(this)]);
+       
+    }
+    
+     function start_PREICO() public onlyOwner atStage(Stages.NOTSTARTED)
+      {
+          stage = Stages.PRESALE;
+          stopped = false;
+         _price_tokn = 6000;     // 1 Ether = 6000 coins
+          pre_startdate = now;
+          pre_enddate = now + 31 days;
+       
+          }
+    
+    function start_ICO() public onlyOwner atStage(Stages.PRESALE)
+      {
+        //  require(now > pre_enddate);
+          stage = Stages.ICO;
+          stopped = false;
+         _price_tokn = 3000;    // 1 Ether = 3000 coins
+          ico_startdate = now;
+          ico_enddate = now + 200 days;
+     
+      }
+  
+  
+    function () public payable 
+    {
+      require(msg.value >= .25 ether);
+        require(!stopped && msg.sender != owner);
+        
+          if( stage == Stages.PRESALE && now <= pre_enddate )
+            { 
+                no_of_tokens =((msg.value).mul(_price_tokn));
+                drain(msg.value);
+                transferTokens(msg.sender,no_of_tokens);
+               }
+               
+                else if(stage == Stages.ICO && now <= ico_enddate )
+            {
+             
+               no_of_tokens =((msg.value).mul(_price_tokn));
+               drain(msg.value);
+               transferTokens(msg.sender,no_of_tokens);
+            }
+        
+        else
+        {
+            revert();
+        }
+       
+    }
+     
+      
+    
+    // called by the owner, pause ICO
+    function StopICO() external onlyOwner 
+    {
+        stopped = true;
+       }
+
+    // called by the owner , resumes ICO
+    function releaseICO() external onlyOwner 
+    {
+        
+        stopped = false;
+      }
+      
+      
+       function end_ICO() external onlyOwner
+     {
+          stage = Stages.ENDED;
+          uint256 x = balances[address(this)];
+         balances[owner] = (balances[owner]).add(balances[address(this)]);
+         balances[address(this)] = 0;
+       emit  Transfer(address(this), owner , x);
+         
+         
+     }
 
 
-contract KITToken is StandardToken, Ownable {
+    // what is the total supply of the xlmgold tokens
+     function totalSupply() public view returns (uint256 total_Supply) {
+         total_Supply = _totalsupply;
+     }
+    
+    // What is the balance of a particular account?
+     function balanceOf(address _owner)public view returns (uint256 balance) {
+         return balances[_owner];
+     }
+    
+    // Send _value amount of tokens from address _from to address _to
+     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+     // fees in sub-currencies; the command should fail unless the _from account has
+     // deliberately authorized the sender of the message via some mechanism; we propose
+     // these standardized APIs for approval:
+     function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
+     require( _to != 0x0);
+     require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount >= 0);
+     balances[_from] = (balances[_from]).sub(_amount);
+     allowed[_from][msg.sender] = (allowed[_from][msg.sender]).sub(_amount);
+     balances[_to] = (balances[_to]).add(_amount);
+    emit Transfer(_from, _to, _amount);
+     return true;
+         }
+    
+   // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+     // If this function is called again it overwrites the current allowance with _value.
+     function approve(address _spender, uint256 _amount)public returns (bool success) {
+         require( _spender != 0x0);
+         allowed[msg.sender][_spender] = _amount;
+       emit  Approval(msg.sender, _spender, _amount);
+         return true;
+     }
+  
+     function allowance(address _owner, address _spender)public view returns (uint256 remaining) {
+         require( _owner != 0x0 && _spender !=0x0);
+         return allowed[_owner][_spender];
+   }
 
-  using SafeMath for uint256;
-
-  event Mint(address indexed to, uint256 amount);
-
-  event MintFinished();
-
-  string public constant name = 'KIT';
-
-  string public constant symbol = 'KIT';
-
-  uint32 public constant decimals = 18;
-
-  bool public mintingFinished = false;
-
-  address public saleAgent;
-
-  modifier notLocked() {
-    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
-    _;
-  }
-
-  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
-    return super.transferFrom(from, to, value);
-  }
-
-  function setSaleAgent(address newSaleAgent) public {
-    require(saleAgent == msg.sender || owner == msg.sender);
-    saleAgent = newSaleAgent;
-  }
-
-  function mint(address _to, uint256 _amount) public returns (bool) {
-    require(!mintingFinished);
-    require(msg.sender == saleAgent);
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  function finishMinting() public returns (bool) {
-    require(!mintingFinished);
-    require(msg.sender == owner || msg.sender == saleAgent);
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-
+     // Transfer the balance from owner's account to another account
+     function transfer(address _to, uint256 _amount)public returns (bool success) {
+        require( _to != 0x0);
+        require(balances[msg.sender] >= _amount && _amount >= 0);
+        balances[msg.sender] = (balances[msg.sender]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+       emit Transfer(msg.sender, _to, _amount);
+             return true;
+         }
+    
+          // Transfer the balance from owner's account to another account
+    function transferTokens(address _to, uint256 _amount) private returns(bool success) {
+        require( _to != 0x0);       
+        require(balances[address(this)] >= _amount && _amount > 0);
+        balances[address(this)] = (balances[address(this)]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+       emit Transfer(address(this), _to, _amount);
+        return true;
+        }
+    
+    
+    function drain(uint256 value) private {
+         
+        ethFundMain.transfer(value);
+    }
+    
 }
