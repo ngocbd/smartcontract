@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCupBroker at 0xdac4f0d74592012eb4baeb608b1992ffe5cc537a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCupBroker at 0x1367fc0b62c024de2be4ec22355d6614090ebc41
 */
 pragma solidity ^0.4.18;
 
@@ -1924,7 +1924,7 @@ contract WorldCupBroker is Ownable, usingOraclize {
         "Japan"
     ];
     uint public constant MAX_NUM_PAYOUT_ATTEMPTS = 3; // after 3 consecutive failed payout attempts, lock the match
-    uint public constant PAYOUT_ATTEMPT_INTERVAL = 10 minutes; // try every 10 minutes to release payout
+    uint public constant PAYOUT_ATTEMPT_INTERVAL = 3 minutes; // try every 3 minutes to release payout
     uint public  commission_rate = 7;
     uint public  minimum_bet = 0.01 ether;
     uint private commissions = 0;
@@ -1976,7 +1976,7 @@ contract WorldCupBroker is Ownable, usingOraclize {
      */ 
     function addMatch(string _name, string _fixture, string _secondary, bool _invert, uint8 _teamA, uint8 _teamB, uint _start) public onlyOwner returns (uint8) {
         // Check that there's at least 15 minutes until the match starts
-        require(_teamA < 32 && _teamB < 32 && _teamA != _teamB && (_start - 15 minutes) >= now);
+        require(_teamA < 32 && _teamB < 32 && _teamA != _teamB);
         Match memory newMatch = Match({
             locked: false, 
             cancelled: false, 
@@ -1999,13 +1999,17 @@ contract WorldCupBroker is Ownable, usingOraclize {
         string memory url = strConcat(
             "[URL] json(https://soccer.sportmonks.com/api/v2.0/fixtures/",
             newMatch.secondaryFixtureId,
-            "?api_token=${[decrypt] BNxYykO2hsQ7iA7yRuDLSu1km6jFZwN5X87TY1BSmU30llRn8uWkJjHgx+YGytA1tmbRjb20CW0gIzcFmvq3yLZnitsvW28SPjlf+s9MK7hU+uRXqwhoW6dmWqKsBrCigrggFwMBRk4kA16jugtIr+enXHjOnAKSxd1dO4YXTCYvZc3T1pFA9PVyFFnd}).data.scores[localteam_score,visitorteam_score]");
+            "?api_token=${[decrypt] BBCTaXDN6dnsmdjsC2wVaBPxSDsuKX86BANML5dkUxjEUtgWsm9Rckj8c+4rIAjTOq9xn78g0lQswiiy63fxzbXJiFRP0uj53HrIa9CGfa4eXa5iQusy06294Vuljc1atuIbZzNuXdJ9cwDrH1xAc86eKnW1rYmWMqGKpr4Xw0lefpakheD8/9fJMIVo}).data.scores[localteam_score,visitorteam_score]");
         // store the oraclize query id for later use
         // use hours to over estimate the amount of time it would take to safely get a correct result
         // 90 minutes of regulation play time + potential 30 minutes of extra time + 15 minutes break
         // + potential 10 minutes of stoppage time + potential 10 minutes of penalties
         // + 25 minutes of time for any APIs to correct and ensure their information is correct
-        bytes32 oraclizeId = oraclize_query((_start + (3 hours)), "nested", url, primaryGasLimit);
+        uint start = (_start + 3 hours);
+        if (start <= now) {
+            start = 1 minutes;
+        }
+        bytes32 oraclizeId = oraclize_query(start, "nested", url, primaryGasLimit);
         oraclizeIds[oraclizeId] = matchId;
         emit MatchCreated(matchId);
         return matchId;
@@ -2305,7 +2309,7 @@ contract WorldCupBroker is Ownable, usingOraclize {
                     url = strConcat(
                         "[URL] json(https://soccer.sportmonks.com/api/v2.0/fixtures/",
                         matches[matchId].secondaryFixtureId,
-                        "?api_token=${[decrypt] BNxYykO2hsQ7iA7yRuDLSu1km6jFZwN5X87TY1BSmU30llRn8uWkJjHgx+YGytA1tmbRjb20CW0gIzcFmvq3yLZnitsvW28SPjlf+s9MK7hU+uRXqwhoW6dmWqKsBrCigrggFwMBRk4kA16jugtIr+enXHjOnAKSxd1dO4YXTCYvZc3T1pFA9PVyFFnd}).data.scores[localteam_score,visitorteam_score]");
+                        "?api_token=${[decrypt] BBCTaXDN6dnsmdjsC2wVaBPxSDsuKX86BANML5dkUxjEUtgWsm9Rckj8c+4rIAjTOq9xn78g0lQswiiy63fxzbXJiFRP0uj53HrIa9CGfa4eXa5iQusy06294Vuljc1atuIbZzNuXdJ9cwDrH1xAc86eKnW1rYmWMqGKpr4Xw0lefpakheD8/9fJMIVo}).data.scores[localteam_score,visitorteam_score]");
                     querytype = "nested";
                     // use primary gas limit since that query won't payout winners on callback
                     limit = primaryGasLimit;
@@ -2323,8 +2327,8 @@ contract WorldCupBroker is Ownable, usingOraclize {
             // split the string to get the two string encoded ints
             strings.slice memory x = s.split(", ".toSlice());
             // parse them to int to get the scores
-            uint homeScore = parseInt(s.toString()); 
-            uint awayScore = parseInt(x.toString());
+            uint awayScore = parseInt(s.toString()); 
+            uint homeScore = parseInt(x.toString());
             uint8 matchResult;
             // determine the winner
             if (homeScore > awayScore) {
