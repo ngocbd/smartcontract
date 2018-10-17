@@ -1,17 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpendCoin at 0x8b449007fecad398b3c0b8ca27305a4b9ddaa32a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Spendcoin at 0xddd460bbd9f79847ea08681563e8a9696867210c
 */
 pragma solidity ^0.4.18;
 
 
 // ----------------------------------------------------------------------------
 
-// 'XSD' 'Spend' Coin contract
+// Spendcoin Contract
 //
-// Symbol      : XSD
-// Name        : SpendCoin
-// Total supply: 10,000,000,000.000000000000000000
+// Symbol      : SPND
+// Name        : Spendcoin
+// Total supply: 2,000,000,000.000000000000000000
 // Decimals    : 18
+// Website     : https://spendcoin.org
 // ----------------------------------------------------------------------------
 
 
@@ -118,6 +119,44 @@ contract Owned {
 
 }
 
+contract Tokenlock is Owned {
+    
+    uint lockStartTime = 0;   //time from when token will be locked
+    uint lockEndTime = 0;     //time from when token will be locked
+    uint8 isLocked = 0;       //flag indicates if token is locked
+
+    event Freezed(uint starttime, uint endtime);
+    event UnFreezed();
+
+    modifier validLock {
+        require(isLocked == 0 || (now < lockStartTime || now > lockEndTime));
+        _;
+    }
+    
+    function freezeTime(uint _startTime, uint _endTime) public onlyOwner {
+        isLocked = 1;
+        lockStartTime = _startTime;
+        lockEndTime = _endTime;
+        
+        emit Freezed(lockStartTime, lockEndTime);
+    }
+    
+    function freeze() public onlyOwner {
+        isLocked = 1;
+        lockStartTime = 0;
+        lockEndTime = 90000000000;
+        
+        emit Freezed(lockStartTime, lockEndTime);
+    }
+
+    function unfreeze() public onlyOwner {
+        isLocked = 0;
+        lockStartTime = 0;
+        lockEndTime = 0;
+        
+        emit UnFreezed();
+    }
+}
 
 
 // ----------------------------------------------------------------------------
@@ -128,7 +167,7 @@ contract Owned {
 
 // ----------------------------------------------------------------------------
 
-contract SpendCoin is ERC20Interface, Owned {
+contract Spendcoin is ERC20Interface, Tokenlock {
 
     using SafeMath for uint;
 
@@ -154,19 +193,19 @@ contract SpendCoin is ERC20Interface, Owned {
 
     // ------------------------------------------------------------------------
 
-    function SpendCoin() public {
+    function Spendcoin() public {
 
-        symbol = "XSD";
+        symbol = "SPND";
 
-        name = "SpendCoin";
+        name = "Spendcoin";
 
         decimals = 18;
 
-        _totalSupply = 10000000000 * 10**uint(decimals);
+        _totalSupply = 2000000000 * 10**uint(decimals);
 
         balances[owner] = _totalSupply;
 
-        Transfer(address(0), owner, _totalSupply);
+        emit Transfer(address(0), owner, _totalSupply);
 
     }
 
@@ -216,7 +255,7 @@ contract SpendCoin is ERC20Interface, Owned {
 
         balances[to] = balances[to].add(tokens);
 
-        Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
 
         return true;
 
@@ -244,7 +283,7 @@ contract SpendCoin is ERC20Interface, Owned {
 
         allowed[msg.sender][spender] = tokens;
 
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
 
         return true;
 
@@ -278,7 +317,7 @@ contract SpendCoin is ERC20Interface, Owned {
 
         balances[to] = balances[to].add(tokens);
 
-        Transfer(from, to, tokens);
+        emit Transfer(from, to, tokens);
 
         return true;
 
@@ -317,9 +356,8 @@ contract SpendCoin is ERC20Interface, Owned {
     // Owner can withdraw ether if token received.
     // ------------------------------------------------------------------------
     function withdraw() public onlyOwner returns (bool result) {
-        
-        return owner.send(this.balance);
-        
+        address tokenaddress = this;
+        return owner.send(tokenaddress.balance);
     }
     
     // ------------------------------------------------------------------------
