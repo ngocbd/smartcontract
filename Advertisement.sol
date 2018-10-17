@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0xF6739B829001Eb92605c36bA0BfEfd7Dad202251
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x252318211e7f8d48e04ec9897ea556d06b49e304
 */
 pragma solidity ^0.4.21;
 
@@ -236,7 +236,7 @@ contract AdvertisementStorage {
 
     function emitEvent(CampaignLibrary.Campaign campaign) private {
 
-        if (campaigns[campaign.bidId].bidId == 0x0) {
+        if (campaigns[campaign.bidId].owner == 0x0) {
             emit CampaignCreated(
                 campaign.bidId,
                 campaign.price,
@@ -259,6 +259,7 @@ contract AdvertisementStorage {
         }
     }
 }
+
 
 contract AdvertisementFinance {
 
