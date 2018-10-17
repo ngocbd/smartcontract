@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXCToken at 0x52ffa0ce9feeac3430963d03e728811546710b6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXCToken at 0xac8c6879bd79821c1a2db5ba424d3354eabb7630
 */
 pragma solidity ^0.4.24;
 
@@ -429,10 +429,5 @@ contract EXCToken is PausableToken {
     totalSupply_ = TOTAL_SUPPLY;
     balances[msg.sender] = TOTAL_SUPPLY;
     emit Transfer(address(0), msg.sender, TOTAL_SUPPLY);
-  }
-  
-  // can't accept ether
-  function () public payable {
-    revert();
   }
 }
