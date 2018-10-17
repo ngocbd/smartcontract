@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATxAssetProxy at 0xd029de67c3f46d046c635f60efeb41d5b92a74ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATxAssetProxy at 0xc72d06eecd98865f4b07cc496c50aca9a1e77e88
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title Owned contract with safe ownership pass.
@@ -92,7 +91,6 @@ contract ERC20Interface {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
 
-
 /**
  * @title Generic owned destroyable contract
  */
@@ -121,7 +119,6 @@ contract Object is Owned {
         return OWNED_ACCESS_DENIED_ONLY_CONTRACT_OWNER;
     }
 }
-
 
 /**
 * @title SafeMath
@@ -153,18 +150,6 @@ library SafeMath {
     }
 }
 
-contract ERC20 {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, address indexed spender, uint256 value);
-    string public symbol;
-
-    function totalSupply() constant returns (uint256 supply);
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-}
 /// @title Provides possibility manage holders? country limits and limits for holders.
 contract DataControllerInterface {
 
@@ -177,6 +162,7 @@ contract DataControllerInterface {
 
     function changeAllowance(address _holder, uint _value) public returns (uint);
 }
+
 /// @title ServiceController
 ///
 /// Base implementation
@@ -188,7 +174,6 @@ contract ServiceControllerInterface {
     /// @return `true` when an address is a service, `false` otherwise
     function isService(address _address) public view returns (bool);
 }
-
 
 contract ATxAssetInterface {
 
@@ -202,12 +187,29 @@ contract ATxAssetInterface {
         revert();
     }
 }
+
 /// @title ServiceAllowance.
 ///
 /// Provides a way to delegate operation allowance decision to a service contract
 contract ServiceAllowance {
     function isTransferAllowed(address _from, address _to, address _sender, address _token, uint _value) public view returns (bool);
 }
+
+
+contract ERC20 {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed from, address indexed spender, uint256 value);
+    string public symbol;
+
+    function totalSupply() constant returns (uint256 supply);
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+}
+
+
 contract Platform {
     mapping(bytes32 => address) public proxies;
     function name(bytes32 _symbol) public view returns (string);
@@ -227,11 +229,7 @@ contract Platform {
     function changeOwnership(bytes32 _symbol, address _newOwner) public returns (uint errorCode);
 }
 
-
 contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
-
-    // Timespan for users to review the new implementation and make decision.
-    uint constant UPGRADE_FREEZE_TIME = 3 days;
 
     using SafeMath for uint;
 
@@ -242,12 +240,6 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
 
     // Current asset implementation contract address.
     address latestVersion;
-
-    // Proposed next asset implementation contract address.
-    address pendingVersion;
-
-    // Upgrade freeze-time start.
-    uint pendingVersionTimestamp;
 
     // Assigned platform, immutable.
     Platform public platform;
@@ -502,24 +494,6 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
     }
 
     /**
-     * Returns proposed next asset implementation contract address.
-     *
-     * @return asset implementation contract address.
-     */
-    function getPendingVersion() public view returns (address) {
-        return pendingVersion;
-    }
-
-    /**
-     * Returns upgrade freeze-time start.
-     *
-     * @return freeze-time start.
-     */
-    function getPendingVersionTimestamp() public view returns (uint) {
-        return pendingVersionTimestamp;
-    }
-
-    /**
      * Propose next asset implementation contract address.
      *
      * Can only be called by current asset owner.
@@ -531,58 +505,14 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
      * @return success.
      */
     function proposeUpgrade(address _newVersion) public onlyAssetOwner returns (bool) {
-        // Should not already be in the upgrading process.
-        if (pendingVersion != 0x0) {
-            return false;
-        }
         // New version address should be other than 0x0.
         if (_newVersion == 0x0) {
             return false;
         }
-        // Don't apply freeze-time for the initial setup.
-        if (latestVersion == 0x0) {
-            latestVersion = _newVersion;
-            return true;
-        }
-        pendingVersion = _newVersion;
-        pendingVersionTimestamp = now;
-        UpgradeProposal(_newVersion);
-        return true;
-    }
+        
+        latestVersion = _newVersion;
 
-    /**
-     * Cancel the pending upgrade process.
-     *
-     * Can only be called by current asset owner.
-     *
-     * @return success.
-     */
-    function purgeUpgrade() public onlyAssetOwner returns (bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
-        return true;
-    }
-
-    /**
-     * Finalize an upgrade process setting new asset implementation contract address.
-     *
-     * Can only be called after an upgrade freeze-time.
-     *
-     * @return success.
-     */
-    function commitUpgrade() public returns (bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        if (pendingVersionTimestamp.add(UPGRADE_FREEZE_TIME) > now) {
-            return false;
-        }
-        latestVersion = pendingVersion;
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
+        UpgradeProposal(_newVersion); 
         return true;
     }
 
