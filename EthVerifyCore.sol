@@ -1,14 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVerifyCore at 0x1ea6fad76886fe0c0bf8ebb3f51678b33d24186c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthVerifyCore at 0x1c307a39511c16f74783fcd0091a921ec29a0b51
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
+//EthVerify.net
 contract EthVerifyCore{
     address public ceoAddress;
     mapping(address=>bool) public admins;
     mapping(address=>bool) public approvedContracts;
-    mapping (address => bool) private verifiedUsers;
-    
+
+    //Use this variable to access info on addresses, ie require(ethVerify.verifiedUsers(msg.sender));
+    mapping (address => bool) public verifiedUsers;
+
   modifier onlyCEO() {
     require(msg.sender == ceoAddress);
     _;
@@ -17,7 +20,7 @@ contract EthVerifyCore{
     require(admins[msg.sender]);
     _;
   }
-    
+
     function EthVerifyCore() public{
         ceoAddress=msg.sender;
         admins[ceoAddress]=true;
@@ -43,8 +46,5 @@ contract EthVerifyCore{
         for(uint i = 0; i<addresses.length; i++){
             verifiedUsers[addresses[i]]=false;
         }
-    }
-    function getUserStatus(address user) public view onlyAdmin returns(bool){
-        return verifiedUsers[user];
     }
 }
