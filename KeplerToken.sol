@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeplerToken at 0x7c5cf07b5c7d4b7f7cd001e96ec7e7189a155773
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeplerToken at 0x9e8fab775193bc2d61be41b70d959a8dbc05ed98
 */
 pragma solidity ^0.4.21;
 
@@ -262,7 +262,7 @@ contract StandardToken is ERC20, BasicToken {
     string public constant symbol = "KEP";
     uint8 public constant decimals = 18;
 
-    uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
 
     function KeplerToken() public {
       totalSupply_ = INITIAL_SUPPLY;
