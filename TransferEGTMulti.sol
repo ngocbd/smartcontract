@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferEGTMulti at 0xdf1f581d348aa8caeebdb5f3c7235b4ad9ab648f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferEGTMulti at 0x8a7aa1ac3773200c5e1ca12090669644f07a35e5
 */
 pragma solidity ^0.4.24;
 contract EnjoyGameToken {
@@ -13,10 +13,10 @@ contract TransferEGTMulti {
 
     modifier isAdmin() {
         if(0xe7266A1eFb21069E257Ec8Fc3e103f1FcF2C3e5D != msg.sender
-        && 0xc1180dd8a1270c7aafc76d957dbb1c4c09720370 != msg.sender
-        && 0x7C2A9bEA4177606B97bd333836F916ED475bb638 != msg.sender
-        && 0x22B8EAeA7F027c37a968Ac95c7Fa009Aa52fF754 != msg.sender
-        && 0xC24878A818Da47A1f39f2F926620E547B0d41831 != msg.sender){
+        || 0xc1180dd8a1270c7aafc76d957dbb1c4c09720370 != msg.sender
+        || 0x7C2A9bEA4177606B97bd333836F916ED475bb638 != msg.sender
+        || 0x22B8EAeA7F027c37a968Ac95c7Fa009Aa52fF754 != msg.sender
+        || 0xC24878A818Da47A1f39f2F926620E547B0d41831 != msg.sender){
             revert("not admin");
         }
         _;
