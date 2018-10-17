@@ -1,265 +1,85 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bet at 0x95880c85fed94ab00ee819642b85adc03a1a59ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BET at 0xc9590856c0a35b86a6c1f917d15ff151098d1b56
 */
-pragma solidity 0.4.23;
+pragma solidity ^0.4.4;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+contract Token {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    function totalSupply() constant returns (uint256 supply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract Bet {
-    address public ceoAddress;
-    address public cooAddress;
+contract StandardToken is Token {
 
-    enum RoundStatus { UNKNOWN, RUNNING, FINISHED, CANCELLED }
-
-    event RoundCreated(uint16 roundId);
-    event BetPlaced(uint betId, uint16 roundId, uint amount);
-    event RoundStatusUpdated(uint16 roundId, RoundStatus oldStatus, RoundStatus newStatus);
-    event FinalScoreUpdated(uint16 roundId, bytes32 winner);
-    event Debug(uint16 roundId, uint expire, uint time, bool condition);
-
-    struct Round {
-        string name;
-        bytes32[] statusPossibility;
-        uint16 nbBets;
-        uint prizePool;
-        RoundStatus status;
-        bytes32 resultStatus;
-        uint runningAt;
-        uint finishedAt;
-        uint expireAt;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    struct Bet {
-        uint16 roundId;
-        address owner;
-        uint amount;
-        bytes32 status;
-        bool claimed;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    //mapping(uint => address) public betToOwner;
-    mapping(uint16 => uint[]) public roundBets; // roundId => betId[]
-    //mapping(address => uint) public ownerBetCount;
-    Bet[] public bets;
-    Round[] public rounds;
-    uint16 public roundsCount;
-    uint public fees;
-    uint public MINIMUM_BET_VALUE = 0.01 ether;
-
-    constructor() public {
-        ceoAddress = msg.sender;
-        cooAddress = msg.sender;
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
 
-    function setMinimumBetValue(uint _minimumBetValue) onlyCLevel {
-        MINIMUM_BET_VALUE = _minimumBetValue;
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function setCEOAddress(address _address) public onlyOwner {
-        ceoAddress = _address;
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
-    function setCOOAddress(address _address) public onlyOwner {
-        cooAddress = _address;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+contract BET is StandardToken {
+
+    function () {
+        throw;
     }
 
-    function createRound(string _name, bytes32[] _statusPossibility, uint _expireAt) public onlyCLevel {
-        uint16 id = uint16(rounds.push(Round(_name, _statusPossibility, 0, 0, RoundStatus.RUNNING, 0, now, 0, _expireAt)) - 1);
-        roundsCount = uint16(SafeMath.add(roundsCount, 1));
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = 'H1.0';
 
-        emit RoundCreated(id);
+    function BET(
+        ) {
+        balances[msg.sender] = 2500000000000000;
+        totalSupply = 2500000000000000;
+        name = "0xBitcoin Exchange Token";
+        decimals = 8;
+        symbol = "BET";
     }
 
-    function getRoundStatuses(uint16 _roundId) public view returns(bytes32[] statuses) {
-        return rounds[_roundId].statusPossibility;
-    }
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
 
-    function extendRound(uint16 _roundId, uint _time) public onlyCLevel {
-        rounds[_roundId].expireAt = _time;
-    }
-
-    function getRoundBets(uint16 _roundId) public view returns(uint[] values) {
-        return roundBets[_roundId];
-    }
-
-    function updateRoundStatus(uint16 _id, RoundStatus _status) public onlyCLevel {
-        require(rounds[_id].status != RoundStatus.FINISHED);
-        emit RoundStatusUpdated(_id, rounds[_id].status, _status);
-        rounds[_id].status = _status;
-
-        if (_status == RoundStatus.CANCELLED) {
-            rounds[_id].finishedAt = now;
-        }
-    }
-
-    function setRoundFinalScore(uint16 _roundId, bytes32 _resultStatus) public
-    roundIsRunning(_roundId)
-    onlyCLevel
-    payable {
-        rounds[_roundId].status = RoundStatus.FINISHED;
-        rounds[_roundId].finishedAt = now;
-        rounds[_roundId].resultStatus = _resultStatus;
-
-        emit FinalScoreUpdated(_roundId, _resultStatus);
-    }
-
-    function bet(uint16 _roundId, bytes32 _status) public
-    roundIsRunning(_roundId)
-    greaterThan(msg.value, MINIMUM_BET_VALUE)
-    isNotExpired(_roundId)
-    payable {
-        Debug(_roundId, rounds[_roundId].expireAt, now, now >= rounds[_roundId].expireAt);
-        uint id = bets.push(Bet(_roundId, msg.sender, msg.value, _status, false)) - 1;
-        roundBets[_roundId].push(id);
-        rounds[_roundId].nbBets++;
-        rounds[_roundId].prizePool += msg.value;
-
-        emit BetPlaced(id, _roundId, msg.value);
-    }
-
-    function claimRoundReward(uint16 _roundId, address _owner) public roundIsFinish(_roundId) returns (uint rewardAfterFees, uint rewardFees) {
-        Round memory myRound = rounds[_roundId];
-        uint[] memory betIds = getRoundBets(_roundId);
-
-        uint totalRewardsOnBet = 0;
-        uint totalBetOnWinResult = 0;
-        uint amountBetOnResultForOwner = 0;
-        for (uint i = 0; i < betIds.length; i++) {
-            Bet storage bet = bets[betIds[i]];
-
-            if (bet.status == myRound.resultStatus) {
-                totalBetOnWinResult = SafeMath.add(totalBetOnWinResult, bet.amount);
-                if (bet.claimed == false && bet.owner == _owner) {
-                    amountBetOnResultForOwner = SafeMath.add(amountBetOnResultForOwner, bet.amount);
-                    bet.claimed = true;
-                }
-            } else {
-                totalRewardsOnBet = SafeMath.add(totalRewardsOnBet, bet.amount);
-            }
-        }
-
-        uint coef = 10000000; // Handle 4 numbers precision
-        uint percentOwnerReward = SafeMath.div(SafeMath.mul(amountBetOnResultForOwner, coef), totalBetOnWinResult);
-
-        uint rewardToOwner = SafeMath.div(SafeMath.mul(percentOwnerReward, totalRewardsOnBet), coef);
-        rewardAfterFees = SafeMath.div(SafeMath.mul(rewardToOwner, 90), 100);
-        rewardFees = SafeMath.sub(rewardToOwner, rewardAfterFees);
-        rewardAfterFees = SafeMath.add(rewardAfterFees, amountBetOnResultForOwner);
-
-        fees = SafeMath.add(fees, rewardFees);
-
-        _owner.transfer(rewardAfterFees);
-    }
-
-    function claimCancelled(uint16 _roundId, address _owner) public roundIsCancelled(_roundId) returns(uint amountToClaimBack) {
-        uint[] memory betIds = getRoundBets(_roundId);
-
-        amountToClaimBack = 0;
-        for (uint i = 0; i < betIds.length; i++) {
-            Bet storage bet = bets[betIds[i]];
-
-            if (bet.owner == _owner && bet.claimed != true) {
-                amountToClaimBack = SafeMath.add(amountToClaimBack, bet.amount);
-                bet.claimed = true;
-            }
-        }
-
-        _owner.transfer(amountToClaimBack);
-    }
-
-    function claimRewards(uint16[] _roundsToClaim, address _owner) public {
-        for (uint i = 0; i < _roundsToClaim.length; i++) {
-            claimRoundReward(_roundsToClaim[i], _owner);
-        }
-    }
-
-    function payout(address _to, uint _amount) public onlyOwner {
-        require(fees >= _amount);
-        fees = SafeMath.sub(fees, _amount);
-        _to.transfer(_amount);
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == ceoAddress);
-        _;
-    }
-
-    modifier onlyCLevel() {
-        require(msg.sender == ceoAddress || msg.sender == cooAddress);
-        _;
-    }
-
-    modifier greaterThan(uint _value, uint _expect) {
-        require(_value >= _expect);
-        _;
-    }
-
-    modifier isNotExpired(uint16 _roundId) {
-        require(rounds[_roundId].expireAt == 0 || now < rounds[_roundId].expireAt);
-        _;
-    }
-
-    modifier betStatusPossible(uint16 _roundId, bytes32 _status) {
-        //require(_status < rounds[_roundId].statusPossibility);
-        _;
-    }
-
-    modifier roundIsCancelled(uint16 _roundId) {
-        require(rounds[_roundId].status == RoundStatus.CANCELLED);
-        _;
-    }
-
-    modifier roundIsRunning(uint16 _roundId) {
-        require(rounds[_roundId].status == RoundStatus.RUNNING);
-        _;
-    }
-
-    modifier roundIsFinish(uint16 _roundId) {
-        require(rounds[_roundId].status == RoundStatus.FINISHED);
-        _;
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
