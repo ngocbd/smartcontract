@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a172c797c894737760aaa9e9d1558a72ace60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a17f8ad40dc2c955d95c0547f3e6318bd72e7
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
 contract Engine {
     uint256 public VERSION;
@@ -260,18 +260,18 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     uint256 constant internal PRECISION = (10**18);
     uint256 constant internal RCN_DECIMALS = 18;
 
-    uint256 public constant VERSION = 232;
+    uint256 public constant VERSION = 233;
     string public constant VERSION_NAME = "Basalt";
 
     uint256 private activeLoans = 0;
     mapping(address => uint256) private lendersBalance;
 
     function name() public view returns (string _name) {
-        _name = "RCN - Nano loan engine - Basalt 232";
+        _name = "RCN - Nano loan engine - Basalt 233";
     }
 
     function symbol() public view returns (string _symbol) {
-        _symbol = "RCN-NLE-232";
+        _symbol = "RCN-NLE-233";
     }
 
     /**
@@ -700,13 +700,14 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         
         require(msg.sender == loan.lender || msg.sender == loan.approvedTransfer || operators[loan.lender][msg.sender]);
         require(to != address(0));
-        loan.lender = to;
-        loan.approvedTransfer = address(0);
 
         // ERC721, transfer loan to another address
-        lendersBalance[msg.sender] -= 1;
+        lendersBalance[loan.lender] -= 1;
         lendersBalance[to] += 1;
         Transfer(loan.lender, to, index);
+
+        loan.lender = to;
+        loan.approvedTransfer = address(0);
 
         return true;
     }
