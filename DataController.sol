@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataController at 0x32965050e700b83e94195d250b784e54111aeacb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataController at 0xb019ed7fc2fe1e6c57e438c94799af02dee0e22d
 */
 pragma solidity ^0.4.18;
 
@@ -170,23 +170,13 @@ contract OracleMethodAdapter is Object {
         }
     }
 
-    function addOracles(
-        bytes4[] _signatures, 
-        address[] _oracles
-    ) 
-    onlyContractOwner 
-    external 
-    returns (uint) 
-    {
+    function addOracles(bytes4[] _signatures, address[] _oracles) onlyContractOwner external returns (uint) {
         require(_signatures.length == _oracles.length);
         bytes4 _sig;
         address _oracle;
         for (uint _idx = 0; _idx < _signatures.length; ++_idx) {
             (_sig, _oracle) = (_signatures[_idx], _oracles[_idx]);
-            if (_oracle != 0x0 
-                && _sig != bytes4(0) 
-                && !oracles[_sig][_oracle]
-            ) {
+            if (!oracles[_sig][_oracle]) {
                 oracles[_sig][_oracle] = true;
                 _emitOracleAdded(_sig, _oracle);
             }
@@ -194,23 +184,13 @@ contract OracleMethodAdapter is Object {
         return OK;
     }
 
-    function removeOracles(
-        bytes4[] _signatures, 
-        address[] _oracles
-    ) 
-    onlyContractOwner 
-    external 
-    returns (uint) 
-    {
+    function removeOracles(bytes4[] _signatures, address[] _oracles) onlyContractOwner external returns (uint) {
         require(_signatures.length == _oracles.length);
         bytes4 _sig;
         address _oracle;
         for (uint _idx = 0; _idx < _signatures.length; ++_idx) {
             (_sig, _oracle) = (_signatures[_idx], _oracles[_idx]);
-            if (_oracle != 0x0 
-                && _sig != bytes4(0) 
-                && oracles[_sig][_oracle]
-            ) {
+            if (oracles[_sig][_oracle]) {
                 delete oracles[_sig][_oracle];
                 _emitOracleRemoved(_sig, _oracle);
             }
@@ -287,6 +267,7 @@ contract ERC20 {
 }
 
 
+
 contract Platform {
     mapping(bytes32 => address) public proxies;
     function name(bytes32 _symbol) public view returns (string);
@@ -305,7 +286,6 @@ contract Platform {
     function isReissuable(bytes32 _symbol) public view returns (bool);
     function changeOwnership(bytes32 _symbol, address _newOwner) public returns (uint errorCode);
 }
-
 
 contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
 
@@ -2025,14 +2005,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return holderIndex[holderAddress2Id[_address]] != 0;
     }
 
-    function isHolderOwnAddress(
-        bytes32 _externalHolderId, 
-        address _address
-    ) 
-    public 
-    view 
-    returns (bool) 
-    {
+    function isHolderOwnAddress(bytes32 _externalHolderId, address _address) public view returns (bool) {
         uint _holderIndex = holderIndex[_externalHolderId];
         if (_holderIndex == 0) {
             return false;
@@ -2040,13 +2013,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return holders[_holderIndex].address2Index[_address] != 0;
     }
 
-    function getCountryInfo(uint _countryCode) 
-    public 
-    view 
-    returns (
-        uint _maxHolderNumber, 
-        uint _currentHolderCount
-    ) {
+    function getCountryInfo(uint _countryCode) public view returns (uint _maxHolderNumber, uint _currentHolderCount) {
         CountryLimits storage _data = countryLimitsList[countryIndex[_countryCode]];
         return (_data.maxTokenHolderNumber, _data.currentTokenHolderNumber);
     }
@@ -2069,15 +2036,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId holder address.
     /// @param _countryCode country code.
     /// @return error code.
-    function registerHolder(
-        bytes32 _externalHolderId, 
-        address _holderAddress, 
-        uint _countryCode
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function registerHolder(bytes32 _externalHolderId, address _holderAddress, uint _countryCode) onlyOracleOrOwner external returns (uint) {
         require(_holderAddress != 0x0);
         require(holderIndex[_externalHolderId] == 0);
         uint _holderIndex = holderIndex[holderAddress2Id[_holderAddress]];
@@ -2107,14 +2066,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId external holder identifier.
     /// @param _newAddress adding address.
     /// @return error code.
-    function addHolderAddress(
-        bytes32 _externalHolderId, 
-        address _newAddress
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function addHolderAddress(bytes32 _externalHolderId, address _newAddress) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2139,14 +2091,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId external holder identifier.
     /// @param _address removing address.
     /// @return error code.
-    function removeHolderAddress(
-        bytes32 _externalHolderId, 
-        address _address
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function removeHolderAddress(bytes32 _externalHolderId, address _address) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2174,14 +2119,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _operational operational status.
     ///
     /// @return result code.
-    function changeOperational(
-        bytes32 _externalHolderId, 
-        bool _operational
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function changeOperational(bytes32 _externalHolderId, bool _operational) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2198,14 +2136,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _text changing text.
     ///
     /// @return result code.
-    function updateTextForHolder(
-        bytes32 _externalHolderId, 
-        bytes _text
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function updateTextForHolder(bytes32 _externalHolderId, bytes _text) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2221,14 +2152,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function updateLimitPerDay(
-        bytes32 _externalHolderId, 
-        uint _limit
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function updateLimitPerDay(bytes32 _externalHolderId, uint _limit) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2246,14 +2170,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function updateLimitPerMonth(
-        bytes32 _externalHolderId, 
-        uint _limit
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function updateLimitPerMonth(bytes32 _externalHolderId, uint _limit) onlyOracleOrOwner external returns (uint) {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2271,14 +2188,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function changeCountryLimit(
-        uint _countryCode, 
-        uint _limit
-    ) 
-    onlyOracleOrOwner 
-    external 
-    returns (uint) 
-    {
+    function changeCountryLimit(uint _countryCode, uint _limit) onlyOracleOrOwner external returns (uint) {
         uint _countryIndex = countryIndex[_countryCode];
         require(_countryIndex != 0);
 
@@ -2293,14 +2203,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function withdrawFrom(
-        address _holderAddress, 
-        uint _value
-    ) 
-    onlyAsset 
-    public 
-    returns (uint) 
-    {
+    function withdrawFrom(address _holderAddress, uint _value) public onlyAsset returns (uint) {
         bytes32 _externalHolderId = holderAddress2Id[_holderAddress];
         HoldersData storage _holderData = holders[holderIndex[_externalHolderId]];
         _holderData.sendLimPerDay = _holderData.sendLimPerDay.sub(_value);
@@ -2308,14 +2211,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function depositTo(
-        address _holderAddress, 
-        uint _value
-    ) 
-    onlyAsset 
-    public 
-    returns (uint) 
-    {
+    function depositTo(address _holderAddress, uint _value) public onlyAsset returns (uint) {
         bytes32 _externalHolderId = holderAddress2Id[_holderAddress];
         HoldersData storage _holderData = holders[holderIndex[_externalHolderId]];
         _holderData.sendLimPerDay = _holderData.sendLimPerDay.add(_value);
@@ -2323,14 +2219,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function updateCountryHoldersCount(
-        uint _countryCode, 
-        uint _updatedHolderCount
-    ) 
-    public 
-    onlyAsset 
-    returns (uint) 
-    {
+    function updateCountryHoldersCount(uint _countryCode, uint _updatedHolderCount) public onlyAsset returns (uint) {
         CountryLimits storage _data = countryLimitsList[countryIndex[_countryCode]];
         assert(_data.maxTokenHolderNumber >= _updatedHolderCount);
         _data.currentTokenHolderNumber = _updatedHolderCount;
