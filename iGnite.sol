@@ -1,247 +1,258 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iGnite at 0xe075793215ddbd61b513309febec8fd67e2d3ba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ignite at 0x750120015bb290d0be129b10d786793883a1378d
 */
-contract ERC223ReceivingContract {
-     
-    struct iGn {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
+pragma solidity ^0.4.23;
+
+
+library SafeMath {
+
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    
-      function tokenFallback(address _from, uint _value, bytes _data){
-      iGn memory ignite;
-      ignite.sender = _from;
-      ignite.value = _value;
-      ignite.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      ignite.sig = bytes4(u);
- 
+
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
-
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
- 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) throw;
-        return x + y;
-    }
- 
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x < y) throw;
-        return x - y;
-    }
- 
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) throw;
-        return x * y;
-    }
+contract ForeignToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
- 
-contract iGnite is SafeMath { 
 
-    string public name;
-    bytes32 public symbol;
-    uint8 public decimals;
-    uint256 public rewardPerBlockPerAddress;
-    uint256 public totalGenesisAddresses;
-    address public genesisCallerAddress;
-    uint256 public initialSupplyPerAddress;
-    uint256 public genesisBlockCount;
-    uint256 private minedBlocks;
-    uint256 private iGnited;
-    uint256 private genesisSupplyPerAddress;
-    uint256 private totalMaxAvailableAmount;
-    uint256 private availableAmount;
-    uint256 private availableBalance;
-    uint256 private balanceOfAddress;
-    uint256 private genesisSupply;
-    uint256 private _totalSupply;
-   
-    mapping(address => uint256) public balanceOf;
-    mapping(address => uint) balances; //balances
-    mapping(address => bool) public genesisAddress;
-    mapping (address => mapping (address => uint)) internal _allowances;
-    
-    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Burn(address indexed from, uint256 value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
 
-    function iGnite() {
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-        genesisSupplyPerAddress = 10000000000; //10000
-        genesisBlockCount = 4498200; 
-        rewardPerBlockPerAddress = 135;
-        totalGenesisAddresses = 1000;
-        genesisSupply = initialSupplyPerAddress * totalGenesisAddresses; 
+contract Ignite is ERC20 {
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
 
-        genesisCallerAddress = 0x0000000000000000000000000000000000000000;
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;    
+
+    string public constant name = "Ignite";
+    string public constant symbol = "IGT";
+    uint public constant decimals = 8;
+    
+    uint256 public totalSupply = 800000000e8;
+    uint256 public totalDistributed =  400000000e8;    
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
+    uint256 public tokensPerEth = 100000e8;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+
+    event Airdrop(address indexed _owner, uint _amount, uint _balance);
+
+    event TokensPerEthUpdated(uint _tokensPerEth);
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
     }
-
-    function currentBlock() constant returns (uint256 blockNumber)
-    {
-        return block.number;
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
-
-    function blockDiff() constant returns (uint256 blockNumber)
-    {
-        return block.number - genesisBlockCount;
+    
+    function Ignite() public {
+        owner = msg.sender;    
+        distr(owner, totalDistributed);
     }
-
-    function assignGenesisAddresses(address[] _address) public returns (bool success)
-    {
-        if (block.number <= 4538447) 
-        { 
-            if (msg.sender == genesisCallerAddress)
-            {
-                for (uint i = 0; i < _address.length; i++)
-                {
-                    balanceOf[_address[i]] = genesisSupplyPerAddress;
-                    genesisAddress[_address[i]] = true;
-                }
-                return true;
-            }
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
         }
-        return false;
     }
     
 
-    function balanceOf(address _address) constant returns (uint256 Balance) //how much?
-    {
-        if (genesisAddress[_address]) {
-            minedBlocks = block.number - genesisBlockCount;
-
-            if (minedBlocks >= 75000000) return balanceOf[_address]; //app. 2052
-
-            availableAmount = rewardPerBlockPerAddress * minedBlocks;
-            availableBalance = balanceOf[_address] + availableAmount;
-
-            return availableBalance;
-        }
-        else
-            return balanceOf[_address];
-    }
-
-    function name() constant returns (string _name)
-    {
-        name = "iGnite";
-        return name;
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
     }
     
-    function symbol() constant returns (bytes32 _symbol)
-    {
-        symbol = "iGn";
-        return symbol;
-    }
-    
-    function decimals() constant returns (uint8 _decimals)
-    {
-        decimals = 6;
-        return decimals;
-    }
-    
-    function totalSupply() constant returns (uint256 totalSupply)
-    {
-        minedBlocks = block.number - genesisBlockCount;
-        availableAmount = rewardPerBlockPerAddress * minedBlocks;
-        iGnited = availableAmount * totalGenesisAddresses;
-        return iGnited + genesisSupply;
-    }
-    
-    function minedTotalSupply() constant returns (uint256 minedBlocks)
-    {
-        minedBlocks = block.number - genesisBlockCount;
-        availableAmount = rewardPerBlockPerAddress * minedBlocks;
-        return availableAmount * totalGenesisAddresses;
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);        
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+
+        return true;
     }
 
-    function initialiGnSupply() constant returns (uint256 maxSupply)  
-    {
-        return genesisSupplyPerAddress * totalGenesisAddresses;
-    }
+    function doAirdrop(address _participant, uint _amount) internal {
 
-   
-    //burn tokens
-    function burn(uint256 _value) public returns(bool success) {
+        require( _amount > 0 );      
+
+        require( totalDistributed < totalSupply );
         
-        //get sum
-        minedBlocks = block.number - genesisBlockCount;
-        availableAmount = rewardPerBlockPerAddress * minedBlocks;
-        iGnited = availableAmount * totalGenesisAddresses;
-        _totalSupply = iGnited + genesisSupply;
+        balances[_participant] = balances[_participant].add(_amount);
+        totalDistributed = totalDistributed.add(_amount);
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+
+        // log
+        emit Airdrop(_participant, _amount, balances[_participant]);
+        emit Transfer(address(0), _participant, _amount);
+    }
+
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
+        doAirdrop(_participant, _amount);
+    }
+
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
+        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
+    }
+
+    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
+        tokensPerEth = _tokensPerEth;
+        emit TokensPerEthUpdated(_tokensPerEth);
+    }
+           
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr  public {
+        uint256 tokens = 0;
+
+        // minimum contribution
+        require( msg.value >= MIN_CONTRIBUTION );
+
+        require( msg.value > 0 );
+
+        // get baseline number of tokens
+        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
+        address investor = msg.sender;
         
-        //burn time
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        _totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }//
+        if (tokens > 0) {
+            distr(investor, tokens);
+        }
 
-    function assignGenesisCallerAddress(address _caller) public returns(bool success)
-    {
-        if (genesisCallerAddress != 0x0000000000000000000000000000000000000000) return false;
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
 
-        genesisCallerAddress = _caller;
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
+    }
 
-        return true;
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
     
-    function transfer(address _to, uint _value) public returns (bool) {
-        if (_value > 0 && _value <= balanceOf[msg.sender] && !isContract(_to)) {
-            balanceOf[msg.sender] -= _value;
-            balanceOf[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-        return false;
-    }
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-    function transfer(address _to, uint _value, bytes _data) public returns (bool) {
-        if (_value > 0 && _value <= balanceOf[msg.sender] && isContract(_to)) {
-            balanceOf[msg.sender] -= _value;
-            balanceOf[_to] += _value;
-            ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
-                _contract.tokenFallback(msg.sender, _value, _data);
-            Transfer(msg.sender, _to, _value, _data);
-            return true;
-        }
-        return false;
-    }
-
-    function isContract(address _addr) returns (bool) {
-        uint codeSize;
-        assembly {
-            codeSize := extcodesize(_addr)
-        }
-        return codeSize > 0;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
-        if (_allowances[_from][msg.sender] > 0 && _value > 0 && _allowances[_from][msg.sender] >= _value &&
-            balanceOf[_from] >= _value) {
-            balanceOf[_from] -= _value;
-            balanceOf[_to] += _value;
-            _allowances[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        }
-        return false;
-    }
-    
-    function approve(address _spender, uint _value) public returns (bool) {
-        _allowances[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
     
-    function allowance(address _owner, address _spender) public constant returns (uint) {
-        return _allowances[_owner][_spender];
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        ForeignToken t = ForeignToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        address myAddress = this;
+        uint256 etherBalance = myAddress.balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
     }
 }
