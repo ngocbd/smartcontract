@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xae73e0522512d6e1346d3f39124d083aa0e3dc33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x38a19ba829f192a30ec7e03cda1368c50dad9785
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 2600000000000000000;
-        name = 'Garlic Chain';
-        symbol = 'GLC';
-        decimals = 10;
-        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
-        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
+        totalSupply = 1000000000000000000;
+        name = 'TexasholdemPoker';
+        symbol = 'THPC';
+        decimals = 8;
+        balanceOf[0x348d6e3320f0bd8d7281a6aa3545c51f852a2892] = totalSupply;
+        Transfer(address(0), 0x348d6e3320f0bd8d7281a6aa3545c51f852a2892, totalSupply);
     }
 }
