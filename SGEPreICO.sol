@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEPreICO at 0xe061712c04b748ddc460b37a11fd78de760005d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGEPreICO at 0x2bd0a6cb33205225c653975d57ce1c937fa6310f
 */
 pragma solidity ^0.4.16;
 
@@ -26,11 +26,11 @@ contract SGEPreICO {
 
     function SGEPreICO() public {
         creator = msg.sender;
-        startDate = 1526342400;
-        endDate = 1531612800;
-        price = 3185;
+        startDate = 1531612800;
+        endDate = 1536969600;
+        price = 2500;
         tokenReward = Token(0x40489719E489782959486A04B765E1E93E5B221a);
-    }
+    } 
 
     function setOwner(address _owner) isCreator public {
         owner = _owner;
