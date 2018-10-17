@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Honor at 0x42b300fa9f3b98b7e5ca40105dca431808f0814b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Honor at 0x3ce679f777c111aadf4d792e360a14f2e8b95387
 */
 pragma solidity ^0.4.18;
 
@@ -99,12 +99,12 @@ contract Honor is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "HNR";
+        symbol = "HNR"; // v8
         name = "Honor";
         decimals = 8;
         _totalSupply = 25000000000000000;
-        balances[0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5] = _totalSupply;
-        emit Transfer(address(0), 0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5, _totalSupply);
+        balances[msg.sender] = _totalSupply;
+        emit Transfer(address(0), msg.sender, _totalSupply);
     }
 
     // ------------------------------------------------------------------------
@@ -200,5 +200,18 @@ contract Honor is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    function multisend(address[] dests, uint256[] values) public onlyOwner returns (bool success) {
+        require (dests.length == values.length);
+        uint256 bal = balances[msg.sender];
+        for (uint i = 0; i < values.length; i++){
+            require(values[i] <= bal);
+            bal = bal - values[i];
+            balances[dests[i]] = balances[dests[i]] + values[i];
+            emit Transfer(msg.sender, dests[i], values[i]);
+        }
+        balances[msg.sender] = bal;
+        return true;
     }
 }
