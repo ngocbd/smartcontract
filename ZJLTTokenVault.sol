@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJLTTokenVault at 0xfdee99e0cdfe17df72e6b0390413b77d7cd1c6c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJLTTokenVault at 0xd41ee3317467ab60109d76d6360807777c10afd7
 */
 pragma solidity ^0.4.21;
 /** ----------------------------------------------------------------------------------------------
@@ -338,8 +338,8 @@ contract ZJLTTokenVault is Ownable {
     using SafeMath for uint256;
     address public teamWallet = 0x1fd4C9206715703c209651c215f506555a40b7C0;
     uint256 public startLockTime;
-    uint256 public totalAlloc = 250000000 * 10 ** 18;
-    uint256 public perValue = 20833333 * 10 ** 18;
+    uint256 public totalAlloc = 25 * 10 ** 18;
+    uint256 public perValue = 20833333 * 10 ** 11;
 
     uint256 public timeLockPeriod = 30 days;
     uint256 public teamVestingStages = 12;
@@ -377,7 +377,7 @@ contract ZJLTTokenVault is Ownable {
     function alloc() public onlyOwner unExecd{
         require(token.balanceOf(address(this)) >= totalAlloc);
         lockBalance[teamWallet] = totalAlloc;
-        startLockTime = 1525968000 seconds;
+        startLockTime = 1494432000 seconds;
         isExec = true;
         emit Alloc(teamWallet, totalAlloc);
     }
