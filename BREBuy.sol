@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BREBuy at 0x172b12defcc3c0556fc4620446a672ebc24b672d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BREBuy at 0x82d69c2f6d0ef836b26f02598782b5cdee2f887e
 */
 pragma solidity ^0.4.24;
 contract BREBuy {
@@ -118,6 +118,21 @@ contract BREBuy {
         addressArray.length=0;
     }
     
+    
+    function addPlayer() notLock public payable {
+        
+        require(isNotContract(msg.sender),"Contract not call addPlayer");
+        require(msg.value == curConfig.singlePrice,"msg.value error");
+        totalPrice = totalPrice + msg.value;
+        addressArray.push(msg.sender);
+       
+        emit addPlayerEvent(gameIndex,msg.sender);
+        if(addressArray.length >= curConfig.totalSize) {
+            gameResult();
+            startNewGame();
+        }
+    }
+    
     function getGameInfo() public view returns  (uint256,uint32,uint256,uint8,address[],uint256,bool)  {
         return (gameIndex,
                 curConfig.totalSize,
@@ -153,18 +168,5 @@ contract BREBuy {
       }
       uint index  = uint(ramdon) % addressArray.length;
       return index;
-    }
-    
-    function() notLock payable public{
-        require(isNotContract(msg.sender),"Contract not call addPlayer");
-        require(msg.value == curConfig.singlePrice,"msg.value error");
-        totalPrice = totalPrice + msg.value;
-        addressArray.push(msg.sender);
-       
-        emit addPlayerEvent(gameIndex,msg.sender);
-        if(addressArray.length >= curConfig.totalSize) {
-            gameResult();
-            startNewGame();
-        }
     }
 }
