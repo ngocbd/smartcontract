@@ -1,15 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceOracle at 0x4d552a4facc008cdf004833aaa1499a1ed5977c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PriceOracle at 0x5f243c098ca59501c153c1fa5e2a3bfd4d61bdf7
 */
-pragma solidity 0.4.20;
+pragma solidity ^0.4.24;
 
-/**
- * @title  PriceOracle
- * @author Kirill Varlamov (@ongrid)
- * @dev    Oracle for keeping actual ETH price (USD cents per 1 ETH).
- */
- 
- 
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -19,11 +13,15 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -33,9 +31,9 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
@@ -49,12 +47,13 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
+
 
 /**
  * @title Roles
@@ -114,8 +113,8 @@ library Roles {
  * @title RBAC (Role-Based Access Control)
  * @author Matt Condon (@Shrugs)
  * @dev Stores and provides setters and getters for roles and addresses.
- *      Supports unlimited numbers of roles and addresses.
- *      See //contracts/mocks/RBACMock.sol for an example of usage.
+ * @dev Supports unlimited numbers of roles and addresses.
+ * @dev See //contracts/mocks/RBACMock.sol for an example of usage.
  * This RBAC method uses strings to key roles. It may be beneficial
  *  for you to write your own implementation of this interface using Enums or similar.
  * It's also recommended that you define constants in the contract, like ROLE_ADMIN below,
@@ -128,20 +127,6 @@ contract RBAC {
 
   event RoleAdded(address addr, string roleName);
   event RoleRemoved(address addr, string roleName);
-
-  /**
-   * A constant role name for indicating admins.
-   */
-  string public constant ROLE_ADMIN = "admin";
-
-  /**
-   * @dev constructor. Sets msg.sender as admin by default
-   */
-  function RBAC()
-    public
-  {
-    addRole(msg.sender, ROLE_ADMIN);
-  }
 
   /**
    * @dev reverts if addr does not have role
@@ -175,35 +160,11 @@ contract RBAC {
    * @param addr address
    * @param roleName the name of the role
    */
-  function adminAddRole(address addr, string roleName)
-    onlyAdmin
-    public
-  {
-    addRole(addr, roleName);
-  }
-
-  /**
-   * @dev remove a role from an address
-   * @param addr address
-   * @param roleName the name of the role
-   */
-  function adminRemoveRole(address addr, string roleName)
-    onlyAdmin
-    public
-  {
-    removeRole(addr, roleName);
-  }
-
-  /**
-   * @dev add a role to an address
-   * @param addr address
-   * @param roleName the name of the role
-   */
   function addRole(address addr, string roleName)
     internal
   {
     roles[roleName].add(addr);
-    RoleAdded(addr, roleName);
+    emit RoleAdded(addr, roleName);
   }
 
   /**
@@ -215,7 +176,7 @@ contract RBAC {
     internal
   {
     roles[roleName].remove(addr);
-    RoleRemoved(addr, roleName);
+    emit RoleRemoved(addr, roleName);
   }
 
   /**
@@ -228,51 +189,143 @@ contract RBAC {
     checkRole(msg.sender, roleName);
     _;
   }
+}
+
+
+/**
+ * @title Ethereum price feed
+ * @dev Keeps the current ETH price in USD cents to use by crowdsale contracts.
+ * Price kept up to date by external script polling exchanges tickers
+ * @author OnGrid Systems
+ */
+contract PriceOracle is RBAC {
+  using SafeMath for uint256;
+
+  // Average ETH price in USD cents
+  uint256 public ethPriceInCents;
+
+  // The change limit in percent.
+  // Provides basic protection from erroneous input.
+  uint256 public allowedOracleChangePercent;
+
+  // Roles in the oracle
+  string public constant ROLE_ADMIN = "admin";
+  string public constant ROLE_ORACLE = "oracle";
 
   /**
    * @dev modifier to scope access to admins
-   * // reverts
+   * // reverts if called not by admin
    */
   modifier onlyAdmin()
   {
     checkRole(msg.sender, ROLE_ADMIN);
     _;
   }
-}
 
+  /**
+   * @dev modifier to scope access to price keeping oracles (scripts polling exchanges)
+   * // reverts if called not by oracle
+   */
+  modifier onlyOracle()
+  {
+    checkRole(msg.sender, ROLE_ORACLE);
+    _;
+  }
 
-/**
- * @title  PriceOracle
- * @dev    Contract for actual ETH price injection into Ethereum ledger.
- *         Contract gets periodically updated by external script polling major exchanges for actual ETH/SDH price.
- * @author Kirill Varlamov, OnGrid systems
- */
-contract PriceOracle is RBAC {
-    using SafeMath for uint256;
-    string constant ROLE_BOT = "bot";
-    // current ETHereum price in USD cents.
-    uint256 public priceUSDcETH;
-    event PriceUpdate(uint256 price);
+  /**
+   * @dev Initializes oracle contract
+   * @param _initialEthPriceInCents Initial Ethereum price in USD cents
+   * @param _allowedOracleChangePercent Percent of change allowed per single request
+   */
+  constructor(
+    uint256 _initialEthPriceInCents,
+    uint256 _allowedOracleChangePercent
+  ) public {
+    ethPriceInCents = _initialEthPriceInCents;
+    allowedOracleChangePercent = _allowedOracleChangePercent;
+    addRole(msg.sender, ROLE_ADMIN);
+  }
 
-    /**
-     * @param _initialPrice Starting ETHereum price in USD cents.
-     */
-    function PriceOracle(uint256 _initialPrice) RBAC() public {
-        priceUSDcETH = _initialPrice;
-        addRole(msg.sender, ROLE_BOT);
-    }
+  /**
+   * @dev Converts ETH (wei) to USD cents
+   * @param _wei amount of wei (10e-18 ETH)
+   * @return cents amount
+   */
+  function getUsdCentsFromWei(uint256 _wei) public view returns (uint256) {
+    return _wei.mul(ethPriceInCents).div(1 ether);
+  }
 
-    /**
-     * @dev Updates in-contract price upon external bot request.
-     *      New price is checked for validity (the single-request change is limited to 10%)
-     * @param _priceUSDcETH Requested ETHereum price in USD cents.
-     */
-    function setPrice(uint256 _priceUSDcETH) public onlyRole(ROLE_BOT) {
-        // don't allow to change price more than 10%
-        // to avoid typos
-        assert(_priceUSDcETH < priceUSDcETH.mul(110).div(100));
-        assert(_priceUSDcETH > priceUSDcETH.mul(90).div(100));
-        priceUSDcETH = _priceUSDcETH;
-        PriceUpdate(priceUSDcETH);
-    }
+  /**
+   * @dev Converts USD cents to wei
+   * @param _usdCents amount
+   * @return wei amount
+   */
+  function getWeiFromUsdCents(uint256 _usdCents)
+    public view returns (uint256)
+  {
+    return _usdCents.mul(1 ether).div(ethPriceInCents);
+  }
+
+  /**
+   * @dev Sets current ETH price in cents
+   * @param _cents USD cents
+   */
+  function setEthPrice(uint256 _cents)
+    public
+    onlyOracle
+  {
+    uint256 maxCents = allowedOracleChangePercent.add(100)
+    .mul(ethPriceInCents).div(100);
+    uint256 minCents = SafeMath.sub(100,allowedOracleChangePercent)
+    .mul(ethPriceInCents).div(100);
+    require(
+      _cents <= maxCents && _cents >= minCents,
+      "Price out of allowed range"
+    );
+    ethPriceInCents = _cents;
+  }
+
+  /**
+   * @dev Add admin role to an address
+   * @param addr address
+   */
+  function addAdmin(address addr)
+    public
+    onlyAdmin
+  {
+    addRole(addr, ROLE_ADMIN);
+  }
+
+  /**
+   * @dev Revoke admin privileges from an address
+   * @param addr address
+   */
+  function delAdmin(address addr)
+    public
+    onlyAdmin
+  {
+    removeRole(addr, ROLE_ADMIN);
+  }
+
+  /**
+   * @dev Add oracle role to an address
+   * @param addr address
+   */
+  function addOracle(address addr)
+    public
+    onlyAdmin
+  {
+    addRole(addr, ROLE_ORACLE);
+  }
+
+  /**
+   * @dev Revoke oracle role from an address
+   * @param addr address
+   */
+  function delOracle(address addr)
+    public
+    onlyAdmin
+  {
+    removeRole(addr, ROLE_ORACLE);
+  }
 }
