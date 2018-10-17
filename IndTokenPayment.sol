@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0xdeca7a07bd58fc6d091e86469077d1c4372cf04a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0xf6f1a2a798f94c426274ed58438015718d107894
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 // File: contracts/common/Ownable.sol
+
 
 /**
  * Ownable contract from Open zepplin
@@ -228,13 +229,6 @@ contract IContractRegistry {
  * @notice It does not support ERC20 to ERC20 transfer.
  */
 
-
-
-
-
-
-
-
 contract IndTokenPayment is Ownable, ReentrancyGuard {  
     using SafeMath for uint256;
     IERC20Token[] public path;    
@@ -244,7 +238,8 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     IContractRegistry public bancorRegistry;
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     
-    event conversionSucceded(address from,uint256 fromTokenVal,address dest,uint256 destTokenVal);    
+    event conversionSucceded(address from,uint256 fromTokenVal,address dest,uint256 minReturn,uint256 destTokenVal);    
+    event conversionMin(uint256 min);
     
     constructor(IERC20Token[] _path,
                 address destWalletAddr,
@@ -272,13 +267,13 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
         destinationWallet = destWalletAddr;
     }    
     
-    function convertToInd() internal nonReentrant {
+    function convertToInd() internal {
         assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
         IBancorNetwork bancorNetwork = IBancorNetwork(bancorRegistry.getAddress(BANCOR_NETWORK));   
         uint256 minReturn = minConversionRate.mul(msg.value);
         uint256 convTokens =  bancorNetwork.convertFor.value(msg.value)(path,msg.value,minReturn,destinationWallet);        
         assert(convTokens > 0);
-        emit conversionSucceded(msg.sender,msg.value,destinationWallet,convTokens);                                                                    
+        emit conversionSucceded(msg.sender,msg.value,destinationWallet,minReturn,convTokens);                                                                    
     }
 
     //If accidentally tokens are transferred to this
@@ -299,7 +294,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
         return true;
     }
  
-    function () public payable nonReentrant {
+    function () public payable nonReentrant{
         //Bancor contract can send the transfer back in case of error, which goes back into this
         //function ,convertToInd is non-reentrant.
         convertToInd();
