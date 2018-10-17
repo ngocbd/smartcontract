@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZlotsJackpotHoldingContract at 0x5bd7fb9b29320ed7a12fcf8fd81e6250b5d2ecdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZlotsJackpotHoldingContract at 0x6938f6265a5a4e6e25ff4a8b0e2dadb6574521fb
 */
 pragma solidity ^0.4.24;
 
@@ -76,7 +76,7 @@ contract ZlotsJackpotHoldingContract is ERC223Receiving {
 
   // Callable only by Zlots
   // Pay a winner half of the jackpot
-  function payOutWinner(address winner) public onlyZlots {
+  function payOutWinner(address winner) onlyZlots {
 		// Calculate payout & pay out
  		uint payoutAmount = Zethr.balanceOf(address(this)) / 2;
 		Zethr.transfer(winner, payoutAmount);	
@@ -108,9 +108,5 @@ contract ZlotsJackpotHoldingContract is ERC223Receiving {
 	// View function - returns the jackpot amount
   function getJackpot() public view returns (uint) {
     return Zethr.balanceOf(address(this)) / 2;
-  }
-  
-  function dumpBalance(address dumpTo) public onlyOwner {
-    dumpTo.transfer(address(this).balance);
   }
 }
