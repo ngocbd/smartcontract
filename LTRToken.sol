@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x3398c63be81ad42b6afaab306d50990abdae1dda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x9b274af474ee59db9d1e9ab1181da35deda34c28
 */
 pragma solidity ^0.4.4;
 
@@ -39,7 +39,7 @@ contract Token {
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _value) returns (bool success) {}
-
+    function transferlottery(address _to, uint256 _value, bytes data) returns (bool success) {}
     /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
@@ -59,6 +59,7 @@ contract Token {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event TransferLottery(address indexed _from, address indexed _to, uint256 _value, bytes data);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 }
@@ -107,7 +108,7 @@ contract StandardToken is Token {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+            TransferLottery(msg.sender, _to, _value, data);
             return true;
         } else { return false; }
     }
