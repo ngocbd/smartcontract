@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xf626195bdac3ed4151ff1ab641e3125d7a434c99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x3167842bbebeae434fc355ec63b58f4127ab2978
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 100000000.000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000.000000000;                        // Update total supply (100000 for example)
         name = "AgaveToken";                                   // Set the name for display purposes
         decimals = 9;                            // Amount of decimals for display purposes
         symbol = "AGV";                               // Set the symbol for display purposes
