@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0xe793f0318f571ec463a4968f7870378f7655a44d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x7a848abebea15a4bc2c27a40fa78f44c3daecd2c
 */
 pragma solidity ^0.4.24;
 
@@ -449,72 +449,72 @@ contract VanityLib {
         return toBase58Checked(createBtcAddressHex(publicXPoint, publicYPoint), "1");
     }
 
-    // function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
-    //     return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
-    // }
+    function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
+        return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
+    }
 
-    // // https://bitcoin.stackexchange.com/questions/48586
-    // function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
-    //     require(prefix.length >= length);
+    // https://bitcoin.stackexchange.com/questions/48586
+    function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
+        require(prefix.length >= length);
         
-    //     uint8[128] memory unbase58 = [
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-    //         255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
-    //         255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
-    //         22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
-    //         255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
-    //         47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
-    //     ];
+        uint8[128] memory unbase58 = [
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+            255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
+            255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
+            22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
+            255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
+            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
+        ];
 
-    //     uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
+        uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
 
-    //     uint256 prefixValue = 0;
-    //     uint256 prefix1 = 1;
-    //     for (uint i = 0; i < length; i++) {
-    //         uint index = uint(prefix[i]);
-    //         require(index != 255);
-    //         prefixValue = prefixValue * 58 + unbase58[index];
-    //         prefix1 *= 58;
-    //     }
+        uint256 prefixValue = 0;
+        uint256 prefix1 = 1;
+        for (uint i = 0; i < length; i++) {
+            uint index = uint(prefix[i]);
+            require(index != 255);
+            prefixValue = prefixValue * 58 + unbase58[index];
+            prefix1 *= 58;
+        }
 
-    //     uint256 top = (uint256(1) << (200 - 8*leadingOnes));
-    //     uint256 total = 0;
-    //     uint256 prefixMin = prefixValue;
-    //     uint256 diff = 0;
-    //     for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
-    //         prefix1 *= 58;
-    //         prefixMin *= 58;
-    //         prefixValue = prefixValue * 58 + 57;
+        uint256 top = (uint256(1) << (200 - 8*leadingOnes));
+        uint256 total = 0;
+        uint256 prefixMin = prefixValue;
+        uint256 diff = 0;
+        for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
+            prefix1 *= 58;
+            prefixMin *= 58;
+            prefixValue = prefixValue * 58 + 57;
 
-    //         diff = 0;
-    //         if (prefixValue >= top) {
-    //             diff += prefixValue - top;
-    //         }
-    //         if (prefixMin < (top >> 8)) {
-    //             diff += (top >> 8) - prefixMin;
-    //         }
+            diff = 0;
+            if (prefixValue >= top) {
+                diff += prefixValue - top;
+            }
+            if (prefixMin < (top >> 8)) {
+                diff += (top >> 8) - prefixMin;
+            }
             
-    //         if ((58 ** digits) >= diff) {
-    //             total += (58 ** digits) - diff;
-    //         }
-    //     }
+            if ((58 ** digits) >= diff) {
+                total += (58 ** digits) - diff;
+            }
+        }
 
-    //     if (prefixMin == 0) { // if prefix is contains only ones: 111111
-    //         total = (58 ** (digits - 1)) - diff;
-    //     }
+        if (prefixMin == 0) { // if prefix is contains only ones: 111111
+            total = (58 ** (digits - 1)) - diff;
+        }
 
-    //     return (1 << 192) / total;
-    // }
+        return (1 << 192) / total;
+    }
 
-    // function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
-    //     uint leadingOnes = 1;
-    //     for (uint j = 0; j < length && prefix[j] == 49; j++) {
-    //         leadingOnes = j + 1;
-    //     }
-    //     return leadingOnes;
-    // }
+    function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
+        uint leadingOnes = 1;
+        for (uint j = 0; j < length && prefix[j] == 49; j++) {
+            leadingOnes = j + 1;
+        }
+        return leadingOnes;
+    }
 
     function isValidBicoinAddressPrefix(bytes prefixArg) public pure returns(bool) {
         if (prefixArg.length < 5) {
@@ -665,7 +665,7 @@ contract TaskRegister is Upgradable, VanityLib {
     mapping(uint256 => uint) public indexOfCompletedTaskId; // Starting from 1
 
     event TaskCreated(uint256 indexed taskId);
-    event TaskSolved(uint256 indexed taskId, uint256 reward);
+    event TaskSolved(uint256 indexed taskId, uint256 minerReward, uint256 referrerReward);
     event TaskPayed(uint256 indexed taskId, uint256 value);
 
     constructor(address _ec, address _prevVersion) public Upgradable(_prevVersion) {
@@ -911,8 +911,8 @@ contract TaskRegister is Upgradable, VanityLib {
     }
 
     function solveTask(uint _taskId, uint256 _answerPrivateKey, uint256 publicXPoint, uint256 publicYPoint) public isLastestVersion {
-        uint activeTaskIndex = indexOfTaskId[_taskId].sub(1);
-        Task storage task = allTasks[activeTaskIndex];
+        uint taskIndex = indexOfTaskId[_taskId].sub(1);
+        Task storage task = allTasks[taskIndex];
         require(task.answerPrivateKey == 0, "solveTask: task is already solved");
         
         // Require private key to be part of address to prevent front-running attack
@@ -942,22 +942,25 @@ contract TaskRegister is Upgradable, VanityLib {
         if (serviceReward != 0 && task.referrer != 0) {
             uint256 referrerReward = serviceReward.mul(referrerFee).div(MAX_PERCENT); // 50% of service reward
             task.referrer.transfer(referrerReward);
+            emit TaskSolved(_taskId, minerReward, referrerReward);
+        } else {
+            emit TaskSolved(_taskId, minerReward, 0);
         }
         msg.sender.transfer(minerReward);
         totalReward -= taskReard;
 
-        _completeTask(_taskId, activeTaskIndex);
-        emit TaskSolved(_taskId, minerReward);
+        _completeTask(_taskId);
     }
 
-    function _completeTask(uint _taskId, uint _activeTaskIndex) internal {
+    function _completeTask(uint _taskId) internal {
         indexOfCompletedTaskId[_taskId] = completedTaskIds.push(_taskId);
+        uint activeTaskIndex = indexOfActiveTaskId[_taskId].sub(1);
         delete indexOfActiveTaskId[_taskId];
 
-        if (_activeTaskIndex + 1 < taskIds.length) { // if not latest
+        if (activeTaskIndex + 1 < taskIds.length) { // if not latest
             uint256 lastTaskId = taskIds[taskIds.length - 1];
-            taskIds[_activeTaskIndex] = lastTaskId;
-            indexOfActiveTaskId[lastTaskId] = _activeTaskIndex + 1;
+            taskIds[activeTaskIndex] = lastTaskId;
+            indexOfActiveTaskId[lastTaskId] = activeTaskIndex + 1;
         }
         taskIds.length -= 1;
     }
