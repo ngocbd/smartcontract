@@ -1,35 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x083a27e2c44412954330ade5ded41e546c398db2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x08c81a23cb8f9034a78dd41d7bbcf1a40482c2b7
 */
 pragma solidity ^0.4.23;
-
-
-/**
- * Utility library of inline functions on addresses
- */
-library AddressUtils {
-
-  /**
-   * Returns whether the target address is a contract
-   * @dev This function will return false if invoked during the constructor of a contract,
-   *  as the code is not actually created until after the constructor finishes.
-   * @param addr address to check
-   * @return whether the target address is a contract
-   */
-  function isContract(address addr) internal view returns (bool) {
-    uint256 size;
-    // XXX Currently there is no better way to check if there is a contract in an address
-    // than to check the size of the code at that address.
-    // See https://ethereum.stackexchange.com/a/14016/36603
-    // for more details about how this works.
-    // TODO Check this again before the Serenity release, because all addresses will be
-    // contracts then.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly { size := extcodesize(addr) }
-    return size > 0;
-  }
-
-}
 
 /**
  * @title SafeMath
@@ -78,297 +50,362 @@ library SafeMath {
 }
 
 /**
- * @title ERC721 Non-Fungible Token Standard basic interface
- * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+ * Utility library of inline functions on addresses
  */
-contract ERC721Basic {
-  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-  event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+library AddressUtils {
 
-  function balanceOf(address _owner) public view returns (uint256 _balance);
-  function ownerOf(uint256 _tokenId) public view returns (address _owner);
-  function exists(uint256 _tokenId) public view returns (bool _exists);
+  /**
+   * Returns whether the target address is a contract
+   * @dev This function will return false if invoked during the constructor of a contract,
+   *  as the code is not actually created until after the constructor finishes.
+   * @param addr address to check
+   * @return whether the target address is a contract
+   */
+  function isContract(address addr) internal view returns (bool) {
+    uint256 size;
+    // XXX Currently there is no better way to check if there is a contract in an address
+    // than to check the size of the code at that address.
+    // See https://ethereum.stackexchange.com/a/14016/36603
+    // for more details about how this works.
+    // TODO Check this again before the Serenity release, because all addresses will be
+    // contracts then.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly { size := extcodesize(addr) }
+    return size > 0;
+  }
 
-  function approve(address _to, uint256 _tokenId) public;
-  function getApproved(uint256 _tokenId) public view returns (address _operator);
-
-  function setApprovalForAll(address _operator, bool _approved) public;
-  function isApprovedForAll(address _owner, address _operator) public view returns (bool);
-
-  function transferFrom(address _from, address _to, uint256 _tokenId) public;
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId) public;
-
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes _data) public;
 }
 
-contract ERC721Enumerable is ERC721Basic {
-  function totalSupply() public view returns (uint256);
-  function tokenOfOwnerByIndex(address _owner, uint256 _index) public view returns (uint256 _tokenId);
-  function tokenByIndex(uint256 _index) public view returns (uint256);
+interface ERC165 {
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
-contract ERC721Metadata is ERC721Basic {
-  function name() public view returns (string _name);
-  function symbol() public view returns (string _symbol);
-  function tokenURI(uint256 _tokenId) public view returns (string);
+contract SupportsInterface is ERC165 {
+    
+    mapping(bytes4 => bool) internal supportedInterfaces;
+
+    constructor() public {
+        supportedInterfaces[0x01ffc9a7] = true; // ERC165
+    }
+
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool) {
+        return supportedInterfaces[_interfaceID];
+    }
 }
 
-contract ERC721Receiver {
-    bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
-    function onERC721Received(address _from, uint256 _tokenId, bytes _data) public returns(bytes4);
+interface ERC721 {
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+    
+    function balanceOf(address _owner) external view returns (uint256);
+    function ownerOf(uint256 _tokenId) external view returns (address);
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes _data) external;
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
+    
+    function transferFrom(address _from, address _to, uint256 _tokenId) external;
+    function approve(address _approved, uint256 _tokenId) external;
+    function setApprovalForAll(address _operator, bool _approved) external;
+    
+    function getApproved(uint256 _tokenId) external view returns (address);
+    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
 
-contract ERC721BasicToken is ERC721Basic {
+interface ERC721Enumerable {
+    function totalSupply() external view returns (uint256);
+    function tokenByIndex(uint256 _index) external view returns (uint256);
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
+}
+
+interface ERC721Metadata {
+    function name() external view returns (string _name);
+    function symbol() external view returns (string _symbol);
+    function tokenURI(uint256 _tokenId) external view returns (string);
+}
+
+interface ERC721TokenReceiver {
+  function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns(bytes4);
+}
+
+contract NFToken is ERC721, SupportsInterface {
+
     using SafeMath for uint256;
     using AddressUtils for address;
     
-    bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
+    // A mapping from NFT ID to the address that owns it.
+    mapping (uint256 => address) internal idToOwner;
     
-    // Mapping from token ID to owner
-    mapping (uint256 => address) internal tokenOwner;
+    // Mapping from NFT ID to approved address.
+    mapping (uint256 => address) internal idToApprovals;
+    
+    // Mapping from owner address to count of his tokens.
+    mapping (address => uint256) internal ownerToNFTokenCount;
+    
+    // Mapping from owner address to mapping of operator addresses.
+    mapping (address => mapping (address => bool)) internal ownerToOperators;
+    
+    /**
+    * @dev Magic value of a smart contract that can recieve NFT.
+    * Equal to: bytes4(keccak256("onERC721Received(address,address,uint256,bytes)")).
+    */
+    bytes4 constant MAGIC_ON_ERC721_RECEIVED = 0x150b7a02;
 
-    // Mapping from token ID to approved address
-    mapping (uint256 => address) internal tokenApprovals;
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
+    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 
-    // Mapping from owner to number of owned token
-    mapping (address => uint256) internal ownedTokensCount;
-
-    // Mapping from owner to operator approvals
-    mapping (address => mapping (address => bool)) internal operatorApprovals;
-
-    modifier onlyOwnerOf(uint256 _tokenId) {
-        require(ownerOf(_tokenId) == msg.sender);
+    modifier canOperate(uint256 _tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == msg.sender || ownerToOperators[tokenOwner][msg.sender]);
         _;
     }
+
 
     modifier canTransfer(uint256 _tokenId) {
-        require(isApprovedOrOwner(msg.sender, _tokenId));
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == msg.sender || getApproved(_tokenId) == msg.sender || ownerToOperators[tokenOwner][msg.sender]);
         _;
     }
 
+    modifier validNFToken(uint256 _tokenId) {
+        require(idToOwner[_tokenId] != address(0));
+        _;
+    }
 
-    function balanceOf(address _owner) public view returns (uint256) {
+    constructor() public {
+        supportedInterfaces[0x80ac58cd] = true; // ERC721
+    }
+
+
+    function balanceOf(address _owner) external view returns (uint256) {
         require(_owner != address(0));
-        return ownedTokensCount[_owner];
+        return ownerToNFTokenCount[_owner];
     }
 
-    function ownerOf(uint256 _tokenId) public view returns (address) {
-        address owner = tokenOwner[_tokenId];
-        require(owner != address(0));
-        return owner;
+    function ownerOf(uint256 _tokenId) external view returns (address _owner) {
+        _owner = idToOwner[_tokenId];
+        require(_owner != address(0));
     }
 
-    function exists(uint256 _tokenId) public view returns (bool) {
-        address owner = tokenOwner[_tokenId];
-        return owner != address(0);
+
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes _data) external {
+        _safeTransferFrom(_from, _to, _tokenId, _data);
     }
 
-    function approve(address _to, uint256 _tokenId) public {
-        address owner = ownerOf(_tokenId);
-        require(_to != owner);
-        require(msg.sender == owner || isApprovedForAll(owner, msg.sender));
-    
-        if (getApproved(_tokenId) != address(0) || _to != address(0)) {
-            tokenApprovals[_tokenId] = _to;
-            emit Approval(owner, _to, _tokenId);
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external {
+        _safeTransferFrom(_from, _to, _tokenId, "");
+    }
+
+    function transferFrom(address _from, address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == _from);
+        require(_to != address(0));
+        _transfer(_to, _tokenId);
+    }
+
+    function approve(address _approved, uint256 _tokenId) external canOperate(_tokenId) validNFToken(_tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(_approved != tokenOwner);
+
+        idToApprovals[_tokenId] = _approved;
+        emit Approval(tokenOwner, _approved, _tokenId);
+    }
+
+    function setApprovalForAll(address _operator, bool _approved) external {
+        require(_operator != address(0));
+        ownerToOperators[msg.sender][_operator] = _approved;
+        emit ApprovalForAll(msg.sender, _operator, _approved);
+    }
+
+    function getApproved(uint256 _tokenId) public view validNFToken(_tokenId) returns (address) {
+        return idToApprovals[_tokenId];
+    }
+
+    function isApprovedForAll(address _owner, address _operator) external view returns (bool) {
+        require(_owner != address(0));
+        require(_operator != address(0));
+        return ownerToOperators[_owner][_operator];
+    }
+
+    function _safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes _data) internal canTransfer(_tokenId) validNFToken(_tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == _from);
+        require(_to != address(0));
+
+        _transfer(_to, _tokenId);
+
+        if (_to.isContract()) {
+            bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(msg.sender, _from, _tokenId, _data);
+            require(retval == MAGIC_ON_ERC721_RECEIVED);
         }
     }
 
-    function getApproved(uint256 _tokenId) public view returns (address) {
-        return tokenApprovals[_tokenId];
+    function _transfer(address _to, uint256 _tokenId) private {
+        address from = idToOwner[_tokenId];
+        clearApproval(_tokenId);
+        removeNFToken(from, _tokenId);
+        addNFToken(_to, _tokenId);
+        emit Transfer(from, _to, _tokenId);
     }
+   
 
-    function setApprovalForAll(address _to, bool _approved) public {
-        require(_to != msg.sender);
-        operatorApprovals[msg.sender][_to] = _approved;
-        emit ApprovalForAll(msg.sender, _to, _approved);
-    }    
-
-    function isApprovedForAll(address _owner, address _operator) public view returns (bool) {
-        return operatorApprovals[_owner][_operator];
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _tokenId) public canTransfer(_tokenId) {
-        require(_from != address(0));
-        require(_to != address(0));
-
-        clearApproval(_from, _tokenId);
-        removeTokenFrom(_from, _tokenId);
-        addTokenTo(_to, _tokenId);
-
-        emit Transfer(_from, _to, _tokenId);
-    }
-
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId) public canTransfer(_tokenId) {
-        // solium-disable-next-line arg-overflow
-        safeTransferFrom(_from, _to, _tokenId, "");
-    }
-    
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes _data) public canTransfer(_tokenId) {
-        transferFrom(_from, _to, _tokenId);
-        // solium-disable-next-line arg-overflow
-        require(checkAndCallSafeTransfer(_from, _to, _tokenId, _data));
-    }
-    
-    function isApprovedOrOwner(address _spender, uint256 _tokenId) internal view returns (bool) {
-        address owner = ownerOf(_tokenId);
-        // Disable solium check because of
-        // https://github.com/duaraghav8/Solium/issues/175
-        // solium-disable-next-line operator-whitespace
-        return (_spender == owner || getApproved(_tokenId) == _spender || isApprovedForAll(owner, _spender));
-    }
-    
     function _mint(address _to, uint256 _tokenId) internal {
         require(_to != address(0));
-        addTokenTo(_to, _tokenId);
+        require(_tokenId != 0);
+        require(idToOwner[_tokenId] == address(0));
+
+        addNFToken(_to, _tokenId);
+
         emit Transfer(address(0), _to, _tokenId);
     }
-    
-    function _burn(address _owner, uint256 _tokenId) internal {
-        clearApproval(_owner, _tokenId);
-        removeTokenFrom(_owner, _tokenId);
+
+    function _burn(address _owner, uint256 _tokenId) validNFToken(_tokenId) internal { 
+        clearApproval(_tokenId);
+        removeNFToken(_owner, _tokenId);
         emit Transfer(_owner, address(0), _tokenId);
     }
 
-    function clearApproval(address _owner, uint256 _tokenId) internal {
-        require(ownerOf(_tokenId) == _owner);
-        if (tokenApprovals[_tokenId] != address(0)) {
-            tokenApprovals[_tokenId] = address(0);
-            emit Approval(_owner, address(0), _tokenId);
+    function clearApproval(uint256 _tokenId) private {
+        if(idToApprovals[_tokenId] != 0) {
+            delete idToApprovals[_tokenId];
         }
     }
 
+    function removeNFToken(address _from, uint256 _tokenId) internal {
+        require(idToOwner[_tokenId] == _from);
+        assert(ownerToNFTokenCount[_from] > 0);
+        ownerToNFTokenCount[_from] = ownerToNFTokenCount[_from] - 1;
+        delete idToOwner[_tokenId];
+    }
 
-    function addTokenTo(address _to, uint256 _tokenId) internal {
-        require(tokenOwner[_tokenId] == address(0));
-        tokenOwner[_tokenId] = _to;
-        ownedTokensCount[_to] = ownedTokensCount[_to].add(1);
-    }
-    
-    function removeTokenFrom(address _from, uint256 _tokenId) internal {
-        require(ownerOf(_tokenId) == _from);
-        ownedTokensCount[_from] = ownedTokensCount[_from].sub(1);
-        tokenOwner[_tokenId] = address(0);
-    }
-    
-    function checkAndCallSafeTransfer(address _from, address _to, uint256 _tokenId, bytes _data) internal returns (bool) {
-        if (!_to.isContract()) {
-            return true;
-        }
-        bytes4 retval = ERC721Receiver(_to).onERC721Received(_from, _tokenId, _data);
-        return (retval == ERC721_RECEIVED);
+    function addNFToken(address _to, uint256 _tokenId) internal {
+        require(idToOwner[_tokenId] == address(0));
+
+        idToOwner[_tokenId] = _to;
+        ownerToNFTokenCount[_to] = ownerToNFTokenCount[_to].add(1);
     }
 }
 
-contract ERC721Token is ERC721Basic, ERC721Enumerable, ERC721Metadata, ERC721BasicToken {
-    string internal name_;
-    string internal symbol_;
 
-    // Mapping from owner to list of owned token IDs
-    mapping(address => uint256[]) internal ownedTokens;
-    // Mapping from token ID to index of the owner tokens list
-    mapping(uint256 => uint256) internal ownedTokensIndex;
-    // Array with all token ids, used for enumeration
-    uint256[] internal allTokens;
-    // Mapping from token id to position in the allTokens array
-    mapping(uint256 => uint256) internal allTokensIndex;
-    // Optional mapping for token URIs
-    mapping(uint256 => string) internal tokenURIs;
+contract NFTokenEnumerable is NFToken, ERC721Enumerable {
 
+    // Array of all NFT IDs.
+    uint256[] internal tokens;
 
-    constructor(string _name, string _symbol) public {
-        name_ = _name;
-        symbol_ = _symbol;
-    }
+    // Mapping from token ID its index in global tokens array.
+    mapping(uint256 => uint256) internal idToIndex;
 
-    function name() public view returns (string) {
-        return name_;
-    }
+    // Mapping from owner to list of owned NFT IDs.
+    mapping(address => uint256[]) internal ownerToIds;
 
-    function symbol() public view returns (string) {
-        return symbol_;
-    }
+    // Mapping from NFT ID to its index in the owner tokens list.
+    mapping(uint256 => uint256) internal idToOwnerIndex;
 
-    function tokenURI(uint256 _tokenId) public view returns (string) {
-        require(exists(_tokenId));
-        return tokenURIs[_tokenId];
-    }
-
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) public view returns (uint256) {
-        require(_index < balanceOf(_owner));
-        return ownedTokens[_owner][_index];
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return allTokens.length;
-    }
-
-    function tokenByIndex(uint256 _index) public view returns (uint256) {
-        require(_index < totalSupply());
-        return allTokens[_index];
-    }
-    
-
-    function addTokenTo(address _to, uint256 _tokenId) internal {
-        super.addTokenTo(_to, _tokenId);
-        uint256 length = ownedTokens[_to].length;
-        ownedTokens[_to].push(_tokenId);
-        ownedTokensIndex[_tokenId] = length;
-    }
-
-    function removeTokenFrom(address _from, uint256 _tokenId) internal {
-        super.removeTokenFrom(_from, _tokenId);
-
-        uint256 tokenIndex = ownedTokensIndex[_tokenId];
-        uint256 lastTokenIndex = ownedTokens[_from].length.sub(1);
-        uint256 lastToken = ownedTokens[_from][lastTokenIndex];
-
-        ownedTokens[_from][tokenIndex] = lastToken;
-        ownedTokens[_from][lastTokenIndex] = 0;
-
-        ownedTokens[_from].length--;
-        ownedTokensIndex[_tokenId] = 0;
-        ownedTokensIndex[lastToken] = tokenIndex;
-    }
-    
-    function _setTokenURI(uint256 _tokenId, string _uri) internal {
-        require(exists(_tokenId));
-        tokenURIs[_tokenId] = _uri;
+    constructor() public {
+        supportedInterfaces[0x780e9d63] = true; // ERC721Enumerable
     }
 
     function _mint(address _to, uint256 _tokenId) internal {
         super._mint(_to, _tokenId);
-
-        allTokensIndex[_tokenId] = allTokens.length;
-        allTokens.push(_tokenId);
+        uint256 length = tokens.push(_tokenId);
+        idToIndex[_tokenId] = length - 1;
     }
-
 
     function _burn(address _owner, uint256 _tokenId) internal {
         super._burn(_owner, _tokenId);
+        assert(tokens.length > 0);
 
-        // Clear metadata (if any)
-        if (bytes(tokenURIs[_tokenId]).length != 0) {
-            delete tokenURIs[_tokenId];
-        }
+        uint256 tokenIndex = idToIndex[_tokenId];
+        // Sanity check. This could be removed in the future.
+        assert(tokens[tokenIndex] == _tokenId);
+        uint256 lastTokenIndex = tokens.length - 1;
+        uint256 lastToken = tokens[lastTokenIndex];
 
-        // Reorg all tokens array
-        uint256 tokenIndex = allTokensIndex[_tokenId];
-        uint256 lastTokenIndex = allTokens.length.sub(1);
-        uint256 lastToken = allTokens[lastTokenIndex];
+        tokens[tokenIndex] = lastToken;
 
-        allTokens[tokenIndex] = lastToken;
-        allTokens[lastTokenIndex] = 0;
+        tokens.length--;
+        // Consider adding a conditional check for the last token in order to save GAS.
+        idToIndex[lastToken] = tokenIndex;
+        idToIndex[_tokenId] = 0;
+    }
 
-        allTokens.length--;
-        allTokensIndex[_tokenId] = 0;
-        allTokensIndex[lastToken] = tokenIndex;
+    function removeNFToken(address _from, uint256 _tokenId) internal
+    {
+        super.removeNFToken(_from, _tokenId);
+        assert(ownerToIds[_from].length > 0);
+
+        uint256 tokenToRemoveIndex = idToOwnerIndex[_tokenId];
+        uint256 lastTokenIndex = ownerToIds[_from].length - 1;
+        uint256 lastToken = ownerToIds[_from][lastTokenIndex];
+
+        ownerToIds[_from][tokenToRemoveIndex] = lastToken;
+
+        ownerToIds[_from].length--;
+        // Consider adding a conditional check for the last token in order to save GAS.
+        idToOwnerIndex[lastToken] = tokenToRemoveIndex;
+        idToOwnerIndex[_tokenId] = 0;
+    }
+
+    function addNFToken(address _to, uint256 _tokenId) internal {
+        super.addNFToken(_to, _tokenId);
+
+        uint256 length = ownerToIds[_to].push(_tokenId);
+        idToOwnerIndex[_tokenId] = length - 1;
+    }
+
+    function totalSupply() external view returns (uint256) {
+        return tokens.length;
+    }
+
+    function tokenByIndex(uint256 _index) external view returns (uint256) {
+        require(_index < tokens.length);
+        // Sanity check. This could be removed in the future.
+        assert(idToIndex[tokens[_index]] == _index);
+        return tokens[_index];
+    }
+
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256) {
+        require(_index < ownerToIds[_owner].length);
+        return ownerToIds[_owner][_index];
     }
 
 }
 
+contract NFTStandard is NFTokenEnumerable, ERC721Metadata {
+    string internal nftName;
+    string internal nftSymbol;
+    
+    mapping (uint256 => string) internal idToUri;
+    
+    constructor(string _name, string _symbol) public {
+        nftName = _name;
+        nftSymbol = _symbol;
+        supportedInterfaces[0x5b5e139f] = true; // ERC721Metadata
+    }
+    
+    function _burn(address _owner, uint256 _tokenId) internal {
+        super._burn(_owner, _tokenId);
+        if (bytes(idToUri[_tokenId]).length != 0) {
+        delete idToUri[_tokenId];
+        }
+    }
+    
+    function _setTokenUri(uint256 _tokenId, string _uri) validNFToken(_tokenId) internal {
+        idToUri[_tokenId] = _uri;
+    }
+    
+    function name() external view returns (string _name) {
+        _name = nftName;
+    }
+    
+    function symbol() external view returns (string _symbol) {
+        _symbol = nftSymbol;
+    }
+    
+    function tokenURI(uint256 _tokenId) validNFToken(_tokenId) external view returns (string) {
+        return idToUri[_tokenId];
+    }
+}
 
 contract BasicAccessControl {
     address public owner;
@@ -427,7 +464,7 @@ interface EtheremonAdventureHandler {
     function handleMultipleItems(address _sender, uint _classId1, uint _classId2, uint _classId3, uint _target, uint _param) external;
 }
 
-contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), BasicAccessControl {
+contract EtheremonAdventureItem is NFTStandard("EtheremonAdventure", "EMOND"), BasicAccessControl {
     uint constant public MAX_OWNER_PERS_SITE = 10;
     uint constant public MAX_SITE_ID = 108;
     uint constant public MAX_SITE_TOKEN_ID = 1080;
@@ -444,7 +481,6 @@ contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), B
     }
     
     uint public totalItem = MAX_SITE_TOKEN_ID;
-    mapping (uint => uint[]) sites; // site class id => token id
     mapping (uint => Item) items; // token id => info
     
     modifier requireAdventureHandler {
@@ -457,22 +493,16 @@ contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), B
     }
     
     function setTokenURI(uint256 _tokenId, string _uri) onlyModerators external {
-        _setTokenURI(_tokenId, _uri);
+        _setTokenUri(_tokenId, _uri);
     }
     
     function spawnSite(uint _classId, uint _tokenId, address _owner) onlyModerators external {
         if (_owner == address(0)) revert();
         if (_classId > MAX_SITE_ID || _classId == 0 || _tokenId > MAX_SITE_TOKEN_ID || _tokenId == 0) revert();
         
-        // can not spawn more than MAX_OWNER_PERS_SITE per site
-        uint[] storage siteIds = sites[_classId];
-        if (siteIds.length > MAX_OWNER_PERS_SITE)
-            revert();
-        
         Item storage item = items[_tokenId];
         if (item.classId != 0) revert(); // token existed
         item.classId = _classId;
-        siteIds.push(_tokenId);
         
         _mint(_owner, _tokenId);
     }
@@ -494,7 +524,7 @@ contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), B
     // public write 
     function useSingleItem(uint _tokenId, uint _target, uint _param) isActive requireAdventureHandler public {
         // check ownership
-        if (_tokenId == 0 || tokenOwner[_tokenId] != msg.sender) revert();
+        if (_tokenId == 0 || idToOwner[_tokenId] != msg.sender) revert();
         Item storage item = items[_tokenId];
         
         EtheremonAdventureHandler handler = EtheremonAdventureHandler(adventureHandler);
@@ -504,9 +534,9 @@ contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), B
     }
     
     function useMultipleItem(uint _token1, uint _token2, uint _token3, uint _target, uint _param) isActive requireAdventureHandler public {
-        if (_token1 > 0 && tokenOwner[_token1] != msg.sender) revert();
-        if (_token2 > 0 && tokenOwner[_token2] != msg.sender) revert();
-        if (_token3 > 0 && tokenOwner[_token3] != msg.sender) revert();
+        if (_token1 > 0 && idToOwner[_token1] != msg.sender) revert();
+        if (_token2 > 0 && idToOwner[_token2] != msg.sender) revert();
+        if (_token3 > 0 && idToOwner[_token3] != msg.sender) revert();
         
         Item storage item1 = items[_token1];
         Item storage item2 = items[_token2];
@@ -527,16 +557,5 @@ contract EtheremonAdventureItem is ERC721Token("EtheremonAdventure", "EMOND"), B
         classId = item.classId;
         value = item.classId;
     }
-    
-    function getSiteTokenId(uint _classId, uint _index) constant public returns(uint tokenId) {
-        return sites[_classId][_index];
-    }
-    
-    function getSiteTokenLength(uint _classId) constant public returns(uint length) {
-        return sites[_classId].length;
-    }
-    
-    function getSiteTokenIds(uint _classId) constant public returns(uint[]) {
-        return sites[_classId];
-    }
+
 }
