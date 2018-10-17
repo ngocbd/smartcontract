@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKAllocation at 0x77f95ccd5ce7acf7dcd02f99392b040ccb89c763
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKAllocation at 0x42E54856aC383a86b404Ab9FdBFC9224E5527b2F
 */
 pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
