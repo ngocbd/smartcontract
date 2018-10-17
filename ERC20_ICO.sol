@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20_ICO at 0xd082e94b1fcad2a083ed817618b24b14399439ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20_ICO at 0x13873a43694f039d18107afeac917aff6bc4fa96
 */
 pragma solidity ^0.4.24;
 
@@ -214,10 +214,10 @@ contract ERC20_ICO is owned, Killable {
     ERC20 public token;
 
     /// the UNIX timestamp start date of the crowdsale
-    uint256 public startsAt = 1528489000;
+    uint256 public startsAt = 1528761600;
 
     /// the UNIX timestamp end date of the crowdsale
-    uint256 public endsAt = 1530000000;
+    uint256 public endsAt = 1531389600;
 
     /// the price of token
     uint256 public TokenPerETH = 5600;
@@ -243,6 +243,9 @@ contract ERC20_ICO is owned, Killable {
     /// How much ETH each address has invested to this crowdsale
     mapping (address => uint256) public investedAmountOf;
 
+    /// list of investor
+    address[] public investorlist;
+
     /// A new investment was made
     event Invested(address investor, uint256 weiAmount, uint256 tokenAmount);
     /// Crowdsale Start time has been changed
@@ -267,6 +270,7 @@ contract ERC20_ICO is owned, Killable {
         if(investedAmountOf[receiver] == 0) {
             // A new investor
             investorCount++;
+            investorlist.push(receiver) -1;
         }
 
         // Update investor
@@ -299,7 +303,7 @@ contract ERC20_ICO is owned, Killable {
 
     }
 
-    function buy() public payable {
+    function () public payable {
         investInternal(msg.sender);
     }
 
@@ -323,5 +327,7 @@ contract ERC20_ICO is owned, Killable {
     function finalize() public onlyOwner {
         // Finalized Pre ICO crowdsele.
         finalized = true;
+        uint256 tokensAmount = token.balanceOf(this);
+        token.transfer(owner, tokensAmount);
     }
 }
