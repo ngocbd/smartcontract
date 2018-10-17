@@ -1,77 +1,71 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x9726f6c6feba96b04702550fb99bf4f0f152d7df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x20e2bf0fc47e65a3caa5e8e17c5cd730cc556db9
 */
 pragma solidity ^0.4.24;
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+
+interface Token {
+  function transfer(address _to, uint256 _value) external returns (bool);
 }
 
-contract Ownable {
+contract onlyOwner {
   address public owner;
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
+    bool private stopped = false;
+  /** 
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
   constructor() public {
     owner = msg.sender;
-  }
 
+  }
+    
+    modifier isRunning {
+        require(!stopped);
+        _;
+    }
+    
+    function stop() isOwner public {
+        stopped = true;
+    }
+
+    function start() isOwner public {
+        stopped = false;
+    }
   /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
+  * @dev Throws if called by any account other than the owner. 
+  */
+  modifier isOwner {
     require(msg.sender == owner);
     _;
   }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 }
 
-contract Airdrop is Ownable {
+contract AirDrop is onlyOwner{
 
-    ERC20Basic token;
+  Token token;
 
-    constructor(address tokenAddress) public {
-        token = ERC20Basic(tokenAddress);
+  event TransferredToken(address indexed to, uint256 value);
+
+
+  constructor() public{
+      address _tokenAddr = 0x99092a458b405fb8c06c5a3aa01cffd826019568; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
+
+    function() external payable{
+        withdraw();
     }
+    
+    
+  function sendInternally(uint256 tokensToSend, uint256 valueToPresent) internal {
+    require(msg.sender != address(0));
+    token.transfer(msg.sender, tokensToSend);
+    emit TransferredToken(msg.sender, valueToPresent);
+    
+  }
 
-    function sendWinnings(address[] winners, uint256[] amounts) public onlyOwner {
-        require(winners.length == amounts.length,"The number of winners must match the number of amounts");
-        require(winners.length <= 64);
-        for (uint i = 0; i < winners.length; i++) {
-            token.transfer(winners[i], amounts[i]);
-        }
-    }
-
-    function withdraw() public onlyOwner {
-        uint256 currentSupply = token.balanceOf(address(this));
-        token.transfer(owner, currentSupply);
-    }
-
+  function withdraw() isRunning private returns(bool) {
+    sendInternally(400*10**18,400);
+    return true;   
+  }
 }
