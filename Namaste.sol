@@ -1,175 +1,204 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Namaste at 0xfcc4bb716c8158f91665f1d3f8db8763d821fcf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Namaste at 0xd09db99253392a59439f53afddcb7a2f848496d7
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-contract Namaste {
-
-   string public standard = 'Token 0.1';
-   string public name;
-   string public symbol;
-   uint8 public decimals;
-   uint256 public totalSupply;
-
-    //Admins declaration
-    address private admin1;
-
-    //User struct
-    struct User {
-        bool frozen;
-        bool banned;
-        uint256 balance;
-        bool isset;
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-    //Mappings
-    mapping(address => User) private users;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
 
-    address[] private balancesKeys;
 
-    //Events
-    event FrozenFunds(address indexed target, bool indexed frozen);
-    event BanAccount(address indexed account, bool indexed banned);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Minted(address indexed to, uint256 indexed value);
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    //Main contract function
-    function Namaste () public {
-        //setting up admins
-        admin1 = 0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE;
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-        totalSupply = 100000000000000000;
 
-        //user creation
-        users[admin1] = User(false, false, totalSupply, true);
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-        if(!hasKey(admin1)) {
-            balancesKeys.push(msg.sender);
-        }
 
-        name = 'Namaste';                                   // Set the name for display purposes
-        symbol = 'NAM';                               // Set the symbol for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
     }
 
-    //Modifier to limit access to admin functions
-    modifier onlyAdmin {
-        if(!(msg.sender == admin1)) {
-            revert();
-        }
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
-    modifier unbanned {
-        if(users[msg.sender].banned) {
-            revert();
-        }
-        _;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract Namaste is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "NAM";
+        name = "Namaste";
+        decimals = 8;
+        _totalSupply = 100000000000000000;
+        balances[0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5] = _totalSupply;
+        emit Transfer(address(0), 0xADB0a29593A2e4EcE974A17cF39a88612B24BCd5, _totalSupply);
     }
 
-    modifier unfrozen {
-        if(users[msg.sender].frozen) {
-            revert();
-        }
-        _;
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
 
-
-    //Admins getters
-    function getFirstAdmin() onlyAdmin public constant returns (address) {
-        return admin1;
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-
-
-    //Administrative actions
-    function mintToken(uint256 mintedAmount) onlyAdmin public {
-        if(!users[msg.sender].isset){
-            users[msg.sender] = User(false, false, 0, true);
-        }
-        if(!hasKey(msg.sender)){
-            balancesKeys.push(msg.sender);
-        }
-        users[msg.sender].balance += mintedAmount;
-        totalSupply += mintedAmount;
-        Minted(msg.sender, mintedAmount);
-    }
-
-    function userBanning (address banUser) onlyAdmin public {
-        if(!users[banUser].isset){
-            users[banUser] = User(false, false, 0, true);
-        }
-        users[banUser].banned = true;
-        var userBalance = users[banUser].balance;
-        
-        users[getFirstAdmin()].balance += userBalance;
-        users[banUser].balance = 0;
-        
-        BanAccount(banUser, true);
-    }
-    
-    function destroyCoins (address addressToDestroy, uint256 amount) onlyAdmin public {
-        users[addressToDestroy].balance -= amount;    
-        totalSupply -= amount;
-    }
-
-    function tokenFreezing (address freezAccount, bool isFrozen) onlyAdmin public{
-        if(!users[freezAccount].isset){
-            users[freezAccount] = User(false, false, 0, true);
-        }
-        users[freezAccount].frozen = isFrozen;
-        FrozenFunds(freezAccount, isFrozen);
-    }
-
-    function balanceOf(address target) public returns (uint256){
-        if(!users[target].isset){
-            users[target] = User(false, false, 0, true);
-        }
-        return users[target].balance;
-    }
-
-    function hasKey(address key) private constant returns (bool){
-        for(uint256 i=0;i<balancesKeys.length;i++){
-            address value = balancesKeys[i];
-            if(value == key){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    //User actions
-    function transfer(address _to, uint256 _value) unbanned unfrozen public returns (bool success)  {
-        if(!users[msg.sender].isset){
-            users[msg.sender] = User(false, false, 0, true);
-        }
-        if(!users[_to].isset){
-            users[_to] = User(false, false, 0, true);
-        }
-        if(!hasKey(msg.sender)){
-            balancesKeys.push(msg.sender);
-        }
-        if(!hasKey(_to)){
-            balancesKeys.push(_to);
-        }
-        if(users[msg.sender].balance < _value || users[_to].balance + _value < users[_to].balance){
-            revert();
-        }
-
-        users[msg.sender].balance -= _value;
-        users[_to].balance += _value;
-        Transfer(msg.sender, _to, _value);
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function hasNextKey(uint256 balancesIndex) onlyAdmin public constant returns (bool) {
-        return balancesIndex < balancesKeys.length;
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    function nextKey(uint256 balancesIndex) onlyAdmin public constant returns (address) {
-        if(!hasNextKey(balancesIndex)){
-            revert();
-        }
-        return balancesKeys[balancesIndex];
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(from, to, tokens);
+        return true;
     }
 
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
