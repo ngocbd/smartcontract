@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeMediaChainToken at 0xa8f7cab2c2485ff8f044248ebe64b6ccb9e250cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeMediaChainToken at 0xdf7d9630d5c43f2ece338843c019f050f72dcd79
 */
 pragma solidity ^0.4.16;
 
@@ -293,9 +293,9 @@ contract PausableFrozenToken is StandardToken, Frozen {
 }
 
 /**
- * @title Bec Token
+ * @title WeMediaChain Token
  *
- * @dev Implementation of Bec Token based on the basic standard token.
+ * @dev Implementation of WeMediaChain Token based on the basic standard token.
  */
 contract WeMediaChainToken is PausableFrozenToken {
     
@@ -305,8 +305,8 @@ contract WeMediaChainToken is PausableFrozenToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "WeMediaChain";
-    string public symbol = "WMC";
+    string public name = "WeMediaCash";
+    string public symbol = "WMCH";
     string public version = '1.0.0';
     uint8 public decimals = 18;
 
