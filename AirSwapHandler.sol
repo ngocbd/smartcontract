@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirSwapHandler at 0x18a27a0e42d02d88ea2800ffe3bf094fb2de3e53
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirSwapHandler at 0x706b36a1f11457b31652149b77a3fef16575b808
 */
 pragma solidity 0.4.21;
 
@@ -248,6 +248,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     AirSwapInterface public airSwap;
     WETH9 public weth;
     address public totle;
+    uint256 constant MAX_UINT = 2**256 - 1;
 
     modifier onlyTotle() {
         require(msg.sender == totle);
@@ -280,8 +281,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
         bytes32,
         bytes32
     ) external returns (uint256) {
-        // Just return a orderValues[0], as there's nothing else we can do here
-        return orderValues[0];
+        return orderValues[1];
     }
 
     /// @dev Perform a buy order at the exchange
@@ -305,8 +305,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     onlyTotle
     payable
     returns (uint256) {
-        fillBuy(orderAddresses, orderValues, v, r, s);
-        return amountToFill;
+        return fillBuy(orderAddresses, orderValues, v, r, s);
     }
 
     /// @dev Perform a sell order at the exchange
@@ -357,6 +356,10 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
         owner.transfer(_amount);
     }
 
+    function approveToken(address _token, uint amount) external onlyOwner {
+        require(ERC20(_token).approve(address(airSwap), amount));
+    }
+
     function() public payable {
     }
 
@@ -394,7 +397,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) private {
+    ) private returns (uint) {
         airSwap.fill.value(msg.value)(orderAddresses[0], orderValues[0], orderAddresses[1],
                                       address(this), orderValues[1], orderAddresses[3],
                                       orderValues[2], orderValues[3], v, r, s);
@@ -404,6 +407,8 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
                               orderValues[2], orderValues[3]));
 
         require(ERC20(orderAddresses[1]).transfer(orderAddresses[2], orderValues[0]));
+
+        return orderValues[0];
     }
 
     /// orderAddresses[0] == makerAddress
@@ -429,7 +434,9 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
 
         uint takerAmount = orderValues[1];
 
-        require(ERC20(orderAddresses[3]).approve(address(airSwap), takerAmount));
+        if(ERC20(orderAddresses[3]).allowance(address(this), address(airSwap)) == 0) {
+            require(ERC20(orderAddresses[3]).approve(address(airSwap), MAX_UINT));
+        }
 
         airSwap.fill(orderAddresses[0], orderValues[0], orderAddresses[1],
                      address(this), takerAmount, orderAddresses[3],
