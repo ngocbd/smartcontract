@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GanapatiReservedToken at 0x4fc91719cff9c402ced5cd48c59a1c349a96dcf3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GanapatiReservedToken at 0xc38d316557afd7bd6220aee1a3990fafce552801
 */
 pragma solidity ^0.4.24;
 
@@ -340,31 +340,31 @@ contract GanapatiReservedToken is StandardToken, Ownable {
         validAddresses[_owner] = true;
 
         // the tokens of 60% of the totalSupply is set to the sale address
-        address sale = 0x03be9b0c621ceb2b2dafb2eb3a05c9d36ec99d4b;
+        address sale = 0xd01fafa4eb615a6d62d0501d8d062b197a0adfc9;
         balances[sale] = _initialSupply.mul(60).div(100);
         emit Transfer(0x0, sale, balances[sale]);
         validAddresses[sale] = true;
 
         // the tokens of 15% of the totalSupply is set to the team address
-        address team = 0x5757c579b1db2a1cfbca6cfe5c969a92ca679567;
+        address team = 0x1a2d931f4f22fad1e767632c1985dc74e9ce4a1f;
         balances[team] = _initialSupply.mul(15).div(100);
         emit Transfer(0x0, team, balances[team]);
         validAddresses[team] = true;
 
         // the tokens of 12% of the totalSupply is set to the marketor address
-        address marketor = 0x11638630373db529e17cf6994eb0265832b9e491;
+        address marketor = 0xc6a0474c40dcaa9e7a471583d181ca5c9faadbd1;
         balances[marketor] = _initialSupply.mul(12).div(100);
         emit Transfer(0x0, marketor, balances[marketor]);
         validAddresses[marketor] = true;
 
         // the tokens of 10% of the totalSupply is set to the advisor address
-        address advisor = 0x143f8c60e8eb0d881a7be9f60db04cb4182c9cd4;
+        address advisor = 0x0b05e495d7b536d403e7805cd08847cbb634d846;
         balances[advisor] = _initialSupply.mul(10).div(100);
         emit Transfer(0x0, advisor, balances[advisor]);
         validAddresses[advisor] = true;
 
         // the tokens of 3% of the totalSupply is set to the developer address
-        address developer = 0xd96520b5dde7ad1a7775034460dc869495ce170c;
+        address developer = 0x8eb312173e823995583580bb268b2e15dac67441;
         balances[developer] = _initialSupply.mul(3).div(100);
         emit Transfer(0x0, developer, balances[developer]);
         validAddresses[developer] = true;
