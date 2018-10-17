@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb4b22879a8e49f19c4edca787c6a8e022ee42451
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x38e7a9fc20362ffe7300abd4eaaa1b99127365ee
 */
 pragma solidity ^0.4.23;
 /**
@@ -354,8 +354,8 @@ contract Crowdsale is Ownable {
   function Crowdsale() public {
     token = createTokenContract();
     //Hard cap
-    sumHardCapPreICO = 15000000 * 1 ether;
-    sumHardCapICO = 1000000 * 1 ether;
+    sumHardCapPreICO = 14700000 * 1 ether;
+    sumHardCapICO = 4960000 * 1 ether;
     //referral system
     maxRefererTokens = 2500000 * 1 ether;
     //Min Max Investment
