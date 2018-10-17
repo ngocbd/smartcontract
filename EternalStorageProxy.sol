@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorageProxy at 0xd819E948b14cA6AAD2b7Ffd333cCDf732b129EeD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EternalStorageProxy at 0x3410349f1e02e3beab54b1513fc2c9d2bab6d7ac
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 // File: contracts/upgradeability/EternalStorage.sol
 
@@ -213,7 +213,7 @@ contract OwnedUpgradeabilityProxy is UpgradeabilityOwnerStorage, UpgradeabilityP
     /**
     * @dev the constructor sets the original owner of the contract to the sender account.
     */
-    function OwnedUpgradeabilityProxy() public {
+    constructor() public {
         setUpgradeabilityOwner(msg.sender);
     }
 
