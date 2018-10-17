@@ -1,92 +1,88 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERH at 0x2c1180e2818069e5a9f911e636fb8f3db5106a9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERH at 0x49f4b69fef86c82c8e936bfaf1b9e326bd1a20d0
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-////////////////////
-// STANDARD TOKEN //
-////////////////////
+// 'ETHERCHAIN' CROWDSALE token contract
+//
+// Deployed to : 0x49F4B69FEf86C82c8e936Bfaf1b9E326bd1A20D0
+// Symbol      : ERH
+// Name        : ETHERCHAIN TOKEN
+// Total supply: 1,000,000,000
+// Decimals    : 18
 
-contract Token {
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
+contract ERH {
+    // Public variables of the token
+    string public name = "Etherchain";
+    string public symbol = "ERH";
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default
     uint256 public totalSupply;
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-}
-
-contract StandardToken is Token {
-
-     function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
+    uint256 public tokenSupply = 1000000000;
+    uint256 public buyPrice = 500000;
+    address public creator;
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    
+    
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    function ERH() public {
+        totalSupply = tokenSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;    // Give DatBoiCoin Mint the total created tokens
+        creator = msg.sender;
     }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
+      
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    
+    
+    /// @notice Buy tokens from contract by sending ether
+    function () payable internal {
+        uint amount = msg.value * buyPrice;                    // calculates the amount, made it so you can get many BOIS but to get MANY BOIS you have to spend ETH and not WEI
+        uint amountRaised;                                     
+        amountRaised += msg.value;                            //many thanks bois, couldnt do it without r/me_irl
+        require(balanceOf[creator] >= amount);               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
+        balanceOf[creator] -= amount;                        // sends ETH to DatBoiCoinMint
+        Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
+        creator.transfer(amountRaised);
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-
-}
-
-////////////////////////////////////////////
-//   Emergency Response Ethereum-Based   //
-///////////////////////////////////////////
-
-
-contract ERH is StandardToken {
-
-
-    string public constant name = "Emergency Response Ethereum-Based";
-    string public constant symbol = "ERH";
-    uint256 public constant decimals = 18;
-    uint256 public totalSupply = 10000000000 * 10**decimals;
-
-
-    function ERH (address _addressFounder)  {
-
-      balances[_addressFounder] = totalSupply;
-      Transfer(0x0, _addressFounder, totalSupply);
-
-    }
-
-    function () payable public {
-      require(msg.value == 0);
-    }
-
-}
+ }
