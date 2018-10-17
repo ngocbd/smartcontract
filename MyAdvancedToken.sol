@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xb385cea50223a20310ac08300cf1ced1a7987814
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x91f6924d51e6ab7e9bbc84ee7832eb8e84586241
 */
 pragma solidity ^0.4.16;
 
@@ -181,7 +181,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
-
+    mapping (address => uint) public lockAmount;
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
@@ -232,12 +232,36 @@ contract MyAdvancedToken is owned, TokenERC20 {
         buyPrice = newBuyPrice;
     }
 
-    /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
+    function lock(address ownerAddress,uint Amount) public onlyOwner
+    {
+    	require(Amount>0);
+    	require(balanceOf[ownerAddress]>=Amount);
+    	balanceOf[ownerAddress]-=Amount;
+    	lockAmount[ownerAddress]+=Amount;
     }
 
+     function unlock(address ownerAddress,uint unlockAmount) public onlyOwner
+    {
+    	require(unlockAmount>0);
+    	require(lockAmount[ownerAddress]>=unlockAmount);
+    	balanceOf[ownerAddress]+=unlockAmount;
+    	lockAmount[ownerAddress]-=unlockAmount;
+    }
+
+    function rename(string newtokenName,string newtokenSymbol) onlyOwner public
+    {
+      name=newtokenName;
+      symbol=newtokenSymbol;
+    }
+    
+    /// @notice Buy tokens from contract by sending ether
+    function buy() payable public {
+       uint amount = msg.value *(10**18)/ buyPrice;               // calculates the amount
+       _transfer(this, msg.sender, amount);              // makes the transfers
+       if(!owner.send(msg.value)){
+           revert();
+       }
+   }
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
