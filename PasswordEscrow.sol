@@ -1,12 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PasswordEscrow at 0x11ab8e468a6e4e0f69bfd35e4e5a941043f51fd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PasswordEscrow at 0xa150539e9bff0109b8cfeb6c95cc9132941a9349
 */
 pragma solidity 0.4.23;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
+    }
+
+    uint256 c = _a * _b;
+    assert(c / _a == _b);
+
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    uint256 c = _a - _b;
+
+    return c;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    uint256 c = _a + _b;
+    assert(c >= _a);
+
+    return c;
+  }
+}
+
+
 contract PasswordEscrow {
+
+  using SafeMath for uint256;
+
   address public owner;
   uint256 public commissionFee;
   uint256 public totalFee;
+
+  uint256 private randSeed = 50;
 
   //data
   struct Transfer {
@@ -14,21 +76,11 @@ contract PasswordEscrow {
     uint256 amount;
   }
 
-  mapping(bytes32 => Transfer) private transferToPassword;
-
-  mapping(address => uint256) private indexToAddress;
-  mapping(address => mapping(uint256 => bytes32)) private passwordToAddress;
+  mapping(bytes32 => Transfer) private password;
+  mapping(address => uint256) private randToAddress;
 
   modifier onlyOwner() {
     require(msg.sender == owner);
-    _;
-  }
-
-  modifier passwordOwner(bytes32 _byte) {
-    require(
-      transferToPassword[_byte].from == msg.sender &&
-      transferToPassword[_byte].amount > 0
-    );
     _;
   }
 
@@ -36,123 +88,67 @@ contract PasswordEscrow {
   event LogChangeOwner(address indexed exOwner, address indexed newOwner);
   event LogDeposit(address indexed from, uint256 amount);
   event LogGetTransfer(address indexed from, address indexed recipient, uint256 amount);
-  event LogEmergency(address indexed from, uint256 amount);
-
 
 
   constructor(uint256 _fee) public {
     commissionFee = _fee;
+    owner = msg.sender;
   }
 
   function changeCommissionFee(uint256 _fee) public onlyOwner {
     commissionFee = _fee;
-
     emit LogChangeCommissionFee(_fee);
   }
 
   function changeOwner(address _newOwner) public onlyOwner {
-    address exOwner = owner;
+    emit LogChangeOwner(owner, _newOwner);
     owner = _newOwner;
-
-    emit LogChangeOwner(exOwner, _newOwner);
   }
 
-
-  //simple transfer
+  //escrow
   function deposit(bytes32 _password) public payable {
-    require(
-      msg.value > commissionFee &&
-      transferToPassword[sha3(_password)].amount == 0
-    );
+    require(msg.value > commissionFee);
 
-    bytes32 pass = sha3(_password);
-    transferToPassword[pass] = Transfer(msg.sender, msg.value);
+    uint256 rand = _rand();
+    bytes32 pass = sha3(_password, rand);
+    randToAddress[msg.sender] = rand;
+    password[pass].from = msg.sender;
+    password[pass].amount = password[pass].amount.add(msg.value);
 
-    uint256 index = indexToAddress[msg.sender];
-
-    indexToAddress[msg.sender]++;
-    passwordToAddress[msg.sender][index] = pass;
+    _updateSeed();
 
     emit LogDeposit(msg.sender, msg.value);
   }
 
-  function getTransfer(bytes32 _password) public payable {
-    require(
-      transferToPassword[sha3(_password)].amount > 0
-    );
+  function _rand() private view returns(uint256) {
+    uint256 rand = uint256(sha3(now, block.number, randSeed));
+    return rand %= (10 ** 6);
+  }
 
-    bytes32 pass = sha3(_password);
-    address from = transferToPassword[pass].from;
-    uint256 amount = transferToPassword[pass].amount - commissionFee;
-    totalFee += commissionFee;
+  function _updateSeed() private {
+    randSeed = _rand();
+  }
 
-    transferToPassword[pass].amount = 0;
+  function viewRand() public view returns(uint256) {
+    return randToAddress[msg.sender];
+  }
+
+  function getTransfer(bytes32 _password, uint256 _number) public {
+    require(password[sha3(_password, _number)].amount > 0);
+
+    bytes32 pass = sha3(_password, _number);
+    address from = password[pass].from;
+    uint256 amount = password[pass].amount;
+    amount = amount.sub(commissionFee);
+    totalFee = totalFee.add(commissionFee);
+
+    _updateSeed();
+
+    password[pass].amount = 0;
 
     msg.sender.transfer(amount);
 
     emit LogGetTransfer(from, msg.sender, amount);
-  }
-
-
-
-  //advanced transfer
-  function AdvancedDeposit(bytes32 _password, uint256 _num) public payable {
-    require(
-      _num >= 0 && _num < 1000000 &&
-      msg.value >= commissionFee &&
-      transferToPassword[sha3(_password, _num)].amount == 0
-    );
-
-    bytes32 pass = sha3(_password, _num);
-    transferToPassword[pass] = Transfer(msg.sender, msg.value);
-
-    uint256 index = indexToAddress[msg.sender];
-
-    indexToAddress[msg.sender]++;
-    passwordToAddress[msg.sender][index] = pass;
-
-
-    emit LogDeposit(msg.sender, msg.value);
-  }
-
-  function getAdvancedTransfer(bytes32 _password, uint256 _num) public payable {
-    require(
-      _num >= 0 && _num < 1000000 &&
-      transferToPassword[sha3(_password, _num)].amount > 0
-    );
-
-    bytes32 pass = sha3(_password, _num);
-    address from = transferToPassword[pass].from;
-    uint256 amount = transferToPassword[pass].amount - commissionFee;
-    totalFee += commissionFee;
-
-    transferToPassword[pass].amount = 0;
-
-    msg.sender.transfer(amount);
-
-    emit LogGetTransfer(from, msg.sender, amount);
-  }
-
-  function viewIndexNumber() public view returns(uint256) {
-    return indexToAddress[msg.sender];
-  }
-
-  function viewPassword(uint256 _index) public view returns(bytes32, uint256) {
-    bytes32 hash = passwordToAddress[msg.sender][_index];
-    uint256 value = transferToPassword[hash].amount;
-
-    return (hash, value);
-  }
-
-  function emergency(bytes32 _byte) public payable passwordOwner(_byte) {
-
-    uint256 amount = transferToPassword[_byte].amount - commissionFee * 2;
-    totalFee += commissionFee * 2;
-    transferToPassword[_byte].amount = 0;
-
-    msg.sender.transfer(amount);
-
-    emit LogEmergency(msg.sender, amount);
   }
 
   function withdrawFee() public payable onlyOwner {
@@ -161,12 +157,11 @@ contract PasswordEscrow {
     uint256 fee = totalFee;
     totalFee = 0;
 
-    msg.sender.transfer(totalFee);
+    owner.transfer(fee);
   }
 
-  // only emergency
   function withdraw() public payable onlyOwner {
-    msg.sender.transfer(this.balance);
+    owner.transfer(this.balance);
   }
 
 
