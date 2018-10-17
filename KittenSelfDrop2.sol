@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittenSelfDrop2 at 0x370f0fe5f1c03892b2dc950a89c6eaff4980dac3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittenSelfDrop2 at 0x3f513977cd827428e0459fdef7217cd6272dc893
 */
 pragma solidity ^0.4.21;
 
@@ -54,17 +54,18 @@ contract KittenSelfDrop2 is Ownable {
     
     // Initialize the cutest contract in the world
     function KittenSelfDrop2 () {
-        address c = 0xac2BD14654BBf22F9d8f20c7b3a70e376d3436B4; // set Kitten Coin contract address
+        address c = 0x2089899d03607b2192afb2567874a3f287f2f1e4
+; // set Kitten Coin contract address
         kittenContract = KittenCoin(c); 
         dropNumber = 1;
         kittensDroppedToTheWorld = 0;
         kittensRemainingToDrop = 0;
-        basicReward = 50000000000; // set initial basic reward to 500 Kitten Coins
-        holderReward = 50000000000; // set initial holder reward to 500 Kitten Coins
+        basicReward = 500; // set initial basic reward to 500 Kitten Coins
+        holderReward = 5; // set initial holder reward to 500 Kitten Coins
         holderAmount = 5000000000000; // set initial hold amount to 50000 Kitten Coins for extra reward
-        donatorReward[0]=[1,10000000000]; // set initial donator reward to 100 Kitten Coins from 1 wei
-        donatorReward[1]=[1000000000000000,100000000000]; // set initial donator reward to 1000 Kitten Coins from 0.001 ETH
-        donatorReward[2]=[10000000000000000,500000000000]; // set initial donator reward to 5000 Kitten Coins from 0.01 ETH
+        donatorReward[0]=[1,1]; // set initial donator reward to 100 Kitten Coins from 1 wei
+        donatorReward[1]=[1000000000000000,1000]; // set initial donator reward to 1000 Kitten Coins from 0.001 ETH
+        donatorReward[2]=[10000000000000000,5000]; // set initial donator reward to 5000 Kitten Coins from 0.01 ETH
         donatorRewardLevels = 3;
         totalDropTransactions = 0;
     }
