@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTE at 0x1259ef4e1df170e0ae0b31c03e9d7de7f57be90f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTE at 0xcd3b77b229c3afd1b88e5d28ece0d1c6fa57117a
 */
 pragma solidity ^0.4.23;
 /**
@@ -298,30 +298,37 @@ contract LTE is Ownable, MintableToken {
   string public constant symbol = "LTE";
   uint32 public constant decimals = 18;
   address public addressBounty;
+  address public addressAirdrop;
   address public addressTeam;
   address public addressAdvisors;
   address public addressDividendReserve;
   address public addressPrivateSale;
   uint256 public summBounty;
+  uint256 public summAirdrop;
   uint256 public summTeam;
   uint256 public summAdvisors;
   uint256 public summDividendReserve;
   uint256 public summPrivateSale;
 
   function LTE() public {
-    addressBounty = 0x55a56c4666b95003f21f6273D17A449405b7CBaa; 
-    addressTeam = 0x4847a781F2FfE63f3474ba694FA96D63D5653D23; 
-    addressAdvisors = 0xc7a4784e57cf7d545F39C624c29147bC528b5128; 
-    addressDividendReserve = 0x9FAc8dDD09f8e12f3fA006b46dE7D52288DAA6c6; 
-    addressPrivateSale = 0xD9AB546F703a28360fc5653d5b6f5af3fb70586F; 
+    addressBounty = 0xe70D1a8D548aFCdB4B5D162DaF8668E1E97796FB; 
+    addressAirdrop = 0x024d96Ad09a076A88F0EA716B38EdB36B8A636DD;
+    addressTeam = 0xCe1932A41aaC4D8d838a41f2D10E4b154f719Eb1; 
+    addressAdvisors = 0x9f3D002255B96F39F96961F40FdD2a1C3d40B919; 
+    addressDividendReserve = 0xB647e8157270cCc5dB202FFa7C5CC80992645Ec7; 
+    addressPrivateSale = 0x953b3f258f441BC49d0a6f21f41E86E5ab9e6715; 
+
     // Token distribution
-    summBounty = 890677 * (10 ** uint256(decimals));
-    summTeam = 11133474 * (10 ** uint256(decimals));
-    summAdvisors = 2226694 * (10 ** uint256(decimals));
-    summDividendReserve = 22266949 * (10 ** uint256(decimals));
+    summBounty = 779600 * (10 ** uint256(decimals));
+    summAirdrop = 779600 * (10 ** uint256(decimals));
+    summTeam = 9745000 * (10 ** uint256(decimals));
+    summAdvisors = 1949000 * (10 ** uint256(decimals));
+    summDividendReserve = 12160400 * (10 ** uint256(decimals));
     summPrivateSale = 8000000 * (10 ** uint256(decimals));
+
     // Founders and supporters initial Allocations
     mint(addressBounty, summBounty);
+    mint(addressAirdrop, summAirdrop);
     mint(addressTeam, summTeam);
     mint(addressAdvisors, summAdvisors);
     mint(addressDividendReserve, summDividendReserve);
@@ -398,10 +405,10 @@ contract Crowdsale is Ownable {
     startPreICOStage2 = 1533859200; // August    10 2018 00:00:00 +0000
     endPreICOStage2   = 1534723200; // August    20 2018 00:00:00 +0000
     startPreICOStage3 = 1534723200; // August    20 2018 00:00:00 +0000
-    endPreICOStage3   = 1535673600; // August    31 2018 00:00:00 +0000
-    startICOStage1    = 1535673600; // August    31 2018 00:00:00 +0000
-    endICOStage1      = 1536192000; // September 6 2018 00:00:00 +0000
-    startICOStage2    = 1536192000; // September 6 2018 00:00:00 +0000
+    endPreICOStage3   = 1535587200; // August    30 2018 00:00:00 +0000
+    startICOStage1    = 1535587200; // August    30 2018 00:00:00 +0000
+    endICOStage1      = 1536105600; // September 5 2018 00:00:00 +0000
+    startICOStage2    = 1536105600; // September 5 2018 00:00:00 +0000
     endICOStage2      = 1536537600; // September 10 2018 00:00:00 +0000    
 
     sumHardCapPreICO1 = 3900000 * 1 ether;
