@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9d8be94d0612170ce533ac4d7b43cc3cd91e5a1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x8ad6739649f1fbf079882c14d27862d5c2206660
 */
 pragma solidity ^0.4.24;  
 ////////////////////////////////////////////////////////////////////////////////
@@ -33,19 +33,10 @@ library     SafeMath
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-library     StringLib       // (minimal version)
-{
-    function same(string strA, string strB) internal pure returns(bool)
-    {
-        return keccak256(abi.encodePacked(strA))==keccak256(abi.encodePacked(strB));        // using abi.encodePacked since solidity v0.4.23
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
 contract    ERC20 
 {
     using SafeMath  for uint256;
-    using StringLib for string;
-
+    
     //----- VARIABLES
 
     address public              owner;          // Owner of this contract
@@ -56,10 +47,10 @@ contract    ERC20
 
     //------ TOKEN SPECIFICATION
 
-    string  public  constant    name       = "BqtX Token";
-    string  public  constant    symbol     = "BQTX";
+    string  public  constant    name       = "IOU Loyalty Exchange Token";
+    string  public  constant    symbol     = "IOUX";
     uint256 public  constant    decimals   = 18;      // Handle the coin as FIAT (2 decimals). ETH Handles 18 decimal places
-    uint256 public  constant    initSupply = 800000000 * 10**decimals;        // 10**18 max
+    uint256 public  constant    initSupply       = 800000000 * 10**decimals;        // 10**18 max
     uint256 public  constant    supplyReserveVal = 600000000 * 10**decimals;          // if quantity => the ##MACRO## addrs "* 10**decimals" 
 
     //-----
@@ -67,12 +58,12 @@ contract    ERC20
     uint256 public              totalSupply;
     uint256 public              icoSalesSupply   = 0;                   // Needed when burning tokens
     uint256 public              icoReserveSupply = 0;
-    uint256 public              softCap = 10000000   * 10**decimals;
-    uint256 public              hardCap = 500000000   * 10**decimals;
+    uint256 public              softCap = 10000000  * 10**decimals;
+    uint256 public              hardCap = 500000000 * 10**decimals;
 
     //---------------------------------------------------- smartcontract control
 
-    uint256 public              icoDeadLine = 1544313600;     // 2018-12-09 00:00 (GMT+0)
+    uint256 public              icoDeadLine = 1545177600;     // 2018-12-19 00:00 (GMT+0)
 
     bool    public              isIcoPaused            = false; 
     bool    public              isStoppingIcoOnHardCap = false;
@@ -99,13 +90,13 @@ contract    ERC20
 
             //---- extra EVENTS
 
-    event onAdminUserChanged(   address oldAdmin,       address newAdmin);
-    event onOwnershipTransfered(address oldOwner,       address newOwner);
-    event onAdminUserChange(    address oldAdmin,       address newAdmin);
-    event onIcoDeadlineChanged( uint256 oldIcoDeadLine, uint256 newIcoDeadline);
-    event onHardcapChanged(     uint256 hardCap,        uint256 newHardCap);
-    event icoIsNowPaused(       uint8 newPauseStatus);
-    event icoHasRestarted(      uint8 newPauseStatus);
+    event EventOn_AdminUserChanged(   address oldAdmin,       address newAdmin);
+    event EventOn_OwnershipTransfered(address oldOwner,       address newOwner);
+    event EventOn_AdminUserChange(    address oldAdmin,       address newAdmin);
+    event EventOn_IcoDeadlineChanged( uint256 oldIcoDeadLine, uint256 newIcoDeadline);
+    event EventOn_HardcapChanged(     uint256 hardCap,        uint256 newHardCap);
+    event EventOn_IcoIsNowPaused(       uint8 newPauseStatus);
+    event EventOn_IcoHasRestarted(      uint8 newPauseStatus);
 
     //--------------------------------------------------------------------------
     //--------------------------------------------------------------------------
@@ -202,7 +193,7 @@ contract    ERC20
     {
         require(newOwner != address(0));
 
-        emit onOwnershipTransfered(owner, newOwner);
+        emit EventOn_OwnershipTransfered(owner, newOwner);
         owner = newOwner;
     }
     //--------------------------------------------------------------------------
@@ -213,7 +204,7 @@ contract    ERC20
     {
         require(newAdminAddress!=0x0);
 
-        emit onAdminUserChange(admin, newAdminAddress);
+        emit EventOn_AdminUserChange(admin, newAdminAddress);
         admin = newAdminAddress;
     }
     //--------------------------------------------------------------------------
@@ -222,7 +213,7 @@ contract    ERC20
     {
         require(newIcoDeadline!=0);
 
-        emit onIcoDeadlineChanged(icoDeadLine, newIcoDeadline);
+        emit EventOn_IcoDeadlineChanged(icoDeadLine, newIcoDeadline);
         icoDeadLine = newIcoDeadline;
     }
     //--------------------------------------------------------------------------
@@ -232,7 +223,7 @@ contract    ERC20
     {
         require(newHardCap!=0);
 
-        emit onHardcapChanged(hardCap, newHardCap);
+        emit EventOn_HardcapChanged(hardCap, newHardCap);
         hardCap = newHardCap;
     }
     //--------------------------------------------------------------------------
@@ -246,13 +237,13 @@ contract    ERC20
     function    pauseICO()  public onlyAdmin
     {
         isIcoPaused = true;
-        emit icoIsNowPaused(1);
+        emit EventOn_IcoIsNowPaused(1);
     }
     //--------------------------------------------------------------------------
     function    unpauseICO()  public onlyAdmin
     {
         isIcoPaused = false;
-        emit icoHasRestarted(0);
+        emit EventOn_IcoHasRestarted(0);
     }
     //--------------------------------------------------------------------------
     function    isPausedICO() public view     returns(bool)
@@ -296,7 +287,6 @@ contract    ERC20
 contract    Token  is  ERC20
 {
     using SafeMath  for uint256;
-    using StringLib for string;
 
     //-------------------------------------------------------------------------- Constructor
     constructor()   public 
