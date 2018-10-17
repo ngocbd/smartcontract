@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x8b9dbdfacf9d0659044c4c83c213e5a245785729
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0xfe0cbfe053ff1986c616612ad97e5adaafe2a761
 */
 pragma solidity 0.4.24;
 
@@ -238,7 +238,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     IContractRegistry public bancorRegistry;
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     
-    event conversionSucceded(address from,uint256 fromTokenVal,address dest,uint256 minReturn,uint256 destTokenVal);    
+    event conversionSucceded(address from,uint256 fromTokenVal,address dest,uint256 destTokenVal);    
     event conversionMin(uint256 min);
     
     constructor(IERC20Token[] _path,
@@ -270,10 +270,11 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     function convertToInd() internal nonReentrant {
         assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
         IBancorNetwork bancorNetwork = IBancorNetwork(bancorRegistry.getAddress(BANCOR_NETWORK));   
-        uint256 minReturn = minConversionRate.mul(msg.value);
+        uint256 minReturn = 1;
+        emit conversionMin(minConversionRate.mul(msg.value));   
         uint256 convTokens =  bancorNetwork.convertFor.value(msg.value)(path,msg.value,minReturn,destinationWallet);        
         assert(convTokens > 0);
-        emit conversionSucceded(msg.sender,msg.value,destinationWallet,minReturn,convTokens);                                                                    
+        emit conversionSucceded(msg.sender,msg.value,destinationWallet,convTokens);                                                                    
     }
 
     //If accidentally tokens are transferred to this
