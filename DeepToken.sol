@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepToken at 0x50E6264b0879742d68EDeEd061B168F4294eca14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepToken at 0xD4FBeAee64679A9Ca66Efd230bC4e6053144c9Df
 */
 pragma solidity ^0.4.13;
 
@@ -67,7 +67,9 @@ contract DeepToken is SafeMath{
 		balanceOf[msg.sender] = 100*(10**8)*(10**18);              // Give the creator all initial tokens
 		name = "DeepToken";                                   // Set the name for display purposes
 		symbol = "DPT";                               // Set the symbol for display purposes
-		decimals = 18;                            // Amount of decimals for display purposes
+		decimals = 18; 		// Amount of decimals for display purposes
+		owner = msg.sender;
+		
 	}
 
     /* Send coins */
