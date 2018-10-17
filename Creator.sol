@@ -1,25 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0x6aa1990f72c53000aceff1d8934d1ca2802aa1d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0xfc440f51c020a0d2c22bf3c36f9cb13105915152
 */
 pragma solidity ^0.4.13;
 
-contract IFinancialStrategy{
-
-    enum State { Active, Refunding, Closed }
-    State public state = State.Active;
-
-    event Deposited(address indexed beneficiary, uint256 weiAmount);
-    event Receive(address indexed beneficiary, uint256 weiAmount);
-    event Refunded(address indexed beneficiary, uint256 weiAmount);
-    event Started();
-    event Closed();
-    event RefundsEnabled();
-    function freeCash() view public returns(uint256);
-    function deposit(address _beneficiary) external payable;
-    function refund(address _investor) external;
-    function setup(uint8 _state, bytes32[] _params) external;
-    function getBeneficiaryCash() external;
-    function getPartnerCash(uint8 _user, address _msgsender) external;
+contract IAllocation {
+    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external;
 }
 
 contract IRightAndRoles {
@@ -32,187 +17,6 @@ contract IRightAndRoles {
     function changeWallet(address _wallet, uint8 _role) external;
     function setManagerPowerful(bool _mode) external;
     function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool);
-}
-
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-
-    uint256 totalSupply_;
-
-    /**
-    * @dev total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
-    }
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-contract IAllocation {
-    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external;
-}
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-    function minus(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (b>=a) return 0;
-        return a - b;
-    }
-}
-
-contract ICreator{
-    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation);
-    function createFinancialStrategy() external returns(IFinancialStrategy);
-    function getRightAndRoles() external returns(IRightAndRoles);
 }
 
 contract RightAndRoles is IRightAndRoles {
@@ -259,7 +63,7 @@ contract RightAndRoles is IRightAndRoles {
     // @ When it is launched automatically  -
     // @ Who can call the function          staff (all 7+ roles)
     function changeWallet(address _wallet, uint8 _role) external {
-        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && managerPowerful /* && _role != 0*/));
+        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && managerPowerful));
         emit WalletChanged(wallets[_role][0],_wallet,_role);
         uint16 roleMask = uint16(2)**_role;
         address[] storage tmp = wallets[_role];
@@ -293,9 +97,86 @@ contract RightAndRoles is IRightAndRoles {
     }
 }
 
-contract Creator is ICreator{
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    uint256 totalSupply_;
+
+    /**
+    * @dev total number of tokens in existence
+    */
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
+    }
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+}
+
+contract ICreator{
     IRightAndRoles public rightAndRoles;
-    address[] tmp1;
+    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation);
+    function createFinancialStrategy() external returns(IFinancialStrategy);
+    function getRightAndRoles() external returns(IRightAndRoles);
+}
+
+contract MigrationAgent
+{
+    function migrateFrom(address _from, uint256 _value) public;
+}
+
+contract IFinancialStrategy{
+
+    enum State { Active, Refunding, Closed }
+    State public state = State.Active;
+
+    event Deposited(address indexed beneficiary, uint256 weiAmount);
+    event Receive(address indexed beneficiary, uint256 weiAmount);
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+    event Started();
+    event Closed();
+    event RefundsEnabled();
+    function freeCash() view public returns(uint256);
+    function deposit(address _beneficiary) external payable;
+    function refund(address _investor) external;
+    function setup(uint8 _state, bytes32[] _params) external;
+    function getBeneficiaryCash() external;
+    function getPartnerCash(uint8 _user, address _msgsender) external;
+}
+
+contract Creator is ICreator{
 
     function Creator() public{
         address[] memory tmp = new address[](8);
@@ -304,19 +185,19 @@ contract Creator is ICreator{
         //manager
         tmp[1] = msg.sender;
         //beneficiary
-        tmp[2] = 0xd228DF77aF3df82cB7580D48FD0b33Fe43A70F0e;
+        tmp[2] = 0x07544edde0542857277188598606B32F2C28062F;
         // Accountant
         // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
-        tmp[3] = 0xcDd417d7f260B08CD10a3810321dF7A40D65bA40;
+        tmp[3] = 0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494;
         // Observer
         // Has only the right to call paymentsInOtherCurrency (please read the document)
         tmp[4] = 0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494;
         // Bounty - 2% tokens
-        tmp[5] = 0x903b15589855B8c944e9b865A5814D656dA16544;
+        tmp[5] = 0x17194d2cA481d2533A147776BeB471DC40dc4580;
         // Company - 10% tokens
-        tmp[6] = 0xcA2d7C0147fCE138736981fb1Aa273d89cC9A3BF;
+        tmp[6] = 0xb4D429B3240616FA67D1509c0C0E48D11900dd18;
         // Team - 11% tokens, freeze 1 year
-        tmp[7] = 0x7767B19420c89Bb79908820f4a5E55dc65ca7658;
+        tmp[7] = 0x443f4Be0f50f973e3970343c6A50bcf1Ac66c6C3;
         rightAndRoles = new RightAndRoles(tmp);
     }
 
@@ -335,24 +216,54 @@ contract Creator is ICreator{
     }
 }
 
-contract IToken{
-    function setUnpausedWallet(address _wallet, bool mode) public;
-    function mint(address _to, uint256 _amount) public returns (bool);
-    function totalSupply() public view returns (uint256);
-    function setPause(bool mode) public;
-    function setMigrationAgent(address _migrationAgent) public;
-    function migrateAll(address[] _holders) public;
-    function burn(address _beneficiary, uint256 _value) public;
-    function freezedTokenOf(address _beneficiary) public view returns (uint256 amount);
-    function defrostDate(address _beneficiary) public view returns (uint256 Date);
-    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public;
-}
-
 contract GuidedByRoles {
     IRightAndRoles public rightAndRoles;
     function GuidedByRoles(IRightAndRoles _rightAndRoles) public {
         rightAndRoles = _rightAndRoles;
     }
+}
+
+contract MigratableToken is BasicToken,GuidedByRoles {
+
+    uint256 public totalMigrated;
+    address public migrationAgent;
+
+    event Migrate(address indexed _from, address indexed _to, uint256 _value);
+
+    function setMigrationAgent(address _migrationAgent) public {
+        require(rightAndRoles.onlyRoles(msg.sender,1));
+        require(totalMigrated == 0);
+        migrationAgent = _migrationAgent;
+    }
+
+
+    function migrateInternal(address _holder) internal{
+        require(migrationAgent != 0x0);
+
+        uint256 value = balances[_holder];
+        balances[_holder] = 0;
+
+        totalSupply_ = totalSupply_.sub(value);
+        totalMigrated = totalMigrated.add(value);
+
+        MigrationAgent(migrationAgent).migrateFrom(_holder, value);
+        emit Migrate(_holder,migrationAgent,value);
+    }
+
+    function migrateAll(address[] _holders) public {
+        require(rightAndRoles.onlyRoles(msg.sender,1));
+        for(uint i = 0; i < _holders.length; i++){
+            migrateInternal(_holders[i]);
+        }
+    }
+
+    // Reissue your tokens.
+    function migrate() public
+    {
+        require(balances[msg.sender] > 0);
+        migrateInternal(msg.sender);
+    }
+
 }
 
 contract Pausable is GuidedByRoles {
@@ -398,79 +309,6 @@ contract Pausable is GuidedByRoles {
         }
     }
 
-}
-
-contract Allocation is GuidedByRoles, IAllocation {
-    using SafeMath for uint256;
-
-    struct Share {
-        uint256 proportion;
-        uint256 forPart;
-    }
-
-    // How many days to freeze from the moment of finalizing ICO
-    uint256 public unlockPart1;
-    uint256 public unlockPart2;
-    uint256 public totalShare;
-
-    mapping(address => Share) public shares;
-
-    ERC20Basic public token;
-
-    // The contract takes the ERC20 coin address from which this contract will work and from the
-    // owner (Team wallet) who owns the funds.
-    function Allocation(IRightAndRoles _rightAndRoles,ERC20Basic _token, uint256 _unlockPart1, uint256 _unlockPart2) GuidedByRoles(_rightAndRoles) public{
-        unlockPart1 = _unlockPart1;
-        unlockPart2 = _unlockPart2;
-        token = _token;
-    }
-
-    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        shares[_beneficiary] = Share(shares[_beneficiary].proportion.add(_proportion),_percenForFirstPart);
-        totalShare = totalShare.add(_proportion);
-    }
-
-    //    function unlock() external {
-    //        unlockFor(msg.sender);
-    //    }
-
-    // If the time of freezing expired will return the funds to the owner.
-    function unlockFor(address _owner) public {
-        require(now >= unlockPart1);
-        uint256 share = shares[_owner].proportion;
-        if (now < unlockPart2) {
-            share = share.mul(shares[_owner].forPart)/100;
-            shares[_owner].forPart = 0;
-        }
-        if (share > 0) {
-            uint256 unlockedToken = token.balanceOf(this).mul(share).div(totalShare);
-            shares[_owner].proportion = shares[_owner].proportion.sub(share);
-            totalShare = totalShare.sub(share);
-            token.transfer(_owner,unlockedToken);
-        }
-    }
-}
-
-contract BurnableToken is BasicToken, GuidedByRoles {
-
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(address _beneficiary, uint256 _value) public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        require(_value <= balances[_beneficiary]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        balances[_beneficiary] = balances[_beneficiary].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        emit Burn(_beneficiary, _value);
-        emit Transfer(_beneficiary, address(0), _value);
-    }
 }
 
 contract FinancialStrategy is IFinancialStrategy, GuidedByRoles{
@@ -700,45 +538,211 @@ contract FinancialStrategy is IFinancialStrategy, GuidedByRoles{
     }
 }
 
-contract MigratableToken is BasicToken,GuidedByRoles {
+contract IToken{
+    function setUnpausedWallet(address _wallet, bool mode) public;
+    function mint(address _to, uint256 _amount) public returns (bool);
+    function totalSupply() public view returns (uint256);
+    function setPause(bool mode) public;
+    function setMigrationAgent(address _migrationAgent) public;
+    function migrateAll(address[] _holders) public;
+    function burn(address _beneficiary, uint256 _value) public;
+    function freezedTokenOf(address _beneficiary) public view returns (uint256 amount);
+    function defrostDate(address _beneficiary) public view returns (uint256 Date);
+    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public;
+}
 
-    uint256 public totalMigrated;
-    address public migrationAgent;
+contract BurnableToken is BasicToken, GuidedByRoles {
 
-    event Migrate(address indexed _from, address indexed _to, uint256 _value);
+    event Burn(address indexed burner, uint256 value);
 
-    function setMigrationAgent(address _migrationAgent) public {
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(address _beneficiary, uint256 _value) public {
         require(rightAndRoles.onlyRoles(msg.sender,1));
-        require(totalMigrated == 0);
-        migrationAgent = _migrationAgent;
+        require(_value <= balances[_beneficiary]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        balances[_beneficiary] = balances[_beneficiary].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+        emit Burn(_beneficiary, _value);
+        emit Transfer(_beneficiary, address(0), _value);
+    }
+}
+
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+    function minus(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (b>=a) return 0;
+        return a - b;
+    }
+}
+
+contract Allocation is GuidedByRoles, IAllocation {
+    using SafeMath for uint256;
+
+    struct Share {
+        uint256 proportion;
+        uint256 forPart;
     }
 
+    // How many days to freeze from the moment of finalizing ICO
+    uint256 public unlockPart1;
+    uint256 public unlockPart2;
+    uint256 public totalShare;
 
-    function migrateInternal(address _holder) internal{
-        require(migrationAgent != 0x0);
+    mapping(address => Share) public shares;
 
-        uint256 value = balances[_holder];
-        balances[_holder] = 0;
+    ERC20Basic public token;
 
-        totalSupply_ = totalSupply_.sub(value);
-        totalMigrated = totalMigrated.add(value);
-
-        MigrationAgent(migrationAgent).migrateFrom(_holder, value);
-        emit Migrate(_holder,migrationAgent,value);
+    // The contract takes the ERC20 coin address from which this contract will work and from the
+    // owner (Team wallet) who owns the funds.
+    function Allocation(IRightAndRoles _rightAndRoles,ERC20Basic _token, uint256 _unlockPart1, uint256 _unlockPart2) GuidedByRoles(_rightAndRoles) public{
+        unlockPart1 = _unlockPart1;
+        unlockPart2 = _unlockPart2;
+        token = _token;
     }
 
-    function migrateAll(address[] _holders) public {
+    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external {
         require(rightAndRoles.onlyRoles(msg.sender,1));
-        for(uint i = 0; i < _holders.length; i++){
-            migrateInternal(_holders[i]);
+        shares[_beneficiary] = Share(shares[_beneficiary].proportion.add(_proportion),_percenForFirstPart);
+        totalShare = totalShare.add(_proportion);
+    }
+
+    //    function unlock() external {
+    //        unlockFor(msg.sender);
+    //    }
+
+    // If the time of freezing expired will return the funds to the owner.
+    function unlockFor(address _owner) public {
+        require(now >= unlockPart1);
+        uint256 share = shares[_owner].proportion;
+        if (now < unlockPart2) {
+            share = share.mul(shares[_owner].forPart)/100;
+            shares[_owner].forPart = 0;
+        }
+        if (share > 0) {
+            uint256 unlockedToken = token.balanceOf(this).mul(share).div(totalShare);
+            shares[_owner].proportion = shares[_owner].proportion.sub(share);
+            totalShare = totalShare.sub(share);
+            token.transfer(_owner,unlockedToken);
         }
     }
+}
 
-    // Reissue your tokens.
-    function migrate() public
-    {
-        require(balances[msg.sender] > 0);
-        migrateInternal(msg.sender);
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
 
 }
@@ -836,13 +840,8 @@ contract MintableToken is StandardToken, GuidedByRoles {
 }
 
 contract Token is IToken, FreezingToken, MintableToken, MigratableToken, BurnableToken{
-    function Token(IRightAndRoles _rightAndRoles) GuidedByRoles(_rightAndRoles) public {}
-    string public constant name = "Ale Coin";
-    string public constant symbol = "ALE";
+    function Token(ICreator _creator) GuidedByRoles(_creator.rightAndRoles()) public {}
+    string public constant name = "Imigize";
+    string public constant symbol = "IMGZ";
     uint8 public constant decimals = 18;
-}
-
-contract MigrationAgent
-{
-    function migrateFrom(address _from, uint256 _value) public;
 }
