@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Avatar at 0xa4688ea42e1c607929fa30ff5911a9da7f589f91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Avatar at 0x9653b504a33fe5d2434af7ccacfcd4304862b23a
 */
 pragma solidity ^0.4.23;
 
@@ -291,7 +291,7 @@ contract Avatar is MintableToken {
 
     address public approvedUser = 0x48BAa849622fb4481c0C4D9E7a68bcE6b63b0213;
 
-    address public wallet = 0x48BAa849622fb4481c0C4D9E7a68bcE6b63b0213;
+    address public wallet = 0x231FA84139d9956Cc8135303701d738213D8D916;
 
     uint64 public dateStart = 1520348400;
 
@@ -389,28 +389,27 @@ contract Avatar is MintableToken {
         uint256 bonus = 0;
         uint256 totalWei = weiAmount.add(weiFounded);
 
-        if(weiAmount >= 100 finney){
-            bonus = 5;
-        }else if (weiAmount >= 300 finney){
-            bonus = 20;
-        }else if (weiAmount >= 500 finney){
-            bonus = 30;
-        }else if (weiAmount >= 1 ether){
-            bonus = 42;
-        }else if (weiAmount >= 1500 finney){
-            bonus = 45;
-        }else if (weiAmount >= 3 ether){
-            bonus = 51;
-        }else if (weiAmount >= 6 ether){
-            bonus = 60;
+        if (weiAmount >= 30 ether){
+            bonus = 75;
         }else if (weiAmount >= 15 ether){
             bonus = 70;
-        }else if (weiAmount >= 330 ether){
-            bonus = 75;
+        }if (weiAmount >= 6 ether){
+            bonus = 60;
+        }else if (weiAmount >= 3 ether){
+            bonus = 51;
+        }else if (weiAmount >= 1500 finney){
+            bonus = 45;
+        }else if (weiAmount >= 1 ether){
+            bonus = 42;
+        }else if (weiAmount >= 500 finney){
+            bonus = 30;
+        }else if (weiAmount >= 300 finney){
+            bonus = 20;
+        }else if(weiAmount >= 100 finney){
+            bonus = 5;
         }
+
         uint256 tokens = weiAmount.mul(rate);
-
-
 
         if(bonus > 0){
             tokens += tokens.mul(bonus).div(100);
@@ -429,12 +428,11 @@ contract Avatar is MintableToken {
         wallet.transfer(msg.value);
     }
 
-
     function changeWallet(address _newWallet) onlyOwner returns (bool) {
         require(_newWallet != 0x0);
         wallet = _newWallet;
         return true;
     }
 
-    
+
 }
