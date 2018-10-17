@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NotusNetwork at 0x650ddd2982325a6b7bf261b1b82ee9e0cb1cf3dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NotusNetwork at 0x9f43e93450f750847e6e3a958894bd096f6fd528
 */
 pragma solidity ^0.4.23;
 
@@ -113,7 +113,7 @@ contract NotusNetwork is StandardToken { // CHANGE THIS. Update the contract nam
         name = "Notus Network";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "NOTUS";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 111111111;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 4000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
