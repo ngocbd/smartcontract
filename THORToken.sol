@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THORToken at 0x2e59c87e9349242063793761780550374a3146cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THORToken at 0xba1810b38a6b11b9ed8f5c35c4b53feb07feca0c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 /*
- * Creator:THOR (Thor Token) 
+ * Creator: THOR (ThorToken) 
  */
 
 /*
@@ -181,7 +181,7 @@ contract AbstractToken is Token, SafeMath {
 
 
 /**
- * THOR token smart contract.
+ * THOR token token smart contract.
  */
 contract THORToken is AbstractToken {
   /**
@@ -231,7 +231,7 @@ contract THORToken is AbstractToken {
     return tokenCount;
   }
 
-  string constant public name = "Thor";
+  string constant public name = "ThorToken";
   string constant public symbol = "THOR";
   uint8 constant public decimals = 8;
   
