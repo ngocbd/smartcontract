@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x3dd21350a340adfc0a040e0c7074ec8f5728062a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x4cba8d9080964482371b6e6e474dd48eba541640
 */
 pragma solidity ^0.4.24;
 
@@ -135,13 +135,13 @@ contract FoMo3Dshort is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "MOFO 3D";
-    string constant public symbol = "MOFO";
-    uint256 private rndExtra_ = 5 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 5 minutes;         // length of ICO phase, set to 1 year for EOS.
+    string constant public name = "FOMO Short";
+    string constant public symbol = "SHORT";
+    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 5 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
+    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -1389,7 +1389,7 @@ contract FoMo3Dshort is modularShort {
 
 
         // distribute share to affiliate
-        uint256 _aff = (8 * _eth) / 100;
+        uint256 _aff = _eth / 10;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
