@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract e2pEscrow at 0xef0469e78c6537a7239470b752653345c873a3fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract e2pEscrow at 0x0ce80662769f22fd161e5e92cfc82121c835e097
 */
 pragma solidity 0.4.23;
 
@@ -449,7 +449,7 @@ contract e2pEscrow is Stoppable, SafeMath {
     Transfer memory transferOrder = transferDct[_transitAddress];
 
     // verifying signature
-    (verifySignature(_transitAddress,
+    require(verifySignature(_transitAddress,
 		     _recipient, _v, _r, _s ));
 
     delete transferDct[_transitAddress];
