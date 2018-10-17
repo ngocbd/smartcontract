@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plague at 0x293fdd00312d6c91af0280ea53f717dda68a0c95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Plague at 0xe261b329eaa9a0ac456d09f8501fb0129b0c3797
 */
 pragma solidity ^0.4.24;
 
@@ -495,9 +495,6 @@ contract Plague is PlagueEvents{
         public
         returns (uint256, uint256, uint256, uint256)
     {
-        require(isStartGame == true, "The game hasn't started yet.");
-        require(_rndNo <= rndNo, "You're running too fast");
-        
         uint256 _ethPlayerAward = 0;
         
         //withdraw award
@@ -570,6 +567,7 @@ contract Plague is PlagueEvents{
     
     /**
      * @dev start game
+     * 0xd65ab5f2
      */
     function startGame()
         onlyOwner()
@@ -583,6 +581,7 @@ contract Plague is PlagueEvents{
 
     /**
      * @dev change owner.
+     * 0x547e3f06000000000000000000000000695c7a3c1a27de4bb32cd812a8c2677e25f0b9d5
      */
     function changeReceiver(address newReceiver)
         onlyOwner()
@@ -600,7 +599,6 @@ contract Plague is PlagueEvents{
         view 
         returns(uint256, uint256[2], uint256[3], address[2], uint256[6], address[11],address[4])
     {
-        require(isStartGame == true, "The game hasn't started yet.");
         uint256 _rndNo = rndNo;
         uint256 _totalAwardAtRound = round_m[_rndNo].lastRoundReward.add(round_m[_rndNo].exAward).add(round_m[_rndNo].eth.mul(30) / 100);
         
@@ -625,7 +623,6 @@ contract Plague is PlagueEvents{
         view 
         returns(uint256)
     {
-        require(isStartGame == true, "The game hasn't started yet.");
         uint256 _rndNo = rndNo;
         uint256 _now = now;
         
