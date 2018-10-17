@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0x57ad2a680aed1c6b4adf1d4abddeea54a9668ef4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0xD4c304F688049c70226CBE54878e9582ec14d506
 */
 pragma solidity 0.4.24;
 
@@ -1064,13 +1064,13 @@ contract SparksterToken is StandardToken, Ownable{
 		uint256 howManyDistributed;
 	}
 
-	bool internal transferLock = true; // A Global transfer lock. Set to lock down all tokens from all groups.
-	bool internal allowedToSell = false;
-	bool internal allowedToPurchase = false;
+	bool public transferLock = true; // A Global transfer lock. Set to lock down all tokens from all groups.
+	bool public allowedToSell = false;
+	bool public allowedToPurchase = false;
 	string public name;									 // name for display
 	string public symbol;								 //An identifier
 	uint8 public decimals;							//How many decimals to show.
-	uint256 internal maxGasPrice; // The maximum allowed gas for the purchase function.
+	uint256 public maxGasPrice; // The maximum allowed gas for the purchase function.
 	uint256 internal nextGroupNumber;
 	uint256 public sellPrice; // sellPrice wei:1 spark token; we won't allow to sell back parts of a token.
 	address[] internal allMembers;	
@@ -1079,8 +1079,10 @@ contract SparksterToken is StandardToken, Ownable{
 	mapping(address => Member) internal members;
 	mapping(uint256 => Group) internal groups;
 	mapping(uint256 => address[]) internal associations; // Will hold a record of which addresses belong to which group.
-	uint256 internal openGroupNumber;
-	event PurchaseSuccess(address indexed _addr, uint256 _weiAmount,uint256 _totalEthBalance,uint256 _totalTokenBalance);
+	uint256 public openGroupNumber;
+	event PurchaseSuccess(address indexed _addr, uint256 _groupNumber, uint256 _weiAmount,uint256 _totalEthBalance,uint256 _totalTokenBalance);
+	event NearingHardCap(uint256 groupNumber, uint256 remainder);
+	event ReachedHardCap(uint256 groupNumber);
 	event DistributeDone(uint256 groupNumber);
 	event UnlockDone(uint256 groupNumber);
 	event GroupCreated(uint256 groupNumber, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio);
@@ -1202,7 +1204,13 @@ contract SparksterToken is StandardToken, Ownable{
 		memberRecord.tokenBalance[openGroup.groupNumber] = memberRecord.tokenBalance[openGroup.groupNumber].add(tokenAmount); // Update the member's token amount.
 		balances[owner] = newLeftOver; // Update the available number of tokens.
 		owner.transfer(weiAmount); // Transfer to owner, don't keep funds in the contract.
-		emit PurchaseSuccess(msg.sender,weiAmount,memberRecord.ethBalance[openGroup.groupNumber],memberRecord.tokenBalance[openGroup.groupNumber]); 
+		emit PurchaseSuccess(msg.sender,openGroupNumber,weiAmount,memberRecord.ethBalance[openGroup.groupNumber],memberRecord.tokenBalance[openGroup.groupNumber]); 
+		if (getHowMuchUntilHardCap() <= 100 ether) {
+			emit NearingHardCap(openGroupNumber, getHowMuchUntilHardCap());
+		}
+		if (openGroup.ethTotal == openGroup.cap) {
+			emit ReachedHardCap(openGroupNumber);
+		}
 	}
 	
 	function sell(uint256 amount) public canSell { // Can't sell unless owner has allowed it.
@@ -1261,7 +1269,7 @@ contract SparksterToken is StandardToken, Ownable{
 		return createGroup(0, 0, 0, 0, 0, 0, 0, 0);
 	}
 
-	function getGroup(uint256 groupNumber) public view onlyOwner returns(bool distributed, bool unlocked, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 ethTotal, uint256 howManyDistributed) {
+	function getGroup(uint256 groupNumber) public view returns(bool distributed, bool unlocked, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 weiTotal, uint256 howManyDistributed) {
 		require(groupNumber < nextGroupNumber);
 		Group storage theGroup = groups[groupNumber];
 		distributed = theGroup.distributed;
@@ -1274,8 +1282,12 @@ contract SparksterToken is StandardToken, Ownable{
 		phase1endTime = theGroup.phase1endTime;
 		phase2endTime = theGroup.phase2endTime;
 		deadline = theGroup.deadline;
-		ethTotal = theGroup.ethTotal;
+		weiTotal = theGroup.ethTotal;
 		howManyDistributed = theGroup.howManyDistributed;
+	}
+	
+	function getHowMuchUntilHardCap() public view returns(uint256 remainder) {
+		return groups[openGroupNumber].cap - groups[openGroupNumber].ethTotal;
 	}
 
 	function getHowManyLeftToDistribute(uint256 groupNumber) public view returns(uint256 howManyLeftToDistribute) {
@@ -1300,7 +1312,9 @@ contract SparksterToken is StandardToken, Ownable{
 		balances[owner] = balances[owner].sub(tokens);
 		theMember.tokenBalance[groupNumber] = tokens;
 		theMember.max1 = maxContribution1;
+		if (balances[walletAddress] > 0) {
 		theMember.transferred = -int(balances[walletAddress]); // Don't lock the tokens they come in with if they already hold a balance.
+	}
 		theMember.exists = true;
 		associations[groupNumber].push(walletAddress); // Push this user's address to the associations array so we can easily keep track of which users belong to which group...
 		// ... Solidity doesn't allow to iterate over a map.
