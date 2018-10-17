@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeDice at 0xa69d21a791347acb29ec457e9e5bc6e39c1a5c61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeDice at 0x7935c82679a6a31dbd58f50e2ebc89e79fe4e547
 */
 pragma solidity 0.4.24;
 
-// </ORACLIZE_API>
 // Minimal required STAKE token interface
 contract StakeToken
 {
@@ -48,26 +47,7 @@ contract StakeDiceGame
         return availableTokens * 10000 / multiplierOnWin() / 5;
     }
     
-    ///////////////////////////////
-    /////// GAME FUNCTIONALITY
-    
-    // If we receive approval to transfer a gambler's tokens
-    /*function receiveApproval(address _gambler, uint256 _amount, address _tokenContract, bytes) external returns (bool)
-    {
-        // Make sure that we are receiving STAKE tokens, and not some other token
-        require(_tokenContract == address(stakeDice.stakeTokenContract()));
-        require(msg.sender == _tokenContract);
-        
-        // Make sure the bet is within the current limits
-        require(_amount >= stakeDice.minimumBet());
-        require(_amount <= maximumBet());
-        
-        // Tranfer the STAKE tokens from the user's account to the StakeDice contract
-        stakeDice.stakeTokenContract().transferFrom(_gambler, stakeDice, _amount);
-        
-        // Notify the StakeDice contract that a bet has been placed
-        stakeDice.betPlaced(_gambler, _amount, winningChance);
-    }*/
+
     
     ///////////////////////////////
     /////// OWNER FUNCTIONS
