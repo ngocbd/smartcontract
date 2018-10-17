@@ -1,73 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x1eeeaffe28d463dcf2c1898d19cf3871e9a17d7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x3c3a02efe0a39cec46b9cb6dd4df63cd7e20e3ba
 */
 pragma solidity ^0.4.24;
 
-contract SNOVToken {
-    function transfer(address _to, uint256 _value) public returns (bool success);
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract MultiOwnable {
 
-    mapping(address => bool) ownerMap;
-    address[] public owners;
 
-    event OwnerAdded(address indexed _newOwner);
-    event OwnerRemoved(address indexed _oldOwner);
 
-    modifier onlyOwner() {
-        require(isOwner(msg.sender));
-        _;
-    }
 
-    constructor() public {
-        // Add default owner
-        address owner = msg.sender;
-        ownerMap[owner] = true;
-        owners.push(owner);
-    }
-
-    function ownerCount() public constant returns (uint256) {
-        return owners.length;
-    }
-
-    function isOwner(address owner) public constant returns (bool) {
-        return ownerMap[owner];
-    }
-
-    function addOwner(address owner) public onlyOwner returns (bool) {
-        if (!isOwner(owner) && owner != 0) {
-            ownerMap[owner] = true;
-            owners.push(owner);
-
-            emit OwnerAdded(owner);
-            return true;
-        } else return false;
-    }
-
-    function removeOwner(address owner) public onlyOwner returns (bool) {
-        if (isOwner(owner)) {
-            ownerMap[owner] = false;
-            for (uint i = 0; i < owners.length - 1; i++) {
-                if (owners[i] == owner) {
-                    owners[i] = owners[owners.length - 1];
-                    break;
-                }
-            }
-            owners.length -= 1;
-
-            emit OwnerRemoved(owner);
-            return true;
-        } else return false;
-    }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract MultiTransfer is MultiOwnable {
-    
-    function MultiTransaction(address _tokenAddress, address[] _addresses, uint256[] _values) public onlyOwner {
-        SNOVToken token = SNOVToken(_tokenAddress);
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            token.transfer(_addresses[i], _values[i]);
+
+
+
+contract MultiTransfer {
+
+    function MultiTransfer() public {
+
+    }
+
+    function transfer(address token, address owner,address[] to, uint[] value) public {
+        require(to.length == value.length);
+        require(token != address(0));
+
+        ERC20 t = ERC20(token);
+        for (uint i = 0; i < to.length; i++) {
+            t.transferFrom(owner, to[i], value[i]);
         }
     }
 }
