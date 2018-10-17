@@ -1,127 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xe9f8cde1b60461b7591375b3bc5f2a22a0a1b3e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xf3b5589684aa48ee7f559c58bc66ac74b95ca319
 */
 pragma solidity ^0.4.18;
 
-// File: contracts/IEscrow.sol
-
 /**
- * @title Escrow interface
- *
- * @dev https://send.sd/token
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-interface IEscrow {
-
-  event Created(
-    address indexed sender,
-    address indexed recipient,
-    address indexed arbitrator,
-    uint256 transactionId
-  );
-  event Released(address indexed arbitrator, address indexed sentTo, uint256 transactionId);
-  event Dispute(address indexed arbitrator, uint256 transactionId);
-  event Paid(address indexed arbitrator, uint256 transactionId);
-
-  function create(
-      address _sender,
-      address _recipient,
-      address _arbitrator,
-      uint256 _transactionId,
-      uint256 _tokens,
-      uint256 _fee,
-      uint256 _expiration
-  ) public;
-
-  function fund(
-      address _sender,
-      address _arbitrator,
-      uint256 _transactionId,
-      uint256 _tokens,
-      uint256 _fee
-  ) public;
-
-}
-
-// File: contracts/ISendToken.sol
-
-/**
- * @title ISendToken - Send Consensus Network Token interface
- * @dev token interface built on top of ERC20 standard interface
- * @dev see https://send.sd/token
- */
-interface ISendToken {
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
-
-  function isVerified(address _address) public constant returns(bool);
-
-  function verify(address _address) public;
-
-  function unverify(address _address) public;
-
-  function verifiedTransferFrom(
-      address from,
-      address to,
-      uint256 value,
-      uint256 referenceId,
-      uint256 exchangeRate,
-      uint256 fee
-  ) public;
-
-  function issueExchangeRate(
-      address _from,
-      address _to,
-      address _verifiedAddress,
-      uint256 _value,
-      uint256 _referenceId,
-      uint256 _exchangeRate
-  ) public;
-
-  event VerifiedTransfer(
-      address indexed from,
-      address indexed to,
-      address indexed verifiedAddress,
-      uint256 value,
-      uint256 referenceId,
-      uint256 exchangeRate
-  );
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -132,17 +43,20 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -152,263 +66,210 @@ contract Ownable {
     _;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
-// File: contracts/Escrow.sol
-
 /**
- * @title Vesting contract for SDT
- * @dev see https://send.sd/token
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract Escrow is IEscrow, Ownable {
-  using SafeMath for uint256;
+library SafeMath {
 
-  ISendToken public token;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
 
-  struct Lock {
-    address sender;
-    address recipient;
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Escrow is Ownable {
+    using SafeMath for uint256;
+    struct EscrowElement {
+    bool exists;
+    address src;
+    address dst;
     uint256 value;
-    uint256 fee;
-    uint256 expiration;
-    bool paid;
-  }
-
-  mapping(address => mapping(uint256 => Lock)) internal escrows;
-
-  function Escrow(address _token) public {
-    token = ISendToken(_token);
-  }
-
-  modifier tokenRestricted() {
-    require(msg.sender == address(token));
-    _;
-  }
-
-  function getStatus(address _arbitrator, uint256 _transactionId) 
-      public view returns(address, address, uint256, uint256, uint256, bool) {
-    return(
-      escrows[_arbitrator][_transactionId].sender,
-      escrows[_arbitrator][_transactionId].recipient,
-      escrows[_arbitrator][_transactionId].value,
-      escrows[_arbitrator][_transactionId].fee,
-      escrows[_arbitrator][_transactionId].expiration,
-      escrows[_arbitrator][_transactionId].paid
-    );
-  }
-
-  function isUnlocked(address _arbitrator, uint256 _transactionId) public view returns(bool) {
-    return escrows[_arbitrator][_transactionId].expiration == 1;
-  }
-
-  /**
-   * @dev Create a record for held tokens
-   * @param _arbitrator Address to be authorized to spend locked funds
-   * @param _transactionId Intenral ID for applications implementing this
-   * @param _tokens Amount of tokens to lock
-   * @param _fee A fee to be paid to arbitrator (may be 0)
-   * @param _expiration After this timestamp, user can claim tokens back.
-   */
-  function create(
-      address _sender,
-      address _recipient,
-      address _arbitrator,
-      uint256 _transactionId,
-      uint256 _tokens,
-      uint256 _fee,
-      uint256 _expiration
-  ) public tokenRestricted {
-
-    require(_tokens > 0);
-    require(_fee >= 0);
-    require(escrows[_arbitrator][_transactionId].value == 0);
-
-    escrows[_arbitrator][_transactionId].sender = _sender;
-    escrows[_arbitrator][_transactionId].recipient = _recipient;
-    escrows[_arbitrator][_transactionId].value = _tokens;
-    escrows[_arbitrator][_transactionId].fee = _fee;
-    escrows[_arbitrator][_transactionId].expiration = _expiration;
-
-    Created(_sender, _recipient, _arbitrator, _transactionId);
-  }
-
-  /**
-   * @dev Fund escrow record
-   * @param _arbitrator Address to be authorized to spend locked funds
-   * @param _transactionId Intenral ID for applications implementing this
-   * @param _tokens Amount of tokens to lock
-   * @param _fee A fee to be paid to arbitrator (may be 0)
-   */
-  function fund(
-      address _sender,
-      address _arbitrator,
-      uint256 _transactionId,
-      uint256 _tokens,
-      uint256 _fee
-  ) public tokenRestricted {
-
-    require(escrows[_arbitrator][_transactionId].sender == _sender);
-    require(escrows[_arbitrator][_transactionId].value == _tokens);
-    require(escrows[_arbitrator][_transactionId].fee == _fee);
-    require(escrows[_arbitrator][_transactionId].paid == false);
-
-    escrows[_arbitrator][_transactionId].paid = true;
-
-    Paid(_arbitrator, _transactionId);
-  }
-
-  /**
-   * @dev Transfer a locked amount
-   * @notice Only authorized address
-   * @notice Exchange rate has 18 decimal places
-   * @param _sender Address with locked amount
-   * @param _recipient Address to send funds to
-   * @param _transactionId App/user internal associated ID
-   * @param _exchangeRate Rate to be reported to the blockchain
-   */
-  function release(
-      address _sender,
-      address _recipient,
-      uint256 _transactionId,
-      uint256 _exchangeRate
-  ) public {
-
-    Lock memory lock = escrows[msg.sender][_transactionId];
-
-    require(lock.expiration != 1);
-    require(lock.sender == _sender);
-    require(lock.recipient == _recipient || lock.sender == _recipient);
-    require(lock.paid);
-
-    if (lock.fee > 0 && lock.recipient == _recipient) {
-      token.transfer(_recipient, lock.value);
-      token.transfer(msg.sender, lock.fee);
-    } else {
-      token.transfer(_recipient, lock.value.add(lock.fee));
     }
 
-    delete escrows[msg.sender][_transactionId];
+    address public token;
+    ERC20 public tok;
 
-    token.issueExchangeRate(
-      _sender,
-      _recipient,
-      msg.sender,
-      lock.value,
-      _transactionId,
-      _exchangeRate
+    mapping (bytes20 => EscrowElement) public escrows;
+
+    /* Numerator and denominator of common fraction.
+        E.g. 1 & 25 mean one twenty fifths, i.e. 0.04 = 4% */
+    uint256 public escrow_fee_numerator; /* 1 */
+    uint256 public escrow_fee_denominator; /* 25 */
+
+
+
+    event EscrowStarted(
+    bytes20 indexed escrow_id,
+    EscrowElement escrow_element
     );
-    Released(msg.sender, _recipient, _transactionId);
-  }
 
-  /**
-   * @dev Transfer a locked amount for timeless escrow
-   * @notice Only authorized address
-   * @notice Exchange rate has 18 decimal places
-   * @param _sender Address with locked amount
-   * @param _recipient Address to send funds to
-   * @param _transactionId App/user internal associated ID
-   * @param _exchangeRate Rate to be reported to the blockchain
-   */
-  function releaseUnlocked(
-      address _sender,
-      address _recipient,
-      uint256 _transactionId,
-      uint256 _exchangeRate
-  ) public {
+    event EscrowReleased(
+    bytes20 indexed escrow_id,
+    EscrowElement escrow_element
+    );
 
-    Lock memory lock = escrows[msg.sender][_transactionId];
+    event EscrowCancelled(
+    bytes20 indexed escrow_id,
+    EscrowElement escrow_element
+    );
 
-    require(lock.expiration == 1);
-    require(lock.sender == _sender);
-    require(lock.paid);
 
-    if (lock.fee > 0 && lock.sender != _recipient) {
-      token.transfer(_recipient, lock.value);
-      token.transfer(msg.sender, lock.fee);
-    } else {
-      token.transfer(_recipient, lock.value.add(lock.fee));
+    event TokenSet(
+    address indexed token
+    );
+
+    event Withdrawed(
+    address indexed dst,
+    uint256 value
+    );
+
+    function Escrow(address _token){
+        token = _token;
+        tok = ERC20(_token);
+        escrow_fee_numerator = 1;
+        escrow_fee_denominator = 25;
     }
 
-    delete escrows[msg.sender][_transactionId];
+    function startEscrow(bytes20 escrow_id, address to, uint256 value) public returns (bool) {
+        require(to != address(0));
+        require(escrows[escrow_id].exists != true);
+//        ERC20 tok = ERC20(token);
+        tok.transferFrom(msg.sender, address(this), value);
+        EscrowElement memory escrow_element = EscrowElement(true, msg.sender, to, value);
+        escrows[escrow_id] = escrow_element;
 
-    token.issueExchangeRate(
-      _sender,
-      _recipient,
-      msg.sender,
-      lock.value,
-      _transactionId,
-      _exchangeRate
-    );
-    Released(msg.sender, _recipient, _transactionId);
-  }
+        emit EscrowStarted(escrow_id, escrow_element);
 
-  /**
-   * @dev Claim back locked amount after expiration time
-   * @dev Cannot be claimed if expiration == 0 or expiration == 1
-   * @notice Only works after lock expired
-   * @param _arbitrator Authorized lock address
-   * @param _transactionId transactionId ID from App/user
-   */
-  function claim(
-      address _arbitrator,
-      uint256 _transactionId
-  ) public {
-    Lock memory lock = escrows[_arbitrator][_transactionId];
+        return true;
+    }
 
-    require(lock.sender == msg.sender);
-    require(lock.paid);
-    require(lock.expiration < block.timestamp);
-    require(lock.expiration != 0);
-    require(lock.expiration != 1);
+    function releaseEscrow(bytes20 escrow_id, address fee_destination) onlyOwner returns (bool) {
+        require(fee_destination != address(0));
+        require(escrows[escrow_id].exists == true);
 
-    delete escrows[_arbitrator][_transactionId];
+        EscrowElement storage escrow_element = escrows[escrow_id];
 
-    token.transfer(msg.sender, lock.value.add(lock.fee));
+        uint256 fee = escrow_element.value.mul(escrow_fee_numerator).div(escrow_fee_denominator);
+        uint256 value = escrow_element.value.sub(fee);
 
-    Released(
-      _arbitrator,
-      msg.sender,
-      _transactionId
-    );
-  }
+//        ERC20 tok = ERC20(token);
 
-  /**
-   * @dev Remove expiration time on a lock
-   * @notice User wont be able to claim tokens back after this is called by arbitrator address
-   * @notice Only authorized address
-   * @param _transactionId App/user internal associated ID
-   */
-  function mediate(
-      uint256 _transactionId
-  ) public {
-    require(escrows[msg.sender][_transactionId].paid);
-    require(escrows[msg.sender][_transactionId].expiration != 0);
-    require(escrows[msg.sender][_transactionId].expiration != 1);
+        tok.transfer(escrow_element.dst, value);
+        tok.transfer(fee_destination, fee);
 
-    escrows[msg.sender][_transactionId].expiration = 0;
 
-    Dispute(msg.sender, _transactionId);
-  }
+        EscrowElement memory _escrow_element = escrow_element;
 
-  /**
-   This function is a way to get other ETC20 tokens
-   back to their rightful owner if sent by mistake
-   */
-  function transferToken(address _tokenAddress, address _transferTo, uint256 _value) public onlyOwner {
-    require(_tokenAddress != address(token));
+        emit EscrowReleased(escrow_id, _escrow_element);
 
-    ISendToken erc20Token = ISendToken(_tokenAddress);
-    erc20Token.transfer(_transferTo, _value);
-  }
+        delete escrows[escrow_id];
+
+        return true;
+    }
+
+    function cancelEscrow(bytes20 escrow_id) onlyOwner returns (bool) {
+        EscrowElement storage escrow_element = escrows[escrow_id];
+
+//        ERC20 tok = ERC20(token);
+
+        tok.transfer(escrow_element.src, escrow_element.value);
+        /* Workaround because of lack of feature. See https://github.com/ethereum/solidity/issues/3577 */
+        EscrowElement memory _escrow_element = escrow_element;
+
+
+        emit EscrowCancelled(escrow_id, _escrow_element);
+
+        delete escrows[escrow_id];
+
+        return true;
+    }
+
+    function withdrawToken(address dst, uint256 value) onlyOwner returns (bool){
+        require(dst != address(0));
+        require(value > 0);
+//        ERC20 tok = ERC20(token);
+        tok.transfer(dst, value);
+
+        emit Withdrawed(dst, value);
+
+        return true;
+    }
+
+    function setToken(address _token) onlyOwner returns (bool){
+        require(_token != address(0));
+        token = _token;
+        tok = ERC20(_token);
+        emit TokenSet(_token);
+
+        return true;
+    }
+    //
+
+
 }
