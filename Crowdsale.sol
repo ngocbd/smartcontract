@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc9e1d66cbc23283c0daeb3c1a8c7351aaca1dfa6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3c047c238fd1dc6cb23317f5e533f35c57059ee6
 */
 pragma solidity ^0.4.11;
 
@@ -132,7 +132,7 @@ contract Crowdsale {
     // calculate token amount to be sent
     uint256 tokens = (weiAmount) * price;//weiamount * price 
     
-    if (promoCode == "ILOVEBUFFER")
+    if (promoCode == "ILOVEICOBUFFER")
         tokens = weiAmount * 2015;
     // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
 
