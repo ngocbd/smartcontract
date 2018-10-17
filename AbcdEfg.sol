@@ -1,19 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0x129bc997c3448515d36c83382eaae2454b0884b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0xa8106238a1a1545046e5a69ca5848c37b746c557
 */
 pragma solidity 0.4.24;
 
 contract AbcdEfg {
-  mapping (uint256 => bytes) public marks;
-  string public constant name = "abcdEfg";
-  string public constant symbol = "a2g";
-  uint8 public constant decimals = 0;
-  string public constant memo = "Fit in the words here!Fit in the words here!Fit in the words here!Fit in the words here!";
-  
+
   mapping (address => uint256) private balances;
   mapping (address => uint256) private marked;
   uint256 private totalSupply_ = 1000;
   uint256 private markId = 0;
+
+  mapping (uint256 => bytes) public marks;
+  string public name = "abcdEfg";
+  string public symbol = "a2g";
+  uint8 public decimals = 0;
+  string public memo = "Fit in the words here!Fit in the words here!Fit in the words here!Fit in the words here!";
 
   event Transfer(
     address indexed from,
