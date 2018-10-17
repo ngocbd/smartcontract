@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridProxy at 0xac75c5bcce7c8b487355c3d7e61555eff4493528
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HybridProxy at 0x43c9c9e52cd2cc332b01afdeb32b9e79c084c13b
 */
 pragma solidity ^0.4.23;
 
@@ -57,7 +57,7 @@ contract HybridProxy {
     require(eth_balance != 0);
   }
 
-  function dev_fee(uint256 tokens_this_round) returns (uint256) {
+  function dev_fee(uint256 tokens_this_round) internal returns (uint256) {
     uint256 tokens_individual;
     tokens_individual = tokens_this_round/FEE_DEV;
     require(token.transfer(DEVELOPER1, tokens_individual));
