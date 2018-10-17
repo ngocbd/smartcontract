@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TweedentityRegistry at 0x0a66d93d08ff6c2720267936d48655452745652c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TweedentityRegistry at 0x2ab58a02c4d26bcf3c6116f62ec5c1a6d4c7a53f
 */
 pragma solidity ^0.4.18;
 
@@ -103,17 +103,13 @@ contract TweedentityRegistry
 is HasNoEther
 {
 
-  string public version = "1.3.0";
+  string public version = "1.4.0";
 
   uint public totalStores;
-  mapping (bytes32 => address) public stores;
+  mapping (bytes32 => address) private stores;
 
   address public manager;
   address public claimer;
-
-  bytes32 public managerKey = keccak256("manager");
-  bytes32 public claimerKey = keccak256("claimer");
-  bytes32 public storeKey = keccak256("store");
 
   event ContractRegistered(
     bytes32 indexed key,
@@ -130,7 +126,7 @@ is HasNoEther
   {
     require(_manager != address(0));
     manager = _manager;
-    ContractRegistered(managerKey, "", _manager);
+    ContractRegistered(keccak256("manager"), "", _manager);
   }
 
 
@@ -142,7 +138,7 @@ is HasNoEther
   {
     require(_claimer != address(0));
     claimer = _claimer;
-    ContractRegistered(claimerKey, "", _claimer);
+    ContractRegistered(keccak256("claimer"), "", _claimer);
   }
 
 
@@ -157,8 +153,8 @@ is HasNoEther
     require(_claimer != address(0));
     manager = _manager;
     claimer = _claimer;
-    ContractRegistered(managerKey, "", _manager);
-    ContractRegistered(claimerKey, "", _claimer);
+    ContractRegistered(keccak256("manager"), "", _manager);
+    ContractRegistered(keccak256("claimer"), "", _claimer);
   }
 
 
@@ -174,7 +170,7 @@ is HasNoEther
       totalStores++;
     }
     stores[keccak256(_appNickname)] = _store;
-    ContractRegistered(storeKey, _appNickname, _store);
+    ContractRegistered(keccak256("store"), _appNickname, _store);
   }
 
 
