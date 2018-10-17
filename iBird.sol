@@ -1,306 +1,230 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iBird at 0x4e00ca8c94af28f386a1d8fbeccfb02aff0c29f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iBird at 0xcca92f4e45f6cea3b1ce39c14ce3218f94a1f9fa
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
-contract iBird {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    string public symbol = "iBird";
-    string public name = "iBird Token";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
-  uint256 _FreeiBird = 50000;
-    uint256 _ML1 = 2;
-    uint256 _ML2 = 3;
-  uint256 _ML3 = 4;
-    uint256 _LimitML1 = 3e15;
-    uint256 _LimitML2 = 6e15;
-  uint256 _LimitML3 = 9e15;
-  uint256 _MaxDistribPublicSupply = 20000000000;
-    uint256 _OwnerDistribSupply = 0;
-    uint256 _CurrentDistribPublicSupply = 0;  
-    uint256 _ExtraTokensPerETHSended = 5000000000;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract ForeignToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface Token { 
+    function distr(address _to, uint256 _value) external returns (bool);
+    function totalSupply() constant external returns (uint256 supply);
+    function balanceOf(address _owner) constant external returns (uint256 balance);
+}
+
+contract iBird is ERC20 {
+
+ 
     
-  address _DistribFundsReceiverAddress = 0;
-    address _remainingTokensReceiverAddress = 0;
-    address owner = 0;
-  
-  
-    bool setupDone = false;
-    bool IsDistribRunning = false;
-    bool DistribStarted = false;
+    using SafeMath for uint256;
+    address owner = msg.sender;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public blacklist;
+
+    string public constant name = "iBird";
+    string public constant symbol = "IBI";
+    uint public constant decimals = 18;
+    
+uint256 public totalSupply = 30000000000e18;
+    
+uint256 public totalDistributed = 15000000000e18;
+    
+uint256 public totalRemaining = totalSupply.sub(totalDistributed);
+    
+uint256 public value = 150000e18;
+
+
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burn(address indexed _owner, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    
+    event Burn(address indexed burner, uint256 value);
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowed;
-    mapping(address => bool) public Claimed;
-
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
+    }
+    
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
-    function Makindo() public {
+    
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
+        _;
+    }
+    
+    function SiaCashCoin() public {
         owner = msg.sender;
+        balances[owner] = totalDistributed;
     }
-
-    function() public payable {
-        if (IsDistribRunning) {
-            uint256 _amount;
-            if (((_CurrentDistribPublicSupply + _amount) > _MaxDistribPublicSupply) && _MaxDistribPublicSupply > 0) revert();
-            if (!_DistribFundsReceiverAddress.send(msg.value)) revert();
-            if (Claimed[msg.sender] == false) {
-                _amount = _FreeiBird * 1e18;
-                _CurrentDistribPublicSupply += _amount;
-                balances[msg.sender] += _amount;
-                _totalSupply += _amount;
-                Transfer(this, msg.sender, _amount);
-                Claimed[msg.sender] = true;
-            }
-
-           
-
-            if (msg.value >= 9e15) {
-            _amount = msg.value * _ExtraTokensPerETHSended * 4;
-            } else {
-                if (msg.value >= 6e15) {
-                    _amount = msg.value * _ExtraTokensPerETHSended * 3;
-                } else {
-                    if (msg.value >= 3e15) {
-                        _amount = msg.value * _ExtraTokensPerETHSended * 2;
-                    } else {
-
-                        _amount = msg.value * _ExtraTokensPerETHSended;
-
-                    }
-
-                }
-            }
-       
-       _CurrentDistribPublicSupply += _amount;
-                balances[msg.sender] += _amount;
-                _totalSupply += _amount;
-                Transfer(this, msg.sender, _amount);
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);
+        totalRemaining = totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
         
-
-
-
-        } else {
-            revert();
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
         }
     }
-
-    function SetupiBird(string tokenName, string tokenSymbol, uint256 ExtraTokensPerETHSended, uint256 MaxDistribPublicSupply, uint256 OwnerDistribSupply, address remainingTokensReceiverAddress, address DistribFundsReceiverAddress, uint256 FreeiBird) public {
-        if (msg.sender == owner && !setupDone) {
-            symbol = tokenSymbol;
-            name = tokenName;
-            _FreeiBird = FreeiBird;
-            _ExtraTokensPerETHSended = ExtraTokensPerETHSended;
-            _MaxDistribPublicSupply = MaxDistribPublicSupply * 1e18;
-            if (OwnerDistribSupply > 0) {
-                _OwnerDistribSupply = OwnerDistribSupply * 1e18;
-                _totalSupply = _OwnerDistribSupply;
-                balances[owner] = _totalSupply;
-                _CurrentDistribPublicSupply += _totalSupply;
-                Transfer(this, owner, _totalSupply);
-            }
-            _DistribFundsReceiverAddress = DistribFundsReceiverAddress;
-            if (_DistribFundsReceiverAddress == 0) _DistribFundsReceiverAddress = owner;
-            _remainingTokensReceiverAddress = remainingTokensReceiverAddress;
-
-            setupDone = true;
+    
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr onlyWhitelist public {
+        if (value > totalRemaining) {
+            value = totalRemaining;
         }
-    }
-
-    function SetupML(uint256 ML1inX, uint256 ML2inX, uint256 LimitML1inWei, uint256 LimitML2inWei) onlyOwner public {
-        _ML1 = ML1inX;
-        _ML2 = ML2inX;
-        _LimitML1 = LimitML1inWei;
-        _LimitML2 = LimitML2inWei;
         
-    }
-
-    function SetExtra(uint256 ExtraTokensPerETHSended) onlyOwner public {
-        _ExtraTokensPerETHSended = ExtraTokensPerETHSended;
-    }
-
-    function SetFreeMKI(uint256 FreeiBird) onlyOwner public {
-        _FreeiBird = FreeiBird;
-    }
-
-    function StartDistrib() public returns(bool success) {
-        if (msg.sender == owner && !DistribStarted && setupDone) {
-            DistribStarted = true;
-            IsDistribRunning = true;
-        } else {
-            revert();
-        }
-        return true;
-    }
-
-    function StopDistrib() public returns(bool success) {
-        if (msg.sender == owner && IsDistribRunning) {
-            if (_remainingTokensReceiverAddress != 0 && _MaxDistribPublicSupply > 0) {
-                uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
-                if (_remainingAmount > 0) {
-                    balances[_remainingTokensReceiverAddress] += _remainingAmount;
-                    _totalSupply += _remainingAmount;
-                    Transfer(this, _remainingTokensReceiverAddress, _remainingAmount);
-                }
-            }
-            DistribStarted = false;
-            IsDistribRunning = false;
-        } else {
-            revert();
-        }
-        return true;
-    }
-
-    function distribution(address[] addresses, uint256 _amount) onlyOwner public {
-
-        uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
-        require(addresses.length <= 255);
-        require(_amount <= _remainingAmount);
-        _amount = _amount * 1e18;
-
-        for (uint i = 0; i < addresses.length; i++) {
-            require(_amount <= _remainingAmount);
-            _CurrentDistribPublicSupply += _amount;
-            balances[addresses[i]] += _amount;
-            _totalSupply += _amount;
-            Transfer(this, addresses[i], _amount);
-
+        require(value <= totalRemaining);
+        
+        address investor = msg.sender;
+        uint256 toGive = value;
+        
+        distr(investor, toGive);
+        
+        if (toGive > 0) {
+            blacklist[investor] = true;
         }
 
-        if (_CurrentDistribPublicSupply >= _MaxDistribPublicSupply) {
-            DistribStarted = false;
-            IsDistribRunning = false;
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
         }
+        
+        value = value.div(100000).mul(99999);
     }
 
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner public {
-
-        uint256 _remainingAmount = _MaxDistribPublicSupply - _CurrentDistribPublicSupply;
-        uint256 _amount;
-
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-
-        for (uint8 i = 0; i < addresses.length; i++) {
-            _amount = amounts[i] * 1e18;
-            require(_amount <= _remainingAmount);
-            _CurrentDistribPublicSupply += _amount;
-            balances[addresses[i]] += _amount;
-            _totalSupply += _amount;
-            Transfer(this, addresses[i], _amount);
-
-
-            if (_CurrentDistribPublicSupply >= _MaxDistribPublicSupply) {
-                DistribStarted = false;
-                IsDistribRunning = false;
-            }
-        }
-    }
-
-    function BurnTokens(uint256 amount) public returns(bool success) {
-        uint256 _amount = amount * 1e18;
-        if (balances[msg.sender] >= _amount) {
-            balances[msg.sender] -= _amount;
-            _totalSupply -= _amount;
-            Burn(msg.sender, _amount);
-            Transfer(msg.sender, 0, _amount);
-        } else {
-            revert();
-        }
-        return true;
-    }
-
-    function totalSupply() public constant returns(uint256 totalSupplyValue) {
-        return _totalSupply;
-    }
-
-    function MaxDistribPublicSupply_() public constant returns(uint256 MaxDistribPublicSupply) {
-        return _MaxDistribPublicSupply;
-    }
-
-    function OwnerDistribSupply_() public constant returns(uint256 OwnerDistribSupply) {
-        return _OwnerDistribSupply;
-    }
-
-    function CurrentDistribPublicSupply_() public constant returns(uint256 CurrentDistribPublicSupply) {
-        return _CurrentDistribPublicSupply;
-    }
-
-    function RemainingTokensReceiverAddress() public constant returns(address remainingTokensReceiverAddress) {
-        return _remainingTokensReceiverAddress;
-    }
-
-    function DistribFundsReceiverAddress() public constant returns(address DistribfundsReceiver) {
-        return _DistribFundsReceiverAddress;
-    }
-
-    function Owner() public constant returns(address ownerAddress) {
-        return owner;
-    }
-
-    function SetupDone() public constant returns(bool setupDoneFlag) {
-        return setupDone;
-    }
-
-    function IsDistribRunningFalg_() public constant returns(bool IsDistribRunningFalg) {
-        return IsDistribRunning;
-    }
-
-    function IsDistribStarted() public constant returns(bool IsDistribStartedFlag) {
-        return DistribStarted;
-    }
-
-    function balanceOf(address _owner) public constant returns(uint256 balance) {
+    function balanceOf(address _owner) constant public returns (uint256) {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint256 _amount) public returns(bool success) {
-        if (balances[msg.sender] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
-
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) public returns(bool success) {
-        if (balances[_from] >= _amount &&
-            allowed[_from][msg.sender] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function approve(address _spender, uint256 _amount) public returns(bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
-
-    function allowance(address _owner, address _spender) public constant returns(uint256 remaining) {
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
         return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        ForeignToken t = ForeignToken(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        uint256 etherBalance = address(this).balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
     }
 }
