@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTBCoin at 0x36612c979b893Fc35A91fAE6C4eaA7314f2BE711
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTBCoin at 0x8eCA0B6Bc91d08FB9b7aBde8a701438066De0204
 */
 pragma solidity ^0.4.24;
 
@@ -71,10 +71,10 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     constructor() public {
-        totalSupply = 200000000;  
+        totalSupply = 200000000 *10 ** uint256(decimals);  
         balanceOf[msg.sender] = totalSupply;               
-        name = "CTB";                                  
-        symbol = "?";                           
+        name = "Coin Trade Base";                                  
+        symbol = "CTB";                           
     }
 
     /**
