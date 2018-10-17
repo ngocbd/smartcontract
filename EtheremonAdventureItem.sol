@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x0e6e19549a89c9bec84b5b632cd1674f8e066d06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0xbfde6246df72d3ca86419628cac46a9d2b60393c
 */
 pragma solidity ^0.4.23;
 
@@ -104,6 +104,7 @@ interface ERC721 {
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
     
     function transferFrom(address _from, address _to, uint256 _tokenId) external;
+    function transfer(address _to, uint256 _tokenId) external;
     function approve(address _approved, uint256 _tokenId) external;
     function setApprovalForAll(address _operator, bool _approved) external;
     
@@ -199,6 +200,13 @@ contract NFToken is ERC721, SupportsInterface {
     function transferFrom(address _from, address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
         address tokenOwner = idToOwner[_tokenId];
         require(tokenOwner == _from);
+        require(_to != address(0));
+        _transfer(_to, _tokenId);
+    }
+    
+    function transfer(address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == msg.sender);
         require(_to != address(0));
         _transfer(_to, _tokenId);
     }
@@ -509,7 +517,7 @@ contract EtheremonAdventureItem is NFTStandard("EtheremonAdventure", "EMOND"), B
     
     function spawnItem(uint _classId, uint _value, address _owner) onlyModerators external returns(uint) {
         if (_owner == address(0)) revert();
-        if (_classId < MAX_SITE_ID) revert();
+        if (_classId <= MAX_SITE_ID) revert();
         
         totalItem += 1;
         Item storage item = items[totalItem];
