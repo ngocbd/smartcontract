@@ -1,12 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherealTarot at 0x670343443aace59a5739da1c8330bb9fa7836d9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherealTarot at 0xdf0f6005f469daad805b82d11e65a6654540391d
 */
-pragma solidity ^ 0.4 .23;
-//Ethereal Tarot Reader http://tarot.etherealbazaar.com/
+pragma solidity ^ 0.4.23;
+// tarot.etherealbazaar.com
 contract EtherealTarot {
 
-  mapping(address => uint8[]) readings;
-  mapping(address => uint8[]) orientations;
+    struct reading { // Struct
+        uint8[] cards;
+        bool[] upright;
+        uint8 card_count;
+    }
+
+  mapping(address => reading) readings;
+
   uint8[78] cards;
   uint8 deckSize = 78;
   address public creator;
@@ -18,7 +24,7 @@ contract EtherealTarot {
     }
   }
     
-  function draw(uint8 index, uint8 count) public {
+  function draw(uint8 index, uint8 count) private {
     // put the drawn card at the end of the array
     // so the next random draw cannot contain
     // a card thats already been drawn
@@ -47,43 +53,45 @@ contract EtherealTarot {
     );
     return _seed % (range);
   }
+  function random_bool(uint8 count) view private returns(bool){
+      return 0==random(2,count);
+  }
 
   function spread(uint8 requested) private {
     // cards in the current spread
     uint8[] memory table = new uint8[](requested);
-    //card orientation 0 is front 1 is reversed
-    uint8[] memory oriented = new uint8[](requested);
+    // reversed cards aren't all bad! understand the shadow...
+    bool[] memory upright = new bool[](requested);
 
     //Draw the whole spread
     for (uint8 position = 0; position < requested; position++) {
       table[position] = draw_random_card(position);
-      oriented[position] = random(2, position);
+      upright[position] = random_bool(position);
     }
-    orientations[msg.sender] = oriented;
-    readings[msg.sender] = table;
+    readings[msg.sender]=reading(table,upright,requested);
   }
 
 
-  function orientation() view public returns(uint8[]) {
-    return orientations[msg.sender];
+  function has_reading() view public returns(bool) {
+    return readings[msg.sender].card_count!=0;
   }
-
-  function reading() view public returns(uint8[]) {
-    return readings[msg.sender];
+  function reading_card_at(uint8 index) view public returns(uint8) {
+    return readings[msg.sender].cards[index];
   }
-
-  // Tarot by donation + gas costs
+  // returning variable length arrays proved quite tricky...
+  function reading_card_upright_at(uint8 index) view public returns(bool) {
+    return readings[msg.sender].upright[index];
+  }
+  function reading_card_count() view public returns(uint8){
+    return readings[msg.sender].card_count;
+  }
+  // Tarot by donation
   function withdraw() public {
     require(msg.sender == creator);
     creator.transfer(address(this).balance);
   }
     
-  function shiva() public{
-    require(msg.sender == creator);
-    selfdestruct(creator);
-  }
-
-  // 6 Different Spreads available
+  // 8 Different Spreads available
   function career_path() payable public {
     spread(7);
   }
@@ -104,10 +112,11 @@ contract EtherealTarot {
     spread(8);
   }
 
-  function one_card() payable public {
+  function single_card() payable public {
     spread(1);
   }
-  function two_card() payable public {
+  
+  function situation_challenge() payable public {
     spread(2);
   }
 
