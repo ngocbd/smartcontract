@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0x6ede7f2cf4d3d44ad6e45a23c74af6e5402e89cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0x971d048e737619884f2df75e31c7eb6412392328
 */
 pragma solidity 0.4.24;
 
@@ -324,6 +324,8 @@ contract SparksterToken is StandardToken, Ownable{
 		bool distributed; // Whether or not tokens in this group have been distributed.
 		bool distributing; // This flag is set when we first enter the distribute function and is there to prevent race conditions, since distribution might take a long time.
 		bool unlocked; // Whether or not tokens in this group have been unlocked.
+		mapping(address => bool) exists; // If exists[address] is true, this address has made a purchase on this group before.
+		string name;
 		uint256 ratio; // 1 eth:ratio tokens. This amount represents the decimal amount. ratio*10**decimal = ratio sparks.
 		uint256 startTime; // Epoch of crowdsale start time.
 		uint256 phase1endTime; // Epoch of phase1 end time.
@@ -333,6 +335,8 @@ contract SparksterToken is StandardToken, Ownable{
 		uint256 max3; // Total ether this group can collect in phase 3.
 		uint256 weiTotal; // How much ether has this group collected?
 		uint256 cap; // The hard ether cap.
+		uint256 nextDistributionIndex; // The next index to start distributing at.
+		address[] addresses; // List of addresses that have made a purchase on this group.
 	}
 
 	address oracleAddress;
@@ -355,7 +359,7 @@ contract SparksterToken is StandardToken, Ownable{
 	event NearingHardCap(uint256 groupNumber, uint256 remainder);
 	event ReachedHardCap(uint256 groupNumber);
 	event DistributeDone(uint256 groupNumber);
-	event DistributedBatch(uint256 groupNumber, address[] addresses);
+	event DistributedBatch(uint256 groupNumber, uint256 howMany);
 	event AirdroppedBatch(address[] addresses);
 	event RefundedBatch(address[] addresses);
 	event AddToGroup(address walletAddress, uint256 groupNumber);
@@ -440,6 +444,10 @@ contract SparksterToken is StandardToken, Ownable{
 		uint256 weiTotal = openGroup.weiTotal.add(weiAmount); // Calculate total contribution of all members in this group.
 		require(weiTotal <= openGroup.cap);														// Check to see if accepting these funds will put us above the hard ether cap.
 		uint256 userWeiTotal = memberRecord.weiBalance[openGroupNumber].add(weiAmount);	// Calculate the total amount purchased by the current member
+		if (!openGroup.exists[msg.sender]) { // Has this person not purchased on this group before?
+			openGroup.addresses.push(msg.sender);
+			openGroup.exists[msg.sender] = true;
+		}
 		if(currentTimestamp <= openGroup.phase1endTime){																			 // whether the current timestamp is in the first phase
 			emit WantsToPurchase(msg.sender, weiAmount, openGroupNumber, true);
 			return true;
@@ -476,7 +484,21 @@ contract SparksterToken is StandardToken, Ownable{
 		return true;
 	}
 
-	function purchaseCallbackOnAcceptAndDistribute(uint256 groupNumber, address[] addresses, uint256[] weiAmounts) public onlyOwnerOrOracle returns(bool success) {
+	function insertAndApprove(uint256 groupNumber, address[] addresses, uint256[] weiAmounts) public onlyOwnerOrOracle returns(bool success) {
+		uint256 n = addresses.length;
+		require(n == weiAmounts.length, "Array lengtsh mismatch");
+		Group storage theGroup = groups[groupNumber];
+		for (uint256 i = 0; i < n; i++) {
+			address theAddress = addresses[i];
+			if (!theGroup.exists[theAddress]) {
+				theGroup.addresses.push(theAddress);
+				theGroup.exists[theAddress] = true;
+			}
+		}
+		return purchaseCallbackOnAccept(groupNumber, addresses, weiAmounts);
+	}
+
+	function callbackInsertApproveAndDistribute(uint256 groupNumber, address[] addresses, uint256[] weiAmounts) public onlyOwnerOrOracle returns(bool success) {
 		uint256 n = addresses.length;
 		require(n == weiAmounts.length, "Array lengths mismatch");
 		Group storage theGroup = groups[groupNumber];
@@ -489,11 +511,11 @@ contract SparksterToken is StandardToken, Ownable{
 			Member storage memberRecord = members[theAddress];
 			uint256 weiAmount = weiAmounts[i];
 			memberRecord.weiBalance[groupNumber] = memberRecord.weiBalance[groupNumber].add(weiAmount);														 // Record the total amount purchased by the current member
-			uint256 balance = getUndistributedBalanceOf_(theAddress, groupNumber);
-			if (balance > 0) { // No need to waste ticks if they have no tokens to distribute
-				balances[theAddress] = balances[theAddress].add(balance);
-				newOwnerSupply = newOwnerSupply.sub(balance); // Update the available number of tokens.
-				emit Transfer(owner, theAddress, balance); // Notify exchanges of the distribution.
+			uint256 additionalBalance = weiAmount.mul(theGroup.ratio); // Don't give cumulative tokens; one address can be distributed multiple times.
+			if (additionalBalance > 0) { // No need to waste ticks if they have no tokens to distribute
+				balances[theAddress] = balances[theAddress].add(additionalBalance);
+				newOwnerSupply = newOwnerSupply.sub(additionalBalance); // Update the available number of tokens.
+				emit Transfer(owner, theAddress, additionalBalance); // Notify exchanges of the distribution.
 			}
 		}
 		balances[owner] = newOwnerSupply;
@@ -563,9 +585,10 @@ contract SparksterToken is StandardToken, Ownable{
 		emit ChangedAllowedToPurchase(value);
 	}
 	
-	function createGroup(uint256 startEpoch, uint256 phase1endEpoch, uint256 phase2endEpoch, uint256 deadlineEpoch, uint256 phase2weiCap, uint256 phase3weiCap, uint256 hardWeiCap, uint256 ratio) public onlyOwner returns (bool success, uint256 createdGroupNumber) {
+	function createGroup(string groupName, uint256 startEpoch, uint256 phase1endEpoch, uint256 phase2endEpoch, uint256 deadlineEpoch, uint256 phase2weiCap, uint256 phase3weiCap, uint256 hardWeiCap, uint256 ratio) public onlyOwner returns (bool success, uint256 createdGroupNumber) {
 		createdGroupNumber = nextGroupNumber;
 		Group storage theGroup = groups[createdGroupNumber];
+		theGroup.name = groupName;
 		theGroup.startTime = startEpoch;
 		theGroup.phase1endTime = phase1endEpoch;
 		theGroup.phase2endTime = phase2endEpoch;
@@ -578,15 +601,11 @@ contract SparksterToken is StandardToken, Ownable{
 		success = true;
 	}
 
-	function createGroup() public onlyOwner returns (bool success, uint256 createdGroupNumber) {
-		return createGroup(0, 0, 0, 0, 0, 0, 0, 0);
-	}
-
-	function getGroup(uint256 groupNumber) public view returns(bool distributed, bool distributing, bool unlocked, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 weiTotal) {
+	function getGroup(uint256 groupNumber) public view returns(string groupName, bool distributed, bool unlocked, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 weiTotal) {
 		require(groupNumber < nextGroupNumber);
 		Group storage theGroup = groups[groupNumber];
+		groupName = theGroup.name;
 		distributed = theGroup.distributed;
-		distributing = theGroup.distributing;
 		unlocked = theGroup.unlocked;
 		phase2cap = theGroup.max2;
 		phase3cap = theGroup.max3;
@@ -622,24 +641,87 @@ contract SparksterToken is StandardToken, Ownable{
 		emit WantsToDistribute(groupNumber);
 	}
 	
-	function distributeCallback(uint256 groupNumber, address[] addresses) public onlyOwnerOrOracle returns (bool success) {
+	function distributeCallback(uint256 groupNumber, uint256 howMany) public onlyOwnerOrOracle returns (bool success) {
 		Group storage theGroup = groups[groupNumber];
+		require(!theGroup.distributed);
 		if (!theGroup.distributing) {
 			theGroup.distributing = true;
 		}
-		uint256 n = addresses.length;
-		uint256 newOwnerBalance = balances[owner];
-		for (uint256 i = 0; i < n; i++) {
-			address memberAddress = addresses[i];
-			uint256 balance = getUndistributedBalanceOf_(memberAddress, groupNumber);
+		uint256 n = theGroup.addresses.length;
+		uint256 nextDistributionIndex = theGroup.nextDistributionIndex;
+		uint256 exclusiveEndIndex = nextDistributionIndex + howMany;
+		if (exclusiveEndIndex > n) {
+			exclusiveEndIndex = n;
+		}
+		uint256 newOwnerSupply = balances[owner];
+		for (uint256 i = nextDistributionIndex; i < exclusiveEndIndex; i++) {
+			address theAddress = theGroup.addresses[i];
+			uint256 balance = getUndistributedBalanceOf_(theAddress, groupNumber);
 			if (balance > 0) { // No need to waste ticks if they have no tokens to distribute
-				balances[memberAddress] = balances[memberAddress].add(balance);
-				newOwnerBalance = newOwnerBalance.sub(balance); // Deduct from owner.
-				emit Transfer(owner, memberAddress, balance); // Notify exchanges of the distribution.
+				balances[theAddress] = balances[theAddress].add(balance);
+				newOwnerSupply = newOwnerSupply.sub(balance); // Update the available number of tokens.
+				emit Transfer(owner, theAddress, balance); // Notify exchanges of the distribution.
 			}
 		}
-		balances[owner] = newOwnerBalance;
-		emit DistributedBatch(groupNumber, addresses);
+		balances[owner] = newOwnerSupply;
+		if (exclusiveEndIndex < n) {
+			emit DistributedBatch(groupNumber, howMany);
+		} else { // We've finished distributing people
+			signalDoneDistributing(groupNumber);
+		}
+		theGroup.nextDistributionIndex = exclusiveEndIndex; // Usually not necessary if we've finished distribution, but if we don't update this, getHowManyLeftToDistribute will never show 0.
+		return true;
+	}
+
+	function getHowManyLeftToDistribute(uint256 groupNumber) public view returns(uint256 remainder) {
+		Group storage theGroup = groups[groupNumber];
+		return theGroup.addresses.length - theGroup.nextDistributionIndex;
+	}
+
+	function changeGroupInfo(uint256 groupNumber, uint256 startEpoch, uint256 phase1endEpoch, uint256 phase2endEpoch, uint256 deadlineEpoch, uint256 phase2weiCap, uint256 phase3weiCap, uint256 hardWeiCap, uint256 ratio) public onlyOwner returns (bool success) {
+		Group storage theGroup = groups[groupNumber];
+		if (startEpoch > 0) {
+			theGroup.startTime = startEpoch;
+		}
+		if (phase1endEpoch > 0) {
+			theGroup.phase1endTime = phase1endEpoch;
+		}
+		if (phase2endEpoch > 0) {
+			theGroup.phase2endTime = phase2endEpoch;
+		}
+		if (deadlineEpoch > 0) {
+			theGroup.deadline = deadlineEpoch;
+		}
+		if (phase2weiCap > 0) {
+			theGroup.max2 = phase2weiCap;
+		}
+		if (phase3weiCap > 0) {
+			theGroup.max3 = phase3weiCap;
+		}
+		if (hardWeiCap > 0) {
+			theGroup.cap = hardWeiCap;
+		}
+		if (ratio > 0) {
+			theGroup.ratio = ratio;
+		}
+		return true;
+	}
+
+	function relockGroup(uint256 groupNumber) public onlyOwner returns(bool success) {
+		groups[groupNumber].unlocked = true;
+		return true;
+	}
+
+	function resetGroupInfo(uint256 groupNumber) public onlyOwner returns (bool success) {
+		Group storage theGroup = groups[groupNumber];
+		theGroup.startTime = 0;
+		theGroup.phase1endTime = 0;
+		theGroup.phase2endTime = 0;
+		theGroup.deadline = 0;
+		theGroup.max2 = 0;
+		theGroup.max3 = 0;
+		theGroup.cap = 0;
+		theGroup.ratio = 0;
 		return true;
 	}
 
