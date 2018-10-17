@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0xfe55d20bc9abd995ce965b1d082d10f6f1f057eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0x7c3d358e937a8c544a93854ce3f6e80e50d27b66
 */
 pragma solidity ^0.4.23;
 
@@ -64,13 +64,6 @@ contract BancorKillerContract {
   
 
   mapping (address => uint256) public token_balance;
-  
-  
-  modifier onlyAdmin() {
-      msg.sender == admin;
-      _;
-  }
-
 
   constructor(address _base_token, address _traded_token,uint256 _base_token_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
       
@@ -118,9 +111,7 @@ contract BancorKillerContract {
       
   }
   
-  function deposit_token(address _token, uint256 _amount) private { 
-
-    token_balance[_token] = token_balance[_token].add(_amount);
+  function deposit_token(uint256 _amount) private { 
 
     transferTokensThroughProxyToContract(msg.sender, this, _amount);
 
@@ -128,27 +119,31 @@ contract BancorKillerContract {
 
   function deposit_eth() private { 
 
-    token_balance[0] = token_balance[0].add(msg.value);
+    transferETHToContract();
 
   }  
   
-  function withdraw_token(uint256 _amount) onlyAdmin public {
+  function withdraw_token(uint256 _amount) public {
+
+      require(msg.sender == admin);
       
       uint256 currentBalance_ = token_balance[traded_token];
       
       require(currentBalance_ >= _amount);
       
-      transferTokensFromContract(msg.sender, _amount);
+      transferTokensFromContract(admin, _amount);
       
   }
   
-  function withdraw_eth(uint256 _amount) onlyAdmin public {
+  function withdraw_eth(uint256 _amount) public {
       
+      require(msg.sender == admin);
+
       uint256 currentBalance_ = token_balance[0];
       
       require(currentBalance_ >= _amount);
       
-      transferETHFromContract(msg.sender, _amount);
+      transferETHFromContract(admin, _amount);
       
   }
 
@@ -170,7 +165,7 @@ contract BancorKillerContract {
   
     set_traded_token_as_seeded();
 
-    deposit_token(traded_token, traded_token_seed_amount); 
+    deposit_token(traded_token_seed_amount); 
 
   }
   
