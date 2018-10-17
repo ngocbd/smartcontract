@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0xe35233b389a688ebed1405bc528906bfe27ce218
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x5266618848a646316b9c11e0e990dd2096ca755c
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
+interface token {
+    function transfer(address receiver, uint amount) external;
+}
 
 contract Ownable {
-    
+
     address public owner;
-    
-    function Ownable() public {
+
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -15,72 +19,56 @@ contract Ownable {
         require(msg.sender == owner);
         _;
     }
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        owner = newOwner;
-    }
-    
 }
 
-contract SimpleTokenCoin is Ownable {
+contract ZenswapDistributionTest is Ownable {
     
-    string public constant name = "Vozik coin";
+    token public tokenReward;
     
-    string public constant symbol = "VZCX";
-    
-    uint32 public constant decimals = 18;
-    
-    uint public totalSupply = 1000000000000000000000000000000000000000000000000000000000;
-    
-    mapping (address => uint) balances;
-    
-    mapping (address => mapping(address => uint)) allowed;
-    
-    function mint(address _to, uint _value) public onlyOwner {
-        assert(totalSupply + _value >= totalSupply && balances[_to] + _value >= balances[_to]);
-        balances[_to] += _value;
-        totalSupply += _value;
+    /**
+     * Constructor function
+     *
+     * Set the token smart contract address
+     */
+    constructor() public {
+        
+        tokenReward = token(0xbaD16E6bACaF330D3615539dbf3884836071f279);
+        
     }
     
-    function balanceOf(address _owner) public constant returns (uint balance) {
-        return balances[_owner];
+    /**
+     * Distribute token to multiple address
+     * 
+     */
+    function distributeToken(address[] _addresses, uint256[] _amount) public onlyOwner {
+    
+    uint256 addressCount = _addresses.length;
+    uint256 amountCount = _amount.length;
+    require(addressCount == amountCount);
+    
+    for (uint256 i = 0; i < addressCount; i++) {
+        uint256 _tokensAmount = _amount[i] * 10 ** uint256(18);
+        tokenReward.transfer(_addresses[i], _tokensAmount);
     }
+  }
 
-    function transfer(address _to, uint _value) public returns (bool success) {
-        if(balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
-            balances[msg.sender] -= _value; 
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } 
-        return false;
+    /**
+     * Withdraw an "amount" of available tokens in the contract
+     * 
+     */
+    function withdrawToken(address _address, uint256 _amount) public onlyOwner {
+        
+        uint256 _tokensAmount = _amount * 10 ** uint256(18); 
+        tokenReward.transfer(_address, _tokensAmount);
     }
     
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        if( allowed[_from][msg.sender] >= _value &&
-            balances[_from] >= _value 
-            && balances[_to] + _value >= balances[_to]) {
-            allowed[_from][msg.sender] -= _value;
-            balances[_from] -= _value; 
-            balances[_to] += _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } 
-        return false;
+    /**
+     * Set a token contract address
+     * 
+     */
+    function setTokenReward(address _address) public onlyOwner {
+        
+        tokenReward = token(_address);
     }
-    
-    function approve(address _spender, uint _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
     
 }
