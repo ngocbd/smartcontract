@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0x33Fe572b3faa875B760D3bb48FA0E9BADa9008b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0x8f0ff1662422473df79b6edc596e19d94e9848c9
 */
 pragma solidity ^0.4.23;
 
