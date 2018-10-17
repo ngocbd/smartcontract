@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x28d1fd7814858e9cec88941415ee52f50cb4a74b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xe3def772361fb210d871e399eeb5ad6b4d43164e
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
 /**
  * @title Ownable
@@ -51,7 +51,7 @@ contract Airdropper is Ownable {
     returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
-           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           ERC20(_tokenAddr).transfer(dests[i], 10**18 * values[i]);
            i += 1;
         }
         return(i);
