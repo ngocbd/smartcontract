@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeChainX at 0x12c24018c143a352f7cd5b8075adf5b33b1525cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeChainX at 0x926476bfc3550ccb424202004b9aab9ac40e32de
 */
 pragma solidity ^0.4.4;
 
@@ -91,7 +91,7 @@ contract VeChainX is ERC20 {
     
     uint256 public totalSupply = 1000000000e18;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 300000e18;
+    uint256 public tokensPerEth = 3000000e18;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
