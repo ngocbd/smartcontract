@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIRCToken at 0xff10c9186aa36617d0b442e4514251a5fed9576e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIRCToken at 0xf0b70df9122f284219ea987a62d9746585ed0c83
 */
 pragma solidity ^0.4.24;
 
@@ -188,9 +188,7 @@ contract BIRCToken is StandardToken, Ownable {
 
     constructor(address BIRCWallet) public {
         totalSupply = 1 * 1000 * 1000 * 1000 * 1000000;
-        
         balances[BIRCWallet] = totalSupply;
-        emit Transfer(address(0), BIRCWallet, totalSupply);
     }
 
     modifier illegalWhenLocked() {
