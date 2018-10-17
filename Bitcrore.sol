@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcrore at 0x44864937277db607656e600e5c36304b7279111c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitcrore at 0x489babf6f56e9e6733f2d702d8fdfb519a503a36
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 library SafeMath {
 
@@ -9,7 +9,7 @@ library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
-    
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
@@ -97,14 +97,13 @@ using SafeMath for uint256;
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     
-    constructor (uint256 initialSupply,string tokenName,string tokenSymbol,uint256 setreleasetime) public
+    constructor (uint256 initialSupply,string tokenName,string tokenSymbol) public
     {
         
         totalSupply = initialSupply;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;   // Set the symbol for display purposes
-        releaseTime = setreleasetime;
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
     
     function releaseTime(uint256 newreleaseTime) onlyOwner public {
