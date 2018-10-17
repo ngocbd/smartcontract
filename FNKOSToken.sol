@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FNKOSToken at 0xeb021dd3e42dc6fdb6cde54d0c4a09f82a6bca29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FNKOSToken at 0x0707681f344deb24184037fc0228856f2137b02e
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 //
 // FogLink OS Token
 // Author: FNK
@@ -49,7 +49,7 @@ contract FNKOSToken {
     event Burn(address indexed burner, uint256 val);
     event Freeze(address indexed from, uint256 value);
     
-    function FNKOSToken () public{
+    constructor () public{
         owner = msg.sender;
         balances[owner].balance = totalSupply;
     }
@@ -129,22 +129,22 @@ contract FNKOSToken {
     
     function pause() onlyOwner isRunning    public   {
         running = false;
-        PauseRunning();
+        emit PauseRunning();
     }
     
     function start() onlyOwner isNotRunning public   {
         running = true;
-        BeginRunning();
+        emit BeginRunning();
     }
 
     function pauseSell() onlyOwner  isBuyable isRunning public{
         buyable = false;
-        PauseSell();
+        emit PauseSell();
     }
     
     function beginSell() onlyOwner  isNotBuyable isRunning  public{
         buyable = true;
-        BeginSell();
+        emit BeginSell();
     }
 
     //
@@ -161,7 +161,7 @@ contract FNKOSToken {
         }
         balances[owner].balance = safeSub(balances[owner].balance, _amount);
         balances[_to].balance = safeAdd(balances[_to].balance, _amount);
-        Transfer(owner, _to, _amount);
+        emit Transfer(owner, _to, _amount);
     }
     
     
@@ -217,8 +217,8 @@ contract FNKOSToken {
         bi.freezeAmount = fa;
         bi.releaseTime = rt;
         balances[owner].balance = safeSub(balances[owner].balance, _amount);
-        Transfer(owner, _to, _amount);
-        Freeze(_to, _freezeAmount);
+        emit Transfer(owner, _to, _amount);
+        emit Freeze(_to, _freezeAmount);
     }
     
     function  freezeDeliverMuti(address[] _addrs, uint _deliverAmount, uint _freezeAmount, uint _freezeMonth, uint _unfreezeBeginTime ) onlyOwner public {
@@ -261,7 +261,7 @@ contract FNKOSToken {
         
         balances[owner].balance = safeSub(balances[owner].balance, amount);
         balances[investor].balance = safeAdd(balances[investor].balance, amount);
-        Transfer(owner, investor, amount);
+        emit Transfer(owner, investor, amount);
     }
 
     function addWhitelist(address[] _addrs) public onlyOwner {
@@ -298,7 +298,7 @@ contract FNKOSToken {
         
         balances[msg.sender].balance = safeSub(balances[msg.sender].balance,_amount);
         balances[_to].balance = safeAdd(balances[_to].balance,_amount);
-        Transfer(msg.sender, _to, _amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
 
@@ -312,7 +312,7 @@ contract FNKOSToken {
         balances[_from].balance = safeSub(balances[_from].balance,_amount);
         allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender],_amount);
         balances[_to].balance = safeAdd(balances[_to].balance,_amount);
-        Transfer(_from, _to, _amount);
+        emit Transfer(_from, _to, _amount);
         return true;
     }
 
@@ -321,7 +321,7 @@ contract FNKOSToken {
             return  false; 
         }
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
     
@@ -330,9 +330,10 @@ contract FNKOSToken {
     }
     
     function withdraw() onlyOwner public {
-        require(this.balance > 0);
-        owner.transfer(this.balance);
-        Transfer(this, owner, this.balance);    
+        address myAddress = this;
+        require(myAddress.balance > 0);
+        owner.transfer(myAddress.balance);
+        emit Transfer(this, owner, myAddress.balance);    
     }
     
     function burn(address burner, uint256 _value) onlyOwner public {
@@ -341,17 +342,6 @@ contract FNKOSToken {
         balances[burner].balance = safeSub(balances[burner].balance, _value);
         totalSupply = safeSub(totalSupply, _value);
         fnkSupply = totalSupply / fnkEthRate;
-        Burn(burner, _value);
-    }
-    
-    function mint(address _target, uint256 _amount) onlyOwner public {
-        if(_target  == address(0))
-            _target = owner;
-        
-        balances[_target].balance = safeAdd(balances[_target].balance, _amount);
-        totalSupply = safeAdd(totalSupply,_amount);
-        fnkSupply = totalSupply / fnkEthRate;
-        Transfer(0, this, _amount);
-        Transfer(this, _target, _amount);
+        emit Burn(burner, _value);
     }
 }
