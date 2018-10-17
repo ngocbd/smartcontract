@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StorageController at 0x7e7424707e6ef1c6da1894e04b328cdf13e2505d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StorageController at 0x1d9be4a5681374c54b1821d0beac3a678ad128a4
 */
 pragma solidity ^0.4.19;
 
@@ -775,5 +775,9 @@ contract StorageController is SafeMath, CreatorEnabled, StringMover {
 
     function isHotWallet(address _address) internal returns(bool) {
        return _address == getHotWalletAddress();
+    }
+
+         // Default fallback function
+    function() payable {
     }
 }
