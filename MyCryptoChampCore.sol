@@ -1,8 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyCryptoChampCore at 0xa44e464b13280340904ffef0a65b8a0033460430
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyCryptoChampCore at 0x689fb61845488297dfe7586e5f7956475955d2dc
 */
-pragma solidity 0.4.23;
+/* 		
+		https://mycryptochamp.io/
+		hello@mycryptochamp.io
+*/
 
+pragma solidity 0.4.24;
+
+contract Controller{
+	function getChampReward(uint _position) public view returns(uint);
+	function changeChampsName(uint _champId, string _name, address _msgsender) external;
+	function withdrawChamp(uint _id, address _msgsender) external;
+	function attack(uint _champId, uint _targetId, address _msgsender) external;
+	function transferToken(address _from, address _to, uint _id, bool _isTokenChamp) external;
+	function cancelTokenSale(uint _id, address _msgsender, bool _isTokenChamp) public;
+	function giveToken(address _to, uint _id, address _msgsender, bool _isTokenChamp) external;
+	function setTokenForSale(uint _id, uint _price, address _msgsender, bool _isTokenChamp) external;
+	function getTokenURIs(uint _id, bool _isTokenChamp) public pure returns(string);
+	function takeOffItem(uint _champId, uint8 _type, address _msgsender) public;
+	function putOn(uint _champId, uint _itemId, address _msgsender) external;
+	function forgeItems(uint _parentItemID, uint _childItemID, address _msgsender) external;
+}
 
 /**
  * @title SafeMath
@@ -12,7 +31,7 @@ library SafeMath {
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint a, uint b) internal pure returns (uint) {
     assert(b <= a);
     return a - b;
   }
@@ -20,416 +39,429 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint a, uint b) internal pure returns (uint) {
+    uint c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
+/// @title MyCryptoChamp Core - Stores all of game data. Functions are stored in the replaceable contracts. This solution was required in order to avoid unexpected bugs and make game upgradeable.
+/// @author Patrik Mojzis
+contract MyCryptoChampCore {
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address internal contractOwner;
+    using SafeMath for uint;
 
-  constructor () internal {
-    if(contractOwner == address(0)){
-      contractOwner = msg.sender;
-    }
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == contractOwner);
-    _;
-  }
-  
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    contractOwner = newOwner;
-  }
-
-}
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  bool private paused = false;
-
-  /**
-   * @dev Modifier to allow actions only when the contract IS paused
-     @dev If is paused msg.value is send back
-   */
-  modifier whenNotPaused() {
-    if(paused == true && msg.value > 0){
-      msg.sender.transfer(msg.value);
-    }
-    require(!paused);
-    _;
-  }
-
-
-  /**
-   * @dev Called by the owner to pause, triggers stopped state
-   */
-  function triggerPause() onlyOwner external {
-    paused = !paused;
-  }
-
-}
-
-
-/// @title A contract for creating new champs and making withdrawals
-contract ChampFactory is Pausable{
-
-    event NewChamp(uint256 champID, address owner);
-
-    using SafeMath for uint; //SafeMath for overflow prevention
-
-    /*
-     * Variables
-     */
     struct Champ {
-        uint256 id; //same as position in Champ[]
-        uint256 attackPower;
-        uint256 defencePower;
-        uint256 cooldownTime; //how long does it take to be ready attack again
-        uint256 readyTime; //if is smaller than block.timestamp champ is ready to fight
-        uint256 winCount;
-        uint256 lossCount;
-        uint256 position; //position in leaderboard. subtract 1 and you got position in leaderboard[]
-        uint256 price; //selling price
-        uint256 withdrawCooldown; //if you one of the 800 best champs and withdrawCooldown is less as block.timestamp then you get ETH reward
-        uint256 eq_sword; 
-        uint256 eq_shield; 
-        uint256 eq_helmet; 
+        uint id; //same as position in Champ[]
+        uint attackPower;
+        uint defencePower;
+        uint cooldownTime; //how long does it take to be able attack again
+        uint readyTime; //if is smaller than block.timestamp champ is ready to fight
+        uint winCount;
+        uint lossCount;
+        uint position; //subtract 1 and you get position in leaderboard[]
+        uint price; //sale price
+        uint withdrawCooldown; //if you one of the 800 best champs and withdrawCooldown is less as block.timestamp then you get ETH reward
+        uint eq_sword; 
+        uint eq_shield; 
+        uint eq_helmet; 
         bool forSale; //is champ for sale?
     }
     
     struct AddressInfo {
-        uint256 withdrawal;
-        uint256 champsCount;
-        uint256 itemsCount;
+        uint withdrawal;
+        uint champsCount;
+        uint itemsCount;
         string name;
     }
 
     //Item struct
     struct Item {
+        uint id;
         uint8 itemType; // 1 - Sword | 2 - Shield | 3 - Helmet
         uint8 itemRarity; // 1 - Common | 2 - Uncommon | 3 - Rare | 4 - Epic | 5 - Legendery | 6 - Forged
-        uint256 attackPower;
-        uint256 defencePower;
-        uint256 cooldownReduction;
-        uint256 price;
-        uint256 onChampId; //can not be used to decide if item is on champ, because champ's id can be 0, 'bool onChamp' solves it.
+        uint attackPower;
+        uint defencePower;
+        uint cooldownReduction;
+        uint price;
+        uint onChampId; //can not be used to decide if item is on champ, because champ's id can be 0, 'bool onChamp' solves it.
         bool onChamp; 
         bool forSale; //is item for sale?
     }
     
-    mapping (address => AddressInfo) public addressInfo;
-    mapping (uint256 => address) public champToOwner;
-    mapping (uint256 => address) public itemToOwner;
-    mapping (uint256 => string) public champToName;
-    
     Champ[] public champs;
     Item[] public items;
-    uint256[] public leaderboard;
-    
-    uint256 internal createChampFee = 5 finney;
-    uint256 internal lootboxFee = 5 finney;
-    uint256 internal pendingWithdrawal = 0;
-    uint256 private randNonce = 0; //being used in generating random numbers
-    uint256 public champsForSaleCount;
-    uint256 public itemsForSaleCount;
-    
+    mapping (uint => uint) public leaderboard;
+    mapping (address => bool) private trusted;
+    mapping (address => AddressInfo) public addressInfo;
+    mapping (bool => mapping(address => mapping (address => bool))) public tokenOperatorApprovals;
+    mapping (bool => mapping(uint => address)) public tokenApprovals;
+    mapping (bool => mapping(uint => address)) public tokenToOwner;
+    mapping (uint => string) public champToName;
+    mapping (bool => uint) public tokensForSaleCount;
+    uint public pendingWithdrawal = 0;
+    address private contractOwner;
+    Controller internal controller;
 
-    /*
-     * Modifiers
-     */
-    /// @dev Checks if msg.sender is owner of champ
-    modifier onlyOwnerOfChamp(uint256 _champId) {
-        require(msg.sender == champToOwner[_champId]);
-        _;
+
+    constructor () public 
+    {
+        trusted[msg.sender] = true;
+        contractOwner = msg.sender;
     }
     
 
-    /// @dev Checks if msg.sender is NOT owner of champ
-    modifier onlyNotOwnerOfChamp(uint256 _champId) {
-        require(msg.sender != champToOwner[_champId]);
+    /*============== MODIFIERS ==============*/
+    modifier onlyTrusted(){
+        require(trusted[msg.sender]);
         _;
     }
-    
 
-    /// @notice Checks if amount was sent
-    modifier isPaid(uint256 _price){
+    modifier isPaid(uint _price)
+    {
         require(msg.value >= _price);
         _;
     }
 
+    modifier onlyNotOwnerOfItem(uint _itemId) {
+        require(_itemId != 0);
+        require(msg.sender != tokenToOwner[false][_itemId]);
+        _;
+    }
 
-    /// @notice People are allowed to withdraw only if min. balance (0.01 gwei) is reached
-    modifier contractMinBalanceReached(){
-        require( (address(this).balance).sub(pendingWithdrawal) > 1000000 );
+    modifier isItemForSale(uint _id){
+        require(items[_id].forSale);
+        _;
+    }
+
+    modifier onlyNotOwnerOfChamp(uint _champId) 
+    {
+        require(msg.sender != tokenToOwner[true][_champId]);
+        _;
+    }
+
+    modifier isChampForSale(uint _id)
+    {
+        require(champs[_id].forSale);
         _;
     }
 
 
-    /// @notice Checks if withdraw cooldown passed 
-    modifier isChampWithdrawReady(uint256 _id){
-        require(champs[_id].withdrawCooldown < block.timestamp);
-        _;
+    /*============== CONTROL COTRACT ==============*/
+    function loadController(address _address) external onlyTrusted {
+        controller = Controller(_address);
     }
 
+    
+    function setTrusted(address _address, bool _trusted) external onlyTrusted {
+        trusted[_address] = _trusted;
+    }
+    
+    function transferOwnership(address newOwner) public onlyTrusted {
+        require(newOwner != address(0));
+        contractOwner = newOwner;
+    }
+    
+
+    /*============== PRIVATE FUNCTIONS ==============*/
+    function _addWithdrawal(address _address, uint _amount) private 
+    {
+        addressInfo[_address].withdrawal += _amount;
+        pendingWithdrawal += _amount;
+    }
 
     /// @notice Distribute input funds between contract owner and players
-    modifier distributeInput(address _affiliateAddress){
-
+    function _distributeNewSaleInput(address _affiliateAddress) private 
+    {
         //contract owner
-        uint256 contractOwnerWithdrawal = (msg.value / 100) * 50; // 50%
-        addressInfo[contractOwner].withdrawal += contractOwnerWithdrawal;
-        pendingWithdrawal += contractOwnerWithdrawal;
+        _addWithdrawal(contractOwner, ((msg.value / 100) * 60)); // 60%
 
         //affiliate
         //checks if _affiliateAddress is set & if affiliate address is not buying player
         if(_affiliateAddress != address(0) && _affiliateAddress != msg.sender){
-            uint256 affiliateBonus = (msg.value / 100) * 25; //provision is 25%
-            addressInfo[_affiliateAddress].withdrawal += affiliateBonus;
-            pendingWithdrawal += affiliateBonus;
+            _addWithdrawal(_affiliateAddress, ((msg.value / 100) * 25)); //provision is 25%
+            
         }
-
-        _;
     }
 
-
-
-    /*
-     * View
-     */
-    /// @notice Gets champs by address
-    /// @param _owner Owner address
-    function getChampsByOwner(address _owner) external view returns(uint256[]) {
-        uint256[] memory result = new uint256[](addressInfo[_owner].champsCount);
-        uint256 counter = 0;
-        for (uint256 i = 0; i < champs.length; i++) {
-            if (champToOwner[i] == _owner) {
-                result[counter] = i;
-                counter++;
-            }
-        }
-        return result;
-    }
-
-
-    /// @notice Gets total champs count
-    function getChampsCount() external view returns(uint256){
-        return champs.length;
-    }
     
-
-    /// @notice Gets champ's reward in wei
-    function getChampReward(uint256 _position) public view returns(uint256) {
-        if(_position <= 800){
-            //percentageMultipier = 10,000
-            //maxReward = 2000 = .2% * percentageMultipier
-            //subtractPerPosition = 2 = .0002% * percentageMultipier
-            //2000 - (2 * (_position - 1))
-            uint256 rewardPercentage = uint256(2000).sub(2 * (_position - 1));
-
-            //available funds are all funds - already pending
-            uint256 availableWithdrawal = address(this).balance.sub(pendingWithdrawal);
-
-            //calculate reward for champ's position
-            //1000000 = percentageMultipier * 100
-            return availableWithdrawal / 1000000 * rewardPercentage;
-        }else{
-            return uint256(0);
-        }
-    }
-
-
-    /*
-     * Internal
-     */
-    /// @notice Generates random modulus
-    /// @param _modulus Max random modulus
-    function randMod(uint256 _modulus) internal returns(uint256) {
-        randNonce++;
-        return uint256(keccak256(randNonce, blockhash(block.number - 1))) % _modulus;
-    }
-    
-
-
-    /*
-     * External
-     */
-    /// @notice Creates new champ
-    /// @param _affiliateAddress Affiliate address (optional)
-    function createChamp(address _affiliateAddress) external payable 
-    whenNotPaused
-    isPaid(createChampFee) 
-    distributeInput(_affiliateAddress) 
+    /*============== ONLY TRUSTED ==============*/
+    function addWithdrawal(address _address, uint _amount) public onlyTrusted 
     {
-
-        /* 
-        Champ memory champ = Champ({
-             id: 0,
-             attackPower: 2 + randMod(4),
-             defencePower: 1 + randMod(4),
-             cooldownTime: uint256(1 days) - uint256(randMod(9) * 1 hours),
-             readyTime: 0,
-             winCount: 0,
-             lossCount: 0,
-             position: leaderboard.length + 1, //Last place in leaderboard is new champ's position. Used in new champ struct bellow. +1 to avoid zero position.
-             price: 0,
-             withdrawCooldown: uint256(block.timestamp), 
-             eq_sword: 0,
-             eq_shield: 0, 
-             eq_helmet: 0, 
-             forSale: false 
-        });   
-        */
-
-        // This line bellow is about 30k gas cheaper than lines above. They are the same. Lines above are just more readable.
-        uint256 id = champs.push(Champ(0, 2 + randMod(4), 1 + randMod(4), uint256(1 days)  - uint256(randMod(9) * 1 hours), 0, 0, 0, leaderboard.length + 1, 0, uint256(block.timestamp), 0,0,0, false)) - 1;     
-        
-        
-        champs[id].id = id; //sets id in Champ struct  
-        leaderboard.push(id); //push champ on the last place in leaderboard  
-        champToOwner[id] = msg.sender; //sets owner of this champ - msg.sender
-        addressInfo[msg.sender].champsCount++;
-
-        emit NewChamp(id, msg.sender);
-
+        _addWithdrawal(_address, _amount);
     }
 
-
-    /// @notice Change "CreateChampFee". If ETH price will grow up it can expensive to create new champ.
-    /// @param _fee New "CreateChampFee"
-    /// @dev Only owner of contract can change "CreateChampFee"
-    function setCreateChampFee(uint256 _fee) external onlyOwner {
-        createChampFee = _fee;
+    function clearTokenApproval(address _from, uint _tokenId, bool _isTokenChamp) public onlyTrusted
+    {
+        require(tokenToOwner[_isTokenChamp][_tokenId] == _from);
+        if (tokenApprovals[_isTokenChamp][_tokenId] != address(0)) {
+            tokenApprovals[_isTokenChamp][_tokenId] = address(0);
+        }
     }
-    
 
-    /// @notice Change champ's name
-    function changeChampsName(uint _champId, string _name) external 
-    onlyOwnerOfChamp(_champId){
+    function emergencyWithdraw() external onlyTrusted
+    {
+        contractOwner.transfer(address(this).balance);
+    }
+
+    function setChampsName(uint _champId, string _name) public onlyTrusted 
+    {
         champToName[_champId] = _name;
     }
 
+    function setLeaderboard(uint _x, uint _value) public onlyTrusted
+    {
+        leaderboard[_x] = _value;
+    }
 
-    /// @notice Change players's name
+    function setTokenApproval(uint _id, address _to, bool _isTokenChamp) public onlyTrusted
+    {
+        tokenApprovals[_isTokenChamp][_id] = _to;
+    }
+
+    function setTokenOperatorApprovals(address _from, address _to, bool _approved, bool _isTokenChamp) public onlyTrusted
+    {
+        tokenOperatorApprovals[_isTokenChamp][_from][_to] = _approved;
+    }
+
+    function setTokenToOwner(uint _id, address _owner, bool _isTokenChamp) public onlyTrusted
+    {
+        tokenToOwner[_isTokenChamp][_id] = _owner;
+    }
+
+    function setTokensForSaleCount(uint _value, bool _isTokenChamp) public onlyTrusted 
+    {
+        tokensForSaleCount[_isTokenChamp] = _value;
+    }
+
+    function transferToken(address _from, address _to, uint _id, bool _isTokenChamp) public onlyTrusted
+    {
+        controller.transferToken(_from, _to, _id, _isTokenChamp);
+    }
+
+    function updateAddressInfo(address _address, uint _withdrawal, bool _updatePendingWithdrawal, uint _champsCount, bool _updateChampsCount, uint _itemsCount, bool _updateItemsCount, string _name, bool _updateName) public onlyTrusted {
+        AddressInfo storage ai = addressInfo[_address];
+        if(_updatePendingWithdrawal){ ai.withdrawal = _withdrawal; }
+        if(_updateChampsCount){ ai.champsCount = _champsCount; }
+        if(_updateItemsCount){ ai.itemsCount = _itemsCount; }
+        if(_updateName){ ai.name = _name; }
+    }
+
+    function newChamp(
+        uint _attackPower,
+        uint _defencePower,
+        uint _cooldownTime,
+        uint _winCount,
+        uint _lossCount,
+        uint _position,
+        uint _price,
+        uint _eq_sword, 
+        uint _eq_shield, 
+        uint _eq_helmet, 
+        bool _forSale,
+        address _owner
+    ) public onlyTrusted returns (uint){
+
+        Champ memory champ = Champ({
+            id: 0,
+            attackPower: 0, //CompilerError: Stack too deep, try removing local variables.
+            defencePower: _defencePower,
+            cooldownTime: _cooldownTime,
+            readyTime: 0,
+            winCount: _winCount,
+            lossCount: _lossCount,
+            position: _position,
+            price: _price,
+            withdrawCooldown: 0,
+            eq_sword: _eq_sword,
+            eq_shield: _eq_shield,
+            eq_helmet: _eq_helmet,
+            forSale: _forSale
+        });
+        champ.attackPower = _attackPower;
+
+        uint id = champs.push(champ) - 1; 
+        champs[id].id = id; 
+        leaderboard[_position] = id;
+
+        addressInfo[_owner].champsCount++;
+        tokenToOwner[true][id] = _owner;
+
+        if(_forSale){
+            tokensForSaleCount[true]++;
+        }
+
+        return id;
+    }
+
+    function newItem(
+        uint8 _itemType,
+        uint8 _itemRarity,
+        uint _attackPower,
+        uint _defencePower,
+        uint _cooldownReduction,
+        uint _price,
+        uint _onChampId,
+        bool _onChamp,
+        bool _forSale,
+        address _owner
+    ) public onlyTrusted returns (uint)
+    { 
+        //create that struct
+        Item memory item = Item({
+            id: 0,
+            itemType: _itemType,
+            itemRarity: _itemRarity, 
+            attackPower: _attackPower,
+            defencePower: _defencePower,
+            cooldownReduction: _cooldownReduction,
+            price: _price,
+            onChampId: _onChampId,
+            onChamp: _onChamp, 
+            forSale: _forSale
+
+        });
+
+        uint id = items.push(item) - 1;
+        items[id].id = id; 
+
+        addressInfo[_owner].itemsCount++;
+        tokenToOwner[false][id] = _owner;
+
+        if(_forSale){
+            tokensForSaleCount[false]++;
+        }
+
+        return id;
+    }
+
+    function updateChamp(
+        uint _champId, 
+        uint _attackPower,
+        uint _defencePower,
+        uint _cooldownTime,
+        uint _readyTime,
+        uint _winCount,
+        uint _lossCount,
+        uint _position,
+        uint _price,
+        uint _withdrawCooldown,
+        uint _eq_sword, 
+        uint _eq_shield, 
+        uint _eq_helmet, 
+        bool _forSale
+    ) public onlyTrusted {
+        Champ storage champ = champs[_champId];
+        if(champ.attackPower != _attackPower){champ.attackPower = _attackPower;}
+        if(champ.defencePower != _defencePower){champ.defencePower = _defencePower;}
+        if(champ.cooldownTime != _cooldownTime){champ.cooldownTime = _cooldownTime;}
+        if(champ.readyTime != _readyTime){champ.readyTime = _readyTime;}
+        if(champ.winCount != _winCount){champ.winCount = _winCount;}
+        if(champ.lossCount != _lossCount){champ.lossCount = _lossCount;}
+        if(champ.position != _position){
+            champ.position = _position;
+            leaderboard[_position] = _champId;
+        }
+        if(champ.price != _price){champ.price = _price;}
+        if(champ.withdrawCooldown != _withdrawCooldown){champ.withdrawCooldown = _withdrawCooldown;}
+        if(champ.eq_sword != _eq_sword){champ.eq_sword = _eq_sword;}
+        if(champ.eq_shield != _eq_shield){champ.eq_shield = _eq_shield;}
+        if(champ.eq_helmet != _eq_helmet){champ.eq_helmet = _eq_helmet;}
+        if(champ.forSale != _forSale){ 
+            champ.forSale = _forSale; 
+            if(_forSale){
+                tokensForSaleCount[true]++;
+            }else{
+                tokensForSaleCount[true]--;
+            }
+        }
+    }
+
+    function updateItem(
+        uint _id,
+        uint8 _itemType,
+        uint8 _itemRarity,
+        uint _attackPower,
+        uint _defencePower,
+        uint _cooldownReduction,
+        uint _price,
+        uint _onChampId,
+        bool _onChamp,
+        bool _forSale
+    ) public onlyTrusted
+    {
+        Item storage item = items[_id];
+        if(item.itemType != _itemType){item.itemType = _itemType;}
+        if(item.itemRarity != _itemRarity){item.itemRarity = _itemRarity;}
+        if(item.attackPower != _attackPower){item.attackPower = _attackPower;}
+        if(item.defencePower != _defencePower){item.defencePower = _defencePower;}
+        if(item.cooldownReduction != _cooldownReduction){item.cooldownReduction = _cooldownReduction;}
+        if(item.price != _price){item.price = _price;}
+        if(item.onChampId != _onChampId){item.onChampId = _onChampId;}
+        if(item.onChamp != _onChamp){item.onChamp = _onChamp;}
+        if(item.forSale != _forSale){
+            item.forSale = _forSale;
+            if(_forSale){
+                tokensForSaleCount[false]++;
+            }else{
+                tokensForSaleCount[false]--;
+            }
+        }
+    }
+
+
+    /*============== CALLABLE BY PLAYER ==============*/
+    function buyItem(uint _id, address _affiliateAddress) external payable 
+    onlyNotOwnerOfItem(_id) 
+    isItemForSale(_id)
+    isPaid(items[_id].price) 
+    {
+        if(tokenToOwner[false][_id] == address(this)){
+            _distributeNewSaleInput(_affiliateAddress);
+        }else{
+            _addWithdrawal(tokenToOwner[false][_id], msg.value);
+        }
+        controller.transferToken(tokenToOwner[false][_id], msg.sender, _id, false);
+    }
+
+    function buyChamp(uint _id, address _affiliateAddress) external payable
+    onlyNotOwnerOfChamp(_id) 
+    isChampForSale(_id) 
+    isPaid(champs[_id].price) 
+    {
+        if(tokenToOwner[true][_id] == address(this)){
+            _distributeNewSaleInput(_affiliateAddress);
+        }else{
+            _addWithdrawal(tokenToOwner[true][_id], msg.value);
+        }
+        controller.transferToken(tokenToOwner[true][_id], msg.sender, _id, true);
+    }
+
     function changePlayersName(string _name) external {
         addressInfo[msg.sender].name = _name;
     }
 
-
-    /// @notice Withdraw champ's reward
-    /// @param _id Champ id
-    /// @dev Move champ reward to pending withdrawal to his wallet. 
-    function withdrawChamp(uint _id) external 
-    onlyOwnerOfChamp(_id) 
-    contractMinBalanceReached  
-    isChampWithdrawReady(_id) 
-    whenNotPaused {
-        Champ storage champ = champs[_id];
-        require(champ.position <= 800);
-
-        champ.withdrawCooldown = block.timestamp + 1 days; //one withdrawal 1 per day
-
-        uint256 withdrawal = getChampReward(champ.position);
-        addressInfo[msg.sender].withdrawal += withdrawal;
-        pendingWithdrawal += withdrawal;
-    }
-    
-
-    /// @dev Send all pending funds of caller's address
     function withdrawToAddress(address _address) external 
-    whenNotPaused {
+    {
         address playerAddress = _address;
         if(playerAddress == address(0)){ playerAddress = msg.sender; }
-        uint256 share = addressInfo[playerAddress].withdrawal; //gets pending funds
+        uint share = addressInfo[playerAddress].withdrawal; //gets pending funds
         require(share > 0); //is it more than 0?
 
-        //first sets players withdrawal pending to 0 and subtract amount from playerWithdrawals then transfer funds to avoid reentrancy
         addressInfo[playerAddress].withdrawal = 0; //set player's withdrawal pendings to 0 
         pendingWithdrawal = pendingWithdrawal.sub(share); //subtract share from total pendings 
         
         playerAddress.transfer(share); //transfer
     }
-    
-}
 
 
-
-/// @title  Moderates items and creates new ones
-contract Items is ChampFactory {
-
-    event NewItem(uint256 itemID, address owner);
-
-    constructor () internal {
-        //item -> nothing
-        items.push(Item(0, 0, 0, 0, 0, 0, 0, false, false));
-    }
-
-    /*
-     * Modifiers
-     */
-    /// @notice Checks if sender is owner of item
-    modifier onlyOwnerOfItem(uint256 _itemId) {
-        require(_itemId != 0);
-        require(msg.sender == itemToOwner[_itemId]);
-        _;
-    }
-    
-
-    /// @notice Checks if sender is NOT owner of item
-    modifier onlyNotOwnerOfItem(uint256 _itemId) {
-        require(msg.sender != itemToOwner[_itemId]);
-        _;
-    }
-
-
-    /*
-     * View
-     */
-    ///@notice Check if champ has something on
-    ///@param _type Sword, shield or helmet
-    function hasChampSomethingOn(uint _champId, uint8 _type) internal view returns(bool){
-        Champ storage champ = champs[_champId];
-        if(_type == 1){
-            return (champ.eq_sword == 0) ? false : true;
-        }
-        if(_type == 2){
-            return (champ.eq_shield == 0) ? false : true;
-        }
-        if(_type == 3){
-            return (champ.eq_helmet == 0) ? false : true;
-        }
-    }
-
-
-    /// @notice Gets items by address
-    /// @param _owner Owner address
-    function getItemsByOwner(address _owner) external view returns(uint256[]) {
-        uint256[] memory result = new uint256[](addressInfo[_owner].itemsCount);
+    /*============== VIEW FUNCTIONS ==============*/
+    function getChampsByOwner(address _owner) external view returns(uint256[]) {
+        uint256[] memory result = new uint256[](addressInfo[_owner].champsCount);
         uint256 counter = 0;
-        for (uint256 i = 0; i < items.length; i++) {
-            if (itemToOwner[i] == _owner) {
+        for (uint256 i = 0; i < champs.length; i++) {
+            if (tokenToOwner[true][i] == _owner) {
                 result[counter] = i;
                 counter++;
             }
@@ -437,712 +469,116 @@ contract Items is ChampFactory {
         return result;
     }
 
-
-    /*
-     * Public
-     */
-    ///@notice Takes item off champ
-    function takeOffItem(uint _champId, uint8 _type) public 
-        onlyOwnerOfChamp(_champId) {
-            uint256 itemId;
-            Champ storage champ = champs[_champId];
-            if(_type == 1){
-                itemId = champ.eq_sword; //Get item ID
-                if (itemId > 0) { //0 = nothing
-                    champ.eq_sword = 0; //take off sword
-                }
-            }
-            if(_type == 2){
-                itemId = champ.eq_shield; //Get item ID
-                if(itemId > 0) {//0 = nothing
-                    champ.eq_shield = 0; //take off shield
-                }
-            }
-            if(_type == 3){
-                itemId = champ.eq_helmet; //Get item ID
-                if(itemId > 0) { //0 = nothing
-                    champ.eq_helmet = 0; //take off 
-                }
-            }
-            if(itemId > 0){
-                items[itemId].onChamp = false; //item is free to use, is not on champ
-            }
-    }
-
-
-
-    /*
-     * External
-     */
-    ///@notice Puts item on champ
-    function putOn(uint256 _champId, uint256 _itemId) external 
-        onlyOwnerOfChamp(_champId) 
-        onlyOwnerOfItem(_itemId) {
-            Champ storage champ = champs[_champId];
-            Item storage item = items[_itemId];
-
-            //checks if items is on some other champ
-            if(item.onChamp){
-                takeOffItem(item.onChampId, item.itemType); //take off from champ
-            }
-
-            item.onChamp = true; //item is on champ
-            item.onChampId = _champId; //champ's id
-
-            //put on
-            if(item.itemType == 1){
-                //take off actual sword 
-                if(champ.eq_sword > 0){
-                    takeOffItem(champ.id, 1);
-                }
-                champ.eq_sword = _itemId; //put on sword
-            }
-            if(item.itemType == 2){
-                //take off actual shield 
-                if(champ.eq_shield > 0){
-                    takeOffItem(champ.id, 2);
-                }
-                champ.eq_shield = _itemId; //put on shield
-            }
-            if(item.itemType == 3){
-                //take off actual helmet 
-                if(champ.eq_helmet > 0){
-                    takeOffItem(champ.id, 3);
-                }
-                champ.eq_helmet = _itemId; //put on helmet
-            }
-    }
-
-
-
-    /// @notice Opens loot box and generates new item
-    function openLootbox(address _affiliateAddress) external payable 
-    whenNotPaused
-    isPaid(lootboxFee) 
-    distributeInput(_affiliateAddress) {
-
-        uint256 pointToCooldownReduction;
-        uint256 randNum = randMod(1001); //random number <= 1000
-        uint256 pointsToShare; //total points given
-        uint256 itemID;
-
-        //sets up item
-        Item memory item = Item({
-            itemType: uint8(uint256(randMod(3) + 1)), //generates item type - max num is 2 -> 0 + 1 SWORD | 1 + 1 SHIELD | 2 + 1 HELMET;
-            itemRarity: uint8(0),
-            attackPower: 0,
-            defencePower: 0,
-            cooldownReduction: 0,
-            price: 0,
-            onChampId: 0,
-            onChamp: false,
-            forSale: false
-        });
-        
-        // Gets Rarity of item
-        // 45% common
-        // 27% uncommon
-        // 19% rare
-        // 7%  epic
-        // 2%  legendary
-        if(450 > randNum){
-            pointsToShare = 25 + randMod(9); //25 basic + random number max to 8
-            item.itemRarity = uint8(1);
-        }else if(720 > randNum){
-            pointsToShare = 42 + randMod(17); //42 basic + random number max to 16
-            item.itemRarity = uint8(2);
-        }else if(910 > randNum){
-            pointsToShare = 71 + randMod(25); //71 basic + random number max to 24
-            item.itemRarity = uint8(3);
-        }else if(980 > randNum){
-            pointsToShare = 119 + randMod(33); //119 basic + random number max to 32
-            item.itemRarity = uint8(4);
-        }else{
-            pointsToShare = 235 + randMod(41); //235 basic + random number max to 40
-            item.itemRarity = uint8(5);
-        }
-        
-
-        //Gets type of item
-        if(item.itemType == uint8(1)){ //ITEM IS SWORDS
-            item.attackPower = pointsToShare / 10 * 7; //70% attackPower
-            pointsToShare -= item.attackPower; //points left;
-                
-            item.defencePower = pointsToShare / 10 * randMod(6); //up to 15% defencePower
-            pointsToShare -= item.defencePower; //points left;
-                
-            item.cooldownReduction = pointsToShare * uint256(1 minutes); //rest of points is cooldown reduction
-            item.itemType = uint8(1);
-        }
-        
-        if(item.itemType == uint8(2)){ //ITEM IS SHIELD
-            item.defencePower = pointsToShare / 10 * 7; //70% defencePower
-            pointsToShare -= item.defencePower; //points left;
-                
-            item.attackPower = pointsToShare / 10 * randMod(6); //up to 15% attackPowerPower
-            pointsToShare -= item.attackPower; //points left;
-                
-            item.cooldownReduction = pointsToShare * uint256(1 minutes); //rest of points is cooldown reduction
-            item.itemType = uint8(2);
-        }
-        
-        if(item.itemType == uint8(3)){ //ITEM IS HELMET
-            pointToCooldownReduction = pointsToShare / 10 * 7; //70% cooldown reduction
-            item.cooldownReduction = pointToCooldownReduction * uint256(1 minutes); //points to time
-            pointsToShare -= pointToCooldownReduction; //points left;
-                
-            item.attackPower = pointsToShare / 10 * randMod(6); //up to 15% attackPower
-            pointsToShare -= item.attackPower; //points left;
-                
-            item.defencePower = pointsToShare; //rest of points is defencePower
-            item.itemType = uint8(3);
-        }
-
-        itemID = items.push(item) - 1;
-        
-        itemToOwner[itemID] = msg.sender; //sets owner of this item - msg.sender
-        addressInfo[msg.sender].itemsCount++; //every address has count of items    
-
-        emit NewItem(itemID, msg.sender);    
-
-    }
-
-    /// @notice Change "lootboxFee". 
-    /// @param _fee New "lootboxFee"
-    /// @dev Only owner of contract can change "lootboxFee"
-    function setLootboxFee(uint _fee) external onlyOwner {
-        lootboxFee = _fee;
-    }
-}
-
-
-
-/// @title Moderates buying and selling items
-contract ItemMarket is Items {
-
-    event TransferItem(address from, address to, uint256 itemID);
-
-    /*
-     * Modifiers
-     */
-    ///@notice Checks if item is for sale
-    modifier itemIsForSale(uint256 _id){
-        require(items[_id].forSale);
-        _;
-    }
-
-    ///@notice Checks if item is NOT for sale
-    modifier itemIsNotForSale(uint256 _id){
-        require(items[_id].forSale == false);
-        _;
-    }
-
-    ///@notice If item is for sale then cancel sale
-    modifier ifItemForSaleThenCancelSale(uint256 _itemID){
-      Item storage item = items[_itemID];
-      if(item.forSale){
-          _cancelItemSale(item);
-      }
-      _;
-    }
-
-
-    ///@notice Distribute sale eth input
-    modifier distributeSaleInput(address _owner) { 
-        uint256 contractOwnerCommision; //1%
-        uint256 playerShare; //99%
-        
-        if(msg.value > 100){
-            contractOwnerCommision = (msg.value / 100);
-            playerShare = msg.value - contractOwnerCommision;
-        }else{
-            contractOwnerCommision = 0;
-            playerShare = msg.value;
-        }
-
-        addressInfo[_owner].withdrawal += playerShare;
-        addressInfo[contractOwner].withdrawal += contractOwnerCommision;
-        pendingWithdrawal += playerShare + contractOwnerCommision;
-        _;
-    }
-
-
-
-    /*
-     * View
-     */
-    function getItemsForSale() view external returns(uint256[]){
-        uint256[] memory result = new uint256[](itemsForSaleCount);
-        if(itemsForSaleCount > 0){
+    function getTokensForSale(bool _isTokenChamp) view external returns(uint256[]){
+        uint256[] memory result = new uint256[](tokensForSaleCount[_isTokenChamp]);
+        if(tokensForSaleCount[_isTokenChamp] > 0){
             uint256 counter = 0;
-            for (uint256 i = 0; i < items.length; i++) {
-                if (items[i].forSale == true) {
-                    result[counter]=i;
-                    counter++;
+            if(_isTokenChamp){
+                for (uint256 i = 0; i < champs.length; i++) {
+                    if (champs[i].forSale == true) {
+                        result[counter]=i;
+                        counter++;
+                    }
+                }
+            }else{
+                for (uint256 n = 0; n < items.length; n++) {
+                    if (items[n].forSale == true) {
+                        result[counter]=n;
+                        counter++;
+                    }
                 }
             }
         }
         return result;
     }
-    
-     /*
-     * Private
-     */
-    ///@notice Cancel sale. Should not be called without checking if item is really for sale.
-    function _cancelItemSale(Item storage item) private {
-      //No need to overwrite item's price
-      item.forSale = false;
-      itemsForSaleCount--;
-    }
 
-
-    /*
-     * Internal
-     */
-    /// @notice Transfer item
-    function transferItem(address _from, address _to, uint256 _itemID) internal 
-      ifItemForSaleThenCancelSale(_itemID) {
-        Item storage item = items[_itemID];
-
-        //take off      
-        if(item.onChamp && _to != champToOwner[item.onChampId]){
-          takeOffItem(item.onChampId, item.itemType);
-        }
-
-        addressInfo[_to].itemsCount++;
-        addressInfo[_from].itemsCount--;
-        itemToOwner[_itemID] = _to;
-
-        emit TransferItem(_from, _to, _itemID);
-    }
-
-
-
-    /*
-     * Public
-     */
-    /// @notice Calls transfer item
-    /// @notice Address _from is msg.sender. Cannot be used is market, bc msg.sender is buyer
-    function giveItem(address _to, uint256 _itemID) public 
-      onlyOwnerOfItem(_itemID) {
-        transferItem(msg.sender, _to, _itemID);
-    }
-    
-
-    /// @notice Calcels item's sale
-    function cancelItemSale(uint256 _id) public 
-    itemIsForSale(_id) 
-    onlyOwnerOfItem(_id){
-      Item storage item = items[_id];
-       _cancelItemSale(item);
-    }
-
-
-    /*
-     * External
-     */
-    /// @notice Sets item for sale
-    function setItemForSale(uint256 _id, uint256 _price) external 
-      onlyOwnerOfItem(_id) 
-      itemIsNotForSale(_id) {
-        Item storage item = items[_id];
-        item.forSale = true;
-        item.price = _price;
-        itemsForSaleCount++;
-    }
-    
-    
-    /// @notice Buys item
-    function buyItem(uint256 _id) external payable 
-      whenNotPaused 
-      onlyNotOwnerOfItem(_id) 
-      itemIsForSale(_id) 
-      isPaid(items[_id].price) 
-      distributeSaleInput(itemToOwner[_id]) 
-      {
-        transferItem(itemToOwner[_id], msg.sender, _id);
-    }
-    
-}
-
-
-
-/// @title Manages forging
-contract ItemForge is ItemMarket {
-
-	event Forge(uint256 forgedItemID);
-
-	///@notice Forge items together
-	function forgeItems(uint256 _parentItemID, uint256 _childItemID) external 
-	onlyOwnerOfItem(_parentItemID) 
-	onlyOwnerOfItem(_childItemID) 
-	ifItemForSaleThenCancelSale(_parentItemID) 
-	ifItemForSaleThenCancelSale(_childItemID) {
-
-		//checks if items are not the same
-        require(_parentItemID != _childItemID);
-        
-		Item storage parentItem = items[_parentItemID];
-		Item storage childItem = items[_childItemID];
-
-		//take child item off, because child item will be burned
-		if(childItem.onChamp){
-			takeOffItem(childItem.onChampId, childItem.itemType);
-		}
-
-		//update parent item
-		parentItem.attackPower = (parentItem.attackPower > childItem.attackPower) ? parentItem.attackPower : childItem.attackPower;
-		parentItem.defencePower = (parentItem.defencePower > childItem.defencePower) ? parentItem.defencePower : childItem.defencePower;
-		parentItem.cooldownReduction = (parentItem.cooldownReduction > childItem.cooldownReduction) ? parentItem.cooldownReduction : childItem.cooldownReduction;
-		parentItem.itemRarity = uint8(6);
-
-		//burn child item
-		transferItem(msg.sender, address(0), _childItemID);
-
-		emit Forge(_parentItemID);
-	}
-
-}
-
-
-/// @title Manages attacks in game
-contract ChampAttack is ItemForge {
-    
-    event Attack(uint256 winnerChampID, uint256 defeatedChampID, bool didAttackerWin);
-
-    /*
-     * Modifiers
-     */
-     /// @notice Is champ ready to fight again?
-    modifier isChampReady(uint256 _champId) {
-      require (champs[_champId].readyTime <= block.timestamp);
-      _;
-    }
-
-
-    /// @notice Prevents from self-attack
-    modifier notSelfAttack(uint256 _champId, uint256 _targetId) {
-        require(_champId != _targetId); 
-        _;
-    }
-
-
-    /// @notice Checks if champ does exist
-    modifier targetExists(uint256 _targetId){
-        require(champToOwner[_targetId] != address(0)); 
-        _;
-    }
-
-
-    /*
-     * View
-     */
-    /// @notice Gets champ's attack power, defence power and cooldown reduction with items on
     function getChampStats(uint256 _champId) public view returns(uint256,uint256,uint256){
         Champ storage champ = champs[_champId];
         Item storage sword = items[champ.eq_sword];
         Item storage shield = items[champ.eq_shield];
         Item storage helmet = items[champ.eq_helmet];
 
-        //AP
-        uint256 totalAttackPower = champ.attackPower + sword.attackPower + shield.attackPower + helmet.attackPower; //Gets champs AP
-
-        //DP
-        uint256 totalDefencePower = champ.defencePower + sword.defencePower + shield.defencePower + helmet.defencePower; //Gets champs  DP
-
-        //CR
-        uint256 totalCooldownReduction = sword.cooldownReduction + shield.cooldownReduction + helmet.cooldownReduction; //Gets  CR
+        uint totalAttackPower = champ.attackPower + sword.attackPower + shield.attackPower + helmet.attackPower; //Gets champs AP
+        uint totalDefencePower = champ.defencePower + sword.defencePower + shield.defencePower + helmet.defencePower; //Gets champs  DP
+        uint totalCooldownReduction = sword.cooldownReduction + shield.cooldownReduction + helmet.cooldownReduction; //Gets  CR
 
         return (totalAttackPower, totalDefencePower, totalCooldownReduction);
     }
 
-
-    /*
-     * Pure
-     */
-    /// @notice Subtracts ability points. Helps to not cross minimal attack ability points -> 2
-    /// @param _playerAttackPoints Actual player's attack points
-    /// @param _x Amount to subtract 
-    function subAttack(uint256 _playerAttackPoints, uint256 _x) internal pure returns (uint256) {
-        return (_playerAttackPoints <= _x + 2) ? 2 : _playerAttackPoints - _x;
-    }
-    
-
-    /// @notice Subtracts ability points. Helps to not cross minimal defence ability points -> 1
-    /// @param _playerDefencePoints Actual player's defence points
-    /// @param _x Amount to subtract 
-    function subDefence(uint256 _playerDefencePoints, uint256 _x) internal pure returns (uint256) {
-        return (_playerDefencePoints <= _x) ? 1 : _playerDefencePoints - _x;
-    }
-    
-
-    /*
-     * Private
-     */
-    /// @dev Is called from from Attack function after the winner is already chosen
-    /// @dev Updates abilities, champ's stats and swaps positions
-    function _attackCompleted(Champ storage _winnerChamp, Champ storage _defeatedChamp, uint256 _pointsGiven, uint256 _pointsToAttackPower) private {
-        /*
-         * Updates abilities after fight
-         */
-        //winner abilities update
-        _winnerChamp.attackPower += _pointsToAttackPower; //increase attack power
-        _winnerChamp.defencePower += _pointsGiven - _pointsToAttackPower; //max point that was given - already given to AP
-                
-        //defeated champ's abilities update
-        //checks for not cross minimal AP & DP points
-        _defeatedChamp.attackPower = subAttack(_defeatedChamp.attackPower, _pointsToAttackPower); //decrease attack power
-        _defeatedChamp.defencePower = subDefence(_defeatedChamp.defencePower, _pointsGiven - _pointsToAttackPower); // decrease defence power
-
-
-
-        /*
-         * Update champs' wins and losses
-         */
-        _winnerChamp.winCount++;
-        _defeatedChamp.lossCount++;
-            
-
-
-        /*
-         * Swap positions
-         */
-        if(_winnerChamp.position > _defeatedChamp.position) { //require loser to has better (lower) postion than attacker
-            uint256 winnerPosition = _winnerChamp.position;
-            uint256 loserPosition = _defeatedChamp.position;
-        
-            _defeatedChamp.position = winnerPosition;
-            _winnerChamp.position = loserPosition;
-        
-            //position in champ struct is always one point bigger than in leaderboard array
-            leaderboard[winnerPosition - 1] = _defeatedChamp.id;
-            leaderboard[loserPosition - 1] = _winnerChamp.id;
-        }
-    }
-    
-    
-    /// @dev Gets pointsGiven and pointsToAttackPower
-    function _getPoints(uint256 _pointsGiven) private returns (uint256 pointsGiven, uint256 pointsToAttackPower){
-        return (_pointsGiven, randMod(_pointsGiven+1));
-    }
-
-
-
-    /*
-     * External
-     */
-    /// @notice Attack function
-    /// @param _champId Attacker champ
-    /// @param _targetId Target champ
-    function attack(uint256 _champId, uint256 _targetId) external 
-    onlyOwnerOfChamp(_champId) 
-    isChampReady(_champId) 
-    notSelfAttack(_champId, _targetId) 
-    targetExists(_targetId) {
-        Champ storage myChamp = champs[_champId]; 
-        Champ storage enemyChamp = champs[_targetId]; 
-        uint256 pointsGiven; //total points that will be divided between AP and DP
-        uint256 pointsToAttackPower; //part of points that will be added to attack power, the rest of points go to defence power
-        uint256 myChampAttackPower;  
-        uint256 enemyChampDefencePower; 
-        uint256 myChampCooldownReduction;
-        
-        (myChampAttackPower,,myChampCooldownReduction) = getChampStats(_champId);
-        (,enemyChampDefencePower,) = getChampStats(_targetId);
-
-
-        //if attacker's AP is more than target's DP then attacker wins
-        if (myChampAttackPower > enemyChampDefencePower) {
-            
-            //this should demotivate players from farming on way weaker champs than they are
-            //the bigger difference between AP & DP is, the reward is smaller
-            if(myChampAttackPower - enemyChampDefencePower < 5){
-                
-                //big experience - 3 ability points
-                (pointsGiven, pointsToAttackPower) = _getPoints(3);
-                
-                
-            }else if(myChampAttackPower - enemyChampDefencePower < 10){
-                
-                //medium experience - 2 ability points
-                (pointsGiven, pointsToAttackPower) = _getPoints(2);
-                
-            }else{
-                
-                //small experience - 1 ability point to random ability (attack power or defence power)
-                (pointsGiven, pointsToAttackPower) = _getPoints(1);
-                
-            }
-            
-            _attackCompleted(myChamp, enemyChamp, pointsGiven, pointsToAttackPower);
-
-            emit Attack(myChamp.id, enemyChamp.id, true);
-
-        } else {
-            
-            //1 ability point to random ability (attack power or defence power)
-            (pointsGiven, pointsToAttackPower) = _getPoints(1);
-
-            _attackCompleted(enemyChamp, myChamp, pointsGiven, pointsToAttackPower);
-
-            emit Attack(enemyChamp.id, myChamp.id, false);
-             
-        }
-        
-        //Trigger cooldown for attacker
-        myChamp.readyTime = uint256(block.timestamp + myChamp.cooldownTime - myChampCooldownReduction);
-
-    }
-    
-}
-
-
-/// @title Moderates buying and selling champs
-contract ChampMarket is ChampAttack {
-
-    event TransferChamp(address from, address to, uint256 champID);
-
-    /*
-     * Modifiers
-     */
-    ///@notice Require champ to be sale
-    modifier champIsForSale(uint256 _id){
-        require(champs[_id].forSale);
-        _;
-    }
-    
-
-    ///@notice Require champ NOT to be for sale
-    modifier champIsNotForSale(uint256 _id){
-        require(champs[_id].forSale == false);
-        _;
-    }
-    
-
-    ///@notice If champ is for sale then cancel sale
-    modifier ifChampForSaleThenCancelSale(uint256 _champID){
-      Champ storage champ = champs[_champID];
-      if(champ.forSale){
-          _cancelChampSale(champ);
-      }
-      _;
-    }
-    
-
-    /*
-     * View
-     */
-    ///@notice Gets all champs for sale
-    function getChampsForSale() view external returns(uint256[]){
-        uint256[] memory result = new uint256[](champsForSaleCount);
-        if(champsForSaleCount > 0){
-            uint256 counter = 0;
-            for (uint256 i = 0; i < champs.length; i++) {
-                if (champs[i].forSale == true) {
-                    result[counter]=i;
-                    counter++;
-                }
+    function getItemsByOwner(address _owner) external view returns(uint256[]) {
+        uint256[] memory result = new uint256[](addressInfo[_owner].itemsCount);
+        uint256 counter = 0;
+        for (uint256 i = 0; i < items.length; i++) {
+            if (tokenToOwner[false][i] == _owner) {
+                result[counter] = i;
+                counter++;
             }
         }
         return result;
     }
+
+    function getTokenCount(bool _isTokenChamp) external view returns(uint)
+    {
+        if(_isTokenChamp){
+            return champs.length - addressInfo[address(0)].champsCount;
+        }else{
+            return items.length - 1 - addressInfo[address(0)].itemsCount;
+        }
+    }
     
-    
-    /*
-     * Private
-     */
-     ///@dev Cancel sale. Should not be called without checking if champ is really for sale.
-     function _cancelChampSale(Champ storage champ) private {
-        //cancel champ's sale
-        //no need waste gas to overwrite his price.
-        champ.forSale = false;
-        champsForSaleCount--;
-     }
-     
+    function getTokenURIs(uint _tokenId, bool _isTokenChamp) public view returns(string)
+    {
+        return controller.getTokenURIs(_tokenId,_isTokenChamp);
+    }
 
-    /*
-     * Internal
-     */
-    /// @notice Transfer champ
-    function transferChamp(address _from, address _to, uint256 _champId) internal ifChampForSaleThenCancelSale(_champId){
-        Champ storage champ = champs[_champId];
-
-        //transfer champ
-        addressInfo[_to].champsCount++;
-        addressInfo[_from].champsCount--;
-        champToOwner[_champId] = _to;
-
-        //transfer items
-        if(champ.eq_sword != 0) { transferItem(_from, _to, champ.eq_sword); }
-        if(champ.eq_shield != 0) { transferItem(_from, _to, champ.eq_shield); }
-        if(champ.eq_helmet != 0) { transferItem(_from, _to, champ.eq_helmet); }
-
-        emit TransferChamp(_from, _to, _champId);
+    function onlyApprovedOrOwnerOfToken(uint _id, address _msgsender, bool _isTokenChamp) external view returns(bool)
+    {
+        if(!_isTokenChamp){
+            require(_id != 0);
+        }
+        address owner = tokenToOwner[_isTokenChamp][_id];
+        return(_msgsender == owner || _msgsender == tokenApprovals[_isTokenChamp][_id] || tokenOperatorApprovals[_isTokenChamp][owner][_msgsender]);
     }
 
 
-
-    /*
-     * Public
-     */
-    /// @notice Champ is no more for sale
-    function cancelChampSale(uint256 _id) public 
-      champIsForSale(_id) 
-      onlyOwnerOfChamp(_id) {
-        Champ storage champ = champs[_id];
-        _cancelChampSale(champ);
+    /*============== DELEGATE ==============*/
+    function attack(uint _champId, uint _targetId) external{
+        controller.attack(_champId, _targetId, msg.sender);
     }
 
-
-    /*
-     * External
-     */
-    /// @notice Gift champ
-    /// @dev Address _from is msg.sender
-    function giveChamp(address _to, uint256 _champId) external 
-      onlyOwnerOfChamp(_champId) {
-        transferChamp(msg.sender, _to, _champId);
+    function cancelTokenSale(uint _id, bool _isTokenChamp) public{
+        controller.cancelTokenSale(_id, msg.sender, _isTokenChamp);
     }
 
-
-    /// @notice Sets champ for sale
-    function setChampForSale(uint256 _id, uint256 _price) external 
-      onlyOwnerOfChamp(_id) 
-      champIsNotForSale(_id) {
-        Champ storage champ = champs[_id];
-        champ.forSale = true;
-        champ.price = _price;
-        champsForSaleCount++;
+    function changeChampsName(uint _champId, string _name) external{
+        controller.changeChampsName(_champId, _name, msg.sender);
     }
-    
-    
-    /// @notice Buys champ
-    function buyChamp(uint256 _id) external payable 
-      whenNotPaused 
-      onlyNotOwnerOfChamp(_id) 
-      champIsForSale(_id) 
-      isPaid(champs[_id].price) 
-      distributeSaleInput(champToOwner[_id]) {
-        transferChamp(champToOwner[_id], msg.sender, _id);
+
+    function forgeItems(uint _parentItemID, uint _childItemID) external{
+        controller.forgeItems(_parentItemID, _childItemID, msg.sender);
     }
-    
-}
 
+    function giveToken(address _to, uint _champId, bool _isTokenChamp) external{
+        controller.giveToken(_to, _champId, msg.sender, _isTokenChamp);
+    }
 
+    function setTokenForSale(uint _id, uint _price, bool _isTokenChamp) external{
+        controller.setTokenForSale(_id, _price, msg.sender, _isTokenChamp);
+    }
 
-/// @title Only used for deploying all contracts
-contract MyCryptoChampCore is ChampMarket {
-	/* 
-		© Copyright 2018 - Patrik Mojzis
-		Redistributing and modifying is prohibited.
-		
-		https://mycryptochamp.io/
+    function putOn(uint _champId, uint _itemId) external{
+        controller.putOn(_champId, _itemId, msg.sender);
+    }
 
-		What is MyCryptoChamp?
-		- Blockchain game about upgrading champs by fighting, getting better items,
-		  trading them and the best 800 champs are daily rewarded by real Ether.
+    function takeOffItem(uint _champId, uint8 _type) public{
+        controller.takeOffItem(_champId, _type, msg.sender);
+    }
 
-		Feel free to ask any questions
-		hello@mycryptochamp.io
-	*/
+    function withdrawChamp(uint _id) external{
+        controller.withdrawChamp(_id, msg.sender); 
+    }
+
+    function getChampReward(uint _position) public view returns(uint){
+        return controller.getChampReward(_position);
+    }
 }
