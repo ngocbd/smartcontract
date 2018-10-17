@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenRegistry at 0x920dffaf4d05a93657bc5d5e6402612d75ecbd79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenRegistry at 0x6d5246ac741ea76de42b75dc48a78cc6dc7c7593
 */
 pragma solidity ^0.4.24;
 
@@ -120,18 +120,28 @@ contract Pausable is Ownable {
 
 contract MultiTokenRegistry is Pausable {
 
+    event NewMultitoken(address indexed mtkn);
+    event NewDeployer(uint256 indexed index, address indexed oldDeployer, address indexed newDeployer);
+
     address[] public multitokens;
     mapping(uint256 => IDeployer) public deployers;
 
+    function multitokensCount() public view returns(uint256) {
+        return multitokens.length;
+    }
+    
     function allMultitokens() public view returns(address[]) {
         return multitokens;
     }
 
     function setDeployer(uint256 index, IDeployer deployer) public onlyOwner whenNotPaused {
+        emit NewDeployer(index, deployers[index], deployer);
         deployers[index] = deployer;
     }
 
     function deploy(uint256 index, bytes data) public whenNotPaused {
-        multitokens.push(deployers[index].deploy(data));
+        address mtkn = deployers[index].deploy(data);
+        multitokens.push(mtkn);
+        emit NewMultitoken(mtkn);
     }
 }
