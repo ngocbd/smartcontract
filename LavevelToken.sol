@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavevelToken at 0x9922d178dfeed0c19618a2a9bac8810e37f02909
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavevelToken at 0x9aed67c464d5843a2fde16249132ec8f0972f800
 */
 pragma solidity ^0.4.23;
 
