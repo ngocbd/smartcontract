@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OREX at 0x0c4ca33a680fb974b41f020fda52fa430af22039
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OREX at 0x2db48cb78c7541e9ebfb79b3797d99b8b6fd7fd2
 */
 pragma solidity ^0.4.17;
 
@@ -438,8 +438,8 @@ contract PausableToken is StandardToken, Pausable {
  */
 contract OREX is MintableToken, PausableToken {
     string public constant version = "1.0";
-    string public constant name = "XWGPYU";
-    string public constant symbol = "XWGPYU";
+    string public constant name = "OREX";
+    string public constant symbol = "OREX";
     uint8 public constant decimals = 18;
 
     event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
