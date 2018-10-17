@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract crowdfund at 0x984c392A0Fe78371CBC59FaFa8DB44B681a9f90c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract crowdfund at 0xd507d241e00504dd2acdc6089f233a8cfe8d24ab
 */
 pragma solidity ^0.4.21;
 
@@ -113,11 +113,13 @@ function makeProposal(string title,uint256 minGoal,uint256 maxGoal,uint256 hostC
 	if (hostCut>MAX_HOST_PERCENT) revert(); 
 	if (duration<5 || duration>225257142) revert();  
 	
-	if (!(tokenAddress==0xc8C6A31A4A806d3710A7B38b7B296D2fABCCDBA8)) revert();
+	// UNCOMMENT on final version:
+	//if (!(tokenAddress==0xc8c6a31a4a806d3710a7b38b7b296d2fabccdba8)) revert();
 	
 	uint256 status=PROPOSED_STATUS;
 	address creator=msg.sender;
 	
+
 	Idea memory newIdea=Idea(title,minGoal,maxGoal,hostCut,duration,0,status,0,host,tokenAddress,creator);
 	ideas.push(newIdea);
 	
