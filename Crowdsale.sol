@@ -1,374 +1,477 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8f50514ff53645ea5d2ad0dfdca82bdc7ea61386
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x705932f4f88b94c6429be75e6d1450dbe82331bc
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.21;
 
 
-
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-  address public owner;
+    address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-  
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 
 }
 
-contract TOKKA is StandardToken {
-    string public name = "StreamPay Token";
-    string public symbol = "STPY";
-    uint256 public decimals = 18;
 
-   
-    function TOKKA() public {
-       totalSupply = 35000000 * 10**18;
-       balances[msg.sender] = totalSupply;
+contract CryptoRoboticsToken {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    function burn(uint256 value) public;
+}
+
+
+contract RefundVault is Ownable {
+    using SafeMath for uint256;
+
+    enum State { Active, Refunding, Closed }
+
+    mapping (address => uint256) public deposited;
+    address public wallet;
+    State public state;
+
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+    /**
+     * @param _wallet Vault address
+     */
+    function RefundVault(address _wallet) public {
+        require(_wallet != address(0));
+        wallet = _wallet;
+        state = State.Active;
+    }
+
+    /**
+     * @param investor Investor address
+     */
+    function deposit(address investor) onlyOwner public payable {
+        require(state == State.Active);
+        deposited[investor] = deposited[investor].add(msg.value);
+    }
+
+    function close() onlyOwner public {
+        require(state == State.Active);
+        state = State.Closed;
+        emit Closed();
+        wallet.transfer(address(this).balance);
+    }
+
+    function enableRefunds() onlyOwner public {
+        require(state == State.Active);
+        state = State.Refunding;
+        emit RefundsEnabled();
+    }
+
+    /**
+     * @param investor Investor address
+     */
+    function refund(address investor) public {
+        require(state == State.Refunding);
+        uint256 depositedValue = deposited[investor];
+        deposited[investor] = 0;
+        investor.transfer(depositedValue);
+        emit Refunded(investor, depositedValue);
     }
 }
 
 
 contract Crowdsale is Ownable {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
 
-   // The token being sold
-  TOKKA public token;
+    // The token being sold
+    CryptoRoboticsToken public token;
+    //MAKE APPROVAL TO Crowdsale
+    address public reserve_fund = 0x7C88C296B9042946f821F5456bd00EA92a13B3BB;
+    address preico;
 
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
+    // Address where funds are collected
+    address public wallet;
 
-  // address where funds are collected
-  address public wallet;
+    // Amount of wei raised
+    uint256 public weiRaised;
 
-  // how many token units a buyer gets per wei (500)
-  uint256 public rate ;
+    uint256 public openingTime;
+    uint256 public closingTime;
 
-  // amount of raised money in wei
-  uint256 public weiRaised;
-  
-  // Our Goal is 68254.06111663644 Ethers Hardcap
-  uint256 public CAP = 68254061116636440000000;
-  
-  bool crowdsaleClosed = false;
-  
-  //Bonus Parameters
-  
-  uint256 public PreIcobonusEnds = 1535731200;
-  
-  uint256 public StgOnebonusEnds = 1538323200;
-  uint256 public StgTwobonusEnds = 1541001600;
-  uint256 public StgThreebonusEnds = 1543593600;
-  uint256 public StgFourbonusEnds = 1546272000;
-  
-  
-  
+    bool public isFinalized = false;
 
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    uint public currentStage = 0;
+
+    uint256 public goal = 1000 ether;
+    uint256 public cap  = 6840  ether;
+
+    RefundVault public vault;
 
 
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
 
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
-    
-    //Bonus Parametersss
-    
-    //StgOnebonusEnds = _bonusEnds;
-    
-    token = createTokenContract();
-  }
+    //price in wei for stage
+    uint[4] public stagePrices = [
+    127500000000000 wei,     //0.000085 - ICO Stage 1
+    135 szabo,     //0.000090 - ICO Stage 2
+    142500000000000 wei,     //0.000095 - ICO Stage 3
+    150 szabo     //0.0001 - ICO Stage 4
+    ];
 
-// creates the token to be sold.
-// override this method to have crowdsale of a specific mintable token.
-function createTokenContract() internal returns (TOKKA) {
-    return new TOKKA();
-  }
+    //limit in wei for stage 612 + 1296 + 2052 + 2880
+    uint[4] internal stageLimits = [
+    612 ether,    //4800000 tokens 10% of ICO tokens (ICO token 40% of all (48 000 000) )
+    1296 ether,    //9600000 tokens 20% of ICO tokens
+    2052 ether,   //14400000 tokens 30% of ICO tokens
+    2880 ether    //19200000 tokens 40% of ICO tokens
+    ];
+
+    mapping(address => bool) public referrals;
+    mapping(address => uint) public reservedTokens;
+    mapping(address => uint) public reservedRefsTokens;
+    uint public amountReservedTokens;
+    uint public amountReservedRefsTokens;
+
+    event Finalized();
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenReserved(address indexed beneficiary, uint256 value, uint256 amount, address referral);
 
 
-  // fallback function can be used to buy tokens
-  function() external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-    require(!crowdsaleClosed);
-    
-    //Bounus Conditions
-    
-    
-    
-    if (now <= PreIcobonusEnds) {
-            rate = 667;
-         } 
-    
-     else if (now <= StgOnebonusEnds && now > PreIcobonusEnds) {
-            rate = 641;
-         }  
-    
-    else if (now <= StgTwobonusEnds && now > StgOnebonusEnds ) {
-            rate = 616;
-         }  
-     
-     else if (now <= StgThreebonusEnds && now > StgTwobonusEnds ) {
-            rate = 590;
-         } 
-         else if (now <= StgFourbonusEnds && now > StgThreebonusEnds ) {
-            rate = 564;
-         }
-    else{
-        rate = 513;
+    modifier onlyWhileOpen {
+        require(now >= openingTime && now <= closingTime);
+        _;
     }
-     
-    
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    // transfer tokens purchased 
-    //ERC20(token).transfer(this, tokens);
-    //StandardToken(token).transfer(this, tokens);
-    token.transfer(beneficiary, tokens);
-
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-}
 
 
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
+    modifier onlyPreIco {
+        require(msg.sender == preico);
+        _;
+    }
 
 
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
+    function Crowdsale(CryptoRoboticsToken _token) public
+    {
+        require(_token != address(0));
+
+        wallet = 0x3eb945fd746fbdf641f1063731d91a6fb381ea0f;
+        token = _token;
+        openingTime = 1526774400;
+        closingTime = 1532044800;
+        vault = new RefundVault(wallet);
+    }
 
 
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-  
-  function GoalReached() public view returns (bool) {
-    return (weiRaised >= CAP);
-  }
-  
-  function Pause() public onlyOwner
-  {
-       //if (weiRaised >= CAP){
-           
-        //}
-        require(weiRaised >= CAP);
-        
-        crowdsaleClosed = true;
-  }
-  
-  function Play() public onlyOwner
-  {
-       //if (weiRaised >= CAP){
-           
-        //}
-        require(crowdsaleClosed == true);
-        
-        crowdsaleClosed = false;
-  }
+    function () external payable {
+        buyTokens(msg.sender, address(0));
+    }
+
+
+    function buyTokens(address _beneficiary, address _ref) public payable {
+        uint256 weiAmount = msg.value;
+        _preValidatePurchase(_beneficiary, weiAmount);
+        _getTokenAmount(weiAmount,true,_beneficiary,_ref);
+    }
+
+
+    function reserveTokens(address _ref) public payable {
+        uint256 weiAmount = msg.value;
+        _preValidateReserve(msg.sender, weiAmount, _ref);
+        _getTokenAmount(weiAmount, false,msg.sender,_ref);
+    }
+
+
+    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal view onlyWhileOpen {
+        require(weiRaised.add(_weiAmount) <= cap);
+        require(_weiAmount >= stagePrices[currentStage]);
+        require(_beneficiary != address(0));
+
+    }
+
+    function _preValidateReserve(address _beneficiary, uint256 _weiAmount, address _ref) internal view {
+        require(now < openingTime);
+        require(referrals[_ref]);
+        require(weiRaised.add(_weiAmount) <= cap);
+        require(_weiAmount >= stagePrices[currentStage]);
+        require(_beneficiary != address(0));
+    }
+
+
+    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        token.transfer(_beneficiary, _tokenAmount);
+    }
+
+
+    function _processPurchase(address _beneficiary, uint256 _tokenAmount, address _ref) internal {
+        _tokenAmount = _tokenAmount * 1 ether;
+        _deliverTokens(_beneficiary, _tokenAmount);
+        if (referrals[_ref]) {
+            uint _refTokens = valueFromPercent(_tokenAmount,10);
+            token.transferFrom(reserve_fund, _ref, _refTokens);
+        }
+    }
+
+
+    function _processReserve(address _beneficiary, uint256 _tokenAmount, address _ref) internal {
+        _tokenAmount = _tokenAmount * 1 ether;
+        _reserveTokens(_beneficiary, _tokenAmount);
+        uint _refTokens = valueFromPercent(_tokenAmount,10);
+        _reserveRefTokens(_ref, _refTokens);
+    }
+
+
+    function _reserveTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        reservedTokens[_beneficiary] = reservedTokens[_beneficiary].add(_tokenAmount);
+        amountReservedTokens = amountReservedTokens.add(_tokenAmount);
+    }
+
+
+    function _reserveRefTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        reservedRefsTokens[_beneficiary] = reservedRefsTokens[_beneficiary].add(_tokenAmount);
+        amountReservedRefsTokens = amountReservedRefsTokens.add(_tokenAmount);
+    }
+
+
+    function getReservedTokens() public {
+        require(now >= openingTime);
+        require(reservedTokens[msg.sender] > 0);
+        amountReservedTokens = amountReservedTokens.sub(reservedTokens[msg.sender]);
+        reservedTokens[msg.sender] = 0;
+        token.transfer(msg.sender, reservedTokens[msg.sender]);
+    }
+
+
+    function getRefReservedTokens() public {
+        require(now >= openingTime);
+        require(reservedRefsTokens[msg.sender] > 0);
+        amountReservedRefsTokens = amountReservedRefsTokens.sub(reservedRefsTokens[msg.sender]);
+        reservedRefsTokens[msg.sender] = 0;
+        token.transferFrom(reserve_fund, msg.sender, reservedRefsTokens[msg.sender]);
+    }
+
+
+    function valueFromPercent(uint _value, uint _percent) internal pure returns(uint amount)    {
+        uint _amount = _value.mul(_percent).div(100);
+        return (_amount);
+    }
+
+
+    function _getTokenAmount(uint256 _weiAmount, bool _buy, address _beneficiary, address _ref) internal {
+        uint256 weiAmount = _weiAmount;
+        uint _tokens = 0;
+        uint _tokens_price = 0;
+        uint _current_tokens = 0;
+
+        for (uint p = currentStage; p < 4 && _weiAmount >= stagePrices[p]; p++) {
+            if (stageLimits[p] > 0 ) {
+                //???? ????? ?????? ??? _weiAmount, ????? ??????? ??? ?? ??????? ??? ??????????? ? ?????
+                //? ??????? ?? ?????
+                if (stageLimits[p] > _weiAmount) {
+                    //?????????? ??????? ?? ???????? ?????? (????????? ??????? ???? ????????  ?????? ??? ?? ?????? ?????????? ?????)
+                    _current_tokens = _weiAmount.div(stagePrices[p]);
+                    //???? ???? ?????, ????? ?????????? ??????? ????????????????? wei
+                    _tokens_price = _current_tokens.mul(stagePrices[p]);
+                    //???????? ???????
+                    _weiAmount = _weiAmount.sub(_tokens_price);
+                    //????????? ?????? ???????? ??????? ? ?????? ??????????
+                    _tokens = _tokens.add(_current_tokens);
+                    //????????? ??????
+                    stageLimits[p] = stageLimits[p].sub(_tokens_price);
+                    break;
+                } else { //????? ?????? ??? ?????????? wei
+                    //???????? ??? ?????????? ?????? ? ???????
+                    _current_tokens = stageLimits[p].div(stagePrices[p]);
+                    _weiAmount = _weiAmount.sub(stageLimits[p]);
+                    _tokens = _tokens.add(_current_tokens);
+                    stageLimits[p] = 0;
+                    _updateStage();
+                }
+
+            }
+        }
+
+        weiAmount = weiAmount.sub(_weiAmount);
+        weiRaised = weiRaised.add(weiAmount);
+
+        if (_buy) {
+            _processPurchase(_beneficiary, _tokens, _ref);
+            emit TokenPurchase(msg.sender, _beneficiary, weiAmount, _tokens);
+        } else {
+            _processReserve(msg.sender, _tokens, _ref);
+            emit TokenReserved(msg.sender, weiAmount, _tokens, _ref);
+        }
+
+        //?????????? ??????? ????????????????? ???????
+        if (_weiAmount > 0) {
+            msg.sender.transfer(_weiAmount);
+        }
+
+        // update state
+
+
+        _forwardFunds(weiAmount);
+    }
+
+
+    function _updateStage() internal {
+        if ((stageLimits[currentStage] == 0) && currentStage < 3) {
+            currentStage++;
+        }
+    }
+
+
+    function _forwardFunds(uint _weiAmount) internal {
+        vault.deposit.value(_weiAmount)(msg.sender);
+    }
+
+
+    function hasClosed() public view returns (bool) {
+        return now > closingTime;
+    }
+
+
+    function capReached() public view returns (bool) {
+        return weiRaised >= cap;
+    }
+
+
+    function goalReached() public view returns (bool) {
+        return weiRaised >= goal;
+    }
+
+
+    function finalize() onlyOwner public {
+        require(!isFinalized);
+        require(hasClosed() || capReached());
+
+        finalization();
+        emit Finalized();
+
+        isFinalized = true;
+    }
+
+
+    function finalization() internal {
+        if (goalReached()) {
+            vault.close();
+        } else {
+            vault.enableRefunds();
+        }
+
+        uint token_balace = token.balanceOf(this);
+        token_balace = token_balace.sub(amountReservedTokens);//
+        token.burn(token_balace);
+    }
+
+
+    function addReferral(address _ref) external onlyOwner {
+        referrals[_ref] = true;
+    }
+
+
+    function removeReferral(address _ref) external onlyOwner {
+        referrals[_ref] = false;
+    }
+
+
+    function setPreIco(address _preico) onlyOwner public {
+        preico = _preico;
+    }
+
+
+    function setTokenCountFromPreIco(uint _value) onlyPreIco public{
+        _value = _value.div(1 ether);
+        uint weis = _value.mul(stagePrices[3]);
+        stageLimits[3] = stageLimits[3].add(weis);
+        cap = cap.add(weis);
+
+    }
+
+
+    function claimRefund() public {
+        require(isFinalized);
+        require(!goalReached());
+
+        vault.refund(msg.sender);
+    }
 
 }
