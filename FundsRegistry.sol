@@ -1,6 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0x8c4ccf23d8674a04665e9e7a64260aa4c0030aeb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsRegistry at 0xb3b0f5eaf15a6b3f6d1c0f84bc896ba173ee33c6
 */
+pragma solidity 0.4.23;
+
+// File: contracts/IBoomstarterToken.sol
+
+/// @title Interface of the BoomstarterToken.
+interface IBoomstarterToken {
+    // multiowned
+    function changeOwner(address _from, address _to) external;
+    function addOwner(address _owner) external;
+    function removeOwner(address _owner) external;
+    function changeRequirement(uint _newRequired) external;
+    function getOwner(uint ownerIndex) public view returns (address);
+    function getOwners() public view returns (address[]);
+    function isOwner(address _addr) public view returns (bool);
+    function amIOwner() external view returns (bool);
+    function revoke(bytes32 _operation) external;
+    function hasConfirmed(bytes32 _operation, address _owner) external view returns (bool);
+
+    // ERC20Basic
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+
+    // ERC20
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+
+    function name() public view returns (string);
+    function symbol() public view returns (string);
+    function decimals() public view returns (uint8);
+
+    // BurnableToken
+    function burn(uint256 _amount) public returns (bool);
+
+    // TokenWithApproveAndCallMethod
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public;
+
+    // BoomstarterToken
+    function setSale(address account, bool isSale) external;
+    function switchToNextSale(address _newSale) external;
+    function thaw() external;
+    function disablePrivileged() external;
+
+}
+
+// File: mixbytes-solidity/contracts/ownership/multiowned.sol
+
 // Copyright (C) 2017  MixBytes, LLC
 
 // Licensed under the Apache License, Version 2.0 (the "License").
@@ -10,92 +58,40 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
+// Code taken from https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol
+// Audit, refactoring and improvements by github.com/Eenae
+
+// @authors:
+// Gav Wood <g@ethdev.com>
+// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
+// single, or, crucially, each of a number of, designated owners.
+// usage:
+// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
+// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
+// interior is executed.
+
 pragma solidity ^0.4.15;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-
-/**
- * @title Helps contracts guard agains rentrancy attacks.
- * @author Remco Bloemen <remco@2?.com>
- * @notice If you mark a function `nonReentrant`, you should also
- * mark it `external`.
- */
-contract ReentrancyGuard {
-
-    /**
-     * @dev We use a single lock for the whole contract.
-     */
-    bool private rentrancy_lock = false;
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * @notice If you mark a function `nonReentrant`, you should also
-     * mark it `external`. Calling one nonReentrant function from
-     * another is not supported. Instead, you can implement a
-     * `private` function doing the actual work, and a `external`
-     * wrapper marked as `nonReentrant`.
-     */
-    modifier nonReentrant() {
-        require(!rentrancy_lock);
-        rentrancy_lock = true;
-        _;
-        rentrancy_lock = false;
-    }
-
-}
 
 
 /// note: during any ownership changes all pending operations (waiting for more signatures) are cancelled
 // TODO acceptOwnership
 contract multiowned {
 
-    // TYPES
+	// TYPES
 
     // struct for the status of a pending operation.
     struct MultiOwnedOperationPendingState {
-    // count of confirmations needed
-    uint yetNeeded;
+        // count of confirmations needed
+        uint yetNeeded;
 
-    // bitmap of confirmations where owner #ownerIndex's decision corresponds to 2**ownerIndex bit
-    uint ownersDone;
+        // bitmap of confirmations where owner #ownerIndex's decision corresponds to 2**ownerIndex bit
+        uint ownersDone;
 
-    // position of this operation key in m_multiOwnedPendingIndex
-    uint index;
+        // position of this operation key in m_multiOwnedPendingIndex
+        uint index;
     }
 
-    // EVENTS
+	// EVENTS
 
     event Confirmation(address owner, bytes32 operation);
     event Revoke(address owner, bytes32 operation);
@@ -109,7 +105,7 @@ contract multiowned {
     // the last one is emitted if the required signatures change
     event RequirementChanged(uint newRequirement);
 
-    // MODIFIERS
+	// MODIFIERS
 
     // simple single-sig function modifier.
     modifier onlyowner {
@@ -153,13 +149,14 @@ contract multiowned {
         _;
     }
 
-    // METHODS
+	// METHODS
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them (msg.sender is not added to the owners!).
     function multiowned(address[] _owners, uint _required)
-    validNumOwners(_owners.length)
-    multiOwnedValidRequirement(_required, _owners.length)
+        public
+        validNumOwners(_owners.length)
+        multiOwnedValidRequirement(_required, _owners.length)
     {
         assert(c_maxOwners <= 255);
 
@@ -185,10 +182,10 @@ contract multiowned {
     /// @param _to address of new owner
     // All pending operations will be canceled!
     function changeOwner(address _from, address _to)
-    external
-    ownerExists(_from)
-    ownerDoesNotExist(_to)
-    onlymanyowners(sha3(msg.data))
+        external
+        ownerExists(_from)
+        ownerDoesNotExist(_to)
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -206,10 +203,10 @@ contract multiowned {
     /// @param _owner address of new owner
     // All pending operations will be canceled!
     function addOwner(address _owner)
-    external
-    ownerDoesNotExist(_owner)
-    validNumOwners(m_numOwners + 1)
-    onlymanyowners(sha3(msg.data))
+        external
+        ownerDoesNotExist(_owner)
+        validNumOwners(m_numOwners + 1)
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -226,11 +223,11 @@ contract multiowned {
     /// @param _owner address of owner to remove
     // All pending operations will be canceled!
     function removeOwner(address _owner)
-    external
-    ownerExists(_owner)
-    validNumOwners(m_numOwners - 1)
-    multiOwnedValidRequirement(m_multiOwnedRequired, m_numOwners - 1)
-    onlymanyowners(sha3(msg.data))
+        external
+        ownerExists(_owner)
+        validNumOwners(m_numOwners - 1)
+        multiOwnedValidRequirement(m_multiOwnedRequired, m_numOwners - 1)
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -249,9 +246,9 @@ contract multiowned {
     /// @param _newRequired new number of signatures required
     // All pending operations will be canceled!
     function changeRequirement(uint _newRequired)
-    external
-    multiOwnedValidRequirement(_newRequired, m_numOwners)
-    onlymanyowners(sha3(msg.data))
+        external
+        multiOwnedValidRequirement(_newRequired, m_numOwners)
+        onlymanyowners(keccak256(msg.data))
     {
         m_multiOwnedRequired = _newRequired;
         clearPending();
@@ -269,7 +266,7 @@ contract multiowned {
     function getOwners() public constant returns (address[]) {
         address[] memory result = new address[](m_numOwners);
         for (uint i = 0; i < m_numOwners; i++)
-        result[i] = getOwner(i);
+            result[i] = getOwner(i);
 
         return result;
     }
@@ -290,11 +287,11 @@ contract multiowned {
     }
 
     /// @notice Revokes a prior confirmation of the given operation
-    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _operation operation value, typically keccak256(msg.data)
     function revoke(bytes32 _operation)
-    external
-    multiOwnedOperationIsActive(_operation)
-    onlyowner
+        external
+        multiOwnedOperationIsActive(_operation)
+        onlyowner
     {
         uint ownerIndexBit = makeOwnerBitmapBit(msg.sender);
         var pending = m_multiOwnedPending[_operation];
@@ -310,14 +307,14 @@ contract multiowned {
     }
 
     /// @notice Checks if owner confirmed given operation
-    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _operation operation value, typically keccak256(msg.data)
     /// @param _owner an owner address
     function hasConfirmed(bytes32 _operation, address _owner)
-    external
-    constant
-    multiOwnedOperationIsActive(_operation)
-    ownerExists(_owner)
-    returns (bool)
+        external
+        constant
+        multiOwnedOperationIsActive(_operation)
+        ownerExists(_owner)
+        returns (bool)
     {
         return !(m_multiOwnedPending[_operation].ownersDone & makeOwnerBitmapBit(_owner) == 0);
     }
@@ -325,16 +322,16 @@ contract multiowned {
     // INTERNAL METHODS
 
     function confirmAndCheck(bytes32 _operation)
-    private
-    onlyowner
-    returns (bool)
+        private
+        onlyowner
+        returns (bool)
     {
         if (512 == m_multiOwnedPendingIndex.length)
-        // In case m_multiOwnedPendingIndex grows too much we have to shrink it: otherwise at some point
-        // we won't be able to do it because of block gas limit.
-        // Yes, pending confirmations will be lost. Dont see any security or stability implications.
-        // TODO use more graceful approach like compact or removal of clearPending completely
-        clearPending();
+            // In case m_multiOwnedPendingIndex grows too much we have to shrink it: otherwise at some point
+            // we won't be able to do it because of block gas limit.
+            // Yes, pending confirmations will be lost. Dont see any security or stability implications.
+            // TODO use more graceful approach like compact or removal of clearPending completely
+            clearPending();
 
         var pending = m_multiOwnedPending[_operation];
 
@@ -401,12 +398,12 @@ contract multiowned {
         // TODO block gas limit
         for (uint i = 0; i < length; ++i) {
             if (m_multiOwnedPendingIndex[i] != 0)
-            delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
+                delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
         }
         delete m_multiOwnedPendingIndex;
     }
 
-    function checkOwnerIndex(uint ownerIndex) private constant returns (uint) {
+    function checkOwnerIndex(uint ownerIndex) private pure returns (uint) {
         assert(0 != ownerIndex && ownerIndex <= c_maxOwners);
         return ownerIndex;
     }
@@ -436,7 +433,7 @@ contract multiowned {
     }
 
 
-    // FIELDS
+   	// FIELDS
 
     uint constant c_maxOwners = 250;
 
@@ -461,6 +458,20 @@ contract multiowned {
     bytes32[] internal m_multiOwnedPendingIndex;
 }
 
+// File: mixbytes-solidity/contracts/ownership/MultiownedControlled.sol
+
+// Copyright (C) 2017  MixBytes, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+pragma solidity ^0.4.15;
+
+
 
 /**
  * @title Contract which is owned by owners and operated by controller.
@@ -474,6 +485,7 @@ contract MultiownedControlled is multiowned {
 
     event ControllerSet(address controller);
     event ControllerRetired(address was);
+    event ControllerRetiredForever(address was);
 
 
     modifier onlyController {
@@ -485,14 +497,16 @@ contract MultiownedControlled is multiowned {
     // PUBLIC interface
 
     function MultiownedControlled(address[] _owners, uint _signaturesRequired, address _controller)
-    multiowned(_owners, _signaturesRequired)
+        public
+        multiowned(_owners, _signaturesRequired)
     {
         m_controller = _controller;
         ControllerSet(m_controller);
     }
 
     /// @dev sets the controller
-    function setController(address _controller) external onlymanyowners(sha3(msg.data)) {
+    function setController(address _controller) external onlymanyowners(keccak256(msg.data)) {
+        require(m_attaching_enabled);
         m_controller = _controller;
         ControllerSet(m_controller);
     }
@@ -504,12 +518,36 @@ contract MultiownedControlled is multiowned {
         ControllerRetired(was);
     }
 
+    /// @dev ability for controller to step down and make this contract completely automatic (without third-party control)
+    function detachControllerForever() external onlyController {
+        assert(m_attaching_enabled);
+        address was = m_controller;
+        m_controller = address(0);
+        m_attaching_enabled = false;
+        ControllerRetiredForever(was);
+    }
+
 
     // FIELDS
 
     /// @notice address of entity entitled to mint new tokens
     address public m_controller;
+
+    bool public m_attaching_enabled = true;
 }
+
+// File: mixbytes-solidity/contracts/security/ArgumentsChecker.sol
+
+// Copyright (C) 2017  MixBytes, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+pragma solidity ^0.4.15;
 
 
 /// @title utility methods and modifiers of arguments validation
@@ -517,8 +555,8 @@ contract ArgumentsChecker {
 
     /// @dev check which prevents short address attack
     modifier payloadSizeIs(uint size) {
-        require(msg.data.length == size + 4 /* function selector */);
-        _;
+       require(msg.data.length == size + 4 /* function selector */);
+       _;
     }
 
     /// @dev check that address is valid
@@ -528,6 +566,71 @@ contract ArgumentsChecker {
     }
 }
 
+// File: zeppelin-solidity/contracts/ReentrancyGuard.sol
+
+/**
+ * @title Helps contracts guard agains rentrancy attacks.
+ * @author Remco Bloemen <remco@2?.com>
+ * @notice If you mark a function `nonReentrant`, you should also
+ * mark it `external`.
+ */
+contract ReentrancyGuard {
+
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private rentrancy_lock = false;
+
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!rentrancy_lock);
+    rentrancy_lock = true;
+    _;
+    rentrancy_lock = false;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: contracts/crowdsale/FundsRegistry.sol
 
 /// @title registry of funds sent by investors
 contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuard {
@@ -543,7 +646,7 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
     }
 
     event StateChanged(State _state);
-    event Invested(address indexed investor, uint256 amount);
+    event Invested(address indexed investor, uint etherInvested, uint tokensReceived);
     event EtherSent(address indexed to, uint value);
     event RefundSent(address indexed to, uint value);
 
@@ -556,9 +659,15 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
 
     // PUBLIC interface
 
-    function FundsRegistry(address[] _owners, uint _signaturesRequired, address _controller)
+    function FundsRegistry(
+        address[] _owners,
+        uint _signaturesRequired,
+        address _controller,
+        address _token
+    )
         MultiownedControlled(_owners, _signaturesRequired, _controller)
     {
+        m_token = IBoomstarterToken(_token);
     }
 
     /// @dev performs only allowed state transitions
@@ -576,7 +685,9 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
     }
 
     /// @dev records an investment
-    function invested(address _investor)
+    /// @param _investor who invested
+    /// @param _tokenAmount the amount of token bought, calculation is handled by ICO
+    function invested(address _investor, uint _tokenAmount)
         external
         payable
         onlyController
@@ -593,8 +704,9 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
         // register payment
         totalInvested = totalInvested.add(amount);
         m_weiBalances[_investor] = m_weiBalances[_investor].add(amount);
+        m_tokenBalances[_investor] = m_tokenBalances[_investor].add(_tokenAmount);
 
-        Invested(_investor, amount);
+        Invested(_investor, amount, _tokenAmount);
     }
 
     /// @notice owners: send `value` of ether to address `to`, can be called if crowdsale succeeded
@@ -603,7 +715,7 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
     function sendEther(address to, uint value)
         external
         validAddress(to)
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
         requiresState(State.SUCCEEDED)
     {
         require(value > 0 && this.balance >= value);
@@ -611,27 +723,49 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
         EtherSent(to, value);
     }
 
-    /// @notice withdraw accumulated balance, called by payee in case crowdsale failed
-    function withdrawPayments(address payee)
+    /// @notice owners: send `value` of tokens to address `to`, can be called if
+    ///         crowdsale failed and some of the investors refunded the ether
+    /// @param to where to send tokens
+    /// @param value amount of token-wei to send
+    function sendTokens(address to, uint value)
         external
-        nonReentrant
-        onlyController
+        validAddress(to)
+        onlymanyowners(keccak256(msg.data))
         requiresState(State.REFUNDING)
     {
-        uint256 payment = m_weiBalances[payee];
+        require(value > 0 && m_token.balanceOf(this) >= value);
+        m_token.transfer(to, value);
+    }
 
+    /// @notice withdraw accumulated balance, called by payee in case crowdsale failed
+    /// @dev caller should approve tokens bought during ICO to this contract
+    function withdrawPayments()
+        external
+        nonReentrant
+        requiresState(State.REFUNDING)
+    {
+        address payee = msg.sender;
+        uint payment = m_weiBalances[payee];
+        uint tokens = m_tokenBalances[payee];
+
+        // check that there is some ether to withdraw
         require(payment != 0);
+        // check that the contract holds enough ether
         require(this.balance >= payment);
+        // check that the investor (payee) gives back all tokens bought during ICO
+        require(m_token.allowance(payee, this) >= m_tokenBalances[payee]);
 
         totalInvested = totalInvested.sub(payment);
         m_weiBalances[payee] = 0;
+        m_tokenBalances[payee] = 0;
+
+        m_token.transferFrom(payee, this, tokens);
 
         payee.transfer(payment);
         RefundSent(payee, payment);
     }
 
     function getInvestorsCount() external constant returns (uint) { return m_investors.length; }
-
 
     // FIELDS
 
@@ -644,6 +778,12 @@ contract FundsRegistry is ArgumentsChecker, MultiownedControlled, ReentrancyGuar
     /// @dev balances of investors in wei
     mapping(address => uint256) public m_weiBalances;
 
+    /// @dev balances of tokens sold to investors
+    mapping(address => uint256) public m_tokenBalances;
+
     /// @dev list of unique investors
     address[] public m_investors;
+
+    /// @dev token accepted for refunds
+    IBoomstarterToken public m_token;
 }
