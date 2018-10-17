@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDrop at 0x81b1ff50d5bca9150700e7265f7216e65c8936e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDrop at 0x5f474f2cb42de99392a2669b7e9b8a6834a40958
 */
 pragma solidity ^0.4.20;
 
@@ -62,7 +62,7 @@ contract Pausable is Ownable {
 
 contract EtherDrop is Pausable {
 
-    uint constant PRICE_WEI = 2e16;
+    uint constant PRICE_WEI = 2e18;
 
     /*
      * blacklist flag
@@ -72,13 +72,13 @@ contract EtherDrop is Pausable {
     /*
      * subscription queue size: should be power of 10
      */
-    uint constant QMAX = 1000;
+    uint constant QMAX = 10;
 
     /*
      * randomness order construction conform to QMAX
      * e.g. random [0 to 999] is of order 3 => rand = 100*x + 10*y + z
      */
-    uint constant DMAX = 3;
+    uint constant DMAX = 1;
 
     /*
      * this event is when we have a new subscription
