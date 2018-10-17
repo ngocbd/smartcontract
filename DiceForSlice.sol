@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceForSlice at 0x997351b8cad2e1b531d6480ec0242fdc51a8ae09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceForSlice at 0x05EA5336c73F3A3fBd8238efb519D6731CE91844
 */
 pragma solidity ^0.4.16;
 
@@ -59,14 +59,10 @@ library Math {
     function percent(uint256 value, uint256 per) internal pure returns(uint256) {
         return uint256((divf(int256(value), 100, 4) * int256(per)) / 10000);
     }
-}
 
-/**
- * @title Randomizer
- * @dev Fuck me... >_<
- */
-contract Randomizer {
-    function getRandomNumber(int256 min, int256 max) public returns(int256);
+    function random(uint256 nonce, int256 min, int256 max) internal view returns(int256) {
+        return int256(uint256(keccak256(nonce + block.number + block.timestamp + uint256(block.coinbase))) % uint256((max - min))) + min;
+    }
 }
 
 
@@ -104,13 +100,13 @@ contract DiceForSlice is Ownable {
     // Address storage for referral system
     mapping(address => uint256) private bets;
 
-    // Randomizer contract
-    Randomizer private rand;
-
     // Sponsor data
     address private sponsor;
     uint256 private sponsorDiff  = 100000000000000000;
     uint256 public sponsorValue  = 0;
+
+    // Nonce for more random
+    uint256 private nonce        = 1;
 
     // Current balances of contract
     // -bank  - available reward value
@@ -158,14 +154,6 @@ contract DiceForSlice is Ownable {
 
 
     /**
-     * @dev Set randomizer address
-     */
-    function setRandomizer(address _rand) external onlyOwner {
-        rand = Randomizer(_rand);
-    }
-
-
-    /**
      * @dev Special method for fill contract bank 
      */
     function fillTheBank() external payable {
@@ -201,14 +189,16 @@ contract DiceForSlice is Ownable {
      * @dev Get random number
      */
     function getRN() internal returns(uint8) {
-        return uint8(rand.getRandomNumber(minNumber, maxNumber + minNumber));
+        // 7 is max because method sub min from max (7-1 = 6). Look in Math::random implementation
+        nonce++;
+        return uint8(Math.random(nonce, minNumber, maxNumber + minNumber));
     }
 
 
     /**
      * @dev Check is valid number
      */
-    function isValidNumber(uint8 number) private view returns(bool) {
+    function isValidNumber(uint8 number) internal view returns(bool) {
         return number >= minNumber && number <= maxNumber;
     }
 
@@ -221,7 +211,7 @@ contract DiceForSlice is Ownable {
      * - 10% go to stock for future restores
      * - 3%  go to referral (if exists, if not - go into stock)
      */
-    function splitTheBet(address referral) private {
+    function splitTheBet(address referral) internal {
         uint256 _partBank     = Math.percent(msg.value, partBank);
         uint256 _partOwner    = Math.percent(msg.value, partOwner);
         uint256 _partStock    = Math.percent(msg.value, partStock);
@@ -244,7 +234,7 @@ contract DiceForSlice is Ownable {
     /**
      * @dev Check the winner
      */
-    function isWinner(uint8 required, uint8[5] numbers, uint8[5] randoms) private pure returns(bool) {
+    function isWinner(uint8 required, uint8[5] numbers, uint8[5] randoms) internal pure returns(bool) {
         uint8 count = 0;
         for (uint8 i = 0; i < numbers.length; i++) {
             if (numbers[i] == 0) continue;
@@ -264,7 +254,7 @@ contract DiceForSlice is Ownable {
     /**
      * @dev Reward the winner
      */
-    function rewardTheWinner(uint8 reward) private {
+    function rewardTheWinner(uint8 reward) internal {
         uint256 rewardValue = Math.percent(bank, reward);
         require(rewardValue <= getBalance());
         require(rewardValue <= bank);
