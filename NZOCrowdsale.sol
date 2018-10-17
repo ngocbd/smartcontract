@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NZOCrowdsale at 0x94eea9a484f0bae03d19623cfe389e2cba56b72f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NZOCrowdsale at 0x3e7203ef349c04b8cb46ebbfcb8ec046d7196504
 */
 pragma solidity ^0.4.24;
 
@@ -320,15 +320,17 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
     using SafeMath for uint256;
 
     // https://www.coingecko.com/en/coins/ethereum
-    // For June 02, 2018
-    //$0.01 = 1 token => $ 1,000 = 1.7089051044995474 ETH =>
-    // 1,000 / 0.01 = 100,000 token = 1.7089051044995474 ETH =>
-    //100,000 token = 1.7089051044995474 ETH =>
-    //1 ETH = 100,000/1.7089051044995474 = 58517
-    uint256 public rate  = 58517; // for $0.01
+    //$0.01 = 1 token & $ 1,000 = 2,1541510490715607 ETH =>
+    // 1,000 / 0.01 = 100,000 token = 2,1541510490715607 ETH =>
+    //100,000 token = 2,1541510490715607 ETH =>
+    //1 ETH = 100,000/2,1541510490715607 = 46422
+
+    uint256 public rate  = 46422; // for $0.01
     //uint256 public rate  = 10; // for test's
 
     mapping (address => uint256) public deposited;
+    mapping (address => uint256) public paidTokens;
+    mapping (address => bool) public contractAdmins;
 
     uint256 public constant INITIAL_SUPPLY = 21 * 10**9 * (10 ** uint256(decimals));
     uint256 public    fundForSale = 12600 * 10**6 * (10 ** uint256(decimals));
@@ -336,18 +338,20 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
     uint256 public fundFoundation = 1000500000 * (10 ** uint256(decimals));
     uint256 public       fundTeam = 2100000000 * (10 ** uint256(decimals));
 
-    uint256 limitWeekZero = 2500000000 * (10 ** uint256(decimals));
-    uint256 limitWeekOther = 200000000 * (10 ** uint256(decimals));
-    //uint256 limitWeekZero = 20 * (10 ** uint256(decimals)); // for tests
-    //uint256 limitWeekOther = 10 * (10 ** uint256(decimals)); // for tests
+    uint256 limitWindowZero = 1 * 10**9 * (10 ** uint256(decimals));
+    uint256 limitWindowOther = 1 * 10**9 * (10 ** uint256(decimals));
+    //uint256 limitWindowZero = 20 * (10 ** uint256(decimals)); // for tests
+    //uint256 limitWindowOther = 10 * (10 ** uint256(decimals)); // for tests
 
     address public addressFundReserve = 0x67446E0673418d302dB3552bdF05363dB5Fda9Ce;
     address public addressFundFoundation = 0xfe3859CB2F9d6f448e9959e6e8Fe0be841c62459;
     address public addressFundTeam = 0xfeD3B7eaDf1bD15FbE3aA1f1eAfa141efe0eeeb2;
 
-    uint256 public startTime = 1530720000; // Wed, 04 Jul 2018 16:00:00 GMT
+    address public bufferWallet = 0x09618fB091417c08BA74c9CFC65bB2A81F080300;
+
+    uint256 public startTime = 1533312000; // Fri, 03 Aug 2018 16:00:00 GMT
     // Eastern Standard Time (EST) + 4 hours = Greenwich Mean Time (GMT))
-    uint numberWeeks = 46;
+    uint numberPeriods = 4;
 
 
     uint256 public countInvestor;
@@ -355,6 +359,7 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
     event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
     event TokenLimitReached(uint256 tokenRaised, uint256 purchasedToken);
     event MinWeiLimitReached(address indexed sender, uint256 weiAmount);
+    event CurrentPeriod(uint period);
     event Finalized();
 
     constructor(address _owner) public
@@ -382,7 +387,8 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
         if (tokens == 0) {revert();}
         weiRaised = weiRaised.add(weiAmount);
         tokenAllocated = tokenAllocated.add(tokens);
-        mint(_investor, tokens, owner);
+        mint(bufferWallet, tokens, owner);
+        paidTokens[_investor] = paidTokens[_investor].add(tokens);
 
         emit TokenPurchase(_investor, weiAmount, tokens);
         if (deposited[_investor] == 0) {
@@ -396,39 +402,47 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
     function getTotalAmountOfTokens(uint256 _weiAmount) internal returns (uint256) {
         uint256 currentDate = now;
         //currentDate = 1533513600; // (06 Aug 2018 00:00:00 GMT) for test's
-        //currentDate = 1534694400; // (19 Aug 2018 00:00:00 GMT) for test's
-        uint currentPeriod = getPeriod(currentDate);
+        //currentDate = 1540051200; // (20 Oct 2018 00:00:00 GMT) for test's
+        uint currentPeriod = 0;
+        currentPeriod = getPeriod(currentDate);
         uint256 amountOfTokens = 0;
         if(currentPeriod < 100){
             if(currentPeriod == 0){
-                amountOfTokens = _weiAmount.mul(rate).div(4);
-                if (tokenAllocated.add(amountOfTokens) > limitWeekZero) {
-                    emit TokenLimitReached(tokenAllocated, amountOfTokens);
-                    return 0;
+                amountOfTokens = _weiAmount.mul(rate).mul(2);
+                if (tokenAllocated.add(amountOfTokens) > limitWindowZero) {
+                    currentPeriod = currentPeriod.add(1);
                 }
             }
-            for(uint j = 0; j < numberWeeks; j++){
-                if(currentPeriod == (j + 1)){
-                    amountOfTokens = _weiAmount.mul(rate).div(5+j*25);
-                    if (tokenAllocated.add(amountOfTokens) > limitWeekZero + limitWeekOther.mul(j+1)) {
-                        emit TokenLimitReached(tokenAllocated, amountOfTokens);
-                        return 0;
-                    }
+            if(0 < currentPeriod && currentPeriod < (numberPeriods + 1)){
+                while(currentPeriod < defineCurrentPeriod(currentPeriod, _weiAmount)){
+                    currentPeriod = currentPeriod.add(1);
                 }
+                amountOfTokens = _weiAmount.mul(rate).div(currentPeriod);
             }
         }
+        emit CurrentPeriod(currentPeriod);
         return amountOfTokens;
     }
 
+    function defineCurrentPeriod(uint _currentPeriod, uint256 _weiAmount) public view returns (uint) {
+        uint256 amountOfTokens = _weiAmount.mul(rate).div(_currentPeriod);
+        if(_currentPeriod == 4) {return 4;}
+        if (tokenAllocated.add(amountOfTokens) > limitWindowZero + limitWindowOther.mul(_currentPeriod)) {
+            return _currentPeriod.add(1);
+        } else {
+            return _currentPeriod;
+        }
+    }
+
     function getPeriod(uint256 _currentDate) public view returns (uint) {
-        if( startTime > _currentDate && _currentDate > startTime + 365 days){
+        if( startTime > _currentDate && _currentDate > startTime + 90 days){
             return 100;
         }
-        if( startTime <= _currentDate && _currentDate <= startTime + 43 days){
+        if( startTime <= _currentDate && _currentDate <= startTime + 30 days){
             return 0;
         }
-        for(uint j = 0; j < numberWeeks; j++){
-            if( startTime + 43 days + j*7 days <= _currentDate && _currentDate <= startTime + 43 days + (j+1)*7 days){
+        for(uint j = 0; j < numberPeriods; j++){
+            if( startTime + 30 days + j*15 days <= _currentDate && _currentDate <= startTime + 30 days + (j+1)*15 days){
                 return j + 1;
             }
         }
@@ -437,6 +451,10 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
 
     function deposit(address investor) internal {
         deposited[investor] = deposited[investor].add(msg.value);
+    }
+
+    function paidTokensOf(address _owner) public constant returns (uint256) {
+        return paidTokens[_owner];
     }
 
     function mintForOwner(address _walletOwner) internal returns (bool result) {
@@ -448,6 +466,8 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
         balances[addressFundReserve] = balances[addressFundReserve].add(fundReserve);
         balances[addressFundFoundation] = balances[addressFundFoundation].add(fundFoundation);
 
+        //tokenAllocated = tokenAllocated.add(12300000000 * (10 ** uint256(decimals))); //for test's
+
         result = true;
     }
 
@@ -457,7 +477,7 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
 
     function validPurchaseTokens(uint256 _weiAmount) public returns (uint256) {
         uint256 addTokens = getTotalAmountOfTokens(_weiAmount);
-        if (_weiAmount < 0.5 ether) {
+        if (_weiAmount < 0.1 ether) {
             emit MinWeiLimitReached(msg.sender, _weiAmount);
             return 0;
         }
@@ -479,6 +499,35 @@ contract NZOCrowdsale is Ownable, Crowdsale, MintableToken {
     function setRate(uint256 _newRate) external onlyOwner returns (bool){
         require(_newRate > 0);
         rate = _newRate;
+        return true;
+    }
+
+    /**
+    * @dev Add an contract admin
+    */
+    function setContractAdmin(address _admin, bool _isAdmin) public onlyOwner {
+        contractAdmins[_admin] = _isAdmin;
+    }
+
+    modifier onlyOwnerOrAdmin() {
+        require(msg.sender == owner || contractAdmins[msg.sender] || msg.sender == bufferWallet);
+        _;
+    }
+
+    function batchTransfer(address[] _recipients, uint256[] _values) external onlyOwnerOrAdmin returns (bool) {
+        require( _recipients.length > 0 && _recipients.length == _values.length);
+        uint256 total = 0;
+        for(uint i = 0; i < _values.length; i++){
+            total = total.add(_values[i]);
+        }
+        require(total <= balanceOf(msg.sender));
+        for(uint j = 0; j < _recipients.length; j++){
+            transfer(_recipients[j], _values[j]);
+            require(0 <= _values[j]);
+            require(_values[j] <= paidTokens[_recipients[j]]);
+            paidTokens[_recipients[j]].sub(_values[j]);
+            emit Transfer(msg.sender, _recipients[j], _values[j]);
+        }
         return true;
     }
 }
