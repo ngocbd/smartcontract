@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LOLlong at 0x473C31f84A453a86f295e5860e4Cbd3A17F91CDa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LOLlong at 0x94197f2d7384ff6c71a73fdc95d9e5629c1e6e7e
 */
 pragma solidity ^0.4.24;
 /**
@@ -166,7 +166,7 @@ contract LOLlong is modularLong,Owned {
 	//otherFoMo3D private otherF3D_;
                                 
     LOLOfficalBankInterface constant private lol_offical_bank = LOLOfficalBankInterface(0xF66E2D098D85b803D5ae710008fCc876c8656fFd);       
-	LOLPlayerBookInterface constant private PlayerBook = LOLPlayerBookInterface(0xb9Db77600A611c1DfC923c2c8b513cB1Fc4Fe113);               
+	LOLPlayerBookInterface constant private PlayerBook = LOLPlayerBookInterface(0x3bede1c8601baF37220a5E2dA41409481132EC51);               
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -174,8 +174,8 @@ contract LOLlong is modularLong,Owned {
 //=================_|===========================================================
     string constant public name = "LOL Official";
     string constant public symbol = "LOL";
-	uint256 private rndExtra_ = 1 hours;//extSettings.getLongExtra();     // length of the very first ICO 
-    uint256 private rndGap_ = 24 hours;//extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
+	uint256 private rndExtra_ = 0 hours;//extSettings.getLongExtra();     // length of the very first ICO 
+    uint256 private rndGap_ = 0 hours;//extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
