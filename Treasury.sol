@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treasury at 0xd19a16e097af43642346cff4ecd2c81472ee8bf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treasury at 0x36ad5e153e04494352c0aaefbfc626df34b03acb
 */
 pragma solidity ^0.4.18;
 
@@ -180,10 +180,14 @@ contract OracleContractAdapter is Object {
     /// @notice Add oracles to whitelist.
     ///
     /// @param _whitelist user list.
-    function addOracles(address[] _whitelist) external onlyContractOwner returns (uint)    {
+    function addOracles(address[] _whitelist) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         for (uint _idx = 0; _idx < _whitelist.length; ++_idx) {
             address _oracle = _whitelist[_idx];
-            if (!oracles[_oracle]) {
+            if (_oracle != 0x0 && !oracles[_oracle]) {
                 oracles[_oracle] = true;
                 _emitOracleAdded(_oracle);
             }
@@ -194,10 +198,14 @@ contract OracleContractAdapter is Object {
     /// @notice Removes oracles from whitelist.
     ///
     /// @param _blacklist user in whitelist.
-    function removeOracles(address[] _blacklist) external onlyContractOwner returns (uint)    {
+    function removeOracles(address[] _blacklist) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         for (uint _idx = 0; _idx < _blacklist.length; ++_idx) {
             address _oracle = _blacklist[_idx];
-            if (oracles[_oracle]) {
+            if (_oracle != 0x0 && oracles[_oracle]) {
                 delete oracles[_oracle];
                 _emitOracleRemoved(_oracle);
             }
@@ -219,6 +227,7 @@ contract TreasuryEmitter {
     event TreasuryWithdrawn(bytes32 userKey, uint value);
 }
 
+
 contract ERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed from, address indexed spender, uint256 value);
@@ -231,6 +240,7 @@ contract ERC20 {
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
+
 
 
 
