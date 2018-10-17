@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EMPresale at 0x23d8E1DA32bba8e3A6B88d51BE158CDfFEff7FCC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EMPresale at 0xf1ef9f5a3d3ec8391016d12ef37f0d70cf73d391
 */
 pragma solidity ^0.4.18;
 
 contract EMPresale {
     
-    bool public inMaintainance;
+    bool inMaintainance;
+    bool isRefundable;
     
     // Data -----------------------------
     
@@ -22,6 +23,12 @@ contract EMPresale {
         uint32 cardTypeID;
         uint256 price;
         uint256 saleEndTime;
+        
+        bool isAirdrop;     // enables minting (+maxBought per hour until leftToMint==0)
+                            // + each player can only buy once
+                            // + is free
+        uint256 nextMintTime;
+        uint8 leftToMint;
     }
     
     address admin;
@@ -35,7 +42,6 @@ contract EMPresale {
     mapping(uint8 => Sale) sales;   // use from 1 onwards
     uint256 refPrize;
     
-    
     // CONSTRUCTOR =======================
     
     function EMPresale() public {
@@ -43,13 +49,13 @@ contract EMPresale {
         approverArr.push(admin);
         approvers[admin] = true;
         
-        playerAddrs.length = 1;
-        playerRefCounts.length = 1;
+        playerAddrs.push(address(0));
+        playerRefCounts.push(0);
     }
     
     // ADMIN FUNCTIONS =======================
     
-    function setSaleType(uint8 saleID, uint8 maxBought, uint32 cardTypeID, uint256 price, uint256 saleEndTime) external onlyAdmin {
+    function setSaleType_Presale(uint8 saleID, uint8 maxBought, uint32 cardTypeID, uint256 price, uint256 saleEndTime) external onlyAdmin {
         Sale storage sale = sales[saleID];
         
         // assign sale type
@@ -58,6 +64,26 @@ contract EMPresale {
         sale.cardTypeID = cardTypeID;
         sale.price = price;
         sale.saleEndTime = saleEndTime;
+        
+        // airdrop type
+        sale.isAirdrop = false;
+    }
+    
+    function setSaleType_Airdrop(uint8 saleID, uint8 maxBought, uint32 cardTypeID, uint8 leftToMint, uint256 firstMintTime) external onlyAdmin {
+        Sale storage sale = sales[saleID];
+        
+        // assign sale type
+        sale.bought = 0;
+        sale.maxBought = maxBought;
+        sale.cardTypeID = cardTypeID;
+        sale.price = 0;
+        sale.saleEndTime = 2000000000;
+        
+        // airdrop type
+        require(leftToMint >= maxBought);
+        sale.isAirdrop = true;
+        sale.nextMintTime = firstMintTime;
+        sale.leftToMint = leftToMint - maxBought;
     }
     
     function stopSaleType(uint8 saleID) external onlyAdmin {
@@ -71,16 +97,16 @@ contract EMPresale {
         return owned;
     }
     
-    function refund(address playerAddr) public onlyAdmin {
-        Player storage player = players[playerAddr];
-        uint256 spent = player.weiSpent;
-        player.weiSpent = 0;
-        playerAddr.transfer(spent);
+    function setRefundable(bool refundable) external onlyAdmin {
+        isRefundable = refundable;
     }
     
-    function refundAll() external onlyAdmin {
-        for(uint256 i=0; i<playerAddrs.length; i++)
-            refund(playerAddrs[i]);
+    function refund() external {
+        require(isRefundable);
+        Player storage player = players[msg.sender];
+        uint256 spent = player.weiSpent;
+        player.weiSpent = 0;
+        msg.sender.transfer(spent);
     }
     
     // PLAYER FUNCTIONS ========================
@@ -102,8 +128,26 @@ contract EMPresale {
         Sale storage sale = sales[saleID];
         require(sale.saleEndTime > now);
         
-        // check ether is paid
-        require(msg.value >= sale.price);
+        bool isAirdrop = sale.isAirdrop;
+        if(isAirdrop) {
+            // airdrop minting
+            if(now >= sale.nextMintTime) {  // hit a cycle
+            
+                sale.nextMintTime += ((now-sale.nextMintTime)/3600)*3600+3600;   // mint again next hour
+                if(sale.bought != 0) {
+                    uint8 leftToMint = sale.leftToMint;
+                    if(leftToMint < sale.bought) { // not enough to recover, set maximum left to be bought
+                        sale.maxBought = sale.maxBought + leftToMint - sale.bought;
+                        sale.leftToMint = 0;
+                    } else
+                        sale.leftToMint -= sale.bought;
+                    sale.bought = 0;
+                }
+            }
+        } else {
+            // check ether is paid
+            require(msg.value >= sale.price);
+        }
 
         // check not all is bought
         require(sale.bought < sale.maxBought);
@@ -116,10 +160,15 @@ contract EMPresale {
         Player storage player = players[msg.sender];
         if(player.id == 0)
             toRegisterPlayer = true;
+            
+        // cannot buy more than once if airdrop
+        if(isAirdrop)
+            require(player.bought[saleID] == 0);
         
         // give ownership
         player.bought[saleID]++;
-        player.weiSpent += msg.value;
+        if(!isAirdrop)  // is free otherwise
+            player.weiSpent += msg.value;
         
         // if hasn't referred, add referral
         if(!player.hasSpent) {
@@ -160,13 +209,41 @@ contract EMPresale {
         refPrize += msg.value/40;    // 2.5% added to prize money
     }
     
-    function GetSaleInfo(uint8 saleID) external view returns (uint8, uint8, uint8, uint32, uint256, uint256) {
+    function GetSaleInfo_Presale(uint8 saleID) external view returns (uint8, uint8, uint8, uint32, uint256, uint256) {
         uint8 playerOwned = 0;
         if(msg.sender != address(0))
             playerOwned = players[msg.sender].bought[saleID];
         
         Sale storage sale = sales[saleID];
         return (playerOwned, sale.bought, sale.maxBought, sale.cardTypeID, sale.price, sale.saleEndTime);
+    }
+    
+    function GetSaleInfo_Airdrop(uint8 saleID) external view returns (uint8, uint8, uint8, uint32, uint256, uint8) {
+        uint8 playerOwned = 0;
+        if(msg.sender != address(0))
+            playerOwned = players[msg.sender].bought[saleID];
+        
+        Sale storage sale = sales[saleID];
+        uint8 bought = sale.bought;
+        uint8 maxBought = sale.maxBought;
+        uint256 nextMintTime = sale.nextMintTime;
+        uint8 leftToMintResult = sale.leftToMint;
+    
+        // airdrop minting
+        if(now >= nextMintTime) {  // hit a cycle
+            nextMintTime += ((now-nextMintTime)/3600)*3600+3600;   // mint again next hour
+            if(bought != 0) {
+                uint8 leftToMint = leftToMintResult;
+                if(leftToMint < bought) { // not enough to recover, set maximum left to be bought
+                    maxBought = maxBought + leftToMint - bought;
+                    leftToMintResult = 0;
+                } else
+                    leftToMintResult -= bought;
+                bought = 0;
+            }
+        }
+        
+        return (playerOwned, bought, maxBought, sale.cardTypeID, nextMintTime, leftToMintResult);
     }
     
     function GetReferralInfo() external view returns(uint256, uint32) {
