@@ -1,50 +1,136 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETO at 0x41a25d15eef06891c9d8d134f2e65fb6d8f3a578
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETO at 0xdf6a48c688384d816d2fc1a7823dde41c39eee59
 */
-contract ETO {
-    /* Public variables of the token */
-    string public standard = 'ETO 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
+//@ create by ETU LAB
+pragma solidity ^0.4.8;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function ETO() {
-
-         initialSupply = 314159265;
-         name ="Ethereum Core";
-        decimals = 2;
-         symbol = "ETO";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+          return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
-
-   
-
     
-
-   
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
     }
+    
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+contract Owned {
+    address public owner;
+    address public newOwner;
+    modifier onlyOwner { require(msg.sender == owner); _; }
+    event OwnerUpdate(address _prevOwner, address _newOwner);
+
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = 0x0;
+    }
+}
+
+// ERC20 Interface
+contract ERC20 {
+    function totalSupply() public view returns (uint _totalSupply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+// ERC20Token
+contract ERC20Token is ERC20 {
+    using SafeMath for uint256;
+    mapping(address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalToken; 
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_from] = balances[_from].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return totalToken;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+}
+
+contract ETO is ERC20Token, Owned {
+
+    string  public constant name = "ETO Token";
+    string  public constant symbol = "ETO";
+    uint256 public constant decimals = 18;
+
+    function ETO() public {
+		totalToken = 100000000000000000000000000000;
+		balances[msg.sender] = totalToken;
+    }
+
+    function transferAnyERC20Token(address _tokenAddress, address _recipient, uint256 _amount) public onlyOwner returns (bool success) {
+        return ERC20(_tokenAddress).transfer(_recipient, _amount);
+    }
+
+
 }
