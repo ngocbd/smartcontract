@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenEnergyToken at 0x8b9d4a796c55a28e65eb276d7ec016f5cd6a4116
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenEnergyToken at 0xADc6cfA74Bc2547DE15d7505C1aC1cF7BB4BEF14
 */
 contract owned {
     address public owner;
@@ -45,14 +45,14 @@ contract GreenEnergyToken {
      */
     function GreenEnergyToken (
         //  uint256  initialSupply,
-        string GreenEnergy,
-        string GRNE
+        string tokenName,
+        string tokenSymbol
     ) public {
         totalSupply =  100000000000000000000000000; // Update total supply with the decimal amount
         balanceOf[msg.sender] = 100000000000000000000000000;                // Give the creator all initial tokens
         decimals = 18;                            // Amount of decimals for display purposes
-        name = GreenEnergy;                                  // Set the name for display purposes
-        symbol =GRNE ;                               // Set the symbol for display purposes
+        name = tokenName;                                  // Set the name for display purposes
+        symbol =tokenSymbol ;                               // Set the symbol for display purposes
     }
 
     /**
