@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDeltaHandler at 0x51111d922f035efa8b3cbceb4a770786e80ad6ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDeltaHandler at 0xd6e49ccaa9feb528e07c43d8cb6a930e580fbfe4
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 // File: contracts/ExchangeHandler.sol
 
@@ -161,7 +161,7 @@ contract EtherDeltaHandler is ExchangeHandler {
     EtherDelta public exchange;
 
     // Constructor
-    function EtherDeltaHandler(address _exchange) public {
+    constructor(address _exchange) public {
         exchange = EtherDelta(_exchange);
     }
 
@@ -206,7 +206,7 @@ contract EtherDeltaHandler is ExchangeHandler {
         bytes32 r,
         bytes32 s
     ) external payable returns (uint256) {
-        require(msg.value == amountToFill);
+        require(msg.value == amountToFill, "EtherDeltaHandler - amountToFill != msg.value");
 
         deposit(amountToFill);
 
@@ -299,7 +299,7 @@ contract EtherDeltaHandler is ExchangeHandler {
     }
 
     function depositToken(address token, uint256 amount) internal {
-        require(Token(token).approve(address(exchange), amount));
+        require(Token(token).approve(address(exchange), amount), "EtherDeltaHandler - unable to deposit token, approve failed");
         exchange.depositToken(token, amount);
     }
 
@@ -312,7 +312,7 @@ contract EtherDeltaHandler is ExchangeHandler {
     }
 
     function transferTokenToSender(address token, uint256 amount) internal {
-        require(Token(token).transfer(msg.sender, amount));
+        require(Token(token).transfer(msg.sender, amount), "EtherDeltaHandler - failed to transfer token to sender");
     }
 
     function transferEtherToSender(uint256 amount) internal {
@@ -324,6 +324,6 @@ contract EtherDeltaHandler is ExchangeHandler {
     }
 
     function() public payable {
-        require(msg.sender == address(exchange));
+        require(msg.sender == address(exchange), "EtherDeltaHandler - Only exchange allowed to send ether");
     }
 }
