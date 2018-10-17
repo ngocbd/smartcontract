@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Suoha at 0x460a5098248f4aa1a46eec6aac78b7819ea01c42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Suoha at 0x1181ebd2c9bb4045e30eb8dfe82cf57906676644
 */
 pragma solidity ^0.4.24;
 
@@ -128,8 +128,8 @@ contract Suoha is modularShort {
     using NameFilter for string;
     using SuohaKeysCalcLong for uint256;
 	
-    address community_addr = 0x5707D1322237300fc0a0Be9b3159B0BA41eEfEEF;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xE7198204B2286fDCcc2da2676EaA3af4FD4903BC  );
+    address community_addr = 0xAc97bE4C7E1d5A1146196ad8Ff3F9701f0398f6d;
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x345ac0c516891f3c0ee7a319b636364982851222  );
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
