@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Woyager at 0x87ed87a34adc1ecc62232f248d74fe1f81e5da68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Woyager at 0x86d7889aa3d2ac9a7ae197f76e807ce24e7083e0
 */
 pragma solidity ^0.4.19;
 
@@ -113,7 +113,7 @@ contract Woyager is BaseToken, AirdropToken, ICOToken {
 
         icoRatio = 10e6;
         icoBegintime = 1533992400;
-        icoEndtime = 1548979140;
+        icoEndtime = 1517443140;
         icoSender = 0x1Bd8917f60d528a0FcF87660CFC80Bf3ed48a353;
         icoHolder = 0x1Bd8917f60d528a0FcF87660CFC80Bf3ed48a353;
     }
