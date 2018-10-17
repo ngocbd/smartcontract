@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECCToken at 0xdbb409e7c15f58186775959850df18967f7deade
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECCToken at 0x7d4d05abcadbdbf877c5cd5eb9dac6ddaa17ff89
 */
 pragma solidity ^0.4.24;
 
@@ -210,7 +210,7 @@ contract BECCToken is ERC20, Owned {
     // - 0 value transfers are allowed
     // ************************************************************************
     function transferFrom(address from, address to, uint tokens) public whenNotPaused returns (bool success) {
-        require(address(0) != to && tokens <= balances[from] && tokens <= allowed[from][msg.sender] && 0 <= tokens);
+        require(address(0) != to && tokens <= balances[msg.sender] && tokens <= allowed[from][msg.sender] && 0 <= tokens);
         balances[from] = balances[from].sub(tokens);
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
