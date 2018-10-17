@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zygoma at 0x06f3a5b77623c0943f0f6c497cef0f39f3bc0089
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zygoma at 0x6e30644babcff8fdd83403a6c8714c1ef59525ad
 */
 pragma solidity ^0.4.24;
 
@@ -79,7 +79,6 @@ contract Zygoma is ERC20Interface, Owned {
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
-
 
     function Zygoma() public {
         symbol = "ZYG";
