@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0xe0670e32c120813a54860442155659cfa029d343
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0xbfaacfdecfbbcc7ea8c17e19c8f4f84c523267de
 */
-pragma solidity 0.4.19;
+pragma solidity ^0.4.23;
 
 // File: contracts/NokuPricingPlan.sol
 
 /**
 * @dev The NokuPricingPlan contract defines the responsibilities of a Noku pricing plan.
 */
-interface NokuPricingPlan {
+contract NokuPricingPlan {
     /**
     * @dev Pay the fee for the service identified by the specified name.
     * The fee amount shall already be approved by the client.
@@ -29,7 +29,7 @@ interface NokuPricingPlan {
     function usageFee(bytes32 serviceName, uint256 multiplier) public constant returns(uint fee);
 }
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -65,13 +65,13 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
 
 /**
  * @title Pausable
@@ -105,7 +105,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
+    emit Pause();
   }
 
   /**
@@ -113,11 +113,11 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
+    emit Unpause();
   }
 }
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -128,11 +128,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -142,13 +142,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -158,14 +158,14 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -179,7 +179,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -224,13 +224,13 @@ contract NokuTokenBurner is Pausable {
     * @dev Create a new NokuTokenBurner with predefined burning fraction.
     * @param _wallet The wallet receiving the unburnt tokens.
     */
-    function NokuTokenBurner(address _wallet) public {
-        require(_wallet != address(0));
+    constructor(address _wallet) public {
+        require(_wallet != address(0), "_wallet is zero");
         
         wallet = _wallet;
         burningPercentage = 100;
 
-        LogNokuTokenBurnerCreated(msg.sender, _wallet);
+        emit LogNokuTokenBurnerCreated(msg.sender, _wallet);
     }
 
     /**
@@ -238,12 +238,12 @@ contract NokuTokenBurner is Pausable {
     * @param _burningPercentage The percentage of tokens to be burnt.
     */
     function setBurningPercentage(uint256 _burningPercentage) public onlyOwner {
-        require(0 <= _burningPercentage && _burningPercentage <= 100);
-        require(_burningPercentage != burningPercentage);
+        require(0 <= _burningPercentage && _burningPercentage <= 100, "_burningPercentage not in [0, 100]");
+        require(_burningPercentage != burningPercentage, "_burningPercentage equal to current one");
         
         burningPercentage = _burningPercentage;
 
-        LogBurningPercentageChanged(msg.sender, _burningPercentage);
+        emit LogBurningPercentageChanged(msg.sender, _burningPercentage);
     }
 
     /**
@@ -252,8 +252,8 @@ contract NokuTokenBurner is Pausable {
     * @param _amount The amount of burnable tokens just arrived ready for burning.
     */
     function tokenReceived(address _token, uint256 _amount) public whenNotPaused {
-        require(_token != address(0));
-        require(_amount > 0);
+        require(_token != address(0), "_token is zero");
+        require(_amount > 0, "_amount is zero");
 
         uint256 amountToBurn = _amount.mul(burningPercentage).div(100);
         if (amountToBurn > 0) {
@@ -304,18 +304,18 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
     // The contract responsible for burning the NOKU tokens paid as service fee
     address public tokenBurner;
 
-    function NokuConsumptionPlan(address _nokuMasterToken, address _tokenBurner) public {
-        require(_nokuMasterToken != 0);
-        require(_tokenBurner != 0);
+    constructor(address _nokuMasterToken, address _tokenBurner) public {
+        require(_nokuMasterToken != 0, "_nokuMasterToken is zero");
+        require(_tokenBurner != 0, "_tokenBurner is zero");
 
         nokuMasterToken = _nokuMasterToken;
         tokenBurner = _tokenBurner;
 
-        LogNokuConsumptionPlanCreated(msg.sender, _nokuMasterToken, _tokenBurner);
+        emit LogNokuConsumptionPlanCreated(msg.sender, _nokuMasterToken, _tokenBurner);
     }
 
     function isService(bytes32 _serviceName) public constant returns(bool isIndeed) {
-        require(_serviceName != 0);
+        require(_serviceName != 0, "_serviceName is zero");
 
         if (serviceIndex.length == 0)
             return false;
@@ -324,18 +324,18 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
     }
 
     function addService(bytes32 _serviceName, uint _serviceFee) public onlyOwner returns(uint index) {
-        require(!isService(_serviceName));
-        
+        require(!isService(_serviceName), "_serviceName already present");
+
         services[_serviceName].serviceFee = _serviceFee;
         services[_serviceName].index = serviceIndex.push(_serviceName)-1;
 
-        LogServiceAdded(_serviceName, serviceIndex.length-1, _serviceFee);
+        emit LogServiceAdded(_serviceName, serviceIndex.length-1, _serviceFee);
 
         return serviceIndex.length-1;
     }
 
     function removeService(bytes32 _serviceName) public onlyOwner returns(uint index) {
-        require(isService(_serviceName));
+        require(isService(_serviceName), "_serviceName not present");
 
         uint rowToDelete = services[_serviceName].index;
         bytes32 keyToMove = serviceIndex[serviceIndex.length-1];
@@ -343,18 +343,18 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
         services[keyToMove].index = rowToDelete; 
         serviceIndex.length--;
 
-        LogServiceRemoved(_serviceName,  rowToDelete);
-        LogServiceChanged(keyToMove, rowToDelete, services[keyToMove].serviceFee);
+        emit LogServiceRemoved(_serviceName,  rowToDelete);
+        emit LogServiceChanged(keyToMove, rowToDelete, services[keyToMove].serviceFee);
 
         return rowToDelete;
     }
 
     function updateServiceFee(bytes32 _serviceName, uint _serviceFee) public onlyOwner returns(bool success) {
-        require(isService(_serviceName));
+        require(isService(_serviceName), "_serviceName not present");
 
         services[_serviceName].serviceFee = _serviceFee;
 
-        LogServiceChanged(_serviceName, services[_serviceName].index, _serviceFee);
+        emit LogServiceChanged(_serviceName, services[_serviceName].index, _serviceFee);
 
         return true;
     }
@@ -362,11 +362,12 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
     function payFee(bytes32 _serviceName, uint256 _amount, address _client) public returns(bool paid) {
         //require(isService(_serviceName)); // Already checked by #usageFee
         //require(_amount != 0); // Already checked by #usageFee
-        require(_client != 0);
+        require(_client != 0, "_client is zero");
 
         uint256 fee = usageFee(_serviceName, _amount);
+        if (fee == 0) return true;
 
-        assert(ERC20(nokuMasterToken).transferFrom(_client, tokenBurner, fee));
+        require(ERC20(nokuMasterToken).transferFrom(_client, tokenBurner, fee), "NOKU fee payment failed");
 
         NokuTokenBurner(tokenBurner).tokenReceived(nokuMasterToken, fee);
 
@@ -374,8 +375,8 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
     }
 
     function usageFee(bytes32 _serviceName, uint256 _amount) public constant returns(uint fee) {
-        require(isService(_serviceName));
-        require(_amount != 0);
+        require(isService(_serviceName), "_serviceName not present");
+        require(_amount != 0, "_amount is zero");
         
         // Assume fee are represented in 18-decimals notation
         return _amount.mul(services[_serviceName].serviceFee).div(10**18);
