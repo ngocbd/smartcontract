@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nettekcoin at 0xa6af8c6f67995faedd83b341c80af09159fe318a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Nettekcoin at 0xce93640883cd48c620ae5b2ec200a15140b527be
 */
 pragma solidity ^0.4.4;
 
@@ -108,8 +108,8 @@ contract Nettekcoin is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function Nettekcoin() {
-        balances[msg.sender] = 500000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 500000000000000000000000000;                     // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 1000000000000000000000000000;                // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1000000000000000000000000000;                       // Update total supply (1000 for example) (CHANGE THIS)
         name = "Nettekcoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "NTTK";                                             // Set the symbol for display purposes (CHANGE THIS)
