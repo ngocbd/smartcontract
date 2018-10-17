@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MLPPToken at 0xd5ee7f00b77edb531c55f986bb0593dd9d4ae1cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MLPPToken at 0xb4328f9d7a9ce71fff5c6dc13f85a65a5f545186
 */
 pragma solidity ^0.4.21;
 
@@ -109,7 +109,7 @@ contract MLPPToken is StandardToken {
     string public constant name = 'Multilevel People Pool Coin';
     string public constant symbol = 'MLPP';
     uint8 public constant decimals = 3;
-    string public constant version = 'MLPP1.0';
+    string public constant version = 'S1.0';
     constructor(uint256 _initialAmount) public {
         balances[msg.sender] = _initialAmount;
         totalSupply_ = _initialAmount;
