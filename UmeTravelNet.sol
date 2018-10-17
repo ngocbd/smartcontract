@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UmeTravelNet at 0xc743f7f7cf330a7598ae5fd11518c994ba0251ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UmeTravelNet at 0xc6253bb646da7d941ccacc78bb9e559c2e62a008
 */
 pragma solidity ^0.4.24;
 
@@ -113,7 +113,7 @@ contract UmeTravelNet is StandardToken { // CHANGE THIS. Update the contract nam
         name = "UmeTravelNet";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "UTA";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 150000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 150000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
