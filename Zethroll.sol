@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xa9887ca8db0aaee060acf1dac0f62c14274fa11e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x0096dc2246fc3627cc2bf87a3b0d2e0f87b58589
 */
 pragma solidity ^0.4.23;
 
@@ -186,7 +186,7 @@ contract Zethroll is ZTHReceivingContract {
     }
 
     // Set struct block number, token value, and rollUnder values
-    roll.blockn = uint48(block.number);
+    roll.blockn = uint40(block.number);
     roll.tokenValue = uint200(_tkn.value);
     roll.rollUnder = uint8(_rollUnder);
 
@@ -236,10 +236,6 @@ contract Zethroll is ZTHReceivingContract {
 
       // Safely map player profit
       uint profit = calculateProfit(roll.tokenValue, rollUnder);
-      
-        if (profit > maxProfit){
-            profit = maxProfit;
-        }
 
       // Safely reduce contract balance by player profit
       contractBalance = contractBalance.sub(profit);
