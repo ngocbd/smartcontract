@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorkToken at 0x1044ef958a44cb829cd7ff7b7e4849c122662f78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorkToken at 0xd18e454d844eb0009d32e07a0cde89e18d64cfb4
 */
 library SafeMath {
 
@@ -114,18 +114,19 @@ contract StandardToken is ERC20, BasicToken {
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
-
 }
 
 contract WorkToken is StandardToken {
 
-    string public name = 'WorkToken';
-    string public symbol = 'WORK';
-    uint8 public decimals = 18;
-    uint public INITIAL_SUPPLY = 1000000000;
+    string public constant name = "WorkToken";
+    string public constant symbol = "WORK";
+    uint8 public constant decimals = 18;
+
+    uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
 
     constructor() public {
-      totalSupply_ = INITIAL_SUPPLY;
-      balances[msg.sender] = INITIAL_SUPPLY;
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
 }
