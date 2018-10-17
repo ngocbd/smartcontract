@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContract at 0x4026f73f99427c6b70c9b101321895cee6b72659
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContract at 0x3caf82e500dc104b370b86ef302bf66f8682bcae
 */
-pragma solidity ^0.4.15;
-
 contract Owned {
     address public owner;
     address public newOwner;
 
-    function Owned() {
+    function Owned() public {
         owner = msg.sender;
     }
 
@@ -23,7 +21,7 @@ contract Owned {
 
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
+        emit OwnerUpdate(owner, newOwner);
         owner = newOwner;
         newOwner = 0x0;
     }
@@ -51,30 +49,45 @@ contract VestingContract is Owned {
     
     uint public lastBlockClaimed;
     uint public blockDelay;
-    uint public reward;
+    uint public level;
     
     event ClaimExecuted(uint _amount, uint _blockNumber, address _destination);
     
-    function VestingContract() {
+    function VestingContract() public {
         
-        lastBlockClaimed = 4216530;
-        blockDelay = 152470;
-        reward = 1333333000000000000000000;
-        
-        tokenAddress = 0x2C974B2d0BA1716E644c1FC59982a89DDD2fF724;
+        lastBlockClaimed = 6402520; 
+        blockDelay = 175680; 
+        level = 1;
+        tokenAddress = 0x574F84108a98c575794F75483d801d1d5DC861a5;
     }
     
     function claimReward() public onlyOwner {
         require(block.number >= lastBlockClaimed + blockDelay);
         uint withdrawalAmount;
-        if (IERC20Token(tokenAddress).balanceOf(address(this)) > reward) {
-            withdrawalAmount = reward;
+        if (IERC20Token(tokenAddress).balanceOf(address(this)) > getReward()) {
+            withdrawalAmount = getReward();
         }else {
             withdrawalAmount = IERC20Token(tokenAddress).balanceOf(address(this));
         }
         IERC20Token(tokenAddress).transfer(withdrawalAddress, withdrawalAmount);
+        level += 1;
         lastBlockClaimed += blockDelay;
-        ClaimExecuted(withdrawalAmount, block.number, withdrawalAddress);
+        emit ClaimExecuted(withdrawalAmount, block.number, withdrawalAddress);
+    }
+    
+    function getReward() internal returns (uint){
+        if (level == 1) { return  3166639968300000000000000; }
+        else if (level == 2) { return 3166639968300000000000000; }
+        else if (level == 3) { return 3166639968300000000000000; }
+        else if (level == 4) { return 3166639968300000000000000; }
+        else if (level == 5) { return 3166639968300000000000000; }
+        else if (level == 6) { return 3166639968300000000000000; }
+        else if (level == 7) { return 3166639968300000000000000; }
+        else if (level == 8) { return 3166639968300000000000000; }
+        else if (level == 9) { return 3166639968300000000000000; }
+        else if (level == 10) { return 3166639968300000000000000; }
+        else if (level == 11) { return 0;}
+        else {return 0;}
     }
     
     function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount) public onlyOwner {
