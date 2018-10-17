@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAFCToken at 0x3108d30b658254cd59e9a35d881a13eeb16cd091
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAFCToken at 0x9924a7e3a2756ab8b9a828485f052b6693aaa33e
 */
 pragma solidity ^0.4.24;
  
@@ -96,7 +96,7 @@ contract BasicToken is ERC20Basic {
   /// Emitted when a function is invocated by unauthorized addresses.
   event InvalidCaller(address caller);
 
-  /// Emitted when some TOKEN coins are burn.
+  /// Emitted when some UBS coins are burn.
   event Burn(address caller, uint value);
   
   /// Emitted when the ownership is transferred.
@@ -105,7 +105,7 @@ contract BasicToken is ERC20Basic {
   /// Emitted if the account is invalid for transaction.
   event InvalidAccount(address indexed addr, bytes msg);
   
-  /// Emitted when the liquity of TOKEN is switched off
+  /// Emitted when the liquity of UBS is switched off
   event LiquidityAlarm(bytes msg);
   
   function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) unFrozenAccount onlyTransferable {
@@ -122,7 +122,7 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-  ///@notice `freeze? Prevent | Allow` `target` from sending & receiving TOKEN preconditions
+  ///@notice `freeze? Prevent | Allow` `target` from sending & receiving UBS preconditions
   ///@param target Address to be frozen
   ///@param freeze To freeze the target account or not
   function freezeAccount(address target, bool freeze) onlyOwner public {
@@ -190,7 +190,7 @@ contract BAFCToken is StandardToken {
     /**
      * CONSTRUCTOR, This address will be : 0x...
      */
-    function BAFCToken() {
+    function UBSexToken() {
         owner = msg.sender;
         totalSupply = 1.9 * 10 ** 26;
         balances[owner] = totalSupply;
