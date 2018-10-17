@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x0f1f5b0aec864262aef8cbe1f89be64b7beb6a39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x27e21dfa8a81514e6b64ebc5294fe62f9db629d7
 */
 pragma solidity ^0.4.24;
 
@@ -133,6 +133,7 @@ contract PlayCoinKey is modularKey {
     using NameFilter for string;
     using PCKKeysCalcLong for uint256;
     
+    otherPCK private otherPCK_;
     PlayCoinGodInterface constant private PCGod = PlayCoinGodInterface(0x6f93Be8fD47EBb62F54ebd149B58658bf9BaCF4f);
     PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x47D1c777f1853cac97E6b81226B1F5108FBD7B81);
 //==============================================================================
@@ -1474,7 +1475,7 @@ contract PlayCoinKey is modularKey {
         
         // pay 1% out to FoMo3D short
         uint256 _long = _eth / 100;
-        potSwap(_long);
+        otherPCK_.potSwap.value(_long)();
         
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
@@ -1502,12 +1503,15 @@ contract PlayCoinKey is modularKey {
         return(_eventData_);
     }
     
-    function potSwap(uint256 _pot) private {
+    function potSwap()
+        external
+        payable
+    {
         // setup local rID
         uint256 _rID = rID_ + 1;
         
-        round_[_rID].pot = round_[_rID].pot.add(_pot);
-        emit PCKevents.onPotSwapDeposit(_rID, _pot);
+        round_[_rID].pot = round_[_rID].pot.add(msg.value);
+        emit PCKevents.onPotSwapDeposit(_rID, msg.value);
     }
     
     /**
@@ -1642,6 +1646,9 @@ contract PlayCoinKey is modularKey {
             msg.sender == admin,
             "only team just can activate"
         );
+
+        // make sure that its been linked.
+        require(address(otherPCK_) != address(0), "must link to other PCK first");
         
         // can only be ran once
         require(activated_ == false, "PCK already activated");
@@ -1655,6 +1662,19 @@ contract PlayCoinKey is modularKey {
         round_[1].end = now + rndInit_ + rndExtra_;
     }
 
+    function setOtherPCK(address _otherPCK) public {
+        // only team just can activate 
+        require(
+            msg.sender == admin,
+            "only team just can activate"
+        );
+
+        // make sure that it HASNT yet been linked.
+        require(address(otherPCK_) == address(0), "silly dev, you already did that");
+        
+        // set up other fomo3d (fast or long) for pot swap
+        otherPCK_ = otherPCK(_otherPCK);
+    }
 }
 
 //==============================================================================
@@ -1796,6 +1816,9 @@ library PCKKeysCalcLong {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
+interface otherPCK {
+    function potSwap() external payable;
+}
 
 interface PCKExtSettingInterface {
     function getFastGap() external view returns(uint256);
