@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCup at 0x6f936639c9b7514df2f92b618b19eee30de0260c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCup at 0x32b37f184769e7921050a296fc7455deda5f7e44
 */
 pragma solidity ^0.4.18;
 // <ORACLIZE_API>
@@ -1232,6 +1232,7 @@ contract WorldCup is usingOraclize {
   mapping(bool => uint) boolMapping;
 
   mapping(address => mapping(string => Player)) playerData;
+
   struct Player {
     uint betAmount;
     string team;
@@ -1260,6 +1261,7 @@ contract WorldCup is usingOraclize {
     uint indexed withdrawnAmount
   );
 
+  event BetWithdrawn(address indexed withdrawer, uint indexed withdrawnAmount);
   event WinningTeamSet(string indexed team);
   event OraclizeQuery(string indexed description);
 
@@ -1304,7 +1306,19 @@ contract WorldCup is usingOraclize {
     _;
   }
 
-  function WorldCup(string _teamOne, string _teamTwo, uint _endsAt, uint _betsCloseAt, string _oraclizeSource) public
+  modifier onlyAfterTwoWeeks() {
+    require(now > (betsCloseAt + 2 weeks));
+    _;
+  }
+
+  constructor(
+    string _teamOne,
+    string _teamTwo,
+    uint _endsAt,
+    uint _betsCloseAt,
+    string _oraclizeSource
+  )
+    public
     endsAtAfterBetsCloseAt(_betsCloseAt, _endsAt)
   {
     oraclize_setProof(proofType_TLSNotary);
@@ -1335,19 +1349,23 @@ contract WorldCup is usingOraclize {
       playerData[msg.sender][_team].betAmount += msg.value;
     }
 
-    PlayerJoined(msg.sender, msg.value, _team);
+    emit PlayerJoined(msg.sender, msg.value, _team);
   }
 
   function withdrawReward() public onlyAfterEndTime() onlyIfWinnerIsSet() {
     uint betAmount = book[WINNER][msg.sender];
-    uint reward = betAmount + (betAmount * (oddsMapping[loserOne] + oddsMapping[loserTwo]) / oddsMapping[WINNER]);
+    uint reward = betAmount + (
+      betAmount *
+        (oddsMapping[loserOne] + oddsMapping[loserTwo]) /
+          oddsMapping[WINNER]
+    );
 
     address(msg.sender).transfer(reward);
 
     playerData[msg.sender][WINNER].withdrawn = true;
     book[WINNER][msg.sender] = 0;
 
-    RewardWithdrawn(msg.sender, reward);
+    emit RewardWithdrawn(msg.sender, reward);
   }
 
   function __callback(bytes32 _queryId, string _result, bytes _proof) public
@@ -1359,25 +1377,29 @@ contract WorldCup is usingOraclize {
     WINNER = _result;
     delete validQueryIds[_queryId];
 
-    WinningTeamSet(_result);
+    emit WinningTeamSet(_result);
     setLosers();
   }
 
-  function oraclizeSetWinner(uint _callback_wei) public payable
-    onlyAfterEndTime
-    onlyIfWinnerIsMissing
+  function oraclizeSetWinner(uint _callback_wei, uint _callback_gas_limit)
+    public
+    payable
+    onlyAfterEndTime()
+    onlyIfWinnerIsMissing()
   {
-    require(oraclize_getPrice("URL") < msg.value);
-    
+    require(oraclize_getPrice("URL", _callback_gas_limit) < msg.value);
+
     oraclize_setCustomGasPrice(_callback_wei);
 
     if (oraclize_getPrice("URL") > address(this).balance) {
-      OraclizeQuery("Oraclize query not sent, balance too low");
+      emit OraclizeQuery("Oraclize query not sent, balance too low");
     } else {
-      bytes32 queryId = oraclize_query("URL", oraclizeSource);
-      validQueryIds[queryId] = true;
+      bytes32 queryId = oraclize_query(
+        "URL", oraclizeSource, _callback_gas_limit
+      );
 
-      OraclizeQuery("Oraclize query sent!");
+      validQueryIds[queryId] = true;
+      emit OraclizeQuery("Oraclize query sent!");
     }
   }
 
@@ -1391,7 +1413,11 @@ contract WorldCup is usingOraclize {
   //    first array holds player data for teamOne
   //    second array holds player data for teamTwo
   //    third array holds pleyer data for draw
-  function getPlayerData(address _playerAddress) public view returns(uint[3][3]) {
+  function getPlayerData(address _playerAddress)
+    public
+    view
+    returns(uint[3][3])
+  {
     return [
       [
         teamMapping[playerData[_playerAddress][teamOne].team],
@@ -1415,12 +1441,21 @@ contract WorldCup is usingOraclize {
     return [oddsMapping[teamOne], oddsMapping[teamTwo], oddsMapping[draw]];
   }
 
-  function withdrawRemainingRewards() public
-    onlyOwner
-    onlyAfterEndTime
-    onlyIfWinnerIsSet
-  {
-    address(owner).transfer(address(this).balance);
+  function withdrawBet() public onlyIfWinnerIsMissing() onlyAfterTwoWeeks() {
+    uint amount = playerData[msg.sender][teamOne].betAmount +
+      playerData[msg.sender][teamTwo].betAmount +
+        playerData[msg.sender][draw].betAmount;
+
+    playerData[msg.sender][teamOne].betAmount = 0;
+    playerData[msg.sender][teamTwo].betAmount = 0;
+    playerData[msg.sender][draw].betAmount = 0;
+
+    playerData[msg.sender][teamOne].withdrawn = true;
+    playerData[msg.sender][teamTwo].withdrawn = true;
+    playerData[msg.sender][draw].withdrawn = true;
+
+    address(msg.sender).transfer(amount);
+    emit BetWithdrawn(msg.sender, amount);
   }
 
   function setLosers() private returns(string) {
@@ -1436,7 +1471,9 @@ contract WorldCup is usingOraclize {
     }
   }
 
-  function buildTeamMapping(string _teamOne, string _teamTwo, string _draw) private {
+  function buildTeamMapping(string _teamOne, string _teamTwo, string _draw)
+    private
+  {
     teamMapping[_teamOne] = 0;
     teamMapping[_teamTwo] = 1;
     teamMapping[_draw] = 2;
