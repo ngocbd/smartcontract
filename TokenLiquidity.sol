@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidity at 0xdc7109afb8a3cc28f2429bf4a35f959a567a2610
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidity at 0x35afc160989db7b975e1e39f70c59531ef267858
 */
 pragma solidity ^0.4.23;
 
@@ -16,6 +16,19 @@ library SafeMath {
     return c;
   }
 
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a / b;
+  }
+  
 }
 
 contract Token {
@@ -123,13 +136,13 @@ contract TokenLiquidityContract {
 
   }  
   
-  function withdraw_token(uint256 _amount) public only_admin {
+  function withdraw_token(uint256 _amount) public only_admin() {
 
     transferTokensFromContract(admin, _amount);
       
   }
   
-  function withdraw_eth(uint256 _amount) public only_admin {
+  function withdraw_eth(uint256 _amount) public only_admin() {
       
     transferETHFromContract(admin, _amount);
       
@@ -147,7 +160,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function seed_traded_token() public only_admin {
+  function seed_traded_token() public only_admin() {
 
     require(!traded_token_is_seeded);
   
@@ -157,7 +170,7 @@ contract TokenLiquidityContract {
 
   }
   
-  function seed_eth() public payable only_admin {
+  function seed_eth() public payable only_admin() {
 
     require(!eth_is_seeded);
 
@@ -169,7 +182,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function seed_additional_token(uint256 _amount) public only_admin {
+  function seed_additional_token(uint256 _amount) public only_admin() {
 
     require(market_is_open());
     
@@ -177,7 +190,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function seed_additional_eth() public payable only_admin {
+  function seed_additional_eth() public payable only_admin() {
   
     require(market_is_open());
     
@@ -191,7 +204,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function deactivate_trading() public only_admin {
+  function deactivate_trading() public only_admin() {
   
     require(!trading_deactivated);
     
@@ -199,7 +212,7 @@ contract TokenLiquidityContract {
 
   }
   
-  function reactivate_trading() public only_admin {
+  function reactivate_trading() public only_admin() {
       
     require(trading_deactivated);
     
@@ -211,16 +224,16 @@ contract TokenLiquidityContract {
  
     uint256 traded_token_balance_plus_amount_ = traded_token_balance.add(_amount);
     
-    return (2*eth_balance*_amount)/(traded_token_balance + traded_token_balance_plus_amount_);
+    return (eth_balance.mul(_amount)).div(traded_token_balance_plus_amount_);
     
   }
 
   function get_amount_buy(uint256 _amount) public view returns(uint256) {
 
-    uint256 eth_balance_plus_amount_ = eth_balance + _amount;
-    
-    return (_amount*traded_token_balance*(eth_balance_plus_amount_ + eth_balance))/(2*eth_balance_plus_amount_*eth_balance);
-   
+    uint256 eth_balance_plus_amount_ = eth_balance.add(_amount);
+
+    return (traded_token_balance.mul(_amount)).div(eth_balance_plus_amount_);
+
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
@@ -229,7 +242,7 @@ contract TokenLiquidityContract {
     
   }
 
-  function activate_admin_commission() public only_admin {
+  function activate_admin_commission() public only_admin() {
 
     require(!admin_commission_activated);
 
@@ -237,7 +250,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function deactivate_admin_comission() public only_admin {
+  function deactivate_admin_comission() public only_admin() {
 
     require(admin_commission_activated);
 
@@ -245,7 +258,7 @@ contract TokenLiquidityContract {
 
   }
 
-  function change_admin_commission(uint256 _new_commission_ratio) public only_admin {
+  function change_admin_commission(uint256 _new_commission_ratio) public only_admin() {
   
      require(_new_commission_ratio != commission_ratio);
 
@@ -296,7 +309,7 @@ contract TokenLiquidityContract {
     
   }
   
-  function sell_tokens(uint256 _amount_give) public trading_activated {
+  function sell_tokens(uint256 _amount_give) public trading_activated() {
 
     require(market_is_open());
 
@@ -304,7 +317,7 @@ contract TokenLiquidityContract {
 
   }
   
-  function buy_tokens() private trading_activated {
+  function buy_tokens() private trading_activated() {
 
     require(market_is_open());
 
