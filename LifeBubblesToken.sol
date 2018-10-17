@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifeBubblesToken at 0xa2618e2c0b71d0d53db600257f3db68954029ac6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifeBubblesToken at 0xdfcc5dba7305671e303f1c86b5c7355228e04053
 */
 pragma solidity ^0.4.18;
 
@@ -342,6 +342,6 @@ contract MintableToken is StandardToken, Ownable {
 // ----------------------------------------------------------------------------
 contract LifeBubblesToken is MintableToken {
   string public name = " LifeBubblesToken "; 
-  string public symbol = "LBT";
+  string public symbol = "LTB";
   uint public decimals = 18;
 }
