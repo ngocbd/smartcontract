@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmzdmToken at 0x14435dec5d6f2f6255b1ccba75d3125c0543255e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmzdmToken at 0xb97e35b75d69ecf88083cc7aa3fabdd30ff99913
 */
 pragma solidity ^0.4.18;
 
@@ -105,7 +105,7 @@ contract SmzdmToken is ERC20Interface, Owned, SafeMath {
         symbol = "SMZDM";
         name = "SMZDM Token";
         decimals = 8;
-        _totalSupply = 2100000000000000;
+        _totalSupply = 21000000;
         balances[0x05a7d45097dB1B84510f63A1689863094CECf0D2] = _totalSupply;
         Transfer(address(0), 0x05a7d45097dB1B84510f63A1689863094CECf0D2, _totalSupply);
     }
