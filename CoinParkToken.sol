@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinParkToken at 0xfd45e61e085b3e7a1990a47828d757755b206eee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinParkToken at 0x41838203e938378c21f7031e4c0bc2d1c3fc2aec
 */
 /**
  * @title SafeMath
@@ -218,8 +218,8 @@ contract StandardToken is ERC20, BasicToken {
 
 contract CoinParkToken is StandardToken, Ownable{
     
-    string public version = "v2.0";
-    string public name = "CoinPark Token (www.coinpark.com)";
+    string public version = "v1.0";
+    string public name = "CoinPark Token";
     string public symbol = "CP";
     string public website = "https://www.coinpark.com";
     uint8 public  decimals = 18;
@@ -239,7 +239,7 @@ contract CoinParkToken is StandardToken, Ownable{
     
 
     // constructor
-    function CoinParkToken() { 
+    function CoinparkToken() { 
         address onwer = msg.sender;
         balances[onwer] = INITIAL_SUPPLY;
         totalSupply = INITIAL_SUPPLY;
