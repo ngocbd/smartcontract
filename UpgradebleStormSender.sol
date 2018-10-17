@@ -1,10 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0x473c2d69c006db8a5d3fc68437c3df6fd020a45d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xb786121c91539a76875e4dc76048963263229dc4
 */
-// File: contracts/EternalStorage.sol
+// To Use this Dapp: http://tokensender.me/
 
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
 pragma solidity 0.4.24;
 
 
@@ -23,10 +21,7 @@ contract EternalStorage {
 
 }
 
-// File: contracts/UpgradeabilityOwnerStorage.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -54,10 +49,7 @@ contract UpgradeabilityOwnerStorage {
 
 }
 
-// File: contracts/UpgradeabilityStorage.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -88,13 +80,7 @@ contract UpgradeabilityStorage {
     }
 }
 
-// File: contracts/OwnedUpgradeabilityStorage.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
-
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -104,10 +90,7 @@ contract UpgradeabilityStorage {
  */
 contract OwnedUpgradeabilityStorage is UpgradeabilityOwnerStorage, UpgradeabilityStorage, EternalStorage {}
 
-// File: contracts/SafeMath.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -156,11 +139,7 @@ library SafeMath {
   }
 }
 
-// File: contracts/multisender/Ownable.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -209,12 +188,7 @@ contract Ownable is EternalStorage {
     }
 }
 
-// File: contracts/multisender/Claimable.sol
-
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -254,12 +228,8 @@ contract Claimable is EternalStorage, Ownable {
     }
 }
 
-// File: contracts/multisender/UpgradebleStormSender.sol
 
-// Roman Storm Multi Sender
-// To Use this Dapp: https://rstormsf.github.io/multisender
-
-
+// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -303,7 +273,7 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
         setOwner(_owner);
         setArrayLimit(200);
         setDiscountStep(0.00005 ether);
-        setFee(0.05 ether);
+        setFee(0.03 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
