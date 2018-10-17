@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xfc08f84cad4069808b4d5ad655652487ba7f9e7b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x324b50caa2b95df219e78e016a3014e9b70ef5a2
 */
 pragma solidity ^0.4.24;
 
@@ -37,7 +37,7 @@ contract F3Devents {
         uint256 airDropPot
     );
 
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -128,20 +128,20 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x425020FF85f2E35b8269Af3d84DeFb2DC2BB6D12);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x18A586F55DA3C95Fe1bD79A4E54F9a37987b688A);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "Capital Game F3D";
-    string constant public symbol = "CGF";
-    uint256 private rndExtra_ = 12 hours;     // length of the very first ICO
-    uint256 private rndGap_ = 12 hours;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;              // max length a round timer can be
+    string constant public name = "FOMO Fast";
+    string constant public symbol = "Fast";
+    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -174,13 +174,13 @@ contract FoMo3Dshort is modularShort {
     constructor()
         public
     {
-		// Team allocation structures
+        // Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-		// Team allocation percentages
+        // Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
@@ -194,7 +194,7 @@ contract FoMo3Dshort is modularShort {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-	}
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -526,10 +526,10 @@ contract FoMo3Dshort is modularShort {
             F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -809,7 +809,7 @@ contract FoMo3Dshort is modularShort {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-	 * @return player round eth
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -866,7 +866,7 @@ contract FoMo3Dshort is modularShort {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -1055,7 +1055,7 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-		    endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1124,7 +1124,7 @@ contract FoMo3Dshort is modularShort {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract
+     * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1669,7 +1669,12 @@ library F3DKeysCalcShort {
         return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
     }
 
-   
+    /**
+     * @dev calculates amount of eth received if you sold X keys
+     * @param _curKeys current amount of keys that exist
+     * @param _sellKeys amount of keys you wish to sell
+     * @return amount of eth received
+     */
     function ethRec(uint256 _curKeys, uint256 _sellKeys)
         internal
         pure
@@ -1678,7 +1683,11 @@ library F3DKeysCalcShort {
         return((eth(_curKeys)).sub(eth(_curKeys.sub(_sellKeys))));
     }
 
-    
+    /**
+     * @dev calculates how many keys would exist with given an amount of eth
+     * @param _eth eth "in contract"
+     * @return number of keys that would exist
+     */
     function keys(uint256 _eth)
         internal
         pure
@@ -1717,8 +1726,41 @@ interface PlayerBookInterface {
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
 }
 
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /
+*                            (__ /          (_/ (, /                                      /)™
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
+
 library NameFilter {
-  
+    /**
+     * @dev filters name strings
+     * -converts uppercase to lower case.
+     * -makes sure it does not start/end with a space
+     * -makes sure it does not contain multiple spaces in a row
+     * -cannot be only numbers
+     * -cannot start with 0x
+     * -restricts characters to A-Z, a-z, 0-9, and space.
+     * @return reprocessed string in bytes32 format
+     */
     function nameFilter(string _input)
         internal
         pure
