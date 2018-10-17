@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x7a0069dbf190a68e6af996ec1d93705042325003
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x700757d6fa4d951e7786f6c34686cafdd9fce44a
 */
 /*
 Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
@@ -64,9 +64,9 @@ contract EIP20 is EIP20Interface{
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "ShitCoin";               //fancy name: eg Simon Bucks
+    string public name = "HackLabCoin";               //fancy name: eg Simon Bucks
     uint8 public decimals = 18;                    //How many decimals to show.
-    string public symbol = "SHIT";                 //An identifier: eg SBX
+    string public symbol = "HackLab";                 //An identifier: eg SBX
 
     constructor(
         uint256 _initialAmount,
