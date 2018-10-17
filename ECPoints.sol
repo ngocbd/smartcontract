@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECPoints at 0x08769a9b479a4b20e796194d960cc407fc66359a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECPoints at 0x8ff777cf27abc3740d3ebfe51d8f9a23fcff6b01
 */
 pragma solidity ^0.4.21;
 
@@ -306,10 +306,10 @@ contract Ownable {
 }
 
 contract ECPoints is StandardBurnableToken, Ownable {
-  string public name = "ECTokens";
-  string public symbol = "ECT";
-  uint8 public decimals = 8;
-  uint256 public INITIAL_SUPPLY = 2000000000;
+  string public name = "ECPoints";
+  string public symbol = "ECP";
+  uint8 public decimals = 4;
+  uint256 public INITIAL_SUPPLY = 130000000000000;
 
   address public owner;
 
