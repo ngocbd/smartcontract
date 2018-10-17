@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DELCToken at 0x935463d0e57b88f24e4b1c31e384825cddefe6cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DELCToken at 0x51c1a88a007411ca7af351218ea6448ed8f381c1
 */
 pragma solidity ^0.4.23;
 
@@ -88,6 +88,9 @@ contract Ownable {
   }
 
 }
+
+
+
 
 /**
  * @title Standard ERC20 token
@@ -312,13 +315,131 @@ contract Pausable is Ownable {
   }
 }
 
+
+/**
+ * @title TokenVesting
+ * @dev A token holder contract that can release its token balance gradually like a
+ * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
+ * owner.
+ */
+contract TokenVesting is StandardToken,Ownable {
+  using SafeMath for uint256;
+
+  event AddToVestMap(address vestcount);
+  event DelFromVestMap(address vestcount);
+
+  event Released(address vestcount,uint256 amount);
+  event Revoked(address vestcount);
+
+  struct tokenToVest{
+      bool  exist;
+      uint256  start;
+      uint256  cliff;
+      uint256  duration;
+      uint256  torelease;
+      uint256  released;
+  }
+
+  //key is the account to vest
+  mapping (address=>tokenToVest) vestToMap;
+
+
+  /**
+   * @dev Add one account to the vest Map
+   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _start the time (as Unix time) at which point vesting starts 
+   * @param _duration duration in seconds of the period in which the tokens will vest
+   * @param _torelease  delc count to release
+   */
+  function addToVestMap(
+    address _beneficiary,
+    uint256 _start,
+    uint256 _cliff,
+    uint256 _duration,
+    uint256 _torelease
+  ) public onlyOwner{
+    require(_beneficiary != address(0));
+    require(_cliff <= _duration);
+    require(_start > block.timestamp);
+    require(!vestToMap[_beneficiary].exist);
+
+    vestToMap[_beneficiary] = tokenToVest(true,_start,_start.add(_cliff),_duration,
+        _torelease,uint256(0));
+
+    emit AddToVestMap(_beneficiary);
+  }
+
+
+  /**
+   * @dev del One account to the vest Map
+   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+   */
+  function delFromVestMap(
+    address _beneficiary
+  ) public onlyOwner{
+    require(_beneficiary != address(0));
+    require(vestToMap[_beneficiary].exist);
+
+    delete vestToMap[_beneficiary];
+
+    emit DelFromVestMap(_beneficiary);
+  }
+
+
+
+  /**
+   * @notice Transfers vested tokens to beneficiary.
+   */
+  function release(address _beneficiary) public {
+
+    tokenToVest storage value = vestToMap[_beneficiary];
+    require(value.exist);
+    uint256 unreleased = releasableAmount(_beneficiary);
+    require(unreleased > 0);
+    require(unreleased + value.released <= value.torelease);
+
+
+    vestToMap[_beneficiary].released = vestToMap[_beneficiary].released.add(unreleased);
+
+    transfer(_beneficiary, unreleased);
+
+    emit Released(_beneficiary,unreleased);
+  }
+
+  /**
+   * @dev Calculates the amount that has already vested but hasn't been released yet.
+   */
+  function releasableAmount(address _beneficiary) public view returns (uint256) {
+    return vestedAmount(_beneficiary).sub(vestToMap[_beneficiary].released);
+  }
+
+  /**
+   * @dev Calculates the amount that has already vested.
+   */
+  function vestedAmount(address _beneficiary) public view returns (uint256) {
+
+    tokenToVest storage value = vestToMap[_beneficiary];
+    //uint256 currentBalance = balanceOf(_beneficiary);
+    uint256 totalBalance = value.torelease;
+
+    if (block.timestamp < value.cliff) {
+      return 0;
+    } else if (block.timestamp >= value.start.add(value.duration)) {
+      return totalBalance;
+    } else {
+      return totalBalance.mul(block.timestamp.sub(value.start)).div(value.duration);
+    }
+  }
+}
+
 /**
  * @title Pausable token
  *
  * @dev StandardToken modified with pausable transfers.
  **/
 
-contract PausableToken is StandardToken, Pausable {
+contract PausableToken is TokenVesting, Pausable {
 
   function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transfer(_to, _value);
@@ -335,6 +456,10 @@ contract PausableToken is StandardToken, Pausable {
   function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
     return super.approve(_spender, _value);
   }
+
+  function release(address _beneficiary) public whenNotPaused{
+    super.release(_beneficiary);
+  }
 }
 
 /*
@@ -344,17 +469,20 @@ contract DELCToken is BurnableToken, MintableToken, PausableToken {
   // Public variables of the token
   string public name;
   string public symbol;
-  // ?????Wei?????,  decimals is the strongly suggested default, avoid changing it
+  // decimals is the strongly suggested default, avoid changing it
   uint8 public decimals;
 
   constructor() public {
-    name = "DELC Token";
+    name = "DELC Relation Person Token";
     symbol = "DELC";
     decimals = 18;
     totalSupply = 10000000000 * 10 ** uint256(decimals);
 
     // Allocate initial balance to the owner
     balances[msg.sender] = totalSupply;
+    
+    emit Transfer(address(0), msg.sender, totalSupply);
+    
   }
 
   // transfer balance to owner
