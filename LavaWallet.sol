@@ -1,22 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavaWallet at 0xf226b12c03514571c5a473b2627f5528da46d263
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavaWallet at 0x69a02e511e027e5c26d2fbe4192e45b41db32819
 */
 pragma solidity ^0.4.18;
-
- 
-
-
-/*
-
-This is a token wallet contract
-
-Store your tokens in this contract to give them super powers
-
-Tokens can be spent from the contract with only an ecSignature from the owner - onchain approve is not needed
-
-
-*/
-
 
 library ECRecovery {
 
@@ -57,6 +42,7 @@ library ECRecovery {
 
 }
 
+ 
 
 
 /**
@@ -106,6 +92,17 @@ library SafeMath {
 }
 
 
+/*
+
+This is a token wallet contract
+
+Store your tokens in this contract to give them super powers
+
+Tokens can be spent from the contract with only an ecSignature from the owner - onchain approve is not needed
+
+
+*/
+
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -117,8 +114,25 @@ contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
+contract ERC918Interface {
+  function totalSupply() public constant returns (uint);
+  function getMiningDifficulty() public constant returns (uint);
+  function getMiningTarget() public constant returns (uint);
+  function getMiningReward() public constant returns (uint);
+  function balanceOf(address tokenOwner) public constant returns (uint balance);
 
+  function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success);
 
+  event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
+
+}
+
+contract MiningKingInterface {
+    function getKing() public returns (address);
+    function transferKing(address newKing) public;
+
+    event TransferKing(address from, address to);
+}
 
 contract ApproveAndCallFallBack {
 
@@ -194,13 +208,17 @@ contract LavaWallet is Owned {
    mapping(bytes32 => uint256) burnedSignatures;
 
 
+    address public relayKingContract;
+
+
+
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
   event Transfer(address indexed from, address indexed to,address token, uint tokens);
   event Approval(address indexed tokenOwner, address indexed spender,address token, uint tokens);
 
-  function LavaWallet() public  {
-
+  function LavaWallet(address relayKingContractAddress ) public  {
+    relayKingContract = relayKingContractAddress;
   }
 
 
@@ -226,7 +244,6 @@ contract LavaWallet is Owned {
       return true;
   }
 
- 
 
   //No approve needed, only from msg.sender
   function withdrawTokens(address token, uint256 tokens) public returns (bool success){
@@ -311,10 +328,14 @@ contract LavaWallet is Owned {
        address recoveredSignatureSigner = ECRecovery.recover(sigHash,signature);
 
        //make sure the signer is the depositor of the tokens
-       if(from != recoveredSignatureSigner) revert();
+       require(from == recoveredSignatureSigner);
+
+       require(msg.sender == getRelayingKing()
+         || msg.sender == from
+         || msg.sender == to);  // you must be the 'king of the hill' to relay
 
        //make sure the signature has not expired
-       if(block.number > expires) revert();
+       require(block.number < expires);
 
        uint burnedSignature = burnedSignatures[sigHash];
        burnedSignatures[sigHash] = 0x1; //spent
@@ -463,6 +484,11 @@ contract LavaWallet is Owned {
 
      }
 
+     function getRelayingKing() public returns (address)
+     {
+       return MiningKingInterface(relayKingContract).getKing();
+     }
+
 
 
  // ------------------------------------------------------------------------
@@ -490,7 +516,6 @@ contract LavaWallet is Owned {
      return true;
 
  }
-
 
 
 
