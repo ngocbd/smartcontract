@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeChainToken at 0x52c6fc5cc6e3626a4b53c14a6fd12418bf26b20e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeChainToken at 0x44be867d1bb472c9297a84ffe77b7b18d811f1e0
 */
 pragma solidity ^0.4.13;
 
@@ -191,7 +191,7 @@ contract TimeChainToken is StandardToken {
     string public name = 'TimeChain';
     string public symbol = 'TMC';
     uint8 public decimals = 6;
-    uint public INITIAL_SUPPLY = 100000000000000;
+    uint256 public INITIAL_SUPPLY = 2000000000000000;
 
     constructor() {
         totalSupply_ = INITIAL_SUPPLY;
