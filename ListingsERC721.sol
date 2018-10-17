@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC721 at 0x7f650f3b231d3a32c2b0e2940e870acdd4aa9961
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC721 at 0xc7703c4b5672b47c6512c90d1db89ecf0070e309
 */
 pragma solidity ^0.4.24;
 
@@ -290,8 +290,6 @@ contract ListingsERC721 is Ownable {
         require(now <= listing.dateEnds);
         //make sure that the seller still has that amount to sell
         require(tokenContract.ownerOf(tokenId) == seller, "user doesn't own this token");
-        //make sure that the seller still will allow that amount to be sold
-        require(tokenContract.getApproved(tokenId) == address(this));
         require(msg.value == price);
         tokenContract.transferFrom(seller, msg.sender, tokenId);
         if (ownerPercentage > 0) {
