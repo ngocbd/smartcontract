@@ -1,176 +1,157 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Love at 0xcad796d6a2c0bb1de7f24262819be96fb08c1c3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Love at 0x542a900357c9638ad6e944a57072c5d01f1c1ea7
 */
-/*
-Copyright 2018 DeDev Pte Ltd
+pragma solidity ^0.4.19;
 
-Author : Chongsoo Chung (Jones Chung), CEO of DeDev in Seoul, South Korea
- */
+contract Love {
 
-pragma solidity ^0.4.20;
+  mapping (address => address) private propose;
+  mapping (address => address) private partner;
+  mapping (uint256 => string[]) private partnerMessages;
+  mapping (uint256 => bool) private isHiddenMessages;
+  uint public proposeCount;
+  uint public partnerCount;
 
-contract ERC20Interface {
-	function totalSupply() constant returns (uint supply);
-	function balanceOf(address _owner) constant returns (uint balance);
-	function transfer(address _to, uint _value) returns (bool success);
-	function transferFrom(address _from, address _to, uint _value) returns (bool success);
-	function approve(address _spender, uint _value) returns (bool success);
-	function allowance(address _owner, address _spender) constant returns (uint remaining);
-	event Transfer(address indexed _from, address indexed _to, uint _value);
-	event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
+  event Propose(address indexed from, address indexed to);
+  event CancelPropose(address indexed from, address indexed to);
+  event Partner(address indexed from, address indexed to);
+  event Farewell(address indexed from, address indexed to);
+  event Message(address indexed addressOne, address indexed addressTwo, string message, uint index);
+  event HiddenMessages(address indexed addressOne, address indexed addressTwo, bool flag);
 
-contract Love is ERC20Interface {
-	// ERC20 basic variables
-	string public constant symbol = "LOVE";
-	string public constant name = "LoveToken";
-	uint8 public constant decimals = 0;
-	uint256 public constant _totalSupply = (10 ** 10);
-	mapping (address => uint) public balances;
-	mapping (address => mapping (address => uint256)) public allowed;
+  function proposeTo(address to) public {
+    require(to != address(0));
+    require(msg.sender != to);
+    require(partner[msg.sender] != to);
 
-	mapping (address => uint256) public tokenSaleAmount;
-	uint256 public saleStartEpoch;
-	uint256 public tokenSaleLeft = 7 * (10 ** 9);
-	uint256 public tokenAirdropLeft = 3 * (10 ** 9);
+    address alreadyPropose = propose[to];
+    if (alreadyPropose == msg.sender) {
+      propose[to] = address(0);
+      if (propose[msg.sender] != address(0)) {
+        propose[msg.sender] = address(0);
+        proposeCount -= 2;
 
-	uint256 public constant tokenSaleLowerLimit = 10 finney;
-	uint256 public constant tokenSaleUpperLimit = 1 ether;
-	uint256 public constant tokenExchangeRate = (10 ** 8); // 100m LOVE for each ether
-	uint256 public constant devReward = 18; // in percent
+      } else {
+        proposeCount--;
+      }
 
-	address private constant saleDepositAddress = 0x6969696969696969696969696969696969696969;
-	address private constant airdropDepositAddress = 0x7474747474747474747474747474747474747474;
+      address selfPartner = partner[msg.sender];
+      if (selfPartner != address(0)) {
+        if (partner[selfPartner] == msg.sender) {
+          partner[selfPartner] = address(0);
+          partnerCount--;
+          Farewell(msg.sender, selfPartner);
+        }
+      }
+      partner[msg.sender] = to;
 
-	address public devAddress;
-	address public ownerAddress;
+      address targetPartner = partner[to];
+      if (targetPartner != address(0)) {
+        if (partner[targetPartner] == to) {
+          partner[targetPartner] = address(0);
+          partnerCount--;
+          Farewell(to, targetPartner);
+        }
+      }
+      partner[to] = msg.sender;
 
-// constructor
-	function Love(address _ownerAddress, address _devAddress, uint256 _saleStartEpoch) public {
-		require(_ownerAddress != 0);
-		require(_devAddress != 0);
-		require(_saleStartEpoch > now);
+      partnerCount++;
+      Partner(msg.sender, to);
 
-		balances[saleDepositAddress] = tokenSaleLeft;
-		balances[airdropDepositAddress] = tokenAirdropLeft;
+    } else {
+      if (propose[msg.sender] == address(0)) {
+        proposeCount++;
+      }
+      propose[msg.sender] = to;
+      Propose(msg.sender, to);
+    }
+  }
 
-		ownerAddress = _ownerAddress;
-		devAddress = _devAddress;
-		saleStartEpoch = _saleStartEpoch;
-	}
+  function cancelProposeTo() public {
+    address proposingTo = propose[msg.sender];
+    require(proposingTo != address(0));
+    propose[msg.sender] = address(0);
+    proposeCount--;
+    CancelPropose(msg.sender, proposingTo);
+  }
 
-	function sendAirdrop(address[] to, uint256[] value) public {
-		require(msg.sender == ownerAddress);
-		require(to.length == value.length);
-		for(uint256 i = 0; i < to.length; i++){
-			if(tokenAirdropLeft > value[i]){
-				Transfer(airdropDepositAddress, to[i], value[i]);
+  function addMessage(string message) public {
+    address target = partner[msg.sender];
+    require(isPartner(msg.sender, target) == true);
+    uint index = partnerMessages[uint256(keccak256(craetePartnerBytes(msg.sender, target)))].push(message) - 1;
+    Message(msg.sender, target, message, index);
+  }
 
-				balances[to[i]] += value[i];
-				balances[airdropDepositAddress] -= value[i];
-				tokenAirdropLeft -= value[i];
-			}
-			else{
-				Transfer(airdropDepositAddress, to[i], tokenAirdropLeft);
+  function farewellTo(address to) public {
+    require(partner[msg.sender] == to);
+    require(partner[to] == msg.sender);
+    partner[msg.sender] = address(0);
+    partner[to] = address(0);
+    partnerCount--;
+    Farewell(msg.sender, to);
+  }
 
-				balances[to[i]] += tokenAirdropLeft;
-				balances[airdropDepositAddress] -= tokenAirdropLeft;
-				tokenAirdropLeft = 0;
-				break;
-			}
-		}
-	}
+  function isPartner(address a, address b) public view returns (bool) {
+    require(a != address(0));
+    require(b != address(0));
+    return (a == partner[b]) && (b == partner[a]);
+  }
 
-	function buy() payable public {
-		require(tokenSaleLeft > 0);
-		require(msg.value + tokenSaleAmount[msg.sender] <= tokenSaleUpperLimit);
-		require(msg.value >= tokenSaleLowerLimit);
-		require(now >= saleStartEpoch);
-		require(msg.value >= 1 ether / tokenExchangeRate);
+  function getPropose(address a) public view returns (address) {
+    return propose[a];
+  }
 
-		if(msg.value * tokenExchangeRate / 1 ether > tokenSaleLeft){
-			Transfer(saleDepositAddress, msg.sender, tokenSaleLeft);
+  function getPartner(address a) public view returns (address) {
+    return partner[a];
+  }
 
-			uint256 changeAmount = msg.value - tokenSaleLeft * 1 ether / tokenExchangeRate;
-			balances[msg.sender] += tokenSaleLeft;
-			balances[saleDepositAddress] -= tokenSaleLeft;
-			tokenSaleAmount[msg.sender] += msg.value - changeAmount;
-			tokenSaleLeft = 0;
-			msg.sender.transfer(changeAmount);
+  function getPartnerMessage(address a, address b, uint index) public view returns (string) {
+    require(isPartner(a, b) == true);
+    uint256 key = uint256(keccak256(craetePartnerBytes(a, b)));
+    if (isHiddenMessages[key] == true) {
+      require((msg.sender == a) || (msg.sender == b));
+    }
+    uint count = partnerMessages[key].length;
+    require(index < count);
+    return partnerMessages[key][index];
+  }
 
-			ownerAddress.transfer((msg.value - changeAmount) * (100 - devReward) / 100);
-			devAddress.transfer((msg.value - changeAmount) * devReward / 100);
-		}
-		else{
-			Transfer(saleDepositAddress, msg.sender, msg.value * tokenExchangeRate / 1 ether);
+  function partnerMessagesCount(address a, address b) public view returns (uint) {
+    require(isPartner(a, b) == true);
+    uint256 key = uint256(keccak256(craetePartnerBytes(a, b)));
+    if (isHiddenMessages[key] == true) {
+      require((msg.sender == a) || (msg.sender == b));
+    }
+    return partnerMessages[key].length;
+  }
 
-			balances[msg.sender] += msg.value * tokenExchangeRate / 1 ether;
-			balances[saleDepositAddress] -= msg.value * tokenExchangeRate / 1 ether;
-			tokenSaleAmount[msg.sender] += msg.value;
-			tokenSaleLeft -= msg.value * tokenExchangeRate / 1 ether;
+  function getOwnPartnerMessage(uint index) public view returns (string) {
+    return getPartnerMessage(msg.sender, partner[msg.sender], index);
+  }
 
-			ownerAddress.transfer(msg.value * (100 - devReward) / 100);
-			devAddress.transfer(msg.value * devReward / 100);
-		}
-	}
+  function craetePartnerBytes(address a, address b) private pure returns(bytes) {
+    bytes memory arr = new bytes(64);
+    bytes32 first;
+    bytes32 second;
+    if (uint160(a) < uint160(b)) {
+      first = keccak256(a);
+      second = keccak256(b);
+    } else {
+      first = keccak256(b);
+      second = keccak256(a);
+    }
 
-// fallback function : send request to donate
-	function () payable public {
-		buy();
-	}
+    for (uint i = 0; i < 32; i++) {
+      arr[i] = first[i];
+      arr[i + 32] = second[i];
+    }
+    return arr;
+  }
 
-
-// ERC20 FUNCTIONS
-	//get total tokens
-	function totalSupply() constant returns (uint supply){
-		return _totalSupply;
-	}
-	//get balance of user
-	function balanceOf(address _owner) constant returns (uint balance){
-		return balances[_owner];
-	}
-	//transfer tokens
-	function transfer(address _to, uint _value) returns (bool success){
-		if(balances[msg.sender] < _value)
-			return false;
-		balances[msg.sender] -= _value;
-		balances[_to] += _value;
-		Transfer(msg.sender, _to, _value);
-		return true;
-	}
-	//transfer tokens if you have been delegated a wallet
-	function transferFrom(address _from, address _to, uint _value) returns (bool success){
-		if(balances[_from] >= _value
-			&& allowed[_from][msg.sender] >= _value
-			&& _value >= 0
-			&& balances[_to] + _value > balances[_to]){
-			balances[_from] -= _value;
-			allowed[_from][msg.sender] -= _value;
-			balances[_to] += _value;
-			Transfer(_from, _to, _value);
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
-	//delegate your wallet to someone, usually to a smart contract
-	function approve(address _spender, uint _value) returns (bool success){
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-	}
-	//get allowance that you can spend, from delegated wallet
-	function allowance(address _owner, address _spender) constant returns (uint remaining){
-		return allowed[_owner][_spender];
-	}
-	
-	function change_owner(address new_owner){
-	    require(msg.sender == ownerAddress);
-	    ownerAddress = new_owner;
-	}
-	function change_dev(address new_dev){
-	    require(msg.sender == devAddress);
-	    devAddress = new_dev;
-	}
+  function setIsHiddenMessages(bool flag) public {
+    require(isPartner(msg.sender, partner[msg.sender]) == true);
+    uint256 key = uint256(keccak256(craetePartnerBytes(msg.sender, partner[msg.sender])));
+    isHiddenMessages[key] = flag;
+    HiddenMessages(msg.sender, partner[msg.sender], flag);
+  }
 }
