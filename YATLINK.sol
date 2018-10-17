@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YATLINK at 0x1a9d9e5a2b730b5adee416dcde93f2a6a71b4f3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YATLINK at 0xe48bbfca723a04a8ac44f21c639ad8ee039d3ede
 */
 pragma solidity ^0.4.21;
 
@@ -330,11 +330,4 @@ contract YATLINK is PausableToken
     
     // 300 Million Total Supply
     uint256 public constant INITIAL_SUPPLY = 3e8 * 10**uint256(decimals);
-    
-    constructor()  public {
-        totalSupply_ = INITIAL_SUPPLY;
-        transferOwnership(0x281e55a508779f7EA198cA32210727De7EE097C1);
-        balances[0x281e55a508779f7EA198cA32210727De7EE097C1] = INITIAL_SUPPLY;
-        emit Transfer(0x0, 0x281e55a508779f7EA198cA32210727De7EE097C1, INITIAL_SUPPLY);
-    }
 }
