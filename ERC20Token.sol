@@ -1,33 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20token at 0x4f8af8ff2b8de791b47d004efd2a430a98fc67bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20token at 0x4ec0ab1353885e7cc240b9ce8c08e4af10b7eca0
 */
 pragma solidity ^0.4.16;
-
-contract ERC20token{
+contract Token{
     uint256 public totalSupply;
+    
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    
+    function transferFrom(address _from, address _to, uint256 _value) public returns   
+    (bool success);
+
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    
+    function allowance(address _owner, address _spender) public constant returns 
+    (uint256 remaining);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 
+    _value);
+}
+
+contract ERC20token is Token {
+    
     string public name;
     uint8 public decimals;
     string public symbol;
-    address public admin;
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
-    mapping (address => bool) public frozenAccount; //????????
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    
     function ERC20token(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
         totalSupply = _initialAmount * 10 ** uint256(_decimalUnits);
         balances[msg.sender] = totalSupply;
-        admin = msg.sender;
-        name = _tokenName;
-        decimals = _decimalUnits;
+        name = _tokenName;                   
+        decimals = _decimalUnits;          
         symbol = _tokenSymbol;
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
         require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(_to != 0x0);
         balances[msg.sender] -= _value;
@@ -35,9 +45,10 @@ contract ERC20token{
         Transfer(msg.sender, _to, _value);
         return true;
     }
-    
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
+
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns 
+    (bool success) {
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         balances[_to] += _value;
         balances[_from] -= _value;
@@ -45,25 +56,18 @@ contract ERC20token{
         Transfer(_from, _to, _value);
         return true;
     }
-    
     function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
-    
-     function freeze(address _target,bool _freeze) public returns (bool) {
-        require(msg.sender == admin);
-        require(_target != address(0));
-        frozenAccount[_target] = _freeze;
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success)
-    {
+
+
+    function approve(address _spender, uint256 _value) public returns (bool success)   
+    { 
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    
+
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
