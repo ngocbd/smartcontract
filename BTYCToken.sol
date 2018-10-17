@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCToken at 0x5cb69fa1a56efa88b0d724ed6e699dda05a13e98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCToken at 0x56f527c3f4a24bb2beba449ffd766331da840ffa
 */
 pragma solidity ^ 0.4.24;
 
@@ -129,6 +129,8 @@ contract BTYCToken is ERC20Interface, Owned {
 	mapping(address => uint[]) public mycanmoney; //??
 	//????
 	mapping(address => address) public fromaddr;
+	//?????
+	mapping(address => bool) public admins;
 	// ???????????
 	mapping(address => uint) public cronaddOf;
 
@@ -245,6 +247,8 @@ contract BTYCToken is ERC20Interface, Owned {
 		require(actived == true);
 		uint256 canuse = getcanuse(msg.sender);
 		require(canuse >= tokens);
+		//
+		require(msg.sender != to);
 		//????????
 		if(fromaddr[to] == address(0)) {
 			//??????
@@ -253,13 +257,13 @@ contract BTYCToken is ERC20Interface, Owned {
 			if(tokens >= candyper) {
 				if(givecandyfrom > 0) {
 					balances[msg.sender] = balances[msg.sender].sub(tokens).add(givecandyfrom);
-					balances[owner] = balances[owner].sub(givecandyfrom); //?????
+					//balances[owner] = balances[owner].sub(givecandyfrom); //?????,??? 
 					reducemoney(msg.sender, tokens);
 					addmoney(msg.sender, givecandyfrom, 0);
 				}
 				if(givecandyto > 0) {
 					tokens += givecandyto;
-					balances[owner] = balances[owner].sub(givecandyto); //?????
+					//balances[owner] = balances[owner].sub(givecandyto); //?????,???
 				}
 			} else {
 				balances[msg.sender] = balances[msg.sender].sub(tokens);
@@ -269,17 +273,17 @@ contract BTYCToken is ERC20Interface, Owned {
 			addmoney(to, tokens, 0);
 			//tokens = candyuser(msg.sender, to, tokens);
 		} else {
-
+            //??????
+			balances[msg.sender] = balances[msg.sender].sub(tokens);
+			reducemoney(msg.sender, tokens);
+			
 			if(sendPer > 0 && sendPer <= 100) {
-				//??????
-				balances[msg.sender] = balances[msg.sender].sub(tokens);
-				reducemoney(msg.sender, tokens);
 				//????
 				uint addfroms = tokens * sendPer / 100;
 				address topuser1 = fromaddr[to];
 				balances[topuser1] = balances[topuser1].add(addfroms);
 				addmoney(topuser1, addfroms, 0);
-				//balances[owner] = balances[owner].sub(addfroms); //?????
+				//balances[owner] = balances[owner].sub(addfroms); //?????,??
 
 				//???????
 				if(sendPer2 > 0 && sendPer2 <= 100 && fromaddr[topuser1] != address(0)) {
@@ -287,24 +291,20 @@ contract BTYCToken is ERC20Interface, Owned {
 					address topuser2 = fromaddr[topuser1];
 					balances[topuser2] = balances[topuser2].add(addfroms2);
 					addmoney(topuser2, addfroms2, 0);
-					//balances[owner] = balances[owner].sub(addfroms2); //?????
+					//balances[owner] = balances[owner].sub(addfroms2); //?????,??
 					//???????
 					if(sendPer3 > 0 && sendPer3 <= 100 && fromaddr[topuser2] != address(0)) {
 						uint addfroms3 = tokens * sendPer3 / 100;
 						address topuser3 = fromaddr[topuser2];
 						balances[topuser3] = balances[topuser3].add(addfroms3);
 						addmoney(topuser3, addfroms3, 0);
-						//balances[owner] = balances[owner].sub(addfroms3); //?????
+						//balances[owner] = balances[owner].sub(addfroms3); //?????,??
 
 					}
 				}
 
 				//emit Transfer(owner, msg.sender, addfroms);
 
-			} else {
-
-				balances[msg.sender] = balances[msg.sender].sub(tokens);
-				reducemoney(msg.sender, tokens);
 			}
 
 			balances[to] = balances[to].add(tokens);
@@ -334,6 +334,7 @@ contract BTYCToken is ERC20Interface, Owned {
 	}
 
 	function approve(address spender, uint tokens) public returns(bool success) {
+		require(admins[msg.sender] == true);
 		allowed[msg.sender][spender] = tokens;
 		emit Approval(msg.sender, spender, tokens);
 		return true;
@@ -368,6 +369,7 @@ contract BTYCToken is ERC20Interface, Owned {
 	 * @param {Object} address
 	 */
 	function approveAndCall(address spender, uint tokens, bytes data) public returns(bool success) {
+		require(admins[msg.sender] == true);
 		allowed[msg.sender][spender] = tokens;
 		emit Approval(msg.sender, spender, tokens);
 		ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
@@ -375,15 +377,26 @@ contract BTYCToken is ERC20Interface, Owned {
 	}
 
 	/// ?? or ????
-	function freezeAccount(address target, bool freeze) onlyOwner public {
+	function freezeAccount(address target, bool freeze) public {
+		require(admins[msg.sender] == true);
 		frozenAccount[target] = freeze;
 		emit FrozenFunds(target, freeze);
+	}
+	/*
+	 * ?????
+	 * @param {Object} address
+	 */
+	function admAccount(address target, bool freeze) onlyOwner public {
+		admins[target] = freeze;
 	}
 	/*
 	 * ????
 	 * @param {Object} uint
 	 */
-	function setPrices(uint newBuyPrice, uint newSellPrice, uint systyPrice, uint sysPermit, uint sysgivefrom, uint sysgiveto, uint sysgiveper, uint syssendfrozen, uint syssendper1, uint syssendper2, uint syssendper3) onlyOwner public {
+	function setPrices(uint newonceaddtime, uint newonceouttime, uint newBuyPrice, uint newSellPrice, uint systyPrice, uint sysPermit, uint sysgivefrom, uint sysgiveto, uint sysgiveper, uint syssendfrozen, uint syssendper1, uint syssendper2, uint syssendper3) public {
+		require(admins[msg.sender] == true);
+		onceAddTime = newonceaddtime;
+		onceOuttime = newonceouttime;
 		buyPrice = newBuyPrice;
 		sellPrice = newSellPrice;
 		sysPrice = systyPrice;
@@ -399,7 +412,9 @@ contract BTYCToken is ERC20Interface, Owned {
 	/*
 	 * ??????
 	 */
-	function getprice() public view returns(uint bprice, uint spice, uint sprice, uint sper, uint givefrom, uint giveto, uint giveper, uint sdfrozen, uint sdper1, uint sdper2, uint sdper3) {
+	function getprice() public view returns(uint addtime, uint outtime, uint bprice, uint spice, uint sprice, uint sper, uint givefrom, uint giveto, uint giveper, uint sdfrozen, uint sdper1, uint sdper2, uint sdper3) {
+		addtime = onceAddTime;
+		outtime = onceOuttime;
 		bprice = buyPrice;
 		spice = sellPrice;
 		sprice = sysPrice;
@@ -430,8 +445,9 @@ contract BTYCToken is ERC20Interface, Owned {
 	 * ?????????
 	 * @param {Object} address
 	 */
-	function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+	function mintToken(address target, uint256 mintedAmount) public {
 		require(!frozenAccount[target]);
+		require(admins[msg.sender] == true);
 		require(actived == true);
 
 		balances[target] = balances[target].add(mintedAmount);
@@ -465,16 +481,17 @@ contract BTYCToken is ERC20Interface, Owned {
 	/*
 	 * ??
 	 */
-	function buy() public payable returns(uint256 amount) {
+	function buy() public payable returns(uint) {
 		require(actived == true);
 		require(!frozenAccount[msg.sender]);
 		require(msg.value > 0);
 
-		uint256 money = msg.value / (10 ** uint(decimals));
-		amount = money * buyPrice;
-		require(balances[owner] > amount);
+		//uint256 money = msg.value / (10 ** uint(decimals));
+		//amount = money * buyPrice;
+		uint amount = msg.value * buyPrice/1000000000000000000;
+		//require(balances[owner] > amount);
 		balances[msg.sender] = balances[msg.sender].add(amount);
-		balances[owner] = balances[owner].sub(amount);
+		//balances[owner] = balances[owner].sub(amount);
 
 		addmoney(msg.sender, amount, 0);
 
@@ -486,7 +503,7 @@ contract BTYCToken is ERC20Interface, Owned {
 	 * ????
 	 */
 	function charge() public payable returns(bool) {
-		require(actived == true);
+		//require(actived == true);
 		return(true);
 	}
 	
@@ -512,13 +529,14 @@ contract BTYCToken is ERC20Interface, Owned {
 		require(amount > 0);
 		uint256 canuse = getcanuse(msg.sender);
 		require(canuse >= amount);
-		require(balances[msg.sender] > amount);
-		uint moneys = (amount * sellPrice) / 10 ** uint(decimals);
+		require(balances[msg.sender] >= amount);
+		//uint moneys = (amount * sellPrice) / 10 ** uint(decimals);
+		uint moneys = amount * sellPrice/1000000000000000000;
 		require(address(this).balance > moneys);
 		msg.sender.transfer(moneys);
 		reducemoney(msg.sender, amount);
 		balances[msg.sender] = balances[msg.sender].sub(amount);
-		balances[owner] = balances[owner].add(amount);
+		//balances[owner] = balances[owner].add(amount);
 
 		emit Transfer(owner, msg.sender, moneys);
 		return(true);
@@ -527,7 +545,8 @@ contract BTYCToken is ERC20Interface, Owned {
 	 * ????
 	 * @param {Object} address
 	 */
-	function addBalances(address[] recipients, uint256[] moenys) public onlyOwner {
+	function addBalances(address[] recipients, uint256[] moenys) public{
+		require(admins[msg.sender] == true);
 		uint256 sum = 0;
 		for(uint256 i = 0; i < recipients.length; i++) {
 			balances[recipients[i]] = balances[recipients[i]].add(moenys[i]);
@@ -540,11 +559,12 @@ contract BTYCToken is ERC20Interface, Owned {
 	 * ????
 	 * @param {Object} address
 	 */
-	function subBalances(address[] recipients, uint256[] moenys) public onlyOwner {
+	function subBalances(address[] recipients, uint256[] moenys) public{
+		require(admins[msg.sender] == true);
 		uint256 sum = 0;
 		for(uint256 i = 0; i < recipients.length; i++) {
 			balances[recipients[i]] = balances[recipients[i]].sub(moenys[i]);
-			addmoney(recipients[i], moenys[i], 0);
+			reducemoney(recipients[i], moenys[i]);
 			sum = sum.add(moenys[i]);
 		}
 		balances[owner] = balances[owner].add(sum);
