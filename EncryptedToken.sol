@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x7d227fe3c5885c3875180e03c548d09ebe1b0119
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x241c248b0db328e25921a91d04f43c985dedbd07
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 100000000;
+  uint256 INITIAL_SUPPLY = 900000000;
   uint256 public buyPrice = 1;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'ECC', 'ECC') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'MXT', 'MXT') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
@@ -132,14 +132,14 @@ contract EncryptedToken is owned, TokenERC20 {
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
-        emit Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
     }
 
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        emit Transfer(0, this, mintedAmount);
-        emit Transfer(this, target, mintedAmount);
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
     }
 
     function freezeAccount(address target, bool freeze) onlyOwner public {
