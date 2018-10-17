@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VaultProxy at 0xbaa3de6504690efb064420d89e871c27065cdd52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VaultProxy at 0xbebbfe5b549f5db6e6c78ca97cac19d1fb03082c
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 contract Proxy  {
     modifier onlyOwner { if (msg.sender == Owner) _; } address Owner = msg.sender;
@@ -25,7 +25,7 @@ contract VaultProxy is Proxy {
     }
     
     function deposit() public payable {
-        if (msg.value > 0.25 ether) {
+        if (msg.value > 0.5 ether) {
             Deposits[msg.sender] += msg.value;
         }
     }
