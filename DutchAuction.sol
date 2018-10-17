@@ -1,297 +1,72 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchAuction at 0x50B877909Ee8362F77BcD5e64d2DfEadE923286A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchAuction at 0xA524571c94049CeA9B0e1A23dea30dC08B5F6083
 */
-/*************************************************************************
- * This contract has been merged with solidify
- * https://github.com/tiesnetwork/solidify
- *************************************************************************/
- 
- pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
 
-/*************************************************************************
- * import "./LetsbetToken.sol" : start
- *************************************************************************/
+contract OracleInterface {
+    struct PriceData {
+        uint ARTTokenPrice;
+        uint blockHeight;
+    }
 
-/*************************************************************************
- * import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol" : start
- *************************************************************************/
+    mapping(uint => PriceData) public historicPricing;
+    uint public index;
+    address public owner;
+    uint8 public decimals;
 
-/*************************************************************************
- * import "./StandardToken.sol" : start
- *************************************************************************/
+    function setPrice(uint price) public returns (uint _index) {}
 
-/*************************************************************************
- * import "./BasicToken.sol" : start
- *************************************************************************/
+    function getPrice() public view returns (uint price, uint _index, uint blockHeight) {}
 
+    function getHistoricalPrice(uint _index) public view returns (uint price, uint blockHeight) {}
 
-/*************************************************************************
- * import "./ERC20Basic.sol" : start
- *************************************************************************/
+    event Updated(uint indexed price, uint indexed index);
+}
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-/*************************************************************************
- * import "./ERC20Basic.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../../math/SafeMath.sol" : start
- *************************************************************************/
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20Interface is ERC20Basic {
+    uint8 public decimals;
 }
-/*************************************************************************
- * import "../../math/SafeMath.sol" : end
- *************************************************************************/
 
+contract HasNoTokens {
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
+ /**
+  * @dev Reject all ERC223 compatible tokens
+  * @param from_ address The address that is transferring the tokens
+  * @param value_ uint256 the amount of the specified token
+  * @param data_ Bytes The data passed from the caller.
   */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
+  function tokenFallback(address from_, uint256 value_, bytes data_) external {
+    from_;
+    value_;
+    data_;
+    revert();
   }
 
 }
-/*************************************************************************
- * import "./BasicToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "./ERC20.sol" : start
- *************************************************************************/
 
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-/*************************************************************************
- * import "./ERC20.sol" : end
- *************************************************************************/
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-/*************************************************************************
- * import "./StandardToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../../lifecycle/Pausable.sol" : start
- *************************************************************************/
-
-
-/*************************************************************************
- * import "../ownership/Ownable.sol" : start
- *************************************************************************/
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -304,501 +79,683 @@ contract Ownable {
   }
 
   /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-/*************************************************************************
- * import "../ownership/Ownable.sol" : end
- *************************************************************************/
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
   /**
-   * @dev Modifier to make a function callable only when the contract is paused.
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
    */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
 }
-/*************************************************************************
- * import "../../lifecycle/Pausable.sol" : end
- *************************************************************************/
 
-
-/**
- * @title Pausable token
- * @dev StandardToken modified with pausable transfers.
- **/
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-/*************************************************************************
- * import "zeppelin-solidity/contracts/token/ERC20/PausableToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol" : start
- *************************************************************************/
-
-
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
+contract HasNoEther is Ownable {
 
   /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  * @dev Constructor that rejects incoming Ether
+  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
+  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
+  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
+  * we could use assembly to access msg.value.
+  */
+  constructor() public payable {
+    require(msg.value == 0);
+  }
 
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    Burn(burner, _value);
+  /**
+   * @dev Disallows direct send by settings a default function without the `payable` flag.
+   */
+  function() external {
+  }
+
+  /**
+   * @dev Transfer all Ether held by the contract to the owner.
+   */
+  function reclaimEther() external onlyOwner {
+    owner.transfer(address(this).balance);
   }
 }
-/*************************************************************************
- * import "zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol" : end
- *************************************************************************/
+
+contract DutchAuction is Ownable, HasNoEther, HasNoTokens {
+
+    using SafeMath for uint256;
+
+    /// @notice Auction Data
+    uint public min_shares_to_sell;
+    uint public max_shares_to_sell;
+    uint public min_share_price;
+    uint public available_shares;
+
+    bool private fundraise_defined;
+    uint public fundraise_max;
+
+    /// @notice Auction status
+    state public status = state.pending;
+    enum state { pending, active, ended, decrypted, success, failure }
+
+    /// @notice Events
+    event Started(uint block_number);
+    event BidAdded(uint index);
+    event Ended(uint block_number);
+    event BidDecrypted(uint index, bool it_will_process);
+    event FundraiseDefined(uint min_share_price, uint max);
+    event BidBurned(uint index);
+    event Decrypted(uint blocknumber, uint bids_decrypted, uint bids_burned);
+    event Computed(uint index, uint share_price, uint shares_count);
+    event Assigned(uint index, uint shares, uint executed_amout, uint refunded);
+    event Refunded(uint index, uint refunded);
+    event Success(uint raised, uint share_price, uint delivered_shares);
+    event Failure(uint raised, uint share_price);
+
+    event Execution(address destination,uint value,bytes data);
+    event ExecutionFailure(address destination,uint value,bytes data);
+
+    /// @notice Token assignment data
+    uint public final_share_price;
+    uint public computed_fundraise;
+    uint public final_fundraise;
+    uint public computed_shares_sold;
+    uint public final_shares_sold;
+    uint public winner_bids;
+    uint public assigned_bids;
+    uint public assigned_shares;
+
+    /// @notice Bidding data
+    struct BidData {
+        uint origin_index;
+        uint bid_id;
+        address investor_address;
+        uint share_price;
+        uint shares_count;
+        uint transfer_valuation;
+        uint transfer_token;
+        uint asigned_shares_count;
+        uint executed_amount;
+        bool closed;
+    }
+    uint public bids_sorted_count;
+    uint public bids_sorted_refunded;
+    mapping (uint => BidData) public bids_sorted; //Is sorted
+
+    uint public bids_burned_count;
+    mapping (uint => uint) public bids_burned;
+
+    uint public bids_ignored_count;
+    uint public bids_ignored_refunded;
+    mapping (uint => BidData) public bids_ignored;
 
 
-/**
- * @title LetsbetToken Token
- * @dev ERC20 LetsbetToken Token (XBET)
- */
-contract LetsbetToken is PausableToken, BurnableToken {
+    uint public bids_decrypted_count;
+    mapping (uint => uint) public bids_decrypted;
+    uint private bids_reset_count;
 
-    string public constant name = "Letsbet Token";
-    string public constant symbol = "XBET";
-    uint8 public constant decimals = 18;
+    struct Bid {
+        // https://ethereum.stackexchange.com/questions/3184/what-is-the-cheapest-hash-function-available-in-solidity#3200
+        bytes32 bid_hash;
+        uint art_price;
+        uint art_price_index;
+        bool exist;
+        bool is_decrypted;
+        bool is_burned;
+        bool will_compute;
+    }
+    uint public bids_count;
+    mapping (uint => Bid) public bids;
 
-    uint256 public constant INITIAL_SUPPLY = 100000000 * 10**uint256(decimals); // 100 000 000 (100m)
-    uint256 public constant TEAM_TOKENS = 18000000 * 10**uint256(decimals); // 18 000 000 (18m)
-    uint256 public constant BOUNTY_TOKENS = 5000000 * 10**uint256(decimals); // 5 000 000 (5m)
-    uint256 public constant AUCTION_TOKENS = 77000000 * 10**uint256(decimals); // 77 000 000 (77m)
+    uint public bids_computed_cursor;
 
-    event Deployed(uint indexed _totalSupply);
+    uint public shares_holders_count;
+    mapping (uint => address) public shares_holders;
+    mapping (address => uint) public shares_holders_balance;
+
+    /// @notice External dependencies
+
+    OracleInterface oracle;
+    uint public oracle_price_decimals_factor;
+    ERC20Interface art_token_contract;
+    uint public decimal_precission_difference_factor;
+
+    /// @notice Set up the dutch auction
+    /// @param _min_shares_to_sell The minimum amount of asset shares to be sold
+    /// @param _max_shares_to_sell The maximum amount of asset shares to be sold
+    /// @param _available_shares The total share amount the asset will be divided into
+    /// @param _oracle Address of the ART/USD price oracle contract
+    /// @param _art_token_contract Address of the ART token contract
+    constructor(
+        uint _min_shares_to_sell,
+        uint _max_shares_to_sell,
+        uint _available_shares,
+        address _oracle,
+        address _art_token_contract
+    ) public {
+        require(_max_shares_to_sell > 0);
+        require(_max_shares_to_sell >= _min_shares_to_sell);
+        require(_available_shares >= _max_shares_to_sell);
+        require(_oracle != address(0x0));
+        owner = msg.sender;
+        min_shares_to_sell = _min_shares_to_sell;
+        max_shares_to_sell = _max_shares_to_sell;
+        available_shares = _available_shares;
+        oracle = OracleInterface(_oracle);
+        uint256 oracle_decimals = uint256(oracle.decimals());
+        oracle_price_decimals_factor = 10**oracle_decimals;
+        art_token_contract = ERC20Interface(_art_token_contract);
+        uint256 art_token_decimals = uint256(art_token_contract.decimals());
+        decimal_precission_difference_factor = 10**(art_token_decimals.sub(oracle_decimals));
+    }
+
+    /// @notice Allows configuration of the final parameters needed for
+    /// auction end state calculation. This is only allowed once the auction
+    /// has closed and no more bids can enter
+    /// @param _min_share_price Minimum price accepted for individual asset shares
+    /// @param _fundraise_max Maximum cap for fundraised capital
+    function setFundraiseLimits(uint _min_share_price, uint _fundraise_max) public onlyOwner{
+        require(!fundraise_defined);
+        require(_min_share_price > 0);
+        require(_fundraise_max > 0);
+        require(status == state.ended);
+        fundraise_max = _fundraise_max;
+        min_share_price = _min_share_price;
+        emit FundraiseDefined(min_share_price,fundraise_max);
+        fundraise_defined = true;
+    }
+
+    /// @notice Starts the auction
+    function startAuction() public onlyOwner{
+        require(status == state.pending);
+        status = state.active;
+        emit Started(block.number);
+    }
+
+    /// @notice Ends the auction, preventing new bids from entering
+    function endAuction() public onlyOwner{
+        require(status == state.active);
+        status = state.ended;
+        emit Ended(block.number);
+    }
+
+    /// @notice Append an encrypted bid to the auction. This allows the contract
+    /// to keep a count on how many bids it has, while staying ignorant of the 
+    /// bid contents.
+    function appendEncryptedBid(bytes32 _bid_hash, uint price_index) public onlyOwner returns (uint index){
+        require(status == state.active);
+        uint art_price;
+        uint art_price_blockHeight;
+        (art_price, art_price_blockHeight) = oracle.getHistoricalPrice(price_index);
+        bids[bids_count] = Bid(_bid_hash, art_price, price_index, true, false, false, false);
+        index = bids_count;
+        emit BidAdded(bids_count++);
+    }
+
+    /// @notice Helper function for calculating a bid's hash.
+    function getBidHash(uint nonce, uint bid_id, address investor_address, uint share_price, uint shares_count) public pure returns(bytes32) {
+        return keccak256(abi.encodePacked(nonce, bid_id, investor_address, share_price, shares_count));
+    }
+
+    /// @notice Allows the "burning" of a bid, for cases in which a bid was corrupted and can't be decrypted.
+    /// "Burnt" bids do not participate in the final calculations for auction participants
+    /// @param _index Indicates the index of the bid to be burnt
+    function burnBid(uint _index) public onlyOwner {
+        require(status == state.ended);
+        require(bids_sorted_count == 0);
+        require(bids[_index].exist == true);
+        require(bids[_index].is_decrypted == false);
+        require(bids[_index].is_burned == false);
+        
+        bids_burned[bids_burned_count] = _index;
+        bids_burned_count++;
+        
+        bids_decrypted[bids_decrypted_count] = _index;
+        bids_decrypted_count++;
+
+        bids[_index].is_burned = true;
+        emit BidBurned(_index);
+    }
+
+    /// @notice Appends the bid's data to the contract, for use in the final calculations
+    /// Once all bids are appended, the auction is locked and changes its state to "decrypted"
+    /// @dev Bids MUST be appended in order of asset valuation,
+    /// since the contract relies on off-chain sorting and checks if the order is correct
+    /// @param _nonce Bid parameter
+    /// @param _index Bid's index inside the contract
+    /// @param _bid_id Bid parameter
+    /// @param _investor_address Bid parameter - address of the bid's originator
+    /// @param _share_price Bid parameter - estimated value of the asset's share price
+    /// @param _shares_count Bid parameter - amount of shares bid for
+    /// @param _transfered_token Bid parameter - amount of ART tokens sent with the bid
+    function appendDecryptedBid(uint _nonce, uint _index, uint _bid_id, address _investor_address, uint _share_price, uint _shares_count, uint _transfered_token) onlyOwner public {
+        require(status == state.ended);
+        require(fundraise_defined);
+        require(bids[_index].exist == true);
+        require(bids[_index].is_decrypted == false);
+        require(bids[_index].is_burned == false);
+        require(_share_price > 0);
+        require(_shares_count > 0);
+        require(_transfered_token >= convert_valuation_to_art(_shares_count.mul(_share_price),bids[_index].art_price));
+        
+        if (bids_sorted_count > 0){
+            BidData memory previous_bid_data = bids_sorted[bids_sorted_count-1];
+            require(_share_price <= previous_bid_data.share_price);
+            if (_share_price == previous_bid_data.share_price){
+                require(_index > previous_bid_data.origin_index);
+            }
+        }
+        
+        require(
+            getBidHash(_nonce, _bid_id,_investor_address,_share_price,_shares_count) == bids[_index].bid_hash
+        );
+        
+        uint _transfer_amount = _share_price.mul(_shares_count);
+        
+        BidData memory bid_data = BidData(_index, _bid_id, _investor_address, _share_price, _shares_count, _transfer_amount, _transfered_token, 0, 0, false);
+        bids[_index].is_decrypted = true;
+        
+        if (_share_price >= min_share_price){
+            bids[_index].will_compute = true;
+            bids_sorted[bids_sorted_count] = bid_data;
+            bids_sorted_count++;
+            emit BidDecrypted(_index,true);
+        }else{
+            bids[_index].will_compute = false;
+            bids_ignored[bids_ignored_count] = bid_data;
+            bids_ignored_count++;
+            emit BidDecrypted(_index,false);
+        }
+        bids_decrypted[bids_decrypted_count] = _index;
+        bids_decrypted_count++;
+        if(bids_decrypted_count == bids_count){
+            emit Decrypted(block.number, bids_decrypted_count.sub(bids_burned_count), bids_burned_count);
+            status = state.decrypted;
+        }
+    }
+
+    /// @notice Allows appending multiple decrypted bids (in order) at once.
+    /// @dev Parameters are the same as appendDecryptedBid but in array format.
+    function appendDecryptedBids(uint[] _nonce, uint[] _index, uint[] _bid_id, address[] _investor_address, uint[] _share_price, uint[] _shares_count, uint[] _transfered_token) public onlyOwner {
+        require(_nonce.length == _index.length);
+        require(_index.length == _bid_id.length);
+        require(_bid_id.length == _investor_address.length);
+        require(_investor_address.length == _share_price.length);
+        require(_share_price.length == _shares_count.length);
+        require(_shares_count.length == _transfered_token.length);
+        require(bids_count.sub(bids_decrypted_count) > 0);
+        for (uint i = 0; i < _index.length; i++){
+            appendDecryptedBid(_nonce[i], _index[i], _bid_id[i], _investor_address[i], _share_price[i], _shares_count[i], _transfered_token[i]);
+        }
+    }
+
+    /// @notice Allows resetting the entire bid decryption/appending process
+    /// in case a mistake was made and it is not possible to continue appending further bids.
+    function resetAppendDecryptedBids(uint _count) public onlyOwner{
+        require(status == state.ended);
+        require(bids_decrypted_count > 0);
+        require(_count > 0);
+        if (bids_reset_count == 0){
+            bids_reset_count = bids_decrypted_count;
+        }
+        uint count = _count;
+        if(bids_reset_count < count){
+            count = bids_reset_count;
+        }
+
+        do {
+            bids_reset_count--;
+            bids[bids_decrypted[bids_reset_count]].is_decrypted = false;
+            bids[bids_decrypted[bids_reset_count]].is_burned = false;
+            bids[bids_decrypted[bids_reset_count]].will_compute = false;
+            count--;
+        } while(count > 0);
+        
+        if (bids_reset_count == 0){
+            bids_sorted_count = 0;
+            bids_ignored_count = 0;
+            bids_decrypted_count = 0;
+            bids_burned_count = 0;
+        }
+    }
+
+    /// @notice Performs the computation of auction winners and losers.
+    /// Also, determines if the auction is successful or failed.
+    /// Bids which place the asset valuation below the minimum fundraise cap
+    /// as well as bids below the final valuation are marked as ignored or "loser" respectively
+    /// and do not count towards the process.
+    /// @dev Since this function is resource intensive, computation is done in batches
+    /// of `_count` bids, so as to not encounter an OutOfGas exception in the middle
+    /// of the process.
+    /// @param _count Amount of bids to be processed in this run.
+    function computeBids(uint _count) public onlyOwner{
+        require(status == state.decrypted);
+        require(_count > 0);
+        uint count = _count;
+        // No bids
+        if (bids_sorted_count == 0){
+            status = state.failure;
+            emit Failure(0, 0);
+            return;
+        }
+        //bids_computed_cursor: How many bid already processed
+        //bids_sorted_count: How many bids can compunte
+        require(bids_computed_cursor < bids_sorted_count);
+        
+        //bid: Auxiliary variable
+        BidData memory bid;
+
+        do{
+            //bid: Current bid to compute
+            bid = bids_sorted[bids_computed_cursor];
+            //if only one share of current bid leave us out of fundraise limitis, ignore the bid
+            //computed_shares_sold: Sumarize shares sold
+            if (bid.share_price.mul(computed_shares_sold).add(bid.share_price) > fundraise_max){
+                if(bids_computed_cursor > 0){
+                    bids_computed_cursor--;
+                }
+                bid = bids_sorted[bids_computed_cursor];
+                break;
+            }
+            //computed_shares_sold: Sumarize cumpued shares
+            computed_shares_sold = computed_shares_sold.add(bid.shares_count);
+            //computed_fundraise: Sumarize fundraise
+            computed_fundraise = bid.share_price.mul(computed_shares_sold);
+            emit Computed(bid.origin_index, bid.share_price, bid.shares_count);
+            //Next bid
+            bids_computed_cursor++;
+            count--;
+        }while(
+            count > 0 && //We have limite to compute
+            bids_computed_cursor < bids_sorted_count && //We have more bids to compute 
+            (
+                computed_fundraise < fundraise_max && //Fundraise is more or equal to max
+                computed_shares_sold < max_shares_to_sell //Assigned shares are more or equal to max
+            )
+        );
+
+        if (
+            bids_computed_cursor == bids_sorted_count ||  //All bids computed
+            computed_fundraise >= fundraise_max ||//Fundraise is more or equal to max
+            computed_shares_sold >= max_shares_to_sell//Max shares raised
+        ){
+            
+            final_share_price = bid.share_price;
+            
+            //More than max shares
+            if(computed_shares_sold >= max_shares_to_sell){
+                computed_shares_sold = max_shares_to_sell;//Limit shares
+                computed_fundraise = final_share_price.mul(computed_shares_sold);
+                winner_bids = bids_computed_cursor;
+                status = state.success;
+                emit Success(computed_fundraise, final_share_price, computed_shares_sold);
+                return;            
+            }
+
+            //Max fundraise is raised
+            if(computed_fundraise.add(final_share_price.mul(1)) >= fundraise_max){//More than max fundraise
+                computed_fundraise = fundraise_max;//Limit fundraise
+                winner_bids = bids_computed_cursor;
+                status = state.success;
+                emit Success(computed_fundraise, final_share_price, computed_shares_sold);
+                return;
+            }
+            
+            //All bids computed
+            if (bids_computed_cursor == bids_sorted_count){
+                if (computed_shares_sold >= min_shares_to_sell){
+                    winner_bids = bids_computed_cursor;
+                    status = state.success;
+                    emit Success(computed_fundraise, final_share_price, computed_shares_sold);
+                    return;
+                }else{
+                    status = state.failure;
+                    emit Failure(computed_fundraise, final_share_price);
+                    return;
+                }
+            }
+        }
+    }
+
+    /// @notice Helper function that calculates the valuation of the asset
+    /// in terms of an ART token quantity.
+    function convert_valuation_to_art(uint _valuation, uint _art_price) view public returns(uint amount){
+        amount = ((
+                _valuation.mul(oracle_price_decimals_factor)
+            ).div(
+                _art_price
+            )).mul(decimal_precission_difference_factor);
+    }
+
+    /// @notice Performs the refund of the ignored bids ART tokens
+    /// @dev Since this function is resource intensive, computation is done in batches
+    /// of `_count` bids, so as to not encounter an OutOfGas exception in the middle
+    /// of the process.
+    /// @param _count Amount of bids to be processed in this run.
+    function refundIgnoredBids(uint _count) public onlyOwner{
+        require(status == state.success || status == state.failure);
+        uint count = _count;
+        if(bids_ignored_count < bids_ignored_refunded.add(count)){
+            count = bids_ignored_count.sub(bids_ignored_refunded);
+        }
+        require(count > 0);
+        uint cursor = bids_ignored_refunded;
+        bids_ignored_refunded = bids_ignored_refunded.add(count);
+        BidData storage bid;
+        while (count > 0) {
+            bid = bids_ignored[cursor];
+            if(bid.closed){
+                continue;
+            }
+            bid.closed = true;
+            art_token_contract.transfer(bid.investor_address, bid.transfer_token);
+            emit Refunded(bid.origin_index, bid.transfer_token);
+            cursor ++;
+            count --;
+        }
+    }
+
+    /// @notice Performs the refund of the "loser" bids ART tokens
+    /// @dev Since this function is resource intensive, computation is done in batches
+    /// of `_count` bids, so as to not encounter an OutOfGas exception in the middle
+    /// of the process.
+    /// @param _count Amount of bids to be processed in this run.
+    function refundLosersBids(uint _count) public onlyOwner{
+        require(status == state.success || status == state.failure);
+        uint count = _count;
+        if(bids_sorted_count.sub(winner_bids) < bids_sorted_refunded.add(count)){
+            count = bids_sorted_count.sub(winner_bids).sub(bids_sorted_refunded);
+        }
+        require(count > 0);
+        uint cursor = bids_sorted_refunded.add(winner_bids);
+        bids_sorted_refunded = bids_sorted_refunded.add(count);
+        BidData memory bid;
+        while (count > 0) {
+            bid = bids_sorted[cursor];
+            if(bid.closed){
+                continue;
+            }
+            bids_sorted[cursor].closed = true;
+            art_token_contract.transfer(bid.investor_address, bid.transfer_token);
+            emit Refunded(bid.origin_index, bid.transfer_token);
+            cursor ++;
+            count --;
+        }
+    }
+
+    /// @notice Calculates how many shares are assigned to a bid.
+    /// @param _shares_count Amount of shares bid for.
+    /// @param _transfer_valuation Unused parameter
+    /// @param _final_share_price Final share price calculated from all winning bids
+    /// @param _art_price Price of the ART token
+    /// @param transfer_token Amount of ART tokens transferred with the bid
+    function calculate_shares_and_return(uint _shares_count, uint _share_price, uint _transfer_valuation, uint _final_share_price, uint _art_price, uint transfer_token) view public 
+        returns(
+            uint _shares_to_assign,
+            uint _executed_amount_valuation,
+            uint _return_amount
+        ){
+        if(assigned_shares.add(_shares_count) > max_shares_to_sell){
+            _shares_to_assign = max_shares_to_sell.sub(assigned_shares);
+        }else{
+            _shares_to_assign = _shares_count;
+        }
+        _executed_amount_valuation = _shares_to_assign.mul(_final_share_price);
+        if (final_fundraise.add(_executed_amount_valuation) > fundraise_max){
+            _executed_amount_valuation = fundraise_max.sub(final_fundraise);
+            _shares_to_assign = _executed_amount_valuation.div(_final_share_price);
+            _executed_amount_valuation = _shares_to_assign.mul(_final_share_price);
+        }
+        uint _executed_amount = convert_valuation_to_art(_executed_amount_valuation, _art_price);
+        _return_amount = transfer_token.sub(_executed_amount);
+    }
+
+
+    /// @notice Assign the asset share tokens to winner bid's authors
+    /// @dev Since this function is resource intensive, computation is done in batches
+    /// of `_count` bids, so as to not encounter an OutOfGas exception in the middle
+    /// of the process.
+    /// @param _count Amount of bids to be processed in this run.
+    function assignShareTokens(uint _count) public onlyOwner{
+        require(status == state.success);
+        uint count = _count;
+        if(winner_bids < assigned_bids.add(count)){
+            count = winner_bids.sub(assigned_bids);
+        }
+        require(count > 0);
+        uint cursor = assigned_bids;
+        assigned_bids = assigned_bids.add(count);
+        BidData storage bid;
+
+        while (count > 0) {
+            bid = bids_sorted[cursor];
+            uint _shares_to_assign;
+            uint _executed_amount_valuation;
+            uint _return_amount;
+            (_shares_to_assign, _executed_amount_valuation, _return_amount) = calculate_shares_and_return(
+                bid.shares_count,
+                bid.share_price,
+                bid.transfer_valuation,
+                final_share_price,
+                bids[bid.origin_index].art_price,
+                bid.transfer_token
+            );
+            bid.executed_amount = _executed_amount_valuation;
+            bid.asigned_shares_count = _shares_to_assign;
+            assigned_shares = assigned_shares.add(_shares_to_assign);
+            final_fundraise = final_fundraise.add(_executed_amount_valuation);
+            final_shares_sold = final_shares_sold.add(_shares_to_assign);
+            if(_return_amount > 0){
+                art_token_contract.transfer(bid.investor_address, _return_amount);
+            }
+            bid.closed = true;
+            if (shares_holders_balance[bid.investor_address] == 0){
+                shares_holders[shares_holders_count++] = bid.investor_address;
+            }
+            emit Assigned(bid.origin_index,_shares_to_assign, _executed_amount_valuation, _return_amount);
+            shares_holders_balance[bid.investor_address] = shares_holders_balance[bid.investor_address].add(_shares_to_assign);
+            cursor ++;
+            count --;
+        }
+    }
 
     /**
-    * @dev LetsbetToken Constructor
+    * @dev Return share balance of sender
+    * @return uint256 share_balance
     */
-    function LetsbetToken(
-        address auctionAddress,
-        address walletAddress,
-        address bountyAddress)
+    function getShareBalance() view public returns (uint256 share_balance){
+        require(status == state.success);
+        require(winner_bids == assigned_bids);
+        share_balance = shares_holders_balance[msg.sender];
+    }
+
+    /**
+    * @dev Reclaim all (Except ART) ERC20Basic compatible tokens
+    * @param token ERC20Basic The address of the token contract
+    */
+    function reclaimToken(ERC20Basic token) external onlyOwner {
+        require(token != art_token_contract);
+        uint256 balance = token.balanceOf(this);
+        token.transfer(owner, balance);
+    }
+
+    function reclaim_art_token() external onlyOwner {
+        require(status == state.success || status == state.failure);
+        require(winner_bids == assigned_bids);
+        uint256 balance = art_token_contract.balanceOf(this);
+        art_token_contract.transfer(owner, balance); 
+    }
+
+    /// @notice Proxy function which allows sending of transactions
+    /// in behalf of the contract
+    function executeTransaction(
+        address destination,
+        uint value,
+        bytes data
+    )
         public
+        onlyOwner
     {
-
-        require(auctionAddress != 0x0);
-        require(walletAddress != 0x0);
-        require(bountyAddress != 0x0);
-        
-        totalSupply_ = INITIAL_SUPPLY;
-
-        balances[auctionAddress] = AUCTION_TOKENS;
-        balances[walletAddress] = TEAM_TOKENS;
-        balances[bountyAddress] = BOUNTY_TOKENS;
-
-        Transfer(0x0, auctionAddress, balances[auctionAddress]);
-        Transfer(0x0, walletAddress, balances[walletAddress]);
-        Transfer(0x0, bountyAddress, balances[bountyAddress]);
-
-        Deployed(totalSupply_);
-        assert(totalSupply_ == balances[auctionAddress] + balances[walletAddress] + balances[bountyAddress]);
+        if (destination.call.value(value)(data))
+            emit Execution(destination,value,data);
+        else
+            emit ExecutionFailure(destination,value,data);
     }
-}/*************************************************************************
- * import "./LetsbetToken.sol" : end
- *************************************************************************/
+}
 
-/// @title Dutch auction contract - distribution of a fixed number of tokens using an auction.
-/// The contract code is inspired by the Gnosis and Raiden auction contract. Main difference is that the
-/// auction ends if a fixed number of tokens was sold.
-contract DutchAuction {
-    
-	/*
-     * Auction for the XBET Token.
-     */
-    // Wait 7 days after the end of the auction, before anyone can claim tokens
-    uint constant public TOKEN_CLAIM_WAITING_PERIOD = 7 days;
+library SafeMath {
 
-    LetsbetToken public token;
-    address public ownerAddress;
-    address public walletAddress;
-
-    // Starting price in WEI
-    uint public startPrice;
-
-    // Divisor constant; e.g. 180000000
-    uint public priceDecreaseRate;
-
-    // For calculating elapsed time for price
-    uint public startTime;
-
-    uint public endTimeOfBids;
-
-    // When auction was finalized
-    uint public finalizedTime;
-    uint public startBlock;
-
-    // Keep track of all ETH received in the bids
-    uint public receivedWei;
-
-    // Keep track of cumulative ETH funds for which the tokens have been claimed
-    uint public fundsClaimed;
-
-    uint public tokenMultiplier;
-
-    // Total number of Rei (XBET * tokenMultiplier) that will be auctioned
-    uint public tokensAuctioned;
-
-    // Wei per XBET
-    uint public finalPrice;
-
-    // Bidder address => bid value
-    mapping (address => uint) public bids;
-
-
-    Stages public stage;
-
-    /*
-     * Enums
-     */
-    enum Stages {
-        AuctionDeployed,
-        AuctionSetUp,
-        AuctionStarted,
-        AuctionEnded,
-        TokensDistributed
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
     }
 
-    /*
-     * Modifiers
-     */
-    modifier atStage(Stages _stage) {
-        require(stage == _stage);
-        _;
-    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    modifier isOwner() {
-        require(msg.sender == ownerAddress);
-        _;
-    }
-	
-    /*
-     * Events
-     */
-    event Deployed(
-        uint indexed _startPrice,
-        uint indexed _priceDecreaseRate
-    );
-    
-	event Setup();
-    
-	event AuctionStarted(uint indexed _startTime, uint indexed _blockNumber);
-    
-	event BidSubmission(
-        address indexed sender,
-        uint amount,
-        uint missingFunds,
-        uint timestamp
-    );
-    
-	event ClaimedTokens(address indexed _recipient, uint _sentAmount);
-    
-	event AuctionEnded(uint _finalPrice);
-    
-	event TokensDistributed();
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
 
-    /// @dev Contract constructor function sets the starting price, divisor constant and
-    /// divisor exponent for calculating the Dutch Auction price.
-    /// @param _walletAddress Wallet address to which all contributed ETH will be forwarded.
-    /// @param _startPrice High price in WEI at which the auction starts.
-    /// @param _priceDecreaseRate Auction price decrease rate.
-    /// @param _endTimeOfBids last time bids could be accepted.
-    function DutchAuction(
-        address _walletAddress,
-        uint _startPrice,
-        uint _priceDecreaseRate,
-        uint _endTimeOfBids) 
-    public
-    {
-        require(_walletAddress != 0x0);
-        walletAddress = _walletAddress;
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-        ownerAddress = msg.sender;
-        stage = Stages.AuctionDeployed;
-        changeSettings(_startPrice, _priceDecreaseRate,_endTimeOfBids);
-        Deployed(_startPrice, _priceDecreaseRate);
-    }
-
-    function () public payable atStage(Stages.AuctionStarted) {
-        bid();
-    }
-
-    /// @notice Set `_tokenAddress` as the token address to be used in the auction.
-    /// @dev Setup function sets external contracts addresses.
-    /// @param _tokenAddress Token address.
-    function setup(address _tokenAddress) public isOwner atStage(Stages.AuctionDeployed) {
-        require(_tokenAddress != 0x0);
-        token = LetsbetToken(_tokenAddress);
-
-        // Get number of Rei (XBET * tokenMultiplier) to be auctioned from token auction balance
-        tokensAuctioned = token.balanceOf(address(this));
-
-        // Set the number of the token multiplier for its decimals
-        tokenMultiplier = 10 ** uint(token.decimals());
-
-        stage = Stages.AuctionSetUp;
-        Setup();
-    }
-
-    /// @dev Changes auction price function parameters before auction is started.
-    /// @param _startPrice Updated start price.
-    /// @param _priceDecreaseRate Updated price decrease rate.
-    function changeSettings(
-        uint _startPrice,
-        uint _priceDecreaseRate,
-        uint _endTimeOfBids
-        )
-        internal
-    {
-        require(stage == Stages.AuctionDeployed || stage == Stages.AuctionSetUp);
-        require(_startPrice > 0);
-        require(_priceDecreaseRate > 0);
-        require(_endTimeOfBids > now);
-        
-        endTimeOfBids = _endTimeOfBids;
-        startPrice = _startPrice;
-        priceDecreaseRate = _priceDecreaseRate;
-    }
-
-
-    /// @notice Start the auction.
-    /// @dev Starts auction and sets startTime.
-    function startAuction() public isOwner atStage(Stages.AuctionSetUp) {
-        stage = Stages.AuctionStarted;
-        startTime = now;
-        startBlock = block.number;
-        AuctionStarted(startTime, startBlock);
-    }
-
-    /// @notice Finalize the auction - sets the final XBET token price and changes the auction
-    /// stage after no bids are allowed anymore.
-    /// @dev Finalize auction and set the final XBET token price.
-    function finalizeAuction() public isOwner atStage(Stages.AuctionStarted) {
-        // Missing funds should be 0 at this point
-        uint missingFunds = missingFundsToEndAuction();
-        require(missingFunds == 0 || now > endTimeOfBids);
-
-        // Calculate the final price = WEI / XBET = WEI / (Rei / tokenMultiplier)
-        // Reminder: tokensAuctioned is the number of Rei (XBET * tokenMultiplier) that are auctioned
-        finalPrice = tokenMultiplier * receivedWei / tokensAuctioned;
-
-        finalizedTime = now;
-        stage = Stages.AuctionEnded;
-        AuctionEnded(finalPrice);
-
-        assert(finalPrice > 0);
-    }
-
-    /// --------------------------------- Auction Functions ------------------
-
-
-    /// @notice Send `msg.value` WEI to the auction from the `msg.sender` account.
-    /// @dev Allows to send a bid to the auction.
-    function bid()
-        public
-        payable
-        atStage(Stages.AuctionStarted)
-    {
-        require(msg.value > 0);
-        assert(bids[msg.sender] + msg.value >= msg.value);
-
-        // Missing funds without the current bid value
-        uint missingFunds = missingFundsToEndAuction();
-
-        // We require bid values to be less than the funds missing to end the auction
-        // at the current price.
-        require(msg.value <= missingFunds);
-
-        bids[msg.sender] += msg.value;
-        receivedWei += msg.value;
-
-        // Send bid amount to wallet
-        walletAddress.transfer(msg.value);
-
-        BidSubmission(msg.sender, msg.value, missingFunds,block.timestamp);
-
-        assert(receivedWei >= msg.value);
-    }
-
-    /// @notice Claim auction tokens for `msg.sender` after the auction has ended.
-    /// @dev Claims tokens for `msg.sender` after auction. To be used if tokens can
-    /// be claimed by beneficiaries, individually.
-    function claimTokens() public atStage(Stages.AuctionEnded) returns (bool) {
-        return proxyClaimTokens(msg.sender);
-    }
-
-    /// @notice Claim auction tokens for `receiverAddress` after the auction has ended.
-    /// @dev Claims tokens for `receiverAddress` after auction has ended.
-    /// @param receiverAddress Tokens will be assigned to this address if eligible.
-    function proxyClaimTokens(address receiverAddress)
-        public
-        atStage(Stages.AuctionEnded)
-        returns (bool)
-    {
-        // Waiting period after the end of the auction, before anyone can claim tokens
-        // Ensures enough time to check if auction was finalized correctly
-        // before users start transacting tokens
-        require(now > finalizedTime + TOKEN_CLAIM_WAITING_PERIOD);
-        require(receiverAddress != 0x0);
-
-        if (bids[receiverAddress] == 0) {
-            return false;
-        }
-
-        uint num = (tokenMultiplier * bids[receiverAddress]) / finalPrice;
-
-        // Due to finalPrice floor rounding, the number of assigned tokens may be higher
-        // than expected. Therefore, the number of remaining unassigned auction tokens
-        // may be smaller than the number of tokens needed for the last claimTokens call
-        uint auctionTokensBalance = token.balanceOf(address(this));
-        if (num > auctionTokensBalance) {
-            num = auctionTokensBalance;
-        }
-
-        // Update the total amount of funds for which tokens have been claimed
-        fundsClaimed += bids[receiverAddress];
-
-        // Set receiver bid to 0 before assigning tokens
-        bids[receiverAddress] = 0;
-
-        require(token.transfer(receiverAddress, num));
-
-        ClaimedTokens(receiverAddress, num);
-
-        // After the last tokens are claimed, we change the auction stage
-        // Due to the above logic, rounding errors will not be an issue
-        if (fundsClaimed == receivedWei) {
-            stage = Stages.TokensDistributed;
-            TokensDistributed();
-        }
-
-        assert(token.balanceOf(receiverAddress) >= num);
-        assert(bids[receiverAddress] == 0);
-        return true;
-    }
-
-    /// @notice Get the XBET price in WEI during the auction, at the time of
-    /// calling this function. Returns `0` if auction has ended.
-    /// Returns `startPrice` before auction has started.
-    /// @dev Calculates the current XBET token price in WEI.
-    /// @return Returns WEI per XBET (tokenMultiplier * Rei).
-    function price() public constant returns (uint) {
-        if (stage == Stages.AuctionEnded ||
-            stage == Stages.TokensDistributed) {
-            return finalPrice;
-        }
-        return calcTokenPrice();
-    }
-
-    /// @notice Get the missing funds needed to end the auction,
-    /// calculated at the current XBET price in WEI.
-    /// @dev The missing funds amount necessary to end the auction at the current XBET price in WEI.
-    /// @return Returns the missing funds amount in WEI.
-    function missingFundsToEndAuction() constant public returns (uint) {
-
-        uint requiredWei = tokensAuctioned * price() / tokenMultiplier;
-        if (requiredWei <= receivedWei) {
-            return 0;
-        }
-
-        return requiredWei - receivedWei;
-    }
-
-    /*
-     *  Private functions
-     */
-    /// @dev Calculates the token price (WEI / XBET) at the current timestamp.
-    /// For every new block the price decreases with priceDecreaseRate * numberOfNewBLocks
-    /// @return current price
-    function calcTokenPrice() constant private returns (uint) {
-        uint currentPrice;
-        if (stage == Stages.AuctionStarted) {
-            currentPrice = startPrice - priceDecreaseRate * (block.number - startBlock);
-        }else {
-            currentPrice = startPrice;
-        }
-
-        return currentPrice;
-    }
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
