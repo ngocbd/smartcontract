@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWalletFactory at 0x86ed663b4cacda7f1bf73532cb64da007b18d99b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWalletFactory at 0x841f2869bdf55257f66a42e8b1c0eaa4c7733313
 */
 pragma solidity ^0.4.23;
 
@@ -25,32 +25,32 @@ contract ERC20 {
 // File: contracts/TimeLockedWallet.sol
 
 contract TimeLockedWallet {
-
-    address public creator;
-    address public owner;
-    uint256 public unlockDate;
-    uint256 public createdAt;
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    constructor(
-        address _creator,
-        address _owner,
-        uint256 _unlockDate
-    ) public {
-        creator = _creator;
-        owner = _owner;
-        unlockDate = _unlockDate;
-        createdAt = now;
-    }
-
-    // Don't accept ETH.
-    function () public payable {
-        revert();
-    }
+                                                                                                                                            
+    address public creator;                                                                                                                 
+    address public owner;                                                                                                                   
+    uint256 public unlockDate;                                                                                                              
+    uint256 public createdAt;                                                                                                               
+                                                                                                                                            
+    modifier onlyOwner {                                                                                                                    
+        require(msg.sender == owner);                                                                                                       
+        _;                                                                                                                                  
+    }                                                                                                                                       
+                                                                                                                                            
+    constructor(                                                                                                                            
+        address _creator,                                                                                                                   
+        address _owner,                                                                                                                     
+        uint256 _unlockDate                                                                                                                 
+    ) public {                                                                                                                              
+        creator = _creator;                                                                                                                 
+        owner = _owner;                                                                                                                     
+        unlockDate = _unlockDate;                                                                                                           
+        createdAt = now;                                                                                                                    
+    }                                                                                                                                       
+                                                                                                                                            
+    // Don't accept ETH.                                                                                                                    
+    function () public payable {                                                                                                            
+        revert();                                                                                                                           
+    }                                                                                                                                       
 
     // callable by owner only, after specified time, only for Tokens implementing ERC20
     function withdrawTokens(address _tokenContract) onlyOwner public {
@@ -67,7 +67,6 @@ contract TimeLockedWallet {
     }
 
     event Received(address from, uint256 amount);
-    event Withdrew(address to, uint256 amount);
     event WithdrewTokens(address tokenContract, address to, uint256 amount);
 }
 
@@ -100,9 +99,6 @@ contract TimeLockedWalletFactory {
         if(msg.sender != _owner){
             wallets[_owner].push(wallet);
         }
-
-        // Send ether from this transaction to the created contract.
-        wallet.transfer(msg.value);
 
         // Emit event.
         emit Created(wallet, msg.sender, _owner, now, _unlockDate, msg.value);
