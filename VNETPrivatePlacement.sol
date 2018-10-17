@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VNETPrivatePlacement at 0x36790877badeb0ab1306dffe6c97a099d96a4f6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VNETPrivatePlacement at 0x01c8bb9205fec775deb38534ea50a84c9b30a84b
 */
 pragma solidity ^0.4.21;
 
@@ -8,9 +8,6 @@ pragma solidity ^0.4.21;
  * VNET Token Private Placement Contract
  * 
  * Send ETH here, and you will receive the VNET Tokens immediately.
- * The minimum ivnestment limit is 300 ETH, and the accumulated maximum limit is 1000 ETH.
- * 
- * RATE: 1 ETH = 200,000 VNET
  * 
  * https://vision.network
  */
@@ -141,16 +138,19 @@ contract VNETPrivatePlacement is Ownable {
 
     ERC20Basic public vnetToken;
 
-    uint256 public rate = 200000;
     string public description;
-    uint256 public etherMinimum = 300;
-    uint256 public etherMaximum = 1000;
+    uint256 public rate;
+    uint256 public etherMinimum;
+    uint256 public etherMaximum;
 
     /**
      * @dev Constructor
      */
-    constructor(ERC20Basic _vnetToken, string _description) public {
+    constructor(ERC20Basic _vnetToken, string _description, uint256 _rate, uint256 _min, uint256 _max) public {
         vnetToken = _vnetToken;
+        rate = _rate;
+        etherMinimum = _min;
+        etherMaximum = _max;
         description = _description;
     }
 
@@ -197,8 +197,18 @@ contract VNETPrivatePlacement is Ownable {
      * 
      * @param _description string
      */
-    function setDescription(string _description) external onlyOwner returns (bool) {
+    function setDescription(string _description) external onlyOwner {
         description = _description;
-        return true;
+    }
+    
+    /**
+     * @dev Set Rate
+     * 
+     * @param _rate uint256
+     */
+    function setRate(uint256 _rate, uint256 _min, uint256 _max) external onlyOwner {
+        rate = _rate;
+        etherMinimum = _min;
+        etherMaximum = _max;
     }
 }
