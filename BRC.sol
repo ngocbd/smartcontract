@@ -1,116 +1,198 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRC at 0x3097c003296861e48043a1c4921b021f0feb81d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRC at 0x21ab6c9fac80c59d401b37cb43f81ea9dde7fe34
 */
-pragma solidity ^0.4.18;
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-}
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+pragma solidity ^0.4.8;
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-contract Owned {
-    address public owner;
-    address public newOwner;
+   
 
-    event OwnershipTransferred(address indexed _from, address indexed _to);
+interface ERC20Interface {
 
-    function Owned() public {
-        owner = msg.sender;
-    }
+   
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+    function totalSupply() constant returns (uint256 totalSupply) ;
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
-contract BRC is ERC20Interface, Owned, SafeMath {
-    string public symbol;
-    string public  name;
-    uint8 public decimals;
-    uint public _totalSupply;
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-    function BRC() public {
-        symbol = "BRC";
-        name = "Bright Coin";
-        decimals = 18;
-        _totalSupply = 860000000000000000000000000;
-        balances[0x02DEA85397EF756307F9751693872d54d0B75A2c] = _totalSupply;
-        Transfer(address(0), 0x02DEA85397EF756307F9751693872d54d0B75A2c, _totalSupply);
-    }
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
-    }
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-    function () public payable {
-        revert();
-    }
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
-    }
-}
+       
+
+    function balanceOf(address _owner) constant returns (uint256 balance);
+
+       
+
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+       
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+
+       
+
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+       
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+       
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+       
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+       
+
+ }
+
+     
+
+ contract BRC is ERC20Interface {
+
+      string public constant symbol = "BRC";
+
+      string public constant name = "Baer Chain";
+
+      uint8 public constant decimals = 8;
+
+      uint256 _totalSupply = 58000000000000000;
+
+    
+
+      address public owner;
+
+      
+
+      mapping(address => uint256) balances;
+
+      
+
+    
+
+      mapping(address => mapping (address => uint256)) allowed;
+
+      
+
+         
+
+      modifier onlyOwner() {
+
+          if (msg.sender != owner) {
+
+              throw;
+
+          }
+
+          _;
+
+      }
+
+      
+
+      function BRC() {
+
+          owner = msg.sender;
+
+          balances[owner] = _totalSupply;
+
+      }
+
+      
+
+      function totalSupply() constant returns (uint256 totalSupply) {
+
+          totalSupply = _totalSupply;
+
+      }
+
+      
+
+      function balanceOf(address _owner) constant returns (uint256 balance) {
+
+          return balances[_owner];
+
+      }
+
+      
+
+      function transfer(address _to, uint256 _amount) returns (bool success) {
+
+          if (balances[msg.sender] >= _amount 
+
+              && _amount > 0
+
+              && balances[_to] + _amount > balances[_to]) {
+
+              balances[msg.sender] -= _amount;
+
+              balances[_to] += _amount;
+
+              Transfer(msg.sender, _to, _amount);
+
+              return true;
+
+          } else {
+
+              return false;
+
+          }
+
+      }
+
+      
+
+      function transferFrom(
+
+          address _from,
+
+          address _to,
+
+          uint256 _amount
+
+     ) returns (bool success) {
+
+         if (balances[_from] >= _amount
+
+             && allowed[_from][msg.sender] >= _amount
+
+             && _amount > 0
+
+             && balances[_to] + _amount > balances[_to]) {
+
+             balances[_from] -= _amount;
+
+             allowed[_from][msg.sender] -= _amount;
+
+             balances[_to] += _amount;
+
+             Transfer(_from, _to, _amount);
+
+             return true;
+
+         } else {
+
+             return false;
+
+         }
+
+     }
+
+   
+
+     function approve(address _spender, uint256 _amount) returns (bool success) {
+
+         allowed[msg.sender][_spender] = _amount;
+
+         Approval(msg.sender, _spender, _amount);
+
+         return true;
+
+     }
+
+     
+
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+
+         return allowed[_owner][_spender];
+
+     }
+
+ }
