@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0x63b2513304a5f8b9c4dbc1bc980a185255e92703
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0x09029eb1f8827465c64146465e7d07197f263f50
 */
 pragma solidity ^0.4.21;
 // The GNU General Public License v3
@@ -128,7 +128,7 @@ contract Redenom is ERC20Interface, Owned{
    
 
     //Funds
-    uint public total_fund; // All funds for all epochs 1 000 000 NOM
+    uint public total_fund; // All funds for 100 epochs 100 000 000 NOM
     uint public epoch_fund; // All funds for current epoch 100 000 NOM
     uint public team_fund; // Team Fund 10% of all funds paid
     uint public redenom_dao_fund; // DAO Fund 30% of all funds paid
@@ -136,7 +136,8 @@ contract Redenom is ERC20Interface, Owned{
     struct Account {
         uint balance;
         uint lastRound; // Last round dividens paid
-        uint lastVotedBallotId; // Last epoch user voted
+        uint lastEpoch; // Last round dividens paid
+        uint lastVotedBallotId; // Last ballot user voted
         uint bitmask;
             // 2 - got 0.55... for phone verif.
             // 4 - got 1 for KYC
@@ -160,7 +161,7 @@ contract Redenom is ERC20Interface, Owned{
         name = "Redenom_test";
         _totalSupply = 0; // total NOM's in the game 
 
-        total_fund = 1000000 * 10**decimals; // 1 000 000.00000000, 1Mt
+        total_fund = 10000000 * 10**decimals; // 100 000 00.00000000, 1Mt
         epoch_fund = 100000 * 10**decimals; // 100 000.00000000, 100 Kt
         total_fund = total_fund.sub(epoch_fund); // Taking 100 Kt from total to epoch_fund
 
@@ -172,12 +173,10 @@ contract Redenom is ERC20Interface, Owned{
     // New epoch can be started if:
     // - Current round is 9
     // - Curen epoch < 10
-    // - Voting is over
     function StartNewEpoch() public onlyAdmin returns(bool succ){
         require(frozen == false); 
         require(round == 9);
-        require(epoch < 10);
-        require(votingActive == false); 
+        require(epoch < 100);
 
         dec = [0,0,0,0,0,0,0,0];  
         round = 1;
@@ -195,14 +194,6 @@ contract Redenom is ERC20Interface, Owned{
 
 
     ///////////////////////////////////////////B A L L O T////////////////////////////////////////////
-/*
-struct Account {
-    uint balance;
-    uint lastRound; // Last round dividens paid
-    uint lastVotedBallotId; // Last epoch user voted
-    uint[] parts; // Users parts in voted projects 
-    uint bitmask;
-*/
 
     //Is voting active?
     bool public votingActive = false;
@@ -251,6 +242,7 @@ struct Account {
 
     // Add prop. with id: _id
     function addProject(uint _id) public onlyAdmin {
+        require(votingActive == true);
         projects.push(Project({
             id: _id,
             votesWeight: 0,
@@ -422,8 +414,8 @@ struct Account {
 
         renewDec( accounts[to].balance, accounts[to].balance.add(fixedAmount) );
 
-        uint team_part = (fixedAmount/100)*10;
-        uint dao_part = (fixedAmount/100)*30;
+        uint team_part = (fixedAmount/100)*16;
+        uint dao_part = (fixedAmount/10)*6;
         uint total = fixedAmount.add(team_part).add(dao_part);
 
         epoch_fund = epoch_fund.sub(total);
@@ -524,7 +516,7 @@ struct Account {
         return true;
     }
     // Checks whether some bit is present in BM
-    function bitmask_check(address user, uint _bit) internal view returns (bool status){
+    function bitmask_check(address user, uint _bit) public view returns (bool status){
         bool flag;
         accounts[user].bitmask & _bit == 0 ? flag = false : flag = true;
         return flag;
@@ -580,6 +572,7 @@ struct Account {
             if(total_current==0){
                 current_toadd = [0,0,0,0,0,0,0,0,0]; 
                 round++;
+                emit Redenomination(round);
                 return round;
             }
 
@@ -617,6 +610,14 @@ struct Account {
         return round;
     }
 
+
+    function actual_balance(address user) public constant returns(uint actual_balance){
+        if(epoch > 1 && accounts[user].lastEpoch < epoch){
+            return (accounts[user].balance/100000000)*100000000;
+        }else{
+            return (accounts[user].balance/current_mul())*current_mul();
+        }
+    }
    
     // Refresh user acc
     // Pays dividends if any
@@ -624,6 +625,12 @@ struct Account {
         require(frozen == false); 
         require(round<=9);
         require(bitmask_check(account, 1024) == false); // banned == false
+
+        if(epoch > 1 && accounts[account].lastEpoch < epoch){
+            uint entire = accounts[account].balance/100000000;
+            accounts[account].balance = entire*100000000;
+            return accounts[account].balance;
+        }
 
         if(round > accounts[account].lastRound){
 
@@ -666,6 +673,11 @@ struct Account {
 
                 accounts[account].lastRound = round;
                 // Writting last round in wich user got dividends
+                if(accounts[account].lastEpoch != epoch){
+                    accounts[account].lastEpoch = epoch;
+                }
+
+
                 return accounts[account].balance;
                 // returns new balance
             }else{
@@ -682,6 +694,11 @@ struct Account {
 
                     accounts[account].lastRound = round;
                     // Writting last round in wich user got dividends
+                    if(accounts[account].lastEpoch != epoch){
+                        accounts[account].lastEpoch = epoch;
+                    }
+
+
                     return accounts[account].balance;
                     // returns new balance
                 }
