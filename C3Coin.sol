@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract C3Coin at 0xe91be998e94d9875e5dd3d97285e2b31999b1985
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract C3Coin at 0x16d9306c93a37ae3954efe211262ab6e7579acc0
 */
 pragma solidity ^0.4.24;
 
@@ -189,7 +189,7 @@ contract C3Coin is ERC223, Ownable {
     string public name = "C3coin";
     string public symbol = "CCC";
     uint8 public decimals = 18;
-    uint256 public totalSupply = 10e11 * 1e18;
+    uint256 public totalSupply = 10e10 * 1e18;
 
 
     constructor() public {
