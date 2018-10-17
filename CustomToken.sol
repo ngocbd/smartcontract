@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc5fc46b7ed05cce3ca31f09a35d76047ce190509
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x55e1866e2a8cda64eb02f598468c374fe6a705aa
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 500000000000000000000000000;
-        name = 'PowerChain';
-        symbol = 'PWRC';
+        totalSupply = 2200000000000000000000000000;
+        name = 'Egg22';
+        symbol = 'Egg22';
         decimals = 18;
-        balanceOf[0x812a610fee93816153e4f1429ffedd1d0da206f0] = totalSupply;
-        Transfer(address(0), 0x812a610fee93816153e4f1429ffedd1d0da206f0, totalSupply);
+        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
+        Transfer(address(0), 0xf588d792fa8a634162760482a7b61dd1ab99b1f1, totalSupply);
     }
 }
