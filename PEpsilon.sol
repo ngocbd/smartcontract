@@ -1,6 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEpsilon at 0xfd2ec9e1208bdbefbcc0bbe493922ec29b97d183
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PEpsilon at 0xecb8457a9ae61578540fc36a537f876ecb3c1277
 */
+pragma solidity ^0.4.24;
+
+
 /** @title PEpsilon
  *  @author Daniel Babbev
  *
@@ -177,7 +180,6 @@ contract PEpsilon {
     }
   }
 }
-
 
 /**
  *  @title Kleros
