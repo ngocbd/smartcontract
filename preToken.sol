@@ -1,169 +1,262 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preToken at 0x88a3e4f35d64aad41a6d4030ac9afe4356cb84fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreToken at 0xecb782b19be6e657ae2d88831dd98145a00d32d5
 */
-pragma solidity ^0.4.17;
+pragma solidity 0.4.24;
 
-//Based on OpenZeppelin's SafeMath
+/**
+* @title SafeMath
+* @dev Math operations with safety checks that throw on error
+*/
+
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b, "mul overflow");
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b > 0, "div by 0"); // Solidity automatically throws for div by 0 but require to emit reason
+        uint256 c = a / b;
+        // require(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a, "sub underflow");
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "add overflow");
+        return c;
+    }
+
+    function roundedDiv(uint a, uint b) internal pure returns (uint256) {
+        require(b > 0, "div by 0"); // Solidity automatically throws for div by 0 but require to emit reason
+        uint256 z = a / b;
+        if (a % b >= b / 2) {
+            z++;  // no need for safe add b/c it can happen only if we divided the input
+        }
+        return z;
+    }
 }
 
-//Presearch Token (PRE)
-contract preToken {
-  using SafeMath for uint256;
+/*
+    Generic contract to authorise calls to certain functions only from a given address.
+    The address authorised must be a contract (multisig or not, depending on the permission), except for local test
 
-  //Vanity settings
-  string public constant name = "Presearch";
-  string public constant symbol = "PRE";
-  uint8 public constant decimals = 18;
-  uint public totalSupply = 0;
+    deployment works as:
+           1. contract deployer account deploys contracts
+           2. constructor grants "PermissionGranter" permission to deployer account
+           3. deployer account executes initial setup (no multiSig)
+           4. deployer account grants PermissionGranter permission for the MultiSig contract
+                (e.g. StabilityBoardProxy or PreTokenProxy)
+           5. deployer account revokes its own PermissionGranter permission
+*/
 
-  //Maximum supply of tokens that can ever be created 1,000,000,000
-  uint256 public constant maxSupply = 1000000000e18;
+contract Restricted {
 
-  //Supply of tokens minted for presale distribution 250,000,000
-  uint256 public constant initialSupply = 250000000e18;
+    // NB: using bytes32 rather than the string type because it's cheaper gas-wise:
+    mapping (address => mapping (bytes32 => bool)) public permissions;
 
-  //Mappings
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
+    event PermissionGranted(address indexed agent, bytes32 grantedPermission);
+    event PermissionRevoked(address indexed agent, bytes32 revokedPermission);
 
-  //Contract owner address for additional permission
-  address public owner;
-
-  //CrowdsaleAddress to allow for token distribution to presale purchasers before the unlockDate
-  address public crowdsaleAddress;
-
-  //Allow trades at November 30th 2017 00:00:00 AM EST
-  uint public unlockDate = 1512018000;
-
-  //Events
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  //Prevent short address attack
-  modifier onlyPayloadSize(uint size) {
-     assert(msg.data.length == size + 4);
-     _;
-   }
-
-  //Checks if now is before unlock date and the msg.sender is not the contract owner or the crowdsaleAddress
-  //Allows the owner or crowdsaleAddress to transfer before the unlock date to facilitate distribution
-  modifier tradable {
-      if (now < unlockDate && msg.sender != owner && msg.sender != crowdsaleAddress) revert();
-      _;
+    modifier restrict(bytes32 requiredPermission) {
+        require(permissions[msg.sender][requiredPermission], "msg.sender must have permission");
+        _;
     }
 
-  //Checks if msg.sender is the contract owner
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  //Sends the initial supply of 250,000,000 tokens to the creator, sets the totalSupply, sets the owner and crowdsaleAddress to the deployer
-  function preToken() public {
-    balances[msg.sender] = initialSupply;
-    totalSupply = initialSupply;
-    owner = msg.sender;
-    crowdsaleAddress = msg.sender;
-  }
-
-  //balances
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-   }
-
-  //ERC-20 transfer with SafeMath
-  function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) tradable returns (bool success) {
-    require(_to != address(0));
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  //ERC-20 transferFrom with SafeMath
-  function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(2 * 32) tradable returns (bool success) {
-    require(_from != address(0) && _to != address(0));
-    uint256 _allowance = allowed[_from][msg.sender];
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  //ERC-20 approve spender
-  function approve(address _spender, uint256 _value) public returns (bool success) {
-    require(_spender != address(0));
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  //ERC-20 allowance
-  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  //Allows only the contract owner to transfer ownership to someone else
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  //Allows only the owner to create new tokens as long as the number of tokens attempting to be minted
-  //plus the current totalSupply is less than or equal to 1,000,000,000
-  //increases the totalSupply by the amount of tokens minted
-  function mint(uint256 _amount) public onlyOwner {
-    if (totalSupply.add(_amount) <= maxSupply){
-      balances[msg.sender] = balances[msg.sender].add(_amount);
-      totalSupply = totalSupply.add(_amount);
-    }else{
-      revert();
+    constructor(address permissionGranterContract) public {
+        require(permissionGranterContract != address(0), "permissionGranterContract must be set");
+        permissions[permissionGranterContract]["PermissionGranter"] = true;
+        emit PermissionGranted(permissionGranterContract, "PermissionGranter");
     }
-  }
 
-  //Allows the contract owner to burn (destroy) their own tokens
-  //Decreases the totalSupply so that tokens could be minted again at later date
-  function burn(uint256 _amount) public onlyOwner {
-    require(balances[msg.sender] >= _amount);
-    balances[msg.sender] = balances[msg.sender].sub(_amount);
-    totalSupply = totalSupply.sub(_amount);
-  }
+    function grantPermission(address agent, bytes32 requiredPermission) public {
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
+        permissions[agent][requiredPermission] = true;
+        emit PermissionGranted(agent, requiredPermission);
+    }
 
-  //Allows the owner to set the crowdsaleAddress
-  function setCrowdsaleAddress(address newCrowdsaleAddress) public onlyOwner {
-    require(newCrowdsaleAddress != address(0));
-    crowdsaleAddress = newCrowdsaleAddress;
-  }
+    function grantMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
+        uint256 length = requiredPermissions.length;
+        for (uint256 i = 0; i < length; i++) {
+            grantPermission(agent, requiredPermissions[i]);
+        }
+    }
 
-  //Allow the owner to update the unlockDate to allow trading sooner, but not later than the original unlockDate
-  function updateUnlockDate(uint _newDate) public onlyOwner {
-    require (_newDate <= 1512018000);
-      unlockDate=_newDate;
-  }
+    function revokePermission(address agent, bytes32 requiredPermission) public {
+        require(permissions[msg.sender]["PermissionGranter"],
+            "msg.sender must have PermissionGranter permission");
+        permissions[agent][requiredPermission] = false;
+        emit PermissionRevoked(agent, requiredPermission);
+    }
 
+    function revokeMultiplePermissions(address agent, bytes32[] requiredPermissions) public {
+        uint256 length = requiredPermissions.length;
+        for (uint256 i = 0; i < length; i++) {
+            revokePermission(agent, requiredPermissions[i]);
+        }
+    }
+
+}
+
+
+/* Augmint pretoken contract to record agreements and tokens allocated based on the agreement.
+
+    Important: this is NOT an ERC20 token!
+
+    PreTokens are non-fungible: agreements can have different conditions (valuationCap and discount)
+        and pretokens are not tradable.
+
+    Ownership can be transferred if owner wants to change wallet but the whole agreement and
+        the total pretoken amount is moved to a new account
+
+    PreTokenSigner can (via MultiSig):
+      - add agreements and issue pretokens to an agreement
+      - change owner of any agreement to handle if an owner lost a private keys
+      - burn pretokens from any agreement to fix potential erroneous issuance
+    These are known compromises on trustlessness hence all these tokens distributed based on signed agreements and
+        preTokens are issued only to a closed group of contributors / team members.
+    If despite these something goes wrong then as a last resort a new pretoken contract can be recreated from agreements.
+
+    Some ERC20 functions are implemented so agreement owners can see their balances and use transfer in standard wallets.
+    Restrictions:
+      - only total balance can be transfered - effectively ERC20 transfer used to transfer agreement ownership
+      - only agreement holders can transfer
+        (i.e. can't transfer 0 amount if have no agreement to avoid polluting logs with Transfer events)
+      - transfer is only allowed to accounts without an agreement yet
+      - no approval and transferFrom ERC20 functions
+ */
+
+contract PreToken is Restricted {
+    using SafeMath for uint256;
+
+    uint public constant CHUNK_SIZE = 100;
+
+    string constant public name = "Augmint pretokens"; // solhint-disable-line const-name-snakecase
+    string constant public symbol = "APRE"; // solhint-disable-line const-name-snakecase
+    uint8 constant public decimals = 0; // solhint-disable-line const-name-snakecase
+
+    uint public totalSupply;
+
+    struct Agreement {
+        address owner;
+        uint balance;
+        uint32 discount; //  discountRate in parts per million , ie. 10,000 = 1%
+        uint32 valuationCap; // in USD (no decimals)
+    }
+
+    /* Agreement hash is the SHA-2 (SHA-256) hash of signed agreement document.
+         To generate:
+            OSX: shasum -a 256 agreement.pdf
+            Windows: certUtil -hashfile agreement.pdf SHA256 */
+    mapping(address => bytes32) public agreementOwners; // to lookup agrement by owner
+    mapping(bytes32 => Agreement) public agreements;
+
+    bytes32[] public allAgreements; // all agreements to able to iterate over
+
+    event Transfer(address indexed from, address indexed to, uint amount);
+
+    event NewAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap);
+
+    constructor(address permissionGranterContract) public Restricted(permissionGranterContract) {} // solhint-disable-line no-empty-blocks
+
+    function addAgreement(address owner, bytes32 agreementHash, uint32 discount, uint32 valuationCap)
+    external restrict("PreTokenSigner") {
+        require(owner != address(0), "owner must not be 0x0");
+        require(agreementOwners[owner] == 0x0, "owner must not have an aggrement yet");
+        require(agreementHash != 0x0, "agreementHash must not be 0x0");
+        require(discount > 0, "discount must be > 0");
+        require(agreements[agreementHash].discount == 0, "agreement must not exist yet");
+
+        agreements[agreementHash] = Agreement(owner, 0, discount, valuationCap);
+        agreementOwners[owner] = agreementHash;
+        allAgreements.push(agreementHash);
+
+        emit NewAgreement(owner, agreementHash, discount, valuationCap);
+    }
+
+    function issueTo(bytes32 agreementHash, uint amount) external restrict("PreTokenSigner") {
+        Agreement storage agreement = agreements[agreementHash];
+        require(agreement.discount > 0, "agreement must exist");
+
+        agreement.balance = agreement.balance.add(amount);
+        totalSupply = totalSupply.add(amount);
+
+        emit Transfer(0x0, agreement.owner, amount);
+    }
+
+    /* Restricted function to allow pretoken signers to fix incorrect issuance */
+    function burnFrom(bytes32 agreementHash, uint amount)
+    public restrict("PreTokenSigner") returns (bool) {
+        Agreement storage agreement = agreements[agreementHash];
+        require(agreement.discount > 0, "agreement must exist"); // this is redundant b/c of next requires but be explicit
+        require(amount > 0, "burn amount must be > 0");
+        require(agreement.balance >= amount, "must not burn more than balance"); // .sub would revert anyways but emit reason
+
+        agreement.balance = agreement.balance.sub(amount);
+        totalSupply = totalSupply.sub(amount);
+
+        emit Transfer(agreement.owner, 0x0, amount);
+        return true;
+    }
+
+    function balanceOf(address owner) public view returns (uint) {
+        return agreements[agreementOwners[owner]].balance;
+    }
+
+    /* function to transfer agreement ownership to other wallet by owner
+        it's in ERC20 form so owners can use standard ERC20 wallet just need to pass full balance as value */
+    function transfer(address to, uint amount) public returns (bool) { // solhint-disable-line no-simple-event-func-name
+        require(amount == agreements[agreementOwners[msg.sender]].balance, "must transfer full balance");
+        _transfer(msg.sender, to);
+        return true;
+    }
+
+    /* Restricted function to allow pretoken signers to fix if pretoken owner lost keys */
+    function transferAgreement(bytes32 agreementHash, address to)
+    public restrict("PreTokenSigner") returns (bool) {
+        _transfer(agreements[agreementHash].owner, to);
+        return true;
+    }
+
+    /* private function used by transferAgreement & transfer */
+    function _transfer(address from, address to) private {
+        Agreement storage agreement = agreements[agreementOwners[from]];
+        require(agreementOwners[from] != 0x0, "from agreement must exists");
+        require(agreementOwners[to] == 0, "to must not have an agreement");
+        require(to != 0x0, "must not transfer to 0x0");
+
+        agreement.owner = to;
+
+        agreementOwners[to] = agreementOwners[from];
+        agreementOwners[from] = 0x0;
+
+        emit Transfer(from, to, agreement.balance);
+    }
+
+    function getAgreementsCount() external view returns (uint agreementsCount) {
+        return allAgreements.length;
+    }
+
+    // UI helper fx - Returns all agreements from offset as
+    // [index in allAgreements, account address as uint, balance, agreementHash as uint,
+    //          discount as uint, valuationCap as uint ]
+    function getAllAgreements(uint offset) external view returns(uint[6][CHUNK_SIZE] agreementsResult) {
+
+        for (uint8 i = 0; i < CHUNK_SIZE && i + offset < allAgreements.length; i++) {
+            bytes32 agreementHash = allAgreements[i + offset];
+            Agreement storage agreement = agreements[agreementHash];
+
+            agreementsResult[i] = [ i + offset, uint(agreement.owner), agreement.balance,
+                uint(agreementHash), uint(agreement.discount), uint(agreement.valuationCap)];
+        }
+    }
 }
