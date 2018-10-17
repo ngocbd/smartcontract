@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0xf2be263ed9be57bcafbd625f156ca9b639cd640c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0xdf59c8ba19b4d1437d80836b45f1319d9a429eed
 */
-pragma solidity ^0.4.24;
+/*
+ * IZIChain (https://izichain.network/)
+ * Copyright (C) 2018 HVA
+ */
+pragma solidity ^0.4.23;
 
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
@@ -421,14 +425,14 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
 
 
 contract Consts {
-    uint public constant TOKEN_DECIMALS = 0;
-    uint8 public constant TOKEN_DECIMALS_UINT8 = 0;
+    uint public constant TOKEN_DECIMALS = 4;
+    uint8 public constant TOKEN_DECIMALS_UINT8 = 4;
     uint public constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string public constant TOKEN_NAME = "MissYou";
-    string public constant TOKEN_SYMBOL = "MIS";
+    string public constant TOKEN_NAME = "IZIChain";
+    string public constant TOKEN_SYMBOL = "IZI";
     bool public constant PAUSED = false;
-    address public constant TARGET_USER = 0x210d60d0ec127f0fff477a1b1b9424bb1c32876d;
+    address public constant TARGET_USER = 0x61cce7ffbfd929628020470070382fe3de3d7f1a;
     
     bool public constant CONTINUE_MINTING = false;
 }
@@ -475,8 +479,8 @@ contract MainToken is Consts, FreezableMintableToken, BurnableToken, Pausable
         }
 
         
-        address[1] memory addresses = [address(0x210d60d0ec127f0fff477a1b1b9424bb1c32876d)];
-        uint[1] memory amounts = [uint(690000000000)];
+        address[1] memory addresses = [address(0x61cce7ffbfd929628020470070382fe3de3d7f1a)];
+        uint[1] memory amounts = [uint(12500000000000)];
         uint64[1] memory freezes = [uint64(0)];
 
         for (uint i = 0; i < addresses.length; i++) {
