@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Anno at 0x725baee3c9f194a467bf8260146bea95d0efabf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Anno at 0x0f0901ce7fd93b1644dc746eb2916c86a0dc0f8b
 */
 pragma solidity ^0.4.18;
 
@@ -10,7 +10,7 @@ pragma solidity ^0.4.18;
 //Anno Consensus Medal: Veni, Vidi, Vici
 // 
 // Symbol      : CPLD
-// Name        : Anno Consensus
+// Name        : Anno Consensus Medal
 // Total supply: 1000000
 // Decimals    : 0
 // 
@@ -143,8 +143,8 @@ contract AnnoMedal is ERC20Interface, Administration, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function AnnoMedal() public {
-        medalSymbol = "CPLD";
-        medalName = "Anno Medal";
+        medalSymbol = "ANCM";
+        medalName = "Anno Consensus Medal";
         medalDecimals = 0;
         _medalTotalSupply = 1000000;
         medalBalances[adminAddress] = _medalTotalSupply;
@@ -319,11 +319,11 @@ contract AnnoToken is AnnoMedal {
     // Constructor
     // ------------------------------------------------------------------------
     function AnnoToken() public {
-        symbol = "anno";
-        name = "Anno Token";
+        symbol = "ANOT";
+        name = "Anno Consensus Token";
         decimals = 18;
         _totalSupply = 1000000000000000000000000000;
-        minePool = 60000000000000000000000000000;
+        minePool = 600000000000000000000000000;
         balances[adminAddress] = _totalSupply - minePool;
         Transfer(address(0), adminAddress, _totalSupply);
     }
