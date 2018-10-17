@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrandTheftFOMO at 0x0bc50963b8eccb87b904e2fdfa209a30b1ca0ed0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrandTheftFOMO at 0x77ad7abcaf4013d766f359c3fb2c634da18a4198
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract GrandTheftFOMO is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xC3647e8a2a7E2458ADc5f53b14BBEE1DAe1d7744);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x9C190ea8957879b758B4e5b1FcCd400476736B1E);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -1187,7 +1187,7 @@ contract GrandTheftFOMO is modularShort {
                 plyr_[_pID].laff = _laff;
 
             // set the new player bool to true
-            _eventData_.compressedData = _eventData_.compressedData + 0;
+            _eventData_.compressedData = _eventData_.compressedData + 1;
         }
         return (_eventData_);
     }
