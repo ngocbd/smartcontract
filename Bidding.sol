@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0xf6a1e68e9ff6589b19981c4716f32b38ec8cc3ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0xb4910fe410240d2b79c557250adc767a9bc930c1
 */
 pragma solidity ^0.4.21;
 
@@ -160,7 +160,7 @@ contract Bidding is Pausable
                 _highestBidder[j] = auctions[i].highestBidder;
                 _auctionIndex[j] = i;
                 j++;
-                if (j >= 5)
+                if (j > 5)
                 {
                     break;
                 }
