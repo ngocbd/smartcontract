@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENC at 0x57f432615a31f96528cba0427aaf1e6e61da0668
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENC at 0x090614a173a591b2963751167d7d9e72ca5bb0ed
 */
 pragma solidity ^0.4.18;
 
@@ -26,7 +26,7 @@ contract ENC is ERC20Interface {
     string public constant symbol = "ENC";
     string public constant name = "Enetrix Coin";
 
-    uint256 public _totalSupply = 10 ** 14 / 2; // total supply is 10^14 unit, equivalent to 10^9 ENC
+    uint256 public _totalSupply = 5 * 10 * 14; // total supply is 10^14 unit, equivalent to 10^9 ENC
 
     // Owner of this contract
     address public owner;
