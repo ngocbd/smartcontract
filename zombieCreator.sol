@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieCreator at 0xe72fcb1215a5c677739af80f102c5d7430b5fadb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieCreator at 0xda9bdf8ad69775c1d3851b8b67fa754a5a07b2f5
 */
 pragma solidity ^0.4.19;
 
@@ -115,7 +115,7 @@ contract zombieCreator is Ownable {
   uint createRandomZombie_ZOBToken_goldpack = 400 * 10 ** 18;
   
   zombieMain c = zombieMain(0x58fd762F76D57C6fC2a480F6d26c1D03175AD64F);
-  zombieToken t = zombieToken(0x83B8C8A08938B878017fDF0Ec0A689313F75739D);
+  zombieToken t = zombieToken(0x2Bb48FE71ba5f73Ab1c2B9775cfe638400110d34);
   
   uint public FreeZombieCount = 999999;
 
@@ -203,8 +203,8 @@ contract zombieCreator is Ownable {
     uint8 star = 1;
 
     if(ran>=90){
-      roletype = 2;
-      star = 4;
+      roletype = 4;
+      star = 2;
     } else {
       roletype = uint(keccak256(msg.sender ,block.blockhash(block.number-1), block.coinbase, now, block.difficulty)) % 3 + 1;
     }
