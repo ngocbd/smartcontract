@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xe8f089887bab0af363426af917d54cd2ba0be767
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5159acf37834231d77c6dd6f76a776360d885f22
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.20;
 
 contract owned {
     address public owner;
@@ -205,6 +205,30 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
+        
+        // LOCK COINS
+        uint start = 1532944800;
+        uint256 DSTtotalAmount = totalSupply;
+        address teamaccount = 0xFF7B4596cEF5dC7D15fBcFA9AA0C1516125399af;
+
+        uint256 amount = _value;
+        address sender = _from;
+        uint256 balance = balanceOf[_from];
+
+        if(teamaccount == sender){
+            if (now < start + 365 * 1 days) {
+                require((balance - amount) >= DSTtotalAmount/10 * 3/4);
+
+            } else if (now < start + (2*365+1) * 1 days){
+                require((balance - amount) >= DSTtotalAmount/10 * 2/4);
+
+            }else if (now < start + (3*365+1) * 1 days){
+                require((balance - amount) >= DSTtotalAmount/10 * 1/4);
+
+            }
+        }
+
+
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         emit Transfer(_from, _to, _value);
@@ -251,3 +275,5 @@ contract MyAdvancedToken is owned, TokenERC20 {
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
+
+//contract MAT is MyAdvancedToken(1500000000, "MAT", "MAT") {}
