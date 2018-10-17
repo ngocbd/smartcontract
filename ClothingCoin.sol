@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClothingCoin at 0xb35566fdff36aac84450c198348a33d0c719ad61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClothingCoin at 0x293491389a6fce1fc984824c70195e65bbe4f630
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.4;
 
 contract Token {
 
@@ -108,13 +108,13 @@ contract ClothingCoin is StandardToken { // CHANGE THIS. Update the contract nam
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function ClothingCoin() {
-        balances[0xF62bA7e5aB7F34653C4Ff34DB3108fD2B99F9Fa0] = 300000000 * 1000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        balances[0x797FF91586d7b35899Ce55ACC894024F461b7fb6] = 300000000 * 1000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 300000000 * 1000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "ClothingCoin1";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "ClothingCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "CC1";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "CC";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 1800;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = 0xF62bA7e5aB7F34653C4Ff34DB3108fD2B99F9Fa0;                                    // The owner of the contract gets ETH
+        fundsWallet = 0x797FF91586d7b35899Ce55ACC894024F461b7fb6;                                    // The owner of the contract gets ETH
     }
 
     function() payable{
