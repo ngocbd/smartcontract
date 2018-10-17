@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x51109152d0335fa841443fd78ba678b0cf276ed7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x020713e9d9150720c1a507205db0495423ae3eb5
 */
 pragma solidity ^0.4.18;
 
@@ -17,10 +17,10 @@ contract Crowdsale {
     uint public price;
     token public tokenReward; 
     mapping(address => uint256) public balanceOf;
-    
+    bool fundingGoalReached = false; 
     bool crowdsaleClosed = false; 
     
-   
+    event GoalReached(address recipient, uint totalAmountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
 
     /**
@@ -30,13 +30,13 @@ contract Crowdsale {
      */
     function Crowdsale(
         address ifSuccessfulSendTo,
-       
+        uint fundingGoalInEthers,
         uint durationInMinutes,
         uint etherCostOfEachToken,
         address addressOfTokenUsedAsReward
     ) {
         beneficiary = ifSuccessfulSendTo;
-       
+        fundingGoal = fundingGoalInEthers * 1 ether;
         deadline = now + durationInMinutes * 1 minutes;
         price = etherCostOfEachToken * 1 ether;
         tokenReward = token(addressOfTokenUsedAsReward); 
