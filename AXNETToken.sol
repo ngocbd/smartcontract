@@ -1,17 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AXNETToken at 0x41dc0d29ea75f603ad725b6b26fba39a477ac796
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AXNETToken at 0x304281f3d1023a2039ea930c65f8f721d7c746c8
 */
 pragma solidity ^0.4.18;
 
 
 // ----------------------------------------------------------------------------
-
-// AXNET Token contract
+// The AXNET Token is the native currency for the AXNET Ecosystem of products
+// AXN is a Utility Token and is being distributed AS-IS
+// Visit https://ax.net/token-terms/ for full details. Thank you
+//
+//
+// AXNET Token Contract
 //
 // Symbol      : AXN
-// Name        : AXNET Token
-// Total supply: 3,000,000,000.000000000000000000
+// Name        : AXNET
+// Total supply: 1,000,000,000.000000000000000000
 // Decimals    : 18
+// Website     : https://ax.net
+// Company     : Asset Exchange Network (AXNET OÜ)
+//
 // ----------------------------------------------------------------------------
 
 
@@ -158,11 +165,11 @@ contract AXNETToken is ERC20Interface, Owned {
 
         symbol = "AXN";
 
-        name = "AXNET Token";
+        name = "AXNET";
 
         decimals = 18;
 
-        _totalSupply = 3000000000 * 10**uint(decimals);
+        _totalSupply = 1000000000 * 10**uint(decimals);
 
         balances[owner] = _totalSupply;
 
