@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DUnlimited at 0x39ffccecc551f35f8dfcb52c8c01060919aed1ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DUnlimited at 0x783106bac89242fda0a34425793767b374680c67
 */
 pragma solidity ^0.4.24;
 
@@ -1367,8 +1367,10 @@ contract FoMo3DUnlimited is modularShort {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 2% out to community rewards
+        // pay 3% out to community rewards
+        uint256 _p1 = _eth / 100; //1%
         uint256 _com = _eth / 50;  //2%
+        _com = _com.add(_p1); //1 + 2 = 3
 
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
