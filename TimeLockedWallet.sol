@@ -1,92 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWallet at 0x217edc621b3c8f70e55286f56dc75eb70326ec16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWallet at 0x4bf9e798cc40b6ccce801dec622af66a653e9f11
 */
 pragma solidity ^0.4.24;
 
+contract Ownable {
+	event OwnershipRenounced(address indexed previousOwner); 
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-/**
- * @title ERC20
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint256 public totalSupply;
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
 
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
+	modifier notOwner(address _addr) {
+		require(_addr != owner);
+		_;
+	}
 
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+	address public owner;
+
+	constructor() 
+		public 
+	{
+		owner = msg.sender;
+	}
+
+	function renounceOwnership()
+		external
+		onlyOwner 
+	{
+		emit OwnershipRenounced(owner);
+		owner = address(0);
+	}
+
+	function transferOwnership(address _newOwner) 
+		external
+		onlyOwner
+		notOwner(_newOwner)
+	{
+		require(_newOwner != address(0));
+		emit OwnershipTransferred(owner, _newOwner);
+		owner = _newOwner;
+	}
 }
 
-contract TimeLockedWallet {
+contract TimeLockedWallet is Ownable {
+	uint256 public unlockTime;
 
-    address public creator;
-    address public owner;
-    uint public unlockDate;
-    uint public createdAt;
+	constructor(uint256 _unlockTime) 
+		public
+	{
+		unlockTime = _unlockTime;
+	}
 
-    event Received(address from, uint amount);
-    event Withdrew(address to, uint amount);
-    event WithdrewTokens(address tokenContract, address to, uint amount);
+	function()
+		public
+		payable
+	{
+	}
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+	function locked()
+		public
+		view
+		returns (bool)
+	{
+		return now <= unlockTime;
+	}
 
-    constructor (
-        address _owner,
-        uint _unlockDate
-    ) public {
-        creator = msg.sender;
-        owner = _owner;
-        unlockDate = _unlockDate;
-        createdAt = now;
-    }
-
-    // keep all the ether sent to this address
-    function() payable public { 
-        emit Received(msg.sender, msg.value);
-    }
-
-    // callable by owner only, after specified time
-    function withdraw() onlyOwner public {
-       require(now >= unlockDate);
-       //now send all the balance
-       uint256 balance = address(this).balance;
-       msg.sender.transfer(balance);
-       emit Withdrew(msg.sender, balance);
-    }
-
-    // callable by owner only, after specified time, only for Tokens implementing ERC20
-    function withdrawTokens(address _tokenContract) onlyOwner public {
-       require(now >= unlockDate);
-       ERC20 token = ERC20(_tokenContract);
-       //now send all the token balance
-       uint tokenBalance = token.balanceOf(this);
-       token.transfer(owner, tokenBalance);
-       emit WithdrewTokens(_tokenContract, msg.sender, tokenBalance);
-    }
-
-    function info() public view returns(address _creator, address _owner, uint _unlockDate, uint _now, uint _createdAt, uint _balance) {
-        return (creator, owner, unlockDate, now, createdAt, address(this).balance);
-    }
-    
-    function isLocked() public view returns(bool _isLocked) {
-        
-        return now < unlockDate;
-    }
-    
-    function tokenBalance(address _tokenContract) public view returns(uint _balance) {
-        
-        ERC20 token = ERC20(_tokenContract);
-       //now send all the token balance
-       uint balance = token.balanceOf(this);
-       return balance;
-    }
- 
-   
+	function claim()
+		external
+		onlyOwner
+	{
+		require(!locked());
+		selfdestruct(owner);
+	}	
 }
