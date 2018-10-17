@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x309748032600f3554776697a6a6610f61f568597
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xa5652e5a7b1e5ab8fb35b9ecfb0039b354a5e4a2
 */
 pragma solidity ^0.4.24;
 /*
@@ -45,7 +45,7 @@ contract PlayerBook {
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
 //=============================|================================================
-    uint256 public registrationFee_ = 10 finney;            // price to register a name
+    uint256 public registrationFee_ = 0;                    // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
     mapping(address => uint256) public gameIDs_;            // lokup a games ID
@@ -71,16 +71,40 @@ contract PlayerBook {
     {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
-            // PID's and names for referral codes. //?????PID???
-        plyr_[1].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;  //justo?????
+            // PID's and names for referral codes.
+        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 1;
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
 
-        pID_ = 1;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
+        plyr_[2].name = "mantso";
+        plyr_[2].names = 1;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
+        pIDxName_["mantso"] = 2;
+        plyrNames_[2]["mantso"] = true;
+        plyrNameList_[2][1] = "mantso";
+
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
+        plyr_[3].name = "sumpunk";
+        plyr_[3].names = 1;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
+        pIDxName_["sumpunk"] = 3;
+        plyrNames_[3]["sumpunk"] = true;
+        plyrNameList_[3][1] = "sumpunk";
+
+        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        plyr_[4].name = "inventor";
+        plyr_[4].names = 1;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
+        pIDxName_["inventor"] = 4;
+        plyrNames_[4]["inventor"] = true;
+        plyrNameList_[4][1] = "inventor";
+
+        pID_ = 4;
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -561,23 +585,23 @@ contract PlayerBook {
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
-            gID_++;
-            bytes32 _name = _gameNameStr.nameFilter();
-            gameIDs_[_gameAddress] = gID_;
-            gameNames_[_gameAddress] = _name;
-            games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
+        gID_++;
+        bytes32 _name = _gameNameStr.nameFilter();
+        gameIDs_[_gameAddress] = gID_;
+        gameNames_[_gameAddress] = _name;
+        games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
 
-            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+        games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+        games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+        games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
 
     function setRegistrationFee(uint256 _fee)
         onlyDevs()
         public
     {
-      registrationFee_ = _fee;
+        registrationFee_ = _fee;
     }
 
 }
