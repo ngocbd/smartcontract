@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xStaking at 0xeef0ee02d4ae5520e202038112ad7e5aa6187c2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xStaking at 0x8915a459057fdb6139355a23764f47eb853715bf
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 
 /**
@@ -27,14 +27,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -47,15 +51,30 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 
@@ -72,9 +91,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -169,11 +192,26 @@ contract Pausable is Ownable {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
+
+
+
+contract BntyControllerInterface {
+    function destroyTokensInBntyTokenContract(address _owner, uint _amount) public returns (bool);
+}
+
 
 
 
@@ -184,16 +222,14 @@ contract Bounty0xStaking is Ownable, Pausable {
     address public Bounty0xToken;
 
     mapping (address => uint) public balances;
+    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token 
 
-    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
 
+    event Deposit(address indexed depositor, uint amount, uint balance);
+    event Withdraw(address indexed depositor, uint amount, uint balance);
 
-    event Deposit(address depositor, uint amount, uint balance);
-    event Withdraw(address depositor, uint amount, uint balance);
-
-    event Stake(uint submissionId, address hunter, uint amount);
-
-    event StakeReleased(uint submissionId, address from, address to, uint amount);
+    event Stake(uint indexed submissionId, address hunter, uint amount);
+    event StakeReleased(uint indexed submissionId, address from, address to, uint amount);
 
 
     constructor(address _bounty0xToken) public {
@@ -213,7 +249,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
-
+        
         emit Withdraw(msg.sender, _amount, balances[msg.sender]);
     }
 
@@ -240,7 +276,7 @@ contract Bounty0xStaking is Ownable, Pausable {
             emit Stake(_submissionIds[i], msg.sender, _amounts[i]);
         }
     }
-
+    
 
     function releaseStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
         require(stakes[_submissionId][_from] >= _amount);
@@ -265,4 +301,26 @@ contract Bounty0xStaking is Ownable, Pausable {
         }
     }
 
+
+    // Burnable mechanism
+    
+    address public bntyController;
+    
+    event Burn(uint indexed submissionId, address from, uint amount);
+    
+    function changeBntyController(address _bntyController) onlyOwner public {
+        bntyController = _bntyController;
+    }
+    
+    
+    function burnStake(uint _submissionId, address _from) public onlyOwner {
+        require(stakes[_submissionId][_from] > 0);
+        
+        uint amountToBurn = stakes[_submissionId][_from];
+        stakes[_submissionId][_from] = 0;
+        
+        require(BntyControllerInterface(bntyController).destroyTokensInBntyTokenContract(this, amountToBurn));
+        emit Burn(_submissionId, _from, amountToBurn);
+    }
+    
 }
