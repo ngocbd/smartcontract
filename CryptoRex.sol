@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRex at 0xc15710ca478e2392bb850ae8904680d384925407
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRex at 0xff4b4a59b95810486f57eb8d3781a8a137a7bbfa
 */
 pragma solidity ^0.4.9;
  
@@ -109,7 +109,7 @@ contract CryptoRex is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.2';       //human 0.1 standard. Just an arbitrary versioning scheme.
  
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,7 +119,7 @@ contract CryptoRex is StandardToken {
  
     function CryptoRex(
         ) {
-        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 100000000;                        // Update total supply (100000 for example)
         name = "CryptoRex";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
