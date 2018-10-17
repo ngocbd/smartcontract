@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrToken at 0xfd7cb51943844c80bd68d0070c03cf8a20da6fdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmbrToken at 0x1AAafc751D23ACBdE42651599489671435F306aC
 */
 pragma solidity ^0.4.18;
 
