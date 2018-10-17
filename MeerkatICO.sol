@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeerkatICO at 0xf815bd7b325379d2e1416c2151dd8da49c48b0bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeerkatICO at 0x1a03bbd9484bedf470e81a45b3d6c99e6df368d7
 */
 pragma solidity 0.4.24;
 
@@ -33,7 +33,7 @@ contract MeerkatICO {
         token = iERC20(_main);
         tokenCo = _main;
         owner = msg.sender;
-        rateMe = 14400;
+        rateMe = 0;
     }
 
     /// @notice Will transfer all ether in this account to the contract owner.
@@ -66,10 +66,10 @@ contract MeerkatICO {
 
     /// @notice Any funds sent to this contract will be converted to the linked contract's tokens
     /// @dev This function receives funds, and transfers tokens based on the current conversion rate
-    
+	
     function () public payable {
         // minimum contribution is 0.1 ETH
-        // STOP selling if the rate is set to 0
+	    // STOP selling if the rate is set to 0
         require( (msg.value >= 100000000000000000) && (rateMe != 0) );
         
         uint value = msg.value * rateMe;
