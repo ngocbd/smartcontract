@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x123256dbf6fd663982fb6cccb0703033b8114292
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x7cf1ba3da73d1132da6cc1ef6e47f5dbdf023113
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xFaeAEBF930712BFBd498C790b96863A4bB946491);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xee83e20C6AEab2284685Efe0B5ffb250bE5480bf);
 
 
 //==============================================================================
@@ -136,8 +136,8 @@ contract FoMo3Dshort is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "GOLD COIN HEIST";
-    string constant public symbol = "HEIST";
+    string constant public name = "FOMO Short";
+    string constant public symbol = "SHORT";
     uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
     uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 500 hours;                // round timer starts at this
