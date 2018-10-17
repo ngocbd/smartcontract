@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xef474ecab5ebbc7d41543f8bca47a4add2e3772b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xD85000a20FE97e31D46C664ac5B7b5E2592045a2
 */
 pragma solidity ^0.4.8;
 contract Token{
     // token???????public??????getter????????totalSupply().
-    uint256 public totalSupply = 2000000000;
+    uint256 public totalSupply;
 
     /// ????_owner??token??? 
     function balanceOf(address _owner) constant returns (uint256 balance);
@@ -78,9 +78,9 @@ contract StandardToken is Token {
 contract HumanStandardToken is StandardToken { 
 
     /* Public variables of the token */
-    string public name = "NOVA";                   //??: eg Simon Bucks
-    uint8 public decimals = 8;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol = "NOVA";               //token??: eg SBX
+    string public name;                   //??: eg Simon Bucks
+    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;               //token??: eg SBX
     string public version = 'H0.1';    //??
 
     function HumanStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
