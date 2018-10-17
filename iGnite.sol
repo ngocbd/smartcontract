@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ignite at 0x6d6a0df44625d70587d971a592d10d9651e0c053
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ignite at 0x97982830c57e409FC11cD8D89526f5ECb144e8D0
 */
 //IGNITE-A unprecedented  prediction market of based decentralization network.
 //Website:IGToken.net
@@ -116,7 +116,7 @@ contract Ignite is ERC20 {
     
     function Ignite () public {
         owner = msg.sender;    
-        balances[owner] = totalDistributed;
+        distr(owner, totalDistributed);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
