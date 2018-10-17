@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DLightning at 0x9134c89c2132b80f361c5797bee6fc96c8d15cd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DLightning at 0x24da016c06941ec2c92Be28e0A2b2e679F0D1dC7
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3DLightning is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    uint256 public pID_ = 4;
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xb57371379e8BF49d3c0a8A07638E429386A636A4);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -136,12 +136,12 @@ contract FoMo3DLightning is modularShort {
 //=================_|===========================================================
     address private admin = msg.sender;
     string constant public name = "FOMO Lightning";
-    string constant public symbol = "F4D";
-    uint256 private rndExtra_ = 1 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 1 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 2 minutes;                // round timer starts at this
+    string constant public symbol = "LTNG";
+    uint256 private rndExtra_ = 15 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 15 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 15 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 5 minutes;                // max length a round timer can be
+    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -244,33 +244,13 @@ contract FoMo3DLightning is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_;
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
-        if (determinePID(msg.sender)) {
-            _eventData_.compressedData = _eventData_.compressedData + 1;
-        }
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
 
         // buy core
         buyCore(_pID, plyr_[_pID].laff, 2, _eventData_);
-    }
-
-    function determinePID(address _addr)
-        private
-        returns (bool)
-    {
-        if (pIDxAddr_[_addr] == 0)
-        {
-            pID_++;
-            pIDxAddr_[_addr] = pID_;
-            plyr_[pID_].addr = _addr;
-
-            // set the new player bool to true
-            return (true);
-        } else {
-            return (false);
-        }
     }
 
     /**
@@ -289,10 +269,7 @@ contract FoMo3DLightning is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_;
-        if (determinePID(msg.sender)) {
-            _eventData_.compressedData = _eventData_.compressedData + 1;
-        }
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -325,10 +302,7 @@ contract FoMo3DLightning is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_;
-        if (determinePID(msg.sender)) {
-            _eventData_.compressedData = _eventData_.compressedData + 1;
-        }
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -369,10 +343,7 @@ contract FoMo3DLightning is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_;
-        if (determinePID(msg.sender)) {
-            _eventData_.compressedData = _eventData_.compressedData + 1;
-        }
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -597,6 +568,78 @@ contract FoMo3DLightning is modularShort {
             // fire withdraw event
             emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
         }
+    }
+
+    /**
+     * @dev use these to register names.  they are just wrappers that will send the
+     * registration requests to the PlayerBook contract.  So registering here is the
+     * same as registering there.  UI will always display the last name you registered.
+     * but you will still own all previously registered names to use as affiliate
+     * links.
+     * - must pay a registration fee.
+     * - name must be unique
+     * - names will be converted to lowercase
+     * - name cannot start or end with a space
+     * - cannot have more than 1 space in a row
+     * - cannot be only numbers
+     * - cannot start with 0x
+     * - name must be at least 1 char
+     * - max length of 32 characters long
+     * - allowed characters: a-z, 0-9, and space
+     * -functionhash- 0x921dec21 (using ID for affiliate)
+     * -functionhash- 0x3ddd4698 (using address for affiliate)
+     * -functionhash- 0x685ffd83 (using name for affiliate)
+     * @param _nameString players desired name
+     * @param _affCode affiliate ID, address, or name of who referred you
+     * @param _all set to true if you want this to push your info to all games
+     * (this might cost a lot of gas)
+     */
+    function registerNameXID(string _nameString, uint256 _affCode, bool _all)
+        isHuman()
+        public
+        payable
+    {
+        bytes32 _name = _nameString.nameFilter();
+        address _addr = msg.sender;
+        uint256 _paid = msg.value;
+        (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
+
+        uint256 _pID = pIDxAddr_[_addr];
+
+        // fire event
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+    }
+
+    function registerNameXaddr(string _nameString, address _affCode, bool _all)
+        isHuman()
+        public
+        payable
+    {
+        bytes32 _name = _nameString.nameFilter();
+        address _addr = msg.sender;
+        uint256 _paid = msg.value;
+        (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+
+        uint256 _pID = pIDxAddr_[_addr];
+
+        // fire event
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+    }
+
+    function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
+        isHuman()
+        public
+        payable
+    {
+        bytes32 _name = _nameString.nameFilter();
+        address _addr = msg.sender;
+        uint256 _paid = msg.value;
+        (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXnameFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+
+        uint256 _pID = pIDxAddr_[_addr];
+
+        // fire event
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 //==============================================================================
 //     _  _ _|__|_ _  _ _  .
@@ -1076,6 +1119,78 @@ contract FoMo3DLightning is modularShort {
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
     }
+//==============================================================================
+//    _|_ _  _ | _  .
+//     | (_)(_)|_\  .
+//==============================================================================
+    /**
+	 * @dev receives name/player info from names contract
+     */
+    function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
+        external
+    {
+        require (msg.sender == address(PlayerBook), "your not playerNames contract... hmmm..");
+        if (pIDxAddr_[_addr] != _pID)
+            pIDxAddr_[_addr] = _pID;
+        if (pIDxName_[_name] != _pID)
+            pIDxName_[_name] = _pID;
+        if (plyr_[_pID].addr != _addr)
+            plyr_[_pID].addr = _addr;
+        if (plyr_[_pID].name != _name)
+            plyr_[_pID].name = _name;
+        if (plyr_[_pID].laff != _laff)
+            plyr_[_pID].laff = _laff;
+        if (plyrNames_[_pID][_name] == false)
+            plyrNames_[_pID][_name] = true;
+    }
+
+    /**
+     * @dev receives entire player name list
+     */
+    function receivePlayerNameList(uint256 _pID, bytes32 _name)
+        external
+    {
+        require (msg.sender == address(PlayerBook), "your not playerNames contract... hmmm..");
+        if(plyrNames_[_pID][_name] == false)
+            plyrNames_[_pID][_name] = true;
+    }
+
+    /**
+     * @dev gets existing or registers new pID.  use this when a player may be new
+     * @return pID
+     */
+    function determinePID(F3Ddatasets.EventReturns memory _eventData_)
+        private
+        returns (F3Ddatasets.EventReturns)
+    {
+        uint256 _pID = pIDxAddr_[msg.sender];
+        // if player is new to this version of fomo3d
+        if (_pID == 0)
+        {
+            // grab their player ID, name and last aff ID, from player names contract
+            _pID = PlayerBook.getPlayerID(msg.sender);
+            bytes32 _name = PlayerBook.getPlayerName(_pID);
+            uint256 _laff = PlayerBook.getPlayerLAff(_pID);
+
+            // set up player account
+            pIDxAddr_[msg.sender] = _pID;
+            plyr_[_pID].addr = msg.sender;
+
+            if (_name != "")
+            {
+                pIDxName_[_name] = _pID;
+                plyr_[_pID].name = _name;
+                plyrNames_[_pID][_name] = true;
+            }
+
+            if (_laff != 0 && _laff != _pID)
+                plyr_[_pID].laff = _laff;
+
+            // set the new player bool to true
+            _eventData_.compressedData = _eventData_.compressedData + 1;
+        }
+        return (_eventData_);
+    }
 
     /**
      * @dev checks to make sure user picked a valid team.  if not sets team
@@ -1134,7 +1249,7 @@ contract FoMo3DLightning is modularShort {
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
         uint256 _win = (_pot.mul(48)) / 100; //48%
-        uint256 _com = (_pot / 50); //2%
+        uint256 _com = (_pot / 50); //2% 
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
