@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyExchange at 0x46C69FeE08Ee6dF808A6D0A05A0D12674a8E9Bc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyExchange at 0x9517c7c2aaf069897cd975fe9be5b68f0ba8d7e4
 */
 pragma solidity ^0.4.24;
 
@@ -1200,7 +1200,7 @@ contract HorseyPilot {
         @param methodId a string representing the function ie. 'renameHorsey()'
         @param parameter parameter to be used if invocation is approved
     */
-    function makeProposal( uint8 methodId, uint256 parameter ) external
+    function makeProposal( uint8 methodId, uint8 parameter ) external
     onlyCLevelAccess()
     proposalAvailable()
     cooledDown()
