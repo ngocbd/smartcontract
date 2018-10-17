@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0x3fcb2db94f0b953cef1357d588d425c485313fd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0xb6d0C7F22bf8EBDB42697D1D16460f114E916135
 */
 pragma solidity ^0.4.24;
+
 
 library NameFilter {
     /**
@@ -460,16 +461,16 @@ contract FoMo3DFast is modularFast {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xea07723857747Ae8b92Df3bCA6A67Fb85e586c6d);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x1c52efF9C47fE419E3b269f5759d98d2072cC91A);
 
     address private admin = msg.sender;
     string constant public name = "FOMO Fast";
     string constant public symbol = "FAST";
-    uint256 private rndExtra_ = 3 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 3 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 20 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 8 hours;                // max length a round timer can be
+    uint256 private rndExtra_ = 1 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 3 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 5 minutes;                // max length a round timer can be
     uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
