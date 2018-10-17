@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x53b4bd8a7922864860fc3667534f1b1c2307730f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x9cf1be77ba6f5619da037de9977dba95b8878296
 */
 pragma solidity ^0.4.11;
  
@@ -19,10 +19,10 @@ contract Token {
     mapping(address => mapping (address => uint256)) allowed;
  
     function Token(address adr) {
-        owner = adr;        
+        owner = adr;         
     }
    
-    function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+    function MakeMyToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
     {
         if (msg.sender == owner && setupDone == false)
         {
