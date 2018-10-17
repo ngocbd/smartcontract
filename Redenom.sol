@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0x2c31DBd57a56D953bE4396C42089C95f5bBF603d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0x63b2513304a5f8b9c4dbc1bc980a185255e92703
 */
 pragma solidity ^0.4.21;
 // The GNU General Public License v3
@@ -125,7 +125,7 @@ contract Redenom is ERC20Interface, Owned{
     uint[9] private weight = [uint(0),0,0,0,0,5,10,30,55];
     //current_toadd - After redenominate() it holds an amount to add on each digit.
     uint[9] private current_toadd = [uint(0),0,0,0,0,0,0,0,0];
-    
+   
 
     //Funds
     uint public total_fund; // All funds for all epochs 1 000 000 NOM
@@ -136,8 +136,8 @@ contract Redenom is ERC20Interface, Owned{
     struct Account {
         uint balance;
         uint lastRound; // Last round dividens paid
-        uint lastVotedEpoch; // Last epoch user voted
-        uint bitmask; 
+        uint lastVotedBallotId; // Last epoch user voted
+        uint bitmask;
             // 2 - got 0.55... for phone verif.
             // 4 - got 1 for KYC
             // 1024 - banned
@@ -151,9 +151,9 @@ contract Redenom is ERC20Interface, Owned{
     //Redenom special events
     event Redenomination(uint indexed round);
     event Epoch(uint indexed epoch);
-    event VotingOn(address indexed initiator);
-    event VotingOff(address indexed initiator);
-    event Vote(address indexed voter, uint indexed propId, uint voterBalance, uint indexed voteEpoch);
+    event VotingOn(uint indexed _ballotId);
+    event VotingOff(uint indexed winner);
+    event Vote(address indexed voter, uint indexed propId, uint voterBalance, uint indexed curentBallotId);
 
     function Redenom() public {
         symbol = "NOMT";
@@ -186,7 +186,6 @@ contract Redenom is ERC20Interface, Owned{
         epoch_fund = 100000 * 10**decimals; // 100 000.00000000, 100 Kt
         total_fund = total_fund.sub(epoch_fund); // Taking 100 Kt from total to epoch fund
 
-        delete projects;
 
         emit Epoch(epoch);
         return true;
@@ -196,17 +195,26 @@ contract Redenom is ERC20Interface, Owned{
 
 
     ///////////////////////////////////////////B A L L O T////////////////////////////////////////////
+/*
+struct Account {
+    uint balance;
+    uint lastRound; // Last round dividens paid
+    uint lastVotedBallotId; // Last epoch user voted
+    uint[] parts; // Users parts in voted projects 
+    uint bitmask;
+*/
 
     //Is voting active?
     bool public votingActive = false;
+    uint public curentBallotId = 0;
+    uint public curentWinner;
 
     // Voter requirements:
     modifier onlyVoter {
         require(votingActive == true);
         require(bitmask_check(msg.sender, 4) == true); //passed KYC
-        //require((accounts[msg.sender].balance >= 100000000), "must have >= 1 NOM");
-        require((accounts[msg.sender].lastVotedEpoch < epoch));
         require(bitmask_check(msg.sender, 1024) == false); // banned == false
+        require((accounts[msg.sender].lastVotedBallotId < curentBallotId)); 
         _;
     }
 
@@ -216,9 +224,30 @@ contract Redenom is ERC20Interface, Owned{
         uint votesWeight; // total weight
         bool active; //active status.
     }
-
-    // A dynamically-sized array of `Project` structs.
     Project[] public projects;
+
+    struct Winner {
+        uint id;
+        uint projId;
+    }
+    Winner[] public winners;
+
+
+    function addWinner(uint projId) internal {
+        winners.push(Winner({
+            id: curentBallotId,
+            projId: projId
+        }));
+    }
+    function findWinner(uint _ballotId) public constant returns (uint winner){
+        for (uint p = 0; p < winners.length; p++) {
+            if (winners[p].id == _ballotId) {
+                return winners[p].projId;
+            }
+        }
+    }
+
+
 
     // Add prop. with id: _id
     function addProject(uint _id) public onlyAdmin {
@@ -264,14 +293,13 @@ contract Redenom is ERC20Interface, Owned{
     function vote(uint _id) public onlyVoter returns(bool success){
         require(frozen == false);
 
-        //todo updateAccount
         for (uint p = 0; p < projects.length; p++){
             if(projects[p].id == _id && projects[p].active == true){
                 projects[p].votesWeight += sqrt(accounts[msg.sender].balance);
-                accounts[msg.sender].lastVotedEpoch = epoch;
+                accounts[msg.sender].lastVotedBallotId = curentBallotId;
             }
         }
-        emit Vote(msg.sender, _id, accounts[msg.sender].balance, epoch);
+        emit Vote(msg.sender, _id, accounts[msg.sender].balance, curentBallotId);
 
         return true;
     }
@@ -288,27 +316,33 @@ contract Redenom is ERC20Interface, Owned{
     }
 
     // Activates voting
-    // requires round = 9
-    function enableVoting() public onlyAdmin returns(bool succ){ 
+    // Clears projects
+    function enableVoting() public onlyAdmin returns(uint ballotId){ 
         require(votingActive == false);
         require(frozen == false);
-        require(round == 9);
 
+        curentBallotId++;
         votingActive = true;
-        emit VotingOn(msg.sender);
-        return true;
 
+        delete projects;
+
+        emit VotingOn(curentBallotId);
+        return curentBallotId;
     }
 
     // Deactivates voting
-    function disableVoting() public onlyAdmin returns(bool succ){
+    function disableVoting() public onlyAdmin returns(uint winner){
         require(votingActive == true);
         require(frozen == false);
         votingActive = false;
 
-        emit VotingOff(msg.sender);
-        return true;
+        curentWinner = winningProject();
+        addWinner(curentWinner);
+        
+        emit VotingOff(curentWinner);
+        return curentWinner;
     }
+
 
     // sqrt root func
     function sqrt(uint x) internal pure returns (uint y) {
