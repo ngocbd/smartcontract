@@ -1,28 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x657a6b7e2529225fdb6a3b9de2abdc181d4ecfba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0xd0b4e64c323186340ed2d8168ddae8f18677560e
 */
 pragma solidity ^0.4.24;
 
 contract test {
-
-    modifier notzero1(address _addr) {
-        require(_addr != address(0x0));
-        _;
+    
+    function sub1(uint256 _a, uint256 _b) public pure returns (uint256 result) {
+        require(_a >= _b);
+        return _a - _b;
     }
-
-    modifier notzero2(address _addr) {
-        require(_addr != address(0x0), "something is wrong");
-        _;
+    
+    function sub2(uint256 _a, uint256 _b) public pure returns (uint256 result) {
+        require(_a >= _b, "_a cannot be less than _b");
+        return _a - _b;
     }
-
-    function viewa1(address _addr) notzero1(_addr) public pure returns (uint256) 
-    {
-        return 100;
-    }
-
-    function viewa2(address _addr) notzero2(_addr) public pure returns (uint256) 
-    {
-        return 200;
-    }
-
+    
 }
