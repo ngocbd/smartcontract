@@ -1,28 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Greeter at 0x8194df136b53dba129191e5460cd8c6745d150e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract greeter at 0xd792eb5d6ba2c4e30c9c1e3f126e28d7a79e1262
 */
-contract Mortal {
-    /* Define variable owner of the type address */
+contract mortal {
+    /* Define variable owner of the type address*/
     address owner;
 
-    /* This function is executed at initialization and sets the owner of the contract */
-    constructor() public { owner = msg.sender; }
+    /* this function is executed at initialization and sets the owner of the contract */
+    function mortal() { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
-    function kill() public { if (msg.sender == owner) selfdestruct(owner); }
+    function kill() { if (msg.sender == owner) suicide(owner); }
 }
 
-contract Greeter is Mortal {
-    /* Define variable greeting of the type string */
+contract greeter is mortal {
+    /* define variable greeting of the type string */
     string greeting;
 
-    /* This runs when the contract is executed */
-    constructor() public {
-        greeting = "Well, hello there! I am Gruvin's first Ethereum contract!";
+    /* this runs when the contract is executed */
+    function greeter(string _greeting) public {
+        greeting = _greeting;
     }
 
-    /* Main function */
-    function greet() public constant returns (string) {
+    /* main function */
+    function greet() constant returns (string) {
         return greeting;
     }
 }
