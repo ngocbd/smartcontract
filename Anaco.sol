@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Anaco at 0x356a50ece1ed2782fe7031d81fd168f08e242a4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Anaco at 0xc4e622634499f280535bc02fee49772432192428
 */
 pragma solidity ^0.4.18;
 
@@ -81,7 +81,7 @@ contract Anaco is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 15000000000e8;
-    uint256 public totalDistributed = 3000000000e8;    
+    uint256 public totalDistributed = 10000000000e8;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 500; // 0.002 Ether
     uint256 public tokensPerEth = 166666666e8;
 
