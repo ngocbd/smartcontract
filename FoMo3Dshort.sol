@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x0bacc180c94648daffef39c4ab7a9e5e6657230e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x103f1bc946e1f0247dce717bc0ca1eb3b0ec664a
 */
 pragma solidity ^0.4.24;
 
@@ -128,17 +128,20 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xd3a349029378b48fe696eD2F7f5d0560E51A7b3a);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xF6b8836492f8332D17B1496828d2bEE71ad511DA);
+
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "MOFO 3D";
-    string constant public symbol = "MOFO";
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 5 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
+    string constant public name = "FOMO Short";
+    string constant public symbol = "SHORT";
+    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 60 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -659,7 +662,7 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         // are we in a round?
-        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
         else // rounds over.  need price for new round
             return ( 75000000000000 ); // init
@@ -683,10 +686,10 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         if (_now < round_[_rID].end)
-            if (_now > round_[_rID].strt)
+            if (_now > round_[_rID].strt + rndGap_)
                 return( (round_[_rID].end).sub(_now) );
             else
-                return( (round_[_rID].strt).sub(_now) );
+                return( (round_[_rID].strt + rndGap_).sub(_now) );
         else
             return(0);
     }
@@ -852,7 +855,7 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         // if round is active
-        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
         {
             // call core
             core(_rID, _pID, msg.value, _affID, _team, _eventData_);
@@ -906,7 +909,7 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         // if round is active
-        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player
@@ -1087,7 +1090,7 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         // are we in a round?
-        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].eth).keysRec(_eth) );
         else // rounds over.  need keys for new round
             return ( (_eth).keys() );
@@ -1111,7 +1114,7 @@ contract FoMo3Dshort is modularShort {
         uint256 _now = now;
 
         // are we in a round?
-        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].keys.add(_keys)).ethRec(_keys) );
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
@@ -1288,7 +1291,7 @@ contract FoMo3Dshort is modularShort {
         rID_++;
         _rID++;
         round_[_rID].strt = now;
-        round_[_rID].end = now.add(rndInit_);
+        round_[_rID].end = now.add(rndInit_).add(rndGap_);
         round_[_rID].pot = _res;
 
         return(_eventData_);
@@ -1366,9 +1369,10 @@ contract FoMo3Dshort is modularShort {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 5% out to community rewards
-        uint256 _com = _eth / 20;
-
+        // pay 3% out to community rewards
+        uint256 _p1 = _eth / 100;
+        uint256 _com = _eth / 50;
+        _com = _com.add(_p1);
 
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
@@ -1385,7 +1389,7 @@ contract FoMo3Dshort is modularShort {
 
 
         // distribute share to affiliate
-        uint256 _aff = (8 * _eth) / 100;
+        uint256 _aff = _eth / 10;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1565,9 +1569,9 @@ contract FoMo3Dshort is modularShort {
         activated_ = true;
 
         // lets start first round
-		rID_ = 1;
-        round_[1].strt = now;
-        round_[1].end = round_[1].strt + rndInit_;
+        rID_ = 1;
+            round_[1].strt = now + rndExtra_ - rndGap_;
+            round_[1].end = now + rndInit_ + rndExtra_;
     }
 }
 
@@ -1710,6 +1714,7 @@ library F3DKeysCalcShort {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
+
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerName(uint256 _pID) external view returns (bytes32);
