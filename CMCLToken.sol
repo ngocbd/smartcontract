@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCLToken at 0xf8D759F59Ab5eF46587dE7a5185aB5A32cf0Dbab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCLToken at 0xb545602D4A78193a275ebdf5E5957a19B14784aF
 */
 pragma solidity ^0.4.16;
 
@@ -21,15 +21,18 @@ contract owned {
     function transferOwnership(address newOwner) onlyOwner public{  owner = newOwner;  }
 }
 
-contract Token20 is owned, Utils {
+contract CMCLToken is owned, Utils {
     string public name; 
     string public symbol; 
     uint8 public decimals = 18;
     uint256 public totalSupply; 
 
     mapping (address => uint256) public balanceOf;
+
+    event Transfer(address indexed from, address indexed to, uint256 value); 
+    event Burn(address indexed from, uint256 value);  
     
-    function Token20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
+    function CMCLToken(uint256 initialSupply, string tokenName, string tokenSymbol) public {
 
         totalSupply = initialSupply * 10 ** uint256(decimals);  
         balanceOf[msg.sender] = totalSupply; 
@@ -47,16 +50,19 @@ contract Token20 is owned, Utils {
       uint256 previousBalances = safeAdd(balanceOf[_from], balanceOf[_to]); 
       balanceOf[_from] = safeSub(balanceOf[_from], _value); 
       balanceOf[_to] = safeAdd(balanceOf[_to], _value); 
+      emit Transfer(_from, _to, _value);
       assert(balanceOf[_from] + balanceOf[_to] == previousBalances); 
     }
 
     function transfer(address _to, uint256 _value) public {   _transfer(msg.sender, _to, _value);   }
-}
 
-contract CMCLToken is Token20 {
-    
-    function CMCLToken(uint256 initialSupply, string tokenName, string tokenSymbol, address centralMinter) public Token20 (initialSupply, tokenName, tokenSymbol) {
-        if(centralMinter != 0 ) 
-			owner = centralMinter; 
+    function burn(uint256 _value) public onlyOwner returns (bool success) {
+        require(balanceOf[msg.sender] >= _value); 
+
+		balanceOf[msg.sender] -= _value; 
+        totalSupply -= _value; 
+        emit Burn(msg.sender, _value);
+		
+        return true;
     }
 }
