@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WgdSale at 0x8b7f73d1802f62d8e88b10213b9a9aca047cc6d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WgdSale at 0x30db195677484f1afc0b2e804eada1d2b3a17ed3
 */
 pragma solidity ^0.4.24;
 
-/*
- * Part of Daonomic platform (daonomic.io)
+/**
+ * Powered by Daonomic (https://daonomic.io)
  */
 
 /**
@@ -331,10 +331,12 @@ contract WgdToken is StandardBurnableToken {
   string public constant symbol = "WGD";
   uint8 public constant decimals = 18;
 
-  constructor(uint _total) public {
-    balances[msg.sender] = _total;
-    totalSupply_ = _total;
-    emit Transfer(address(0), msg.sender, _total);
+  uint256 constant TOTAL = 387500000000000000000000000;
+
+  constructor() public {
+    balances[msg.sender] = TOTAL;
+    totalSupply_ = TOTAL;
+    emit Transfer(address(0), msg.sender, TOTAL);
   }
 }
 
@@ -456,9 +458,6 @@ contract DaonomicCrowdsale {
     uint256 weiEarned = weiAmount.sub(left);
     uint256 bonus = _getBonus(tokens);
     uint256 withBonus = tokens.add(bonus);
-    if (left > 0) {
-      _beneficiary.send(left);
-    }
 
     // update state
     weiRaised = weiRaised.add(weiEarned);
@@ -475,6 +474,10 @@ contract DaonomicCrowdsale {
 
     _updatePurchasingState(_beneficiary, weiEarned, withBonus);
     _postValidatePurchase(_beneficiary, weiEarned);
+
+    if (left > 0) {
+      _beneficiary.transfer(left);
+    }
   }
 
   // -----------------------------------------
@@ -561,7 +564,7 @@ contract DaonomicCrowdsale {
 }
 
 contract Whitelist {
-  function isInWhitelist(address addr) view public returns (bool);
+  function isInWhitelist(address addr) public view returns (bool);
 }
 
 contract WhitelistDaonomicCrowdsale is Ownable, DaonomicCrowdsale {
@@ -599,7 +602,20 @@ contract WhitelistDaonomicCrowdsale is Ownable, DaonomicCrowdsale {
 
 contract RefundableDaonomicCrowdsale is DaonomicCrowdsale {
   event Refund(address _address, uint256 investment);
-  mapping(address => uint256) investments;
+  mapping(address => uint256) public investments;
+
+  function claimRefund() public {
+    require(isRefundable());
+    require(investments[msg.sender] > 0);
+
+    uint investment = investments[msg.sender];
+    investments[msg.sender] = 0;
+
+    msg.sender.transfer(investment);
+    emit Refund(msg.sender, investment);
+  }
+
+  function isRefundable() public view returns (bool);
 
   function _updatePurchasingState(
     address _beneficiary,
@@ -609,19 +625,6 @@ contract RefundableDaonomicCrowdsale is DaonomicCrowdsale {
     super._updatePurchasingState(_beneficiary, _weiAmount, _tokens);
     investments[_beneficiary] = investments[_beneficiary].add(_weiAmount);
   }
-
-  function claimRefund() public {
-    require(isRefundable());
-    require(investments[msg.sender] > 0);
-
-    uint investment = investments[msg.sender];
-    investments[msg.sender] = 0;
-
-    msg.sender.send(investment);
-    emit Refund(msg.sender, investment);
-  }
-
-  function isRefundable() view public returns (bool);
 }
 
 contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
@@ -631,29 +634,39 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
 
   WgdToken public token;
 
-  uint256 public forSale;
+  uint256 constant public FOR_SALE = 300000000000000000000000000;
+  uint256 constant public MINIMAL_WEI = 500000000000000000;
+  uint256 constant public END = 1541592000;
+
+  //stages
+  uint256 constant STAGE1 = 20000000000000000000000000;
+  uint256 constant STAGE2 = 60000000000000000000000000;
+  uint256 constant STAGE3 = 140000000000000000000000000;
+  uint256 constant STAGE4 = 300000000000000000000000000;
+
+  //rates
+  uint256 constant RATE1 = 28000;
+  uint256 constant RATE2 = 24000;
+  uint256 constant RATE3 = 22000;
+  uint256 constant RATE4 = 20000;
+
+  //bonus stages
+  uint256 constant BONUS_STAGE1 = 100000000000000000000000;
+  uint256 constant BONUS_STAGE2 = 500000000000000000000000;
+  uint256 constant BONUS_STAGE3 = 1000000000000000000000000;
+  uint256 constant BONUS_STAGE4 = 5000000000000000000000000;
+
+  //bonuses
+  uint256 constant BONUS1 = 1000000000000000000000;
+  uint256 constant BONUS2 = 25000000000000000000000;
+  uint256 constant BONUS3 = 100000000000000000000000;
+  uint256 constant BONUS4 = 750000000000000000000000;
+
   uint256 public sold;
-  uint256 public minimalWei;
-  uint256 public end;
-  uint256[] public stages;
-  uint256[] public rates;
-  uint256[] public bonusStages;
-  uint256[] public bonuses;
 
-  constructor(WgdToken _token, uint256 _end, uint256 _minimalWei, uint256[] _stages, uint256[] _rates, uint256[] _bonusStages, uint256[] _bonuses, Whitelist[] _whitelists)
+  constructor(WgdToken _token, Whitelist[] _whitelists)
   WhitelistDaonomicCrowdsale(_whitelists) public {
-    require(_stages.length == _rates.length);
-    require(_bonusStages.length == _bonuses.length);
-
     token = _token;
-    end = _end;
-    minimalWei = _minimalWei;
-    stages = _stages;
-    rates = _rates;
-    bonusStages = _bonusStages;
-    bonuses = _bonuses;
-    forSale = stages[stages.length - 1];
-
     emit RateAdd(address(0));
   }
 
@@ -662,19 +675,16 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
     uint256 _weiAmount
   ) internal {
     super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(_weiAmount >= minimalWei);
+    require(_weiAmount >= MINIMAL_WEI);
   }
 
   /**
    * @dev function for Daonomic UI
    */
-  function getRate(address _token) view public returns (uint256) {
+  function getRate(address _token) public view returns (uint256) {
     if (_token == address(0)) {
-      uint8 stage = getStage(sold);
-      if (stage == stages.length) {
-        return 0;
-      }
-      return rates[stage] * 10 ** 18;
+      (,, uint256 rate) = getStage(sold);
+      return rate.mul(10 ** 18);
     } else {
       return 0;
     }
@@ -686,14 +696,15 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
    * @dev call token.approve before calling this function
    */
   function buyback() public {
-    require(getStage(sold) > 0, "buyback doesn't work on stage 0");
+    (uint8 stage,,) = getStage(sold);
+    require(stage > 0, "buyback doesn't work on stage 0");
 
     uint256 approved = token.allowance(msg.sender, this);
     uint256 inCirculation = token.totalSupply().sub(token.balanceOf(this));
-    uint256 value = approved.mul(this.balance).div(inCirculation);
+    uint256 value = approved.mul(address(this).balance).div(inCirculation);
 
     token.burnFrom(msg.sender, approved);
-    msg.sender.send(value);
+    msg.sender.transfer(value);
     emit Buyback(msg.sender, approved, value);
   }
 
@@ -705,10 +716,10 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
   }
 
   function _getBonus(uint256 _tokens) internal view returns (uint256) {
-    return getRealAmountBonus(forSale, sold, _tokens);
+    return getRealAmountBonus(FOR_SALE, sold, _tokens);
   }
 
-  function getRealAmountBonus(uint256 _forSale, uint256 _sold, uint256 _tokens) public view returns (uint256) {
+  function getRealAmountBonus(uint256 _forSale, uint256 _sold, uint256 _tokens) public pure returns (uint256) {
     uint256 bonus = getAmountBonus(_tokens);
     uint256 left = _forSale.sub(_sold).sub(_tokens);
     if (left > bonus) {
@@ -716,17 +727,6 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
     } else {
       return left;
     }
-  }
-
-  function getAmountBonus(uint256 _tokens) public view returns (uint256) {
-    uint256 currentBonus = 0;
-    for (uint8 i = 0; i < bonuses.length; i++) {
-      if (_tokens < bonusStages[i]) {
-        return currentBonus;
-      }
-      currentBonus = bonuses[i];
-    }
-    return currentBonus;
   }
 
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256, uint256) {
@@ -750,32 +750,22 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
    * @return Number of tokens that can be purchased in this stage + wei left
    */
   function getTokensForStage(uint256 _sold, uint256 _weiAmount) public view returns (uint256 tokens, uint256 left) {
-    uint8 stage = getStage(_sold);
-    if (stage == stages.length) {
+    (uint8 stage, uint256 limit, uint256 rate) = getStage(_sold);
+    if (stage == 4) {
       return (0, _weiAmount);
     }
-    if (stage == 0 && now > end) {
+    if (stage == 0 && now > END) {
       revert("Sale is refundable, unable to buy");
     }
-    uint256 rate = rates[stage];
-
     tokens = _weiAmount.mul(rate);
     left = 0;
-    uint8 newStage = getStage(_sold.add(tokens));
+    (uint8 newStage,,) = getStage(_sold.add(tokens));
     if (newStage != stage) {
-      tokens = stages[stage].sub(_sold);
+      tokens = limit.sub(_sold);
+      //alternative to Math.ceil(tokens / rate)
       uint256 weiSpent = (tokens.add(rate).sub(1)).div(rate);
       left = _weiAmount.sub(weiSpent);
     }
-  }
-
-  function getStage(uint256 _sold) public view returns (uint8) {
-    for (uint8 i = 0; i < stages.length; i++) {
-      if (_sold < stages[i]) {
-        return i;
-      }
-    }
-    return uint8(stages.length);
   }
 
   function _updatePurchasingState(
@@ -788,7 +778,36 @@ contract WgdSale is WhitelistDaonomicCrowdsale, RefundableDaonomicCrowdsale {
     sold = sold.add(_tokens);
   }
 
-  function isRefundable() view public returns (bool) {
-    return now > end && getStage(sold) == 0;
+  function isRefundable() public view returns (bool) {
+    (uint8 stage,,) = getStage(sold);
+    return now > END && stage == 0;
+  }
+
+  function getStage(uint256 _sold) public pure returns (uint8 stage, uint256 limit, uint256 rate) {
+    if (_sold < STAGE1) {
+      return (0, STAGE1, RATE1);
+    } else if (_sold < STAGE2) {
+      return (1, STAGE2, RATE2);
+    } else if (_sold < STAGE3) {
+      return (2, STAGE3, RATE3);
+    } else if (_sold < STAGE4) {
+      return (3, STAGE4, RATE4);
+    } else {
+      return (4, 0, 0);
+    }
+  }
+
+  function getAmountBonus(uint256 _tokens) public pure returns (uint256) {
+    if (_tokens < BONUS_STAGE1) {
+      return 0;
+    } else if (_tokens < BONUS_STAGE2) {
+      return BONUS1;
+    } else if (_tokens < BONUS_STAGE3) {
+      return BONUS2;
+    } else if (_tokens < BONUS_STAGE4) {
+      return BONUS3;
+    } else {
+      return BONUS4;
+    }
   }
 }
