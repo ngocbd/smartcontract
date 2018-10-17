@@ -1,1225 +1,1371 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Market at 0x416993d2384d9b82687f34f7fea29f6fb2c6c56d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Market at 0x380070670fb427ae8070631eef6f2d0824d8ce01
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.20;
 
-contract Controlled {
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController { require(msg.sender == controller); _; }
+contract IAugur {
+    function createChildUniverse(bytes32 _parentPayoutDistributionHash, uint256[] _parentPayoutNumerators, bool _parentInvalid) public returns (IUniverse);
+    function isKnownUniverse(IUniverse _universe) public view returns (bool);
+    function trustedTransfer(ERC20 _token, address _from, address _to, uint256 _amount) public returns (bool);
+    function logMarketCreated(bytes32 _topic, string _description, string _extraInfo, IUniverse _universe, address _market, address _marketCreator, bytes32[] _outcomes, int256 _minPrice, int256 _maxPrice, IMarket.MarketType _marketType) public returns (bool);
+    function logMarketCreated(bytes32 _topic, string _description, string _extraInfo, IUniverse _universe, address _market, address _marketCreator, int256 _minPrice, int256 _maxPrice, IMarket.MarketType _marketType) public returns (bool);
+    function logInitialReportSubmitted(IUniverse _universe, address _reporter, address _market, uint256 _amountStaked, bool _isDesignatedReporter, uint256[] _payoutNumerators, bool _invalid) public returns (bool);
+    function disputeCrowdsourcerCreated(IUniverse _universe, address _market, address _disputeCrowdsourcer, uint256[] _payoutNumerators, uint256 _size, bool _invalid) public returns (bool);
+    function logDisputeCrowdsourcerContribution(IUniverse _universe, address _reporter, address _market, address _disputeCrowdsourcer, uint256 _amountStaked) public returns (bool);
+    function logDisputeCrowdsourcerCompleted(IUniverse _universe, address _market, address _disputeCrowdsourcer) public returns (bool);
+    function logInitialReporterRedeemed(IUniverse _universe, address _reporter, address _market, uint256 _amountRedeemed, uint256 _repReceived, uint256 _reportingFeesReceived, uint256[] _payoutNumerators) public returns (bool);
+    function logDisputeCrowdsourcerRedeemed(IUniverse _universe, address _reporter, address _market, uint256 _amountRedeemed, uint256 _repReceived, uint256 _reportingFeesReceived, uint256[] _payoutNumerators) public returns (bool);
+    function logFeeWindowRedeemed(IUniverse _universe, address _reporter, uint256 _amountRedeemed, uint256 _reportingFeesReceived) public returns (bool);
+    function logMarketFinalized(IUniverse _universe) public returns (bool);
+    function logMarketMigrated(IMarket _market, IUniverse _originalUniverse) public returns (bool);
+    function logReportingParticipantDisavowed(IUniverse _universe, IMarket _market) public returns (bool);
+    function logMarketParticipantsDisavowed(IUniverse _universe) public returns (bool);
+    function logOrderCanceled(IUniverse _universe, address _shareToken, address _sender, bytes32 _orderId, Order.Types _orderType, uint256 _tokenRefund, uint256 _sharesRefund) public returns (bool);
+    function logOrderCreated(Order.Types _orderType, uint256 _amount, uint256 _price, address _creator, uint256 _moneyEscrowed, uint256 _sharesEscrowed, bytes32 _tradeGroupId, bytes32 _orderId, IUniverse _universe, address _shareToken) public returns (bool);
+    function logOrderFilled(IUniverse _universe, address _shareToken, address _filler, bytes32 _orderId, uint256 _numCreatorShares, uint256 _numCreatorTokens, uint256 _numFillerShares, uint256 _numFillerTokens, uint256 _marketCreatorFees, uint256 _reporterFees, uint256 _amountFilled, bytes32 _tradeGroupId) public returns (bool);
+    function logCompleteSetsPurchased(IUniverse _universe, IMarket _market, address _account, uint256 _numCompleteSets) public returns (bool);
+    function logCompleteSetsSold(IUniverse _universe, IMarket _market, address _account, uint256 _numCompleteSets) public returns (bool);
+    function logTradingProceedsClaimed(IUniverse _universe, address _shareToken, address _sender, address _market, uint256 _numShares, uint256 _numPayoutTokens, uint256 _finalTokenBalance) public returns (bool);
+    function logUniverseForked() public returns (bool);
+    function logFeeWindowTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logReputationTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logDisputeCrowdsourcerTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logShareTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logReputationTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logReputationTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logShareTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logShareTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logDisputeCrowdsourcerTokensBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logDisputeCrowdsourcerTokensMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowCreated(IFeeWindow _feeWindow, uint256 _id) public returns (bool);
+    function logFeeTokenTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logFeeTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logTimestampSet(uint256 _newTimestamp) public returns (bool);
+    function logInitialReporterTransferred(IUniverse _universe, IMarket _market, address _from, address _to) public returns (bool);
+    function logMarketTransferred(IUniverse _universe, address _from, address _to) public returns (bool);
+    function logMarketMailboxTransferred(IUniverse _universe, IMarket _market, address _from, address _to) public returns (bool);
+    function logEscapeHatchChanged(bool _isOn) public returns (bool);
+}
 
-    address public controller;
+contract IControlled {
+    function getController() public view returns (IController);
+    function setController(IController _controller) public returns(bool);
+}
 
-    function Controlled() public { controller = msg.sender;}
+contract Controlled is IControlled {
+    IController internal controller;
 
-    /// @notice Changes the controller of the contract
-    /// @param _newController The new controller of the contract
-    function changeController(address _newController) public onlyController {
-        controller = _newController;
+    modifier onlyWhitelistedCallers {
+        require(controller.assertIsWhitelisted(msg.sender));
+        _;
+    }
+
+    modifier onlyCaller(bytes32 _key) {
+        require(msg.sender == controller.lookup(_key));
+        _;
+    }
+
+    modifier onlyControllerCaller {
+        require(IController(msg.sender) == controller);
+        _;
+    }
+
+    modifier onlyInGoodTimes {
+        require(controller.stopInEmergency());
+        _;
+    }
+
+    modifier onlyInBadTimes {
+        require(controller.onlyInEmergency());
+        _;
+    }
+
+    function Controlled() public {
+        controller = IController(msg.sender);
+    }
+
+    function getController() public view returns(IController) {
+        return controller;
+    }
+
+    function setController(IController _controller) public onlyControllerCaller returns(bool) {
+        controller = _controller;
+        return true;
     }
 }
 
-
-contract TokenController {
-    /// @notice Called when `_owner` sends ether to the MiniMe Token contract
-    /// @param _owner The address that sent the ether to create tokens
-    /// @return True if the ether is accepted, false if it throws
-    function proxyPayment(address _owner) public payable returns(bool);
-
-    /// @notice Notifies the controller about a token transfer allowing the
-    ///  controller to react if desired
-    /// @param _from The origin of the transfer
-    /// @param _to The destination of the transfer
-    /// @param _amount The amount of the transfer
-    /// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
-
-    /// @notice Notifies the controller about an approval allowing the
-    ///  controller to react if desired
-    /// @param _owner The address that calls `approve()`
-    /// @param _spender The spender in the `approve()` call
-    /// @param _amount The amount in the `approve()` call
-    /// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount) public
-        returns(bool);
+contract IController {
+    function assertIsWhitelisted(address _target) public view returns(bool);
+    function lookup(bytes32 _key) public view returns(address);
+    function stopInEmergency() public view returns(bool);
+    function onlyInEmergency() public view returns(bool);
+    function getAugur() public view returns (IAugur);
+    function getTimestamp() public view returns (uint256);
 }
 
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
+contract DisputeCrowdsourcerFactory {
+    function createDisputeCrowdsourcer(IController _controller, IMarket _market, uint256 _size, bytes32 _payoutDistributionHash, uint256[] _payoutNumerators, bool _invalid) public returns (IDisputeCrowdsourcer) {
+        Delegator _delegator = new Delegator(_controller, "DisputeCrowdsourcer");
+        IDisputeCrowdsourcer _disputeCrowdsourcer = IDisputeCrowdsourcer(_delegator);
+        _disputeCrowdsourcer.initialize(_market, _size, _payoutDistributionHash, _payoutNumerators, _invalid);
+        return _disputeCrowdsourcer;
+    }
 }
 
-/// @dev The actual token contract, the default controller is the msg.sender
-///  that deploys the contract, so usually this token will be deployed by a
-///  token controller contract, which Giveth will call a "Campaign"
-contract MiniMeToken is Controlled {
+contract InitialReporterFactory {
+    function createInitialReporter(IController _controller, IMarket _market, address _designatedReporter) public returns (IInitialReporter) {
+        Delegator _delegator = new Delegator(_controller, "InitialReporter");
+        IInitialReporter _initialReporter = IInitialReporter(_delegator);
+        _initialReporter.initialize(_market, _designatedReporter);
+        return _initialReporter;
+    }
+}
 
-    string public name;                //The Token's name: e.g. DigixDAO Tokens
-    uint8 public decimals;             //Number of decimals of the smallest unit
-    string public symbol;              //An identifier: e.g. REP
-    string public version = 'MMT_0.2'; //An arbitrary versioning scheme
+contract MailboxFactory {
+    function createMailbox(IController _controller, address _owner, IMarket _market) public returns (IMailbox) {
+        Delegator _delegator = new Delegator(_controller, "Mailbox");
+        IMailbox _mailbox = IMailbox(_delegator);
+        _mailbox.initialize(_owner, _market);
+        return _mailbox;
+    }
+}
 
+contract MapFactory {
+    function createMap(IController _controller, address _owner) public returns (Map) {
+        Delegator _delegator = new Delegator(_controller, "Map");
+        Map _map = Map(_delegator);
+        _map.initialize(_owner);
+        return _map;
+    }
+}
 
-    /// @dev `Checkpoint` is the structure that attaches a block number to a
-    ///  given value, the block number attached is the one that last changed the
-    ///  value
-    struct  Checkpoint {
+contract ShareTokenFactory {
+    function createShareToken(IController _controller, IMarket _market, uint256 _outcome) public returns (IShareToken) {
+        Delegator _delegator = new Delegator(_controller, "ShareToken");
+        IShareToken _shareToken = IShareToken(_delegator);
+        _shareToken.initialize(_market, _outcome);
+        return _shareToken;
+    }
+}
 
-        // `fromBlock` is the block number that the value was generated from
-        uint128 fromBlock;
+contract DelegationTarget is Controlled {
+    bytes32 public controllerLookupName;
+}
 
-        // `value` is the amount of tokens at a specific block number
-        uint128 value;
+contract Delegator is DelegationTarget {
+    function Delegator(IController _controller, bytes32 _controllerLookupName) public {
+        controller = _controller;
+        controllerLookupName = _controllerLookupName;
     }
 
-    // `parentToken` is the Token address that was cloned to produce this token;
-    //  it will be 0x0 for a token that was not cloned
-    MiniMeToken public parentToken;
-
-    // `parentSnapShotBlock` is the block number from the Parent Token that was
-    //  used to determine the initial distribution of the Clone Token
-    uint public parentSnapShotBlock;
-
-    // `creationBlock` is the block number that the Clone Token was created
-    uint public creationBlock;
-
-    // `balances` is the map that tracks the balance of each address, in this
-    //  contract when the balance changes the block number that the change
-    //  occurred is also included in the map
-    mapping (address => Checkpoint[]) balances;
-
-    // `allowed` tracks any extra transfer rights as in all ERC20 tokens
-    mapping (address => mapping (address => uint256)) allowed;
-
-    // Tracks the history of the `totalSupply` of the token
-    Checkpoint[] totalSupplyHistory;
-
-    // Flag that determines if the token is transferable or not.
-    bool public transfersEnabled;
-
-    // The factory used to create new clone tokens
-    MiniMeTokenFactory public tokenFactory;
-
-////////////////
-// Constructor
-////////////////
-
-    /// @notice Constructor to create a MiniMeToken
-    /// @param _tokenFactory The address of the MiniMeTokenFactory contract that
-    ///  will create the Clone token contracts, the token factory needs to be
-    ///  deployed first
-    /// @param _parentToken Address of the parent token, set to 0x0 if it is a
-    ///  new token
-    /// @param _parentSnapShotBlock Block of the parent token that will
-    ///  determine the initial distribution of the clone token, set to 0 if it
-    ///  is a new token
-    /// @param _tokenName Name of the new token
-    /// @param _decimalUnits Number of decimals of the new token
-    /// @param _tokenSymbol Token Symbol for the new token
-    /// @param _transfersEnabled If true, tokens will be able to be transferred
-    function MiniMeToken(
-        address _tokenFactory,
-        address _parentToken,
-        uint _parentSnapShotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) public {
-        tokenFactory = MiniMeTokenFactory(_tokenFactory);
-        name = _tokenName;                                 // Set the name
-        decimals = _decimalUnits;                          // Set the decimals
-        symbol = _tokenSymbol;                             // Set the symbol
-        parentToken = MiniMeToken(_parentToken);
-        parentSnapShotBlock = _parentSnapShotBlock;
-        transfersEnabled = _transfersEnabled;
-        creationBlock = block.number;
-    }
-
-
-///////////////////
-// ERC20 Methods
-///////////////////
-
-    /// @notice Send `_amount` tokens to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _amount The amount of tokens to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _amount) public returns (bool success) {
-        require(transfersEnabled);
-        return doTransfer(msg.sender, _to, _amount);
-    }
-
-    /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
-    ///  is approved by `_from`
-    /// @param _from The address holding the tokens being transferred
-    /// @param _to The address of the recipient
-    /// @param _amount The amount of tokens to be transferred
-    /// @return True if the transfer was successful
-    function transferFrom(address _from, address _to, uint256 _amount
-    ) public returns (bool success) {
-
-        // The controller of this contract can move tokens around at will,
-        //  this is important to recognize! Confirm that you trust the
-        //  controller of this contract, which in most situations should be
-        //  another open source smart contract or 0x0
-        if (msg.sender != controller) {
-            require(transfersEnabled);
-
-            // The standard ERC 20 transferFrom functionality
-            if (allowed[_from][msg.sender] < _amount) return false;
-            allowed[_from][msg.sender] -= _amount;
-        }
-        return doTransfer(_from, _to, _amount);
-    }
-
-    /// @dev This is the actual transfer function in the token contract, it can
-    ///  only be called by other functions in this contract.
-    /// @param _from The address holding the tokens being transferred
-    /// @param _to The address of the recipient
-    /// @param _amount The amount of tokens to be transferred
-    /// @return True if the transfer was successful
-    function doTransfer(address _from, address _to, uint _amount
-    ) internal returns(bool) {
-
-           if (_amount == 0) {
-               return true;
-           }
-
-           require(parentSnapShotBlock < block.number);
-
-           // Do not allow transfer to 0x0 or the token contract itself
-           require((_to != 0) && (_to != address(this)));
-
-           // If the amount being transfered is more than the balance of the
-           //  account the transfer returns false
-           var previousBalanceFrom = balanceOfAt(_from, block.number);
-           if (previousBalanceFrom < _amount) {
-               return false;
-           }
-
-           // Alerts the token controller of the transfer
-           if (isContract(controller)) {
-               require(TokenController(controller).onTransfer(_from, _to, _amount));
-           }
-
-           // First update the balance array with the new value for the address
-           //  sending the tokens
-           updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
-
-           // Then update the balance array with the new value for the address
-           //  receiving the tokens
-           var previousBalanceTo = balanceOfAt(_to, block.number);
-           require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-           updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-           // An event to make the transfer easy to find on the blockchain
-           Transfer(_from, _to, _amount);
-
-           return true;
-    }
-
-    /// @param _owner The address that's balance is being requested
-    /// @return The balance of `_owner` at the current block
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balanceOfAt(_owner, block.number);
-    }
-
-    /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
-    ///  its behalf. This is a modified version of the ERC20 approve function
-    ///  to be a little bit safer
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _amount The amount of tokens to be approved for transfer
-    /// @return True if the approval was successful
-    function approve(address _spender, uint256 _amount) public returns (bool success) {
-        require(transfersEnabled);
-
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender,0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-
-        // Alerts the token controller of the approve function call
-        if (isContract(controller)) {
-            require(TokenController(controller).onApprove(msg.sender, _spender, _amount));
-        }
-
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    /// @dev This function makes it easy to read the `allowed[]` map
-    /// @param _owner The address of the account that owns the token
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens of _owner that _spender is allowed
-    ///  to spend
-    function allowance(address _owner, address _spender
-    ) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
-    ///  its behalf, and then a function is triggered in the contract that is
-    ///  being approved, `_spender`. This allows users to use their tokens to
-    ///  interact with contracts in one function call instead of two
-    /// @param _spender The address of the contract able to transfer the tokens
-    /// @param _amount The amount of tokens to be approved for transfer
-    /// @return True if the function call was successful
-    function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-    ) public returns (bool success) {
-        require(approve(_spender, _amount));
-
-        ApproveAndCallFallBack(_spender).receiveApproval(
-            msg.sender,
-            _amount,
-            this,
-            _extraData
-        );
-
-        return true;
-    }
-
-    /// @dev This function makes it easy to get the total number of tokens
-    /// @return The total number of tokens
-    function totalSupply() public constant returns (uint) {
-        return totalSupplyAt(block.number);
-    }
-
-
-////////////////
-// Query balance and totalSupply in History
-////////////////
-
-    /// @dev Queries the balance of `_owner` at a specific `_blockNumber`
-    /// @param _owner The address from which the balance will be retrieved
-    /// @param _blockNumber The block number when the balance is queried
-    /// @return The balance at `_blockNumber`
-    function balanceOfAt(address _owner, uint _blockNumber) public constant
-        returns (uint) {
-
-        // These next few lines are used when the balance of the token is
-        //  requested before a check point was ever created for this token, it
-        //  requires that the `parentToken.balanceOfAt` be queried at the
-        //  genesis block for that token as this contains initial balance of
-        //  this token
-        if ((balances[_owner].length == 0)
-            || (balances[_owner][0].fromBlock > _blockNumber)) {
-            if (address(parentToken) != 0) {
-                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
-            } else {
-                // Has no parent
-                return 0;
-            }
-
-        // This will return the expected balance during normal situations
-        } else {
-            return getValueAt(balances[_owner], _blockNumber);
-        }
-    }
-
-    /// @notice Total amount of tokens at a specific `_blockNumber`.
-    /// @param _blockNumber The block number when the totalSupply is queried
-    /// @return The total amount of tokens at `_blockNumber`
-    function totalSupplyAt(uint _blockNumber) public constant returns(uint) {
-
-        // These next few lines are used when the totalSupply of the token is
-        //  requested before a check point was ever created for this token, it
-        //  requires that the `parentToken.totalSupplyAt` be queried at the
-        //  genesis block for this token as that contains totalSupply of this
-        //  token at this block number.
-        if ((totalSupplyHistory.length == 0)
-            || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
-            if (address(parentToken) != 0) {
-                return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
-            } else {
-                return 0;
-            }
-
-        // This will return the expected totalSupply during normal situations
-        } else {
-            return getValueAt(totalSupplyHistory, _blockNumber);
-        }
-    }
-
-////////////////
-// Clone Token Method
-////////////////
-
-    /// @notice Creates a new clone token with the initial distribution being
-    ///  this token at `_snapshotBlock`
-    /// @param _cloneTokenName Name of the clone token
-    /// @param _cloneDecimalUnits Number of decimals of the smallest unit
-    /// @param _cloneTokenSymbol Symbol of the clone token
-    /// @param _snapshotBlock Block when the distribution of the parent token is
-    ///  copied to set the initial distribution of the new clone token;
-    ///  if the block is zero than the actual block, the current block is used
-    /// @param _transfersEnabled True if transfers are allowed in the clone
-    /// @return The address of the new MiniMeToken Contract
-    function createCloneToken(
-        string _cloneTokenName,
-        uint8 _cloneDecimalUnits,
-        string _cloneTokenSymbol,
-        uint _snapshotBlock,
-        bool _transfersEnabled
-        ) public returns(address) {
-        if (_snapshotBlock == 0) _snapshotBlock = block.number;
-        MiniMeToken cloneToken = tokenFactory.createCloneToken(
-            this,
-            _snapshotBlock,
-            _cloneTokenName,
-            _cloneDecimalUnits,
-            _cloneTokenSymbol,
-            _transfersEnabled
-            );
-
-        cloneToken.changeController(msg.sender);
-
-        // An event to make the token easy to find on the blockchain
-        NewCloneToken(address(cloneToken), _snapshotBlock);
-        return address(cloneToken);
-    }
-
-////////////////
-// Generate and destroy tokens
-////////////////
-
-    /// @notice Generates `_amount` tokens that are assigned to `_owner`
-    /// @param _owner The address that will be assigned the new tokens
-    /// @param _amount The quantity of tokens generated
-    /// @return True if the tokens are generated correctly
-    function generateTokens(address _owner, uint _amount
-    ) public onlyController returns (bool) {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
-        uint previousBalanceTo = balanceOf(_owner);
-        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
-        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-        Transfer(0, _owner, _amount);
-        return true;
-    }
-
-
-    /// @notice Burns `_amount` tokens from `_owner`
-    /// @param _owner The address that will lose the tokens
-    /// @param _amount The quantity of tokens to burn
-    /// @return True if the tokens are burned correctly
-    function destroyTokens(address _owner, uint _amount
-    ) onlyController public returns (bool) {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = balanceOf(_owner);
-        require(previousBalanceFrom >= _amount);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
-        Transfer(_owner, 0, _amount);
-        return true;
-    }
-
-////////////////
-// Enable tokens transfers
-////////////////
-
-
-    /// @notice Enables token holders to transfer their tokens freely if true
-    /// @param _transfersEnabled True if transfers are allowed in the clone
-    function enableTransfers(bool _transfersEnabled) public onlyController {
-        transfersEnabled = _transfersEnabled;
-    }
-
-////////////////
-// Internal helper functions to query and set a value in a snapshot array
-////////////////
-
-    /// @dev `getValueAt` retrieves the number of tokens at a given block number
-    /// @param checkpoints The history of values being queried
-    /// @param _block The block number to retrieve the value at
-    /// @return The number of tokens being queried
-    function getValueAt(Checkpoint[] storage checkpoints, uint _block
-    ) constant internal returns (uint) {
-        if (checkpoints.length == 0) return 0;
-
-        // Shortcut for the actual value
-        if (_block >= checkpoints[checkpoints.length-1].fromBlock)
-            return checkpoints[checkpoints.length-1].value;
-        if (_block < checkpoints[0].fromBlock) return 0;
-
-        // Binary search of the value in the array
-        uint min = 0;
-        uint max = checkpoints.length-1;
-        while (max > min) {
-            uint mid = (max + min + 1)/ 2;
-            if (checkpoints[mid].fromBlock<=_block) {
-                min = mid;
-            } else {
-                max = mid-1;
-            }
-        }
-        return checkpoints[min].value;
-    }
-
-    /// @dev `updateValueAtNow` used to update the `balances` map and the
-    ///  `totalSupplyHistory`
-    /// @param checkpoints The history of data being updated
-    /// @param _value The new number of tokens
-    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value
-    ) internal  {
-        if ((checkpoints.length == 0)
-        || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
-               Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
-               newCheckPoint.fromBlock =  uint128(block.number);
-               newCheckPoint.value = uint128(_value);
-           } else {
-               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-               oldCheckPoint.value = uint128(_value);
-           }
-    }
-
-    /// @dev Internal function to determine if an address is a contract
-    /// @param _addr The address being queried
-    /// @return True if `_addr` is a contract
-    function isContract(address _addr) constant internal returns(bool) {
-        uint size;
-        if (_addr == 0) return false;
-        assembly {
-            size := extcodesize(_addr)
-        }
-        return size>0;
-    }
-
-    /// @dev Helper function to return a min betwen the two uints
-    function min(uint a, uint b) pure internal returns (uint) {
-        return a < b ? a : b;
-    }
-
-    /// @notice The fallback function: If the contract's controller has not been
-    ///  set to 0, then the `proxyPayment` method is called which relays the
-    ///  ether and creates tokens as described in the token controller contract
-    function () public payable {
-        require(isContract(controller));
-        require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
-    }
-
-//////////
-// Safety Methods
-//////////
-
-    /// @notice This method can be used by the controller to extract mistakenly
-    ///  sent tokens to this contract.
-    /// @param _token The address of the token contract that you want to recover
-    ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) public onlyController {
-        if (_token == 0x0) {
-            controller.transfer(this.balance);
+    function() external payable {
+        // Do nothing if we haven't properly set up the delegator to delegate calls
+        if (controllerLookupName == 0) {
             return;
         }
 
-        MiniMeToken token = MiniMeToken(_token);
-        uint balance = token.balanceOf(this);
-        token.transfer(controller, balance);
-        ClaimedTokens(_token, controller, balance);
-    }
+        // Get the delegation target contract
+        address _target = controller.lookup(controllerLookupName);
 
-////////////////
-// Events
-////////////////
-    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
-    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
-    event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
-    event Approval(
-        address indexed _owner,
-        address indexed _spender,
-        uint256 _amount
-        );
-
-}
-
-
-////////////////
-// MiniMeTokenFactory
-////////////////
-
-/// @dev This contract is used to generate clone contracts from a contract.
-///  In solidity this is the way to create a contract from a contract of the
-///  same class
-contract MiniMeTokenFactory {
-
-    /// @notice Update the DApp by creating a new token with new functionalities
-    ///  the msg.sender becomes the controller of this clone token
-    /// @param _parentToken Address of the token being cloned
-    /// @param _snapshotBlock Block of the parent token that will
-    ///  determine the initial distribution of the clone token
-    /// @param _tokenName Name of the new token
-    /// @param _decimalUnits Number of decimals of the new token
-    /// @param _tokenSymbol Token Symbol for the new token
-    /// @param _transfersEnabled If true, tokens will be able to be transferred
-    /// @return The address of the new token contract
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) public returns (MiniMeToken) {
-        MiniMeToken newToken = new MiniMeToken(
-            this,
-            _parentToken,
-            _snapshotBlock,
-            _tokenName,
-            _decimalUnits,
-            _tokenSymbol,
-            _transfersEnabled
-            );
-
-        newToken.changeController(msg.sender);
-        return newToken;
-    }
-}
-
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-contract WhiteList is Ownable {
-
-  mapping (address => bool) public whiteListed;
-  address[] public investors;
-  address[] public contracts;
-
-  // Address early participation whitelist status changed
-  event WhiteListed(address addr, bool status);
-
-  modifier areWhiteListed(address[] addrs) {
-    for (uint i=0; i<addrs.length; i++) {
-        if (!whiteListed[addrs[i]] || addrs[i] == 0)
-            revert();
-    }
-    _;
-  }
-
-  modifier areNotWhiteListed(address[] addrs) {
-    for (uint i=0; i<addrs.length; i++) {
-        if (whiteListed[addrs[i]] || addrs[i] == 0)
-            revert();
-    }
-    _;
-  }
-
-  function WhiteList(address[] addrs) public {
-    for (uint i=0; i<addrs.length; i++) {
-        if(isContract(addrs[i])){
-            contracts.push(addrs[i]);
-        } else {
-            investors.push(addrs[i]);
-        }
-        if (whiteListed[addrs[i]] || addrs[i] == 0) {
-            revert();
-        }
-        whiteListed[addrs[i]] = true;
-    }
-
-  }
-
-  function addAddress(address[] addrs) public onlyOwner areNotWhiteListed(addrs) {
-    for (uint i=0; i<addrs.length; i++) {
-        whiteListed[addrs[i]] = true;
-        if(isContract(addrs[i])){
-            contracts.push(addrs[i]);
-        } else {
-            investors.push(addrs[i]);
-        }
-        WhiteListed(addrs[i], true);
-    }
-  }
-
-  function removeAddress(address addr) public onlyOwner {
-    require(whiteListed[addr]);
-    if (isContract(addr)) {
-        for (uint i=0; i<contracts.length - 1; i++) {
-            if (contracts[i] == addr) {
-                contracts[i] = contracts[contracts.length - 1];
-                break;
+        assembly {
+            //0x40 is the address where the next free memory slot is stored in Solidity
+            let _calldataMemoryOffset := mload(0x40)
+            // new "memory end" including padding. The bitwise operations here ensure we get rounded up to the nearest 32 byte boundary
+            let _size := and(add(calldatasize, 0x1f), not(0x1f))
+            // Update the pointer at 0x40 to point at new free memory location so any theoretical allocation doesn't stomp our memory in this call
+            mstore(0x40, add(_calldataMemoryOffset, _size))
+            // Copy method signature and parameters of this call into memory
+            calldatacopy(_calldataMemoryOffset, 0x0, calldatasize)
+            // Call the actual method via delegation
+            let _retval := delegatecall(gas, _target, _calldataMemoryOffset, calldatasize, 0, 0)
+            switch _retval
+            case 0 {
+                // 0 == it threw, so we revert
+                revert(0,0)
+            } default {
+                // If the call succeeded return the return data from the delegate call
+                let _returndataMemoryOffset := mload(0x40)
+                // Update the pointer at 0x40 again to point at new free memory location so any theoretical allocation doesn't stomp our memory in this call
+                mstore(0x40, add(_returndataMemoryOffset, returndatasize))
+                returndatacopy(_returndataMemoryOffset, 0x0, returndatasize)
+                return(_returndataMemoryOffset, returndatasize)
             }
         }
-        contracts.length -= 1;
-    } else {
-        for (uint j=0; j<investors.length - 1; j++) {
-            if (investors[j] == addr) {
-                investors[j] = investors[investors.length - 1];
-                break;
-            }
-        }
-        investors.length -= 1;
     }
-    whiteListed[addr] = false;
-    WhiteListed(addr, false);
-  }
-
-  /// @dev Internal function to determine if an address is a contract
-  /// @param _addr The address being queried
-  /// @return True if `_addr` is a contract
-  function isContract(address _addr) constant internal returns(bool) {
-    uint size;
-    if (_addr == 0) return false;
-    assembly {
-        size := extcodesize(_addr)
-    }
-    return size>0;
-  }
-
-
-  // web3 function call
-  function getInvestors() public constant returns (address[]) {
-    return investors;
-  }
-
-  function getContracts() public constant returns (address[]) {
-    return contracts;
-  }
-
-  function isWhiteListed(address addr) public constant returns (bool) {
-    return whiteListed[addr];
-  }
-
 }
 
+contract IOwnable {
+    function getOwner() public view returns (address);
+    function transferOwnership(address newOwner) public returns (bool);
+}
 
-contract MultiSigWallet {
+contract ITyped {
+    function getTypeName() public view returns (bytes32);
+}
 
-    /*
-     *  Events
-     */
-    event Confirmation(address indexed sender, uint indexed transactionId);
-    event Revocation(address indexed sender, uint indexed transactionId);
-    event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
-    event OwnerAddition(address indexed owner);
-    event OwnerRemoval(address indexed owner);
-    event RequirementChange(uint required);
+contract Initializable {
+    bool private initialized = false;
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
-    mapping (uint => Transaction) public transactions;
-    mapping (uint => mapping (address => bool)) public confirmations;
-    mapping (address => bool) public isOwner;
-    address[] public owners;
-    uint public required;
-    uint public transactionCount;
-
-    struct Transaction {
-        address destination;
-        uint value;
-        bytes data;
-        bool executed;
-    }
-
-
-    /*
-     *  Modifiers
-     */
-    modifier onlyWallet() {
-        if (msg.sender != address(this))
-            revert();
+    modifier afterInitialized {
+        require(initialized);
         _;
     }
 
+    modifier beforeInitialized {
+        require(!initialized);
+        _;
+    }
+
+    function endInitialization() internal beforeInitialized returns (bool) {
+        initialized = true;
+        return true;
+    }
+
+    function getInitialized() public view returns (bool) {
+        return initialized;
+    }
+}
+
+contract Ownable is IOwnable {
+    address internal owner;
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
     modifier onlyOwner() {
-        if(!isOwner[msg.sender]) 
-            revert();
+        require(msg.sender == owner);
         _;
     }
 
-    modifier ownerDoesNotExist(address owner) {
-        if (isOwner[owner])
-            revert();
-        _;
+    function getOwner() public view returns (address) {
+        return owner;
     }
 
-    modifier ownerExists(address owner) {
-        if (!isOwner[owner])
-            revert();
-        _;
-    }
-
-    modifier transactionExists(uint transactionId) {
-        if (transactions[transactionId].destination == 0)
-            revert();
-        _;
-    }
-
-    modifier confirmed(uint transactionId, address owner) {
-        if (!confirmations[transactionId][owner])
-            revert();
-        _;
-    }
-
-    modifier notConfirmed(uint transactionId, address owner) {
-        if (confirmations[transactionId][owner])
-            revert();
-        _;
-    }
-
-    modifier notExecuted(uint transactionId) {
-        if (transactions[transactionId].executed)
-            revert();
-        _;
-    }
-
-    modifier notNull(address _address) {
-        if (_address == 0)
-            revert();
-        _;
-    }
-
-    modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
-            || _required == 0
-            || ownerCount == 0)
-            revert();
-        _;
-    }
-
-    /// @dev Fallback function allows to deposit ether.
-    function() public payable
-    {
-        if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
-    }
-
-    function MultiSigWallet(address[] _owners, uint _required)
-        public
-        validRequirement(_owners.length, _required)
-    {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                revert();
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
-    }
-
-    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of new owner.
-    function addOwner(address owner)
-        public
-        onlyWallet
-        ownerDoesNotExist(owner)
-        notNull(owner)
-        validRequirement(owners.length + 1, required)
-    {
-        isOwner[owner] = true;
-        owners.push(owner);
-        OwnerAddition(owner);
-    }
-
-    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner.
-    function removeOwner(address owner)
-        public
-        onlyWallet
-        ownerExists(owner)
-    {
-        isOwner[owner] = false;
-        for (uint i=0; i<owners.length - 1; i++)
-            if (owners[i] == owner) {
-                owners[i] = owners[owners.length - 1];
-                break;
-            }
-        owners.length -= 1;
-        if (required > owners.length)
-            changeRequirement(owners.length);
-        OwnerRemoval(owner);
-    }
-
-    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
-    function replaceOwner(address owner, address newOwner)
-        public
-        onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (owners[i] == owner) {
-                owners[i] = newOwner;
-                break;
-            }
-        isOwner[owner] = false;
-        isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
-    }
-
-    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
-    /// @param _required Number of required confirmations.
-    function changeRequirement(uint _required)
-        public
-        onlyWallet
-        validRequirement(owners.length, _required)
-    {
-        required = _required;
-        RequirementChange(_required);
-    }
-
-    /// @dev Allows an owner to submit and confirm a transaction.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes data)
-        public
-        returns (uint transactionId)
-    {
-        transactionId = addTransaction(destination, value, data);
-        confirmTransaction(transactionId);
-    }
-
-    /// @dev Allows an owner to confirm a transaction.
-    /// @param transactionId Transaction ID.
-    function confirmTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        transactionExists(transactionId)
-        notConfirmed(transactionId, msg.sender)
-    {
-        confirmations[transactionId][msg.sender] = true;
-        Confirmation(msg.sender, transactionId);
-        executeTransaction(transactionId);
-    }
-
-    /// @dev Allows an owner to revoke a confirmation for a transaction.
-    /// @param transactionId Transaction ID.
-    function revokeConfirmation(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
-    {
-        confirmations[transactionId][msg.sender] = false;
-        Revocation(msg.sender, transactionId);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
-    {
-        if (isConfirmed(transactionId)) {
-
-            transactions[transactionId].executed = true;
-            if (transactions[transactionId].destination.call.value(transactions[transactionId].value)(transactions[transactionId].data))
-                Execution(transactionId);
-            else {
-                ExecutionFailure(transactionId);
-                transactions[transactionId].executed = false;
-            }
-        }
-    }
-
-    /// @dev Returns the confirmation status of a transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Confirmation status.
-    function isConfirmed(uint transactionId)
-        public
-        constant
-        returns (bool)
-    {
-        uint count = 0;
-        for (uint i=0; i<owners.length; i++) {
-            if (confirmations[transactionId][owners[i]])
-                count += 1;
-            if (count == required)
-                return true;
-        }
-    }
-
-    /*
-     * Internal functions
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
      */
-    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function addTransaction(address destination, uint value, bytes data)
-        internal
-        notNull(destination)
-        returns (uint transactionId)
-    {
-        transactionId = transactionCount;
-        transactions[transactionId] = Transaction({
-            destination: destination,
-            value: value,
-            data: data,
-            executed: false
-        });
-        transactionCount += 1;
-        Submission(transactionId);
+    function transferOwnership(address _newOwner) public onlyOwner returns (bool) {
+        if (_newOwner != address(0)) {
+            onTransferOwnership(owner, _newOwner);
+            owner = _newOwner;
+        }
+        return true;
     }
 
-    /*
-     * Web3 call functions
-     */
-    /// @dev Returns number of confirmations of a transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Number of confirmations.
-    function getConfirmationCount(uint transactionId)
-        public
-        constant
-        returns (uint count)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (confirmations[transactionId][owners[i]])
-                count += 1;
+    // Subclasses of this token may want to send additional logs through the centralized Augur log emitter contract
+    function onTransferOwnership(address, address) internal returns (bool);
+}
+
+contract Map is DelegationTarget, Ownable, Initializable {
+    mapping(bytes32 => bytes32) private items;
+    uint256 private count;
+
+    function initialize(address _owner) public beforeInitialized returns (bool) {
+        endInitialization();
+        owner = _owner;
+        return true;
     }
 
-    /// @dev Returns total number of transactions after filers are applied.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Total number of transactions after filters are applied.
-    function getTransactionCount(bool pending, bool executed)
-        public
-        constant
-        returns (uint count)
-    {
-        for (uint i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-                count += 1;
+    function add(bytes32 _key, bytes32 _value) public onlyOwner returns (bool) {
+        if (contains(_key)) {
+            return false;
+        }
+        items[_key] = _value;
+        count += 1;
+        return true;
     }
 
-    /// @dev Returns list of owners.
-    /// @return List of owner addresses.
-    function getOwners()
-        public
-        constant
-        returns (address[])
-    {
-        return owners;
+    function add(bytes32 _key, address _value) public onlyOwner returns (bool) {
+        return add(_key, bytes32(_value));
     }
 
-    /// @dev Returns array with owner addresses, which confirmed transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Returns array of owner addresses.
-    function getConfirmations(uint transactionId)
-        public
-        constant
-        returns (address[] _confirmations)
-    {
-        address[] memory confirmationsTemp = new address[](owners.length);
-        uint count = 0;
-        uint i;
-        for (i=0; i<owners.length; i++)
-            if (confirmations[transactionId][owners[i]]) {
-                confirmationsTemp[count] = owners[i];
-                count += 1;
-            }
-        _confirmations = new address[](count);
-        for (i=0; i<count; i++)
-            _confirmations[i] = confirmationsTemp[i];
+    function remove(bytes32 _key) public onlyOwner returns (bool) {
+        if (!contains(_key)) {
+            return false;
+        }
+        delete items[_key];
+        count -= 1;
+        return true;
     }
 
-    /// @dev Returns list of transaction IDs in defined range.
-    /// @param from Index start position of transaction array.
-    /// @param to Index end position of transaction array.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Returns array of transaction IDs.
-    function getTransactionIds(uint from, uint to, bool pending, bool executed)
-        public
-        constant
-        returns (uint[] _transactionIds)
-    {
-        uint[] memory transactionIdsTemp = new uint[](transactionCount);
-        uint count = 0;
-        uint i;
-        for (i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-            {
-                transactionIdsTemp[count] = i;
-                count += 1;
-            }
-        _transactionIds = new uint[](to - from);
-        for (i=from; i<to; i++)
-            _transactionIds[i - from] = transactionIdsTemp[i];
+    function getValueOrZero(bytes32 _key) public view returns (bytes32) {
+        return items[_key];
+    }
+
+    function get(bytes32 _key) public view returns (bytes32) {
+        bytes32 _value = items[_key];
+        require(_value != bytes32(0));
+        return _value;
+    }
+
+    function getAsAddressOrZero(bytes32 _key) public view returns (address) {
+        return address(getValueOrZero(_key));
+    }
+
+    function getAsAddress(bytes32 _key) public view returns (address) {
+        return address(get(_key));
+    }
+
+    function contains(bytes32 _key) public view returns (bool) {
+        return items[_key] != bytes32(0);
+    }
+
+    function getCount() public view returns (uint256) {
+        return count;
+    }
+
+    function onTransferOwnership(address, address) internal returns (bool) {
+        return true;
     }
 }
 
+library SafeMathInt256 {
+    // Signed ints with n bits can range from -2**(n-1) to (2**(n-1) - 1)
+    int256 private constant INT256_MIN = -2**(255);
+    int256 private constant INT256_MAX = (2**(255) - 1);
 
-contract Market is TokenController, MultiSigWallet {
-
-	uint public totalTokenCollected;
-
-	MiniMeToken public tokenContract;
-    WhiteList public MyWhiteList;
-
-	uint public basePrice;
-	uint public marketCap;
-
-	uint public startFundingTime;
-	uint public endFundingTime;
-	// market duration 6 hour. 6 * 60 * 60
-	uint public constant DURATION = 21600;
-
-    modifier beforeStart {
-        require(!saleStarted());
-        _;
+    function mul(int256 a, int256 b) internal pure returns (int256) {
+        int256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
     }
 
-    modifier inProgress {
-        require(saleStarted() && ! saleEnded());
-        _;
+    function div(int256 a, int256 b) internal pure returns (int256) {
+        // No need to check for dividing by 0 -- Solidity automatically throws on division by 0
+        int256 c = a / b;
+        return c;
     }
 
-	/// @return true if sale has started, false otherwise.
-    function saleStarted() public constant returns (bool) {
-        return (startFundingTime > 0 && now >= startFundingTime);
+    function sub(int256 a, int256 b) internal pure returns (int256) {
+        require(((a >= 0) && (b >= a - INT256_MAX)) || ((a < 0) && (b <= a - INT256_MIN)));
+        return a - b;
     }
 
-	/// @return true if sale is due when the last phase is finished.
-    function saleEnded() public constant returns (bool) {
-        return now >= endFundingTime;
+    function add(int256 a, int256 b) internal pure returns (int256) {
+        require(((a >= 0) && (b <= INT256_MAX - a)) || ((a < 0) && (b >= INT256_MIN - a)));
+        return a + b;
     }
 
+    function min(int256 a, int256 b) internal pure returns (int256) {
+        if (a <= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
 
-	function Market(
-		address _whiteListAddress,
-		address _tokenAddress,
-		address[] _owners,
-		uint _required
-	) public MultiSigWallet(_owners, _required) {
-		MyWhiteList = WhiteList(_whiteListAddress);
-		tokenContract = MiniMeToken(_tokenAddress);
-	}
+    function max(int256 a, int256 b) internal pure returns (int256) {
+        if (a >= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
 
-	function startAndSetParams(uint _basePrice, uint _marketCap) onlyWallet beforeStart public {
-		basePrice = _basePrice;
-		marketCap = _marketCap;
-		startFundingTime = now;
-		endFundingTime = startFundingTime + DURATION;
-	}
+    function getInt256Min() internal pure returns (int256) {
+        return INT256_MIN;
+    }
 
-	function onTransfer(address _from, address _to, uint _amount) public returns(bool) {
-		require (MyWhiteList.isWhiteListed(_from));
-		require (MyWhiteList.isWhiteListed(_to));
-		if(address(this) == _to) {
-			uint ethAmount = computeEtherAmount(_amount);
-			require(this.balance > ethAmount);
-			totalTokenCollected = totalTokenCollected + _amount;
-			_from.transfer(ethAmount);
-		}
-		return true;
-	}
+    function getInt256Max() internal pure returns (int256) {
+        return INT256_MAX;
+    }
 
-	function onApprove(address _owner, address _spender, uint) public returns(bool) {
-		require (MyWhiteList.isWhiteListed(_owner));
-        require (MyWhiteList.isWhiteListed(_spender));
-		return true;
-	}
+    // Float [fixed point] Operations
+    function fxpMul(int256 a, int256 b, int256 base) internal pure returns (int256) {
+        return div(mul(a, b), base);
+    }
 
-	function deposit() public onlyOwner payable {
-		// deposit ether in this contract but do not get any token;
-		if (msg.value > 0) {
-			Deposit(msg.sender, msg.value);
-		}
-	}
+    function fxpDiv(int256 a, int256 b, int256 base) internal pure returns (int256) {
+        return div(mul(a, base), b);
+    }
+}
 
-	function() public payable {
-	    require (MyWhiteList.isWhiteListed(msg.sender));
-		doPayment(msg.sender);
-	}
+library SafeMathUint256 {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
 
-	function proxyPayment(address _owner) public payable returns(bool) {
-		require (MyWhiteList.isWhiteListed(_owner));
-		doPayment(_owner);
-		return true;
-	}
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-	function doPayment(address _owner) inProgress internal {
-		require((tokenContract.controller() != 0) && (msg.value != 0));
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
 
-		uint tokenAmount = computeTokenAmount(msg.value);
-		uint generateTokenAmount = tokenAmount - totalTokenCollected;
-		uint currentSupply = tokenContract.totalSupply();
-		// total supply must not exceed marketCap after execution
-		require(currentSupply + generateTokenAmount <= marketCap);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
 
-		// transfer collected token first. only generate token when necessary.
-		if (tokenAmount >= totalTokenCollected) {
-			if(totalTokenCollected !=0) {
-				tokenContract.transfer(_owner, totalTokenCollected);
-				totalTokenCollected = 0;
-			}
-			require(tokenContract.generateTokens(_owner, generateTokenAmount));
-		} else {
-			tokenContract.transfer(_owner, tokenAmount);
-			totalTokenCollected = totalTokenCollected - tokenAmount;
-		}
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a <= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
 
-		return;
-	}
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a >= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
 
-	function updateBasePriceAndMarketCap(uint _basePrice, uint _marketCap) onlyWallet public {
-		basePrice = _basePrice;
-    marketCap = _marketCap; 
-	}
+    function getUint256Min() internal pure returns (uint256) {
+        return 0;
+    }
 
-	function computeTokenAmount(uint ethAmount) view internal returns (uint tokens) {
-		tokens = ethAmount * basePrice;
-	}
+    function getUint256Max() internal pure returns (uint256) {
+        return 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    }
 
-	function computeEtherAmount(uint tokenAmount) view internal returns (uint eth) {
-		eth = tokenAmount / basePrice;
-	}
+    function isMultipleOf(uint256 a, uint256 b) internal pure returns (bool) {
+        return a % b == 0;
+    }
+
+    // Float [fixed point] Operations
+    function fxpMul(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
+        return div(mul(a, b), base);
+    }
+
+    function fxpDiv(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
+        return div(mul(a, base), b);
+    }
+}
+
+contract ERC20Basic {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    function balanceOf(address _who) public view returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+    function totalSupply() public view returns (uint256);
+}
+
+contract ERC20 is ERC20Basic {
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function allowance(address _owner, address _spender) public view returns (uint256);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function approve(address _spender, uint256 _value) public returns (bool);
+}
+
+contract IFeeToken is ERC20, Initializable {
+    function initialize(IFeeWindow _feeWindow) public returns (bool);
+    function getFeeWindow() public view returns (IFeeWindow);
+    function feeWindowBurn(address _target, uint256 _amount) public returns (bool);
+    function mintForReportingParticipant(address _target, uint256 _amount) public returns (bool);
+}
+
+contract IFeeWindow is ITyped, ERC20 {
+    function initialize(IUniverse _universe, uint256 _feeWindowId) public returns (bool);
+    function getUniverse() public view returns (IUniverse);
+    function getReputationToken() public view returns (IReputationToken);
+    function getStartTime() public view returns (uint256);
+    function getEndTime() public view returns (uint256);
+    function getNumMarkets() public view returns (uint256);
+    function getNumInvalidMarkets() public view returns (uint256);
+    function getNumIncorrectDesignatedReportMarkets() public view returns (uint256);
+    function getNumDesignatedReportNoShows() public view returns (uint256);
+    function getFeeToken() public view returns (IFeeToken);
+    function isActive() public view returns (bool);
+    function isOver() public view returns (bool);
+    function onMarketFinalized() public returns (bool);
+    function buy(uint256 _attotokens) public returns (bool);
+    function redeem(address _sender) public returns (bool);
+    function redeemForReportingParticipant() public returns (bool);
+    function mintFeeTokens(uint256 _amount) public returns (bool);
+    function trustedUniverseBuy(address _buyer, uint256 _attotokens) public returns (bool);
+}
+
+contract IMailbox {
+    function initialize(address _owner, IMarket _market) public returns (bool);
+    function depositEther() public payable returns (bool);
+}
+
+contract IMarket is ITyped, IOwnable {
+    enum MarketType {
+        YES_NO,
+        CATEGORICAL,
+        SCALAR
+    }
+
+    function initialize(IUniverse _universe, uint256 _endTime, uint256 _feePerEthInAttoeth, ICash _cash, address _designatedReporterAddress, address _creator, uint256 _numOutcomes, uint256 _numTicks) public payable returns (bool _success);
+    function derivePayoutDistributionHash(uint256[] _payoutNumerators, bool _invalid) public view returns (bytes32);
+    function getUniverse() public view returns (IUniverse);
+    function getFeeWindow() public view returns (IFeeWindow);
+    function getNumberOfOutcomes() public view returns (uint256);
+    function getNumTicks() public view returns (uint256);
+    function getDenominationToken() public view returns (ICash);
+    function getShareToken(uint256 _outcome)  public view returns (IShareToken);
+    function getMarketCreatorSettlementFeeDivisor() public view returns (uint256);
+    function getForkingMarket() public view returns (IMarket _market);
+    function getEndTime() public view returns (uint256);
+    function getMarketCreatorMailbox() public view returns (IMailbox);
+    function getWinningPayoutDistributionHash() public view returns (bytes32);
+    function getWinningPayoutNumerator(uint256 _outcome) public view returns (uint256);
+    function getReputationToken() public view returns (IReputationToken);
+    function getFinalizationTime() public view returns (uint256);
+    function getInitialReporterAddress() public view returns (address);
+    function deriveMarketCreatorFeeAmount(uint256 _amount) public view returns (uint256);
+    function isContainerForShareToken(IShareToken _shadyTarget) public view returns (bool);
+    function isContainerForReportingParticipant(IReportingParticipant _reportingParticipant) public view returns (bool);
+    function isInvalid() public view returns (bool);
+    function finalize() public returns (bool);
+    function designatedReporterWasCorrect() public view returns (bool);
+    function designatedReporterShowed() public view returns (bool);
+    function isFinalized() public view returns (bool);
+    function finalizeFork() public returns (bool);
+    function assertBalances() public view returns (bool);
+}
+
+contract IReportingParticipant {
+    function getStake() public view returns (uint256);
+    function getPayoutDistributionHash() public view returns (bytes32);
+    function liquidateLosing() public returns (bool);
+    function redeem(address _redeemer) public returns (bool);
+    function isInvalid() public view returns (bool);
+    function isDisavowed() public view returns (bool);
+    function migrate() public returns (bool);
+    function getPayoutNumerator(uint256 _outcome) public view returns (uint256);
+    function getMarket() public view returns (IMarket);
+    function getSize() public view returns (uint256);
+}
+
+contract IDisputeCrowdsourcer is IReportingParticipant, ERC20 {
+    function initialize(IMarket market, uint256 _size, bytes32 _payoutDistributionHash, uint256[] _payoutNumerators, bool _invalid) public returns (bool);
+    function contribute(address _participant, uint256 _amount) public returns (uint256);
+}
+
+contract IInitialReporter is IReportingParticipant {
+    function initialize(IMarket _market, address _designatedReporter) public returns (bool);
+    function report(address _reporter, bytes32 _payoutDistributionHash, uint256[] _payoutNumerators, bool _invalid) public returns (bool);
+    function resetReportTimestamp() public returns (bool);
+    function designatedReporterShowed() public view returns (bool);
+    function designatedReporterWasCorrect() public view returns (bool);
+    function getDesignatedReporter() public view returns (address);
+    function getReportTimestamp() public view returns (uint256);
+    function migrateREP() public returns (bool);
+}
+
+contract IReputationToken is ITyped, ERC20 {
+    function initialize(IUniverse _universe) public returns (bool);
+    function migrateOut(IReputationToken _destination, uint256 _attotokens) public returns (bool);
+    function migrateIn(address _reporter, uint256 _attotokens) public returns (bool);
+    function trustedReportingParticipantTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedMarketTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedFeeWindowTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedUniverseTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function getUniverse() public view returns (IUniverse);
+    function getTotalMigrated() public view returns (uint256);
+    function getTotalTheoreticalSupply() public view returns (uint256);
+    function mintForReportingParticipant(uint256 _amountMigrated) public returns (bool);
+}
+
+contract IUniverse is ITyped {
+    function initialize(IUniverse _parentUniverse, bytes32 _parentPayoutDistributionHash) external returns (bool);
+    function fork() public returns (bool);
+    function getParentUniverse() public view returns (IUniverse);
+    function createChildUniverse(uint256[] _parentPayoutNumerators, bool _invalid) public returns (IUniverse);
+    function getChildUniverse(bytes32 _parentPayoutDistributionHash) public view returns (IUniverse);
+    function getReputationToken() public view returns (IReputationToken);
+    function getForkingMarket() public view returns (IMarket);
+    function getForkEndTime() public view returns (uint256);
+    function getForkReputationGoal() public view returns (uint256);
+    function getParentPayoutDistributionHash() public view returns (bytes32);
+    function getDisputeRoundDurationInSeconds() public view returns (uint256);
+    function getOrCreateFeeWindowByTimestamp(uint256 _timestamp) public returns (IFeeWindow);
+    function getOrCreateCurrentFeeWindow() public returns (IFeeWindow);
+    function getOrCreateNextFeeWindow() public returns (IFeeWindow);
+    function getOpenInterestInAttoEth() public view returns (uint256);
+    function getRepMarketCapInAttoeth() public view returns (uint256);
+    function getTargetRepMarketCapInAttoeth() public view returns (uint256);
+    function getOrCacheValidityBond() public returns (uint256);
+    function getOrCacheDesignatedReportStake() public returns (uint256);
+    function getOrCacheDesignatedReportNoShowBond() public returns (uint256);
+    function getOrCacheReportingFeeDivisor() public returns (uint256);
+    function getDisputeThresholdForFork() public view returns (uint256);
+    function getInitialReportMinValue() public view returns (uint256);
+    function calculateFloatingValue(uint256 _badMarkets, uint256 _totalMarkets, uint256 _targetDivisor, uint256 _previousValue, uint256 _defaultValue, uint256 _floor) public pure returns (uint256 _newValue);
+    function getOrCacheMarketCreationCost() public returns (uint256);
+    function getCurrentFeeWindow() public view returns (IFeeWindow);
+    function getOrCreateFeeWindowBefore(IFeeWindow _feeWindow) public returns (IFeeWindow);
+    function isParentOf(IUniverse _shadyChild) public view returns (bool);
+    function updateTentativeWinningChildUniverse(bytes32 _parentPayoutDistributionHash) public returns (bool);
+    function isContainerForFeeWindow(IFeeWindow _shadyTarget) public view returns (bool);
+    function isContainerForMarket(IMarket _shadyTarget) public view returns (bool);
+    function isContainerForReportingParticipant(IReportingParticipant _reportingParticipant) public view returns (bool);
+    function isContainerForShareToken(IShareToken _shadyTarget) public view returns (bool);
+    function isContainerForFeeToken(IFeeToken _shadyTarget) public view returns (bool);
+    function addMarketTo() public returns (bool);
+    function removeMarketFrom() public returns (bool);
+    function decrementOpenInterest(uint256 _amount) public returns (bool);
+    function decrementOpenInterestFromMarket(uint256 _amount) public returns (bool);
+    function incrementOpenInterest(uint256 _amount) public returns (bool);
+    function incrementOpenInterestFromMarket(uint256 _amount) public returns (bool);
+    function getWinningChildUniverse() public view returns (IUniverse);
+    function isForking() public view returns (bool);
+}
+
+contract Market is DelegationTarget, ITyped, Initializable, Ownable, IMarket {
+    using SafeMathUint256 for uint256;
+    using SafeMathInt256 for int256;
+
+    // Constants
+    uint256 private constant MAX_FEE_PER_ETH_IN_ATTOETH = 1 ether / 2;
+    uint256 private constant APPROVAL_AMOUNT = 2 ** 256 - 1;
+    address private constant NULL_ADDRESS = address(0);
+    uint256 private constant MIN_OUTCOMES = 2;
+    uint256 private constant MAX_OUTCOMES = 8;
+
+    // Contract Refs
+    IUniverse private universe;
+    IFeeWindow private feeWindow;
+    ICash private cash;
+
+    // Attributes
+    uint256 private numTicks;
+    uint256 private feeDivisor;
+    uint256 private endTime;
+    uint256 private numOutcomes;
+    bytes32 private winningPayoutDistributionHash;
+    uint256 private validityBondAttoeth;
+    IMailbox private marketCreatorMailbox;
+    uint256 private finalizationTime;
+
+    // Collections
+    IReportingParticipant[] public participants;
+    Map public crowdsourcers;
+    IShareToken[] private shareTokens;
+
+    function initialize(IUniverse _universe, uint256 _endTime, uint256 _feePerEthInAttoeth, ICash _cash, address _designatedReporterAddress, address _creator, uint256 _numOutcomes, uint256 _numTicks) public onlyInGoodTimes payable beforeInitialized returns (bool _success) {
+        endInitialization();
+        require(MIN_OUTCOMES <= _numOutcomes && _numOutcomes <= MAX_OUTCOMES);
+        require(_numTicks > 0);
+        require(_designatedReporterAddress != NULL_ADDRESS);
+        require((_numTicks >= _numOutcomes));
+        require(_feePerEthInAttoeth <= MAX_FEE_PER_ETH_IN_ATTOETH);
+        require(_creator != NULL_ADDRESS);
+        require(controller.getTimestamp() < _endTime);
+        require(address(_cash) == controller.lookup("Cash"));
+        universe = _universe;
+        require(!universe.isForking());
+        owner = _creator;
+        assessFees();
+        endTime = _endTime;
+        numOutcomes = _numOutcomes;
+        numTicks = _numTicks;
+        feeDivisor = _feePerEthInAttoeth == 0 ? 0 : 1 ether / _feePerEthInAttoeth;
+        cash = _cash;
+        InitialReporterFactory _initialReporterFactory = InitialReporterFactory(controller.lookup("InitialReporterFactory"));
+        participants.push(_initialReporterFactory.createInitialReporter(controller, this, _designatedReporterAddress));
+        marketCreatorMailbox = MailboxFactory(controller.lookup("MailboxFactory")).createMailbox(controller, owner, this);
+        crowdsourcers = MapFactory(controller.lookup("MapFactory")).createMap(controller, this);
+        for (uint256 _outcome = 0; _outcome < numOutcomes; _outcome++) {
+            shareTokens.push(createShareToken(_outcome));
+        }
+        approveSpenders();
+        // If the value was not at least equal to this fee this will throw. The addition here cannot overflow as these fees are capped
+        uint256 _refund = msg.value.sub(validityBondAttoeth);
+        if (_refund > 0) {
+            owner.transfer(_refund);
+        }
+        return true;
+    }
+
+    function assessFees() private onlyInGoodTimes returns (bool) {
+        require(getReputationToken().balanceOf(this) >= universe.getOrCacheDesignatedReportNoShowBond());
+        validityBondAttoeth = universe.getOrCacheValidityBond();
+        return true;
+    }
+
+    function createShareToken(uint256 _outcome) private onlyInGoodTimes returns (IShareToken) {
+        return ShareTokenFactory(controller.lookup("ShareTokenFactory")).createShareToken(controller, this, _outcome);
+    }
+
+    // This will need to be called manually for each open market if a spender contract is updated
+    function approveSpenders() public onlyInGoodTimes returns (bool) {
+        bytes32[5] memory _names = [bytes32("CancelOrder"), bytes32("CompleteSets"), bytes32("FillOrder"), bytes32("TradingEscapeHatch"), bytes32("ClaimTradingProceeds")];
+        for (uint256 i = 0; i < _names.length; i++) {
+            require(cash.approve(controller.lookup(_names[i]), APPROVAL_AMOUNT));
+        }
+        for (uint256 j = 0; j < numOutcomes; j++) {
+            require(shareTokens[j].approve(controller.lookup("FillOrder"), APPROVAL_AMOUNT));
+        }
+        return true;
+    }
+
+    function doInitialReport(uint256[] _payoutNumerators, bool _invalid) public onlyInGoodTimes returns (bool) {
+        IInitialReporter _initialReporter = getInitialReporter();
+        uint256 _timestamp = controller.getTimestamp();
+        require(_initialReporter.getReportTimestamp() == 0);
+        require(_timestamp > endTime);
+        bool _isDesignatedReporter = msg.sender == _initialReporter.getDesignatedReporter();
+        bool _designatedReportingExpired = _timestamp > getDesignatedReportingEndTime();
+        require(_designatedReportingExpired || _isDesignatedReporter);
+        distributeNoShowBond(_initialReporter, msg.sender);
+        // The designated reporter must actually pay the required REP stake to report
+        if (msg.sender == _initialReporter.getDesignatedReporter()) {
+            IReputationToken _reputationToken = getReputationToken();
+            _reputationToken.trustedMarketTransfer(msg.sender, _initialReporter, universe.getOrCacheDesignatedReportStake());
+        }
+        bytes32 _payoutDistributionHash = derivePayoutDistributionHash(_payoutNumerators, _invalid);
+        feeWindow = universe.getOrCreateNextFeeWindow();
+        _initialReporter.report(msg.sender, _payoutDistributionHash, _payoutNumerators, _invalid);
+        controller.getAugur().logInitialReportSubmitted(universe, msg.sender, this, _initialReporter.getStake(), _isDesignatedReporter, _payoutNumerators, _invalid);
+        return true;
+    }
+
+    function contribute(uint256[] _payoutNumerators, bool _invalid, uint256 _amount) public onlyInGoodTimes returns (bool) {
+        require(feeWindow.isActive());
+        require(!universe.isForking());
+        bytes32 _payoutDistributionHash = derivePayoutDistributionHash(_payoutNumerators, _invalid);
+        require(_payoutDistributionHash != getWinningReportingParticipant().getPayoutDistributionHash());
+        IDisputeCrowdsourcer _crowdsourcer = getOrCreateDisputeCrowdsourcer(_payoutDistributionHash, _payoutNumerators, _invalid);
+        uint256 _actualAmount = _crowdsourcer.contribute(msg.sender, _amount);
+        controller.getAugur().logDisputeCrowdsourcerContribution(universe, msg.sender, this, _crowdsourcer, _actualAmount);
+        if (_crowdsourcer.totalSupply() == _crowdsourcer.getSize()) {
+            finishedCrowdsourcingDisputeBond(_crowdsourcer);
+        }
+        return true;
+    }
+
+    function finishedCrowdsourcingDisputeBond(IReportingParticipant _reportingParticipant) private returns (bool) {
+        participants.push(_reportingParticipant);
+        crowdsourcers = MapFactory(controller.lookup("MapFactory")).createMap(controller, this); // disavow other crowdsourcers
+        if (IDisputeCrowdsourcer(_reportingParticipant).getSize() >= universe.getDisputeThresholdForFork()) {
+            universe.fork();
+        } else {
+            feeWindow = universe.getOrCreateNextFeeWindow();
+            // Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+            for (uint256 i = 0; i < participants.length; i++) {
+                participants[i].migrate();
+            }
+        }
+        controller.getAugur().logDisputeCrowdsourcerCompleted(universe, this, _reportingParticipant);
+        return true;
+    }
+
+    function finalize() public onlyInGoodTimes returns (bool) {
+        if (universe.getForkingMarket() == this) {
+            return finalizeFork();
+        }
+
+        require(winningPayoutDistributionHash == bytes32(0));
+
+        require(getInitialReporter().getReportTimestamp() != 0);
+        require(feeWindow.isOver());
+        require(!universe.isForking());
+        winningPayoutDistributionHash = participants[participants.length-1].getPayoutDistributionHash();
+        feeWindow.onMarketFinalized();
+        universe.decrementOpenInterestFromMarket(shareTokens[0].totalSupply().mul(numTicks));
+        redistributeLosingReputation();
+        distributeValidityBond();
+        finalizationTime = controller.getTimestamp();
+        controller.getAugur().logMarketFinalized(universe);
+        return true;
+    }
+
+    function finalizeFork() public onlyInGoodTimes returns (bool) {
+        require(universe.getForkingMarket() == this);
+        require(winningPayoutDistributionHash == bytes32(0));
+        IUniverse _winningUniverse = universe.getWinningChildUniverse();
+        winningPayoutDistributionHash = _winningUniverse.getParentPayoutDistributionHash();
+        finalizationTime = controller.getTimestamp();
+        controller.getAugur().logMarketFinalized(universe);
+        return true;
+    }
+
+    function redistributeLosingReputation() private returns (bool) {
+        // If no disputes occured early exit
+        if (participants.length == 1) {
+            return true;
+        }
+
+        IReportingParticipant _reportingParticipant;
+
+        // Initial pass is to liquidate losers so we have sufficient REP to pay the winners. Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+        for (uint256 i = 0; i < participants.length; i++) {
+            _reportingParticipant = participants[i];
+            if (_reportingParticipant.getPayoutDistributionHash() != winningPayoutDistributionHash) {
+                _reportingParticipant.liquidateLosing();
+            }
+        }
+
+        IReputationToken _reputationToken = getReputationToken();
+
+        // Now redistribute REP. Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+        for (uint256 j = 0; j < participants.length; j++) {
+            _reportingParticipant = participants[j];
+            if (_reportingParticipant.getPayoutDistributionHash() == winningPayoutDistributionHash) {
+                require(_reputationToken.transfer(_reportingParticipant, _reportingParticipant.getSize().div(2)));
+            }
+        }
+        return true;
+    }
+
+    function distributeNoShowBond(IInitialReporter _initialReporter, address _reporter) private returns (bool) {
+        IReputationToken _reputationToken = getReputationToken();
+        uint256 _repBalance = _reputationToken.balanceOf(this);
+        // If the designated reporter showed up return the no show bond to the market creator. Otherwise it will be used as stake in the first report.
+        if (_reporter == _initialReporter.getDesignatedReporter()) {
+            require(_reputationToken.transfer(owner, _repBalance));
+        } else {
+            require(_reputationToken.transfer(_initialReporter, _repBalance));
+        }
+        return true;
+    }
+
+    function getMarketCreatorSettlementFeeDivisor() public view returns (uint256) {
+        return feeDivisor;
+    }
+
+    function deriveMarketCreatorFeeAmount(uint256 _amount) public view returns (uint256) {
+        if (feeDivisor == 0) {
+            return 0;
+        }
+        return _amount / feeDivisor;
+    }
+
+    function distributeValidityBond() private returns (bool) {
+        // If the market resolved to invalid the bond gets sent to the fee window. Otherwise it gets returned to the market creator mailbox.
+        if (!isInvalid()) {
+            marketCreatorMailbox.depositEther.value(validityBondAttoeth)();
+        } else {
+            cash.depositEtherFor.value(validityBondAttoeth)(universe.getCurrentFeeWindow());
+        }
+        return true;
+    }
+
+    function getOrCreateDisputeCrowdsourcer(bytes32 _payoutDistributionHash, uint256[] _payoutNumerators, bool _invalid) private returns (IDisputeCrowdsourcer) {
+        IDisputeCrowdsourcer _crowdsourcer = IDisputeCrowdsourcer(crowdsourcers.getAsAddressOrZero(_payoutDistributionHash));
+        if (_crowdsourcer == IDisputeCrowdsourcer(0)) {
+            uint256 _size = getParticipantStake().mul(2).sub(getStakeInOutcome(_payoutDistributionHash).mul(3));
+            DisputeCrowdsourcerFactory _disputeCrowdsourcerFactory = DisputeCrowdsourcerFactory(controller.lookup("DisputeCrowdsourcerFactory"));
+            _crowdsourcer = _disputeCrowdsourcerFactory.createDisputeCrowdsourcer(controller, this, _size, _payoutDistributionHash, _payoutNumerators, _invalid);
+            crowdsourcers.add(_payoutDistributionHash, address(_crowdsourcer));
+            controller.getAugur().disputeCrowdsourcerCreated(universe, this, _crowdsourcer, _payoutNumerators, _size, _invalid);
+        }
+        return _crowdsourcer;
+    }
+
+    function migrateThroughOneFork() public onlyInGoodTimes returns (bool) {
+        // only proceed if the forking market is finalized
+        IMarket _forkingMarket = universe.getForkingMarket();
+        require(_forkingMarket.isFinalized());
+        require(!isFinalized());
+
+        IUniverse _currentUniverse = universe;
+        bytes32 _winningForkPayoutDistributionHash = _forkingMarket.getWinningPayoutDistributionHash();
+        IUniverse _destinationUniverse = _currentUniverse.getChildUniverse(_winningForkPayoutDistributionHash);
+
+        uint256 _marketOI = shareTokens[0].totalSupply().mul(numTicks);
+
+        universe.decrementOpenInterestFromMarket(_marketOI);
+
+        // follow the forking market to its universe
+        if (feeWindow != IFeeWindow(0)) {
+            feeWindow = _destinationUniverse.getOrCreateNextFeeWindow();
+        }
+        _destinationUniverse.addMarketTo();
+        _currentUniverse.removeMarketFrom();
+        IReputationToken _oldReputationToken = getReputationToken();
+        universe = _destinationUniverse;
+
+        universe.incrementOpenInterestFromMarket(_marketOI);
+
+        // reset state back to Initial Reporter
+        IInitialReporter _initialParticipant = getInitialReporter();
+
+        delete participants;
+        participants.push(_initialParticipant);
+        _initialParticipant.resetReportTimestamp();
+
+        // Migrate REP
+        _initialParticipant.migrateREP();
+        IReputationToken _newReputationToken = getReputationToken();
+        uint256 _balance = _oldReputationToken.balanceOf(this);
+        if (_balance > 0) {
+            _oldReputationToken.migrateOut(_newReputationToken, _balance);
+        }
+
+        // Disavow crowdsourcers
+        crowdsourcers = MapFactory(controller.lookup("MapFactory")).createMap(controller, this);
+        return true;
+    }
+
+    function disavowCrowdsourcers() public onlyInGoodTimes returns (bool) {
+        require(universe.isForking());
+        IMarket _forkingMarket = getForkingMarket();
+        require(_forkingMarket != this);
+        require(!isFinalized());
+        IInitialReporter _initialParticipant = getInitialReporter();
+        delete participants;
+        participants.push(_initialParticipant);
+        crowdsourcers = MapFactory(controller.lookup("MapFactory")).createMap(controller, this);
+        controller.getAugur().logMarketParticipantsDisavowed(universe);
+        return true;
+    }
+
+    function withdrawInEmergency() public onlyInBadTimes onlyOwner returns (bool) {
+        IReputationToken _reputationToken = getReputationToken();
+        uint256 _repBalance = _reputationToken.balanceOf(this);
+        require(_reputationToken.transfer(msg.sender, _repBalance));
+        if (this.balance > 0) {
+            msg.sender.transfer(this.balance);
+        }
+        return true;
+    }
+
+    function getParticipantStake() public view returns (uint256) {
+        uint256 _sum;
+        // Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+        for (uint256 i = 0; i < participants.length; ++i) {
+            _sum += participants[i].getStake();
+        }
+        return _sum;
+    }
+
+    function getStakeInOutcome(bytes32 _payoutDistributionHash) public view returns (uint256) {
+        uint256 _sum;
+        // Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+        for (uint256 i = 0; i < participants.length; ++i) {
+            if (participants[i].getPayoutDistributionHash() != _payoutDistributionHash) {
+                continue;
+            }
+            _sum += participants[i].getStake();
+        }
+        return _sum;
+    }
+
+    function getTypeName() public view returns (bytes32) {
+        return "Market";
+    }
+
+    function getForkingMarket() public view returns (IMarket) {
+        return universe.getForkingMarket();
+    }
+
+    function getWinningPayoutDistributionHash() public view returns (bytes32) {
+        return winningPayoutDistributionHash;
+    }
+
+    function isFinalized() public view returns (bool) {
+        return winningPayoutDistributionHash != bytes32(0);
+    }
+
+    function getDesignatedReporter() public view returns (address) {
+        return getInitialReporter().getDesignatedReporter();
+    }
+
+    function designatedReporterShowed() public view returns (bool) {
+        return getInitialReporter().designatedReporterShowed();
+    }
+
+    function designatedReporterWasCorrect() public view returns (bool) {
+        return getInitialReporter().designatedReporterWasCorrect();
+    }
+
+    function getEndTime() public view returns (uint256) {
+        return endTime;
+    }
+
+    function getMarketCreatorMailbox() public view returns (IMailbox) {
+        return marketCreatorMailbox;
+    }
+
+    function isInvalid() public view returns (bool) {
+        require(isFinalized());
+        return getWinningReportingParticipant().isInvalid();
+    }
+
+    function getInitialReporter() public view returns (IInitialReporter) {
+        return IInitialReporter(participants[0]);
+    }
+
+    function getInitialReporterAddress() public view returns (address) {
+        return address(participants[0]);
+    }
+
+    function getReportingParticipant(uint256 _index) public view returns (IReportingParticipant) {
+        return participants[_index];
+    }
+
+    function getCrowdsourcer(bytes32 _payoutDistributionHash) public view returns (IDisputeCrowdsourcer) {
+        return  IDisputeCrowdsourcer(crowdsourcers.getAsAddressOrZero(_payoutDistributionHash));
+    }
+
+    function getWinningReportingParticipant() public view returns (IReportingParticipant) {
+        return participants[participants.length-1];
+    }
+
+    function getWinningPayoutNumerator(uint256 _outcome) public view returns (uint256) {
+        require(isFinalized());
+        return getWinningReportingParticipant().getPayoutNumerator(_outcome);
+    }
+
+    function getUniverse() public view returns (IUniverse) {
+        return universe;
+    }
+
+    function getFeeWindow() public view returns (IFeeWindow) {
+        return feeWindow;
+    }
+
+    function getFinalizationTime() public view returns (uint256) {
+        return finalizationTime;
+    }
+
+    function getReputationToken() public view returns (IReputationToken) {
+        return universe.getReputationToken();
+    }
+
+    function getNumberOfOutcomes() public view returns (uint256) {
+        return numOutcomes;
+    }
+
+    function getNumTicks() public view returns (uint256) {
+        return numTicks;
+    }
+
+    function getDenominationToken() public view returns (ICash) {
+        return cash;
+    }
+
+    function getShareToken(uint256 _outcome) public view returns (IShareToken) {
+        return shareTokens[_outcome];
+    }
+
+    function getDesignatedReportingEndTime() public view returns (uint256) {
+        return endTime.add(Reporting.getDesignatedReportingDurationSeconds());
+    }
+
+    function getNumParticipants() public view returns (uint256) {
+        return participants.length;
+    }
+
+    function getValidityBondAttoeth() public view returns (uint256) {
+        return validityBondAttoeth;
+    }
+
+    function derivePayoutDistributionHash(uint256[] _payoutNumerators, bool _invalid) public view returns (bytes32) {
+        uint256 _sum = 0;
+        uint256 _previousValue = _payoutNumerators[0];
+        require(_payoutNumerators.length == numOutcomes);
+        for (uint256 i = 0; i < _payoutNumerators.length; i++) {
+            uint256 _value = _payoutNumerators[i];
+            _sum = _sum.add(_value);
+            require(!_invalid || _value == _previousValue);
+            _previousValue = _value;
+        }
+        if (_invalid) {
+            require(_previousValue == numTicks / numOutcomes);
+        } else {
+            require(_sum == numTicks);
+        }
+        return keccak256(_payoutNumerators, _invalid);
+    }
+
+    function isContainerForShareToken(IShareToken _shadyShareToken) public view returns (bool) {
+        return getShareToken(_shadyShareToken.getOutcome()) == _shadyShareToken;
+    }
+
+    function isContainerForReportingParticipant(IReportingParticipant _shadyReportingParticipant) public view returns (bool) {
+        if (crowdsourcers.getAsAddressOrZero(_shadyReportingParticipant.getPayoutDistributionHash()) == address(_shadyReportingParticipant)) {
+            return true;
+        }
+        // Participants is implicitly bounded by the floor of the initial report REP cost to be no more than 21
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (_shadyReportingParticipant == participants[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function onTransferOwnership(address _owner, address _newOwner) internal returns (bool) {
+        controller.getAugur().logMarketTransferred(getUniverse(), _owner, _newOwner);
+        return true;
+    }
+
+    function assertBalances() public view returns (bool) {
+        // Escrowed funds for open orders
+        uint256 _expectedBalance = IOrders(controller.lookup("Orders")).getTotalEscrowed(this);
+        // Market Open Interest. If we're finalized we need actually calculate the value
+        if (isFinalized()) {
+            IReportingParticipant _winningReportingPartcipant = getWinningReportingParticipant();
+            for (uint256 i = 0; i < numOutcomes; i++) {
+                _expectedBalance = _expectedBalance.add(shareTokens[i].totalSupply().mul(_winningReportingPartcipant.getPayoutNumerator(i)));
+            }
+        } else {
+            _expectedBalance = _expectedBalance.add(shareTokens[0].totalSupply().mul(numTicks));
+        }
+
+        assert(cash.balanceOf(this) >= _expectedBalance);
+        return true;
+    }
+}
+
+library Reporting {
+    uint256 private constant DESIGNATED_REPORTING_DURATION_SECONDS = 3 days;
+    uint256 private constant DISPUTE_ROUND_DURATION_SECONDS = 7 days;
+    uint256 private constant CLAIM_PROCEEDS_WAIT_TIME = 3 days;
+    uint256 private constant FORK_DURATION_SECONDS = 60 days;
+
+    uint256 private constant INITIAL_REP_SUPPLY = 11 * 10 ** 6 * 10 ** 18; // 11 Million REP
+
+    uint256 private constant DEFAULT_VALIDITY_BOND = 1 ether / 100;
+    uint256 private constant VALIDITY_BOND_FLOOR = 1 ether / 100;
+    uint256 private constant DEFAULT_REPORTING_FEE_DIVISOR = 100; // 1% fees
+    uint256 private constant MAXIMUM_REPORTING_FEE_DIVISOR = 10000; // Minimum .01% fees
+    uint256 private constant MINIMUM_REPORTING_FEE_DIVISOR = 3; // Maximum 33.3~% fees. Note than anything less than a value of 2 here will likely result in bugs such as divide by 0 cases.
+
+    uint256 private constant TARGET_INVALID_MARKETS_DIVISOR = 100; // 1% of markets are expected to be invalid
+    uint256 private constant TARGET_INCORRECT_DESIGNATED_REPORT_MARKETS_DIVISOR = 100; // 1% of markets are expected to have an incorrect designate report
+    uint256 private constant TARGET_DESIGNATED_REPORT_NO_SHOWS_DIVISOR = 100; // 1% of markets are expected to have an incorrect designate report
+    uint256 private constant TARGET_REP_MARKET_CAP_MULTIPLIER = 15; // We multiply and divide by constants since we want to multiply by a fractional amount (7.5)
+    uint256 private constant TARGET_REP_MARKET_CAP_DIVISOR = 2;
+
+    uint256 private constant FORK_MIGRATION_PERCENTAGE_BONUS_DIVISOR = 20; // 5% bonus to any REP migrated during a fork
+
+    function getDesignatedReportingDurationSeconds() internal pure returns (uint256) { return DESIGNATED_REPORTING_DURATION_SECONDS; }
+    function getDisputeRoundDurationSeconds() internal pure returns (uint256) { return DISPUTE_ROUND_DURATION_SECONDS; }
+    function getClaimTradingProceedsWaitTime() internal pure returns (uint256) { return CLAIM_PROCEEDS_WAIT_TIME; }
+    function getForkDurationSeconds() internal pure returns (uint256) { return FORK_DURATION_SECONDS; }
+    function getDefaultValidityBond() internal pure returns (uint256) { return DEFAULT_VALIDITY_BOND; }
+    function getValidityBondFloor() internal pure returns (uint256) { return VALIDITY_BOND_FLOOR; }
+    function getTargetInvalidMarketsDivisor() internal pure returns (uint256) { return TARGET_INVALID_MARKETS_DIVISOR; }
+    function getTargetIncorrectDesignatedReportMarketsDivisor() internal pure returns (uint256) { return TARGET_INCORRECT_DESIGNATED_REPORT_MARKETS_DIVISOR; }
+    function getTargetDesignatedReportNoShowsDivisor() internal pure returns (uint256) { return TARGET_DESIGNATED_REPORT_NO_SHOWS_DIVISOR; }
+    function getTargetRepMarketCapMultiplier() internal pure returns (uint256) { return TARGET_REP_MARKET_CAP_MULTIPLIER; }
+    function getTargetRepMarketCapDivisor() internal pure returns (uint256) { return TARGET_REP_MARKET_CAP_DIVISOR; }
+    function getForkMigrationPercentageBonusDivisor() internal pure returns (uint256) { return FORK_MIGRATION_PERCENTAGE_BONUS_DIVISOR; }
+    function getMaximumReportingFeeDivisor() internal pure returns (uint256) { return MAXIMUM_REPORTING_FEE_DIVISOR; }
+    function getMinimumReportingFeeDivisor() internal pure returns (uint256) { return MINIMUM_REPORTING_FEE_DIVISOR; }
+    function getDefaultReportingFeeDivisor() internal pure returns (uint256) { return DEFAULT_REPORTING_FEE_DIVISOR; }
+    function getInitialREPSupply() internal pure returns (uint256) { return INITIAL_REP_SUPPLY; }
+}
+
+contract ICash is ERC20 {
+    function depositEther() external payable returns(bool);
+    function depositEtherFor(address _to) external payable returns(bool);
+    function withdrawEther(uint256 _amount) external returns(bool);
+    function withdrawEtherTo(address _to, uint256 _amount) external returns(bool);
+    function withdrawEtherToIfPossible(address _to, uint256 _amount) external returns (bool);
+}
+
+contract IOrders {
+    function saveOrder(Order.Types _type, IMarket _market, uint256 _fxpAmount, uint256 _price, address _sender, uint256 _outcome, uint256 _moneyEscrowed, uint256 _sharesEscrowed, bytes32 _betterOrderId, bytes32 _worseOrderId, bytes32 _tradeGroupId) public returns (bytes32 _orderId);
+    function removeOrder(bytes32 _orderId) public returns (bool);
+    function getMarket(bytes32 _orderId) public view returns (IMarket);
+    function getOrderType(bytes32 _orderId) public view returns (Order.Types);
+    function getOutcome(bytes32 _orderId) public view returns (uint256);
+    function getAmount(bytes32 _orderId) public view returns (uint256);
+    function getPrice(bytes32 _orderId) public view returns (uint256);
+    function getOrderCreator(bytes32 _orderId) public view returns (address);
+    function getOrderSharesEscrowed(bytes32 _orderId) public view returns (uint256);
+    function getOrderMoneyEscrowed(bytes32 _orderId) public view returns (uint256);
+    function getBetterOrderId(bytes32 _orderId) public view returns (bytes32);
+    function getWorseOrderId(bytes32 _orderId) public view returns (bytes32);
+    function getBestOrderId(Order.Types _type, IMarket _market, uint256 _outcome) public view returns (bytes32);
+    function getWorstOrderId(Order.Types _type, IMarket _market, uint256 _outcome) public view returns (bytes32);
+    function getLastOutcomePrice(IMarket _market, uint256 _outcome) public view returns (uint256);
+    function getOrderId(Order.Types _type, IMarket _market, uint256 _fxpAmount, uint256 _price, address _sender, uint256 _blockNumber, uint256 _outcome, uint256 _moneyEscrowed, uint256 _sharesEscrowed) public pure returns (bytes32);
+    function getTotalEscrowed(IMarket _market) public view returns (uint256);
+    function isBetterPrice(Order.Types _type, uint256 _price, bytes32 _orderId) public view returns (bool);
+    function isWorsePrice(Order.Types _type, uint256 _price, bytes32 _orderId) public view returns (bool);
+    function assertIsNotBetterPrice(Order.Types _type, uint256 _price, bytes32 _betterOrderId) public view returns (bool);
+    function assertIsNotWorsePrice(Order.Types _type, uint256 _price, bytes32 _worseOrderId) public returns (bool);
+    function recordFillOrder(bytes32 _orderId, uint256 _sharesFilled, uint256 _tokensFilled) public returns (bool);
+    function setPrice(IMarket _market, uint256 _outcome, uint256 _price) external returns (bool);
+    function incrementTotalEscrowed(IMarket _market, uint256 _amount) external returns (bool);
+    function decrementTotalEscrowed(IMarket _market, uint256 _amount) external returns (bool);
+}
+
+contract IShareToken is ITyped, ERC20 {
+    function initialize(IMarket _market, uint256 _outcome) external returns (bool);
+    function createShares(address _owner, uint256 _amount) external returns (bool);
+    function destroyShares(address, uint256 balance) external returns (bool);
+    function getMarket() external view returns (IMarket);
+    function getOutcome() external view returns (uint256);
+    function trustedOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedFillOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedCancelOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+}
+
+library Order {
+    using SafeMathUint256 for uint256;
+
+    enum Types {
+        Bid, Ask
+    }
+
+    enum TradeDirections {
+        Long, Short
+    }
+
+    struct Data {
+        // Contracts
+        IOrders orders;
+        IMarket market;
+        IAugur augur;
+
+        // Order
+        bytes32 id;
+        address creator;
+        uint256 outcome;
+        Order.Types orderType;
+        uint256 amount;
+        uint256 price;
+        uint256 sharesEscrowed;
+        uint256 moneyEscrowed;
+        bytes32 betterOrderId;
+        bytes32 worseOrderId;
+    }
+
+    //
+    // Constructor
+    //
+
+    // No validation is needed here as it is simply a librarty function for organizing data
+    function create(IController _controller, address _creator, uint256 _outcome, Order.Types _type, uint256 _attoshares, uint256 _price, IMarket _market, bytes32 _betterOrderId, bytes32 _worseOrderId) internal view returns (Data) {
+        require(_outcome < _market.getNumberOfOutcomes());
+        require(_price < _market.getNumTicks());
+
+        IOrders _orders = IOrders(_controller.lookup("Orders"));
+        IAugur _augur = _controller.getAugur();
+
+        return Data({
+            orders: _orders,
+            market: _market,
+            augur: _augur,
+            id: 0,
+            creator: _creator,
+            outcome: _outcome,
+            orderType: _type,
+            amount: _attoshares,
+            price: _price,
+            sharesEscrowed: 0,
+            moneyEscrowed: 0,
+            betterOrderId: _betterOrderId,
+            worseOrderId: _worseOrderId
+        });
+    }
+
+    //
+    // "public" functions
+    //
+
+    function getOrderId(Order.Data _orderData) internal view returns (bytes32) {
+        if (_orderData.id == bytes32(0)) {
+            bytes32 _orderId = _orderData.orders.getOrderId(_orderData.orderType, _orderData.market, _orderData.amount, _orderData.price, _orderData.creator, block.number, _orderData.outcome, _orderData.moneyEscrowed, _orderData.sharesEscrowed);
+            require(_orderData.orders.getAmount(_orderId) == 0);
+            _orderData.id = _orderId;
+        }
+        return _orderData.id;
+    }
+
+    function getOrderTradingTypeFromMakerDirection(Order.TradeDirections _creatorDirection) internal pure returns (Order.Types) {
+        return (_creatorDirection == Order.TradeDirections.Long) ? Order.Types.Bid : Order.Types.Ask;
+    }
+
+    function getOrderTradingTypeFromFillerDirection(Order.TradeDirections _fillerDirection) internal pure returns (Order.Types) {
+        return (_fillerDirection == Order.TradeDirections.Long) ? Order.Types.Ask : Order.Types.Bid;
+    }
+
+    function escrowFunds(Order.Data _orderData) internal returns (bool) {
+        if (_orderData.orderType == Order.Types.Ask) {
+            return escrowFundsForAsk(_orderData);
+        } else if (_orderData.orderType == Order.Types.Bid) {
+            return escrowFundsForBid(_orderData);
+        }
+    }
+
+    function saveOrder(Order.Data _orderData, bytes32 _tradeGroupId) internal returns (bytes32) {
+        return _orderData.orders.saveOrder(_orderData.orderType, _orderData.market, _orderData.amount, _orderData.price, _orderData.creator, _orderData.outcome, _orderData.moneyEscrowed, _orderData.sharesEscrowed, _orderData.betterOrderId, _orderData.worseOrderId, _tradeGroupId);
+    }
+
+    //
+    // Private functions
+    //
+
+    function escrowFundsForBid(Order.Data _orderData) private returns (bool) {
+        require(_orderData.moneyEscrowed == 0);
+        require(_orderData.sharesEscrowed == 0);
+        uint256 _attosharesToCover = _orderData.amount;
+        uint256 _numberOfOutcomes = _orderData.market.getNumberOfOutcomes();
+
+        // Figure out how many almost-complete-sets (just missing `outcome` share) the creator has
+        uint256 _attosharesHeld = 2**254;
+        for (uint256 _i = 0; _i < _numberOfOutcomes; _i++) {
+            if (_i != _orderData.outcome) {
+                uint256 _creatorShareTokenBalance = _orderData.market.getShareToken(_i).balanceOf(_orderData.creator);
+                _attosharesHeld = SafeMathUint256.min(_creatorShareTokenBalance, _attosharesHeld);
+            }
+        }
+
+        // Take shares into escrow if they have any almost-complete-sets
+        if (_attosharesHeld > 0) {
+            _orderData.sharesEscrowed = SafeMathUint256.min(_attosharesHeld, _attosharesToCover);
+            _attosharesToCover -= _orderData.sharesEscrowed;
+            for (_i = 0; _i < _numberOfOutcomes; _i++) {
+                if (_i != _orderData.outcome) {
+                    _orderData.market.getShareToken(_i).trustedOrderTransfer(_orderData.creator, _orderData.market, _orderData.sharesEscrowed);
+                }
+            }
+        }
+        // If not able to cover entire order with shares alone, then cover remaining with tokens
+        if (_attosharesToCover > 0) {
+            _orderData.moneyEscrowed = _attosharesToCover.mul(_orderData.price);
+            require(_orderData.augur.trustedTransfer(_orderData.market.getDenominationToken(), _orderData.creator, _orderData.market, _orderData.moneyEscrowed));
+        }
+
+        return true;
+    }
+
+    function escrowFundsForAsk(Order.Data _orderData) private returns (bool) {
+        require(_orderData.moneyEscrowed == 0);
+        require(_orderData.sharesEscrowed == 0);
+        IShareToken _shareToken = _orderData.market.getShareToken(_orderData.outcome);
+        uint256 _attosharesToCover = _orderData.amount;
+
+        // Figure out how many shares of the outcome the creator has
+        uint256 _attosharesHeld = _shareToken.balanceOf(_orderData.creator);
+
+        // Take shares in escrow if user has shares
+        if (_attosharesHeld > 0) {
+            _orderData.sharesEscrowed = SafeMathUint256.min(_attosharesHeld, _attosharesToCover);
+            _attosharesToCover -= _orderData.sharesEscrowed;
+            _shareToken.trustedOrderTransfer(_orderData.creator, _orderData.market, _orderData.sharesEscrowed);
+        }
+
+        // If not able to cover entire order with shares alone, then cover remaining with tokens
+        if (_attosharesToCover > 0) {
+            _orderData.moneyEscrowed = _orderData.market.getNumTicks().sub(_orderData.price).mul(_attosharesToCover);
+            require(_orderData.augur.trustedTransfer(_orderData.market.getDenominationToken(), _orderData.creator, _orderData.market, _orderData.moneyEscrowed));
+        }
+
+        return true;
+    }
 }
