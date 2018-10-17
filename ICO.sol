@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x73aec6306b2a201b3f1a873363c8e358a5d02eec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x72aa408393154d34fc789d03d22c9feb5e9fe32b
 */
 pragma solidity 0.4.24;
 
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -50,13 +54,6 @@ library SafeMath {
   }
 }
 
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -111,11 +108,6 @@ contract Ownable {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -123,10 +115,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender)
     public view returns (uint256);
@@ -364,6 +352,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+
 /**
 * @title OneledgerToken
 * @dev this is the oneledger token
@@ -426,7 +415,7 @@ contract ICO is Ownable {
 
     event BuyTokens(uint256 weiAmount, uint256 rate, uint256 token, address beneficiary);
     event UpdateRate(uint256 rate);
-
+    event UpdateWeiCap(uint256 weiCap);
     /**
     * @dev constructor
     */
@@ -459,6 +448,15 @@ contract ICO is Ownable {
       require(now <= initialTime);
       rate = rate_;
       emit UpdateRate(rate);
+    }
+
+    /**
+     * @dev update the weiCap
+     */
+    function updateWeiCap(uint256 weiCap_) public onlyOwner {
+      require(now <= initialTime);
+      weiCap = weiCap_;
+      emit UpdateWeiCap(weiCap_);
     }
 
     /**
@@ -500,7 +498,9 @@ contract ICO is Ownable {
      */
     function closeSale() public onlyOwner {
         saleClosed = true;
-        token.mint(owner, TOTAL_TOKEN_SUPPLY.sub(token.totalSupply()));
+        if (TOTAL_TOKEN_SUPPLY > token.totalSupply()) {
+          token.mint(owner, TOTAL_TOKEN_SUPPLY.sub(token.totalSupply()));
+        }
         token.finishMinting();
         token.transferOwnership(owner);
     }
@@ -519,6 +519,8 @@ contract ICO is Ownable {
         require(elapsedTime > 48 hours || msg.value <= whiteList[msg.sender].offeredWei.mul(2));
     }
 }
+
+
 contract OneledgerTokenVesting is Ownable{
     using SafeMath for uint256;
 
