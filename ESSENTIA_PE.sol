@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0x060c7b3daed4d41c76d7008c8e668ade817098cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0xcd85f4fd1c87d6ba898b697c13ded067e5041a32
 */
 pragma solidity ^0.4.24;
 
@@ -91,9 +91,7 @@ contract Ownable {
 
 contract TokenCHK {
 
-
   function balanceOf(address _owner) public pure returns (uint256 balance) {}
-
 
 }
 
@@ -131,7 +129,7 @@ contract ESSENTIA_PE is Ownable {
     //
     // NOTE: this contract should have sufficient ESS token balance to be > maxCap / tokenPrice
     //
-    // NOTE: this contract will stop REGARDLESS of the above (maxCap) when its token balance is all sold 
+    // NOTE: this contract will stop REGARDLESS of the above (maxCap) when its token balance is all sold
     //
     // The Owner of this contract can set: Price, End, MaxCap, ESS Genesis and ETH Forward address
     //
@@ -147,7 +145,7 @@ contract ESSENTIA_PE is Ownable {
         ) public {
         FWDaddrETH = toETHaddr;
         ESSgenesis = addrESSgenesis;
-        
+
     }
 
 
