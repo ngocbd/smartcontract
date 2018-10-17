@@ -1,126 +1,289 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vcoin at 0x0219b584e1f78675d91187c241439d1acdf7aa86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VCoin at 0x5ba0f310636c50a788bdd51a90f022cd15f9aad7
 */
-pragma solidity ^0.4.4;
+pragma solidity 0.4.24;
 
-contract Token {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+contract Ownable {
+    address public owner;
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20 {
+    uint256 public _totalSupply;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+
+    function totalSupply() public constant returns (uint256 supply);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
 }
 
+//Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 
+contract ERC20Token is ERC20 {
+    using SafeMath for uint256;
 
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) view public returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        //require(balances[msg.sender] >= _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) view public returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+}
+
+/**
+ * @title ERC677 transferAndCall token interface
+ * @dev See https://github.com/ethereum/EIPs/issues/677 for specification and
+ *      discussion.
+ */
+contract ERC677 {
+    event Transfer(address indexed _from, address indexed _to, uint256 _amount, bytes _data);
+
+    function transferAndCall(address _receiver, uint _amount, bytes _data) public;
 }
 
 
-contract Vcoin is StandardToken {
+/**
+ * @title Receiver interface for ERC677 transferAndCall
+ * @dev See https://github.com/ethereum/EIPs/issues/677 for specification and
+ *      discussion.
+ */
+contract ERC677Receiver {
+    function tokenFallback(address _from, uint _amount, bytes _data) public;
+}
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+contract ERC677Token is ERC677, ERC20Token {
+    function transferAndCall(address _receiver, uint _amount, bytes _data) public {
+        require(super.transfer(_receiver, _amount));
+
+        emit Transfer(msg.sender, _receiver, _amount, _data);
+
+        // call receiver
+        if (isContract(_receiver)) {
+            ERC677Receiver to = ERC677Receiver(_receiver);
+            to.tokenFallback(msg.sender, _amount, _data);
+        }
     }
 
-    /* Public variables of the token */
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    string public version = 'H1.0';
+    function isContract(address _addr) internal view returns (bool) {
+        uint len;
+        assembly {
+            len := extcodesize(_addr)
+        }
+        return len > 0;
+    }
+}
 
-    function Vcoin(
-        ) {
-        balances[msg.sender] = 120000;
-        totalSupply = 120000;
-        name = "Vcoin";
-        decimals = 3;
-        symbol = "VCON";
+contract Splitable is ERC677Token, Ownable {
+    uint32 public split;
+    mapping (address => uint32) public splits;
+
+    event Split(address indexed addr, uint32 multiplyer);
+
+    constructor() public {
+        split = 0;
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function splitShare() onlyOwner public {
+        require(split * 2 >= split);
+        if (split == 0) split = 2;
+        else split *= 2;
+        claimShare();
+    }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    function isSplitable() public view returns (bool) {
+        return splits[msg.sender] != split;
+    }
+
+    function claimShare() public {
+        uint32 s = splits[msg.sender];
+        if (s == split) return;
+        if (s == 0) s = 1;
+
+        splits[msg.sender] = split;
+        uint b = balances[msg.sender];
+        uint nb = b * split / s;
+
+        balances[msg.sender] = nb;
+        _totalSupply += nb - b;
+    }
+
+    function claimShare(address _u1, address _u2) public {
+        uint32 s = splits[_u1];
+        if (s != split) {
+            if (s == 0) s = 1;
+
+            splits[_u1] = split;
+            uint b = balances[_u1];
+            uint nb = b.mul(split / s);
+
+            balances[_u1] = nb;
+            _totalSupply += nb - b;
+        }
+        s = splits[_u2];
+        if (s != split) {
+            if (s == 0) s = 1;
+
+            splits[_u2] = split;
+            b = balances[_u2];
+            nb = b.mul(split / s);
+            
+            balances[_u2] = nb;
+            _totalSupply += nb - b;
+        }
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        if (splits[msg.sender] != splits[_to]) claimShare(msg.sender, _to);
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        if (splits[_from] != splits[_to]) claimShare(msg.sender, _to);
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function transferAndCall(address _receiver, uint _amount, bytes _data) public {
+        if (splits[_receiver] != splits[_receiver]) claimShare(msg.sender, _receiver);
+        return super.transferAndCall(_receiver, _amount, _data);
+    }
+}
+
+contract Lockable is ERC20Token, Ownable {
+    using SafeMath for uint256;
+    mapping (address => uint256) public lockAmounts;
+
+    // function lock(address to, uint amount) public onlyOwner {
+    //     lockAmounts[to] = lockAmounts[to].add(amount);
+    // }
+
+    function unlock(address to, uint amount) public onlyOwner {
+        lockAmounts[to] = lockAmounts[to].sub(amount);
+    }
+
+    function issueCoin(address to, uint amount) public onlyOwner {
+        lockAmounts[to] = lockAmounts[to].add(amount);
+        transfer(to, amount);
+    //  balances[to] = balances[to].add(amount);
+    //  balances[owner] = balances[owner].sub(amount);
+    //  emit Transfer(owner, to, amount);
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value + lockAmounts[msg.sender]);
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(balances[_from] >= _value + lockAmounts[_from]);
+        return super.transferFrom(_from, _to, _value);
+    }
+}
+
+contract VCoin is ERC677Token, Ownable, Splitable, Lockable {
+    uint32 public purchaseNo;
+    event Purchase(uint32 indexed purchaseNo, address from, uint value, bytes data);
+
+    constructor() public {
+        symbol = "VICT";
+        name = "Victory Token";
+        decimals = 18;
+        _totalSupply = 1000000000 * 10**uint(decimals);
+
+        balances[owner] = _totalSupply;
+        emit Transfer(address(0), owner, _totalSupply);
+
+        purchaseNo = 1;
+    }
+
+    function () public payable {
+        require(!isContract(msg.sender));
+        owner.transfer(msg.value);
+        emit Purchase(purchaseNo++, msg.sender, msg.value, msg.data);
+        //emit Transfer(owner, msg.sender, msg.value);
     }
 }
