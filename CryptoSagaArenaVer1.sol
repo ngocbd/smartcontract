@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0x9d7db617fbf50ae4860d3f8a5383149656778a6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0xcb17910d94fc9bf2fd6f9937b0d1fb76904d0181
 */
 pragma solidity ^0.4.18;
 
@@ -1665,7 +1665,7 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
 /**
  * @title CryptoSagaArenaVer1
- * @dev The actual gameplay is done by this contract. Version 1.0.1.
+ * @dev The actual gameplay is done by this contract. Version 1.0.2.
  */
 contract CryptoSagaArenaVer1 is Claimable, Pausable {
 
@@ -1675,7 +1675,7 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
     // The address of the enemy player.
     address enemyAddress;
     // Hero's token ids.
-    uint256[4] tokenIds;
+    uint256[8] tokenIds;
     // Unit's class ids. 0 ~ 3: Heroes. 4 ~ 7: Mobs.
     uint32[8] unitClassIds;
     // Unit's levels. 0 ~ 3: Heroes. 4 ~ 7: Mobs.
@@ -1751,7 +1751,7 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
   // @dev Get previous game record.
   function getPlayRecord(address _address)
     external view
-    returns (uint32, address, uint256[4], uint32[8], uint32[8], uint32, uint256, uint8, uint8[8], uint8[24], uint32[24])
+    returns (uint32, address, uint256[8], uint32[8], uint32[8], uint32, uint256, uint8, uint8[8], uint8[24], uint32[24])
   {
     PlayRecord memory _p = addressToPlayRecord[_address];
     TurnInfo memory _t = addressToTurnInfo[_address];
@@ -1773,7 +1773,7 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
   // @dev Get previous game record.
   function getPlayRecordNoTurnData(address _address)
     external view
-    returns (uint32, address, uint256[4], uint32[8], uint32[8], uint32, uint256)
+    returns (uint32, address, uint256[8], uint32[8], uint32[8], uint32, uint256)
   {
     PlayRecord memory _p = addressToPlayRecord[_address];
     return (
@@ -1865,6 +1865,10 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
     _playRecord.tokenIds[1] = 2;
     _playRecord.tokenIds[2] = 3;
     _playRecord.tokenIds[3] = 4;
+    _playRecord.tokenIds[4] = 5;
+    _playRecord.tokenIds[5] = 6;
+    _playRecord.tokenIds[6] = 7;
+    _playRecord.tokenIds[7] = 8;
     addressToPlayRecord[_firstPlayerAddress] = _playRecord;
     
     locationId = _locationId;
@@ -1961,6 +1965,13 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
       (_playRecord.unitLevels[7], , _unitStats[7], , ) = correctedHeroContract.getCorrectedStats(_enemyPlayRecord.tokenIds[3]);
       (, , , , _unitTypesAuras[7][0], , _unitTypesAuras[7][1], , , ) = heroContract.getClassInfo(_playRecord.unitClassIds[7]);
     }
+
+    // Additional token ids for enemies.
+    // Unlike dungeons, arena needs IVs for the enemy heroes.
+    _playRecord.tokenIds[4] = _enemyPlayRecord.tokenIds[0];
+    _playRecord.tokenIds[5] = _enemyPlayRecord.tokenIds[1];
+    _playRecord.tokenIds[6] = _enemyPlayRecord.tokenIds[2];
+    _playRecord.tokenIds[7] = _enemyPlayRecord.tokenIds[3];
 
     // Step 2. Run the battle logic.
     
