@@ -1,7 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0x60394f71266901a5930bb4e90db5dd26b77f8dad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0xdb6dea62c6b250e592b496b42e01cfdc49260d9a
 */
 pragma solidity ^0.4.9;
+
+// ----------------------------------------------------------------------------
+// 'Datodex.com' DEX contract
+//
+// Admin       : 0x50b16167821eFAbdbC991eDd2d166BbA4BCA63B2
+// fees        : 0.08%
+//
+//
+// 
+// In God we Trust
+// ----------------------------------------------------------------------------
+
 
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
