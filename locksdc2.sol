@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract locksdc2 at 0x445d7bb16fe3aada6a89673aa15919306af07c9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract locksdc2 at 0x161b3d76071cbfd164f7e23e3a5ec49b46a69e26
 */
 pragma solidity ^0.4.16;
 interface TokenERC20{
@@ -8,7 +8,7 @@ interface TokenERC20{
 contract locksdc2{
 
     address sdcContractAddr = 0xe85ed250e3d91fde61bf32e22c54f04754e695c5;
-    address sdcMainAcc = 0xe7DbCcA8183cb7d67bCFb3DA687Ce7325779c02f;
+    address sdcMainAcc = 0x34e0968ee4c3447baac34bfc6f9c8445f0633245;
     TokenERC20 sdcCon = TokenERC20(sdcContractAddr);
     struct accountInputSdc {
         address account;
@@ -40,6 +40,7 @@ contract locksdc2{
     
     function inSdcForAdmin(address _address,uint256 _sdc,uint _locktime) public returns (bool b)   {
         require(msg.sender == sdcMainAcc);
+        //??????????????sdc?????
         accountInputSdcs[_address].push(accountInputSdc(_address,_sdc,_locktime,now));
         lockLogs(msg.sender,_address,_sdc,_locktime,true);
         accoutInputOutputSdcLogs[_address].push(accoutInputOutputSdcLog(_address,_sdc,_locktime,true,now));
@@ -47,12 +48,14 @@ contract locksdc2{
     }
     
     function outSdcForUser(uint256 _sdc) public returns(bool b){
+        // cha kan jie suo de jin e bing tian jia
         for(uint i=0;i<accountInputSdcs[msg.sender].length;i++){
             if(now >= accountInputSdcs[msg.sender][i].locktime){
                 unlockSdc[msg.sender] = unlockSdc[msg.sender]+accountInputSdcs[msg.sender][i].sdc;
                 accountInputSdcs[msg.sender][i] = accountInputSdc(msg.sender,0,999999999999,now);
             }
         }
+        //kou qian 
         require(unlockSdc[msg.sender]>=_sdc);
         sdcCon.transfer(msg.sender,_sdc);   
         unlockSdc[msg.sender] = unlockSdc[msg.sender]-_sdc;
