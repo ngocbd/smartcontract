@@ -1,457 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xbd5bbd30aafaf76a2b7bfa92c9c0f92218609778
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xc7acc31641f231b809fd609c21c8343501aa3702
 */
 pragma solidity ^0.4.24;
 
-// File: contracts/interface/PlayerBookInterface.sol
 
-interface PlayerBookInterface {
-    function getPlayerID(address _addr) external returns (uint256);
-    function getPlayerName(uint256 _pID) external view returns (bytes32);
-    function getPlayerLAff(uint256 _pID) external view returns (uint256);
-    function getPlayerAddr(uint256 _pID) external view returns (address);
-    function getNameFee() external view returns (uint256);
-    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all) external payable returns(bool, uint256);
-    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all) external payable returns(bool, uint256);
-    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
-}
-
-// File: contracts/library/SafeMath.sol
-
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr 
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
- */
-library SafeMath {
-    
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) 
-        internal 
-        pure 
-        returns (uint256 c) 
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256) 
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c) 
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-    
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y) 
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y) 
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-    
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
-    }
-    
-    /**
-     * @dev x to the power of y 
-     */
-    function pwr(uint256 x, uint256 y)
-        internal 
-        pure 
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else 
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
-    }
-}
-
-// File: contracts/library/F3DKeysCalcLong.sol
-
-//==============================================================================
-//  |  _      _ _ | _  .
-//  |<(/_\/  (_(_||(_  .
-//=======/======================================================================
-library F3DKeysCalcLong {
-    using SafeMath for *;
-    /**
-     * @dev calculates number of keys received given X eth 
-     * @param _curEth current amount of eth in contract 
-     * @param _newEth eth being spent
-     * @return amount of ticket purchased
-     */
-    function keysRec(uint256 _curEth, uint256 _newEth)
-        internal
-        pure
-        returns (uint256)
-    {
-        return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
-    }
-    
-    /**
-     * @dev calculates amount of eth received if you sold X keys 
-     * @param _curKeys current amount of keys that exist 
-     * @param _sellKeys amount of keys you wish to sell
-     * @return amount of eth received
-     */
-    function ethRec(uint256 _curKeys, uint256 _sellKeys)
-        internal
-        pure
-        returns (uint256)
-    {
-        return((eth(_curKeys)).sub(eth(_curKeys.sub(_sellKeys))));
-    }
-
-    /**
-     * @dev calculates how many keys would exist with given an amount of eth
-     * @param _eth eth "in contract"
-     * @return number of keys that would exist
-     */
-    function keys(uint256 _eth) 
-        internal
-        pure
-        returns(uint256)
-    {
-        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
-    }
-    
-    /**
-     * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract" 
-     * @return eth that would exists
-     */
-    function eth(uint256 _keys) 
-        internal
-        pure
-        returns(uint256)  
-    {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
-    }
-}
-
-// File: contracts/library/F3Ddatasets.sol
-
-//==============================================================================
-//   __|_ _    __|_ _  .
-//  _\ | | |_|(_ | _\  .
-//==============================================================================
-library F3Ddatasets {
-    //compressedData key
-    // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
-        // 0 - new player (bool)
-        // 1 - joined round (bool)
-        // 2 - new  leader (bool)
-        // 3-5 - air drop tracker (uint 0-999)
-        // 6-16 - round end time
-        // 17 - winnerTeam
-        // 18 - 28 timestamp 
-        // 29 - team
-        // 30 - 0 = reinvest (round), 1 = buy (round), 2 = buy (ico), 3 = reinvest (ico)
-        // 31 - airdrop happened bool
-        // 32 - airdrop tier 
-        // 33 - airdrop amount won
-    //compressedIDs key
-    // [77-52][51-26][25-0]
-        // 0-25 - pID 
-        // 26-51 - winPID
-        // 52-77 - rID
-    struct EventReturns {
-        uint256 compressedData;
-        uint256 compressedIDs;
-        address winnerAddr;         // winner address
-        bytes32 winnerName;         // winner name
-        uint256 amountWon;          // amount won
-        uint256 newPot;             // amount in new pot
-        uint256 P3DAmount;          // amount distributed to p3d
-        uint256 genAmount;          // amount distributed to gen
-        uint256 potAmount;          // amount added to pot
-    }
-    struct Player {
-        address addr;   // player address
-        bytes32 name;   // player name
-        uint256 win;    // winnings vault
-        uint256 gen;    // general vault
-        uint256 aff;    // affiliate vault
-        uint256 lrnd;   // last round played
-        uint256 laff;   // last affiliate id used
-    }
-    struct PlayerRounds {
-        uint256 eth;    // eth player has added to round (used for eth limiter)
-        uint256 keys;   // keys
-        uint256 mask;   // player mask 
-        uint256 ico;    // ICO phase investment
-    }
-    struct Round {
-        uint256 plyr;   // pID of player in lead? lead????
-        uint256 team;   // tID of team in lead
-        uint256 end;    // time ends/ended
-        bool ended;     // has round end function been ran  ?????????
-        uint256 strt;   // time round started
-        uint256 keys;   // keys
-        uint256 eth;    // total eth in
-        uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
-        uint256 mask;   // global mask
-        uint256 ico;    // total eth sent in during ICO phase
-        uint256 icoGen; // total eth for gen during ICO phase
-        uint256 icoAvg; // average key price for ICO phase
-    }
-    struct TeamFee {
-        uint256 gen;    // % of buy in thats paid to key holders of current round
-        uint256 p3d;    // % of buy in thats paid to p3d holders
-    }
-    struct PotSplit {
-        uint256 gen;    // % of pot thats paid to key holders of current round
-        uint256 p3d;    // % of pot thats paid to p3d holders
-    }
-}
-
-// File: contracts/library/NameFilter.sol
-
-/**
-* @title -Name Filter- v0.1.9
-* ????????????   ?? ???????  ????????????????????????
-*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
-*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ?  ??????????????? ?                                        (_/
-*              _       __    _      ____      ____  _   _    _____  ____  ___  
-*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
-*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
-*
-* ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
-* ????????? ? ???? ???? ?   ???????????? ????????????
-*/
-
-library NameFilter {
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.  
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x 
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-        
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-        
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-        
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-                
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                    // require character is a space
-                    _temp[i] == 0x20 || 
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-                
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;    
-            }
-        }
-        
-        require(_hasNonNumber == true, "string cannot be only numbers");
-        
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
-}
-
-// File: contracts/library/UintCompressor.sol
-
-/**
-* @title -UintCompressor- v0.1.9
-* ????????????   ?? ???????  ????????????????????????
-*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
-*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ?  ??????????????? ?                                        (_/
-*    _  _   __   __ _  ____     ___   __   _  _  ____  ____  ____  ____  ____   __   ____ 
-*===/ )( \ (  ) (  ( \(_  _)===/ __) /  \ ( \/ )(  _ \(  _ \(  __)/ ___)/ ___) /  \ (  _ \===*
-*   ) \/ (  )(  /    /  )(    ( (__ (  O )/ \/ \ ) __/ )   / ) _) \___ \\___ \(  O ) )   /
-*===\____/ (__) \_)__) (__)====\___) \__/ \_)(_/(__)  (__\_)(____)(____/(____/ \__/ (__\_)===*
-*
-* ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
-* ????????? ? ???? ???? ?   ???????????? ????????????
-*/
-
-library UintCompressor {
-    using SafeMath for *;
-    
-    function insert(uint256 _var, uint256 _include, uint256 _start, uint256 _end)
-        internal
-        pure
-        returns(uint256)
-    {
-        // check conditions 
-        require(_end < 77 && _start < 77, "start/end must be less than 77");
-        require(_end >= _start, "end must be >= start");
-        
-        // format our start/end points
-        _end = exponent(_end).mul(10);
-        _start = exponent(_start);
-        
-        // check that the include data fits into its segment 
-        require(_include < (_end / _start));
-        
-        // build middle
-        if (_include > 0)
-            _include = _include.mul(_start);
-        
-        return((_var.sub((_var / _start).mul(_start))).add(_include).add((_var / _end).mul(_end)));
-    }
-    
-    function extract(uint256 _input, uint256 _start, uint256 _end)
-	    internal
-	    pure
-	    returns(uint256)
-    {
-        // check conditions
-        require(_end < 77 && _start < 77, "start/end must be less than 77");
-        require(_end >= _start, "end must be >= start");
-        
-        // format our start/end points
-        _end = exponent(_end).mul(10);
-        _start = exponent(_start);
-        
-        // return requested section
-        return((((_input / _start).mul(_start)).sub((_input / _end).mul(_end))) / _start);
-    }
-    
-    function exponent(uint256 _position)
-        private
-        pure
-        returns(uint256)
-    {
-        return((10).pwr(_position));
-    }
-}
-
-// File: contracts/F3Devents.sol
+// Events 
 
 contract F3Devents {
     // fired whenever a player registers a name
@@ -487,7 +40,7 @@ contract F3Devents {
         uint256 airDropPot
     );
     
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -566,92 +119,91 @@ contract F3Devents {
     );
 }
 
-// File: contracts/modularLong.sol
+
+// Contract Setup
 
 contract modularLong is F3Devents {}
 
-// File: contracts/FoMo3Dlong.sol
+contract DiviesCTR {
+    function deposit() public payable;
+}
 
 contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
-	
+    
+    otherFoMo3D private otherF3D_;
+    DiviesCTR constant private Divies = DiviesCTR(0x3b4F4505E644ae36FD0d3223Af9b0BAC1C49e656);
+    address constant private FeeAddr = 0x8d35c3edFc1A8f2564fd00561Fb0A8423D5B8b44;
+    //address constant private Jekyll_Island_Inc = Divies;//(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x76f48aa7411437d3B81bea31525b30E707D60aE9);
+    //F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
 
-    //TODO:
-    //JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x508D1c04cd185E693d22125f3Cc6DC81F7Ce9477);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x1a7bADBc3a718Aacd2723a73D01f34DAf5B69dAb);
-  
-    address public teamWallet = 0x7a9f5d9f4BdCf4C2Aa93e929d823FCFBD1fa19D0;
+    
+// Game Settings
 
-//==============================================================================
-//     _ _  _  |`. _     _ _ |_ | _  _  .
-//    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
-//=================_|===========================================================
-    string constant public name = "SuperCC";
-    string constant public symbol = "SC";
-    uint256 private rndExtra_ = 15 seconds;    // length of the very first ICO 
-    uint256 private rndGap_ = 1 hours;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 1 hours; //1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ =  24 hours; // 24 hours;                // max length a round timer can be
-//==============================================================================
-//     _| _ _|_ _    _ _ _|_    _   .
-//    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
-//=============================|================================================
-	uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
+    string constant public name = "HoDL4D";
+    string constant public symbol = "H4D";
+    uint256 private rndExtra_ = 30 seconds;//extSettings.getLongExtra();     // length of the very first ICO 
+    uint256 private rndGap_ = 3 minutes; //extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 3 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 minutes;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 3 hours;                // max length a round timer can be
+
+// Data Settings
+
+    uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
-//****************
-// PLAYER DATA 
-//****************
+    
+
+// Player Data
+
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
     mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
-//****************
-// ROUND DATA 
-//****************
+
+// Round Data
+
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-//****************
-// TEAM FEE DATA , Team???????
-//****************
+
+// Team Fee Data
     mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
     mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
-//==============================================================================
-//     _ _  _  __|_ _    __|_ _  _  .
-//    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
-//==============================================================================
+
+// Constructor
+
     constructor()
         public
     {
-		// Team allocation structures
+        // Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-		// Team allocation percentages
+        // Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(60,0); 
-        fees_[1] = F3Ddatasets.TeamFee(60,0);  
-        fees_[2] = F3Ddatasets.TeamFee(60,0);  
-        fees_[3] = F3Ddatasets.TeamFee(60,0);   
+        fees_[0] = F3Ddatasets.TeamFee(56,10);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(56,10);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(56,10);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
         
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(10,0);  //50% to winner, 1% to next round, 40% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(10,0);   //50% to winner, 1% to next round, 40% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(10,0);  //50% to winner, 1% to next round, 40% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(10,0);  //50% to winner, 1% to next round, 40% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(20,20);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
     }
-//==============================================================================
-//     _ _  _  _|. |`. _  _ _  .
-//    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
-//==============================================================================
+
+// Modules
+
     /**
      * @dev used to make sure no one can interact with contract until it has 
      * been activated. 
@@ -665,13 +217,14 @@ contract FoMo3Dlong is modularLong {
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        require (_addr == tx.origin);
+        // *breathes in*
+        // HAHAHAHA
+        //address _addr = msg.sender;
+        //uint256 _codeLength;
         
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "sorry humans only");
+        //assembly {_codeLength := extcodesize(_addr)}
+        //require(_codeLength == 0, "sorry humans only");
+        require(msg.sender == tx.origin, "sorry humans only - FOR REAL THIS TIME");
         _;
     }
 
@@ -683,24 +236,9 @@ contract FoMo3Dlong is modularLong {
         require(_eth <= 100000000000000000000000, "no vitalik, no");
         _;    
     }
+    
+// Public Functions
 
-    /**
-     * 
-     */
-    modifier onlyDevs() {
-        //TODO:
-        require(
-            msg.sender == 0x00904cF2F74Aba6Df6A60E089CDF9b7b155BAf6c ||
-            msg.sender == 0x00b0Beac53077938634A63306b2c801169b18464,
-            "only team just can activate"
-        );
-        _;
-    }
-
-//==============================================================================
-//     _    |_ |. _   |`    _  __|_. _  _  _  .
-//    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
-//====|=========================================================================
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
@@ -994,10 +532,10 @@ contract FoMo3Dlong is modularLong {
             F3Ddatasets.EventReturns memory _eventData_;
             
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
             
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
             
             // gib moni
@@ -1109,10 +647,9 @@ contract FoMo3Dlong is modularLong {
         // fire event
         emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
-//==============================================================================
-//     _  _ _|__|_ _  _ _  .
-//    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
-//=====_|=======================================================================
+
+// Getters    
+
     /**
      * @dev return the price buyer will pay for next 1 individual key.
      * -functionhash- 0x018a25e8
@@ -1210,7 +747,6 @@ contract FoMo3Dlong is modularLong {
         }
     }
     
-
     /**
      * solidity hates stack limits.  this lets us avoid that hate 
      */
@@ -1222,16 +758,6 @@ contract FoMo3Dlong is modularLong {
         return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit_[round_[_rID].team].gen)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
     }
     
-
-    function isRoundActive(uint256 _rID)
-        public
-        view
-        returns(bool)
-    {
-        return (now > round_[_rID].strt + rndGap_ && (now <= round_[_rID].end || (now > round_[_rID].end && round_[_rID].plyr == 0))) ;
-    
-    }
-
     /**
      * @dev returns all current round info needed for front end
      * -functionhash- 0x747dff42
@@ -1288,7 +814,7 @@ contract FoMo3Dlong is modularLong {
      * @return winnings vault
      * @return general vault 
      * @return affiliate vault 
-	 * @return player round eth
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public 
@@ -1316,10 +842,8 @@ contract FoMo3Dlong is modularLong {
         );
     }
 
-//==============================================================================
-//     _ _  _ _   | _  _ . _  .
-//    (_(_)| (/_  |(_)(_||(_  . (this + tools + calcs + modules = our softwares engine)
-//=====================_|=======================================================
+// Core Logic
+
     /**
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
@@ -1345,7 +869,7 @@ contract FoMo3Dlong is modularLong {
             if (_now > round_[_rID].end && round_[_rID].ended == false) 
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
                 
                 // build event data
@@ -1534,13 +1058,12 @@ contract FoMo3Dlong is modularLong {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
             
             // call end tx function to fire end tx event.
-		    endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
-//==============================================================================
-//     _ _ | _   | _ _|_ _  _ _  .
-//    (_(_||(_|_||(_| | (_)| _\  .
-//==============================================================================
+
+// Calculators
+    
     /**
      * @dev calculates unmasked earnings (just calculates, does not update mask)
      * @return earnings in wei format
@@ -1598,12 +1121,11 @@ contract FoMo3Dlong is modularLong {
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
     }
-//==============================================================================
-//    _|_ _  _ | _  .
-//     | (_)(_)|_\  .
-//==============================================================================
+    
+// Tools
+    
     /**
-	 * @dev receives name/player info from names contract 
+     * @dev receives name/player info from names contract 
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1727,8 +1249,8 @@ contract FoMo3Dlong is modularLong {
         
         // calculate our winner share, community rewards, gen share, 
         // p3d share, and amount reserved for next pot 
-        uint256 _win = (_pot.mul(50)) / 100;
-        uint256 _com = (_pot.mul(40) / 100);
+        uint256 _win = (_pot.mul(48)) / 100;
+        uint256 _com = (_pot / 50);
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
@@ -1745,28 +1267,14 @@ contract FoMo3Dlong is modularLong {
         // pay our winner
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
         
-        // community rewards
-        
-        teamWallet.transfer(_com);
-        
-        // if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
-        // {
-        //     // This ensures Team Just cannot influence the outcome of FoMo3D with
-        //     // bank migrations by breaking outgoing transactions.
-        //     // Something we would never do. But that's not the point.
-        //     // We spent 2000$ in eth re-deploying just to patch this, we hold the 
-        //     // highest belief that everything we create should be trustless.
-        //     // Team JUST, The name you shouldn't have to trust.
-        //     _p3d = _p3d.add(_com);
-        //     _com = 0;
-        // }
+        FeeAddr.transfer(_com);
         
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
         
         // send share for p3d to divies
-        // if (_p3d > 0)
-        //     Divies.deposit.value(_p3d)();
+        if (_p3d > 0)
+            Divies.deposit.value(_p3d)();
             
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
@@ -1860,28 +1368,32 @@ contract FoMo3Dlong is modularLong {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 10% out to community rewards
-        uint256 _com = _eth.mul(9) / 100;
+        // pay 2% out to community rewards
+        uint256 _com = _eth / 50;
 
-        teamWallet.transfer(_com);
-        // if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
-        // {
-        //     // This ensures Team Just cannot influence the outcome of FoMo3D with
-        //     // bank migrations by breaking outgoing transactions.
-        //     // Something we would never do. But that's not the point.
-        //     // We spent 2000$ in eth re-deploying just to patch this, we hold the 
-        //     // highest belief that everything we create should be trustless.
-        //     // Team JUST, The name you shouldn't have to trust.
-        //     _p3d = _com;
-        //     _com = 0;
-        // }
+        FeeAddr.transfer(_com);
+
+        uint256 _p3d;
+        //address(Jekyll_Island_Inc).deposit.value(_com)(); // always returns true or reverts;
+        /*
+        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _com;
+            _com = 0;
+        }*/
         
         // pay 1% out to FoMo3D short
-        //uint256 _other = 0;
+        //uint256 _long = _eth / 100;
         //otherF3D_.potSwap.value(_long)();
         
         // distribute share to affiliate
-        uint256 _aff = _eth / 4;
+        uint256 _aff = _eth / 10; //
         
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1889,19 +1401,21 @@ contract FoMo3Dlong is modularLong {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            teamWallet.transfer(_aff);
+            _p3d = _aff;
         }
-
+        
         // pay out p3d
-        // _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
-        // if (_p3d > 0)
-        // {
-        //     // deposit to divies contract
-        //     Divies.deposit.value(_p3d)();
+        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
+
+        if (_p3d > 0)
+        {
+            // deposit to divies contract
+            //Divies.deposit.value(_p3d.add(_com))();
+            Divies.deposit.value(_p3d)();
             
-        //     // set up event data
-        //     _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
-        // }
+            // set up event data
+            _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
+        }
         
         return(_eventData_);
     }
@@ -1927,12 +1441,12 @@ contract FoMo3Dlong is modularLong {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
         
-        // toss 1% into airdrop pot 
-        uint256 _air = (_eth / 100);
+        // toss 2% into airdrop pot [this 1% comes from removing the f3d potsplit to the short f3d]
+        uint256 _air = (_eth.mul(2) / 100);
         airDropPot_ = airDropPot_.add(_air);
         
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(31)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
         
         // calculate pot 
         uint256 _pot = _eth.sub(_gen);
@@ -2035,28 +1549,378 @@ contract FoMo3Dlong is modularLong {
             airDropPot_
         );
     }
-//==============================================================================
-//    (~ _  _    _._|_    .
-//    _)(/_(_|_|| | | \/  .
-//====================/=========================================================
+
+// Security
+    
     /** upon contract deploy, it will be deactivated.  this is a one time
      * use function that will activate the contract.  we do this so devs 
      * have time to set things up on the web end                            **/
     bool public activated_ = false;
     function activate()
-        onlyDevs()
         public
     {
-		// make sure that its been linked.
+        // only team just can activate 
+        require(
+            (msg.sender == 0x8d35c3edFc1A8f2564fd00561Fb0A8423D5B8b44 || msg.sender == 0x8d35c3edFc1A8f2564fd00561Fb0A8423D5B8b44),
+            "only team HoDL4D can activate"
+        );
+
+        // make sure that its been linked.
+        //require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
+        
         // can only be ran once
-        require(activated_ == false, "already activated");
+        require(activated_ == false, "fomo3d already activated");
         
         // activate the contract 
         activated_ = true;
         
         // lets start first round
-		rID_ = 1;
-        round_[1].strt = now + rndExtra_;
-        round_[1].end = now + rndInit_*12;
+        rID_ = 1;
+        round_[1].strt = now + rndExtra_ - rndGap_;
+        round_[1].end = now + rndInit_ + rndExtra_;
+    }
+
+}
+
+// Structs
+
+library F3Ddatasets {
+    //compressedData key
+    // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
+        // 0 - new player (bool)
+        // 1 - joined round (bool)
+        // 2 - new  leader (bool)
+        // 3-5 - air drop tracker (uint 0-999)
+        // 6-16 - round end time
+        // 17 - winnerTeam
+        // 18 - 28 timestamp 
+        // 29 - team
+        // 30 - 0 = reinvest (round), 1 = buy (round), 2 = buy (ico), 3 = reinvest (ico)
+        // 31 - airdrop happened bool
+        // 32 - airdrop tier 
+        // 33 - airdrop amount won
+    //compressedIDs key
+    // [77-52][51-26][25-0]
+        // 0-25 - pID 
+        // 26-51 - winPID
+        // 52-77 - rID
+    struct EventReturns {
+        uint256 compressedData;
+        uint256 compressedIDs;
+        address winnerAddr;         // winner address
+        bytes32 winnerName;         // winner name
+        uint256 amountWon;          // amount won
+        uint256 newPot;             // amount in new pot
+        uint256 P3DAmount;          // amount distributed to p3d
+        uint256 genAmount;          // amount distributed to gen
+        uint256 potAmount;          // amount added to pot
+    }
+    struct Player {
+        address addr;   // player address
+        bytes32 name;   // player name
+        uint256 win;    // winnings vault
+        uint256 gen;    // general vault
+        uint256 aff;    // affiliate vault
+        uint256 lrnd;   // last round played
+        uint256 laff;   // last affiliate id used
+    }
+    struct PlayerRounds {
+        uint256 eth;    // eth player has added to round (used for eth limiter)
+        uint256 keys;   // keys
+        uint256 mask;   // player mask 
+        uint256 ico;    // ICO phase investment
+    }
+    struct Round {
+        uint256 plyr;   // pID of player in lead
+        uint256 team;   // tID of team in lead
+        uint256 end;    // time ends/ended
+        bool ended;     // has round end function been ran
+        uint256 strt;   // time round started
+        uint256 keys;   // keys
+        uint256 eth;    // total eth in
+        uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
+        uint256 mask;   // global mask
+        uint256 ico;    // total eth sent in during ICO phase
+        uint256 icoGen; // total eth for gen during ICO phase
+        uint256 icoAvg; // average key price for ICO phase
+    }
+    struct TeamFee {
+        uint256 gen;    // % of buy in thats paid to key holders of current round
+        uint256 p3d;    // % of buy in thats paid to p3d holders
+    }
+    struct PotSplit {
+        uint256 gen;    // % of pot thats paid to key holders of current round
+        uint256 p3d;    // % of pot thats paid to p3d holders
+    }
+}
+
+// Key Calculations
+
+library F3DKeysCalcLong {
+    using SafeMath for *;
+    /**
+     * @dev calculates number of keys received given X eth 
+     * @param _curEth current amount of eth in contract 
+     * @param _newEth eth being spent
+     * @return amount of ticket purchased
+     */
+    function keysRec(uint256 _curEth, uint256 _newEth)
+        internal
+        pure
+        returns (uint256)
+    {
+        return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
+    }
+    
+    /**
+     * @dev calculates amount of eth received if you sold X keys 
+     * @param _curKeys current amount of keys that exist 
+     * @param _sellKeys amount of keys you wish to sell
+     * @return amount of eth received
+     */
+    function ethRec(uint256 _curKeys, uint256 _sellKeys)
+        internal
+        pure
+        returns (uint256)
+    {
+        return((eth(_curKeys)).sub(eth(_curKeys.sub(_sellKeys))));
+    }
+
+    /**
+     * @dev calculates how many keys would exist with given an amount of eth
+     * @param _eth eth "in contract"
+     * @return number of keys that would exist
+     */
+    function keys(uint256 _eth) 
+        internal
+        pure
+        returns(uint256)
+    {
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+    }
+    
+    /**
+     * @dev calculates how much eth would be in contract given a number of keys
+     * @param _keys number of keys "in contract" 
+     * @return eth that would exists
+     */
+    function eth(uint256 _keys) 
+        internal
+        pure
+        returns(uint256)  
+    {
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
+    }
+}
+
+// Interfaces
+
+interface otherFoMo3D {
+    function potSwap() external payable;
+}
+
+interface F3DexternalSettingsInterface {
+    function getFastGap() external returns(uint256);
+    function getLongGap() external returns(uint256);
+    function getFastExtra() external returns(uint256);
+    function getLongExtra() external returns(uint256);
+}
+
+interface JIincForwarderInterface {
+    function deposit() external payable;
+    function status() external view returns(address, address, bool);
+    function startMigration(address _newCorpBank) external returns(bool);
+    function cancelMigration() external returns(bool);
+    function finishMigration() external returns(bool);
+    function setup(address _firstCorpBank) external;
+}
+
+interface PlayerBookInterface {
+    function getPlayerID(address _addr) external returns (uint256);
+    function getPlayerName(uint256 _pID) external view returns (bytes32);
+    function getPlayerLAff(uint256 _pID) external view returns (uint256);
+    function getPlayerAddr(uint256 _pID) external view returns (address);
+    function getNameFee() external view returns (uint256);
+    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all) external payable returns(bool, uint256);
+    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all) external payable returns(bool, uint256);
+    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
+}
+
+library NameFilter {
+    /**
+     * @dev filters name strings
+     * -converts uppercase to lower case.  
+     * -makes sure it does not start/end with a space
+     * -makes sure it does not contain multiple spaces in a row
+     * -cannot be only numbers
+     * -cannot start with 0x 
+     * -restricts characters to A-Z, a-z, 0-9, and space.
+     * @return reprocessed string in bytes32 format
+     */
+    function nameFilter(string _input)
+        internal
+        pure
+        returns(bytes32)
+    {
+        bytes memory _temp = bytes(_input);
+        uint256 _length = _temp.length;
+        
+        //sorry limited to 32 characters
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+        // make sure it doesnt start with or end with space
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        // make sure first two characters are not 0x
+        if (_temp[0] == 0x30)
+        {
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
+        }
+        
+        // create a bool to track if we have a non number character
+        bool _hasNonNumber;
+        
+        // convert & check
+        for (uint256 i = 0; i < _length; i++)
+        {
+            // if its uppercase A-Z
+            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
+            {
+                // convert to lower case a-z
+                _temp[i] = byte(uint(_temp[i]) + 32);
+                
+                // we have a non number
+                if (_hasNonNumber == false)
+                    _hasNonNumber = true;
+            } else {
+                require
+                (
+                    // require character is a space
+                    _temp[i] == 0x20 || 
+                    // OR lowercase a-z
+                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
+                    // or 0-9
+                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                    "string contains invalid characters"
+                );
+                // make sure theres not 2x spaces in a row
+                if (_temp[i] == 0x20)
+                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
+                
+                // see if we have a character other than a number
+                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
+                    _hasNonNumber = true;    
+            }
+        }
+        
+        require(_hasNonNumber == true, "string cannot be only numbers");
+        
+        bytes32 _ret;
+        assembly {
+            _ret := mload(add(_temp, 32))
+        }
+        return (_ret);
+    }
+}
+
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * - added sqrt
+ * - added sq
+ * - added pwr 
+ * - changed asserts to requires with error log outputs
+ * - removed div, its useless
+ */
+library SafeMath {
+    
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) 
+        internal 
+        pure 
+        returns (uint256 c) 
+    {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256) 
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c) 
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+    
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y) 
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y) 
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+    
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+    
+    /**
+     * @dev x to the power of y 
+     */
+    function pwr(uint256 x, uint256 y)
+        internal 
+        pure 
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else 
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
     }
 }
