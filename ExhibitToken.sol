@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExhibitToken at 0x643143a0210d6256233714631266220b305789dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExhibitToken at 0x38ef3d08efc74857cc129e9e6026b0d4db9aada9
 */
 pragma solidity ^0.4.4;
 
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract ExhibitToken is StandardToken { 
+contract ExhibitToken is StandardToken {
 
     /* Public variables of the token */
 
@@ -108,12 +108,12 @@ contract ExhibitToken is StandardToken {
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function ExhibitToken() {
-        balances[msg.sender] = 3888888000000000000000000;               
-        totalSupply = 3888888000000000000000000;                        
+        balances[msg.sender] = 38000000000000000000000000;               
+        totalSupply = 38000000000000000000000000;                        
         name = "ExhibitToken";                                   
         decimals = 18;                                               
         symbol = "EXIT";                                             
-        unitsOneEthCanBuy = 28888;                                      
+        unitsOneEthCanBuy = 105000;                                      
         fundsWallet = msg.sender;                                    
     }
 
