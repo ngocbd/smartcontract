@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBittrip at 0xad277fdfc6cab2cd63edd46287b13ed7caabccfe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBittrip at 0xc05fCAcC2f519CCBFa6c9cDB634a1cE8B0423743
 */
 pragma solidity ^0.4.24;
 
 contract TheBittrip {
     string public name;
     string public symbol;
-    uint8 public decimals = 8;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
     
     mapping (address => uint256) public balanceOf;
@@ -20,7 +20,7 @@ contract TheBittrip {
         totalSupply = 250000000 * 10 ** uint256(decimals);  
         balanceOf[msg.sender] = totalSupply;    
         name = "The Bittrip";                     
-        symbol = "BIT";                     
+        symbol = "BTT";                     
     }
     function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
