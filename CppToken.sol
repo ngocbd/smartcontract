@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CppToken at 0xcddec3da6927d9fe4e53919df118397f2bf426e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CppToken at 0x98e76f64618fda1e4bba0655d4e289af73a30ed0
 */
 pragma solidity ^0.4.18;
 
@@ -287,8 +287,8 @@ contract PausableToken is StandardToken, Pausable {
 
 
 contract CppToken is PausableToken {
-    string  public  constant name = "CoinPlusPlus";
-    string  public  constant symbol = "CPP";
+    string  public  constant name = "CoinPlusPlusToken";
+    string  public  constant symbol = "CPPT";
     uint8   public  constant decimals = 12;
 
     modifier validDestination( address to )
