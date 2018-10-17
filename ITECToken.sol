@@ -1,12 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITECToken at 0xf7f39002d5b76d82372f75776d9cb4f07659df95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITECToken at 0x99176b8b915016c80098a9d98caea9e52fc30134
 */
 pragma solidity ^0.4.16;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /******************************************/
 /*       ITECToken STARTS HERE       */
 /******************************************/
-
 contract ITECToken {
 
     // Public variables of the token(TokenERC20)
@@ -16,6 +65,8 @@ contract ITECToken {
     uint8 public decimals = 18; // 18 decimals is the strongly suggested default, avoid changing it
 
     address public owner;
+    
+    using SafeMath for uint; // use the library for uint type
 
     /**
      * Constrctor function
@@ -66,8 +117,10 @@ contract ITECToken {
         require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        
+        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(_value);                           // Add the same to the recipient
+
         emit Transfer(_from, _to, _value);
     }
 
@@ -95,7 +148,9 @@ contract ITECToken {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+
         _transfer(_from, _to, _value);
         return true;
     }
@@ -124,20 +179,12 @@ contract ITECToken {
      */
     function burn(uint256 _value) onlyOwner public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            // Subtract from the sender
+        totalSupply = totalSupply.sub(_value);                      // Updates totalSupply
+
         emit Burn(msg.sender, _value);
         return true;
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        emit Transfer(0, this, mintedAmount);
-        emit Transfer(this, target, mintedAmount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
