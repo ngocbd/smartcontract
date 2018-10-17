@@ -1,391 +1,262 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0xbc10cdbd98d363bbf1f3e267ead3f969dc918376
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0xb42ce9d2a22061b7d5e569753f92edbaa2dad37b
 */
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint a, uint b) internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
+interface IYeekFormula {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) external view returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) external view returns (uint256);
 }
 
-
-contract ERC223Interface {
-    uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function transfer(address to, uint value, bytes data);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+interface ITradeableAsset {
+    function totalSupply() external view returns (uint256);
+    function approve(address spender, uint tokens) external returns (bool success);
+    function transferFrom(address from, address to, uint tokens) external returns (bool success);
+    function decimals() external view returns (uint256);
+    function transfer(address _to, uint256 _value) external;
+    function balanceOf(address _address) external view returns (uint256);
 }
 
-
- /**
- * @title Contract that will work with ERC223 tokens.
- */
- 
-contract ERC223ReceivingContract { 
-/**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
- */
-    function tokenFallback(address _from, uint _value, bytes _data);
-}
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-
-contract ERC223Token is ERC223Interface {
-    using SafeMath for uint;
-
-    mapping(address => uint) balances; // List of user balances.
+/* A basic permissions hierarchy (Owner -> Admin -> Everyone else). One owner may appoint and remove any number of admins
+   and may transfer ownership to another individual address */
+contract Administered {
+    address public creator;
+    uint public commission = 1;
+    mapping (address => bool) public admins;
     
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *      or the fallback function to receive funds.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
-     */
-    function transfer(address _to, uint _value, bytes _data) {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
+    constructor()  public {
+        creator = msg.sender;
+        admins[creator] = true;
+    }
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-        Transfer(msg.sender, _to, _value, _data);
+    //Restrict to the current owner. There may be only 1 owner at a time, but 
+    //ownership can be transferred.
+    modifier onlyOwner {
+        require(creator == msg.sender);
+        _;
     }
     
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    function transfer(address _to, uint _value) {
-        uint codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
-        }
-        Transfer(msg.sender, _to, _value, empty);
-    }
-
-    
-    /**
-     * @dev Returns balance of the `_owner`.
-     *
-     * @param _owner   The address whose balance will be returned.
-     * @return balance Balance of the `_owner`.
-     */
-    function balanceOf(address _owner) constant returns (uint balance) {
-        return balances[_owner];
-    }
-}
-
-
-contract PajCoin223 is ERC223Token {
-
-    string public constant name = "PajCoin";
-    bytes32 public constant symbol = "PJC";
-    uint8 public constant decimals = 18;
-
-    function PajCoin223() public {
-        bytes memory empty;
-        totalSupply = 150000000e18;
-        balances[msg.sender] = totalSupply;
-        Transfer(0x0, msg.sender, totalSupply, empty);
-    }
-}
-
-
-
-contract Exchanger is ERC223ReceivingContract, Ownable {
-
-    uint public rate = 30*1000000000;
-    uint public fee = 100000*3e9;
-
-    PajCoin223 public token = PajCoin223(0x1a85180ce3012e7715b913dd585afdf1a10f3025);
-
-    // event DataEvent(string comment);
-    event DataEvent(uint value, string comment);
-    // event DataEvent(bytes32 value, string comment);
-    // event DataEvent(bool value, string comment);
-    // event DataEvent(address addr, string comment);
-
-    // ?????? ? ?????? ? ??????, ??????? ?? ????????
-    struct Deal {
-        address user;
-        uint money;
-    }
-    // ??????? "???????????????" ????????? ?? ??????? ???????
-    mapping(uint => Deal) ethSended;
-    mapping(uint => Deal) coinSended;
-
-    // ??????? ?????, "???????????????" ??????.
-    // "????????????" ??????, ??? ??????? ??????? ?????? ?? ???????, ?? ???? ???
-    // ?? ??????????. ??????????????, ??????? ??????? ??????????? ? ??????? ? ???
-    // ????????? ?????????? ????? ????? ?????????
-    uint ethSendedNumber = 0;
-    uint coinSendedNumber = 0;
-
-    modifier allDealsArePaid {
-        require(ethSendedNumber == 0);
-        require(coinSendedNumber == 0);
+    //Restrict to any admin. Not sufficient for highly sensitive methods
+    //since basic admin can be granted programatically regardless of msg.sender
+    modifier onlyAdmin {
+        require(admins[msg.sender] || creator == msg.sender);
         _;
     }
 
-    event LogPriceUpdated(uint price);
-
-    function Exchanger() public payable {
-        updater = msg.sender;
+    //Add an admin with basic privileges. Can be done by any superuser (or the owner)
+    function grantAdmin(address newAdmin) onlyOwner  public {
+        _grantAdmin(newAdmin);
     }
 
-    function needUpdate() public view returns (bool) {
-        return ethSendedNumber + coinSendedNumber > 0;
+    function _grantAdmin(address newAdmin) internal
+    {
+        admins[newAdmin] = true;
     }
 
+    //Transfer ownership
+    function changeOwner(address newOwner) onlyOwner public {
+        creator = newOwner;
+    }
+
+    //Remove an admin
+    function revokeAdminStatus(address user) onlyOwner public {
+        admins[user] = false;
+    }
+}
+
+/* A liqudity pool that executes buy and sell orders for an ETH / Token Pair */
+/* The owner deploys it and then adds tokens / ethereum in the desired ratio */
+
+contract Exchanger is Administered {
+    bool public enabled = false;    //Owner can turn off and on
+
+    //The token which is being bought and sold
+    ITradeableAsset public tokenContract;
+    //The contract that does the calculations to determine buy and sell pricing
+    IYeekFormula public formulaContract;
+    //The reserve pct of this exchanger, expressed in ppm
+    uint32 public weight;
+
+    /** 
+        @dev Deploys an exchanger contract for a given token / Ether pairing
+        @param _token An ERC20 token
+        @param _weight The reserve fraction of this exchanger, in ppm
+        @param _formulaContract The contract with the algorithms to calculate price
+     */
+
+    constructor(address _token, 
+                uint32 _weight,
+                address _formulaContract) {
+        require (_weight > 0 && weight <= 1000000);
+        
+        weight = _weight;
+        tokenContract = ITradeableAsset(_token);
+        formulaContract = IYeekFormula(_formulaContract);
+    }
+
+    //Events raised on completion of buy and sell orders. 
+    //The web client can use this info to provide users with their trading history for a given token
+    //and also to notify when a trade has completed.
+
+    event Buy(address indexed purchaser, uint256 amountInWei, uint256 amountInToken);
+    event Sell(address indexed seller, uint256 amountInToken, uint256 amountInWei);
+
+
+    // The following methods are for the owner and admins to manage the Exchanger
+    
+    /**
+     @dev Deposit tokens to the reserve.
+     */
+    function depositTokens(uint amount) onlyOwner public {
+        tokenContract.transferFrom(msg.sender, this, amount);
+    }
+        
+    /**
+     @dev Deposit ether to the reserve
+     */
+     function depositEther() onlyOwner public payable {
+        //return getQuotePrice(); 
+     }
+
+    /**  
+     @dev Withdraw tokens from the reserve
+     */
+    function withdrawTokens(uint amount) onlyOwner public {
+        tokenContract.transfer(msg.sender, amount);
+    }
+
+    /**  
+     @dev Withdraw ether from the reserve
+     */
+    function withdrawEther(uint amountInWei) onlyOwner public {
+        msg.sender.transfer(amountInWei); //Transfers in wei
+    }
+
+    /**
+     @dev Enable trading
+     */
+     function enable() onlyAdmin public {
+         enabled = true;
+     }
+
+     /**
+      @dev Disable trading
+     */
+     function disable() onlyAdmin public {
+         enabled = false;
+     }
+
+     /**
+      @dev Play central banker and set the fractional reserve ratio, from 1 to 1000000 ppm.
+      It is highly disrecommended to do this while trading is enabled! If you don't know what 
+      a fractional reserve is, please put this contract away and go work for your local government.
+     */
+     function setReserveWeight(uint32 ppm) onlyAdmin public {
+         require (ppm>0 && ppm<=1000000);
+         weight = ppm;
+     }
+
+    //These methods return information about the exchanger, and the buy / sell rates offered on the Token / ETH pairing.
+    //They can be called without gas from any client.
+
+    /**  
+     @dev Audit the reserve balances, in the base token and in ether
+     */
+    function getReserveBalances() public view returns (uint256, uint256) {
+        return (tokenContract.balanceOf(this), address(this).balance);
+    }
 
 
     /**
-     * @dev We use a single lock for the whole contract.
+     @dev Gets price based on a sample 1 ether BUY order
      */
-    bool private reentrancy_lock = false;
+    function getQuotePrice() public view returns(uint) {
+        uint tokensPerEther = 
+        formulaContract.calculatePurchaseReturn(
+            tokenContract.totalSupply(),
+            address(this).balance,
+            weight,
+            1 ether 
+        ); 
 
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * @notice If you mark a function `nonReentrant`, you should also
-     * mark it `external`. Calling one nonReentrant function from
-     * another is not supported. Instead, you can implement a
-     * `private` function doing the actual work, and a `external`
-     * wrapper marked as `nonReentrant`.
-     */
-    modifier nonReentrant() {
-        require(!reentrancy_lock);
-        reentrancy_lock = true;
-        _;
-        reentrancy_lock = false;
+        return tokensPerEther;
     }
 
     /**
-     * @dev An account that commands to change a rate
+     @dev Get the BUY price based on the order size. Returned as the number of tokens that the amountInWei will buy.
      */
-    address updater;
-
-    modifier onlyUpdater() {
-        require(msg.sender == updater);
-        _;
+    function getPurchasePrice(uint256 amountInWei) public view returns(uint) {
+        uint tokensPerEther =  formulaContract.calculatePurchaseReturn(
+            tokenContract.totalSupply(),
+            address(this).balance,
+            weight,
+            amountInWei 
+        ); 
+        
+        return tokensPerEther - (tokensPerEther * commission / 100);
     }
 
-    function setUpdater(address _updater) public onlyOwner() {
-        updater = _updater;
+    /**
+     @dev Get the SELL price based on the order size. Returned as amount (in wei) that you'll get for your tokens.
+     */
+    function getSalePrice(uint256 tokensToSell) public view returns(uint) {
+        uint weiRaw= formulaContract.calculateSaleReturn(
+            tokenContract.totalSupply(),
+            address(this).balance,
+            weight,
+            tokensToSell 
+        ); 
+        
+        return weiRaw - (weiRaw * commission / 100);
     }
 
-    function setFee(uint _fee) public onlyOwner() {
-        fee = _fee;
+    //buy and sell execute live trades against the exchanger. For either method, 
+    //you must specify your minimum return (in total tokens or ether that you expect to receive for your trade)
+    //this protects the trader against slippage due to other orders that make it into earlier blocks after they 
+    //place their order. 
+    //
+    //With buy, send the amount of ether you want to spend on the token - you'll get it back immediately if minPurchaseReturn
+    //is not met or if this Exchanger is not in a condition to service your order (usually this happens when there is not a full 
+    //reserve of tokens to satisfy the stated weight)
+    //
+    //With sell, first approve the exchanger to spend the number of tokens you want to sell
+    //Then call sell with that number and your minSaleReturn. The token transfer will not happen 
+    //if the minSaleReturn is not met.
+    //
+    //Sales always go through, as long as there is any ether in the reserve... but those dumping massive quantities of tokens
+    //will naturally be given the shittest rates.
+
+    /**
+     @dev Buy tokens with ether. 
+     @param minPurchaseReturn The minimum number of tokens you will accept.
+     */
+    function buy(uint minPurchaseReturn) public payable {
+        uint amount = formulaContract.calculatePurchaseReturn(
+            tokenContract.totalSupply(),
+            address(this).balance - msg.value,
+            weight,
+            msg.value);
+        require (enabled);
+        require (amount >= minPurchaseReturn);
+        require (tokenContract.balanceOf(this) >= amount);
+        emit Buy(msg.sender, msg.value, amount);
+        tokenContract.transfer(msg.sender, amount);
     }
-
-    function setToken(address addr) public onlyOwner {
-        token = PajCoin223(addr);
-    }
-
-    function getEth(uint amount) public onlyOwner allDealsArePaid {
-        owner.transfer(amount);
-    }
-
-    function getTokens(uint amount) public onlyOwner allDealsArePaid {
-        token.transfer(owner, amount);
-    }
-
-    function() public payable {
-        if (msg.sender != owner) {
-            require(fee <= msg.value);
-            DataEvent(msg.value, "Someone sent ether: amount");
-            ethSended[ethSendedNumber++] = Deal({user: msg.sender, money: msg.value});
-        }
-    }
-
-    function tokenFallback(address _from, uint _value, bytes _data) {
-        // DataEvent(msg.sender, "from");
-
-        require(msg.sender == address(token));
-        if (_from != owner) {
-            require(fee <= _value * 1e9 / rate);
-            DataEvent(_value, "Someone sent coin: amount");
-            coinSended[coinSendedNumber++] = Deal({user: _from, money: _value});
-        }
-    }
-
-    function updateRate(uint _rate) public onlyUpdater nonReentrant{
-
-        rate = _rate;
-        LogPriceUpdated(rate);
-
-        uint personalFee = fee / (ethSendedNumber + coinSendedNumber);
-        DataEvent(personalFee, "Personal fee");
-
-        proceedEtherDeals(personalFee);
-        proceedTokenDeals(personalFee);
-
-    }
-
-    function proceedEtherDeals(uint personalFee) internal {
-        for (uint8 i = 0; i < ethSendedNumber; i++) {
-            address user = ethSended[i].user;
-            DataEvent(ethSended[i].money, "Someone sent ether: amount");
-            DataEvent(personalFee, "Fee: amount");
-            uint money = ethSended[i].money - personalFee;
-
-            DataEvent(money, "Discounted amount: amount");
-            uint value = money * rate / 1e9;
-            DataEvent(value, "Ether to tokens: amount");
-            if (money < 0) {
-                // ??????? ????? ??????, ??? ????????
-            } else if (token.balanceOf(this) < value) {
-                DataEvent(token.balanceOf(this), "Not enough tokens: owner balance");
-                // ??????? ??????, ???? ??????? ?? ????????
-                user.transfer(money);
-            } else {
-                token.transfer(user, value);
-                DataEvent(value, "Tokens were sent to customer: amount");
-            }
-        }
-        ethSendedNumber = 0;
-    }
-
-    function proceedTokenDeals(uint personalFee) internal {
-        for (uint8 j = 0; j < coinSendedNumber; j++) {
-            address user = coinSended[j].user;
-            uint coin = coinSended[j].money;
-
-            DataEvent(coin, "Someone sent tokens: amount");
-            DataEvent(coin * 1e9 / rate, "Tokens to ether: amount");
-            uint value = coin * 1e9 / rate - personalFee;
-            DataEvent(personalFee, "Fee: amount");
-            DataEvent(value, "Tokens to discounted ether: amount");
-
-            if (value < 0) {
-                // ??????? ??????? ??????, ??? ????????
-            } else if (this.balance < value) {
-                // ??????? ??????, ???? ????? ?? ????????
-                DataEvent(this.balance, "Not enough ether: contract balance");
-
-                token.transfer(user, coin);
-            } else {
-                user.transfer(value);
-                DataEvent(value, "Ether was sent to customer: amount");
-            }
-        }
-        coinSendedNumber = 0;
-    }
+    /**
+     @dev Sell tokens for ether
+     @param quantity Number of tokens to sell
+     @param minSaleReturn Minimum amount of ether (in wei) you will accept for your tokens
+     */
+     function sell(uint quantity, uint minSaleReturn) public {
+         uint amountInWei = formulaContract.calculateSaleReturn(
+             tokenContract.totalSupply(),
+             address(this).balance,
+             weight,
+             quantity
+         );
+         require (enabled);
+         require (amountInWei >= minSaleReturn);
+         require (amountInWei <= address(this).balance);
+         require (tokenContract.transferFrom(msg.sender, this, quantity));
+         emit Sell(msg.sender, quantity, amountInWei);
+         msg.sender.transfer(amountInWei); //Always send ether last
+     }
 }
