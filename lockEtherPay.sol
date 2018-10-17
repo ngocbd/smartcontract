@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0xa995df0b9f7e30955b15c64762ff781fda94c521
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x4bb6a666e921494826d99a14353d7e5ca15586f8
 */
 pragma solidity ^0.4.18;
 
