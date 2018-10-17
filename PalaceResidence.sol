@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PalaceResidence at 0xc7a61bbf314a4aca8e2b37e50ea024e80e3ffe9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PalaceResidence at 0xa617e4728f216009b86354797d8d2305d3380179
 */
 pragma solidity ^0.4.4;
 
@@ -108,13 +108,13 @@ contract PalaceResidence is StandardToken {
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function PalaceResidence() {
-        balances[msg.sender] = 4365000000000000000000000000;               // Give the creator all initial tokens.
-        totalSupply = 4365000000000000000000000000;                       // Update total supply 
-        name = "PalaceResidence";                                        // Set the name for display purposes 
-        decimals = 18;                                                  // Amount of decimals for display purposes
-        symbol = "PRT";                                                // Set the symbol for display purposes 
-        unitsOneEthCanBuy = 10000;                                    // Set the price of your token for the ICO 
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        balances[msg.sender] = 404365000000000000000000000000;               // Give the creator all initial tokens.
+        totalSupply = 404365000000000000000000000000;                       // Update total supply 
+        name = "PalaceResidence";                                          // Set the name for display purposes 
+        decimals = 18;                                                    // Amount of decimals for display purposes
+        symbol = "PRT";                                                  // Set the symbol for display purposes 
+        unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO 
+        fundsWallet = msg.sender;                                      // The owner of the contract gets ETH
     }
 
     function() payable{
