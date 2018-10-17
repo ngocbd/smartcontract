@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExitFraud at 0xbab334138f28d87e1a4d70f474ea539e25b9992f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExitFraud at 0x12169a9b82f2eb2fb1f2ae2f840eadc6b5e1644f
 */
 pragma solidity ^0.4.24;
 
@@ -121,7 +121,7 @@ contract ExitFraud is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x99904BE052F97eF56D13a1140F32d99213c88238);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x5F62d3685b9f420C6e87549c92Cf6F91af018297);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -135,7 +135,7 @@ contract ExitFraud is modularShort {
     uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 4 hours;                // max length a round timer can be
+    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
