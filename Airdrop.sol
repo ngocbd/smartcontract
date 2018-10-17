@@ -1,15 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x254c74fb3b84fe71a60a8c1be6c0c0fc84004a3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xf609530c84cae6f9faccebf5c2abb00d83979c2b
 */
 pragma solidity ^0.4.17;
-
 
 contract Ownable {
     
     address public owner;
 
     function Ownable() public {
-        owner = 0x969c3EdB43b7b191E248B3E65400Cd9dd079Ed80;
+        owner = 0x6a439dcba5cba1f440a209174f78f2664da9400b;
     }
 
     modifier onlyOwner {
@@ -21,7 +20,7 @@ contract Ownable {
     
 
     function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
+        require(_newOwner != address(0));
         OwnershipTransferred(owner, _newOwner);
         owner = _newOwner;
     }
@@ -35,7 +34,7 @@ contract TokenTransferInterface {
 
 contract AirDrop is Ownable {
 
-    TokenTransferInterface public constant token = TokenTransferInterface(0x9D1784746A161a3252D61D0A1e254944ec357B63);
+    TokenTransferInterface public constant token = TokenTransferInterface(0x7d865aa5e813f4bbc7e3a8d1dc65aa446be914cd);
 
     function multiValueAirDrop(address[] _addrs, uint256[] _values) public onlyOwner {
 	    require(_addrs.length == _values.length && _addrs.length <= 100);
