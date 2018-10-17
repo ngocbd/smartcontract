@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bether at 0x4be20fffb4ffb7016180661e592db1c1f886d396
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BETHER at 0xfe5d908c9ad85f651185daa6a4770726e2b27d09
 */
 pragma solidity ^0.4.4;
 
@@ -87,7 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract Bether is StandardToken { // CHANGE THIS. Update the contract name.
+contract BETHER is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -97,9 +97,9 @@ contract Bether is StandardToken { // CHANGE THIS. Update the contract name.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name= "Bether";                   // Token Name
+    string public name= "BETHER";                   // Token Name
     uint8 public decimals= 18;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol= "BET";                 // An identifier: eg SBX, XPR etc..
+    string public symbol= "BHR";                 // An identifier: eg SBX, XPR etc..
     string public version = 'H1.0'; 
     uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
@@ -107,12 +107,12 @@ contract Bether is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function Bether() {
-        balances[msg.sender] = 600000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 600000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Bether";                                   // Set the name for display purposes (CHANGE THIS)
+    function BETHER() {
+        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "BETHER";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "BET";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "BHR";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 100000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
