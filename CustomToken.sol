@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2B880297968c559273f540De7CF8E788298A9EfE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x189b9c623570b30e178289740b9cdb5589094424
 */
 pragma solidity ^0.4.24;
 
@@ -103,11 +103,11 @@ contract CustomToken is BaseToken, BurnToken, ICOToken {
     constructor(address icoAddress) public {
         totalSupply = 210000000000000000;
         balanceOf[msg.sender] = totalSupply;
-        name = 'VPEToken';
-        symbol = 'VPE';
+        name = 'DAP';
+        symbol = 'DAP';
         decimals = 8;
         icoRatio = 10000;
-        icoEndtime = 1559318400;
+        icoEndtime = 1590940800;
         icoSender = icoAddress;
         icoHolder = icoAddress;
     }
