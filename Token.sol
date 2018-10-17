@@ -1,50 +1,85 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x4e297fcc055abce9c582f9c563973c501d0b8457
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x5481d12d7e91a1e6459db0ef0caf72fc1170d342
 */
+pragma solidity ^0.4.8;
+
 contract Token {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
-    uint256 public totalSupply;
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-  
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Token() {
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
 
-         initialSupply = 11000000000000000;
-         name = "waipay token";
-        decimals = 8;
-         symbol = "WT";
-        
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-                                   
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
     }
+  }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-      
-    }
+  string public constant symbol = "GNC";
+  string public constant name = "Generic";
+  uint8 public constant decimals = 18;
+  uint256 _totalSupply = 21000000 * 10**18;
 
-   
+  // Owner of this contract
 
-    
+  address public owner;
 
-   
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
-    }
+  // Constructor
+  function Token() {
+      owner = msg.sender;
+      balances[owner] = _totalSupply;
+  }
+
+
+  function totalSupply() constant returns (uint256 totalSupply) {
+      totalSupply = _totalSupply;
+  }
+
+  function transfer(address _to, uint _value) returns (bool success) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+
 }
