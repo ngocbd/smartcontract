@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroExHandler at 0xbe7088029ded190c0317d8b2bd1b19bdca247679
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroExHandler at 0x463a6507a69a054870328bf25fa05923fdc6165d
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 // File: contracts/ExchangeHandler.sol
 
@@ -983,7 +983,7 @@ interface DepositToken {
     function balanceOf(address who) external returns(uint256);
 }
 
-contract ZeroExHandler is ExchangeHandler, Ownable {
+contract ZeroExHandler is ExchangeHandler {
     address wethAddress;
     address public exchangeAddress;
     uint constant MAX_UINT = 2**256 - 1;
@@ -996,7 +996,7 @@ contract ZeroExHandler is ExchangeHandler, Ownable {
         address exc
     );
 
-    function ZeroExHandler(address _exchangeAddr, address _wethAddr) public {
+    constructor(address _exchangeAddr, address _wethAddr) public {
         exchangeAddress = _exchangeAddr;
         wethAddress = _wethAddr;
     }
@@ -1035,16 +1035,19 @@ contract ZeroExHandler is ExchangeHandler, Ownable {
         bytes32 r,
         bytes32 s
     ) external payable returns (uint256) {
-        require(orderUsable(orderAddresses, orderValues));
-        require(orderAddresses[3] == wethAddress);
-        require(amountToFill == msg.value);
+        require(orderUsable(orderAddresses, orderValues), "0xHandler - buy order validation failed");
+        require(orderAddresses[3] == wethAddress, "0xHandler - ordAddr[3] != wethAddress for buy");
+        require(amountToFill == msg.value, "0xHandler - amountToFill != msg.value for buy");
         DepositToken(wethAddress).deposit.value(amountToFill)();
         address[5] memory newAddresses = convertAddressFormat(orderAddresses);
         bytes32 orderHash = ZeroExExchange(exchangeAddress).getOrderHash(newAddresses, orderValues);
         setAllowance(wethAddress);
         ZeroExExchange(exchangeAddress).fillOrder(newAddresses, orderValues, amountToFill, true, v, r, s);
         uint receivedAmount = getPartialAmount(amountToFill, orderValues[1], orderValues[0]);
-        require(Token(newAddresses[2]).transfer(msg.sender, receivedAmount));
+        require(
+            Token(newAddresses[2]).transfer(msg.sender, receivedAmount),
+            "0xHandler - failed to transfer bought tokens"
+        );
         return receivedAmount;
     }
 
@@ -1060,8 +1063,8 @@ contract ZeroExHandler is ExchangeHandler, Ownable {
         bytes32 r,
         bytes32 s
     ) external returns (uint256) {
-        require(orderUsable(orderAddresses, orderValues));
-        require(orderAddresses[2] == wethAddress);
+        require(orderUsable(orderAddresses, orderValues), "0xHandler - sell order validation failed");
+        require(orderAddresses[2] == wethAddress, "0xHandler - ordAddr[3] != wethAddress for sell");
         address[5] memory newAddresses = convertAddressFormat(orderAddresses);
         setAllowance(orderAddresses[3]);
         ZeroExExchange(exchangeAddress).fillOrder(newAddresses, orderValues, amountToFill, false, v, r, s);
@@ -1073,7 +1076,10 @@ contract ZeroExHandler is ExchangeHandler, Ownable {
 
     function setAllowance(address token) internal {
         if(!tokenAllowanceSet[token]) {
-            Token(token).approve(ZeroExExchange(exchangeAddress).TOKEN_TRANSFER_PROXY_CONTRACT(), MAX_UINT);
+            require(
+                Token(token).approve(ZeroExExchange(exchangeAddress).TOKEN_TRANSFER_PROXY_CONTRACT(), MAX_UINT),
+                "0xHandler - token approval failed"
+            );
             tokenAllowanceSet[token] = true;
         }
     }
