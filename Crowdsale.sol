@@ -1,61 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x020713e9d9150720c1a507205db0495423ae3eb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa584c5eaccb5dd4a5c0fc0a785dee952becc4c06
 */
 pragma solidity ^0.4.18;
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) external;
 }
 
 contract Crowdsale {
 
-    address public beneficiary; 
-    uint public fundingGoal; 
-    uint public amountRaised; 
-    uint public deadline; 
-    
-    uint public price;
-    token public tokenReward; 
-    mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false; 
-    bool crowdsaleClosed = false; 
-    
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount, bool isContribution);
+    uint256 public price;
+    token public tokenReward;
+    address owner;
+    uint256 public amount;
 
-    /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInEthers,
-        uint durationInMinutes,
-        uint etherCostOfEachToken,
-        address addressOfTokenUsedAsReward
-    ) {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInEthers * 1 ether;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken * 1 ether;
-        tokenReward = token(addressOfTokenUsedAsReward); 
+     modifier onlyCreator() {
+        require(msg.sender == owner); // If it is incorrect here, it reverts.
+        _;                              // Otherwise, it continues.
+    } 
+    
+    constructor(address addressOfTokenUsedAsReward) public {
+        owner = msg.sender;
+        price = 0.00028 ether;
+        tokenReward = token(addressOfTokenUsedAsReward);
+    }
+    
+    function updateOwner(address newOwner) public onlyCreator{
+        owner = newOwner;
     }
 
-    /**
-     * Fallback function
-     *
-     * payable 
-     */   
-	 
-	function () payable {
-        require(!crowdsaleClosed);
-        uint amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);        
-        beneficiary.send(amountRaised);
-        amountRaised = 0;
-        FundTransfer(msg.sender, amount, true);
-    }	
+    function () payable public {
+
+        amount = msg.value;
+        uint256 tobesent = amount/price;
+        tokenReward.transfer(msg.sender, tobesent*10e7);
+
+    }
+
+    function safeWithdrawal() public onlyCreator {
+            uint amount = address(this).balance;
+                owner.send(amount);
+    }
 }
