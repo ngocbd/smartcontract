@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xStaking at 0x8915a459057fdb6139355a23764f47eb853715bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xStaking at 0x130c640ae4916d20987781dbce83db7219eb1101
 */
 pragma solidity ^0.4.23;
 
@@ -222,13 +222,13 @@ contract Bounty0xStaking is Ownable, Pausable {
     address public Bounty0xToken;
 
     mapping (address => uint) public balances;
-    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token 
+    mapping (uint => mapping (address => uint)) public stakes; // mapping of submission ids to mapping of addresses that staked an amount of bounty token
 
 
     event Deposit(address indexed depositor, uint amount, uint balance);
     event Withdraw(address indexed depositor, uint amount, uint balance);
 
-    event Stake(uint indexed submissionId, address hunter, uint amount);
+    event Stake(uint indexed submissionId, address hunter, uint amount, uint balance);
     event StakeReleased(uint indexed submissionId, address from, address to, uint amount);
 
 
@@ -249,7 +249,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         require(balances[msg.sender] >= _amount);
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         require(ERC20(Bounty0xToken).transfer(msg.sender, _amount));
-        
+
         emit Withdraw(msg.sender, _amount, balances[msg.sender]);
     }
 
@@ -259,7 +259,7 @@ contract Bounty0xStaking is Ownable, Pausable {
         balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
         stakes[_submissionId][msg.sender] = SafeMath.add(stakes[_submissionId][msg.sender], _amount);
 
-        emit Stake(_submissionId, msg.sender, _amount);
+        emit Stake(_submissionId, msg.sender, _amount, balances[msg.sender]);
     }
 
     function stakeToMany(uint[] _submissionIds, uint[] _amounts) public whenNotPaused {
@@ -273,10 +273,10 @@ contract Bounty0xStaking is Ownable, Pausable {
         for (uint i = 0; i < _submissionIds.length; i++) {
             stakes[_submissionIds[i]][msg.sender] = SafeMath.add(stakes[_submissionIds[i]][msg.sender], _amounts[i]);
 
-            emit Stake(_submissionIds[i], msg.sender, _amounts[i]);
+            emit Stake(_submissionIds[i], msg.sender, _amounts[i], balances[msg.sender]);
         }
     }
-    
+
 
     function releaseStake(uint _submissionId, address _from, address _to, uint _amount) public onlyOwner {
         require(stakes[_submissionId][_from] >= _amount);
@@ -301,26 +301,25 @@ contract Bounty0xStaking is Ownable, Pausable {
         }
     }
 
-
     // Burnable mechanism
-    
+
     address public bntyController;
-    
+
     event Burn(uint indexed submissionId, address from, uint amount);
-    
+
     function changeBntyController(address _bntyController) onlyOwner public {
         bntyController = _bntyController;
     }
-    
-    
+
+
     function burnStake(uint _submissionId, address _from) public onlyOwner {
         require(stakes[_submissionId][_from] > 0);
-        
+
         uint amountToBurn = stakes[_submissionId][_from];
         stakes[_submissionId][_from] = 0;
-        
+
         require(BntyControllerInterface(bntyController).destroyTokensInBntyTokenContract(this, amountToBurn));
         emit Burn(_submissionId, _from, amountToBurn);
     }
-    
+
 }
