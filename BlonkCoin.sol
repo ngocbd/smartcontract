@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlonkCoin at 0xacb7ca84dcc5bddfa9b9ee8241844b1f519b5acd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlonkCoin at 0xaa55328e715746eead930ee8d9d9e3e0d0cf9dc8
 */
 pragma solidity ^0.4.23;
 
@@ -224,7 +224,7 @@ contract BlonkCoin is StandardToken {
   constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[0x42D53EbFcAa1e96Ec7F3CD84E555b5dDADbC0328] = INITIAL_SUPPLY;
-    emit Transfer(address(0), 0x42D53EbFcAa1e96Ec7F3CD84E555b5dDADbC0328, INITIAL_SUPPLY);
+    emit Transfer(address(0), msg.sender, INITIAL_SUPPLY);
   }
 
 }
