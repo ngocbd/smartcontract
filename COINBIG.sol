@@ -1,28 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COINBIG at 0x9f49Bcc457D8fd372d361330E2550374bC0A5E96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COINBIG at 0x01E45B8D0c51f05F17385DD3416fE3aA5BFd89aC
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.11;
+
 contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+  function safeMul(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
+  function safeDiv(uint256 a, uint256 b) internal returns (uint256) {
     assert(b > 0);
-    uint c = a / b;
+    uint256 c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function safeSub(uint256 a, uint256 b) internal returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+  function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
     assert(c>=a && c>=b);
     return c;
   }
@@ -46,19 +47,19 @@ contract SafeMath {
 
 contract ERC20 {
   function totalSupply() constant returns (uint256 totalSupply);
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+  function balanceOf(address who) constant returns (uint256);
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool ok);
+  function transferFrom(address from, address to, uint256 value) returns (bool ok);
+  function approve(address spender, uint256 value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract StandardToken is ERC20, SafeMath {
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
-  uint public _totalSupply;
+  mapping(address => uint256) balances;
+  mapping (address => mapping (address => uint256)) allowed;
+  uint256 public _totalSupply;
   address public _creator;
   bool bIsFreezeAll = false;
 
@@ -66,7 +67,7 @@ contract StandardToken is ERC20, SafeMath {
 	totalSupply = _totalSupply;
   }
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  function transfer(address _to, uint256 _value) returns (bool success) {
     require(bIsFreezeAll == false);
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
@@ -74,7 +75,7 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
     require(bIsFreezeAll == false);
     var _allowance = allowed[_from][msg.sender];
     balances[_to] = safeAdd(balances[_to], _value);
@@ -84,18 +85,18 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint balance) {
+  function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
 
-  function approve(address _spender, uint _value) returns (bool success) {
+  function approve(address _spender, uint256 _value) returns (bool success) {
 	require(bIsFreezeAll == false);
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
@@ -110,12 +111,13 @@ contract COINBIG is StandardToken {
 
   string public name = "COINBIG";
   string public symbol = "CB";
-  uint public decimals = 18;
-  uint public INITIAL_SUPPLY = 10000000000000000000000000000;
+  uint256 public constant decimals = 18;
+  uint256 public constant INITIAL_SUPPLY = 10000000000 * 10 ** decimals;	
+
   
   function COINBIG() {
     _totalSupply = INITIAL_SUPPLY;
-	_creator = 0x34625c78472AbBb80190d8be945D949D07d95D12;
+	_creator = 0xfCe1155052AF6c8CB04EDA1CeBB390132E2F0012;
 	balances[_creator] = INITIAL_SUPPLY;
 	bIsFreezeAll = false;
   }
