@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0x6512703abc809b88921703b7572a53c652f96371
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xb6cd913cd9370c82417a1ad7f676a99c0b5b298d
 */
-pragma solidity ^0.4.23;
-
-
+pragma solidity 0.4.24;
 
 
 /**
@@ -52,19 +50,6 @@ library SafeMath {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
 
 /**
  * @title Ownable
@@ -104,6 +89,136 @@ contract Ownable {
 
 }
 
+
+contract Whitelist is Ownable {
+    mapping(address => bool) internal investorMap;
+
+    /**
+    * event for investor approval logging
+    * @param investor approved investor
+    */
+    event Approved(address indexed investor);
+
+    /**
+    * event for investor disapproval logging
+    * @param investor disapproved investor
+    */
+    event Disapproved(address indexed investor);
+
+    constructor(address _owner) 
+        public 
+        Ownable(_owner) 
+    {
+        
+    }
+
+    /** @param _investor the address of investor to be checked
+      * @return true if investor is approved
+      */
+    function isInvestorApproved(address _investor) external view returns (bool) {
+        require(_investor != address(0));
+        return investorMap[_investor];
+    }
+
+    /** @dev approve an investor
+      * @param toApprove investor to be approved
+      */
+    function approveInvestor(address toApprove) external onlyOwner {
+        investorMap[toApprove] = true;
+        emit Approved(toApprove);
+    }
+
+    /** @dev approve investors in bulk
+      * @param toApprove array of investors to be approved
+      */
+    function approveInvestorsInBulk(address[] toApprove) external onlyOwner {
+        for (uint i = 0; i < toApprove.length; i++) {
+            investorMap[toApprove[i]] = true;
+            emit Approved(toApprove[i]);
+        }
+    }
+
+    /** @dev disapprove an investor
+      * @param toDisapprove investor to be disapproved
+      */
+    function disapproveInvestor(address toDisapprove) external onlyOwner {
+        delete investorMap[toDisapprove];
+        emit Disapproved(toDisapprove);
+    }
+
+    /** @dev disapprove investors in bulk
+      * @param toDisapprove array of investors to be disapproved
+      */
+    function disapproveInvestorsInBulk(address[] toDisapprove) external onlyOwner {
+        for (uint i = 0; i < toDisapprove.length; i++) {
+            delete investorMap[toDisapprove[i]];
+            emit Disapproved(toDisapprove[i]);
+        }
+    }
+}
+
+
+/**
+ * @title Validator
+ * @dev The Validator contract has a validator address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Validator {
+    address public validator;
+
+    event NewValidatorSet(address indexed previousOwner, address indexed newValidator);
+
+    /**
+    * @dev The Validator constructor sets the original `validator` of the contract to the sender
+    * account.
+    */
+    constructor() public {
+        validator = msg.sender;
+    }
+
+    /**
+    * @dev Throws if called by any account other than the validator.
+    */
+    modifier onlyValidator() {
+        require(msg.sender == validator);
+        _;
+    }
+
+    /**
+    * @dev Allows the current validator to transfer control of the contract to a newValidator.
+    * @param newValidator The address to become next validator.
+    */
+    function setNewValidator(address newValidator) public onlyValidator {
+        require(newValidator != address(0));
+        emit NewValidatorSet(validator, newValidator);
+        validator = newValidator;
+    }
+}
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 
 /**
@@ -150,23 +265,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 
 /**
@@ -265,7 +363,6 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -316,91 +413,21 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 
-/**
- * @title Validator
- * @dev The Validator contract has a validator address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Validator {
-    address public validator;
+contract DetailedERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
 
-    event NewValidatorSet(address indexed previousOwner, address indexed newValidator);
-
-    /**
-    * @dev The Validator constructor sets the original `validator` of the contract to the sender
-    * account.
-    */
-    constructor() public {
-        validator = msg.sender;
-    }
-
-    /**
-    * @dev Throws if called by any account other than the validator.
-    */
-    modifier onlyValidator() {
-        require(msg.sender == validator);
-        _;
-    }
-
-    /**
-    * @dev Allows the current validator to transfer control of the contract to a newValidator.
-    * @param newValidator The address to become next validator.
-    */
-    function setNewValidator(address newValidator) public onlyValidator {
-        require(newValidator != address(0));
-        emit NewValidatorSet(validator, newValidator);
-        validator = newValidator;
-    }
+  constructor(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
 }
 
 
-
-
-contract Whitelist is Ownable {
-    mapping(address => bool) internal investorMap;
-
-    event Approved(address indexed investor);
-    event Disapproved(address indexed investor);
-
-    constructor(address _owner) 
-        public 
-        Ownable(_owner) 
-    {
-    }
-
-    function isInvestorApproved(address _investor) external view returns (bool) {
-        require(_investor != address(0));
-        return investorMap[_investor];
-    }
-
-    function approveInvestor(address toApprove) external onlyOwner {
-        investorMap[toApprove] = true;
-        emit Approved(toApprove);
-    }
-
-    function approveInvestorsInBulk(address[] toApprove) external onlyOwner {
-        for (uint i = 0; i < toApprove.length; i++) {
-            investorMap[toApprove[i]] = true;
-            emit Approved(toApprove[i]);
-        }
-    }
-
-    function disapproveInvestor(address toDisapprove) external onlyOwner {
-        delete investorMap[toDisapprove];
-        emit Disapproved(toDisapprove);
-    }
-
-    function disapproveInvestorsInBulk(address[] toDisapprove) external onlyOwner {
-        for (uint i = 0; i < toDisapprove.length; i++) {
-            delete investorMap[toDisapprove[i]];
-            emit Disapproved(toDisapprove[i]);
-        }
-    }
-}
-
-
-
-contract CompliantToken is Validator, MintableToken {
+/** @title Compliant Token */
+contract CompliantToken is Validator, DetailedERC20, MintableToken {
     Whitelist public whiteListingContract;
 
     struct TransactionStruct {
@@ -432,6 +459,14 @@ contract CompliantToken is Validator, MintableToken {
         _;
     }
 
+    /**
+    * event for rejected transfer logging
+    * @param from address from which tokens have to be transferred
+    * @param to address to tokens have to be transferred
+    * @param value number of tokens
+    * @param nonce request recorded at this particular nonce
+    * @param reason reason for rejection
+    */
     event TransferRejected(
         address indexed from,
         address indexed to,
@@ -440,6 +475,13 @@ contract CompliantToken is Validator, MintableToken {
         uint256 reason
     );
 
+    /**
+    * event for transfer tokens logging
+    * @param from address from which tokens have to be transferred
+    * @param to address to tokens have to be transferred
+    * @param value number of tokens
+    * @param fee fee in tokens
+    */
     event TransferWithFee(
         address indexed from,
         address indexed to,
@@ -447,6 +489,14 @@ contract CompliantToken is Validator, MintableToken {
         uint256 fee
     );
 
+    /**
+    * event for transfer/transferFrom request logging
+    * @param from address from which tokens have to be transferred
+    * @param to address to tokens have to be transferred
+    * @param value number of tokens
+    * @param fee fee in tokens
+    * @param spender The address which will spend the tokens
+    */
     event RecordedPendingTransaction(
         address indexed from,
         address indexed to,
@@ -455,20 +505,47 @@ contract CompliantToken is Validator, MintableToken {
         address indexed spender
     );
 
+    /**
+    * event for whitelist contract update logging
+    * @param _whiteListingContract address of the new whitelist contract
+    */
     event WhiteListingContractSet(address indexed _whiteListingContract);
 
+    /**
+    * event for fee update logging
+    * @param previousFee previous fee
+    * @param newFee new fee
+    */
     event FeeSet(uint256 indexed previousFee, uint256 indexed newFee);
 
+    /**
+    * event for fee recipient update logging
+    * @param previousRecipient address of the old fee recipient
+    * @param newRecipient address of the new fee recipient
+    */
     event FeeRecipientSet(address indexed previousRecipient, address indexed newRecipient);
 
+    /** @dev Constructor
+      * @param _owner Token contract owner
+      * @param _name Token name
+      * @param _symbol Token symbol
+      * @param _decimals number of decimals in the token(usually 18)
+      * @param whitelistAddress Ethereum address of the whitelist contract
+      * @param recipient Ethereum address of the fee recipient
+      * @param fee token fee for approving a transfer
+      */
     constructor(
         address _owner,
+        string _name, 
+        string _symbol, 
+        uint8 _decimals,
         address whitelistAddress,
         address recipient,
         uint256 fee
     )
-        public 
+        public
         MintableToken(_owner)
+        DetailedERC20(_name, _symbol, _decimals)
         Validator()
     {
         setWhitelistContract(whitelistAddress);
@@ -476,6 +553,9 @@ contract CompliantToken is Validator, MintableToken {
         setFee(fee);
     }
 
+    /** @dev Updates whitelist contract address
+      * @param whitelistAddress New whitelist contract address
+      */
     function setWhitelistContract(address whitelistAddress)
         public
         onlyValidator
@@ -485,6 +565,9 @@ contract CompliantToken is Validator, MintableToken {
         emit WhiteListingContractSet(whiteListingContract);
     }
 
+    /** @dev Updates token fee for approving a transfer
+      * @param fee New token fee
+      */
     function setFee(uint256 fee)
         public
         onlyValidator
@@ -493,6 +576,9 @@ contract CompliantToken is Validator, MintableToken {
         transferFee = fee;
     }
 
+    /** @dev Updates fee recipient address
+      * @param recipient New whitelist contract address
+      */
     function setFeeRecipient(address recipient)
         public
         onlyValidator
@@ -502,6 +588,26 @@ contract CompliantToken is Validator, MintableToken {
         feeRecipient = recipient;
     }
 
+    /** @dev Updates token name
+      * @param _name New token name
+      */
+    function updateName(string _name) public onlyOwner {
+        require(bytes(_name).length != 0);
+        name = _name;
+    }
+
+    /** @dev Updates token symbol
+      * @param _symbol New token name
+      */
+    function updateSymbol(string _symbol) public onlyOwner {
+        require(bytes(_symbol).length != 0);
+        symbol = _symbol;
+    }
+
+    /** @dev transfer request
+      * @param _to address to which the tokens have to be transferred
+      * @param _value amount of tokens to be transferred
+      */
     function transfer(address _to, uint256 _value)
         public
         checkIsInvestorApproved(msg.sender)
@@ -533,6 +639,11 @@ contract CompliantToken is Validator, MintableToken {
         return true;
     }
 
+    /** @dev transferFrom request
+      * @param _from address from which the tokens have to be transferred
+      * @param _to address to which the tokens have to be transferred
+      * @param _value amount of tokens to be transferred
+      */
     function transferFrom(address _from, address _to, uint256 _value)
         public 
         checkIsInvestorApproved(_from)
@@ -567,6 +678,9 @@ contract CompliantToken is Validator, MintableToken {
         return true;
     }
 
+    /** @dev approve transfer/transferFrom request
+      * @param nonce request recorded at this particular nonce
+      */
     function approveTransfer(uint256 nonce)
         external 
         onlyValidator 
@@ -628,6 +742,10 @@ contract CompliantToken is Validator, MintableToken {
         return true;
     }
 
+    /** @dev reject transfer/transferFrom request
+      * @param nonce request recorded at this particular nonce
+      * @param reason reason for rejection
+      */
     function rejectTransfer(uint256 nonce, uint256 reason)
         external 
         onlyValidator
