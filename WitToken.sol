@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WitToken at 0x1bd3435b7db7dd77753b1283e2a9d751f000367b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WitToken at 0x0be4a987fd8dcbd2fff64ba4131d3a208307f667
 */
 pragma solidity 0.4.24;
   
@@ -701,7 +701,7 @@ contract UpgradedStandardToken {
 
 
 contract WitToken is TwoPhaseToken {
-    string  public  constant name = "Wealth in Tokens";
+    string  public  constant name = "Wealth in Token";
     string  public  constant symbol = "WIT";
     uint8   public  constant decimals = 18;
     address public upgradedAddress;
