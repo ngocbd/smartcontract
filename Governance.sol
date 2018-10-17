@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Governance at 0x73185bc2a1aa75ec49ba9239b28ea22fda5940fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Governance at 0x630f5e265112dB10D1e7820E26718172a12BD084
 */
 pragma solidity ^0.4.13;
 
@@ -306,50 +306,6 @@ contract Governance is DBC, Owned, DSGroup {
         DSGroup(ofAuthorities, ofQuorum, ofWindow)
     {}
 
-    // FALLBACK
-
-    function() payable { }
-
-    // PUBLIC METHODS
-
-    /// @notice Propose new versions of Melon
-    /// @param ofVersion Address of version contract to be proposed
-    function proposeVersion(address ofVersion) {
-        versionToProposalIds[ofVersion] = propose(address(this), new bytes(0), 0);
-    }
-
-    /// @notice Approve new versions of Melon
-    /// @param ofVersion Address of version contract to be approved
-    function approveVersion(address ofVersion) {
-        confirm(versionToProposalIds[ofVersion]);
-    }
-
-    /// @notice Trigger new versions of Melon
-    /// @param ofVersion Address of version contract to be triggered
-    function triggerVersion(address ofVersion) {
-        trigger(versionToProposalIds[ofVersion]);
-        addVersion(ofVersion);
-    }
-
-    /// @notice Propose shutdown of Melon version
-    /// @param ofVersionId Version id to be proposed for shutdown
-    function proposeShutdown(uint ofVersionId) {
-        versionIdToShutdownIds[ofVersionId] = propose(address(this), new bytes(0), 0);
-    }
-
-    /// @notice Approve shutdown of Melon version
-    /// @param ofVersionId Version id to be approved for shutdown
-    function approveShutdown(uint ofVersionId) {
-        confirm(versionIdToShutdownIds[ofVersionId]);
-    }
-
-    /// @notice Trigger shutdown of Melon version
-    /// @param ofVersionId Version id to be triggered for shutdown
-    function triggerShutdown(uint ofVersionId) {
-        trigger(versionIdToShutdownIds[ofVersionId]);
-        shutDownVersion(ofVersionId);
-    }
-
     // PUBLIC VIEW METHODS
 
     /**
@@ -369,40 +325,45 @@ contract Governance is DBC, Owned, DSGroup {
 
     // INTERNAL METHODS
 
+    /// @dev In later version, require authorities consensus
     /// @notice Add an approved version of Melon
     /// @param ofVersion Address of the version to add
     /// @return id integer ID of the version (list index)
     function addVersion(
         address ofVersion
     )
-        // In later version
-        //  require Authorities consensus
-        internal returns (uint id)
+        pre_cond(msg.sender == address(this))
+        returns (uint id)
     {
+        require(msg.sender == address(this));
         Version memory info;
         info.version = ofVersion;
         info.active = true;
         info.timestamp = now;
         versions.push(info);
-        VersionUpdated(versions.length - 1);
+        emit VersionUpdated(versions.length - 1);
     }
 
     /// @notice Remove and shut down version of Melon
     /// @param id Id of the version to shutdown
     function shutDownVersion(uint id)
-        pre_cond(isActive(id)) internal
+        pre_cond(msg.sender == address(this))
+        pre_cond(isActive(id))
     {
+        require(msg.sender == address(this));
         VersionInterface Version = VersionInterface(versions[id].version);
         Version.shutDown();
         delete versions[id];
-        VersionUpdated(id);
+        emit VersionUpdated(id);
     }
 
-    function isActive(uint id) internal returns (bool active) {
+    function getVersionsLength() public view returns (uint) {
+        return versions.length;
+    }
+
+    function isActive(uint id) public view returns (bool active) {
         (, active, ) = getVersionById(id);
     }
-
-
 }
 
 interface VersionInterface {
@@ -416,15 +377,14 @@ interface VersionInterface {
     function shutDown() external;
 
     function setupFund(
-        string ofFundName,
+        bytes32 ofFundName,
         address ofQuoteAsset,
         uint ofManagementFee,
         uint ofPerformanceFee,
         address ofCompliance,
         address ofRiskMgmt,
-        address ofPriceFeed,
         address[] ofExchanges,
-        address[] ofExchangeAdapters,
+        address[] ofDefaultAssets,
         uint8 v,
         bytes32 r,
         bytes32 s
