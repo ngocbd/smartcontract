@@ -1,273 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Competition at 0xAe5a801527695745d42034eb236662927ab1f95B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Competition at 0xB1440250b73cC3f5cA364484F0655b5Fa81c410E
 */
 pragma solidity ^0.4.13;
-
-interface FundInterface {
-
-    // EVENTS
-
-    event PortfolioContent(address[] assets, uint[] holdings, uint[] prices);
-    event RequestUpdated(uint id);
-    event Redeemed(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
-    event FeesConverted(uint atTimestamp, uint shareQuantityConverted, uint unclaimed);
-    event CalculationUpdate(uint atTimestamp, uint managementFee, uint performanceFee, uint nav, uint sharePrice, uint totalSupply);
-    event ErrorMessage(string errorMessage);
-
-    // EXTERNAL METHODS
-    // Compliance by Investor
-    function requestInvestment(uint giveQuantity, uint shareQuantity, address investmentAsset) external;
-    function executeRequest(uint requestId) external;
-    function cancelRequest(uint requestId) external;
-    function redeemAllOwnedAssets(uint shareQuantity) external returns (bool);
-    // Administration by Manager
-    function enableInvestment(address[] ofAssets) external;
-    function disableInvestment(address[] ofAssets) external;
-    function shutDown() external;
-
-    // PUBLIC METHODS
-    function emergencyRedeem(uint shareQuantity, address[] requestedAssets) public returns (bool success);
-    function calcSharePriceAndAllocateFees() public returns (uint);
-
-
-    // PUBLIC VIEW METHODS
-    // Get general information
-    function getModules() view returns (address, address, address);
-    function getLastRequestId() view returns (uint);
-    function getManager() view returns (address);
-
-    // Get accounting information
-    function performCalculations() view returns (uint, uint, uint, uint, uint, uint, uint);
-    function calcSharePrice() view returns (uint);
-}
-
-interface AssetInterface {
-    /*
-     * Implements ERC 20 standard.
-     * https://github.com/ethereum/EIPs/blob/f90864a3d2b2b45c4decf95efd26b3f0c276051a/EIPS/eip-20-token-standard.md
-     * https://github.com/ethereum/EIPs/issues/20
-     *
-     *  Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
-     *  https://github.com/ethereum/EIPs/issues/223
-     */
-
-    // Events
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    // There is no ERC223 compatible Transfer event, with `_data` included.
-
-    //ERC 223
-    // PUBLIC METHODS
-    function transfer(address _to, uint _value, bytes _data) public returns (bool success);
-
-    // ERC 20
-    // PUBLIC METHODS
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    // PUBLIC VIEW METHODS
-    function balanceOf(address _owner) view public returns (uint balance);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-}
-
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-interface SharesInterface {
-
-    event Created(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
-    event Annihilated(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
-
-    // VIEW METHODS
-
-    function getName() view returns (bytes32);
-    function getSymbol() view returns (bytes8);
-    function getDecimals() view returns (uint);
-    function getCreationTime() view returns (uint);
-    function toSmallestShareUnit(uint quantity) view returns (uint);
-    function toWholeShareUnit(uint quantity) view returns (uint);
-
-}
-
-interface CompetitionInterface {
-
-    // EVENTS
-
-    event Register(uint withId, address fund, address manager);
-    event ClaimReward(address registrant, address fund, uint shares);
-
-    // PRE, POST, INVARIANT CONDITIONS
-
-    function termsAndConditionsAreSigned(address byManager, uint8 v, bytes32 r, bytes32 s) view returns (bool);
-    function isWhitelisted(address x) view returns (bool);
-    function isCompetitionActive() view returns (bool);
-
-    // CONSTANT METHODS
-
-    function getMelonAsset() view returns (address);
-    function getRegistrantId(address x) view returns (uint);
-    function getRegistrantFund(address x) view returns (address);
-    function getCompetitionStatusOfRegistrants() view returns (address[], address[], bool[]);
-    function getTimeTillEnd() view returns (uint);
-    function getEtherValue(uint amount) view returns (uint);
-    function calculatePayout(uint payin) view returns (uint);
-
-    // PUBLIC METHODS
-
-    function registerForCompetition(address fund, uint8 v, bytes32 r, bytes32 s) payable;
-    function batchAddToWhitelist(uint maxBuyinQuantity, address[] whitelistants);
-    function withdrawMln(address to, uint amount);
-    function claimReward();
-
-}
-
-interface ComplianceInterface {
-
-    // PUBLIC VIEW METHODS
-
-    /// @notice Checks whether investment is permitted for a participant
-    /// @param ofParticipant Address requesting to invest in a Melon fund
-    /// @param giveQuantity Quantity of Melon token times 10 ** 18 offered to receive shareQuantity
-    /// @param shareQuantity Quantity of shares times 10 ** 18 requested to be received
-    /// @return Whether identity is eligible to invest in a Melon fund.
-    function isInvestmentPermitted(
-        address ofParticipant,
-        uint256 giveQuantity,
-        uint256 shareQuantity
-    ) view returns (bool);
-
-    /// @notice Checks whether redemption is permitted for a participant
-    /// @param ofParticipant Address requesting to redeem from a Melon fund
-    /// @param shareQuantity Quantity of shares times 10 ** 18 offered to redeem
-    /// @param receiveQuantity Quantity of Melon token times 10 ** 18 requested to receive for shareQuantity
-    /// @return Whether identity is eligible to redeem from a Melon fund.
-    function isRedemptionPermitted(
-        address ofParticipant,
-        uint256 shareQuantity,
-        uint256 receiveQuantity
-    ) view returns (bool);
-}
-
-contract DBC {
-
-    // MODIFIERS
-
-    modifier pre_cond(bool condition) {
-        require(condition);
-        _;
-    }
-
-    modifier post_cond(bool condition) {
-        _;
-        assert(condition);
-    }
-
-    modifier invariant(bool condition) {
-        require(condition);
-        _;
-        assert(condition);
-    }
-}
-
-contract Owned is DBC {
-
-    // FIELDS
-
-    address public owner;
-
-    // NON-CONSTANT METHODS
-
-    function Owned() { owner = msg.sender; }
-
-    function changeOwner(address ofNewOwner) pre_cond(isOwner()) { owner = ofNewOwner; }
-
-    // PRE, POST, INVARIANT CONDITIONS
-
-    function isOwner() internal returns (bool) { return msg.sender == owner; }
-
-}
-
-contract CompetitionCompliance is ComplianceInterface, DBC, Owned {
-
-    address public competitionAddress;
-
-    // CONSTRUCTOR
-
-    /// @dev Constructor
-    /// @param ofCompetition Address of the competition contract
-    function CompetitionCompliance(address ofCompetition) public {
-        competitionAddress = ofCompetition;
-    }
-
-    // PUBLIC VIEW METHODS
-
-    /// @notice Checks whether investment is permitted for a participant
-    /// @param ofParticipant Address requesting to invest in a Melon fund
-    /// @param giveQuantity Quantity of Melon token times 10 ** 18 offered to receive shareQuantity
-    /// @param shareQuantity Quantity of shares times 10 ** 18 requested to be received
-    /// @return Whether identity is eligible to invest in a Melon fund.
-    function isInvestmentPermitted(
-        address ofParticipant,
-        uint256 giveQuantity,
-        uint256 shareQuantity
-    )
-        view
-        returns (bool)
-    {
-        return competitionAddress == ofParticipant;
-    }
-
-    /// @notice Checks whether redemption is permitted for a participant
-    /// @param ofParticipant Address requesting to redeem from a Melon fund
-    /// @param shareQuantity Quantity of shares times 10 ** 18 offered to redeem
-    /// @param receiveQuantity Quantity of Melon token times 10 ** 18 requested to receive for shareQuantity
-    /// @return isEligible Whether identity is eligible to redeem from a Melon fund.
-    function isRedemptionPermitted(
-        address ofParticipant,
-        uint256 shareQuantity,
-        uint256 receiveQuantity
-    )
-        view
-        returns (bool)
-    {
-        return competitionAddress == ofParticipant;
-    }
-
-    /// @notice Checks whether an address is whitelisted in the competition contract and competition is active
-    /// @param x Address
-    /// @return Whether the address is whitelisted
-    function isCompetitionAllowed(
-        address x
-    )
-        view
-        returns (bool)
-    {
-        return CompetitionInterface(competitionAddress).isWhitelisted(x) && CompetitionInterface(competitionAddress).isCompetitionActive();
-    }
-
-
-    // PUBLIC METHODS
-
-    /// @notice Changes the competition address
-    /// @param ofCompetition Address of the competition contract
-    function changeCompetitionAddress(
-        address ofCompetition
-    )
-        pre_cond(isOwner())
-    {
-        competitionAddress = ofCompetition;
-    }
-
-}
 
 contract DSAuthority {
     function canCall(
@@ -363,6 +97,191 @@ contract DSExec {
     }
 }
 
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+        uint              wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
+
+contract DSGroup is DSExec, DSNote {
+    address[]  public  members;
+    uint       public  quorum;
+    uint       public  window;
+    uint       public  actionCount;
+
+    mapping (uint => Action)                     public  actions;
+    mapping (uint => mapping (address => bool))  public  confirmedBy;
+    mapping (address => bool)                    public  isMember;
+
+    // Legacy events
+    event Proposed   (uint id, bytes calldata);
+    event Confirmed  (uint id, address member);
+    event Triggered  (uint id);
+
+    struct Action {
+        address  target;
+        bytes    calldata;
+        uint     value;
+
+        uint     confirmations;
+        uint     deadline;
+        bool     triggered;
+    }
+
+    function DSGroup(
+        address[]  members_,
+        uint       quorum_,
+        uint       window_
+    ) {
+        members  = members_;
+        quorum   = quorum_;
+        window   = window_;
+
+        for (uint i = 0; i < members.length; i++) {
+            isMember[members[i]] = true;
+        }
+    }
+
+    function memberCount() constant returns (uint) {
+        return members.length;
+    }
+
+    function target(uint id) constant returns (address) {
+        return actions[id].target;
+    }
+    function calldata(uint id) constant returns (bytes) {
+        return actions[id].calldata;
+    }
+    function value(uint id) constant returns (uint) {
+        return actions[id].value;
+    }
+
+    function confirmations(uint id) constant returns (uint) {
+        return actions[id].confirmations;
+    }
+    function deadline(uint id) constant returns (uint) {
+        return actions[id].deadline;
+    }
+    function triggered(uint id) constant returns (bool) {
+        return actions[id].triggered;
+    }
+
+    function confirmed(uint id) constant returns (bool) {
+        return confirmations(id) >= quorum;
+    }
+    function expired(uint id) constant returns (bool) {
+        return now > deadline(id);
+    }
+
+    function deposit() note payable {
+    }
+
+    function propose(
+        address  target,
+        bytes    calldata,
+        uint     value
+    ) onlyMembers note returns (uint id) {
+        id = ++actionCount;
+
+        actions[id].target    = target;
+        actions[id].calldata  = calldata;
+        actions[id].value     = value;
+        actions[id].deadline  = now + window;
+
+        Proposed(id, calldata);
+    }
+
+    function confirm(uint id) onlyMembers onlyActive(id) note {
+        assert(!confirmedBy[id][msg.sender]);
+
+        confirmedBy[id][msg.sender] = true;
+        actions[id].confirmations++;
+
+        Confirmed(id, msg.sender);
+    }
+
+    function trigger(uint id) onlyMembers onlyActive(id) note {
+        assert(confirmed(id));
+
+        actions[id].triggered = true;
+        exec(actions[id].target, actions[id].calldata, actions[id].value);
+
+        Triggered(id);
+    }
+
+    modifier onlyMembers {
+        assert(isMember[msg.sender]);
+        _;
+    }
+
+    modifier onlyActive(uint id) {
+        assert(!expired(id));
+        assert(!triggered(id));
+        _;
+    }
+
+    //------------------------------------------------------------------
+    // Legacy functions
+    //------------------------------------------------------------------
+
+    function getInfo() constant returns (
+        uint  quorum_,
+        uint  memberCount,
+        uint  window_,
+        uint  actionCount_
+    ) {
+        return (quorum, members.length, window, actionCount);
+    }
+
+    function getActionStatus(uint id) constant returns (
+        uint     confirmations,
+        uint     deadline,
+        bool     triggered,
+        address  target,
+        uint     value
+    ) {
+        return (
+            actions[id].confirmations,
+            actions[id].deadline,
+            actions[id].triggered,
+            actions[id].target,
+            actions[id].value
+        );
+    }
+}
+
+contract DSGroupFactory is DSNote {
+    mapping (address => bool)  public  isGroup;
+
+    function newGroup(
+        address[]  members,
+        uint       quorum,
+        uint       window
+    ) note returns (DSGroup group) {
+        group = new DSGroup(members, quorum, window);
+        isGroup[group] = true;
+    }
+}
+
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x);
@@ -429,6 +348,154 @@ contract DSMath {
             }
         }
     }
+}
+
+contract DSThing is DSAuth, DSNote, DSMath {
+
+    function S(string s) internal pure returns (bytes4) {
+        return bytes4(keccak256(s));
+    }
+
+}
+
+contract WETH9_ {
+    string public name     = "Wrapped Ether";
+    string public symbol   = "WETH";
+    uint8  public decimals = 18;
+
+    event  Approval(address indexed src, address indexed guy, uint wad);
+    event  Transfer(address indexed src, address indexed dst, uint wad);
+    event  Deposit(address indexed dst, uint wad);
+    event  Withdrawal(address indexed src, uint wad);
+
+    mapping (address => uint)                       public  balanceOf;
+    mapping (address => mapping (address => uint))  public  allowance;
+
+    function() public payable {
+        deposit();
+    }
+    function deposit() public payable {
+        balanceOf[msg.sender] += msg.value;
+        Deposit(msg.sender, msg.value);
+    }
+    function withdraw(uint wad) public {
+        require(balanceOf[msg.sender] >= wad);
+        balanceOf[msg.sender] -= wad;
+        msg.sender.transfer(wad);
+        Withdrawal(msg.sender, wad);
+    }
+
+    function totalSupply() public view returns (uint) {
+        return this.balance;
+    }
+
+    function approve(address guy, uint wad) public returns (bool) {
+        allowance[msg.sender][guy] = wad;
+        Approval(msg.sender, guy, wad);
+        return true;
+    }
+
+    function transfer(address dst, uint wad) public returns (bool) {
+        return transferFrom(msg.sender, dst, wad);
+    }
+
+    function transferFrom(address src, address dst, uint wad)
+        public
+        returns (bool)
+    {
+        require(balanceOf[src] >= wad);
+
+        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+            require(allowance[src][msg.sender] >= wad);
+            allowance[src][msg.sender] -= wad;
+        }
+
+        balanceOf[src] -= wad;
+        balanceOf[dst] += wad;
+
+        Transfer(src, dst, wad);
+
+        return true;
+    }
+}
+
+interface FundInterface {
+
+    // EVENTS
+
+    event PortfolioContent(address[] assets, uint[] holdings, uint[] prices);
+    event RequestUpdated(uint id);
+    event Redeemed(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
+    event FeesConverted(uint atTimestamp, uint shareQuantityConverted, uint unclaimed);
+    event CalculationUpdate(uint atTimestamp, uint managementFee, uint performanceFee, uint nav, uint sharePrice, uint totalSupply);
+    event ErrorMessage(string errorMessage);
+
+    // EXTERNAL METHODS
+    // Compliance by Investor
+    function requestInvestment(uint giveQuantity, uint shareQuantity, address investmentAsset) external;
+    function executeRequest(uint requestId) external;
+    function cancelRequest(uint requestId) external;
+    function redeemAllOwnedAssets(uint shareQuantity) external returns (bool);
+    // Administration by Manager
+    function enableInvestment(address[] ofAssets) external;
+    function disableInvestment(address[] ofAssets) external;
+    function shutDown() external;
+
+    // PUBLIC METHODS
+    function emergencyRedeem(uint shareQuantity, address[] requestedAssets) public returns (bool success);
+    function calcSharePriceAndAllocateFees() public returns (uint);
+
+
+    // PUBLIC VIEW METHODS
+    // Get general information
+    function getModules() view returns (address, address, address);
+    function getLastRequestId() view returns (uint);
+    function getManager() view returns (address);
+
+    // Get accounting information
+    function performCalculations() view returns (uint, uint, uint, uint, uint, uint, uint);
+    function calcSharePrice() view returns (uint);
+}
+
+interface AssetInterface {
+    /*
+     * Implements ERC 20 standard.
+     * https://github.com/ethereum/EIPs/blob/f90864a3d2b2b45c4decf95efd26b3f0c276051a/EIPS/eip-20-token-standard.md
+     * https://github.com/ethereum/EIPs/issues/20
+     *
+     *  Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
+     *  https://github.com/ethereum/EIPs/issues/223
+     */
+
+    // Events
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+    // There is no ERC223 compatible Transfer event, with `_data` included.
+
+    //ERC 223
+    // PUBLIC METHODS
+    function transfer(address _to, uint _value, bytes _data) public returns (bool success);
+
+    // ERC 20
+    // PUBLIC METHODS
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    // PUBLIC VIEW METHODS
+    function balanceOf(address _owner) view public returns (uint balance);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+}
+
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 contract Asset is DSMath, ERC20Interface {
@@ -529,6 +596,22 @@ contract Asset is DSMath, ERC20Interface {
     }
 }
 
+interface SharesInterface {
+
+    event Created(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
+    event Annihilated(address indexed ofParticipant, uint atTimestamp, uint shareQuantity);
+
+    // VIEW METHODS
+
+    function getName() view returns (bytes32);
+    function getSymbol() view returns (bytes8);
+    function getDecimals() view returns (uint);
+    function getCreationTime() view returns (uint);
+    function toSmallestShareUnit(uint quantity) view returns (uint);
+    function toWholeShareUnit(uint quantity) view returns (uint);
+
+}
+
 contract Shares is SharesInterface, Asset {
 
     // FIELDS
@@ -605,6 +688,104 @@ contract Shares is SharesInterface, Asset {
         emit Annihilated(msg.sender, now, shareQuantity);
         emit Transfer(recipient, address(0), shareQuantity);
     }
+}
+
+interface CompetitionInterface {
+
+    // EVENTS
+
+    event Register(uint withId, address fund, address manager);
+    event ClaimReward(address registrant, address fund, uint shares);
+
+    // PRE, POST, INVARIANT CONDITIONS
+
+    function termsAndConditionsAreSigned(address byManager, uint8 v, bytes32 r, bytes32 s) view returns (bool);
+    function isWhitelisted(address x) view returns (bool);
+    function isCompetitionActive() view returns (bool);
+
+    // CONSTANT METHODS
+
+    function getMelonAsset() view returns (address);
+    function getRegistrantId(address x) view returns (uint);
+    function getRegistrantFund(address x) view returns (address);
+    function getCompetitionStatusOfRegistrants() view returns (address[], address[], bool[]);
+    function getTimeTillEnd() view returns (uint);
+    function getEtherValue(uint amount) view returns (uint);
+    function calculatePayout(uint payin) view returns (uint);
+
+    // PUBLIC METHODS
+
+    function registerForCompetition(address fund, uint8 v, bytes32 r, bytes32 s) payable;
+    function batchAddToWhitelist(uint maxBuyinQuantity, address[] whitelistants);
+    function withdrawMln(address to, uint amount);
+    function claimReward();
+
+}
+
+interface ComplianceInterface {
+
+    // PUBLIC VIEW METHODS
+
+    /// @notice Checks whether investment is permitted for a participant
+    /// @param ofParticipant Address requesting to invest in a Melon fund
+    /// @param giveQuantity Quantity of Melon token times 10 ** 18 offered to receive shareQuantity
+    /// @param shareQuantity Quantity of shares times 10 ** 18 requested to be received
+    /// @return Whether identity is eligible to invest in a Melon fund.
+    function isInvestmentPermitted(
+        address ofParticipant,
+        uint256 giveQuantity,
+        uint256 shareQuantity
+    ) view returns (bool);
+
+    /// @notice Checks whether redemption is permitted for a participant
+    /// @param ofParticipant Address requesting to redeem from a Melon fund
+    /// @param shareQuantity Quantity of shares times 10 ** 18 offered to redeem
+    /// @param receiveQuantity Quantity of Melon token times 10 ** 18 requested to receive for shareQuantity
+    /// @return Whether identity is eligible to redeem from a Melon fund.
+    function isRedemptionPermitted(
+        address ofParticipant,
+        uint256 shareQuantity,
+        uint256 receiveQuantity
+    ) view returns (bool);
+}
+
+contract DBC {
+
+    // MODIFIERS
+
+    modifier pre_cond(bool condition) {
+        require(condition);
+        _;
+    }
+
+    modifier post_cond(bool condition) {
+        _;
+        assert(condition);
+    }
+
+    modifier invariant(bool condition) {
+        require(condition);
+        _;
+        assert(condition);
+    }
+}
+
+contract Owned is DBC {
+
+    // FIELDS
+
+    address public owner;
+
+    // NON-CONSTANT METHODS
+
+    function Owned() { owner = msg.sender; }
+
+    function changeOwner(address ofNewOwner) pre_cond(isOwner()) { owner = ofNewOwner; }
+
+    // PRE, POST, INVARIANT CONDITIONS
+
+    function isOwner() internal returns (bool) { return msg.sender == owner; }
+
 }
 
 contract Fund is DSMath, DBC, Owned, Shares, FundInterface {
@@ -923,17 +1104,13 @@ contract Fund is DSMath, DBC, Owned, Shares, FundInterface {
     )
         external
     {
-        require(
-            modules.pricefeed.exchangeMethodIsAllowed(
-                exchanges[exchangeIndex].exchange, method
-            )
-        );
-        require(
-            exchanges[exchangeIndex].exchangeAdapter.delegatecall(
-                method, exchanges[exchangeIndex].exchange,
-                orderAddresses, orderValues, identifier, v, r, s
-            )
-        );
+        require(modules.pricefeed.exchangeMethodIsAllowed(
+            exchanges[exchangeIndex].exchange, method
+        ));
+        require((exchanges[exchangeIndex].exchangeAdapter).delegatecall(
+            method, exchanges[exchangeIndex].exchange,
+            orderAddresses, orderValues, identifier, v, r, s
+        ));
     }
 
     function addOpenMakeOrder(
@@ -1319,7 +1496,7 @@ contract Competition is CompetitionInterface, DSMath, DBC, Owned {
     // Constant fields
     // Competition terms and conditions as displayed on https://ipfs.io/ipfs/QmXuUfPi6xeYfuMwpVAughm7GjGUjkbEojhNR8DJqVBBxc
     // IPFS hash encoded using http://lenschulwitz.com/base58
-    bytes public constant TERMS_AND_CONDITIONS = hex"12208E21FD34B8B2409972D30326D840C9D747438A118580D6BA8C0735ED53810491";
+    bytes public constant TERMS_AND_CONDITIONS = hex"1220B9C6706EE79792E49C633E9CB95D98E9104FB9B25D1F3D46FCC6519108251992";
     uint public MELON_BASE_UNIT = 10 ** 18;
     // Constructor fields
     address public custodian; // Address of the custodian which holds the funds sent
@@ -1552,195 +1729,75 @@ contract Competition is CompetitionInterface, DSMath, DBC, Owned {
     }
 }
 
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
-    ) anonymous;
+contract CompetitionCompliance is ComplianceInterface, DBC, Owned {
 
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
+    address public competitionAddress;
 
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
+    // CONSTRUCTOR
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
-}
-
-contract DSGroup is DSExec, DSNote {
-    address[]  public  members;
-    uint       public  quorum;
-    uint       public  window;
-    uint       public  actionCount;
-
-    mapping (uint => Action)                     public  actions;
-    mapping (uint => mapping (address => bool))  public  confirmedBy;
-    mapping (address => bool)                    public  isMember;
-
-    // Legacy events
-    event Proposed   (uint id, bytes calldata);
-    event Confirmed  (uint id, address member);
-    event Triggered  (uint id);
-
-    struct Action {
-        address  target;
-        bytes    calldata;
-        uint     value;
-
-        uint     confirmations;
-        uint     deadline;
-        bool     triggered;
+    /// @dev Constructor
+    /// @param ofCompetition Address of the competition contract
+    function CompetitionCompliance(address ofCompetition) public {
+        competitionAddress = ofCompetition;
     }
 
-    function DSGroup(
-        address[]  members_,
-        uint       quorum_,
-        uint       window_
-    ) {
-        members  = members_;
-        quorum   = quorum_;
-        window   = window_;
+    // PUBLIC VIEW METHODS
 
-        for (uint i = 0; i < members.length; i++) {
-            isMember[members[i]] = true;
-        }
+    /// @notice Checks whether investment is permitted for a participant
+    /// @param ofParticipant Address requesting to invest in a Melon fund
+    /// @param giveQuantity Quantity of Melon token times 10 ** 18 offered to receive shareQuantity
+    /// @param shareQuantity Quantity of shares times 10 ** 18 requested to be received
+    /// @return Whether identity is eligible to invest in a Melon fund.
+    function isInvestmentPermitted(
+        address ofParticipant,
+        uint256 giveQuantity,
+        uint256 shareQuantity
+    )
+        view
+        returns (bool)
+    {
+        return competitionAddress == ofParticipant;
     }
 
-    function memberCount() constant returns (uint) {
-        return members.length;
+    /// @notice Checks whether redemption is permitted for a participant
+    /// @param ofParticipant Address requesting to redeem from a Melon fund
+    /// @param shareQuantity Quantity of shares times 10 ** 18 offered to redeem
+    /// @param receiveQuantity Quantity of Melon token times 10 ** 18 requested to receive for shareQuantity
+    /// @return isEligible Whether identity is eligible to redeem from a Melon fund.
+    function isRedemptionPermitted(
+        address ofParticipant,
+        uint256 shareQuantity,
+        uint256 receiveQuantity
+    )
+        view
+        returns (bool)
+    {
+        return competitionAddress == ofParticipant;
     }
 
-    function target(uint id) constant returns (address) {
-        return actions[id].target;
-    }
-    function calldata(uint id) constant returns (bytes) {
-        return actions[id].calldata;
-    }
-    function value(uint id) constant returns (uint) {
-        return actions[id].value;
-    }
-
-    function confirmations(uint id) constant returns (uint) {
-        return actions[id].confirmations;
-    }
-    function deadline(uint id) constant returns (uint) {
-        return actions[id].deadline;
-    }
-    function triggered(uint id) constant returns (bool) {
-        return actions[id].triggered;
+    /// @notice Checks whether an address is whitelisted in the competition contract and competition is active
+    /// @param x Address
+    /// @return Whether the address is whitelisted
+    function isCompetitionAllowed(
+        address x
+    )
+        view
+        returns (bool)
+    {
+        return CompetitionInterface(competitionAddress).isWhitelisted(x) && CompetitionInterface(competitionAddress).isCompetitionActive();
     }
 
-    function confirmed(uint id) constant returns (bool) {
-        return confirmations(id) >= quorum;
-    }
-    function expired(uint id) constant returns (bool) {
-        return now > deadline(id);
-    }
 
-    function deposit() note payable {
-    }
+    // PUBLIC METHODS
 
-    function propose(
-        address  target,
-        bytes    calldata,
-        uint     value
-    ) onlyMembers note returns (uint id) {
-        id = ++actionCount;
-
-        actions[id].target    = target;
-        actions[id].calldata  = calldata;
-        actions[id].value     = value;
-        actions[id].deadline  = now + window;
-
-        Proposed(id, calldata);
-    }
-
-    function confirm(uint id) onlyMembers onlyActive(id) note {
-        assert(!confirmedBy[id][msg.sender]);
-
-        confirmedBy[id][msg.sender] = true;
-        actions[id].confirmations++;
-
-        Confirmed(id, msg.sender);
-    }
-
-    function trigger(uint id) onlyMembers onlyActive(id) note {
-        assert(confirmed(id));
-
-        actions[id].triggered = true;
-        exec(actions[id].target, actions[id].calldata, actions[id].value);
-
-        Triggered(id);
-    }
-
-    modifier onlyMembers {
-        assert(isMember[msg.sender]);
-        _;
-    }
-
-    modifier onlyActive(uint id) {
-        assert(!expired(id));
-        assert(!triggered(id));
-        _;
-    }
-
-    //------------------------------------------------------------------
-    // Legacy functions
-    //------------------------------------------------------------------
-
-    function getInfo() constant returns (
-        uint  quorum_,
-        uint  memberCount,
-        uint  window_,
-        uint  actionCount_
-    ) {
-        return (quorum, members.length, window, actionCount);
-    }
-
-    function getActionStatus(uint id) constant returns (
-        uint     confirmations,
-        uint     deadline,
-        bool     triggered,
-        address  target,
-        uint     value
-    ) {
-        return (
-            actions[id].confirmations,
-            actions[id].deadline,
-            actions[id].triggered,
-            actions[id].target,
-            actions[id].value
-        );
-    }
-}
-
-contract DSGroupFactory is DSNote {
-    mapping (address => bool)  public  isGroup;
-
-    function newGroup(
-        address[]  members,
-        uint       quorum,
-        uint       window
-    ) note returns (DSGroup group) {
-        group = new DSGroup(members, quorum, window);
-        isGroup[group] = true;
-    }
-}
-
-contract DSThing is DSAuth, DSNote, DSMath {
-
-    function S(string s) internal pure returns (bytes4) {
-        return bytes4(keccak256(s));
+    /// @notice Changes the competition address
+    /// @param ofCompetition Address of the competition contract
+    function changeCompetitionAddress(
+        address ofCompetition
+    )
+        pre_cond(isOwner())
+    {
+        competitionAddress = ofCompetition;
     }
 
 }
@@ -2210,10 +2267,7 @@ contract StakingPriceFeed is SimplePriceFeed {
 
     /// @param amount Number of tokens to unstake for this feed
     /// @param data Data may be needed for some future applications (can be empty for now)
-    function unstake(uint amount, bytes data)
-        external
-        auth
-    {
+    function unstake(uint amount, bytes data) {
         stakingContract.unstake(amount, data);
     }
 
@@ -2333,6 +2387,7 @@ contract OperatorStaking is DBC {
         public
         pre_cond(amount >= minimumStake)
     {
+        uint tailNodeId = stakeNodes[0].prev;
         stakedAmounts[msg.sender] += amount;
         updateStakerRanking(msg.sender);
         require(stakingToken.transferFrom(msg.sender, address(this), amount));
@@ -2596,7 +2651,7 @@ contract CanonicalPriceFeed is OperatorStaking, SimplePriceFeed, CanonicalRegist
     }
 
     /// @dev override inherited update function to prevent manual update from authority
-    function update(address[] ofAssets, uint[] newPrices) external { revert(); }
+    function update() external { revert(); }
 
     /// @dev Burn state for a pricefeed operator
     /// @param user Address of pricefeed operator to burn the stake from
@@ -2707,8 +2762,8 @@ contract CanonicalPriceFeed is OperatorStaking, SimplePriceFeed, CanonicalRegist
                     while (item >= out[k]) {
                         k++;  // get to where element belongs (between smaller and larger items)
                     }
-                    for (uint m = counter; m > k; m--) {
-                        out[m] = out[m - 1];    // bump larger elements rightward to leave slot
+                    for (uint l = counter; l > k; l--) {
+                        out[l] = out[l - 1];    // bump larger elements rightward to leave slot
                     }
                     out[k] = item;
                 }
@@ -2932,7 +2987,7 @@ interface VersionInterface {
 contract Version is DBC, Owned, VersionInterface {
     // FIELDS
 
-    bytes32 public constant TERMS_AND_CONDITIONS = 0xAA9C907B0D6B4890E7225C09CBC16A01CB97288840201AA7CDCB27F4ED7BF159; // Hashed terms and conditions as displayed on IPFS, decoded from base 58
+    bytes32 public constant TERMS_AND_CONDITIONS = 0xD35EBA0B0FF284A240D50F43381D8A1E00F19FBFDBF5162224335251A7D6D154; // Hashed terms and conditions as displayed on IPFS, decoded from base 58
 
     // Constructor fields
     string public VERSION_NUMBER; // SemVer of Melon protocol version
