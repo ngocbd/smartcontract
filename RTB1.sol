@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB1 at 0xd0955bd45d5eef5bedce84a3471c825288a14b01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTB1 at 0xc352a761da01fa8c05f5a83cd07cc3237054e42e
 */
 pragma solidity ^0.4.23;
 
@@ -179,7 +179,7 @@ contract RTB1 is shareProfit{
         return true;
     }
     
-    function buy(uint256 _amount) external onlyHuman payable{
+    function buy(uint256 _amount) external payable{
         require(_amount > 0);
         uint256 _money = _amount.mul(price);
         require(msg.value == _money);
