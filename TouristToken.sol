@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TouristToken at 0xe3278df3eb2085ba9b6899812a99a10f9ca5e0df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TouristToken at 0x1b740cb6210c4ee5f88278ec0e8b9d6c012f9ca1
 */
 pragma solidity ^0.4.18;
 
@@ -76,13 +76,13 @@ contract TouristToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "TouristToken";
-    string public constant symbol = "TOTO";
+    string public constant name = "TestToken";
+    string public constant symbol = "TEST";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 20000000000e8;
     uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
+    uint256 public constant MIN_CONTRIBUTION = 0 ether; // 0.01 Ether
     uint256 public tokensPerEth = 15000000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
