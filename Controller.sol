@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xce4383e7309090ac0a7ead826991094c852c68ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x84b6241ed47e935597bc5a14d5e9ef9fb53e77de
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.12;
 
 contract AbstractSweeper {
     function sweep(address token, uint amount) returns (bool);
