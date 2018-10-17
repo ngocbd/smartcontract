@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0x978b15cd40f7286d674258588af4635dce055282
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0xa004b902bdcf710462f905ed487642031d17521c
 */
 pragma solidity ^0.4.24;
 //==============================================================================
@@ -132,7 +132,7 @@ contract FoMoGame is modularLong {
     using F3DKeysCalcLong for uint256;
 
     address private team = 0xBd01103c36f400344b427Cb51934B765007e16f6;
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xB066135b92A122225bf786C38BC5d2284BE7A27e);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x6D6c7B51f42B8A7359F468fba224593e1340c24E);
     
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
