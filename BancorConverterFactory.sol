@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0x3836688e867ca599c79a5cac45054256d53175cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0x5ed8c09f98b2b3ed37d07414bb8c3f065bbb802b
 */
 pragma solidity ^0.4.21;
 
@@ -309,9 +309,19 @@ contract Managed is Owned {
     Can be used in conjunction with the contract registry to get contract addresses
 */
 contract ContractIds {
+    // generic
+    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
+
+    // bancor logic
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     bytes32 public constant BANCOR_FORMULA = "BancorFormula";
-    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
+    bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
+
+    bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
+    bytes32 public constant BANCOR_CONVERTER_UPGRADER = "BancorConverterUpgrader";
+
+    // tokens
+    bytes32 public constant BNT_TOKEN = "BNTToken";
 }
 
 /**
