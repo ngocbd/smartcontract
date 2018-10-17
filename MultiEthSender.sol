@@ -1,55 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0xC8CE829C5D26c2F94E5bf64F90DbDf576b24213B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiEthSender at 0xd2ad3ea94140860f6c9cec4fdbd373603b5031ec
 */
-pragma solidity ^0.4.24;
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-}
+pragma solidity ^0.4.22;
 
 contract MultiEthSender {
-  using SafeMath for uint256;
 
-  event Send(uint256 _amount, address indexed _receiver);
-  
-  function() public payable {
+  uint256 constant private ethInWei = 10**18;
+  mapping(address => uint256) private balance;
+  address public owner;
+
+  event Send(uint256 _amount, address indexed receiver);
+
+  constructor() public payable {
+    owner = msg.sender;
+    balance[msg.sender] = msg.value;
   }
 
-  function multiSendEth(
-    uint256 amount, 
-    address[] list
-  ) 
-  external 
-  returns (bool) 
-  {
-
-    uint256 totalList = list.length;
-    uint256 totalAmount = amount.mul(totalList);
-    require(address(this).balance > totalAmount);
-
+  function multiSendEth(uint256 amount, address[] list) public returns (bool) {
+    uint256 amountInWei = amount * ethInWei;
+    require(amountInWei * list.length <= balance[msg.sender], "the contract balance is not enough");
     for (uint256 i = 0; i < list.length; i++) {
-      require(list[i] != address(0));
-      require(list[i].send(amount));
-
       emit Send(amount, list[i]);
+      uint256 res = balance[msg.sender];
+      balance[msg.sender] = res - amountInWei;
+      list[i].transfer(amountInWei);
     }
-
     return true;
   }
 
+  function deposit() public payable returns (uint256) {
+    balance[msg.sender] += msg.value;
+    return balance[msg.sender];
+  }
+
+  function getBalance() public constant returns (uint256) {
+      return balance[msg.sender];
+  }
+
+  function() public payable { }
 }
