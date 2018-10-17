@@ -1,7 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scale at 0xe9fefb9e69c5e825415b5346f6d7951272e905ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scale at 0x92bc46890929b9f6d27e1882d13852801ef8a8cd
 */
 pragma solidity ^0.4.24;
+
+/**************************************************************
+ * @title Scale Token Contract
+ * @file Scale.sol
+ * @author Jared Downing and Kane Thomas of the Scale Network
+ * @version 1.0
+ *
+ * @section DESCRIPTION
+ *
+ * This is an ERC20-based token with staking and inflationary functionality.
+ *
+ *************************************************************/
+
+//////////////////////////////////
+/// OpenZeppelin library imports
+//////////////////////////////////
 
 /**
  * @title ERC20Basic
@@ -56,22 +72,6 @@ contract Ownable {
   }
 
 }
-
-/**************************************************************
- * @title Scale Token Contract
- * @file Scale.sol
- * @author Jared Downing and Kane Thomas of the Scale Network
- * @version 1.0
- *
- * @section DESCRIPTION
- *
- * This is an ERC20-based token with staking and inflationary functionality.
- *
- *************************************************************/
-
-//////////////////////////////////
-/// OpenZeppelin library imports
-//////////////////////////////////
 
 /**
  * @title SafeMath
@@ -333,7 +333,7 @@ contract Scale is MintableToken, HasNoEther {
 
     // -- Pool Minting Rates and Percentages -- //
     // Pool for Scale distribution to rewards pool
-    // Set to 0 to prohibit issuing to the pool before it is assigned
+    // Set to address 0 to prohibit minting to the pool before it is assigned
     address public pool = address(0);
 
     // Pool and Owner minted tokens per second
@@ -377,7 +377,8 @@ contract Scale is MintableToken, HasNoEther {
     mapping (address => AddressStakeData) public stakeBalances;
 
     // -- Inflation -- //
-    // Inflation rate begins at 100% per year and decreases by 15% per year until it reaches 10% where it decreases by 0.5% per year
+    // Inflation rate begins at 100% per year and decreases by 30% per year until it 
+    // reaches 10% where it decreases by 0.5% per year, stopping at 1% per year.
     uint256 inflationRate = 1000;
 
     // Used to manage when to inflate. Allowed to inflate once per year until the rate reaches 1%.
@@ -430,7 +431,7 @@ contract Scale is MintableToken, HasNoEther {
     // Inflation
     /////////////
 
-    /// @dev the inflation rate begins at 100% and decreases by 15% every year until it reaches 10%
+    /// @dev the inflation rate begins at 100% and decreases by 30% every year until it reaches 10%
     /// at 10% the rate begins to decrease by 0.5% until it reaches 1%
     function adjustInflationRate() private {
 
@@ -438,7 +439,7 @@ contract Scale is MintableToken, HasNoEther {
       // Make sure adjustInflationRate cannot be called for at least another year
       lastInflationUpdate = now;
 
-      // Decrease inflation rate by 15% each year
+      // Decrease inflation rate by 30% each year
       if (inflationRate > 100) {
 
         inflationRate = inflationRate.sub(300);
@@ -450,7 +451,6 @@ contract Scale is MintableToken, HasNoEther {
       }
 
       // Calculate new mint amount of Scale that should be created per year.
-      // Example Inflation Past Year 1 for the poolMintAmount: 16M * 0.85 * 0.7 = 9,520,000
       poolMintAmount = totalSupply.mul(inflationRate).div(1000).mul(poolPercentage).div(100);
       ownerMintAmount = totalSupply.mul(inflationRate).div(1000).mul(ownerPercentage).div(100);
       stakingMintAmount = totalSupply.mul(inflationRate).div(1000).mul(stakingPercentage).div(100);
@@ -475,7 +475,7 @@ contract Scale is MintableToken, HasNoEther {
     // Staking
     /////////////
 
-    /// @dev staking function which allows users to stake an amount of tokens to gain interest for up to 30 days
+    /// @dev staking function which allows users to stake an amount of tokens to gain interest for up to 365 days
     /// @param _stakeAmount how many tokens a user wants to stake
     function stakeScale(uint _stakeAmount) external {
 
@@ -490,7 +490,7 @@ contract Scale is MintableToken, HasNoEther {
       // You can only stake tokens for another user if they have not already staked tokens
       require(stakeBalances[_user].stakeBalance == 0);
 
-      // Transfer Scale from to the user
+      // Transfer Scale from to the msg.sender to the user
       transfer( _user, _stakeAmount);
 
       // Stake for the user
@@ -695,15 +695,15 @@ contract Scale is MintableToken, HasNoEther {
         uint _tokenMintCount; // The amount of new tokens to mint
         bool _mintingSuccess; // The success of minting the new Scale tokens
 
-        // Calculate the number of seconds that have passed since the owner last took a claim
+        // Calculate the number of seconds that have passed since the pool last took a claim
         _timePassedSinceLastMint = now.sub(poolTimeLastMinted);
 
         assert(_timePassedSinceLastMint > 0);
 
-        // Determine the token mint amount, determined from the number of seconds passed and the ownerMintRate
+        // Determine the token mint amount, determined from the number of seconds passed and the poolMintRate
         _tokenMintCount = calculateMintTotal(_timePassedSinceLastMint, poolMintRate);
 
-        // Mint the owner's tokens; this also increases totalSupply
+        // Mint the pool's tokens; this also increases totalSupply
         _mintingSuccess = mint(pool, _tokenMintCount);
 
         require(_mintingSuccess);
@@ -738,6 +738,7 @@ contract Scale is MintableToken, HasNoEther {
 
     /// @dev Determines the amount of Scale to create based on the number of seconds that have passed
     /// @param _timeInSeconds is the time passed in seconds to mint for
+    /// @param _mintRate the mint rate per second 
     /// @return uint with the calculated number of new tokens to mint
     function calculateMintTotal(uint _timeInSeconds, uint _mintRate) pure private returns(uint mintAmount) {
         // Calculates the amount of tokens to mint based upon the number of seconds passed
