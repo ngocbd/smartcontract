@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0x162d258d7954c70ffc17d658cd7e9756935cafc3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0x26fe03c9af82f0ae1ce2497c16ed4f6f3d7c32bd
 */
+pragma solidity ^0.4.11;
+
 //------------------------------------------------------------------------------------------------
 // ERC20 Standard Token Implementation, based on ERC Standard:
 // https://github.com/ethereum/EIPs/issues/20
@@ -86,4 +88,15 @@ contract ERC20Standard {
 		uint _value
 		);
 
+}
+
+contract NewToken is ERC20Standard {
+	function NewToken() {
+		totalSupply = 100000000;
+		name = "BUZcoin";
+		decimals = 2;
+		symbol = "BUZ";
+		version = "1.0";
+		balances[msg.sender] = totalSupply;
+	}
 }
