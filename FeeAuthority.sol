@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeAuthority at 0xf6228915c96403576171d6f1f1573cf38581c4fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeAuthority at 0xf57228ebf15cdc1c42573481c398e15fd29561e4
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
-/* 
+ /* 
   *  Handles mapping and calculation of fees for exchanges.
   */
 
@@ -122,18 +122,18 @@ contract FeeAuthority is DSMath, DSAuth {
         defaultFeePercentage = 0.02 ether;
     }
 
-    function setDefaultFee (uint newFee) public auth {
-        require(newFee < 0.1 ether); /* require <10% fee */
-        defaultFeePercentage = newFee;
+    function setDefaultFee (uint newFeeWad) public auth {
+        require(newFeeWad < 0.1 ether); /* require <10% fee */
+        defaultFeePercentage = newFeeWad;
     }
     
     function setFee (address token, uint newFeeWad) public auth {
-        /* set the new fee for a specific token */
+        /* set the new fee for a token. auth modifier ensures only owner can call. */
         require(newFeeWad < 0.1 ether); /* require <10% fee */
         tokenRates[token] = newFeeWad;
     }
     
-    function rateOf (address token) public view returns (uint) {
+    function rateOf (address token) internal view returns (uint) {
         if (tokenRates[token] == 0) {
         /* use default fee rate if the token's fee rate is not specified */
             return defaultFeePercentage;
@@ -144,7 +144,7 @@ contract FeeAuthority is DSMath, DSAuth {
     
     function takeFee (uint amt, address token) public view returns (uint fee, uint remaining) {
         /* shave the fee off of an amount */
-        fee = mul(amt, rateOf(token)) / WAD;
+        fee = wmul(amt, rateOf(token));
         remaining = sub(amt, fee);
     }
 }
