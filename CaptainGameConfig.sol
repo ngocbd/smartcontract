@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainGameConfig at 0xdbb27a1e598ddf5b12faec207f26c99bfa1d9b13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainGameConfig at 0xb94a576a8bb6224bc3b4b8f1c634267f75cc47f6
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 /* 
 /* https://www.pirateconquest.com One of the world's slg games of blockchain 
 /*  
-/* authors rainy@livestar.com/Jonny.Fu@livestar.com
+/* authors rainy@livestar.com/fanny.zheng@livestar.com
 /*                 
 /* ==================================================================== */
 contract CaptainGameConfig {
@@ -113,10 +113,10 @@ contract CaptainGameConfig {
       atk = cardInfo[cardId].atk * 150/100;
       defense = cardInfo[cardId].defense * 150/100;
     } else if (level>=3) {
-      atk = cardInfo[cardId].atk * (level-1) - (level-2) * cardInfo[cardId].atk * 150/100;
-      defense = cardInfo[cardId].defense * 150/100;
+      atk = cardInfo[cardId].atk * (level-1)*2 - (level-2) * cardInfo[cardId].atk * 150/100;
+      defense = cardInfo[cardId].defense * (level-1)*2 - (level-2) * cardInfo[cardId].defense * 150/100;
     }
     atk_min = calfactor[cardInfo[cardId].color]/100;
     atk_max = atk*(200-cardInfo[cardId].color)/100;
-  }
+  }  
 }
