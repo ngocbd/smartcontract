@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x574d31c8737fc015f6fe8e21d44e1a022081e06e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xec4e41ffc9e17aa71b7ddcc5c1c6e9960a70a11c
 */
 pragma solidity ^0.4.24;
 
@@ -128,20 +128,21 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xa6407c2C318F5594e1d711E48C62F593D7Ad73D6);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xee83e20C6AEab2284685Efe0B5ffb250bE5480bf);
+
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO NOW";
-    string constant public symbol = "FNW";
-    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
+    string constant public name = "FOMO Short";
+    string constant public symbol = "SHORT";
+    uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
+    uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 500 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds (SUBSTRACTS) this much to the timer
+    uint256 constant private rndMax_ = 500 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -183,17 +184,17 @@ contract FoMo3Dshort is modularShort {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(32,0);   //50% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(45,0);   //37% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(62,0);  //20% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(47,0);   //35% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(47,0);  //25% to winner, 25% to next round, 3% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(47,0);   //25% to winner, 25% to next round, 3% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(62,0);  //25% to winner, 10% to next round, 3% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(62,0);  //25% to winner, 10% to next round,3% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -958,13 +959,13 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = managePlayer(_pID, _eventData_);
 
         // early round eth limiter
-        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
-        {
-            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
-            uint256 _refund = _eth.sub(_availableLimit);
-            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
-            _eth = _availableLimit;
-        }
+        //    if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
+        //    {
+        //        uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+        //        uint256 _refund = _eth.sub(_availableLimit);
+        //        plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
+        //        _eth = _availableLimit;
+        //    }
 
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000)
@@ -986,10 +987,59 @@ contract FoMo3Dshort is modularShort {
 
             // set the new leader bool to true
             _eventData_.compressedData = _eventData_.compressedData + 100;
-             }
+        }
 
-            // adjust airDropPot
-                  
+            // manage airdrops
+            if (_eth >= 100000000000000000)
+            {
+            airDropTracker_++;
+            if (airdrop() == true)
+            {
+                // gib muni
+                uint256 _prize;
+                if (_eth >= 10000000000000000000)
+                {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(75)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 3 prize was won
+                    _eventData_.compressedData += 300000000000000000000000000000000;
+                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(50)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 2 prize was won
+                    _eventData_.compressedData += 200000000000000000000000000000000;
+                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(25)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 3 prize was won
+                    _eventData_.compressedData += 300000000000000000000000000000000;
+                }
+                // set airdrop happened bool to true
+                _eventData_.compressedData += 10000000000000000000000000000000;
+                // let event know how much was won
+                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
+
+                // reset air drop tracker
+                airDropTracker_ = 0;
+            }
+        }
+
+            // store the air drop tracker number (number of buys since last airdrop)
             _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
 
             // update player
@@ -1218,12 +1268,12 @@ contract FoMo3Dshort is modularShort {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-
+        
         admin.transfer(_com);
 
-        admin.transfer(_p3d.sub(_p3d / 2));
-
-        round_[_rID].pot = _pot.add(_p3d / 2);
+        //p3d straight to the pot
+        
+        round_[_rID].pot = _pot.add(_p3d);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1276,15 +1326,18 @@ contract FoMo3Dshort is modularShort {
         // calculate time based on number of keys bought
         uint256 _newTime;
         if (_now > round_[_rID].end && round_[_rID].plyr == 0)
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(_now);
+            //_newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(_now);
+            _newTime = _now.sub(((_keys) / (1000000000000000000)).mul(rndInc_));
         else
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
+            //_newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
+            _newTime = round_[_rID].end.sub(((_keys) / (1000000000000000000)).mul(rndInc_));
 
         // compare to max and set new end time
         if (_newTime < (rndMax_).add(_now))
             round_[_rID].end = _newTime;
         else
             round_[_rID].end = rndMax_.add(_now);
+            
     }
 
     /**
@@ -1356,10 +1409,9 @@ contract FoMo3Dshort is modularShort {
         if (_p3d > 0)
         {
             // deposit to divies contract
-            uint256 _potAmount = _p3d / 2;
-
-            admin.transfer(_p3d.sub(_potAmount));
-
+            uint256 _potAmount = _p3d;
+            
+            //p3d rewards straight to the pot enjoy
             round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
             // set up event data
