@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract C3Coin at 0x16d9306c93a37ae3954efe211262ab6e7579acc0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract C3Coin at 0xeab9f0af0f3a857b664878cce1550091b5588ebc
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.9;
 
 
 /**
  * @title ERC223
  * @dev Interface for ERC223
  */
-interface ERC223 {
+contract ERC223 {
 
     // functions
     function balanceOf(address _owner) external constant returns (uint256);
@@ -28,10 +28,11 @@ interface ERC223 {
 
 
     // Events
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event ERC223Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
     event Burn(address indexed burner, uint256 value);
+
+    bytes empty = hex"00000000"; // for compatibility
 }
 
 
@@ -40,9 +41,7 @@ interface ERC223 {
  * @title ERC223ReceivingContract
  * @dev Contract for ERC223 token fallback
  */
-contract ERC223ReceivingContract {
-
-    TKN internal fallback;
+ contract ContractReceiver {
 
     struct TKN {
         address sender;
@@ -51,25 +50,24 @@ contract ERC223ReceivingContract {
         bytes4 sig;
     }
 
-    function tokenFallback(address _from, uint256 _value, bytes _data) external pure {
-        TKN memory tkn;
-        tkn.sender = _from;
-        tkn.value = _value;
-        tkn.data = _data;
-        uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-        tkn.sig = bytes4(u);
 
-        /*
-         * tkn variable is analogue of msg variable of Ether transaction
-         * tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-         * tkn.value the number of tokens that were sent   (analogue of msg.value)
-         * tkn.data is data of token transaction   (analogue of msg.data)
-         * tkn.sig is 4 bytes signature of function if data of token transaction is a function execution
-         */
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
 
-
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
     }
-}
+ }
 
 
 /**
@@ -120,7 +118,7 @@ library SafeMath {
         assert(c >= a);
         return c;
     }
-    
+
 }
 
 
@@ -193,7 +191,7 @@ contract C3Coin is ERC223, Ownable {
 
 
     constructor() public {
-        balances[msg.sender] = totalSupply; 
+        balances[msg.sender] = totalSupply;
     }
 
 
@@ -238,8 +236,8 @@ contract C3Coin is ERC223, Ownable {
      * @param _to Address of token receiver
      * @param _value Number of tokens to send
      */
-    function transfer(address _to, uint _value) public returns (bool success) {
-        bytes memory empty = hex"00000000";
+    function transfer(address _to, uint _value) external returns (bool success) {
+
         if (isContract(_to)) {
             return transferToContract(_to, _value, empty);
         } else {
@@ -279,8 +277,7 @@ contract C3Coin is ERC223, Ownable {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        emit ERC223Transfer(msg.sender, _to, _value, _data);
-        emit Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
 
@@ -290,10 +287,9 @@ contract C3Coin is ERC223, Ownable {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+        ContractReceiver receiver = ContractReceiver(_to);
         receiver.tokenFallback(msg.sender, _value, _data);
-        emit ERC223Transfer(msg.sender, _to, _value, _data);
-        emit Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
 
@@ -310,7 +306,7 @@ contract C3Coin is ERC223, Ownable {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value, empty);
         return true;
     }
 
@@ -356,7 +352,7 @@ contract C3Coin is ERC223, Ownable {
         for (uint j = 0; j < _addresses.length; j++) {
             balances[msg.sender] = balances[msg.sender].sub(_amount);
             balances[_addresses[j]] = balances[_addresses[j]].add(_amount);
-            emit Transfer(msg.sender, _addresses[j], _amount);
+            emit Transfer(msg.sender, _addresses[j], _amount, empty);
         }
         return true;
     }
@@ -380,7 +376,7 @@ contract C3Coin is ERC223, Ownable {
         for (j = 0; j < _addresses.length; j++) {
             balances[msg.sender] = balances[msg.sender].sub(_amounts[j]);
             balances[_addresses[j]] = balances[_addresses[j]].add(_amounts[j]);
-            emit Transfer(msg.sender, _addresses[j], _amounts[j]);
+            emit Transfer(msg.sender, _addresses[j], _amounts[j], empty);
         }
         return true;
     }
@@ -402,13 +398,12 @@ contract C3Coin is ERC223, Ownable {
         balances[_owner] = balances[_owner].sub(_value);
         totalSupply = totalSupply.sub(_value);
         emit Burn(_owner, _value);
-        emit Transfer(_owner, address(0), _value);
+        emit Transfer(_owner, address(0), _value, empty);
+    }
+    
+    
+    function () payable {
+        revert();
     }
 
-    /**
-     * @dev Default payable function executed after receiving ether
-     */
-    function () public payable {
-        // does not accept ether
-    }
 }
