@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StreamityEscrow at 0x8e3d561d367af56c90b792e7588bfb8fb37c6f85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StreamityEscrow at 0x9bf25700727d10a857099d1033ce2cc493c3b61a
 */
 pragma solidity ^0.4.18;
 
@@ -50,7 +50,7 @@ library SafeMath
  */
 contract Ownable
 {
-    address owner;
+    address public owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -648,7 +648,7 @@ contract StreamityEscrow is Ownable, ReentrancyGuard {
     mapping(bytes32 => Deal) public streamityTransfers;
 
     function StreamityEscrow(address streamityContract) public {
-        owner = msg.sender; 
+        require(streamityContract != 0x0);
         requestCancelationTime = 2 hours;
         streamityContractAddress = TokenERC20(streamityContract);
     }
