@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetabaseCrowdSale at 0x29ea8093fcdc87bdd956ef7da1afac51da600a49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetabaseCrowdSale at 0xde0e95cd7572537842045e9d0051a2c3923794c8
 */
 pragma solidity ^0.4.18;
 
@@ -493,8 +493,8 @@ contract StageVestingToken is ReleasableToken {
 
 contract MetabaseToken is StageVestingToken {
 
-    string public constant name = "META-Test";
-    string public constant symbol = "MT";
+    string public constant name = "METABASE";
+    string public constant symbol = "MBT";
     uint256 public constant decimals = 18;
 
 }
