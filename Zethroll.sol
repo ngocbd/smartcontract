@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xb7e5f473e5550d7ca9857561269531787094b715
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xe066145a0d20b09835111b40667aa6c498eb1911
 */
 pragma solidity ^0.4.23;
 
@@ -251,7 +251,7 @@ contract Zethroll is ZTHReceivingContract {
 
 
         // Prevent re-entracy memes
-        playerRolls[target] = playerRoll(uint200(0), uint48(0), uint8(0));
+        delete playerRolls[target];
 
 
       // Transfer profit plus original bet
@@ -272,7 +272,6 @@ contract Zethroll is ZTHReceivingContract {
       */
       contractBalance = contractBalance.add(roll.tokenValue);
 
-        playerRolls[target] = playerRoll(uint200(0), uint48(0), uint8(0));
       // No need to actually delete player roll here since player ALWAYS loses 
       // Saves gas on next buy 
 
