@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x5a6fc364c0232299fcb7c533b9964ae8d41d7b72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x5fd259a0e8ae9526e32cf775af5fa51c630b6771
 */
 pragma solidity ^0.4.24;
 
@@ -408,7 +408,7 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         _removeAuction(_cutieId);
 
         // Transfer proceeds to seller (if there are any!)
-        if (price > 0) {
+        if (price > 0 && seller != address(coreContract)) {
             uint128 fee = _computeFee(price);
             uint128 sellerValue = price - fee;
 
@@ -603,16 +603,14 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
 
         _removeAuction(cutieId);
 
-        require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
-
-        if (seller != address(coreContract))
-        {
+        // Transfer proceeds to seller (if there are any!)
+        if (priceInTokens > 0 && seller != address(coreContract)) {
             uint128 fee = _computeFee(priceInTokens);
             uint128 sellerValue = priceInTokens - fee;
 
+            require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
             tokenContract.transfer(seller, sellerValue);
         }
-
         emit AuctionSuccessfulForToken(cutieId, priceWei, _sender, priceInTokens, _tokenContract);
         _transfer(_sender, cutieId);
     }
