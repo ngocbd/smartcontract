@@ -1,47 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiabilityFactory at 0x44cfbcb1ca0d3df0925dda3354e955d38d78ad6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiabilityFactory at 0x3a82d482e7620b3257718d7926e47a0e53f21466
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title Eliptic curve signature operations
+ *
+ * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
+ *
+ * TODO Remove this library once solidity supports passing a signature to ecrecover.
+ * See https://github.com/ethereum/solidity/issues/864
+ *
  */
-contract Ownable {
-  address public owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
+library ECRecovery {
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
+   * @dev Recover signer address from a message by using their signature
+   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
+   * @param sig bytes signature, the signature is generated using web3.eth.sign()
    */
-  function Ownable() public {
-    owner = msg.sender;
+  function recover(bytes32 hash, bytes sig)
+    internal
+    pure
+    returns (address)
+  {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+
+    // Check the signature length
+    if (sig.length != 65) {
+      return (address(0));
+    }
+
+    // Divide the signature in r, s and v variables
+    // ecrecover takes the signature parameters, and the only way to get them
+    // currently is to use assembly.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly {
+      r := mload(add(sig, 32))
+      s := mload(add(sig, 64))
+      v := byte(0, mload(add(sig, 96)))
+    }
+
+    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+    if (v < 27) {
+      v += 27;
+    }
+
+    // If the version is correct return the signer address
+    if (v != 27 && v != 28) {
+      return (address(0));
+    } else {
+      // solium-disable-next-line arg-overflow
+      return ecrecover(hash, v, r, s);
+    }
   }
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * toEthSignedMessageHash
+   * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
+   * @dev and hash the result
    */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  function toEthSignedMessageHash(bytes32 hash)
+    internal
+    pure
+    returns (bytes32)
+  {
+    // 32 is the length in bytes of hash,
+    // enforced by the type signature above
+    return keccak256(
+      "\x19Ethereum Signed Message:\n32",
+      hash
+    );
   }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
 }
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -89,28 +139,7 @@ library SafeMath {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -155,6 +184,21 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -251,6 +295,50 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol
+
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -294,6 +382,8 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
@@ -322,12 +412,14 @@ contract BurnableToken is BasicToken {
   }
 }
 
+// File: contracts/robonomics/XRT.sol
+
 contract XRT is MintableToken, BurnableToken {
-    string public constant name     = "Robonomics Alpha";
+    string public constant name     = "Robonomics Beta";
     string public constant symbol   = "XRT";
     uint   public constant decimals = 9;
 
-    uint256 public constant INITIAL_SUPPLY = 5 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
 
     constructor() public {
         totalSupply_ = INITIAL_SUPPLY;
@@ -336,86 +428,266 @@ contract XRT is MintableToken, BurnableToken {
     }
 }
 
-contract LightContract {
-    /**
-     * @dev Shared code smart contract 
+// File: contracts/robonomics/DutchAuction.sol
+
+/// @title Dutch auction contract - distribution of XRT tokens using an auction.
+/// @author Stefan George - <stefan.george@consensys.net>
+/// @author Airalab - <research@aira.life> 
+contract DutchAuction {
+
+    /*
+     *  Events
      */
-    address lib;
+    event BidSubmission(address indexed sender, uint256 amount);
 
-    constructor(address _library) public {
-        lib = _library;
+    /*
+     *  Constants
+     */
+    uint constant public MAX_TOKENS_SOLD = 8000 * 10**9; // 8M XRT = 10M - 1M (Foundation) - 1M (Early investors base)
+    uint constant public WAITING_PERIOD = 0; // 1 days;
+
+    /*
+     *  Storage
+     */
+    XRT     public xrt;
+    address public ambix;
+    address public wallet;
+    address public owner;
+    uint public ceiling;
+    uint public priceFactor;
+    uint public startBlock;
+    uint public endTime;
+    uint public totalReceived;
+    uint public finalPrice;
+    mapping (address => uint) public bids;
+    Stages public stage;
+
+    /*
+     *  Enums
+     */
+    enum Stages {
+        AuctionDeployed,
+        AuctionSetUp,
+        AuctionStarted,
+        AuctionEnded,
+        TradingStarted
     }
 
-    function() public {
-        require(lib.delegatecall(msg.data));
+    /*
+     *  Modifiers
+     */
+    modifier atStage(Stages _stage) {
+        // Contract on stage
+        require(stage == _stage);
+        _;
     }
-}
 
-contract LighthouseAPI {
-    address[] public members;
-    mapping(address => uint256) indexOf;
+    modifier isOwner() {
+        // Only owner is allowed to proceed
+        require(msg.sender == owner);
+        _;
+    }
 
-    mapping(address => uint256) public balances;
+    modifier isWallet() {
+        // Only wallet is allowed to proceed
+        require(msg.sender == wallet);
+        _;
+    }
 
-    uint256 public minimalFreeze;
-    uint256 public timeoutBlocks;
+    modifier isValidPayload() {
+        require(msg.data.length == 4 || msg.data.length == 36);
+        _;
+    }
 
-    LiabilityFactory public factory;
-    XRT              public xrt;
+    modifier timedTransitions() {
+        if (stage == Stages.AuctionStarted && calcTokenPrice() <= calcStopPrice())
+            finalizeAuction();
+        if (stage == Stages.AuctionEnded && now > endTime + WAITING_PERIOD)
+            stage = Stages.TradingStarted;
+        _;
+    }
 
-    uint256 public keepaliveBlock = 0;
-    uint256 public marker = 0;
-    uint256 public quota = 0;
-
-    function quotaOf(address _member) public view returns (uint256)
-    { return balances[_member] / minimalFreeze; }
-}
-
-contract Lighthouse is LighthouseAPI, LightContract {
-    constructor(
-        address _lib,
-        uint256 _minimalFreeze,
-        uint256 _timeoutBlocks
-    ) 
+    /*
+     *  Public functions
+     */
+    /// @dev Contract constructor function sets owner.
+    /// @param _wallet Multisig wallet.
+    /// @param _ceiling Auction ceiling.
+    /// @param _priceFactor Auction price factor.
+    constructor(address _wallet, uint _ceiling, uint _priceFactor)
         public
-        LightContract(_lib)
     {
-        minimalFreeze = _minimalFreeze;
-        timeoutBlocks = _timeoutBlocks;
-        factory = LiabilityFactory(msg.sender);
-        xrt = factory.xrt();
+        require(_wallet != 0 && _ceiling != 0 && _priceFactor != 0);
+        owner = msg.sender;
+        wallet = _wallet;
+        ceiling = _ceiling;
+        priceFactor = _priceFactor;
+        stage = Stages.AuctionDeployed;
+    }
+
+    /// @dev Setup function sets external contracts' addresses.
+    /// @param _xrt Robonomics token address.
+    /// @param _ambix Distillation cube address.
+    function setup(address _xrt, address _ambix)
+        public
+        isOwner
+        atStage(Stages.AuctionDeployed)
+    {
+        // Validate argument
+        require(_xrt != 0 && _ambix != 0);
+        xrt = XRT(_xrt);
+        ambix = _ambix;
+
+        // Validate token balance
+        require(xrt.balanceOf(this) == MAX_TOKENS_SOLD);
+
+        stage = Stages.AuctionSetUp;
+    }
+
+    /// @dev Starts auction and sets startBlock.
+    function startAuction()
+        public
+        isWallet
+        atStage(Stages.AuctionSetUp)
+    {
+        stage = Stages.AuctionStarted;
+        startBlock = block.number;
+    }
+
+    /// @dev Changes auction ceiling and start price factor before auction is started.
+    /// @param _ceiling Updated auction ceiling.
+    /// @param _priceFactor Updated start price factor.
+    function changeSettings(uint _ceiling, uint _priceFactor)
+        public
+        isWallet
+        atStage(Stages.AuctionSetUp)
+    {
+        ceiling = _ceiling;
+        priceFactor = _priceFactor;
+    }
+
+    /// @dev Calculates current token price.
+    /// @return Returns token price.
+    function calcCurrentTokenPrice()
+        public
+        timedTransitions
+        returns (uint)
+    {
+        if (stage == Stages.AuctionEnded || stage == Stages.TradingStarted)
+            return finalPrice;
+        return calcTokenPrice();
+    }
+
+    /// @dev Returns correct stage, even if a function with timedTransitions modifier has not yet been called yet.
+    /// @return Returns current auction stage.
+    function updateStage()
+        public
+        timedTransitions
+        returns (Stages)
+    {
+        return stage;
+    }
+
+    /// @dev Allows to send a bid to the auction.
+    /// @param receiver Bid will be assigned to this address if set.
+    function bid(address receiver)
+        public
+        payable
+        isValidPayload
+        timedTransitions
+        atStage(Stages.AuctionStarted)
+        returns (uint amount)
+    {
+        require(msg.value > 0);
+        amount = msg.value;
+
+        // If a bid is done on behalf of a user via ShapeShift, the receiver address is set.
+        if (receiver == 0)
+            receiver = msg.sender;
+
+        // Prevent that more than 90% of tokens are sold. Only relevant if cap not reached.
+        uint maxWei = MAX_TOKENS_SOLD * calcTokenPrice() / 10**9 - totalReceived;
+        uint maxWeiBasedOnTotalReceived = ceiling - totalReceived;
+        if (maxWeiBasedOnTotalReceived < maxWei)
+            maxWei = maxWeiBasedOnTotalReceived;
+
+        // Only invest maximum possible amount.
+        if (amount > maxWei) {
+            amount = maxWei;
+            // Send change back to receiver address. In case of a ShapeShift bid the user receives the change back directly.
+            receiver.transfer(msg.value - amount);
+        }
+
+        // Forward funding to ether wallet
+        wallet.transfer(amount);
+
+        bids[receiver] += amount;
+        totalReceived += amount;
+        BidSubmission(receiver, amount);
+
+        // Finalize auction when maxWei reached
+        if (amount == maxWei)
+            finalizeAuction();
+    }
+
+    /// @dev Claims tokens for bidder after auction.
+    /// @param receiver Tokens will be assigned to this address if set.
+    function claimTokens(address receiver)
+        public
+        isValidPayload
+        timedTransitions
+        atStage(Stages.TradingStarted)
+    {
+        if (receiver == 0)
+            receiver = msg.sender;
+        uint tokenCount = bids[receiver] * 10**9 / finalPrice;
+        bids[receiver] = 0;
+        require(xrt.transfer(receiver, tokenCount));
+    }
+
+    /// @dev Calculates stop price.
+    /// @return Returns stop price.
+    function calcStopPrice()
+        view
+        public
+        returns (uint)
+    {
+        return totalReceived * 10**9 / MAX_TOKENS_SOLD + 1;
+    }
+
+    /// @dev Calculates token price.
+    /// @return Returns token price.
+    function calcTokenPrice()
+        view
+        public
+        returns (uint)
+    {
+        return priceFactor * 10**18 / (block.number - startBlock + 7500) + 1;
+    }
+
+    /*
+     *  Private functions
+     */
+    function finalizeAuction()
+        private
+    {
+        stage = Stages.AuctionEnded;
+        finalPrice = totalReceived == ceiling ? calcTokenPrice() : calcStopPrice();
+        uint soldTokens = totalReceived * 10**9 / finalPrice;
+
+        if (totalReceived == ceiling) {
+            // Auction contract transfers all unsold tokens to Ambix contract
+            require(xrt.transfer(ambix, MAX_TOKENS_SOLD - soldTokens));
+        } else {
+            // Auction contract burn all unsold tokens
+            xrt.burn(MAX_TOKENS_SOLD - soldTokens);
+        }
+
+        endTime = now;
     }
 }
 
-contract RobotLiabilityAPI {
-    bytes   public model;
-    bytes   public objective;
-    bytes   public result;
-
-    XRT        public xrt;
-    ERC20   public token;
-
-    uint256 public cost;
-    uint256 public lighthouseFee;
-    uint256 public validatorFee;
-
-    bytes32 public askHash;
-    bytes32 public bidHash;
-
-    address public promisor;
-    address public promisee;
-    address public validator;
-
-    bool    public isConfirmed;
-    bool    public isFinalized;
-
-    LiabilityFactory public factory;
-}
-
-contract RobotLiability is RobotLiabilityAPI, LightContract {
-    constructor(address _lib) public LightContract(_lib)
-    { factory = LiabilityFactory(msg.sender); }
-}
+// File: ens/contracts/ENS.sol
 
 interface ENS {
 
@@ -441,6 +713,8 @@ interface ENS {
     function ttl(bytes32 node) public view returns (uint64);
 
 }
+
+// File: ens/contracts/PublicResolver.sol
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its
@@ -677,15 +951,365 @@ contract PublicResolver {
     }
 }
 
+contract LightContract {
+    /**
+     * @dev Shared code smart contract 
+     */
+    address lib;
+
+    constructor(address _library) public {
+        lib = _library;
+    }
+
+    function() public {
+        require(lib.delegatecall(msg.data));
+    }
+}
+
+contract LighthouseABI {
+    function refill(uint256 _value) external;
+    function withdraw(uint256 _value) external;
+    function to(address _to, bytes _data) external;
+    function () external;
+}
+
+contract LighthouseAPI {
+    address[] public members;
+    mapping(address => uint256) indexOf;
+
+    mapping(address => uint256) public balances;
+
+    uint256 public minimalFreeze;
+    uint256 public timeoutBlocks;
+
+    LiabilityFactory public factory;
+    XRT              public xrt;
+
+    uint256 public keepaliveBlock = 0;
+    uint256 public marker = 0;
+    uint256 public quota = 0;
+
+    function quotaOf(address _member) public view returns (uint256)
+    { return balances[_member] / minimalFreeze; }
+}
+
+contract LighthouseLib is LighthouseAPI, LighthouseABI {
+
+    function refill(uint256 _value) external {
+        require(xrt.transferFrom(msg.sender, this, _value));
+        require(_value >= minimalFreeze);
+
+        if (balances[msg.sender] == 0) {
+            indexOf[msg.sender] = members.length;
+            members.push(msg.sender);
+        }
+        balances[msg.sender] += _value;
+    }
+
+    function withdraw(uint256 _value) external {
+        require(balances[msg.sender] >= _value);
+
+        balances[msg.sender] -= _value;
+        require(xrt.transfer(msg.sender, _value));
+
+        // Drop member if quota go to zero
+        if (quotaOf(msg.sender) == 0) {
+            uint256 balance = balances[msg.sender];
+            balances[msg.sender] = 0;
+            require(xrt.transfer(msg.sender, balance)); 
+            
+            uint256 senderIndex = indexOf[msg.sender];
+            uint256 lastIndex = members.length - 1;
+            if (senderIndex < lastIndex)
+                members[senderIndex] = members[lastIndex];
+            members.length -= 1;
+        }
+    }
+
+    function nextMember() internal
+    { marker = (marker + 1) % members.length; }
+
+    modifier quoted {
+        if (quota == 0) {
+            // Step over marker
+            nextMember();
+
+            // Allocate new quota
+            quota = quotaOf(members[marker]);
+        }
+
+        // Consume one quota for transaction sending
+        assert(quota > 0);
+        quota -= 1;
+
+        _;
+    }
+
+    modifier keepalive {
+        if (timeoutBlocks < block.number - keepaliveBlock) {
+            // Search keepalive sender
+            while (msg.sender != members[marker])
+                nextMember();
+
+            // Allocate new quota
+            quota = quotaOf(members[marker]);
+        }
+
+        _;
+    }
+
+    modifier member {
+        // Zero members guard
+        require(members.length > 0);
+
+        // Only member with marker can to send transaction
+        require(msg.sender == members[marker]);
+
+        // Store transaction sending block
+        keepaliveBlock = block.number;
+
+        _;
+    }
+
+    function to(address _to, bytes _data) external keepalive quoted member {
+        require(factory.gasUtilizing(_to) > 0);
+        require(_to.call(_data));
+    }
+
+    function () external keepalive quoted member
+    { require(factory.call(msg.data)); }
+}
+
+contract Lighthouse is LighthouseAPI, LightContract {
+    constructor(
+        address _lib,
+        uint256 _minimalFreeze,
+        uint256 _timeoutBlocks
+    ) 
+        public
+        LightContract(_lib)
+    {
+        minimalFreeze = _minimalFreeze;
+        timeoutBlocks = _timeoutBlocks;
+        factory = LiabilityFactory(msg.sender);
+        xrt = factory.xrt();
+    }
+}
+
+contract RobotLiabilityABI {
+    function ask(
+        bytes   _model,
+        bytes   _objective,
+
+        ERC20   _token,
+        uint256 _cost,
+
+        address _validator,
+        uint256 _validator_fee,
+
+        uint256 _deadline,
+        bytes32 _nonce,
+        bytes   _signature
+    ) external returns (bool);
+
+    function bid(
+        bytes   _model,
+        bytes   _objective,
+        
+        ERC20   _token,
+        uint256 _cost,
+
+        uint256 _lighthouse_fee,
+
+        uint256 _deadline,
+        bytes32 _nonce,
+        bytes   _signature
+    ) external returns (bool);
+
+    function finalize(
+        bytes _result,
+        bytes _signature,
+        bool  _agree
+    ) external returns (bool);
+}
+
+contract RobotLiabilityAPI {
+    bytes   public model;
+    bytes   public objective;
+    bytes   public result;
+
+    ERC20   public token;
+    uint256 public cost;
+    uint256 public lighthouseFee;
+    uint256 public validatorFee;
+
+    bytes32 public askHash;
+    bytes32 public bidHash;
+
+    address public promisor;
+    address public promisee;
+    address public validator;
+
+    bool    public isConfirmed;
+    bool    public isFinalized;
+
+    LiabilityFactory public factory;
+}
+
+contract RobotLiabilityLib is RobotLiabilityABI
+                            , RobotLiabilityAPI {
+    using ECRecovery for bytes32;
+
+    function ask(
+        bytes   _model,
+        bytes   _objective,
+
+        ERC20   _token,
+        uint256 _cost,
+
+        address _validator,
+        uint256 _validator_fee,
+
+        uint256 _deadline,
+        bytes32 _nonce,
+        bytes   _signature
+    )
+        external
+        returns (bool)
+    {
+        require(msg.sender == address(factory));
+        require(block.number < _deadline);
+
+        model        = _model;
+        objective    = _objective;
+        token        = _token;
+        cost         = _cost;
+        validator    = _validator;
+        validatorFee = _validator_fee;
+
+        askHash = keccak256(abi.encodePacked(
+            _model
+          , _objective
+          , _token
+          , _cost
+          , _validator
+          , _validator_fee
+          , _deadline
+          , _nonce
+        ));
+
+        promisee = askHash
+            .toEthSignedMessageHash()
+            .recover(_signature);
+        return true;
+    }
+
+    function bid(
+        bytes   _model,
+        bytes   _objective,
+        
+        ERC20   _token,
+        uint256 _cost,
+
+        uint256 _lighthouse_fee,
+
+        uint256 _deadline,
+        bytes32 _nonce,
+        bytes   _signature
+    )
+        external
+        returns (bool)
+    {
+        require(msg.sender == address(factory));
+        require(block.number < _deadline);
+        require(keccak256(model) == keccak256(_model));
+        require(keccak256(objective) == keccak256(_objective));
+        require(_token == token);
+        require(_cost == cost);
+
+        lighthouseFee = _lighthouse_fee;
+
+        bidHash = keccak256(abi.encodePacked(
+            _model
+          , _objective
+          , _token
+          , _cost
+          , _lighthouse_fee
+          , _deadline
+          , _nonce
+        ));
+
+        promisor = bidHash
+            .toEthSignedMessageHash()
+            .recover(_signature);
+        return true;
+    }
+
+    /**
+     * @dev Finalize this liability
+     * @param _result Result data hash
+     * @param _agree Validation network confirmation
+     * @param _signature Result sender signature
+     */
+    function finalize(
+        bytes _result,
+        bytes _signature,
+        bool  _agree
+    )
+        external
+        returns (bool)
+    {
+        uint256 gasinit = gasleft();
+        require(!isFinalized);
+
+        address resultSender = keccak256(abi.encodePacked(this, _result))
+            .toEthSignedMessageHash()
+            .recover(_signature);
+        require(resultSender == promisor);
+
+        result = _result;
+        isFinalized = true;
+
+        if (validator == 0) {
+            require(factory.isLighthouse(msg.sender));
+            require(token.transfer(promisor, cost));
+        } else {
+            require(msg.sender == validator);
+
+            isConfirmed = _agree;
+            if (isConfirmed)
+                require(token.transfer(promisor, cost));
+            else
+                require(token.transfer(promisee, cost));
+
+            if (validatorFee > 0)
+                require(factory.xrt().transfer(validator, validatorFee));
+        }
+
+        require(factory.liabilityFinalized(gasinit));
+        return true;
+    }
+}
+
+// Standard robot liability light contract
+contract RobotLiability is RobotLiabilityAPI, LightContract {
+    constructor(address _lib) public LightContract(_lib)
+    { factory = LiabilityFactory(msg.sender); }
+}
+
 contract LiabilityFactory {
     constructor(
         address _robot_liability_lib,
         address _lighthouse_lib,
-        XRT _xrt
+        DutchAuction _auction,
+        XRT _xrt,
+        ENS _ens
     ) public {
         robotLiabilityLib = _robot_liability_lib;
         lighthouseLib = _lighthouse_lib;
+        auction = _auction;
         xrt = _xrt;
+        ens = _ens;
     }
 
     /**
@@ -699,6 +1323,11 @@ contract LiabilityFactory {
     event NewLighthouse(address indexed lighthouse, string name);
 
     /**
+     * @dev Robonomics dutch auction contract
+     */
+    DutchAuction public auction;
+
+    /**
      * @dev Robonomics network protocol token
      */
     XRT public xrt;
@@ -707,24 +1336,6 @@ contract LiabilityFactory {
      * @dev Ethereum name system
      */
     ENS public ens;
-
-    /**
-     * @dev Robonomics ENS resolver
-     */
-    PublicResolver public resolver;
-
-    bytes32 constant lighthouseNode
-        // lighthouse.0.robonomics.eth
-        = 0x1e42a8e8e1e8cf36e83d096dcc74af801d0a194a14b897f9c8dfd403b4eebeda;
-
-    /**
-     *  @dev Set ENS registry contract address
-     */
-    function setENS(ENS _ens) public {
-      require(address(ens) == 0);
-      ens = _ens;
-      resolver = PublicResolver(ens.resolver(lighthouseNode));
-    }
 
     /**
      * @dev Total GAS utilized by Robonomics network
@@ -736,6 +1347,15 @@ contract LiabilityFactory {
      */
     mapping(address => uint256) public gasUtilizing;
 
+    /**
+     * @dev The count of utilized gas for switch to next epoch 
+     */
+    uint256 public constant gasEpoch = 347 * 10**10;
+
+    /**
+     * @dev Weighted average gasprice
+     */
+    uint256 public constant gasPrice = 10 * 10**9;
 
     /**
      * @dev Used market orders accounting
@@ -760,24 +1380,19 @@ contract LiabilityFactory {
     /**
      * @dev XRT emission value for utilized gas
      */
-    function winnerFromGas(uint256 _gas) public view returns (uint256) {
-        // Basic equal formula
-        uint256 wn = _gas;
+    function wnFromGas(uint256 _gas) public view returns (uint256) {
+        // Just return wn=gas when auction isn't finish
+        if (auction.finalPrice() == 0)
+            return _gas;
 
-        /* Additional emission table
-        if (totalGasUtilizing < 347 * (10 ** 10)) {
-            wn *= 6;
-        } else if (totalGasUtilizing < 2 * 347 * (10 ** 10)) {
-            wn *= 4;
-        } else if (totalGasUtilizing < 3 * 347 * (10 ** 10)) {
-            wn = wn * 2667 / 1000;
-        } else if (totalGasUtilizing < 4 * 347 * (10 ** 10)) {
-            wn = wn * 1778 / 1000;
-        } else if (totalGasUtilizing < 5 * 347 * (10 ** 10)) {
-            wn = wn * 1185 / 1000;
-        } */
+        // Current gas utilization epoch
+        uint256 epoch = totalGasUtilizing / gasEpoch;
 
-        return wn ;
+        // XRT emission with addition coefficient by gas utilzation epoch
+        uint256 wn = _gas * gasPrice * 2**epoch / 3**epoch / auction.finalPrice();
+
+        // Check to not permit emission decrease below wn=gas
+        return wn < _gas ? _gas : wn;
     }
 
     /**
@@ -852,7 +1467,7 @@ contract LiabilityFactory {
      * @param _minimalFreeze Minimal freeze value of XRT token
      * @param _timeoutBlocks Max time of lighthouse silence in blocks
      * @param _name Lighthouse subdomain,
-     *              example: for 'my-name' will created 'my-name.lighthouse.0.robonomics.eth' domain
+     *              example: for 'my-name' will created 'my-name.lighthouse.1.robonomics.eth' domain
      */
     function createLighthouse(
         uint256 _minimalFreeze,
@@ -862,6 +1477,10 @@ contract LiabilityFactory {
         external
         returns (address lighthouse)
     {
+        bytes32 lighthouseNode
+            // lighthouse.1.robonomics.eth
+            = 0x3662a5d633e9a5ca4b4bd25284e1b343c15a92b5347feb9b965a2b1ef3e1ea1a;
+
         // Name reservation check
         bytes32 subnode = keccak256(abi.encodePacked(lighthouseNode, keccak256(_name)));
         require(ens.resolver(subnode) == 0);
@@ -875,6 +1494,7 @@ contract LiabilityFactory {
         ens.setSubnodeOwner(lighthouseNode, keccak256(_name), this);
 
         // Register lighthouse address
+        PublicResolver resolver = PublicResolver(ens.resolver(lighthouseNode));
         ens.setResolver(subnode, resolver);
         resolver.setAddr(subnode, lighthouse);
     }
@@ -894,7 +1514,7 @@ contract LiabilityFactory {
         uint256 gas = _gas - gasleft();
         totalGasUtilizing        += gas;
         gasUtilizing[msg.sender] += gas;
-        require(xrt.mint(tx.origin, winnerFromGas(gasUtilizing[msg.sender])));
+        require(xrt.mint(tx.origin, wnFromGas(gasUtilizing[msg.sender])));
         return true;
     }
 }
