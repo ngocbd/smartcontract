@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa5f2690f8e1bbaa56cbd1d7f20336e5f2d0c930c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x10d2d5b3c8c2e1239135a77bde370a14ca32f0e3
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 84000000000000000000000000;
-        name = 'LiCoinGold';
-        symbol = 'LCGD';
-        decimals = 18;
-        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
-        Transfer(address(0), 0xf588d792fa8a634162760482a7b61dd1ab99b1f1, totalSupply);
+        totalSupply = 10000000000000;
+        name = 'Almighty Diamonds';
+        symbol = 'ADP';
+        decimals = 4;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
 }
