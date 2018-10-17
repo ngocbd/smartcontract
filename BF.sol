@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BF at 0x762987d09a1558700e436395612a27f0c9d30490
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BF at 0x35600512eec4c8fb7ff5b8be30ac87156df6e6bd
 */
 pragma solidity ^0.4.23;
 
@@ -34,7 +34,6 @@ library SafeMath {
 contract Ownable {
   address public owner;
   address public manager;
-  address public behalfer;
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   event SetManager(address indexed _manager);
@@ -53,18 +52,8 @@ contract Ownable {
       _;
   }
   
-  modifier onlyBehalfer() {
-      require(msg.sender == behalfer);
-      _;
-  }
-  
   function setManager(address _manager)public onlyOwner returns (bool) {
       manager = _manager;
-      return true;
-  }
-  
-  function setBehalfer(address _behalfer)public onlyOwner returns (bool) {
-      behalfer = _behalfer;
       return true;
   }
 
@@ -130,7 +119,7 @@ contract BF is BasicBF {
         return true;
     }
     
-    function behalfBet(address _user, uint256 _matchNo, uint256 _teamNo) public whenNotPaused onlyBehalfer payable returns (bool) {
+    function behalfBet(address _user, uint256 _matchNo, uint256 _teamNo) public whenNotPaused onlyManager payable returns (bool) {
         uint256 amount = msg.value;
         betMatchRecords[_matchNo][_teamNo][_user] = betMatchRecords[_matchNo][_teamNo][_user].add(amount);
         betMatchBalances[_matchNo][_teamNo] = betMatchBalances[_matchNo][_teamNo].add(amount);
