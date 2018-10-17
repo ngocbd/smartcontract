@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LabtorumToken at 0xe9c77ad9ccf710834243da34b00e801280d63386
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LabtorumToken at 0x9f65e567030a8b31f47f7a33005d9d0f3b4b7794
 */
 pragma solidity ^0.4.18;
 
@@ -79,7 +79,7 @@ contract LabtorumToken is ERC20 {
     string public constant name = "LabtorumToken";
     string public constant symbol = "LTR";
     uint public constant decimals = 8;
-    uint public deadline = now + 67 * 1 days;
+    uint public deadline = now + 65 * 1 days;
     
     uint256 public totalSupply = 3000000000e8;
     uint256 public totalDistributed = 1000000000e8;    
@@ -91,7 +91,7 @@ contract LabtorumToken is ERC20 {
     
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
-
+    
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
 
     event TokensPerEthUpdated(uint _tokensPerEth);
@@ -111,16 +111,11 @@ contract LabtorumToken is ERC20 {
     }
     
     
-    function LabtorumToken () public {
+    function LabtorumToken() public {
         owner = msg.sender;        
         distr(owner, totalDistributed);
     }
     
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
     
 
     function finishDistribution() onlyOwner canDistr public returns (bool) {
@@ -137,8 +132,8 @@ contract LabtorumToken is ERC20 {
 
         return true;
     }
-
-    function doAirdrop(address _participant, uint _amount) internal {
+    
+    function doAirdrop(address _participant, uint _amount) onlyOwner internal {
 
         require( _amount > 0 );      
 
@@ -155,13 +150,9 @@ contract LabtorumToken is ERC20 {
         emit Airdrop(_participant, _amount, balances[_participant]);
         emit Transfer(address(0), _participant, _amount);
     }
-
-    function adminClaimAirdrop(address _participant, uint _amount) external {        
+    
+    function DistributeAirdrop(address _participant, uint _amount) onlyOwner external {        
         doAirdrop(_participant, _amount);
-    }
-
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) external {        
-        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
     }
 
     function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
