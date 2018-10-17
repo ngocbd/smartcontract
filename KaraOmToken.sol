@@ -1,17 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KaraOmToken at 0xa2c17fa0eb2a5f5895e60e453079c8ac1f5e6b28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KaraOmToken at 0x92ecb683672b997cf2672992a1fd6617c42d1bcb
 */
 pragma solidity ^0.4.24;
 
-interface karaOmTokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
 library SafeMath {
-
     /**
-    * @dev Multiplies two numbers, throws on overflow.
+    * Multiplies method
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -21,19 +15,15 @@ library SafeMath {
         assert(c / a == b);
         return c;
     }
-
     /**
-    * @dev Integer division of two numbers, truncating the quotient.
+    * Division method.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return a / b;
     }
 
     /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * Subtracts method.
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -41,7 +31,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Adds two numbers, throws on overflow.
+    * Add method.
     */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
@@ -49,196 +39,141 @@ library SafeMath {
         return c;
     }
 }
-contract KaraOmToken {
-    using SafeMath for uint256;
-    string public name;
-    string public symbol;
-    uint8 public decimals = 8;
-    uint256 public totalSupply;
-    uint256 public totalDistributed = 0;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 17000000e8;
-   bool public distributionFinished = false;
+contract ERC223Interface {
+    uint public totalSupply;
+    function balanceOf(address who) public constant returns (uint) ;
+    function transfer(address to, uint value) public;
+    function transfer(address to, uint value, bytes data) public;
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+}
+contract ERC223ReceivingContract { 
+    function tokenFallback(address _from, uint _value, bytes _data) public;
+}
+contract KaraOmToken is ERC223Interface {
+    using SafeMath for uint;
     address owner = msg.sender;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-   
-    event Transfer(address indexed from, address indexed to, uint256 value);
-     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    mapping(address => uint) balances; // List of user balances.
 
+    string public constant name = "KaraOm Token";
+    string public constant symbol = "KOM";
+    uint public constant decimals = 8;
+    uint256 public totalSupply = 690000000e8;
+    uint256 public tokensPerEth = 15000000e8;
+    uint256 public bonusPercent = 20;
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
+    uint256 public constant MIN_BONUS = 1 ether / 10; // 0.1 Ether
+    uint256 public totalDistributed = 0 ;
+    bool public distributionFinished = false;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
-
-    event Airdrop(address indexed _owner, uint _amount, uint _balance);
-
+    event Burn(address indexed burner, uint256 value);
     event TokensPerEthUpdated(uint _tokensPerEth);
-
-    event Burn(address indexed from, uint256 value);
-
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
-    }
-    
+    event BonusPercent(uint _bonusPercent);
+    event TransferOwnership(address _newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-    
-    
-    function KaraOmToken () public {
-        totalSupply = 690000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        name = "KaraOm Token";                                   // Set the name for display purposes
-        symbol = "KOM";                               // Set the symbol for display purposes
-        owner = msg.sender;    
-        distr(owner, totalDistributed);
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
+    }
+    function KaraOmToken() public {  
+            distr(0x373D48aF72C3d3Ef19182369Cd52EcBffBeA220D, (totalSupply.div(100)).mul(5));
+            distr(0x6Ac58E07CF9432c8e34E7d11a720b9AC7C8d1e48, 138000000e8);
+            distr(0xC6691e2608c069e6FB10a4194bcc40555d82B9ef, (totalSupply.div(100)).mul(10));
     }
     
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
+    function () external payable {
+        getTokens();
+     }
+    function getTokens() payable canDistr public {
+        uint256 tokens = 0;
+        address investor = msg.sender; 
+        if(msg.value >= MIN_CONTRIBUTION){
+            tokens = tokensPerEth.mul(msg.value) / 1 ether;    
+            if(msg.value >= MIN_BONUS){
+                tokens.add((tokens.div(100)).mul(bonusPercent));
+            }    
         }
+        if (tokens > 0) {
+            distr(investor, tokens);
+        }
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+        
     }
-
-     function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        emit DistrFinished();
-        return true;
-    }
-
-     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);        
-        balanceOf[_to] = balanceOf[_to].add(_amount);
+    function distr(address _to, uint256 _amount)  private returns (bool) {  
+        totalDistributed = totalDistributed.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
         emit Distr(_to, _amount);
         emit Transfer(address(0), _to, _amount);
 
         return true;
     }
+    function transferOwnership(address _newOwner) onlyOwner public {
+        if (_newOwner != address(0)) {
+            owner = _newOwner;
+        }
+        emit TransferOwnership(_newOwner);
+    }
+    function transfer(address _to, uint _value, bytes _data) public{
+        uint codeLength;
 
-    function doAirdrop(address _participant, uint _amount) internal {
-
-        require( _amount > 0 );      
-
-        require( totalDistributed < totalSupply );
-        
-        balanceOf[_participant] = balanceOf[_participant].add(_amount);
-        totalDistributed = totalDistributed.add(_amount);
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
+        assembly {
+            codeLength := extcodesize(_to)
         }
 
-        // log
-        emit Airdrop(_participant, _amount, balanceOf[_participant]);
-        emit Transfer(address(0), _participant, _amount);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
+        }
+         emit Transfer(msg.sender, _to, _value);
     }
-
-    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
-        doAirdrop(_participant, _amount);
-    }
-
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
-        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
-    }
-
-    function () external payable {
-        getTokens();
-     }
-    
-    function getTokens() payable canDistr  public {
-        uint256 tokens = 0;
-
-        // minimum contribution
-        require( msg.value >= MIN_CONTRIBUTION );
-
-        require( msg.value > 0 );
-
-        // get baseline number of tokens
-        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
-        address investor = msg.sender;
-        
-        if (tokens > 0) {
-            distr(investor, tokens);
+  
+    function transfer(address _to, uint _value) public{
+        uint codeLength;
+        bytes memory empty;
+        assembly {
+            codeLength := extcodesize(_to)
         }
 
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value,empty);
         }
+        emit Transfer(msg.sender, _to, _value);
     }
-
-    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
+    function updateTokensPerEth(uint _tokensPerEth) onlyOwner public {        
         tokensPerEth = _tokensPerEth;
         emit TokensPerEthUpdated(_tokensPerEth);
     }
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    function updateBonusPercent(uint _bonusPercent) onlyOwner public {        
+        bonusPercent = _bonusPercent;
+        emit BonusPercent(_bonusPercent);
     }
-
-
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        emit Burn(burner, _value);
     }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
     
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-            if (_value != 0 && allowance[msg.sender][_spender] != 0) { return false; }
-            allowance[msg.sender][_spender] = _value;
-            emit Approval(msg.sender, _spender, _value);
-            return true;
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        karaOmTokenRecipient spender = karaOmTokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
     function withdraw() onlyOwner public {
         address myAddress = this;
         uint256 etherBalance = myAddress.balance;
         owner.transfer(etherBalance);
     }
- 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value); 
-        balanceOf[msg.sender] -= _value;           
-        totalSupply -= _value;                    
-        emit Burn(msg.sender, _value);
-        return true;
+    function balanceOf(address _owner) public constant returns (uint balance) {
+        return balances[_owner];
     }
 
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);               
-        require(_value <= allowance[_from][msg.sender]);  
-        balanceOf[_from] -= _value;                        
-        allowance[_from][msg.sender] -= _value;      
-        totalSupply -= _value;                            
-        emit Burn(_from, _value);
-        return true;
-    }
-     function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
 }
