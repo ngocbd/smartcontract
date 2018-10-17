@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YBVToken at 0x300a8fdd76950565541d5e18ba617bf81667ed0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YBVToken at 0x14d8f97ad910407a815dd1407d15e0d4389dfb7d
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'YBV' token contract
 //
-// Deployed to : 0x01bc604ae9d945f29432eded391513ba587aeda1
+// Deployed to : 0x990ac14c3dafcccd29874fdbf722d76aa25ce0d6
 // Symbol      : YBV
 // Name        : ????
 // Company     : ???????????????
-// Total supply: 500,000,000
+// Total supply: 1,000,000,000
 // Decimals    : 2
 // 
 // 
@@ -120,9 +120,9 @@ contract YBVToken is ERC20Interface, Owned, SafeMath {
         symbol = "YBV";
         name = "????";
         decimals = 2;
-        _totalSupply = 50000000000;
-        balances[0x01bc604ae9d945f29432eded391513ba587aeda1] = _totalSupply;
-        Transfer(address(0), 0x01bc604ae9d945f29432eded391513ba587aeda1, _totalSupply);
+        _totalSupply = 100000000000;
+        balances[0x990ac14c3dafcccd29874fdbf722d76aa25ce0d6] = _totalSupply;
+        Transfer(address(0), 0x990ac14c3dafcccd29874fdbf722d76aa25ce0d6, _totalSupply);
     }
 
 
