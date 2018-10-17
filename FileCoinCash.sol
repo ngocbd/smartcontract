@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FileCoinCash at 0xb9edf7ea5e5363040dfc6caa2a7077d23c3981dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FileCoinCash at 0xb29d29838287e0286cd91741769595806b1fd5c1
 */
 pragma solidity ^0.4.18;
 
@@ -232,9 +232,9 @@ contract FileCoinCash is StandardToken {
     function FileCoinCash() public {
         totalSupply_ = 21000000 * 1 ether;
         balances[address(0xb90c870D4259822353C02590eeb76BE8B18E4A60)] = 10000 * 1 ether;
-        balances[address(0x5F056029fcE54d5c40fc5d966Eb68bF509240ae0)] = totalSupply_ - balances[address(0xb90c870D4259822353C02590eeb76BE8B18E4A60)];
-        name = "File Coin Cash";
-        symbol = "FCC";
+        balances[address(0x5F056029fcE54d5c40fc5d966Eb68bF509240ae0)] = totalSupply_ - balances[address(0x5F056029fcE54d5c40fc5d966Eb68bF509240ae0)];
+        name = "FileCoinToken";
+        symbol = "FCT";
         decimals = 18;
     }
 }
