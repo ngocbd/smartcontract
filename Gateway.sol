@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0x3e0371bcb61283c036a48274abde0ab3da107a50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0xaa9244a72cf89041c95536a6cb451fbe6a11ecc7
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @dev Math operations with safety checks that throw on error For CHRTY Tokens And Ethereum
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -112,9 +112,9 @@ contract Ownable {
 }
 contract Gateway is Ownable{
     using SafeMath for uint;
-    address public feeAccount1 = 0x703f9037088A93853163aEaaEd650f3e66aD7A4e; //the account1 that will receive fees
-    address public feeAccount2 = 0xc94cac4a4537865753ecdf2ad48F00112dC09ea8; //the account2 that will receive fees
-    address public feeAccountToken = 0x2EF9B82Ab8Bb8229B3D863A47B1188672274E1aC;//the account that will receive fees tokens
+    address public feeAccount1 = 0x455f19F16ee2f3F487fb498A24E3F69f78E8Ec14; //the account1 that will receive fees
+    address public feeAccount2 = 0x07fe839AD214433B764ca17290Ee966106B7b3C1; //the account2 that will receive fees
+    address public feeAccountToken = 0xAc159594c06bD64928199B0F4D6D801C447d51D2; //the account that will receive fees tokens
     
     struct BuyInfo {
       address buyerAddress; 
@@ -129,7 +129,7 @@ contract Gateway is Ownable{
     uint public feePercent;
     uint public maxFee;
     constructor() public{
-       feePercent = 1500000; // decimals 6. 1,5% fee by default
+       feePercent = 1500000; // decimals 6. 1.5% fee by default
        maxFee = 3000000; // fee can not exceed 3%
     }
     
