@@ -1,331 +1,126 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x54b0de285c15d27b0daa687bcbf40cea68b2807f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x950e2517ca018d25102c9bc09c2b7805dcbeecb8
 */
-pragma solidity ^0.4.21;
+// v7
 
-interface VaultInterface {
+/**
+ * Vault.sol
+ * Vault contract is used for storing all team/founder tokens amounts from the crowdsale. It adds team members and their amounts in a list.
+ * Vault securely stores team members funds and freezes the particular X amount on set X amount of time.
+ * It also gives the ability to release the funds when the X set time limit is met.
+ */
 
-    event Deposited(address indexed user, address token, uint amount);
-    event Withdrawn(address indexed user, address token, uint amount);
+pragma solidity ^0.4.23;
 
-    event Approved(address indexed user, address indexed spender);
-    event Unapproved(address indexed user, address indexed spender);
-
-    event AddedSpender(address indexed spender);
-    event RemovedSpender(address indexed spender);
-
-    function deposit(address token, uint amount) external payable;
-    function withdraw(address token, uint amount) external;
-    function transfer(address token, address from, address to, uint amount) external;
-    function approve(address spender) external;
-    function unapprove(address spender) external;
-    function isApproved(address user, address spender) external view returns (bool);
-    function addSpender(address spender) external;
-    function removeSpender(address spender) external;
-    function latestSpender() external view returns (address);
-    function isSpender(address spender) external view returns (bool);
-    function tokenFallback(address from, uint value, bytes data) public;
-    function balanceOf(address token, address user) public view returns (uint);
-
-}
-
-interface ERC820 {
-
-    function setInterfaceImplementer(address addr, bytes32 iHash, address implementer) public;
-
-}
-
-library SafeMath {
-
-    function mul(uint a, uint b) internal pure returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint a, uint b) internal pure returns (uint) {
-        assert(b > 0);
-        uint c = a / b;
-        assert(a == b * c + a % b);
-        return c;
-    }
-
-    function sub(uint a, uint b) internal pure returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint a, uint b) internal pure returns (uint) {
-        uint c = a + b;
-        assert(c >= a);
-        return c;
-    }
-
-    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function max256(uint a, uint b) internal pure returns (uint) {
-        return a >= b ? a : b;
-    }
-
-    function min256(uint a, uint b) internal pure returns (uint) {
-        return a < b ? a : b;
-    }
-}
-
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
+  address public owner;
 
-    address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    modifier onlyOwner {
-        require(isOwner(msg.sender));
-        _;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    function Ownable() public {
-        owner = msg.sender;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        owner = _newOwner;
-    }
-
-    function isOwner(address _address) public view returns (bool) {
-        return owner == _address;
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-interface ERC20 {
+/**
+ * @title TokenContract
+ * @dev Token contract interface with transfer and balanceOf functions which need to be implemented
+ */
+interface TokenContract {
 
-    function totalSupply() public view returns (uint);
-    function balanceOf(address owner) public view returns (uint);
-    function allowance(address owner, address spender) public view returns (uint);
-    function transfer(address to, uint value) public returns (bool);
-    function transferFrom(address from, address to, uint value) public returns (bool);
-    function approve(address spender, uint value) public returns (bool);
+  /**
+  * @dev Transfer funds to recipient address
+  * @param _recipient Recipients address
+  * @param _amount Amount to transfer
+  */
+  function transfer(address _recipient, uint256 _amount) external returns (bool);
 
+  /**
+   * @dev Return balance of holders address
+   * @param _holder Holders address
+   */
+  function balanceOf(address _holder) external view returns (uint256);
 }
 
-interface ERC777 {
-    function name() public constant returns (string);
-    function symbol() public constant returns (string);
-    function totalSupply() public constant returns (uint256);
-    function granularity() public constant returns (uint256);
-    function balanceOf(address owner) public constant returns (uint256);
+/**
+ * @title Vault
+ * Vault contract is used for storing all team/founder tokens amounts from the crowdsale. It adds team members and their amounts in a list.
+ * Vault securely stores team members funds and freezes the particular X amount on set X amount of time.
+ * It also gives the ability to release the funds when the X set time limit is met.
+ */
+contract Vault is Ownable {
+  TokenContract public tkn;
 
-    function send(address to, uint256 amount) public;
-    function send(address to, uint256 amount, bytes userData) public;
+  uint256 public releaseDate;
 
-    function authorizeOperator(address operator) public;
-    function revokeOperator(address operator) public;
-    function isOperatorFor(address operator, address tokenHolder) public constant returns (bool);
-    function operatorSend(address from, address to, uint256 amount, bytes userData, bytes operatorData) public;
+  struct Member {
+    address memberAddress;
+    uint256 tokens;
+  }
 
-}
+  Member[] public team;
 
-contract Vault is Ownable, VaultInterface {
+  /**
+   * @dev The Vault constructor sets the release date in epoch time
+   */
+  constructor() public {
+    releaseDate = 1561426200; // set release date in epoch
+  }
 
-    using SafeMath for *;
-
-    address constant public ETH = 0x0;
-
-    mapping (address => bool) public isERC777;
-
-    // user => spender => approved
-    mapping (address => mapping (address => bool)) private approved;
-    mapping (address => mapping (address => uint)) private balances;
-    mapping (address => uint) private accounted;
-    mapping (address => bool) private spenders;
-
-    address private latest;
-
-    modifier onlySpender {
-        require(spenders[msg.sender]);
-        _;
+  /**
+   * @dev Release tokens from vault - unlock them and destroy contract
+   */
+  function releaseTokens() onlyOwner public {
+    require(releaseDate > block.timestamp);
+    uint256 amount;
+    for (uint256 i = 0; i < team.length; i++) {
+      require(tkn.transfer(team[i].memberAddress, team[i].tokens));
     }
+    amount = tkn.balanceOf(address(this));
+    require(tkn.transfer(owner, amount));
+    selfdestruct(owner);
+  }
 
-    modifier onlyApproved(address user) {
-        require(approved[user][msg.sender]);
-        _;
+  /**
+   * @dev Add members to vault to lock funds
+   * @param _member Member to be added to the vault
+   * @param _tokens Amount of tokens to be locked
+   */
+  function addMembers(address[] _member, uint256[] _tokens) onlyOwner public {
+    require(_member.length > 0);
+    require(_member.length == _tokens.length);
+    Member memory member;
+    for (uint256 i = 0; i < _member.length; i++) {
+      member.memberAddress = _member[i];
+      member.tokens = _tokens[i];
+      team.push(member);
     }
-
-    function Vault(ERC820 registry) public {
-        // required by ERC777 standard.
-        registry.setInterfaceImplementer(address(this), keccak256("ERC777TokensRecipient"), address(this));
-    }
-
-    /// @dev Deposits a specific token.
-    /// @param token Address of the token to deposit.
-    /// @param amount Amount of tokens to deposit.
-    function deposit(address token, uint amount) external payable {
-        require(token == ETH || msg.value == 0);
-
-        uint value = amount;
-        if (token == ETH) {
-            value = msg.value;
-        } else {
-            require(ERC20(token).transferFrom(msg.sender, address(this), value));
-        }
-
-        depositFor(msg.sender, token, value);
-    }
-
-    /// @dev Withdraws a specific token.
-    /// @param token Address of the token to withdraw.
-    /// @param amount Amount of tokens to withdraw.
-    function withdraw(address token, uint amount) external {
-        require(balanceOf(token, msg.sender) >= amount);
-
-        balances[token][msg.sender] = balances[token][msg.sender].sub(amount);
-        accounted[token] = accounted[token].sub(amount);
-
-        withdrawTo(msg.sender, token, amount);
-
-        emit Withdrawn(msg.sender, token, amount);
-    }
-
-    /// @dev Approves an spender to trade balances of the sender.
-    /// @param spender Address of the spender to approve.
-    function approve(address spender) external {
-        require(spenders[spender]);
-        approved[msg.sender][spender] = true;
-        emit Approved(msg.sender, spender);
-    }
-
-    /// @dev Unapproves an spender to trade balances of the sender.
-    /// @param spender Address of the spender to unapprove.
-    function unapprove(address spender) external {
-        approved[msg.sender][spender] = false;
-        emit Unapproved(msg.sender, spender);
-    }
-
-    /// @dev Adds a spender.
-    /// @param spender Address of the spender.
-    function addSpender(address spender) external onlyOwner {
-        require(spender != 0x0);
-        spenders[spender] = true;
-        latest = spender;
-        emit AddedSpender(spender);
-    }
-
-    /// @dev Removes a spender.
-    /// @param spender Address of the spender.
-    function removeSpender(address spender) external onlyOwner {
-        spenders[spender] = false;
-        emit RemovedSpender(spender);
-    }
-
-    /// @dev Transfers balances of a token between users.
-    /// @param token Address of the token to transfer.
-    /// @param from Address of the user to transfer tokens from.
-    /// @param to Address of the user to transfer tokens to.
-    /// @param amount Amount of tokens to transfer.
-    function transfer(address token, address from, address to, uint amount) external onlySpender onlyApproved(from) {
-        // We do not check the balance here, as SafeMath will revert if sub / add fail. Due to over/underflows.
-        require(amount > 0);
-        balances[token][from] = balances[token][from].sub(amount);
-        balances[token][to] = balances[token][to].add(amount);
-    }
-
-    /// @dev Returns if an spender has been approved by a user.
-    /// @param user Address of the user.
-    /// @param spender Address of the spender.
-    /// @return Boolean whether spender has been approved.
-    function isApproved(address user, address spender) external view returns (bool) {
-        return approved[user][spender];
-    }
-
-    /// @dev Returns if an address has been approved as a spender.
-    /// @param spender Address of the spender.
-    /// @return Boolean whether spender has been approved.
-    function isSpender(address spender) external view returns (bool) {
-        return spenders[spender];
-    }
-
-    function latestSpender() external view returns (address) {
-        return latest;
-    }
-
-    function tokenFallback(address from, uint value, bytes) public {
-        depositFor(from, msg.sender, value);
-    }
-
-    function tokensReceived(address, address from, address, uint amount, bytes, bytes) public {
-        if (!isERC777[msg.sender]) {
-            isERC777[msg.sender] = true;
-        }
-
-        depositFor(from, msg.sender, amount);
-    }
-
-    /// @dev Marks a token as an ERC777 token.
-    /// @param token Address of the token.
-    function setERC777(address token) public onlyOwner {
-        isERC777[token] = true;
-    }
-
-    /// @dev Unmarks a token as an ERC777 token.
-    /// @param token Address of the token.
-    function unsetERC777(address token) public onlyOwner {
-        isERC777[token] = false;
-    }
-
-    /// @dev Allows owner to withdraw tokens accidentally sent to the contract.
-    /// @param token Address of the token to withdraw.
-    function withdrawOverflow(address token) public onlyOwner {
-        withdrawTo(msg.sender, token, overflow(token));
-    }
-
-    /// @dev Returns the balance of a user for a specified token.
-    /// @param token Address of the token.
-    /// @param user Address of the user.
-    /// @return Balance for the user.
-    function balanceOf(address token, address user) public view returns (uint) {
-        return balances[token][user];
-    }
-
-    /// @dev Calculates how many tokens were accidentally sent to the contract.
-    /// @param token Address of the token to calculate for.
-    /// @return Amount of tokens not accounted for.
-    function overflow(address token) internal view returns (uint) {
-        if (token == ETH) {
-            return address(this).balance.sub(accounted[token]);
-        }
-
-        return ERC20(token).balanceOf(this).sub(accounted[token]);
-    }
-
-    /// @dev Accounts for token deposits.
-    /// @param user Address of the user who deposited.
-    /// @param token Address of the token deposited.
-    /// @param amount Amount of tokens deposited.
-    function depositFor(address user, address token, uint amount) private {
-        balances[token][user] = balances[token][user].add(amount);
-        accounted[token] = accounted[token].add(amount);
-        emit Deposited(user, token, amount);
-    }
-
-    /// @dev Withdraws tokens to user.
-    /// @param user Address of the target user.
-    /// @param token Address of the token.
-    /// @param amount Amount of tokens.
-    function withdrawTo(address user, address token, uint amount) private {
-        if (token == ETH) {
-            user.transfer(amount);
-            return;
-        }
-
-        if (isERC777[token]) {
-            ERC777(token).send(user, amount);
-            return;
-        }
-
-        require(ERC20(token).transfer(user, amount));
-    }
+  }
 }
