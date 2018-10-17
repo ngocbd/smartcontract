@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITube at 0x8564e222115248d10593cf4a6719fa6d82194e62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITube at 0xe92bf23f02eaa301ad68fc10890e3086417567cc
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x91b6B075d1b5b9945b3b48E9B84D6aB1a4589B8F
 // Symbol      : TUB
 // Name        : ITube
-// Total supply: 2300000000000000000000000000
+// Total supply: 2300000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -118,12 +118,12 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function ITube() public {
+    function Itube() public {
         symbol = "TUB";
         name = "ITube";
         decimals = 18;
-        bonusEnds = now + 5 weeks;
-        endDate = now + 15 weeks;
+        bonusEnds = now + 1 weeks;
+        endDate = now + 25 weeks;
 
     }
 
@@ -132,7 +132,7 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0x91b6B075d1b5b9945b3b48E9B84D6aB1a4589B8F)];
+        return _totalSupply  - balances[address(0)];
     }
 
 
@@ -212,7 +212,7 @@ contract ITube is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 500,000 TUB for each 1ETH
+    // 500,000 TUB tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
