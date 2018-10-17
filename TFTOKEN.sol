@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x21dfd0e77629038a5e1809aa14bdba5f7404af95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x733237b46b1fd6bd3266c9b6daae1c018a9d9493
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TFTOKEN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Business industrial chain";
-    string  public constant symbol = "BIC";
+    string  public constant name = "New Energy Chain";
+    string  public constant symbol = "NEC";
     uint8   public constant decimals = 8;
-    uint256 public constant INITIAL_SUPPLY     =  56000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY     =  65000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
