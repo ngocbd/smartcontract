@@ -1,11 +1,37 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0xf551117f5c93867bfc486c73b28b1670d241415f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicResolver at 0x0a2340e7af5dcf6f7f4acc0e01f2102fb4b144b7
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
+
+interface ENS {
+
+    // Logged when the owner of a node assigns a new owner to a subnode.
+    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
+
+    // Logged when the owner of a node transfers ownership to a new account.
+    event Transfer(bytes32 indexed node, address owner);
+
+    // Logged when the resolver for a node changes.
+    event NewResolver(bytes32 indexed node, address resolver);
+
+    // Logged when the TTL of a node changes
+    event NewTTL(bytes32 indexed node, uint64 ttl);
+
+
+    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) external;
+    function setResolver(bytes32 node, address resolver) external;
+    function setOwner(bytes32 node, address owner) external;
+    function setTTL(bytes32 node, uint64 ttl) external;
+    function owner(bytes32 node) external view returns (address);
+    function resolver(bytes32 node) external view returns (address);
+    function ttl(bytes32 node) external view returns (uint64);
+
+}
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its
  * address.
+ * Updated with nonfunctional changes
  */
 contract PublicResolver {
 
@@ -54,7 +80,7 @@ contract PublicResolver {
      * Constructor.
      * @param ensAddr The ENS registrar contract.
      */
-    function PublicResolver(ENS ensAddr) public {
+    constructor(ENS ensAddr) public {
         ens = ensAddr;
     }
 
@@ -66,7 +92,7 @@ contract PublicResolver {
      */
     function setAddr(bytes32 node, address addr) public only_owner(node) {
         records[node].addr = addr;
-        AddrChanged(node, addr);
+        emit AddrChanged(node, addr);
     }
 
     /**
@@ -79,7 +105,7 @@ contract PublicResolver {
      */
     function setContent(bytes32 node, bytes32 hash) public only_owner(node) {
         records[node].content = hash;
-        ContentChanged(node, hash);
+        emit ContentChanged(node, hash);
     }
 
     /**
@@ -90,7 +116,7 @@ contract PublicResolver {
      */
     function setMultihash(bytes32 node, bytes hash) public only_owner(node) {
         records[node].multihash = hash;
-        MultihashChanged(node, hash);
+        emit MultihashChanged(node, hash);
     }
     
     /**
@@ -101,7 +127,7 @@ contract PublicResolver {
      */
     function setName(bytes32 node, string name) public only_owner(node) {
         records[node].name = name;
-        NameChanged(node, name);
+        emit NameChanged(node, name);
     }
 
     /**
@@ -117,7 +143,7 @@ contract PublicResolver {
         require(((contentType - 1) & contentType) == 0);
         
         records[node].abis[contentType] = data;
-        ABIChanged(node, contentType);
+        emit ABIChanged(node, contentType);
     }
     
     /**
@@ -128,7 +154,7 @@ contract PublicResolver {
      */
     function setPubkey(bytes32 node, bytes32 x, bytes32 y) public only_owner(node) {
         records[node].pubkey = PublicKey(x, y);
-        PubkeyChanged(node, x, y);
+        emit PubkeyChanged(node, x, y);
     }
 
     /**
@@ -140,7 +166,7 @@ contract PublicResolver {
      */
     function setText(bytes32 node, string key, string value) public only_owner(node) {
         records[node].text[key] = value;
-        TextChanged(node, key, key);
+        emit TextChanged(node, key, key);
     }
 
     /**
@@ -236,31 +262,4 @@ contract PublicResolver {
         interfaceID == MULTIHASH_INTERFACE_ID ||
         interfaceID == INTERFACE_META_ID;
     }
-}
-
-pragma solidity ^0.4.18;
-
-interface ENS {
-
-    // Logged when the owner of a node assigns a new owner to a subnode.
-    event NewOwner(bytes32 indexed node, bytes32 indexed label, address owner);
-
-    // Logged when the owner of a node transfers ownership to a new account.
-    event Transfer(bytes32 indexed node, address owner);
-
-    // Logged when the resolver for a node changes.
-    event NewResolver(bytes32 indexed node, address resolver);
-
-    // Logged when the TTL of a node changes
-    event NewTTL(bytes32 indexed node, uint64 ttl);
-
-
-    function setSubnodeOwner(bytes32 node, bytes32 label, address owner) public;
-    function setResolver(bytes32 node, address resolver) public;
-    function setOwner(bytes32 node, address owner) public;
-    function setTTL(bytes32 node, uint64 ttl) public;
-    function owner(bytes32 node) public view returns (address);
-    function resolver(bytes32 node) public view returns (address);
-    function ttl(bytes32 node) public view returns (uint64);
-
 }
