@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FENIX at 0x9a94cb229e2519f89d4c59f438711b5c9b32a12e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FENIX at 0x0da9326d7da81f8b19a8ec2d3255ab7076768c2d
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 /*
  This issue is covered by
 INTERNATIONAL BILL OF EXCHANGE (IBOE), REGISTRATION NUMBER: 99-279-0080 and SERIAL
-NUMBER: 092014 PARTIAL ASSIGNMENT /
+NUMBER: 062014 PARTIAL ASSIGNMENT /
 RELEASE IN THE AMOUNT OF $ 500,000,000,000.00 USD in words;
 FIVE HUNDRED BILLION and No / I00 USD, submitted to and in accordance with FINAL ARTICLES OF
 (UNICITRAL Convention 1988) ratified Articles 1-7, 11-13.46-3, 47-4 (c), 51, House Joint Resolution 192 of June 5.1933,
@@ -86,6 +86,7 @@ contract FENIX is ERC20
     uint bonusCalculationFactor;
     uint256 public pre_minContribution = 100000;// 1000 USD in cents for pre sale
     uint256 ContributionAmount;
+    address public admin;  // admin address used to do transaction through the wallet on behalf of owner
  
  
     uint public priceFactor;
@@ -110,7 +111,7 @@ contract FENIX is ERC20
     }
 
   
-    function FENIX(uint256 EtherPriceFactor) public
+    constructor(uint256 EtherPriceFactor) public
     {
         require(EtherPriceFactor != 0);
         owner = msg.sender;
@@ -151,9 +152,9 @@ contract FENIX is ERC20
         uint price_tokn;
         bonusCalculationFactor = (block.timestamp.sub(ico_startdate)).div(3600); //time period in seconds
         if (bonusCalculationFactor== 0) 
-            price_tokn = 65;                     //35 % Discount
-        else if (bonusCalculationFactor >= 1 && bonusCalculationFactor < 24) 
             price_tokn = 70;                     //30 % Discount
+        else if (bonusCalculationFactor >= 1 && bonusCalculationFactor < 24) 
+            price_tokn = 75;                     //25 % Discount
         else if (bonusCalculationFactor >= 24 && bonusCalculationFactor < 168) 
             price_tokn = 80;                      //20 % Discount
         else if (bonusCalculationFactor >= 168 && bonusCalculationFactor < 336) 
@@ -203,11 +204,16 @@ contract FENIX is ERC20
         ethFundMain = newEthfundaddress;
     }
     
+     function setAdminAddress(address newAdminaddress) external onlyOwner
+    {
+        admin = newAdminaddress;
+    }
+    
      function start_PREICO() external onlyOwner atStage(Stages.NOTSTARTED)
       {
           stage = Stages.PREICO;
           stopped = false;
-          _price_tokn = 60;     //40 % dicount
+          _price_tokn = 70;     //30 % dicount
           balances[address(this)] =10000000 * 10 ** 18 ; //10 million in preICO
          preico_startdate = now;
          preico_enddate = now + 7 days; //time for preICO
@@ -302,9 +308,9 @@ contract FENIX is ERC20
     // Transfer the balance from owner's account to another account
     function transfer(address _to, uint256 _amount) public returns(bool success) {
        
-       if ( msg.sender == owner) {
-            require(balances[owner] >= _amount && _amount >= 0);
-            balances[owner] = balances[owner].sub(_amount);
+       if ( msg.sender == owner || msg.sender == admin) {
+            require(balances[msg.sender] >= _amount && _amount >= 0);
+            balances[msg.sender] = balances[msg.sender].sub(_amount);
             balances[_to] += _amount;
             availTokens[_to] += _amount;
             emit Transfer(msg.sender, _to, _amount);
