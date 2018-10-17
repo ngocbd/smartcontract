@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9A039FF5e2Fe718D19693F27Bc90454B2701ee9C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa5f2690f8e1bbaa56cbd1d7f20336e5f2d0c930c
 */
 pragma solidity ^0.4.19;
 
@@ -45,68 +45,13 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
-
-    mapping (address => uint32) public airCountOf;
-
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
-            revert();
-        }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, AirdropToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 20000000000000000000000000000;
-        name = 'DuduTechnology';
-        symbol = 'DUDU';
+        totalSupply = 84000000000000000000000000;
+        name = 'LiCoinGold';
+        symbol = 'LCGD';
         decimals = 18;
-        balanceOf[0x828db0897afec00e04d77b4879082bcb7385a76a] = totalSupply;
-        Transfer(address(0), 0x828db0897afec00e04d77b4879082bcb7385a76a, totalSupply);
-
-        airAmount = 6666666600000000000000;
-        airBegintime = 1520240400;
-        airEndtime = 2215389600;
-        airSender = 0xd686f4d45f96fb035de703206fc55fda8882d33b;
-        airLimitCount = 1;
-    }
-
-    function() public payable {
-        airdrop();
+        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
+        Transfer(address(0), 0xf588d792fa8a634162760482a7b61dd1ab99b1f1, totalSupply);
     }
 }
