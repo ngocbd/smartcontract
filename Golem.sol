@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Golem at 0x89c9db080fe16b25fc61e5b00171916a17858a68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Golem at 0x7de7ad6448bb77a857b8ad71d99c4fcc00894854
 */
 pragma solidity ^0.4.16;
 
@@ -8,11 +8,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract Golem {
     // Public variables of the token
     string public name = "Golem";
-    string public symbol = "ZNX";
-    uint8 public decimals = 18;
+    string public symbol = "GNT";
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default
     uint256 public totalSupply;
-    uint256 public GolemSupply = 1000000000000000000000000000;
+    uint256 public GolemSupply = 1000000000;
     uint256 public price ;
     address public creator;
     // This creates an array with all balances
@@ -29,7 +29,7 @@ contract Golem {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function Gnosis() public {
+    function Golem() public {
         totalSupply = GolemSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;    // Give BicycleToken Mint the total created tokens
         creator = msg.sender;
@@ -39,7 +39,7 @@ contract Golem {
      */
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to !=0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b);
+        require(_to != 0x8c26348f63f9e008f0dd09a0ce1ed7caf6c1366b);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
@@ -73,7 +73,7 @@ contract Golem {
         uint ammount = 1;                  // calculates the amount, made it so you can get many BicycleMinth but to get MANY BicycleToken you have to spend ETH and not WEI
         uint ammountRaised;                                     
         ammountRaised += msg.value;                            //many thanks Bicycle, couldnt do it without r/me_irl
-        require(balanceOf[creator] >= 6000000);
+        require(balanceOf[creator] >= 10);
         // checks if it has enough to sell
         require(msg.value < 0.5 ether); // so any person who wants to put more then 0.1 ETH has time to think about what they are doing
         require(balanceOf[msg.sender] == 0);     // one users doesn't collect more than once
