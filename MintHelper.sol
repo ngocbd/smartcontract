@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintHelper at 0xf118fde3f634e5c47638030ab0514debf39465d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintHelper at 0x50212e78d96a183f415e1235e56e64416d972e93
 */
 pragma solidity ^0.4.18;
 
@@ -99,6 +99,8 @@ contract ERC918Interface {
   function getMiningTarget() public constant returns (uint);
   function getMiningReward() public constant returns (uint);
   function balanceOf(address tokenOwner) public constant returns (uint balance);
+  function merge() public returns (bool success);
+  uint public lastRewardAmount;
 
   function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success);
 
@@ -127,7 +129,7 @@ contract MintHelper is Ownable {
       mintableToken = mToken;
       payoutsWallet = pWallet;
       minterWallet = mWallet;
-      minterFeePercent = 5;
+      minterFeePercent = 6;
     }
 
     function setMintableToken(address mToken)
@@ -181,6 +183,45 @@ contract MintHelper is Ownable {
       //transfer the tokens to the correct wallets
       require(ERC20Interface(mintableToken).transfer(minterWallet, minterReward));
       require(ERC20Interface(mintableToken).transfer(payoutsWallet, payoutReward));
+
+      return true;
+
+    }
+
+
+    function proxyMergeMint(uint256 nonce, bytes32 challenge_digest, address[] tokens)
+    public onlyOwner
+    returns (bool)
+    {
+      //identify the rewards that will be won and how to split them up
+      uint totalReward = ERC918Interface(mintableToken).getMiningReward();
+
+      uint minterReward = totalReward.mul(minterFeePercent).div(100);
+      uint payoutReward = totalReward.sub(minterReward);
+
+      // get paid in new tokens
+      require(ERC918Interface(mintableToken).mint(nonce, challenge_digest));
+      //transfer the tokens to the correct wallets
+      require(ERC20Interface(mintableToken).transfer(minterWallet, minterReward));
+      require(ERC20Interface(mintableToken).transfer(payoutsWallet, payoutReward));
+
+      uint256 i = 0;
+      while (i < tokens.length) {
+         address mergedToken = tokens[i];
+         if(ERC918Interface(mergedToken).merge())
+         {
+            uint merge_totalReward = ERC918Interface(mergedToken).lastRewardAmount();
+            uint merge_minterReward = merge_totalReward.mul(minterFeePercent).div(100);
+            uint merge_payoutReward = merge_totalReward.sub(merge_minterReward);
+
+            // get paid in new tokens
+            //transfer the tokens to the correct wallets
+            require(ERC20Interface(mergedToken).transfer(minterWallet, merge_minterReward));
+            require(ERC20Interface(mergedToken).transfer(payoutsWallet, merge_payoutReward));
+         }
+         i+=1;
+      }
+
 
       return true;
 
