@@ -1,487 +1,715 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MUSTToken at 0x405ec4b2156d03b915e292db8707faedb60bc067
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MustToken at 0xea96e2b3d17fbb7f36d90a3bccd6705c98af5f0b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
-contract Receiver {
-  function tokenFallback(address from, uint value, bytes data);
+// File: contracts/mixins/ERC223ReceiverMixin.sol
+
+contract ERC223ReceiverMixin {
+  function tokenFallback(address _from, uint256 _value, bytes _data) public;
 }
 
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) public constant returns (uint);
-  function allowance(address owner, address spender) public constant returns (uint);
-
-  function transfer(address to, uint value) public returns (bool ok);
-  function transferFrom(address from, address to, uint value) public returns (bool ok);
-  function approve(address spender, uint value) public returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
     return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      revert();
-    }
   }
 }
 
-
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract StandardToken is ERC20, SafeMath {
-  event Transfer(address indexed from, address indexed to, uint indexed value, bytes data);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
 
   /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
-       revert();
-     }
-     _;
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
   }
 
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) public returns (bool success) {
-      bytes memory _empty;
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-      return transfer(_to, _value, _empty);
-  }
-
-  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
-
-    if (isContract(_to)) {
-      Receiver(_to).tokenFallback(msg.sender, _value, _data);
-    }
-
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  // ERC223 fetch contract size (must be nonzero to be a contract)
-  function isContract( address _addr ) private returns (bool) {
-    uint length;
-    _addr = _addr;
-    assembly { length := extcodesize(_addr) }
-    return (length > 0);
-  }
-
-  function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) revert();
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) public constant returns (uint balance) {
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
-  function approve(address _spender, uint _value) public returns (bool success) {
+}
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
   /**
-   * Atomic increment of approved spending
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
    *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function addApproval(address _spender, uint _addedValue) public
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-  /**
-   * Atomic decrement of approved spending.
-   *
-   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   */
-  function subApproval(address _spender, uint _subtractedValue) public
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-
-      uint oldVal = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-}
-
-
-
-contract BurnableToken is StandardToken {
-
-  address public constant BURN_ADDRESS = 0;
-
-  /** How many tokens we burned */
-  event Burned(address burner, uint burnedAmount);
-
-  /**
-   * Burn extra tokens from a balance.
-   *
-   */
-  function burn(uint burnAmount) public {
-    address burner = msg.sender;
-    balances[burner] = safeSub(balances[burner], burnAmount);
-    totalSupply = safeSub(totalSupply, burnAmount);
-    Burned(burner, burnAmount);
-  }
-}
-
-
-
-
-
-/**
- * Upgrade agent interface inspired by Lunyr.
- *
- * Upgrade agent transfers tokens to a new contract.
- * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
- */
-contract UpgradeAgent {
-
-  uint public originalSupply;
-
-  /** Interface marker */
-  function isUpgradeAgent() public constant returns (bool) {
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function upgradeFrom(address _from, uint256 _value) public;
-
-}
-
-
-/**
- * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
- *
- * First envisioned by Golem and Lunyr projects.
- */
-contract UpgradeableToken is StandardToken {
-
-  /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
-  address public upgradeMaster;
-
-  /** The next contract where the tokens will be migrated. */
-  UpgradeAgent public upgradeAgent;
-
-  /** How many tokens we have upgraded by now. */
-  uint256 public totalUpgraded;
-
   /**
-   * Upgrade states.
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
    *
-   * - NotAllowed: The child contract has not reached a condition where the upgrade can bgun
-   * - WaitingForAgent: Token allows upgrade, but we don't have a new agent yet
-   * - ReadyToUpgrade: The agent is set, but not a single token has been upgraded yet
-   * - Upgrading: Upgrade agent is set and the balance holders can upgrade their tokens
-   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
-
-  /**
-   * Somebody has upgraded some of his tokens.
-   */
-  event Upgrade(address indexed _from, address indexed _to, uint256 _value);
-
-  /**
-   * New upgrade agent available.
-   */
-  event UpgradeAgentSet(address agent);
-
-  /**
-   * Do not allow construction without upgrade master set.
-   */
-  function UpgradeableToken(address _upgradeMaster) public {
-    upgradeMaster = _upgradeMaster;
-  }
-
-  /**
-   * Allow the token holder to upgrade some of their tokens to a new contract.
-   */
-  function upgrade(uint256 value) public {
-
-      UpgradeState state = getUpgradeState();
-      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        // Called in a bad state
-        revert();
-      }
-
-      // Validate input value.
-      if (value == 0) revert();
-
-      balances[msg.sender] = safeSub(balances[msg.sender], value);
-
-      // Take tokens out from circulation
-      totalSupply = safeSub(totalSupply, value);
-      totalUpgraded = safeAdd(totalUpgraded, value);
-
-      // Upgrade agent reissues the tokens
-      upgradeAgent.upgradeFrom(msg.sender, value);
-      Upgrade(msg.sender, upgradeAgent, value);
-  }
-
-  /**
-   * Set an upgrade agent that handles
-   */
-  function setUpgradeAgent(address agent) external {
-
-      if(!canUpgrade()) {
-        // The token is not yet in a state that we could think upgrading
-        revert();
-      }
-
-      if (agent == 0x0) revert();
-      // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) revert();
-      // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) revert();
-
-      upgradeAgent = UpgradeAgent(agent);
-
-      // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) revert();
-      // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) revert();
-
-      UpgradeAgentSet(upgradeAgent);
-  }
-
-  /**
-   * Get the state of the token upgrade.
-   */
-  function getUpgradeState() public constant returns(UpgradeState) {
-    if(!canUpgrade()) return UpgradeState.NotAllowed;
-    else if(address(upgradeAgent) == 0x00) return UpgradeState.WaitingForAgent;
-    else if(totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
-    else return UpgradeState.Upgrading;
-  }
-
-  /**
-   * Change the upgrade master.
-   *
-   * This allows us to set a new owner for the upgrade mechanism.
-   */
-  function setUpgradeMaster(address master) public {
-      if (master == 0x0) revert();
-      if (msg.sender != upgradeMaster) revert();
-      upgradeMaster = master;
-  }
-
-  /**
-   * Child contract can enable to provide the condition when the upgrade can begun.
-   */
-  function canUpgrade() public constant returns(bool) {
-     return true;
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
+// File: contracts/mixins/ERC223Mixin.sol
 
-contract MUSTToken is BurnableToken, UpgradeableToken {
+/// @title Custom implementation of ERC223 
+/// @author Aler Denisov <aler.zampillo@gmail.com>
+contract ERC223Mixin is StandardToken {
+  event Transfer(address indexed from, address indexed to, uint256 value, bytes data);
 
-  string public name;
-  string public symbol;
-  uint public decimals;
-  address public owner;
-
-  bool public mintingFinished = false;
-
-  mapping(address => uint) public previligedBalances;
-
-  /** List of agents that are allowed to create new tokens */
-  mapping(address => bool) public mintAgents;
-  event MintingAgentChanged(address addr, bool state);
-
-  modifier onlyOwner() {
-    if(msg.sender != owner) revert();
-    _;
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  ) public returns (bool) 
+  {
+    bytes memory empty;
+    return transferFrom(
+      _from, 
+      _to,
+      _value,
+      empty);
   }
 
-  modifier onlyMintAgent() {
-    // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) revert();
-    _;
-  }
-
-  /** Make sure we are not done yet. */
-  modifier canMint() {
-    if(mintingFinished) revert();
-    _;
-  }
-
-  modifier onlyNotSame(address _from, address _to) {
-    if(_from == _to) revert();
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _data
+  ) public returns (bool)
+  {
+    require(_value <= allowed[_from][msg.sender]);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    if (isContract(_to)) {
+      return transferToContract(
+        _from, 
+        _to, 
+        _value, 
+        _data);
+    } else {
+      return transferToAddress(
+        _from, 
+        _to, 
+        _value, 
+        _data); 
     }
   }
 
-  function MUSTToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals) public UpgradeableToken(_owner) {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-    totalSupply = _totalSupply * 10 ** uint(decimals);
-
-    // Allocate initial balance to the owner
-    balances[_owner] = totalSupply;
-
-    // save the owner
-    owner = _owner;
+  function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
+    if (isContract(_to)) {
+      return transferToContract(
+        msg.sender,
+        _to,
+        _value,
+        _data); 
+    } else {
+      return transferToAddress(
+        msg.sender,
+        _to,
+        _value,
+        _data);
+    }
   }
 
-  function mintingFinish() public onlyOwner {
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+    bytes memory empty;
+    return transfer(_to, _value, empty);
+  }
+
+  function isContract(address _addr) internal view returns (bool) {
+    uint256 length;
+    // solium-disable-next-line security/no-inline-assembly
+    assembly {
+      //retrieve the size of the code on target address, this needs assembly
+      length := extcodesize(_addr)
+    }  
+    return (length>0);
+  }
+
+  function moveTokens(address _from, address _to, uint256 _value) internal returns (bool success) {
+    if (balanceOf(_from) < _value) {
+      revert();
+    }
+    balances[_from] = balanceOf(_from).sub(_value);
+    balances[_to] = balanceOf(_to).add(_value);
+
+    return true;
+  }
+
+  function transferToAddress(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _data
+  ) internal returns (bool success) 
+  {
+    require(moveTokens(_from, _to, _value));
+    emit Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value, _data); // solium-disable-line arg-overflow
+    return true;
+  }
+  
+  //function that is called when transaction target is a contract
+  function transferToContract(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _data
+  ) internal returns (bool success) 
+  {
+    require(moveTokens(_from, _to, _value));
+    ERC223ReceiverMixin(_to).tokenFallback(_from, _value, _data);
+    emit Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value, _data); // solium-disable-line arg-overflow
+    return true;
+  }
+}
+
+// File: contracts/mixins/RBACMixin.sol
+
+/// @title Role based access control mixin for MUST Platform
+/// @author Aler Denisov <aler.zampillo@gmail.com>
+/// @dev Ignore DRY approach to achieve readability
+contract RBACMixin {
+  /// @notice Constant string message to throw on lack of access
+  string constant FORBIDDEN = "Haven't enough right to access";
+  /// @notice Public map of owners
+  mapping (address => bool) public owners;
+  /// @notice Public map of minters
+  mapping (address => bool) public minters;
+
+  /// @notice The event indicates the addition of a new owner
+  /// @param who is address of added owner
+  event AddOwner(address indexed who);
+  /// @notice The event indicates the deletion of an owner
+  /// @param who is address of deleted owner
+  event DeleteOwner(address indexed who);
+
+  /// @notice The event indicates the addition of a new minter
+  /// @param who is address of added minter
+  event AddMinter(address indexed who);
+  /// @notice The event indicates the deletion of a minter
+  /// @param who is address of deleted minter
+  event DeleteMinter(address indexed who);
+
+  constructor () public {
+    _setOwner(msg.sender, true);
+  }
+
+  /// @notice The functional modifier rejects the interaction of senders who are not owners
+  modifier onlyOwner() {
+    require(isOwner(msg.sender), FORBIDDEN);
+    _;
+  }
+
+  /// @notice Functional modifier for rejecting the interaction of senders that are not minters
+  modifier onlyMinter() {
+    require(isMinter(msg.sender), FORBIDDEN);
+    _;
+  }
+
+  /// @notice Look up for the owner role on providen address
+  /// @param _who is address to look up
+  /// @return A boolean of owner role
+  function isOwner(address _who) public view returns (bool) {
+    return owners[_who];
+  }
+
+  /// @notice Look up for the minter role on providen address
+  /// @param _who is address to look up
+  /// @return A boolean of minter role
+  function isMinter(address _who) public view returns (bool) {
+    return minters[_who];
+  }
+
+  /// @notice Adds the owner role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to add role
+  /// @return A boolean that indicates if the operation was successful.
+  function addOwner(address _who) public onlyOwner returns (bool) {
+    _setOwner(_who, true);
+  }
+
+  /// @notice Deletes the owner role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to delete role
+  /// @return A boolean that indicates if the operation was successful.
+  function deleteOwner(address _who) public onlyOwner returns (bool) {
+    _setOwner(_who, false);
+  }
+
+  /// @notice Adds the minter role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to add role
+  /// @return A boolean that indicates if the operation was successful.
+  function addMinter(address _who) public onlyOwner returns (bool) {
+    _setMinter(_who, true);
+  }
+
+  /// @notice Deletes the minter role to provided address
+  /// @dev Requires owner role to interact
+  /// @param _who is address to delete role
+  /// @return A boolean that indicates if the operation was successful.
+  function deleteMinter(address _who) public onlyOwner returns (bool) {
+    _setMinter(_who, false);
+  }
+
+  /// @notice Changes the owner role to provided address
+  /// @param _who is address to change role
+  /// @param _flag is next role status after success
+  /// @return A boolean that indicates if the operation was successful.
+  function _setOwner(address _who, bool _flag) private returns (bool) {
+    require(owners[_who] != _flag);
+    owners[_who] = _flag;
+    if (_flag) {
+      emit AddOwner(_who);
+    } else {
+      emit DeleteOwner(_who);
+    }
+    return true;
+  }
+
+  /// @notice Changes the minter role to provided address
+  /// @param _who is address to change role
+  /// @param _flag is next role status after success
+  /// @return A boolean that indicates if the operation was successful.
+  function _setMinter(address _who, bool _flag) private returns (bool) {
+    require(minters[_who] != _flag);
+    minters[_who] = _flag;
+    if (_flag) {
+      emit AddMinter(_who);
+    } else {
+      emit DeleteMinter(_who);
+    }
+    return true;
+  }
+}
+
+// File: contracts/mixins/RBACERC223TokenFinalization.sol
+
+/// @title Role based token finalization mixin
+/// @author Aler Denisov <aler.zampillo@gmail.com>
+contract RBACERC223TokenFinalization is ERC223Mixin, RBACMixin {
+  event Finalize();
+  /// @notice Public field inicates the finalization state of smart-contract
+  bool public finalized;
+
+  /// @notice The functional modifier rejects the interaction if contract isn't finalized
+  modifier isFinalized() {
+    require(finalized);
+    _;
+  }
+
+  /// @notice The functional modifier rejects the interaction if contract is finalized
+  modifier notFinalized() {
+    require(!finalized);
+    _;
+  }
+
+  /// @notice Finalizes contract
+  /// @dev Requires owner role to interact
+  /// @return A boolean that indicates if the operation was successful.
+  function finalize() public notFinalized onlyOwner returns (bool) {
+    finalized = true;
+    emit Finalize();
+    return true;
+  }
+
+  /// @dev Overrides ERC20 interface to prevent interaction before finalization
+  function transferFrom(address _from, address _to, uint256 _value) public isFinalized returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  /// @dev Overrides ERC223 interface to prevent interaction before finalization
+  // solium-disable-next-line arg-overflow
+  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public isFinalized returns (bool) {
+    return super.transferFrom(_from, _to, _value, _data); // solium-disable-line arg-overflow
+  }
+
+  /// @dev Overrides ERC223 interface to prevent interaction before finalization
+  function transfer(address _to, uint256 _value, bytes _data) public isFinalized returns (bool) {
+    return super.transfer(_to, _value, _data);
+  }
+
+  /// @dev Overrides ERC20 interface to prevent interaction before finalization
+  function transfer(address _to, uint256 _value) public isFinalized returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  /// @dev Overrides ERC20 interface to prevent interaction before finalization
+  function approve(address _spender, uint256 _value) public isFinalized returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  /// @dev Overrides ERC20 interface to prevent interaction before finalization
+  function increaseApproval(address _spender, uint256 _addedValue) public isFinalized returns (bool) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  /// @dev Overrides ERC20 interface to prevent interaction before finalization
+  function decreaseApproval(address _spender, uint256 _subtractedValue) public isFinalized returns (bool) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+// File: contracts/mixins/RBACMintableTokenMixin.sol
+
+contract RBACMintableTokenMixin is StandardToken, RBACMixin {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    onlyMinter
+    canMint
+    public
+    returns (bool)
+  {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint internal returns (bool) {
     mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
   }
 
-  // privileged transfer
-  function transferPrivileged(address _to, uint _value) public onlyOwner returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    previligedBalances[_to] = safeAdd(previligedBalances[_to], _value);
-    Transfer(msg.sender, _to, _value);
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardBurnableToken.sol
+
+/**
+ * @title Standard Burnable Token
+ * @dev Adds burnFrom method to ERC20 implementations
+ */
+contract StandardBurnableToken is BurnableToken, StandardToken {
+
+  /**
+   * @dev Burns a specific amount of tokens from the target address and decrements allowance
+   * @param _from address The address which you want to send tokens from
+   * @param _value uint256 The amount of token to be burned
+   */
+  function burnFrom(address _from, uint256 _value) public {
+    require(_value <= allowed[_from][msg.sender]);
+    // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
+    // this function needs to emit an event with the updated approval.
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    _burn(_from, _value);
+  }
+}
+
+// File: contracts/MustToken.sol
+
+/// @title MUST Platform token implementation
+/// @author Aler Denisov <aler.zampillo@gmail.com>
+/// @dev Implements ERC20, ERC223 and MintableToken interfaces as well as capped and finalization logic
+contract MustToken is StandardBurnableToken, RBACERC223TokenFinalization, RBACMintableTokenMixin {
+  /// @notice Constant field with token full name
+  // solium-disable-next-line uppercase
+  string constant public name = "Main Universal Standard of Tokenization"; 
+  /// @notice Constant field with token symbol
+  string constant public symbol = "MUST"; // solium-disable-line uppercase
+  /// @notice Constant field with token precision depth
+  uint256 constant public decimals = 8; // solium-disable-line uppercase
+  /// @notice Constant field with token cap (total supply limit)
+  uint256 constant public cap = 5 * (10 ** 6) * (10 ** decimals); // solium-disable-line uppercase
+
+  /// @notice Overrides original mint function from MintableToken to limit minting over cap
+  /// @param _to The address that will receive the minted tokens.
+  /// @param _amount The amount of tokens to mint.
+  /// @return A boolean that indicates if the operation was successful.
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    public
+    returns (bool) 
+  {
+    require(totalSupply().add(_amount) <= cap);
+    return super.mint(_to, _amount);
+  }
+
+  /// @notice Overrides finalize function from RBACERC223TokenFinalization to prevent future minting after finalization
+  /// @return A boolean that indicates if the operation was successful.
+  function finalize() public returns (bool) {
+    require(super.finalize());
+    require(finishMinting());
     return true;
   }
 
-  // get priveleged balance
-  function getPrivilegedBalance(address _owner) public constant returns (uint balance) {
-    return previligedBalances[_owner];
-  }
-
-  // admin only can transfer from the privileged accounts
-  function transferFromPrivileged(address _from, address _to, uint _value) public onlyOwner onlyNotSame(_from, _to) returns (bool success) {
-    uint availablePrevilegedBalance = previligedBalances[_from];
-
-    balances[_from] = safeSub(balances[_from], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    previligedBalances[_from] = safeSub(availablePrevilegedBalance, _value);
-    Transfer(_from, _to, _value);
+  /// @notice Overrides finishMinting function from RBACMintableTokenMixin to prevent finishing minting before finalization
+  /// @return A boolean that indicates if the operation was successful.
+  function finishMinting() internal returns (bool) {
+    require(finalized == true);
+    require(super.finishMinting());
     return true;
   }
-
-  /**
-   * Create new tokens and allocate them to an address..
-   *
-   * Only callably by a crowdsale contract (mint agent).
-   */
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    amount *= 10 ** uint(decimals);
-    totalSupply = safeAdd(totalSupply, amount);
-    balances[receiver] = safeAdd(balances[receiver], amount);
-
-    // This will make the mint transaction apper in EtherScan.io
-    // We can remove this after there is a standardized minting event
-    Transfer(0, receiver, amount);
-  }
-
-  /**
-   * Owner can allow a crowdsale contract to mint new tokens.
-   */
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
-    mintAgents[addr] = state;
-    MintingAgentChanged(addr, state);
-  }
-
 }
