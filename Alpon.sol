@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alpon at 0x4aff7f37696ce3bb0dbe10dd63bae8dc9f634623
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alpon at 0x90fd55fb4d68cb96e9ab26253d0f0b59a728abc1
 */
 pragma solidity ^0.4.18;
 
@@ -150,7 +150,7 @@ contract Alpon is ERC223, Ownable {
     string public name = "Alpon";
     string public symbol = "APN";
     uint8 public decimals = 8;
-    uint256 public initialSupply = 10e9 * 1e8;
+    uint256 public initialSupply = 1e9 * 1e8;
     uint256 public totalSupply;
     uint256 public distributeAmount = 0;
     bool public mintingFinished = false;
