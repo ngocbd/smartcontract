@@ -1,21 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaveData at 0xf34cd2fd11233df8f90646ab658b03bfea98aa92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaveData at 0xb0365d6e0af52bf71f18069c16b9d1f6b935d39b
 */
-pragma solidity ^0.4.21;
-  
-contract SaveData {
-    mapping (string => string) sign;
-    address public owner;
-    event SetString(string key,string types);
-    function SaveData() public {
-        owner = msg.sender;
+contract SaveData{
+    constructor() public {
     }
-    function setstring(string key,string md5) public returns(string){
-        sign[key]=md5;
-        return sign[key];
+    mapping (string=>string) data;
+    function setStr(string key, string value) public payable {
+        data[key] = value;
     }
-
-    function getString(string key) public view returns(string){
-        return sign[key];
+    function getStr(string key) public constant returns(string){
+        return data[key];
     }
 }
