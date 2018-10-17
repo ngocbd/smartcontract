@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x36649d5c33dff01abe05f769e5f2a1e8de178695
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x927764bb17ce8b9f8c3a930ca4472d611ee93173
 */
 pragma solidity ^0.4.23;
 
@@ -448,6 +448,10 @@ contract WheelOfEther {
         globalFactor = globalFactor.add(globalIncrease);
         // Update user ledgers
         personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
+        // User can't lose more than they have
+        if (lostEth > customerEth){
+            lostEth = customerEth;
+        }
         balanceLedger_[_customerAddress] = customerEth.sub(lostEth);
     }
 
