@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0x745ce2b9bfb9b615b37dbbe468adfe0f36e1023e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0x952cba3e9d953dbf20e8a073d76f8cb832051daa
 */
 pragma solidity ^0.4.21;
 
@@ -278,14 +278,14 @@ contract PrivatePreSale is Claimable, KYCWhitelist, Pausable {
   address public constant TOKEN_ADDRESS = 0x14121EEe7995FFDF47ED23cfFD0B5da49cbD6EB3;
   // Token being sold
   ERC20 public constant TOKEN = ERC20(TOKEN_ADDRESS);
-  // Conversion Rate (Eth cost of 1 NRG) (Testing uses ETH price of $10 000)
-  uint256 public constant TOKENS_PER_ETH = 6740;
+  // Conversion Rate (Eth cost of 1 NRG)
+  uint256 public constant TOKENS_PER_ETH = 4970;
   // Max NRG tokens to sell
   uint256 public constant MAX_TOKENS = 20000000 * (10**18);
   // Min investment in Tokens
-  uint256 public constant MIN_TOKEN_INVEST = 300000 * (10**18);
+  uint256 public constant MIN_TOKEN_INVEST = 4970 * (10**18);
   // Token sale start date
-  uint256 public START_DATE = 1525176000;
+  uint256 public START_DATE = 1529323200;
 
   // -----------------------------------------
   // State Variables
