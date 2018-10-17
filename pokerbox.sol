@@ -1,33 +1,64 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract pokerbox at 0xa4d9db19f8aba122d3f3a85741a353b272d8e75b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract pokerbox at 0x9d78513d427b6cfb68c1c996b5e924ffc02e4723
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.4;
 
+// ----------------------------------------------------------------------------
+//
+// Symbol      : PEX
+// Name        : pokerbox
+// Total supply: 30000000000
+// Decimals    : 18
+//
+//
+// (c) Pokerbox
+
+/**
+ * @title SafeMath
+ */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    /**
+    * Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+    * Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /**
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-contract ForeignToken {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -46,38 +77,32 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-interface Token { 
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
-
 contract pokerbox is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
 
     mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
+    mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "pokerbox";
     string public constant symbol = "PEX";
     uint public constant decimals = 18;
     
     uint256 public totalSupply = 30000000000e18;
-    uint256 private totalReserved = (totalSupply.div(100)).mul(15);
-    uint256 private totalBounties = (totalSupply.div(100)).mul(10);
-    uint256 public totalDistributed = totalReserved.add(totalBounties);
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value;
-    uint256 public minReq;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 20000000e18;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
+
+    event Airdrop(address indexed _owner, uint _amount, uint _balance);
+
+    event TokensPerEthUpdated(uint _tokensPerEth);
     
     event Burn(address indexed burner, uint256 value);
 
@@ -93,124 +118,82 @@ contract pokerbox is ERC20 {
         _;
     }
     
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
-    }
     
-    function pokerbox (uint256 _value, uint256 _minReq) public {
+    function pokerbox () public {
         owner = msg.sender;
-        value = _value;
-        minReq = _minReq;
-        balances[msg.sender] = totalDistributed;
+        uint256 devTokens = 10000000000e18;
+        distr(owner, devTokens);
     }
     
-     function setParameters (uint256 _value, uint256 _minReq) onlyOwner public {
-        value = _value;
-        minReq = _minReq;
-    }
-
     function transferOwnership(address newOwner) onlyOwner public {
         if (newOwner != address(0)) {
             owner = newOwner;
         }
     }
     
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
-    }
-
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
-    }
 
     function finishDistribution() onlyOwner canDistr public returns (bool) {
         distributionFinished = true;
-        DistrFinished();
+        emit DistrFinished();
         return true;
     }
     
     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
+        totalDistributed = totalDistributed.add(_amount);        
         balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-        
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
 
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-        
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-            
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
-        }
+        return true;
     }
-    
+
+    function doAirdrop(address _participant, uint _amount) internal {
+
+        require( _amount > 0 );      
+
+        require( totalDistributed < totalSupply );
+        
+        balances[_participant] = balances[_participant].add(_amount);
+        totalDistributed = totalDistributed.add(_amount);
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+
+        // log
+        emit Airdrop(_participant, _amount, balances[_participant]);
+        emit Transfer(address(0), _participant, _amount);
+    }
+
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
+        doAirdrop(_participant, _amount);
+    }
+
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
+        for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
+    }
+
+    function updateTokensPerEth(uint _tokensPerEth) public onlyOwner {        
+        tokensPerEth = _tokensPerEth;
+        emit TokensPerEthUpdated(_tokensPerEth);
+    }
+           
     function () external payable {
-            getTokens();
+        getTokens();
      }
     
-    function getTokens() payable canDistr onlyWhitelist public {
+    function getTokens() payable canDistr  public {
+        uint256 tokens = 0;
+
+        require( msg.value >= minContribution );
+
+        require( msg.value > 0 );
         
-        require(value <= totalRemaining);
-        
+        tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
-        uint256 toGive = value;
         
-        if (msg.value < minReq){
-            toGive = value.sub(value);
-        }
-        
-        distr(investor, toGive);
-        
-        if (toGive > 0) {
-            blacklist[investor] = true;
+        if (tokens > 0) {
+            distr(investor, tokens);
         }
 
         if (totalDistributed >= totalSupply) {
@@ -219,7 +202,7 @@ contract pokerbox is ERC20 {
     }
 
     function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
+        return balances[_owner];
     }
 
     // mitigates the ERC20 short address attack
@@ -235,7 +218,7 @@ contract pokerbox is ERC20 {
         
         balances[msg.sender] = balances[msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
     
@@ -248,7 +231,7 @@ contract pokerbox is ERC20 {
         balances[_from] = balances[_from].sub(_amount);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
+        emit Transfer(_from, _to, _amount);
         return true;
     }
     
@@ -256,7 +239,7 @@ contract pokerbox is ERC20 {
         // mitigates the ERC20 spend/approval race condition
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
     
@@ -265,33 +248,30 @@ contract pokerbox is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
     
     function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
+        address myAddress = this;
+        uint256 etherBalance = myAddress.balance;
         owner.transfer(etherBalance);
     }
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
+        
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
         totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
+        emit Burn(burner, _value);
     }
     
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
-
-
 }
