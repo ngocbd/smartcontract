@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0xaa9244a72cf89041c95536a6cb451fbe6a11ecc7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gateway at 0x484afd352ad835510885cfba359c31e97609f2e2
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error For CHRTY Tokens And Ethereum
+ * @dev Math operations for Charity Sea Platform Gateway operations with safety checks that throw on error
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -114,7 +114,6 @@ contract Gateway is Ownable{
     using SafeMath for uint;
     address public feeAccount1 = 0x455f19F16ee2f3F487fb498A24E3F69f78E8Ec14; //the account1 that will receive fees
     address public feeAccount2 = 0x07fe839AD214433B764ca17290Ee966106B7b3C1; //the account2 that will receive fees
-    address public feeAccountToken = 0xAc159594c06bD64928199B0F4D6D801C447d51D2; //the account that will receive fees tokens
     
     struct BuyInfo {
       address buyerAddress; 
@@ -125,11 +124,12 @@ contract Gateway is Ownable{
     
     mapping(address => mapping(uint => BuyInfo)) public payment;
    
+    mapping(address => uint) public balances;
     uint balanceFee;
     uint public feePercent;
     uint public maxFee;
     constructor() public{
-       feePercent = 1500000; // decimals 6. 1.5% fee by default
+       feePercent = 1500000; // decimals 6. 1,5% fee by default
        maxFee = 3000000; // fee can not exceed 3%
     }
     
@@ -156,9 +156,6 @@ contract Gateway is Ownable{
     function setFeeAccount2(address _feeAccount2) onlyOwner public{
       feeAccount2 = _feeAccount2;  
     }
-    function setFeeAccountToken(address _feeAccountToken) onlyOwner public{
-      feeAccountToken = _feeAccountToken;  
-    }    
     function setFeePercent(uint _feePercent) onlyOwner public{
       require(_feePercent <= maxFee);
       feePercent = _feePercent;  
@@ -169,15 +166,16 @@ contract Gateway is Ownable{
       require(_value > 0);
       Token token = Token(_tokenAddress);
       require(token.allowance(msg.sender, this) >= _value);
-      token.transferFrom(msg.sender, feeAccountToken, _value.mul(feePercent).div(100000000));
-      token.transferFrom(msg.sender, _sellerAddress, _value.sub(_value.mul(feePercent).div(100000000)));
+      token.transferFrom(msg.sender, _sellerAddress, _value);
       payment[_sellerAddress][_orderId] = BuyInfo(msg.sender, _sellerAddress, _value, _tokenAddress);
       success = true;
     }
-    function payEth(address _sellerAddress, uint _orderId, uint _value) internal returns  (bool success){
+    function payEth(address _sellerAddress, uint _orderId, uint _value) public returns  (bool success){
       require(_sellerAddress != address(0)); 
       require(_value > 0);
+      require(balances[msg.sender] >= _value);
       uint fee = _value.mul(feePercent).div(100000000);
+      balances[msg.sender] = balances[msg.sender].sub(_value);
       _sellerAddress.transfer(_value.sub(fee));
       balanceFee = balanceFee.add(fee);
       payment[_sellerAddress][_orderId] = BuyInfo(msg.sender, _sellerAddress, _value, 0x0000000000000000000000000000000000000001);    
@@ -197,22 +195,16 @@ contract Gateway is Ownable{
     function balanceOfEthFee() public constant returns (uint) {
       return balanceFee;
     }
-    function bytesToAddress(bytes source) internal pure returns(address) {
-      uint result;
-      uint mul = 1;
-      for(uint i = 20; i > 0; i--) {
-        result += uint8(source[i-1])*mul;
-        mul = mul*256;
-      }
-      return address(result);
+    function refund() public{
+      require(balances[msg.sender] > 0);
+      uint value = balances[msg.sender];
+      balances[msg.sender] = 0;
+      msg.sender.transfer(value);
+    }
+    function getBalanceEth() public constant returns(uint){
+      return balances[msg.sender];    
     }
     function() external payable {
-      require(msg.data.length == 20); 
-      require(msg.value > 99999999999);
-      address sellerAddress = bytesToAddress(bytes(msg.data));
-      uint value = msg.value.div(10000000000).mul(10000000000);
-      uint orderId = msg.value.sub(value);
-      balanceFee = balanceFee.add(orderId);
-      payEth(sellerAddress, orderId, value);
+      balances[msg.sender] = balances[msg.sender].add(msg.value);    
   }
 }
