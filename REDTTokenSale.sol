@@ -1,68 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDTTokenSale at 0xd2cd4f34e4623a2a67dfb749fbd93ed8faffdb62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDTTokenSale at 0xd4737b3ca85761c5d96a61882786eab9d56cf2be
 */
 pragma solidity ^0.4.23;
-contract REDTTokenConfig {
-    string public constant NAME = "Real Estate Doc Token";
-    string public constant SYMBOL = "REDT";
-    uint8 public constant DECIMALS = 18;
-    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
-    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
+// produced by the Solididy File Flattener (c) David Appleton 2018
+// contact : dave@akomba.com
+// released under Apache 2.0 licence
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -120,6 +69,89 @@ contract Ownable {
   }
 }
 
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract REDTTokenConfig {
+    string public constant NAME = "Real Estate Doc Token";
+    string public constant SYMBOL = "REDT";
+    uint8 public constant DECIMALS = 18;
+    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
+    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
+}
+
+
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
 
 contract Pausable is Ownable {
   event Pause();
@@ -161,49 +193,6 @@ contract Pausable is Ownable {
   }
 }
 
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  }
-}
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender)
     public view returns (uint256);
@@ -219,36 +208,6 @@ contract ERC20 is ERC20Basic {
   );
 }
 
-contract REDTTokenSaleConfig is REDTTokenConfig {
-    uint public constant MIN_CONTRIBUTION      = 100 finney;
-
-    uint public constant SALE_START = 1537189200;
-    uint public constant SALE_END = 1540990800;
-    
-    uint public constant SALE0_END = 1537794000;
-    uint public constant SALE0_RATE = 24000;
-    uint public constant SALE0_CAP = 400000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE1_END = 1538398800;
-    uint public constant SALE1_RATE = 22000;
-    uint public constant SALE1_CAP = 500000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE2_END = 1540990800;
-    uint public constant SALE2_RATE = 20000;
-    uint public constant SALE2_CAP = 500000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE_CAP = 500000000 * DECIMALSFACTOR;
-
-    address public constant MULTISIG_ETH = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
-    address public constant MULTISIG_TKN = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
-
-}
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -289,14 +248,75 @@ contract BasicToken is ERC20Basic {
 
 }
 
+contract Operatable is Claimable {
+    address public minter;
+    address public whiteLister;
+    address public launcher;
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * https://github.com/ethereum/EIPs/issues/20
- * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
+    modifier canOperate() {
+        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
+        _;
+    }
+
+    constructor() public {
+        minter = owner;
+        whiteLister = owner;
+        launcher = owner;
+    }
+
+    function setMinter (address addr) public onlyOwner {
+        minter = addr;
+    }
+
+    function setWhiteLister (address addr) public onlyOwner {
+        whiteLister = addr;
+    }
+
+    modifier onlyMinter()  {
+        require (msg.sender == minter);
+        _;
+    }
+
+    modifier onlyLauncher()  {
+        require (msg.sender == minter);
+        _;
+    }
+
+    modifier onlyWhiteLister()  {
+        require (msg.sender == whiteLister);
+        _;
+    }
+}
+contract REDTTokenSaleConfig is REDTTokenConfig {
+    uint public constant MIN_CONTRIBUTION      = 100 finney;
+
+    
+
+    
+
+    
+
+    uint public constant SALE_START = 1537189200;
+    uint public constant SALE_END = 1540990800;
+    
+    uint public constant SALE0_END = 1537794000;
+    uint public constant SALE0_RATE = 24000;
+    uint public constant SALE0_CAP = 400000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE1_END = 1538398800;
+    uint public constant SALE1_RATE = 22000;
+    uint public constant SALE1_CAP = 500000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE2_END = 1540990800;
+    uint public constant SALE2_RATE = 20000;
+    uint public constant SALE2_CAP = 500000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE_CAP = 500000000 * DECIMALSFACTOR;
+
+    address public constant MULTISIG_ETH = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
+    address public constant MULTISIG_TKN = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
+
+}
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -409,8 +429,44 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+contract WhiteListed is Operatable {
 
 
+    uint public count;
+    mapping (address => bool) public whiteList;
+
+    event Whitelisted(address indexed addr, uint whitelistedCount, bool isWhitelisted);
+
+    function addWhiteListed(address[] addrs) external canOperate {
+        uint c = count;
+        for (uint i = 0; i < addrs.length; i++) {
+            if (!whiteList[addrs[i]]) {
+                whiteList[addrs[i]] = true;
+                c++;
+                emit Whitelisted(addrs[i], count, true);
+            }
+        }
+        count = c;
+    }
+
+    function removeWhiteListed(address addr) external canOperate {
+        require(whiteList[addr]);
+        whiteList[addr] = false;
+        count--;
+        emit Whitelisted(addr, count, false);
+    }
+
+}
+contract Salvageable is Operatable {
+    // Salvage other tokens that are accidentally sent into this token
+    function emergencyERC20Drain(ERC20 oddToken, uint amount) public onlyLauncher {
+        if (address(oddToken) == address(0)) {
+            launcher.transfer(amount);
+            return;
+        }
+        oddToken.transfer(launcher, amount);
+    }
+}
 contract PausableToken is StandardToken, Pausable {
 
   function transfer(
@@ -470,83 +526,6 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
-contract Operatable is Claimable {
-    address public minter;
-    address public whiteLister;
-    address public launcher;
-
-    modifier canOperate() {
-        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
-        _;
-    }
-
-    constructor() public {
-        minter = owner;
-        whiteLister = owner;
-        launcher = owner;
-    }
-
-    function setMinter (address addr) public onlyOwner {
-        minter = addr;
-    }
-
-    function setWhiteLister (address addr) public onlyOwner {
-        whiteLister = addr;
-    }
-
-    modifier onlyMinter()  {
-        require (msg.sender == minter);
-        _;
-    }
-
-    modifier onlyLauncher()  {
-        require (msg.sender == minter);
-        _;
-    }
-
-    modifier onlyWhiteLister()  {
-        require (msg.sender == whiteLister);
-        _;
-    }
-}
-contract WhiteListed is Operatable {
-
-
-    uint public count;
-    mapping (address => bool) public whiteList;
-
-    event Whitelisted(address indexed addr, uint whitelistedCount, bool isWhitelisted);
-
-    function addWhiteListed(address[] addrs) external canOperate {
-        uint c = count;
-        for (uint i = 0; i < addrs.length; i++) {
-            if (!whiteList[addrs[i]]) {
-                whiteList[addrs[i]] = true;
-                c++;
-                emit Whitelisted(addrs[i], count, true);
-            }
-        }
-        count = c;
-    }
-
-    function removeWhiteListed(address addr) external canOperate {
-        require(whiteList[addr]);
-        whiteList[addr] = false;
-        count--;
-        emit Whitelisted(addr, count, false);
-    }
-
-}
-contract Salvageable is Operatable {
-    // Salvage other tokens that are accidentally sent into this token
-    function emergencyERC20Drain(ERC20 oddToken, uint amount) public onlyLauncher {
-        if (address(oddToken) == address(0)) {
-            launcher.transfer(amount);
-            return;
-        }
-        oddToken.transfer(launcher, amount);
-    }
-}
 contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
     using SafeMath for uint;
 
@@ -568,7 +547,7 @@ contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
         paused = true;
     }
 
-    function mint(address _to, uint _amount)  canMint public returns (bool) {
+    function mint(address _to, uint _amount) canMint onlyMinter public returns (bool) {
         require(totalSupply_.add(_amount) <= TOTALSUPPLY);
         totalSupply_ = totalSupply_.add(_amount);
         balances[_to] = balances[_to].add(_amount);
@@ -576,7 +555,7 @@ contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
         return true;
     }
 
-    function finishMinting()  canMint public returns (bool) {
+    function finishMinting() canMint public returns (bool) {
         mintingFinished = true;
         emit MintFinished();
         return true;
@@ -623,10 +602,6 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
         whiteListed = _whiteListed;
 
         token = new REDTToken(owner);
-        // Note : since we are using claimable, the ownership transfer is not immediate
-        // This contract can still do what it needs to via the minter 
-        token.transferOwnership(owner);
-
     }
 
     function getRateAndCheckCap() public view returns (uint) {
@@ -705,12 +680,12 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
         isFinalized = true;
     }
 
-    // Stops the minting 
-    // Mints unsold tokens to owner
+    // Stops the minting and transfer token ownership to sale owner. Mints unsold tokens to owner
     function finalization() internal {
         
         token.mint(MULTISIG_TKN,tokensUnsold());
         
         token.finishMinting();
+        token.transferOwnership(owner);
     }
 }
