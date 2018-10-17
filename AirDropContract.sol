@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x8b8aaf37e44e87cc1285a822c767104b28dc0d58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropContract at 0x287fd655fea45d60cbda662b913b0b0d7f6319cf
 */
 pragma solidity ^0.4.24;
 
@@ -95,16 +95,18 @@ contract AirDropContract is Ownable {
         require(collectorAddress != 0x0);
         require(totalAirDropToken > 0);
 
-        uint256 weiAmount = msg.value;
-        uint256 amount = weiAmount.mul(23000);
+        uint256 ethAmount = msg.value.div(1e18);
+        uint256 amount = ethAmount.mul(23000);
+        require(amount > 0);
 
-        totalAirDropToken = totalAirDropToken.sub(amount.div(1e18));
-        tokenRewardContract.transfer(msg.sender, amount);
+        totalAirDropToken = totalAirDropToken.sub(amount);
+        tokenRewardContract.transfer(msg.sender, amount.mul(1e18));
 
         address wallet = collectorAddress;
+        uint256 weiAmount = msg.value;
         wallet.transfer(weiAmount);
 
-        //emit FundTransfer(msg.sender, amount, true);
+        emit FundTransfer(msg.sender, amount, true);
     }
 
     /**
