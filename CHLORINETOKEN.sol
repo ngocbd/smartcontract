@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHLORINETOKEN at 0xf9943775d1ffcdc764e591d04a780a2bf0dbb77c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHLORINETOKEN at 0x15f9771acb367db3aac6f623aa873dc5b6835bd3
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'CHLORINETOKEN' CROWDSALE token contract
 //
-// Deployed to : 0xf9943775d1ffcdc764e591d04a780a2bf0dbb77c
+// Deployed to : 0x15f9771acb367db3aac6f623aa873dc5b6835bd3
 // Symbol      : CLTN
 // Name        : CHLORINE TOKEN 
 // Total supply: 1000000000000000000000000000
@@ -212,15 +212,15 @@ contract CHLORINETOKEN is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 10,000,000 CHLORINE Tokens per 1 ETH
+    // 600,000 CLTN Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 12000000;
+            tokens = msg.value * 720000;
         } else {
-            tokens = msg.value * 10000000;
+            tokens = msg.value * 600000;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
