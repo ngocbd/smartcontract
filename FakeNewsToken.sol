@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeNewsToken at 0xaca5f08a2547f3f73ac8277f02f365f7600aa46a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeNewsToken at 0x496d478d1c819026c8f468e0ec1e8096a055bf17
 */
 pragma solidity ^0.4.18;
 
@@ -7,14 +7,14 @@ pragma solidity ^0.4.18;
 // 'FAKENEWS' token contract
 //
 // Deployed to : 0xA91e24CE3736B2723015C109eb82447430bcC3A5
-// Symbol      : FAKENEWS
+// Symbol      : NEWS
 // Name        : Fake News Token
-// Total supply: 10000000000
+// Total supply: 70000000
 // Decimals    : 18
 //
-// Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+//
+// We are the eyes of the internet
 // ----------------------------------------------------------------------------
 
 
@@ -61,7 +61,7 @@ contract ERC20Interface {
 // ----------------------------------------------------------------------------
 // Contract function to receive approval and execute function in one call
 //
-// Borrowed from MiniMeToken
+//
 // ----------------------------------------------------------------------------
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
@@ -116,10 +116,10 @@ contract FakeNewsToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function FakeNewsToken() public {
-        symbol = "FAKENEWS";
+        symbol = "NEWS";
         name = "Fake News Token";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000000000000;
+        _totalSupply = 70000000000000000000000000;
         balances[0xA91e24CE3736B2723015C109eb82447430bcC3A5] = _totalSupply;
         Transfer(address(0), 0xA91e24CE3736B2723015C109eb82447430bcC3A5, _totalSupply);
     }
@@ -160,7 +160,7 @@ contract FakeNewsToken is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -171,7 +171,7 @@ contract FakeNewsToken is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    // 
+    //
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
