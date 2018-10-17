@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x72340f7173ef45349d8c068fe18d26573f31ac87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x255478fbe5934c2b23497832d39ddd2b37c6d92d
 */
 pragma solidity ^0.4.19;
 
@@ -48,8 +48,8 @@ contract BaseToken {
 contract CustomToken is BaseToken {
     function CustomToken() public {
         totalSupply = 2000000000000000000000000000;
-        name = 'SzkCoin';
-        symbol = 'SZK';
+        name = 'UgkCoin';
+        symbol = 'UGK';
         decimals = 18;
         balanceOf[0x178f97a55b02eead22b895e6525de97689dd05e9] = totalSupply;
         Transfer(address(0), 0x178f97a55b02eead22b895e6525de97689dd05e9, totalSupply);
