@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetWexCoin at 0x4a5f2a4da9bedf6fee7f52a59111281baff59e0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetWexCoin at 0x336a349cea0719a402ac6296382a28e209c6f15b
 */
 pragma solidity ^0.4.4;
 
@@ -108,8 +108,8 @@ contract NetWexCoin is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function NetWexCoin() {
-        balances[msg.sender] = 101000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 101000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 101000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 101000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "NetWexCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "NXET";                                             // Set the symbol for display purposes (CHANGE THIS)
