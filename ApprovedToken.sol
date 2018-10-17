@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedToken at 0xed322cc974befcf1da1d033e46ff75738b8b584a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedToken at 0x8712617216f4fc98bc454e5d87dd25197adc66b8
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for LUNATICUS
  */
 contract ApprovedToken is StandardToken {
-	string public name = 'SHABBY';
-	string public symbol = 'SHABBY';
+	string public name = 'JOINT';
+	string public symbol = 'JOINT';
 	uint public decimals = 18;
 	uint public initialSupply = 100000000000000000000000000;
 	string public publisher = 'LUNATICUS';
