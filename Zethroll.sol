@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x0096dc2246fc3627cc2bf87a3b0d2e0f87b58589
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xfd115c04952afee689cfd6759226e4feb457987b
 */
 pragma solidity ^0.4.23;
 
@@ -283,7 +283,6 @@ contract Zethroll is ZTHReceivingContract {
 
   // Token fallback to bet or deposit from bankroll
   function tokenFallback(address _from, uint _value, bytes _data) public returns (bool) {
-    require(msg.sender == ZTHTKNADDR);
     if (_from == ZethrBankroll) {
       // Update the contract balance
       contractBalance = contractBalance.add(_value);
