@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainToken at 0x507e04f88d500aabc1ed6f3ed23e8368beb7ff43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CaptainToken at 0xe6609f75fd14562125dda0e7ad353a653ca11377
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -10,52 +10,6 @@ pragma solidity ^0.4.18;
 /* authors rainy@livestar.com/Jonny.Fu@livestar.com
 /*                 
 /* ==================================================================== */
-/// @title ERC-721 Non-Fungible Token Standard
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-///  Note: the ERC-165 identifier for this interface is 0x80ac58cd
-contract ERC721 /* is ERC165 */ {
-  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-  event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
-
-  function balanceOf(address _owner) external view returns (uint256);
-  function ownerOf(uint256 _tokenId) external view returns (address);
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external payable;
-  function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
-  function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
-  function approve(address _approved, uint256 _tokenId) external payable;
-  function setApprovalForAll(address _operator, bool _approved) external;
-  function getApproved(uint256 _tokenId) external view returns (address);
-  function isApprovedForAll(address _owner, address _operator) external view returns (bool);
-}
-
-interface ERC165 {
-     function supportsInterface(bytes4 interfaceID) external view returns (bool);
-}
-
-/// @title ERC-721 Non-Fungible Token Standard
-interface ERC721TokenReceiver {
-	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
-}
-
-/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-///  Note: the ERC-165 identifier for this interface is 0x5b5e139f
-interface ERC721Metadata /* is ERC721 */ {
-    function name() external view returns (string _name);
-    function symbol() external view returns (string _symbol);
-    function tokenURI(uint256 _tokenId) external view returns (string);
-}
-
-/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-///  Note: the ERC-165 identifier for this interface is 0x780e9d63
-interface ERC721Enumerable /* is ERC721 */ {
-    function totalSupply() external view returns (uint256);
-    function tokenByIndex(uint256 _index) external view returns (uint256);
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
-}
-
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -92,7 +46,6 @@ contract Ownable {
     owner = newOwner;
   }
 }
-
 
 /**
  * @title Pausable
@@ -140,75 +93,6 @@ contract Pausable is Ownable {
   }
 }
 
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function mul32(uint32 a, uint32 b) internal pure returns (uint32) {
-    if (a == 0) {
-      return 0;
-    }
-    uint32 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function div32(uint32 a, uint32 b) internal pure returns (uint32) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint32 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function sub32(uint32 a, uint32 b) internal pure returns (uint32) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function add32(uint32 a, uint32 b) internal pure returns (uint32) {
-    uint32 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 contract AccessAdmin is Pausable {
 
   /// @dev Admin Address
@@ -237,9 +121,53 @@ contract AccessAdmin is Pausable {
   }
 }
 
-interface CaptainGameConfigInterface {
-  function getLevelConfig(uint32 cardId, uint32 level) external view returns (uint32 atk,uint32 defense,uint32 atk_min,uint32 atk_max);
+
+/// @title ERC-721 Non-Fungible Token Standard
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x80ac58cd
+contract ERC721 /* is ERC165 */ {
+  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+  event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
+
+  function balanceOf(address _owner) external view returns (uint256);
+  function ownerOf(uint256 _tokenId) external view returns (address);
+  function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external payable;
+  function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable;
+  function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+  function approve(address _approved, uint256 _tokenId) external payable;
+  function setApprovalForAll(address _operator, bool _approved) external;
+  function getApproved(uint256 _tokenId) external view returns (address);
+  function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
+
+interface ERC165 {
+     function supportsInterface(bytes4 interfaceID) external view returns (bool);
+}
+
+/// @title ERC-721 Non-Fungible Token Standard
+interface ERC721TokenReceiver {
+	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
+}
+
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x5b5e139f
+interface ERC721Metadata /* is ERC721 */ {
+    function name() external view returns (string _name);
+    function symbol() external view returns (string _symbol);
+    function tokenURI(uint256 _tokenId) external view returns (string);
+}
+
+/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
+/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+///  Note: the ERC-165 identifier for this interface is 0x780e9d63
+interface ERC721Enumerable /* is ERC721 */ {
+    function totalSupply() external view returns (uint256);
+    function tokenByIndex(uint256 _index) external view returns (uint256);
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
+}
+
 contract CaptainToken is AccessAdmin, ERC721 {
   using SafeMath for SafeMath;
   //event 
@@ -248,27 +176,22 @@ contract CaptainToken is AccessAdmin, ERC721 {
   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
   event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
-  event LevelUP(address indexed _owner,uint32 oldLevel, uint32 newLevel);
 
   struct Captain {
     uint32 captainId;  
-    uint32 color; // 1,2,3,4  
+    uint32 color;   
     uint32 atk; 
     uint32 defense;
-    uint32 level;
-    uint256 exp;
+    uint32 atk_min;
+    uint32 atk_max;
   }
-  CaptainGameConfigInterface public config;
+
 
   Captain[] public captains; //dynamic Array
   function CaptainToken() public {
     captains.length += 1;
     setAdminContract(msg.sender,true);
     setActionContract(msg.sender,true);
-  }
-  //setting configuration
-  function setGameConfigContract(address _address) external onlyOwner {
-    config = CaptainGameConfigInterface(_address);
   }
 
   /**MAPPING**/
@@ -289,6 +212,8 @@ contract CaptainToken is AccessAdmin, ERC721 {
   /// @dev The authorized operators for each address
   mapping (address => mapping (address => bool)) operatorToApprovals;
   mapping(uint256 => bool) tokenToSell;
+  /// @dev captain by the owner (array)
+  mapping (address => uint256[]) ownerToCaptainsArray;
   
 
   /*** CONSTRUCTOR ***/
@@ -307,12 +232,23 @@ contract CaptainToken is AccessAdmin, ERC721 {
     _;
   }
   /// @dev Creates a new Captain with the given name.
-  function CreateCaptainToken(address _owner,uint256 _price, uint32 _captainId, uint32 _color,uint32 _atk,uint32 _defense,uint32 _level,uint256 _exp) public onlyAccess {
-    _createCaptainToken(_owner,_price,_captainId,_color,_atk,_defense,_level,_exp);
+  function CreateCaptainToken(address _owner,uint256 _price, uint32 _captainId, uint32 _color,uint32 _atk,uint32 _defense,uint32 _atk_min,uint32 _atk_max) public onlyAccess {
+    _createCaptainToken(_owner,_price,_captainId,_color,_atk,_defense,_atk_min,_atk_max);
+  }
+
+  function checkCaptain(address _owner,uint32 _captainId) external view returns (bool) {
+    uint256 len = ownerToCaptainsArray[_owner].length;
+    bool bexist = false;
+    for (uint256 i=0;i<len;i++) {
+      if (ownerToCaptainsArray[_owner][i] == _captainId) {
+        bexist = true;
+      }
+      }
+    return bexist;
   }
 
   /// For creating CaptainToken
-  function _createCaptainToken(address _owner, uint256 _price, uint32 _captainId, uint32 _color, uint32 _atk, uint32 _defense,uint32 _level,uint256 _exp) 
+  function _createCaptainToken(address _owner, uint256 _price, uint32 _captainId, uint32 _color, uint32 _atk, uint32 _defense,uint32 _atk_min, uint32 _atk_max) 
   internal {
     uint256 newTokenId = captains.length;
     Captain memory _captain = Captain({
@@ -320,14 +256,15 @@ contract CaptainToken is AccessAdmin, ERC721 {
       color: _color,
       atk: _atk,
       defense: _defense,
-      level: _level,
-      exp: _exp 
+      atk_min: _atk_min,
+      atk_max: _atk_max
     });
     captains.push(_captain);
     //event
     CreateCaptain(newTokenId, _captainId, _owner, _price);
     captainTokenIdToPrice[newTokenId] = _price;
     IndexToCaptain[newTokenId] = _captainId;
+    ownerToCaptainsArray[_owner].push(_captainId);
     tokenCountOfCaptain[_captainId] = SafeMath.add(tokenCountOfCaptain[_captainId],1);
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
@@ -391,9 +328,9 @@ contract CaptainToken is AccessAdmin, ERC721 {
     uint32 captainId,  
     uint32 color, 
     uint32 atk,
+    uint32 atk_min,
+    uint32 atk_max,
     uint32 defense,
-    uint32 level,
-    uint256 exp, 
     uint256 price,
     address owner,
     bool selled
@@ -402,34 +339,12 @@ contract CaptainToken is AccessAdmin, ERC721 {
     captainId = captain.captainId;
     color = captain.color;
     atk = captain.atk;
+    atk_min = captain.atk_min;
+    atk_max = captain.atk_max;
     defense = captain.defense;
-    level = captain.level;
-    exp = captain.exp;
     price = captainTokenIdToPrice[_tokenId];
     owner = captainTokenIdToOwner[_tokenId];
     selled = tokenToSell[_tokenId];
-  }
-
-  /// @dev levelUp 
-  function LevelUp(uint256 _tokenId,uint32 _level) external payable {
-    require(msg.sender == captainTokenIdToOwner[_tokenId]);
-    Captain storage captain = captains[_tokenId];
-    uint32 captainId = captain.captainId;
-    uint32 level = captain.level;
-    uint256 cur_exp = SafeMath.mul(SafeMath.mul(level,SafeMath.sub(level,1)),25); // level*(level-1)*25
-    uint256 req_exp = SafeMath.mul(SafeMath.mul(_level,SafeMath.sub(_level,1)),25);
-    require(captain.exp>=SafeMath.sub(req_exp,cur_exp));
-    uint256 exp = SafeMath.sub(captain.exp,SafeMath.sub(req_exp,cur_exp));
-    if (SafeMath.add32(level,_level)>=99) {
-      captains[_tokenId].level = 99;
-    } else {
-      captains[_tokenId].level = _level;
-    }
-
-    (captains[_tokenId].atk,captains[_tokenId].defense,,) = config.getLevelConfig(captainId,captains[_tokenId].level);
-    captains[_tokenId].exp = exp;
-    //event tell the world
-    LevelUP(msg.sender,level,captain.level);
   }
 
   /// ERC721 
@@ -639,4 +554,95 @@ contract CaptainToken is AccessAdmin, ERC721 {
       return result;
     }
   } 
+
+  function tokensOfSell() external view returns (uint256[],bool[],address[],uint32[]) {
+    uint256 len = captains.length - destroyCaptainCount -1;
+    uint256[] memory tokens = new uint256[](len);
+    bool[] memory captainss = new bool[](len);
+    address[] memory owner = new address[](len);
+    uint32[] memory captainId = new uint32[](len);
+    uint256 icount;
+    for (uint256 i=0;i<len;i++) {
+      icount++;
+      tokens[i] = icount;
+      owner[i] = captainTokenIdToOwner[icount];
+      captainId[i] = IndexToCaptain[icount];
+      if (tokenToSell[icount] == true) {
+        captainss[i] = true;
+      }else{
+        captainss[i] = false;
+      }
+    }
+    
+    return (tokens,captainss,owner,captainId);
+  }
+}
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function mul32(uint32 a, uint32 b) internal pure returns (uint32) {
+    if (a == 0) {
+      return 0;
+    }
+    uint32 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function div32(uint32 a, uint32 b) internal pure returns (uint32) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint32 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function sub32(uint32 a, uint32 b) internal pure returns (uint32) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function add32(uint32 a, uint32 b) internal pure returns (uint32) {
+    uint32 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
