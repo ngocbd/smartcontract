@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAISIToken at 0x42Efc5C0601f62897b52Ba2Cfe97149504762D72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAISIToken at 0x940c92d8b9f7a0d9ca26372b06a9b1284ab457c9
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.0;
 
 /**
  * @title ERC20Basic
@@ -316,7 +316,7 @@ contract TokenParam {
 contract AIAISIToken is CappedToken,TokenParam {
     string public constant name = "AIDOC-AISI";
 
-    string public constant symbol = "AIAISI";
+    string public constant symbol = "AIDOC-AISI";
 
     constructor() public CappedToken(totalSupply) {
         balances[msg.sender] = totalSupply;
