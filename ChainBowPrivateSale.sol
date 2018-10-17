@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainBowPrivateSale at 0x9543768b47e18d193dc5b7776e9b3a7a6a619569
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainBowPrivateSale at 0x2c5bb726e940d2add5ed9cdba981cdb97ed13602
 */
 pragma solidity ^0.4.24;
 
@@ -178,7 +178,7 @@ contract ChainBowPrivateSale is Pausable {
 
     ERC20 public tokenContract;
     address public teamWallet;
-    string public name;
+    string public leader;
     uint256 public rate = 5000;
 
     uint256 public totalSupply = 0;
@@ -187,12 +187,12 @@ contract ChainBowPrivateSale is Pausable {
 
     mapping(address => uint256) public records;
 
-    constructor(address _tokenContract, address _teamWallet, string _name, uint _rate) public {
+    constructor(address _tokenContract, address _teamWallet, string _leader, uint _rate) public {
         require(_tokenContract != address(0));
         require(_teamWallet != address(0));
         tokenContract = ERC20(_tokenContract);
         teamWallet = _teamWallet;
-        name = _name;
+        leader = _leader;
         rate = _rate;
     }
 
