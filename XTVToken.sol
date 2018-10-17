@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTVToken at 0x2d92102bf50c111d59b93f7a10bafd13e770ed61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTVToken at 0x41c6af7b388e80030e63f2686dc2ff9bfd1267c9
 */
 pragma solidity ^0.4.23;
 
@@ -422,7 +422,7 @@ contract ERC20Token is ERC20, Ownable {
 contract XTVToken is XTVNetworkGuard, ERC20Token {
   using SafeMath for uint256;
 
-  string public constant name = "XTV Network";
+  string public constant name = "XTV";
   string public constant symbol = "XTV";
   uint public constant decimals = 18;
 
@@ -466,13 +466,6 @@ contract XTVToken is XTVNetworkGuard, ERC20Token {
     _;
   }
 
-  event LogAirdropClaim(
-    address addr,
-    string token,
-    bytes32 verificationHash,
-    bytes xtvSignature
-  );
-
   constructor(
     address _fullfillTeam,
     address _fullfillFounder,
@@ -493,7 +486,9 @@ contract XTVToken is XTVNetworkGuard, ERC20Token {
 
     balances[address(0)] = ALLOC_AIRDROP;
 
-    totalSupply_ = INITIAL_SUPPLY;
+    totalSupply_ = EXPECTED_TOTAL_SUPPLY;
+
+    emit Transfer(address(this), address(0), ALLOC_AIRDROP);
   }
 
   function setXTVNetworkEndorser(address _addr, bool isEndorser) public onlyOwner {
@@ -518,23 +513,21 @@ contract XTVToken is XTVNetworkGuard, ERC20Token {
     balances[msg.sender] = balances[msg.sender].add(AIRDROP_CLAIM_AMMOUNT);
 
     XTVAirDropped = XTVAirDropped.add(AIRDROP_CLAIM_AMMOUNT);
-    totalSupply_ = totalSupply_.add(AIRDROP_CLAIM_AMMOUNT);
 
-    emit LogAirdropClaim(msg.sender, token, verificationHash, xtvSignature);
+    emit Transfer(address(0), msg.sender, AIRDROP_CLAIM_AMMOUNT);
 
     return balances[msg.sender];
   }
 
-  // @dev Anyone can call this function
-  // @dev Locks the burned tokens at address 0x00
-  function burnTokens() public {
-    if (block.timestamp > endTime) {
-      uint256 remaining = balances[address(0)];
+  // @dev Burns tokens at address 0x00
+  function burnTokens() public onlyOwner {
+    require(block.timestamp > endTime);
 
-      airdropActive = false;
+    uint256 remaining = balances[address(0)];
 
-      XTVBurned = remaining;
-    }
+    airdropActive = false;
+
+    XTVBurned = remaining;
   }
 
   function setXTVNetworkContractAddress(address addr) public onlyOwner {
@@ -543,9 +536,5 @@ contract XTVToken is XTVNetworkGuard, ERC20Token {
 
   function setXTVTokenAirdropStatus(bool _status) public onlyOwner {
     airdropActive = _status;
-  }
-
-  function drain() public onlyOwner {
-    owner.transfer(address(this).balance);
   }
 }
