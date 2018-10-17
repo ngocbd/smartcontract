@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x6b125b56d14f8b8962d6bca662bd9ebb2174e5fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xee08086881ab36df02f4da71f0b2c35bec505ff2
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT766103' token contract
+// 'ACT221854' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT766103
-// Name        : ADZbuzz Inquirer.net.com Community Token
+// Symbol      : ACT221854
+// Name        : ADZbuzz Shopify.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT766103";
-        name = "ADZbuzz Inquirer.net Community Token";
+        symbol = "ACT221854";
+        name = "ADZbuzz Shopify.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
