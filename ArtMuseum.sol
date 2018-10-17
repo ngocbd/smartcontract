@@ -1,35 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtMuseum at 0xc056471f31a8f67b5488028b779e0ae546eb78a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArtMuseum at 0x09b943c157ee9d56b0e9168e15eea2c64ea85393
 */
+/*
+//    Copyright Countryside Company Limited
+*/
+
 pragma solidity ^0.4.21;
-
-// File: contracts/LikeCoinInterface.sol
-
-//    Copyright (C) 2017 LikeCoin Foundation Limited
-//
-//    This file is part of LikeCoin Smart Contract.
-//
-//    LikeCoin Smart Contract is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    LikeCoin Smart Contract is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with LikeCoin Smart Contract.  If not, see <http://www.gnu.org/licenses/>.
-
-pragma solidity ^0.4.18;
-
-contract LikeCoinInterface {
-	function balanceOf(address _owner) public constant returns (uint256 balance);
-	function transfer(address _to, uint256 _value) public returns (bool success);
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-	function approve(address _spender, uint256 _value) public returns (bool success);
-}
 
 // File: contracts/Ownable.sol
 
@@ -94,6 +70,15 @@ contract Ownable {
 		operator = _operator;
 	}
 
+}
+
+// File: contracts/LikeCoinInterface.sol
+
+contract LikeCoinInterface {
+	function balanceOf(address _owner) public constant returns (uint256 balance);
+	function transfer(address _to, uint256 _value) public returns (bool success);
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+	function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
 // File: contracts/ArtMuseumBase.sol
@@ -233,6 +218,10 @@ contract ArtMuseumBase is Ownable {
 		return like.balanceOf(this) - reserved;
 	}
 
+	function getNumArtworksXType() public constant returns(uint32[] _numArtworksXType) {
+		_numArtworksXType = numArtworksXType;
+	}
+
 
 }
 
@@ -241,7 +230,6 @@ contract ArtMuseumBase is Ownable {
 contract ArtMuseum is ArtMuseumBase {
 
 	address private _currentImplementation;
-
 
 	function updateImplementation(address _newImplementation) onlyOwner public {
 		require(_newImplementation != address(0));
@@ -255,23 +243,6 @@ contract ArtMuseum is ArtMuseumBase {
 	function () payable public {
 		address _impl = implementation();
 		require(_impl != address(0));
-	/*
-	assembly {
-		// Copy msg.data. We take full control of memory in this inline assembly
-		// block because it will not return to Solidity code. We overwrite the
-		// Solidity scratch pad at memory position 0.
-		calldatacopy(0, 0, calldatasize)
-		// Call the implementation.
-		// out and outsize are 0 because we don't know the size yet.
-		let result := delegatecall(gas, implementation, 0, calldatasize, 0, 0)
-		// Copy the returned data.
-		returndatacopy(0, 0, returndatasize)
-		switch result
-		// delegatecall returns 0 on error.
-		case 0 { revert(0, returndatasize) }
-		default { return(0, returndatasize) }
-	}
-	*/
 		assembly {
 			let ptr := mload(0x40)
 			calldatacopy(ptr, 0, calldatasize)
