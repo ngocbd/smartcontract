@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x5802adcae69b4d6b751171bcc6e92cb3bbfc9c36
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0xfdbfe77f588cb4839193dddd9c47d9983991e108
 */
 pragma solidity ^0.4.18;
 
@@ -1411,6 +1411,7 @@ contract CryptoSagaCorrectedHeroStats {
 }
 
 
+
 /**
  * @title CryptoSagaArenaRecord
  * @dev The record of battles in the Arena.
@@ -1492,6 +1493,7 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
   // @dev Constructor.
   function CryptoSagaArenaRecord(
+    address _firstPlayerAddress,
     address _previousSeasonRecord,
     uint8 _numberOfLeaderboardPlayers, 
     uint8 _numberOfRecentPlayers)
@@ -1501,16 +1503,21 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
     numberOfLeaderboardPlayers = _numberOfLeaderboardPlayers;
     numberOfRecentPlayers = _numberOfRecentPlayers;
 
+    // The initial player gets into leaderboard.
+    leaderBoardPlayers.push(_firstPlayerAddress);
+    addressToIsInLeaderboard[_firstPlayerAddress] = true;
+
+    // The initial player pushed into the recent players queue. 
+    pushPlayer(_firstPlayerAddress);
+    
+    // The initial player's Elo.
+    addressToElo[_firstPlayerAddress] = 1500;
+
     // Get instance of previous season.
     CryptoSagaArenaRecord _previous = CryptoSagaArenaRecord(_previousSeasonRecord);
 
     for (uint256 i = _previous.recentPlayersFront(); i < _previous.recentPlayersBack(); i++) {
       var _player = _previous.recentPlayers(i);
-      // The initial player gets into leaderboard.
-      leaderBoardPlayers.push(_player);
-      addressToIsInLeaderboard[_player] = true;
-      // The initial player pushed into the recent players queue. 
-      pushPlayer(_player);
       // The initial player's Elo.
       addressToElo[_player] = _previous.getEloRating(_player);
     }
