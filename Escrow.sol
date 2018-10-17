@@ -1,7 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0xf3b5589684aa48ee7f559c58bc66ac74b95ca319
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x956c85816373367b808bd18c0c1abda5215080c5
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.24;
+pragma experimental "v0.5.0";
+
+/**
+* @title SafeMath
+* @dev Math operations with safety checks that throw on error
+*/
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -9,267 +40,81 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+contract SRNTPriceOracleBasic {
+  uint256 public SRNT_per_ETH;
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+contract Escrow {
+  using SafeMath for uint256;
 
+  address public party_a;
+  address public party_b;
+  address constant serenity_wallet = 0x47c8F28e6056374aBA3DF0854306c2556B104601;
+  address constant burn_address = 0x0000000000000000000000000000000000000001;
+  ERC20Basic constant SRNT_token = ERC20Basic(0xBC7942054F77b82e8A71aCE170E4B00ebAe67eB6);
+  SRNTPriceOracleBasic constant SRNT_price_oracle = SRNTPriceOracleBasic(0xae5D95379487d047101C4912BddC6942090E5D17);
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+  uint256 public withdrawal_party_a_gets;
+  uint256 public withdrawal_party_b_gets;
+  address public withdrawal_last_voter;
 
+  event Deposit(uint256 amount);
+  event WithdrawalRequest(address requester, uint256 party_a_gets, uint256 party_b_gets);
+  event Withdrawal(uint256 party_a_gets, uint256 party_b_gets);
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
+  constructor (address new_party_a, address new_party_b) public {
+    party_a = new_party_a;
+    party_b = new_party_b;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
+  function () external payable {
+    // New deposit - take commission and issue an event
+    uint256 fee = msg.value.div(100);
+    uint256 srnt_balance = SRNT_token.balanceOf(address(this));
+    uint256 fee_paid_by_srnt = srnt_balance.div(SRNT_price_oracle.SRNT_per_ETH());
+    if (fee_paid_by_srnt < fee) {  // Burn all SRNT, deduct from fee
+      if (fee_paid_by_srnt > 0) {
+        fee = fee.sub(fee_paid_by_srnt);
+        SRNT_token.transfer(burn_address, srnt_balance);
+      }
+      serenity_wallet.transfer(fee);
+      emit Deposit(msg.value.sub(fee));
+    } else {  // There's more SRNT available than needed. Burn a part of it.
+      SRNT_token.transfer(burn_address, fee.mul(SRNT_price_oracle.SRNT_per_ETH()));
+      emit Deposit(msg.value);
     }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+  function request_withdrawal(uint256 party_a_gets, uint256 party_b_gets) external {
+    require(msg.sender != withdrawal_last_voter);  // You can't vote twice
+    require((msg.sender == party_a) || (msg.sender == party_b) || (msg.sender == serenity_wallet));
+    require(party_a_gets.add(party_b_gets) <= address(this).balance);
+
+    withdrawal_last_voter = msg.sender;
+
+    emit WithdrawalRequest(msg.sender, party_a_gets, party_b_gets);
+
+    if ((withdrawal_party_a_gets == party_a_gets) && (withdrawal_party_b_gets == party_b_gets)) {  // We have consensus
+      delete withdrawal_party_a_gets;
+      delete withdrawal_party_b_gets;
+      delete withdrawal_last_voter;
+      if (party_a_gets > 0) {
+        party_a.transfer(party_a_gets);
+      }
+      if (party_b_gets > 0) {
+        party_b.transfer(party_b_gets);
+      }
+      emit Withdrawal(party_a_gets, party_b_gets);
+    } else {
+      withdrawal_party_a_gets = party_a_gets;
+      withdrawal_party_b_gets = party_b_gets;
+    }
   }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Escrow is Ownable {
-    using SafeMath for uint256;
-    struct EscrowElement {
-    bool exists;
-    address src;
-    address dst;
-    uint256 value;
-    }
-
-    address public token;
-    ERC20 public tok;
-
-    mapping (bytes20 => EscrowElement) public escrows;
-
-    /* Numerator and denominator of common fraction.
-        E.g. 1 & 25 mean one twenty fifths, i.e. 0.04 = 4% */
-    uint256 public escrow_fee_numerator; /* 1 */
-    uint256 public escrow_fee_denominator; /* 25 */
-
-
-
-    event EscrowStarted(
-    bytes20 indexed escrow_id,
-    EscrowElement escrow_element
-    );
-
-    event EscrowReleased(
-    bytes20 indexed escrow_id,
-    EscrowElement escrow_element
-    );
-
-    event EscrowCancelled(
-    bytes20 indexed escrow_id,
-    EscrowElement escrow_element
-    );
-
-
-    event TokenSet(
-    address indexed token
-    );
-
-    event Withdrawed(
-    address indexed dst,
-    uint256 value
-    );
-
-    function Escrow(address _token){
-        token = _token;
-        tok = ERC20(_token);
-        escrow_fee_numerator = 1;
-        escrow_fee_denominator = 25;
-    }
-
-    function startEscrow(bytes20 escrow_id, address to, uint256 value) public returns (bool) {
-        require(to != address(0));
-        require(escrows[escrow_id].exists != true);
-//        ERC20 tok = ERC20(token);
-        tok.transferFrom(msg.sender, address(this), value);
-        EscrowElement memory escrow_element = EscrowElement(true, msg.sender, to, value);
-        escrows[escrow_id] = escrow_element;
-
-        emit EscrowStarted(escrow_id, escrow_element);
-
-        return true;
-    }
-
-    function releaseEscrow(bytes20 escrow_id, address fee_destination) onlyOwner returns (bool) {
-        require(fee_destination != address(0));
-        require(escrows[escrow_id].exists == true);
-
-        EscrowElement storage escrow_element = escrows[escrow_id];
-
-        uint256 fee = escrow_element.value.mul(escrow_fee_numerator).div(escrow_fee_denominator);
-        uint256 value = escrow_element.value.sub(fee);
-
-//        ERC20 tok = ERC20(token);
-
-        tok.transfer(escrow_element.dst, value);
-        tok.transfer(fee_destination, fee);
-
-
-        EscrowElement memory _escrow_element = escrow_element;
-
-        emit EscrowReleased(escrow_id, _escrow_element);
-
-        delete escrows[escrow_id];
-
-        return true;
-    }
-
-    function cancelEscrow(bytes20 escrow_id) onlyOwner returns (bool) {
-        EscrowElement storage escrow_element = escrows[escrow_id];
-
-//        ERC20 tok = ERC20(token);
-
-        tok.transfer(escrow_element.src, escrow_element.value);
-        /* Workaround because of lack of feature. See https://github.com/ethereum/solidity/issues/3577 */
-        EscrowElement memory _escrow_element = escrow_element;
-
-
-        emit EscrowCancelled(escrow_id, _escrow_element);
-
-        delete escrows[escrow_id];
-
-        return true;
-    }
-
-    function withdrawToken(address dst, uint256 value) onlyOwner returns (bool){
-        require(dst != address(0));
-        require(value > 0);
-//        ERC20 tok = ERC20(token);
-        tok.transfer(dst, value);
-
-        emit Withdrawed(dst, value);
-
-        return true;
-    }
-
-    function setToken(address _token) onlyOwner returns (bool){
-        require(_token != address(0));
-        token = _token;
-        tok = ERC20(_token);
-        emit TokenSet(_token);
-
-        return true;
-    }
-    //
-
 
 }
