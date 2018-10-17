@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reputation at 0xeabeca1f22283a37c63bef3be8e3cc56af684f48
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reputation at 0x8d880dff55a0c5620cc617b0a34c83b87946783c
 */
 pragma solidity ^0.4.23;
 
@@ -58,16 +58,21 @@ library SafeMath {
   }
 }
 
+contract ERC20 {
+    function transfer(address _to, uint256 _value) public;
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool success);
+}
 
-contract EthToSmthSwaps {
+contract EthTokenToSmthSwaps {
 
   using SafeMath for uint;
-
+  
   address public owner;
   address public ratingContractAddress;
   uint256 SafeTime = 1 hours; // atomic swap timeOut
 
   struct Swap {
+    address token;
     bytes32 secret;
     bytes20 secretHash;
     uint256 createdAt;
@@ -107,24 +112,26 @@ contract EthToSmthSwaps {
 
   // ETH Owner creates Swap with secretHash
   // ETH Owner make token deposit
-  function createSwap(bytes20 _secretHash, address _participantAddress) public payable {
-    require(msg.value > 0);
+  function createSwap(bytes20 _secretHash, address _participantAddress, uint256 _value, address _token) public {
+    require(_value > 0);
     require(participantSigns[msg.sender][_participantAddress].add(SafeTime) > now);
     require(swaps[msg.sender][_participantAddress].balance == uint256(0));
+    require(ERC20(_token).transferFrom(msg.sender, this, _value));
 
     swaps[msg.sender][_participantAddress] = Swap(
+      _token,
       bytes32(0),
       _secretHash,
       now,
-      msg.value
+      _value
     );
 
     CreateSwap(now);
   }
 
   function getBalance(address _ownerAddress) public view returns (uint256) {
-    return swaps[_ownerAddress][msg.sender].balance;
-  }
+      return swaps[_ownerAddress][msg.sender].balance;
+    }
 
   event Withdraw();
 
@@ -132,13 +139,13 @@ contract EthToSmthSwaps {
   // BTC Owner receive +1 reputation
   function withdraw(bytes32 _secret, address _ownerAddress) public {
     Swap memory swap = swaps[_ownerAddress][msg.sender];
-
+    
     require(swap.secretHash == ripemd160(_secret));
     require(swap.balance > uint256(0));
     require(swap.createdAt.add(SafeTime) > now);
 
     Reputation(ratingContractAddress).change(msg.sender, 1);
-    msg.sender.transfer(swap.balance);
+    ERC20(swap.token).transfer(msg.sender, swap.balance);
 
     swaps[_ownerAddress][msg.sender].balance = 0;
     swaps[_ownerAddress][msg.sender].secret = _secret;
@@ -152,7 +159,7 @@ contract EthToSmthSwaps {
   }
 
   event Close();
-
+  
   // ETH Owner closes swap
   // ETH Owner receive +1 reputation
   function close(address _participantAddress) public {
@@ -173,8 +180,8 @@ contract EthToSmthSwaps {
 
     require(swap.balance > uint256(0));
     require(swap.createdAt.add(SafeTime) < now);
-
-    msg.sender.transfer(swap.balance);
+    
+    ERC20(swap.token).transfer(msg.sender, swap.balance);
     // TODO it looks like ETH Owner can create as many swaps as possible and refund them to decrease someone reputation
     Reputation(ratingContractAddress).change(_participantAddress, -1);
     clean(msg.sender, _participantAddress);
@@ -191,7 +198,7 @@ contract EthToSmthSwaps {
     require(swaps[_ownerAddress][msg.sender].balance == uint256(0));
     require(participantSigns[_ownerAddress][msg.sender] != uint(0));
     require(participantSigns[_ownerAddress][msg.sender].add(SafeTime) < now);
-
+    
     Reputation(ratingContractAddress).change(_ownerAddress, -1);
     clean(_ownerAddress, msg.sender);
 
@@ -202,11 +209,4 @@ contract EthToSmthSwaps {
     delete swaps[_ownerAddress][_participantAddress];
     delete participantSigns[_ownerAddress][_participantAddress];
   }
-  
-  //WE ARE IN THE ALPHA, of course this function WILL BE removed in future
-  function withdr(uint amount) {
-     require(msg.sender == owner);
-     owner.transfer(amount);
-  }
-  
 }
