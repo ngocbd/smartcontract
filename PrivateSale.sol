@@ -1,1477 +1,1325 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0x013f7a6b98010e85fd4c8887d30f48c409b5643d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0xB9560eacFAd923886e944eDb3EfE847D107099d7
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
-contract ContractReceiver {
-    function tokenFallback(address _from, uint _value, bytes _data) public;
+contract TokenInfo {
+    // Base prices in wei, going off from an Ether value of $500
+    uint256 public constant PRIVATESALE_BASE_PRICE_IN_WEI = 200000000000000;
+    uint256 public constant PRESALE_BASE_PRICE_IN_WEI = 600000000000000;
+    uint256 public constant ICO_BASE_PRICE_IN_WEI = 800000000000000;
+    uint256 public constant FIRSTSALE_BASE_PRICE_IN_WEI = 200000000000000;
+
+    // First sale minimum and maximum contribution, going off from an Ether value of $500
+    uint256 public constant MIN_PURCHASE_OTHERSALES = 80000000000000000;
+    uint256 public constant MIN_PURCHASE = 1000000000000000000;
+    uint256 public constant MAX_PURCHASE = 1000000000000000000000;
+
+    // Bonus percentages for each respective sale level
+
+    uint256 public constant PRESALE_PERCENTAGE_1 = 10;
+    uint256 public constant PRESALE_PERCENTAGE_2 = 15;
+    uint256 public constant PRESALE_PERCENTAGE_3 = 20;
+    uint256 public constant PRESALE_PERCENTAGE_4 = 25;
+    uint256 public constant PRESALE_PERCENTAGE_5 = 35;
+
+    uint256 public constant ICO_PERCENTAGE_1 = 5;
+    uint256 public constant ICO_PERCENTAGE_2 = 10;
+    uint256 public constant ICO_PERCENTAGE_3 = 15;
+    uint256 public constant ICO_PERCENTAGE_4 = 20;
+    uint256 public constant ICO_PERCENTAGE_5 = 25;
+
+    // Bonus levels in wei for each respective level
+
+    uint256 public constant PRESALE_LEVEL_1 = 5000000000000000000;
+    uint256 public constant PRESALE_LEVEL_2 = 10000000000000000000;
+    uint256 public constant PRESALE_LEVEL_3 = 15000000000000000000;
+    uint256 public constant PRESALE_LEVEL_4 = 20000000000000000000;
+    uint256 public constant PRESALE_LEVEL_5 = 25000000000000000000;
+
+    uint256 public constant ICO_LEVEL_1 = 6666666666666666666;
+    uint256 public constant ICO_LEVEL_2 = 13333333333333333333;
+    uint256 public constant ICO_LEVEL_3 = 20000000000000000000;
+    uint256 public constant ICO_LEVEL_4 = 26666666666666666666;
+    uint256 public constant ICO_LEVEL_5 = 33333333333333333333;
+
+    // Caps for the respective sales, the amount of tokens allocated to the team and the total cap
+    uint256 public constant PRIVATESALE_TOKENCAP = 18750000;
+    uint256 public constant PRESALE_TOKENCAP = 18750000;
+    uint256 public constant ICO_TOKENCAP = 22500000;
+    uint256 public constant FIRSTSALE_TOKENCAP = 5000000;
+    uint256 public constant LEDTEAM_TOKENS = 35000000;
+    uint256 public constant TOTAL_TOKENCAP = 100000000;
+
+    uint256 public constant DECIMALS_MULTIPLIER = 1 ether;
+
+    address public constant LED_MULTISIG = 0x865e785f98b621c5fdde70821ca7cea9eeb77ef4;
 }
 
-contract PrivateSale is ContractReceiver {
-    using SafeMath for uint256;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    Token tokContract;
-    TimedEscrow escrow;
-    address owner;
-    // Conversion between wei and smallest unit of Token
-    // GNU and ETH have both 18 decimal places
-    // 1 ETH = 500 USD && 1 GNU = 0.025 USD ==> 1 ETH = 20000 GNU
-    // Then, in our case we have 1 wei = 20000 units
-    uint256 rate;
 
-    // Timestamp for sale end
-    uint256 end;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    uint256 lockend1;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    uint256 lockend2;
-
-    uint256 mincontrib;
-
-    uint256 numerator;
-
-    uint256 denominator;
-
-    event Contribution(address from, uint256 eth, uint256 tokens);
-
-    constructor(address _tokContract, address _escrowContract, uint256 _end, uint256 _lockend1, uint256 _lockend2, uint256 _numerator, uint256 _denominator, uint256 _mincontrib, uint256 _rate) public {
-        tokContract = Token(_tokContract);
-        escrow = TimedEscrow(_escrowContract);
-        owner = msg.sender;
-        end = _end;
-        require(_rate > 0);
-        rate = _rate;
-        numerator = _numerator;
-        require(_denominator > 0);
-        denominator = _denominator;
-        lockend1 = _lockend1;
-        lockend2 = _lockend2;
-        mincontrib = _mincontrib;
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
-
-    function getMinContrib() public view returns (uint256){
-        return mincontrib;
-    }
-
-    function setMinContrib(uint256 _mincontrib){
-        require(msg.sender == owner);
-        mincontrib = _mincontrib;
-    }
-
-    function setLockend1(uint256 _lockend1){
-        require(msg.sender == owner);
-        require(_lockend1 <= lockend1);
-        lockend1 = _lockend1;
-    }
-
-    function setLockend2(uint256 _lockend2){
-        require(msg.sender == owner);
-        require(_lockend2 <= lockend2);
-        lockend2 = _lockend2;
-    }
-
-    function setLockRatio(uint256 _numerator, uint256 _denominator){
-        require(msg.sender == owner);
-        require(_denominator > 0);
-        numerator = _numerator;
-        denominator = _denominator;
-    }
-
-    // Function to access remaining tokens allocated to this contract
-    function remaining() public view returns (uint) {
-        return tokContract.balanceOf(this);
-    }
-
-    // Empties the contract of the remaining tokens
-    function withdrawTokens() public {
-        require(now > end);
-        require(msg.sender == owner);
-        tokContract.transfer(owner, tokContract.balanceOf(this));
-    }
-
-    function tokenFallback(address _from, uint _value, bytes _data) public {
-        // Only the owner can send tokens to the SC
-        require(_from == owner, "Only owner can send tokens");
-    }
-
-    // Fallback function to issue tokens when receiving ether
-    function() public payable {
-        require(now < end && msg.value >= mincontrib);
-        // Forward ether to owner, throws if error
-        owner.transfer(msg.value);
-
-        uint256 toks = msg.value.mul(rate);
-
-        emit Contribution(msg.sender, msg.value, toks);
-
-        uint256 toks1 = toks.div(denominator).mul(numerator);
-
-        uint256 toks2 = toks - toks1;
-
-        bytes memory data = escrow.transactionRawToBytes(toks1, msg.sender, lockend1, true, false);
-
-        bytes memory data2 = escrow.transactionRawToBytes(toks2, msg.sender, lockend2, true, false);
-
-        // Transfer tokens to escrow
-        tokContract.transfer(
-            escrow,
-            toks1,
-            data
-        );
-
-        tokContract.transfer(
-            escrow,
-            toks2,
-            data2
-        );
-    }
+  }
 
 }
 
-contract ERC20Interface {
-    //ERC20 with allowance
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+  constructor() public {}
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() public onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    emit Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() public onlyOwner whenPaused returns (bool) {
+    paused = false;
+    emit Unpause();
+    return true;
+  }
+}
+
+contract ApproveAndCallReceiver {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
+}
+
+/**
+ * @title Controllable
+ * @dev The Controllable contract has an controller address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Controllable {
+  address public controller;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  constructor() public {
+    controller = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newController The address to transfer ownership to.
+   */
+  function transferControl(address newController) public onlyController {
+    if (newController != address(0)) {
+      controller = newController;
+    }
+  }
+
+}
+
+/// @dev The token controller contract must implement these functions
+contract ControllerInterface {
+
+    function proxyPayment(address _owner) public payable returns(bool);
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
+    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+
+  uint256 public totalSupply;
+
+  function balanceOf(address _owner) public constant returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool);
+  function approve(address _spender, uint256 _amount) public returns (bool);
+  function allowance(address _owner, address _spender) public constant returns (uint256);
+
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+}
+
+contract Crowdsale is Pausable, TokenInfo {
+
+  using SafeMath for uint256;
+
+  LedTokenInterface public ledToken;
+  uint256 public startTime;
+  uint256 public endTime;
+
+  uint256 public totalWeiRaised;
+  uint256 public tokensMinted;
+  uint256 public totalSupply;
+  uint256 public contributors;
+  uint256 public surplusTokens;
+
+  bool public finalized;
+
+  bool public ledTokensAllocated;
+  address public ledMultiSig = LED_MULTISIG;
+
+  //uint256 public tokenCap = FIRSTSALE_TOKENCAP;
+  //uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
+  //uint256 public weiCap = tokenCap * FIRSTSALE_BASE_PRICE_IN_WEI;
+
+  bool public started = false;
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  event NewClonedToken(address indexed _cloneToken);
+  event OnTransfer(address _from, address _to, uint _amount);
+  event OnApprove(address _owner, address _spender, uint _amount);
+  event LogInt(string _name, uint256 _value);
+  event Finalized();
+
+  // constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+    
+
+  //   startTime = _startTime;
+  //   endTime = _endTime;
+  //   ledToken = LedTokenInterface(_tokenAddress);
+
+  //   assert(_tokenAddress != 0x0);
+  //   assert(_startTime > 0);
+  //   assert(_endTime > _startTime);
+  // }
+
+  /**
+   * Low level token purchase function
+   * @param _beneficiary will receive the tokens.
+   */
+  /*function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= MIN_PURCHASE && weiAmount <= MAX_PURCHASE);
+    uint256 priceInWei = FIRSTSALE_BASE_PRICE_IN_WEI;
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
+    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < cap);
+
+    contributors = contributors.add(1);
+
+    ledToken.mint(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }*/
+
+
+  /**
+  * Forwards funds to the tokensale wallet
+  */
+  function forwardFunds() internal {
+    ledMultiSig.transfer(msg.value);
+  }
+
+
+  /**
+  * Validates the purchase (period, minimum amount, within cap)
+  * @return {bool} valid
+  */
+  function validPurchase() internal constant returns (bool) {
+    uint256 current = now;
+    bool presaleStarted = (current >= startTime || started);
+    bool presaleNotEnded = current <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return nonZeroPurchase && presaleStarted && presaleNotEnded;
+  }
+
+  /**
+  * Returns the total Led token supply
+  * @return totalSupply {uint256} Led Token Total Supply
+  */
+  function totalSupply() public constant returns (uint256) {
+    return ledToken.totalSupply();
+  }
+
+  /**
+  * Returns token holder Led Token balance
+  * @param _owner {address} Token holder address
+  * @return balance {uint256} Corresponding token holder balance
+  */
+  function balanceOf(address _owner) public constant returns (uint256) {
+    return ledToken.balanceOf(_owner);
+  }
+
+  /**
+  * Change the Led Token controller
+  * @param _newController {address} New Led Token controller
+  */
+  function changeController(address _newController) public onlyOwner {
+    require(isContract(_newController));
+    ledToken.transferControl(_newController);
+  }
+
+  function enableMasterTransfers() public onlyOwner {
+    ledToken.enableMasterTransfers(true);
+  }
+
+  function lockMasterTransfers() public onlyOwner {
+    ledToken.enableMasterTransfers(false);
+  }
+
+  function forceStart() public onlyOwner {
+    started = true;
+  }
+
+  /*function finalize() public onlyOwner {
+    require(paused);
+    require(!finalized);
+    surplusTokens = cap - tokensMinted;
+    ledToken.mint(ledMultiSig, surplusTokens);
+    ledToken.transferControl(owner);
+
+    emit Finalized();
+
+    finalized = true;
+  }*/
+
+  function isContract(address _addr) constant internal returns(bool) {
+    uint size;
+    if (_addr == 0)
+      return false;
+    assembly {
+        size := extcodesize(_addr)
+    }
+    return size>0;
+  }
+
+  modifier whenNotFinalized() {
+    require(!finalized);
+    _;
+  }
+
+}
+/**
+ * @title FirstSale
+ * FirstSale allows investors to make token purchases and assigns them tokens based
+
+ * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
+ */
+contract FirstSale is Crowdsale {
+
+  uint256 public tokenCap = FIRSTSALE_TOKENCAP;
+  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
+  uint256 public weiCap = tokenCap * FIRSTSALE_BASE_PRICE_IN_WEI;
+
+  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+    
+
+    startTime = _startTime;
+    endTime = _endTime;
+    ledToken = LedTokenInterface(_tokenAddress);
+
+    assert(_tokenAddress != 0x0);
+    assert(_startTime > 0);
+    assert(_endTime > _startTime);
+  }
+
+    /**
+   * High level token purchase function
+   */
+  function() public payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * Low level token purchase function
+   * @param _beneficiary will receive the tokens.
+   */
+  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= MIN_PURCHASE && weiAmount <= MAX_PURCHASE);
+    uint256 priceInWei = FIRSTSALE_BASE_PRICE_IN_WEI;
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
+    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < cap);
+
+    contributors = contributors.add(1);
+
+    ledToken.mint(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
+  bool, uint256, uint256){
+    uint256 decimals = 18;
+    string memory symbol = "LED";
+    bool transfersEnabled = ledToken.transfersEnabled();
+    return (
+      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
+      decimals, // Decimals
+      symbol,
+      transfersEnabled,
+      contributors,
+      totalWeiRaised,
+      tokenCap, // Tokencap for the first sale with the decimal point in place.
+      started,
+      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
+      endTime
     );
+  }
 
-    // ERC20 Basic
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  function finalize() public onlyOwner {
+    require(paused);
+    require(!finalized);
+    surplusTokens = cap - tokensMinted;
+    ledToken.mint(ledMultiSig, surplusTokens);
+    ledToken.transferControl(owner);
+
+    emit Finalized();
+
+    finalized = true;
+  }
+
 }
 
-contract StandardERC20 is ERC20Interface {
-    using SafeMath for uint256;
+contract LedToken is Controllable {
 
-    mapping(address => uint256) balances;
-    uint256 totalSupply_;
+  using SafeMath for uint256;
+  LedTokenInterface public parentToken;
+  TokenFactoryInterface public tokenFactory;
 
-    /**
-    * @dev Total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
-    }
+  string public name;
+  string public symbol;
+  string public version;
+  uint8 public decimals;
 
-    /**
-    * @dev Transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
+  uint256 public parentSnapShotBlock;
+  uint256 public creationBlock;
+  bool public transfersEnabled;
 
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner];
-    }
-
-    /*
-        Allowance part
-    */
-
-    mapping (address => mapping (address => uint256)) internal allowed;
+  bool public masterTransfersEnabled;
+  address public masterWallet = 0x865e785f98b621c5fdde70821ca7cea9eeb77ef4;
 
 
-    /**
-    * @dev Transfer tokens from one address to another
-    * @param _from address The address which you want to send tokens from
-    * @param _to address The address which you want to transfer to
-    * @param _value uint256 the amount of tokens to be transferred
-    */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
+  struct Checkpoint {
+    uint128 fromBlock;
+    uint128 value;
+  }
 
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
+  Checkpoint[] totalSupplyHistory;
+  mapping(address => Checkpoint[]) balances;
+  mapping (address => mapping (address => uint)) allowed;
 
-    /**
-    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    * Beware that changing an allowance with this method brings the risk that someone may use both the old
-    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    * @param _spender The address which will spend the funds.
-    * @param _value The amount of tokens to be spent.
-    */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  bool public mintingFinished = false;
+  bool public presaleBalancesLocked = false;
 
-    /**
-    * @dev Function to check the amount of tokens that an owner allowed to a spender.
-    * @param _owner address The address which owns the funds.
-    * @param _spender address The address which will spend the funds.
-    * @return A uint256 specifying the amount of tokens still available for the spender.
-    */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
+  uint256 public totalSupplyAtCheckpoint;
 
-    /**
-    * @dev Increase the amount of tokens that an owner allowed to a spender.
-    * approve should be called when allowed[_spender] == 0. To increment
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    * @param _spender The address which will spend the funds.
-    * @param _addedValue The amount of tokens to increase the allowance by.
-    */
-    function increaseApproval(address _spender, uint256 _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = (
-        allowed[msg.sender][_spender].add(_addedValue));
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+  event MintFinished();
+  event NewCloneToken(address indexed cloneToken);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /**
-    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-    * approve should be called when allowed[_spender] == 0. To decrement
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    * @param _spender The address which will spend the funds.
-    * @param _subtractedValue The amount of tokens to decrease the allowance by.
-    */
-    function decreaseApproval(address _spender, uint256 _subtractedValue) public returns (bool) {
-        uint256 oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
+
+
+
+  constructor(
+    address _tokenFactory,
+    address _parentToken,
+    uint256 _parentSnapShotBlock,
+    string _tokenName,
+    string _tokenSymbol
+    ) public {
+      tokenFactory = TokenFactoryInterface(_tokenFactory);
+      parentToken = LedTokenInterface(_parentToken);
+      parentSnapShotBlock = _parentSnapShotBlock;
+      name = _tokenName;
+      symbol = _tokenSymbol;
+      decimals = 18;
+      transfersEnabled = false;
+      masterTransfersEnabled = false;
+      creationBlock = block.number;
+      version = '0.1';
+  }
+
+
+  /**
+  * Returns the total Led token supply at the current block
+  * @return total supply {uint256}
+  */
+  function totalSupply() public constant returns (uint256) {
+    return totalSupplyAt(block.number);
+  }
+
+  /**
+  * Returns the total Led token supply at the given block number
+  * @param _blockNumber {uint256}
+  * @return total supply {uint256}
+  */
+  function totalSupplyAt(uint256 _blockNumber) public constant returns(uint256) {
+    // These next few lines are used when the totalSupply of the token is
+    //  requested before a check point was ever created for this token, it
+    //  requires that the `parentToken.totalSupplyAt` be queried at the
+    //  genesis block for this token as that contains totalSupply of this
+    //  token at this block number.
+    if ((totalSupplyHistory.length == 0) || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
+        if (address(parentToken) != 0x0) {
+            return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
         } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-
-}
-
-contract Token is StandardERC20 {
-    
-    string public name    = "Genuine Token";
-    string public symbol  = "GNU";
-    uint8  public decimals = 18;
-
-    address owner;
-
-    bool burnable;
-
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-
-    event Burn(address indexed burner, uint256 value);
-
-
-    constructor() public {
-        balances[msg.sender] = 340000000 * (uint(10) ** decimals);
-        totalSupply_ = balances[msg.sender];
-        owner = msg.sender;
-        burnable = false;
-    }
-
-    function transferOwnership(address tbo) public {
-        require(msg.sender == owner, 'Unauthorized');
-        owner = tbo;
-    }
-       
-    // Function to access name of token .
-    function name() public view returns (string _name) {
-        return name;
-    }
-    
-    // Function to access symbol of token .
-    function symbol() public view returns (string _symbol) {
-        return symbol;
-    }
-    
-    // Function to access decimals of token .
-    function decimals() public view returns (uint8 _decimals) {
-        return decimals;
-    }
-    
-    // Function to access total supply of tokens .
-    function totalSupply() public view returns (uint256 _totalSupply) {
-        return totalSupply_;
-    }
-    
-    // Function that is called when a user or another contract wants to transfer funds .
-    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-        require(_to != address(0));
-
-        if (isContract(_to)) {
-            if (balanceOf(msg.sender) < _value) revert();
-            balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-            balances[_to] = balanceOf(_to).add(_value);
-            assert(_to.call.value(0)(bytes4(sha3(_custom_fallback)), msg.sender, _value, _data));
-            emit Transfer(msg.sender, _to, _value, _data);
-            // ERC20 compliant transfer
-            emit Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return transferToAddress(_to, _value, _data);
-        }
-    }
-  
-
-    // Function that is called when a user or another contract wants to transfer funds .
-    function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
-        require(_to != address(0));
-        
-        if (isContract(_to)) {
-            return transferToContract(_to, _value, _data);
-        }
-        else {
-            return transferToAddress(_to, _value, _data);
-        }
-    }
-    
-    // Standard function transfer similar to ERC20 transfer with no _data .
-    // Added due to backwards compatibility reasons .
-    // Overrides the base transfer function of the standard ERC20 token
-    function transfer(address _to, uint _value) public returns (bool success) {
-        require(_to != address(0));
-        
-        //standard function transfer similar to ERC20 transfer with no _data
-        //added due to backwards compatibility reasons
-        bytes memory empty;
-        if (isContract(_to)) {
-            return transferToContract(_to, _value, empty);
-        }
-        else {
-            return transferToAddress(_to, _value, empty);
-        }
-    }
-
-    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-    function isContract(address _addr) private view returns (bool is_contract) {
-        uint length;
-        assembly {
-                //retrieve the size of the code on target address, this needs assembly
-                length := extcodesize(_addr)
-        }
-        return (length > 0);
-    }
-
-    //function that is called when transaction target is an address
-    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-        if (balanceOf(msg.sender) < _value) revert("Insufficient balance");
-        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-        emit Transfer(msg.sender, _to, _value, _data);
-        // ERC20 compliant transfer
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    
-    //function that is called when transaction target is a contract
-    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-        if (balanceOf(msg.sender) < _value) revert("Insufficient balance");
-        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-        balances[_to] = balanceOf(_to).add(_value);
-        ContractReceiver receiver = ContractReceiver(_to);
-        receiver.tokenFallback(msg.sender, _value, _data);
-        emit Transfer(msg.sender, _to, _value, _data);
-        // ERC20 compliant transfer
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function setBurnable(bool _burnable) public {
-        require (msg.sender == owner);
-        burnable = _burnable;
-    }
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        _burn(msg.sender, _value);
-    }
-
-    function _burn(address _who, uint256 _value) internal {
-
-        require(burnable == true || _who == owner);
-
-        require(_value <= balances[_who]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        emit Burn(_who, _value);
-        emit Transfer(_who, address(0), _value);
-    }
-}
-
-library Array256Lib {
-
-  /// @dev Sum vector
-  /// @param self Storage array containing uint256 type variables
-  /// @return sum The sum of all elements, does not check for overflow
-  function sumElements(uint256[] storage self) public view returns(uint256 sum) {
-    assembly {
-      mstore(0x60,self_slot)
-
-      for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
-        sum := add(sload(add(sha3(0x60,0x20),i)),sum)
-      }
-    }
-  }
-
-  /// @dev Returns the max value in an array.
-  /// @param self Storage array containing uint256 type variables
-  /// @return maxValue The highest value in the array
-  function getMax(uint256[] storage self) public view returns(uint256 maxValue) {
-    assembly {
-      mstore(0x60,self_slot)
-      maxValue := sload(sha3(0x60,0x20))
-
-      for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
-        switch gt(sload(add(sha3(0x60,0x20),i)), maxValue)
-        case 1 {
-          maxValue := sload(add(sha3(0x60,0x20),i))
-        }
-      }
-    }
-  }
-
-  /// @dev Returns the minimum value in an array.
-  /// @param self Storage array containing uint256 type variables
-  /// @return minValue The highest value in the array
-  function getMin(uint256[] storage self) public view returns(uint256 minValue) {
-    assembly {
-      mstore(0x60,self_slot)
-      minValue := sload(sha3(0x60,0x20))
-
-      for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
-        switch gt(sload(add(sha3(0x60,0x20),i)), minValue)
-        case 0 {
-          minValue := sload(add(sha3(0x60,0x20),i))
-        }
-      }
-    }
-  }
-
-  /// @dev Finds the index of a given value in an array
-  /// @param self Storage array containing uint256 type variables
-  /// @param value The value to search for
-  /// @param isSorted True if the array is sorted, false otherwise
-  /// @return found True if the value was found, false otherwise
-  /// @return index The index of the given value, returns 0 if found is false
-  function indexOf(uint256[] storage self, uint256 value, bool isSorted)
-           public
-           view
-           returns(bool found, uint256 index) {
-    assembly{
-      mstore(0x60,self_slot)
-      switch isSorted
-      case 1 {
-        let high := sub(sload(self_slot),1)
-        let mid := 0
-        let low := 0
-        for { } iszero(gt(low, high)) { } {
-          mid := div(add(low,high),2)
-
-          switch lt(sload(add(sha3(0x60,0x20),mid)),value)
-          case 1 {
-             low := add(mid,1)
-          }
-          case 0 {
-            switch gt(sload(add(sha3(0x60,0x20),mid)),value)
-            case 1 {
-              high := sub(mid,1)
-            }
-            case 0 {
-              found := 1
-              index := mid
-              low := add(high,1)
-            }
-          }
-        }
-      }
-      case 0 {
-        for { let low := 0 } lt(low, sload(self_slot)) { low := add(low, 1) } {
-          switch eq(sload(add(sha3(0x60,0x20),low)), value)
-          case 1 {
-            found := 1
-            index := low
-            low := sload(self_slot)
-          }
-        }
-      }
-    }
-  }
-
-  /// @dev Utility function for heapSort
-  /// @param index The index of child node
-  /// @return pI The parent node index
-  function getParentI(uint256 index) private pure returns (uint256 pI) {
-    uint256 i = index - 1;
-    pI = i/2;
-  }
-
-  /// @dev Utility function for heapSort
-  /// @param index The index of parent node
-  /// @return lcI The index of left child
-  function getLeftChildI(uint256 index) private pure returns (uint256 lcI) {
-    uint256 i = index * 2;
-    lcI = i + 1;
-  }
-
-  /// @dev Sorts given array in place
-  /// @param self Storage array containing uint256 type variables
-  function heapSort(uint256[] storage self) public {
-    uint256 end = self.length - 1;
-    uint256 start = getParentI(end);
-    uint256 root = start;
-    uint256 lChild;
-    uint256 rChild;
-    uint256 swap;
-    uint256 temp;
-    while(start >= 0){
-      root = start;
-      lChild = getLeftChildI(start);
-      while(lChild <= end){
-        rChild = lChild + 1;
-        swap = root;
-        if(self[swap] < self[lChild])
-          swap = lChild;
-        if((rChild <= end) && (self[swap]<self[rChild]))
-          swap = rChild;
-        if(swap == root)
-          lChild = end+1;
-        else {
-          temp = self[swap];
-          self[swap] = self[root];
-          self[root] = temp;
-          root = swap;
-          lChild = getLeftChildI(root);
-        }
-      }
-      if(start == 0)
-        break;
-      else
-        start = start - 1;
-    }
-    while(end > 0){
-      temp = self[end];
-      self[end] = self[0];
-      self[0] = temp;
-      end = end - 1;
-      root = 0;
-      lChild = getLeftChildI(0);
-      while(lChild <= end){
-        rChild = lChild + 1;
-        swap = root;
-        if(self[swap] < self[lChild])
-          swap = lChild;
-        if((rChild <= end) && (self[swap]<self[rChild]))
-          swap = rChild;
-        if(swap == root)
-          lChild = end + 1;
-        else {
-          temp = self[swap];
-          self[swap] = self[root];
-          self[root] = temp;
-          root = swap;
-          lChild = getLeftChildI(root);
-        }
-      }
-    }
-  }
-
-  /// @dev Removes duplicates from a given array.
-  /// @param self Storage array containing uint256 type variables
-  function uniq(uint256[] storage self) public returns (uint256 length) {
-    bool contains;
-    uint256 index;
-
-    for (uint256 i = 0; i < self.length; i++) {
-      (contains, index) = indexOf(self, self[i], false);
-
-      if (i > index) {
-        for (uint256 j = i; j < self.length - 1; j++){
-          self[j] = self[j + 1];
-        }
-
-        delete self[self.length - 1];
-        self.length--;
-        i--;
-      }
-    }
-
-    length = self.length;
-  }
-}
-
-contract BytesToTypes {
-    
-
-    function bytesToAddress(uint _offst, bytes memory _input) internal pure returns (address _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-    
-    function bytesToBool(uint _offst, bytes memory _input) internal pure returns (bool _output) {
-        
-        uint8 x;
-        assembly {
-            x := mload(add(_input, _offst))
-        }
-        x==0 ? _output = false : _output = true;
-    }   
-        
-    function getStringSize(uint _offst, bytes memory _input) internal pure returns(uint size){
-        
-        assembly{
-            
-            size := mload(add(_input,_offst))
-            let chunk_count := add(div(size,32),1) // chunk_count = size/32 + 1
-            
-            if gt(mod(size,32),0) {// if size%32 > 0
-                chunk_count := add(chunk_count,1)
-            } 
-            
-             size := mul(chunk_count,32)// first 32 bytes reseves for size in strings
-        }
-    }
-
-    function bytesToString(uint _offst, bytes memory _input, bytes memory _output) internal  {
-
-        uint size = 32;
-        assembly {
-            let loop_index:= 0
-                  
-            let chunk_count
-            
-            size := mload(add(_input,_offst))
-            chunk_count := add(div(size,32),1) // chunk_count = size/32 + 1
-            
-            if gt(mod(size,32),0) {
-                chunk_count := add(chunk_count,1)  // chunk_count++
-            }
-                
-            
-            loop:
-                mstore(add(_output,mul(loop_index,32)),mload(add(_input,_offst)))
-                _offst := sub(_offst,32)           // _offst -= 32
-                loop_index := add(loop_index,1)
-                
-            jumpi(loop , lt(loop_index , chunk_count))
-            
-        }
-    }
-
-    function bytesToBytes32(uint _offst, bytes memory  _input, bytes32 _output) internal pure {
-        
-        assembly {
-            mstore(_output , add(_input, _offst))
-            mstore(add(_output,32) , add(add(_input, _offst),32))
-        }
-    }
-    
-    function bytesToInt8(uint _offst, bytes memory  _input) internal pure returns (int8 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-    
-    function bytesToInt16(uint _offst, bytes memory _input) internal pure returns (int16 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt24(uint _offst, bytes memory _input) internal pure returns (int24 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt32(uint _offst, bytes memory _input) internal pure returns (int32 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt40(uint _offst, bytes memory _input) internal pure returns (int40 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt48(uint _offst, bytes memory _input) internal pure returns (int48 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt56(uint _offst, bytes memory _input) internal pure returns (int56 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt64(uint _offst, bytes memory _input) internal pure returns (int64 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt72(uint _offst, bytes memory _input) internal pure returns (int72 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt80(uint _offst, bytes memory _input) internal pure returns (int80 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt88(uint _offst, bytes memory _input) internal pure returns (int88 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt96(uint _offst, bytes memory _input) internal pure returns (int96 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-	
-	function bytesToInt104(uint _offst, bytes memory _input) internal pure returns (int104 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-    
-    function bytesToInt112(uint _offst, bytes memory _input) internal pure returns (int112 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt120(uint _offst, bytes memory _input) internal pure returns (int120 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt128(uint _offst, bytes memory _input) internal pure returns (int128 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt136(uint _offst, bytes memory _input) internal pure returns (int136 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt144(uint _offst, bytes memory _input) internal pure returns (int144 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt152(uint _offst, bytes memory _input) internal pure returns (int152 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt160(uint _offst, bytes memory _input) internal pure returns (int160 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt168(uint _offst, bytes memory _input) internal pure returns (int168 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt176(uint _offst, bytes memory _input) internal pure returns (int176 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt184(uint _offst, bytes memory _input) internal pure returns (int184 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt192(uint _offst, bytes memory _input) internal pure returns (int192 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt200(uint _offst, bytes memory _input) internal pure returns (int200 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt208(uint _offst, bytes memory _input) internal pure returns (int208 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt216(uint _offst, bytes memory _input) internal pure returns (int216 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt224(uint _offst, bytes memory _input) internal pure returns (int224 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt232(uint _offst, bytes memory _input) internal pure returns (int232 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt240(uint _offst, bytes memory _input) internal pure returns (int240 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt248(uint _offst, bytes memory _input) internal pure returns (int248 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-    function bytesToInt256(uint _offst, bytes memory _input) internal pure returns (int256 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    }
-
-	function bytesToUint8(uint _offst, bytes memory _input) internal pure returns (uint8 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint16(uint _offst, bytes memory _input) internal pure returns (uint16 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint24(uint _offst, bytes memory _input) internal pure returns (uint24 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint32(uint _offst, bytes memory _input) internal pure returns (uint32 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint40(uint _offst, bytes memory _input) internal pure returns (uint40 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint48(uint _offst, bytes memory _input) internal pure returns (uint48 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint56(uint _offst, bytes memory _input) internal pure returns (uint56 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint64(uint _offst, bytes memory _input) internal pure returns (uint64 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint72(uint _offst, bytes memory _input) internal pure returns (uint72 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint80(uint _offst, bytes memory _input) internal pure returns (uint80 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint88(uint _offst, bytes memory _input) internal pure returns (uint88 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-	function bytesToUint96(uint _offst, bytes memory _input) internal pure returns (uint96 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-	
-	function bytesToUint104(uint _offst, bytes memory _input) internal pure returns (uint104 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint112(uint _offst, bytes memory _input) internal pure returns (uint112 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint120(uint _offst, bytes memory _input) internal pure returns (uint120 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint128(uint _offst, bytes memory _input) internal pure returns (uint128 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint136(uint _offst, bytes memory _input) internal pure returns (uint136 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint144(uint _offst, bytes memory _input) internal pure returns (uint144 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint152(uint _offst, bytes memory _input) internal pure returns (uint152 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint160(uint _offst, bytes memory _input) internal pure returns (uint160 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint168(uint _offst, bytes memory _input) internal pure returns (uint168 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint176(uint _offst, bytes memory _input) internal pure returns (uint176 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint184(uint _offst, bytes memory _input) internal pure returns (uint184 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint192(uint _offst, bytes memory _input) internal pure returns (uint192 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint200(uint _offst, bytes memory _input) internal pure returns (uint200 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint208(uint _offst, bytes memory _input) internal pure returns (uint208 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint216(uint _offst, bytes memory _input) internal pure returns (uint216 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint224(uint _offst, bytes memory _input) internal pure returns (uint224 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint232(uint _offst, bytes memory _input) internal pure returns (uint232 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint240(uint _offst, bytes memory _input) internal pure returns (uint240 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint248(uint _offst, bytes memory _input) internal pure returns (uint248 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-
-    function bytesToUint256(uint _offst, bytes memory _input) internal pure returns (uint256 _output) {
-        
-        assembly {
-            _output := mload(add(_input, _offst))
-        }
-    } 
-    
-}
-
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (a == 0) {
             return 0;
         }
 
-        c = a * b;
-        assert(c / a == b);
-        return c;
+    // This will return the expected totalSupply during normal situations
+    } else {
+        return getValueAt(totalSupplyHistory, _blockNumber);
     }
+  }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+  /**
+  * Returns the token holder balance at the current block
+  * @param _owner {address}
+  * @return balance {uint256}
+   */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balanceOfAt(_owner, block.number);
+  }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-contract  SizeOf {
-    
-    function sizeOfString(string _in) internal pure  returns(uint _size){
-        _size = bytes(_in).length / 32;
-         if(bytes(_in).length % 32 != 0) 
-            _size++;
-            
-        _size++; // first 32 bytes is reserved for the size of the string     
-        _size *= 32;
-    }
-
-    function sizeOfInt(uint16 _postfix) internal pure  returns(uint size){
-
-        assembly{
-            switch _postfix
-                case 8 { size := 1 }
-                case 16 { size := 2 }
-                case 24 { size := 3 }
-                case 32 { size := 4 }
-                case 40 { size := 5 }
-                case 48 { size := 6 }
-                case 56 { size := 7 }
-                case 64 { size := 8 }
-                case 72 { size := 9 }
-                case 80 { size := 10 }
-                case 88 { size := 11 }
-                case 96 { size := 12 }
-                case 104 { size := 13 }
-                case 112 { size := 14 }
-                case 120 { size := 15 }
-                case 128 { size := 16 }
-                case 136 { size := 17 }
-                case 144 { size := 18 }
-                case 152 { size := 19 }
-                case 160 { size := 20 }
-                case 168 { size := 21 }
-                case 176 { size := 22 }
-                case 184 { size := 23 }
-                case 192 { size := 24 }
-                case 200 { size := 25 }
-                case 208 { size := 26 }
-                case 216 { size := 27 }
-                case 224 { size := 28 }
-                case 232 { size := 29 }
-                case 240 { size := 30 }
-                case 248 { size := 31 }
-                case 256 { size := 32 }
-                default  { size := 32 }
+  /**
+  * Returns the token holder balance the the given block number
+  * @param _owner {address}
+  * @param _blockNumber {uint256}
+  * @return balance {uint256}
+  */
+  function balanceOfAt(address _owner, uint256 _blockNumber) public constant returns (uint256) {
+    // These next few lines are used when the balance of the token is
+    //  requested before a check point was ever created for this token, it
+    //  requires that the `parentToken.balanceOfAt` be queried at the
+    //  genesis block for that token as this contains initial balance of
+    //  this token
+    if ((balances[_owner].length == 0) || (balances[_owner][0].fromBlock > _blockNumber)) {
+        if (address(parentToken) != 0x0) {
+            return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
+        } else {
+            // Has no parent
+            return 0;
         }
 
+    // This will return the expected balance during normal situations
+    } else {
+        return getValueAt(balances[_owner], _blockNumber);
     }
-    
-    function sizeOfUint(uint16 _postfix) internal pure  returns(uint size){
-        return sizeOfInt(_postfix);
-    }
+  }
 
-    function sizeOfAddress() internal pure  returns(uint8){
-        return 20; 
-    }
-    
-    function sizeOfBool() internal pure  returns(uint8){
-        return 1; 
-    }
-    
+  /**
+  * Standard ERC20 transfer tokens function
+  * @param _to {address}
+  * @param _amount {uint}
+  * @return success {bool}
+  */
+  function transfer(address _to, uint256 _amount) public returns (bool success) {
+    return doTransfer(msg.sender, _to, _amount);
+  }
 
-}
+  /**
+  * Standard ERC20 transferFrom function
+  * @param _from {address}
+  * @param _to {address}
+  * @param _amount {uint256}
+  * @return success {bool}
+  */
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
+    require(allowed[_from][msg.sender] >= _amount);
+    allowed[_from][msg.sender] -= _amount;
+    return doTransfer(_from, _to, _amount);
+  }
 
-contract TypesToBytes {
- 
-    function TypesToBytes() internal {
-        
-    }
-    function addressToBytes(uint _offst, address _input, bytes memory _output) internal pure {
+  /**
+  * Standard ERC20 approve function
+  * @param _spender {address}
+  * @param _amount {uint256}
+  * @return success {bool}
+  */
+  function approve(address _spender, uint256 _amount) public returns (bool success) {
+    require(transfersEnabled);
 
-        assembly {
-            mstore(add(_output, _offst), _input)
-        }
-    }
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
 
-    function bytes32ToBytes(uint _offst, bytes32 _input, bytes memory _output) internal pure {
+    allowed[msg.sender][_spender] = _amount;
+    emit Approval(msg.sender, _spender, _amount);
+    return true;
+  }
 
-        assembly {
-            mstore(add(_output, _offst), _input)
-            mstore(add(add(_output, _offst),32), add(_input,32))
-        }
-    }
-    
-    function boolToBytes(uint _offst, bool _input, bytes memory _output) internal pure {
-        uint8 x = _input == false ? 0 : 1;
-        assembly {
-            mstore(add(_output, _offst), x)
-        }
-    }
-    
-    function stringToBytes(uint _offst, bytes memory _input, bytes memory _output) internal {
-        uint256 stack_size = _input.length / 32;
-        if(_input.length % 32 > 0) stack_size++;
-        
-        assembly {
-            let index := 0
-            stack_size := add(stack_size,1)//adding because of 32 first bytes memory as the length
-        loop:
-            
-            mstore(add(_output, _offst), mload(add(_input,mul(index,32))))
-            _offst := sub(_offst , 32)
-            index := add(index ,1)
-            jumpi(loop , lt(index,stack_size))
-        }
-    }
+  /**
+  * Standard ERC20 approve function
+  * @param _spender {address}
+  * @param _amount {uint256}
+  * @return success {bool}
+  */
+  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success) {
+    approve(_spender, _amount);
 
-    function intToBytes(uint _offst, int _input, bytes memory  _output) internal pure {
+    ApproveAndCallReceiver(_spender).receiveApproval(
+        msg.sender,
+        _amount,
+        this,
+        _extraData
+    );
 
-        assembly {
-            mstore(add(_output, _offst), _input)
-        }
-    } 
-    
-    function uintToBytes(uint _offst, uint _input, bytes memory _output) internal pure {
+    return true;
+  }
 
-        assembly {
-            mstore(add(_output, _offst), _input)
-        }
-    }   
+  /**
+  * Standard ERC20 allowance function
+  * @param _owner {address}
+  * @param _spender {address}
+  * @return remaining {uint256}
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
 
-}
+  /**
+  * Internal Transfer function - Updates the checkpoint ledger
+  * @param _from {address}
+  * @param _to {address}
+  * @param _amount {uint256}
+  * @return success {bool}
+  */
+  function doTransfer(address _from, address _to, uint256 _amount) internal returns(bool) {
 
-contract Seriality is BytesToTypes, TypesToBytes, SizeOf {
-
-    function Seriality() public {
-
-    }
-}
-
-contract TimedEscrow is ContractReceiver, Seriality {
-
-    using Array256Lib for uint256[];
-
-    struct Transaction {
-        uint256 value;
-        address to_address;
-        uint256 time;
-        bool valid; //we do not want to get rid of transactions that are cancelled, just void them
-        bool executed; //we want to separate the concept of executed transactions from the invalid ones which should both be immutable
+    if (msg.sender != masterWallet) {
+      require(transfersEnabled);
+    } else {
+      require(masterTransfersEnabled);
     }
 
-    Token tokContract;
-    address owner;
+    require(_amount > 0);
+    require(parentSnapShotBlock < block.number);
+    require((_to != address(0)) && (_to != address(this)));
 
-    Transaction[] transactions;
+    // If the amount being transfered is more than the balance of the
+    // account the transfer returns false
+    uint256 previousBalanceFrom = balanceOfAt(_from, block.number);
+    require(previousBalanceFrom >= _amount);
 
-    mapping(address => uint256[]) transactions_of;
+    // First update the balance array with the new value for the address
+    //  sending the tokens
+    updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
 
-    // Events
-    event addingTransaction(uint256 value, address addr, uint256 time, bool valid, bool executed, uint index);
-    event voidingTransaction(uint256 index);
+    // Then update the balance array with the new value for the address
+    //  receiving the tokens
+    uint256 previousBalanceTo = balanceOfAt(_to, block.number);
+    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+    updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+
+    // An event to make the transfer easy to find on the blockchain
+    emit Transfer(_from, _to, _amount);
+    return true;
+  }
 
 
-    constructor(address _tokContract) public {
-        tokContract = Token(_tokContract);
-        owner = msg.sender;
+  /**
+  * Token creation functions - can only be called by the tokensale controller during the tokensale period
+  * @param _owner {address}
+  * @param _amount {uint256}
+  * @return success {bool}
+  */
+  function mint(address _owner, uint256 _amount) public onlyController canMint returns (bool) {
+    uint256 curTotalSupply = totalSupply();
+    uint256 previousBalanceTo = balanceOf(_owner);
+
+    require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
+    require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+
+    updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
+    updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
+    emit Transfer(0, _owner, _amount);
+    return true;
+  }
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+
+  /**
+   * Import presale balances before the start of the token sale. After importing
+   * balances, lockPresaleBalances() has to be called to prevent further modification
+   * of presale balances.
+   * @param _addresses {address[]} Array of presale addresses
+   * @param _balances {uint256[]} Array of balances corresponding to presale addresses.
+   * @return success {bool}
+   */
+  function importPresaleBalances(address[] _addresses, uint256[] _balances) public onlyController returns (bool) {
+    require(presaleBalancesLocked == false);
+
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      totalSupplyAtCheckpoint += _balances[i];
+      updateValueAtNow(balances[_addresses[i]], _balances[i]);
+      updateValueAtNow(totalSupplyHistory, totalSupplyAtCheckpoint);
+      emit Transfer(0, _addresses[i], _balances[i]);
     }
+    return true;
+  }
 
-    function addTransaction(Transaction transaction) private {
-        transactions.push(transaction);
-        transactions_of[transaction.to_address].push(transactions.length - 1);
-        emit addingTransaction(transaction.value, transaction.to_address, transaction.time, transaction.valid, transaction.executed, transactions.length - 1);
-    }
+  /**
+   * Lock presale balances after successful presale balance import
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function lockPresaleBalances() public onlyController returns (bool) {
+    presaleBalancesLocked = true;
+    return true;
+  }
 
-    function transferOwnership(address tbo){
-        require(msg.sender == owner, 'Unauthorized');
-        owner = tbo;
-    }
+  /**
+   * Lock the minting of Led Tokens - to be called after the presale
+   * @return {bool} success
+  */
+  function finishMinting() public onlyController returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
 
-    //ETH has been transfered so we should not be allowed to void transactions
-    //Should we allow beneficiary to void his transaction? Maybe they have lost private key to hackers
+  /**
+   * Enable or block transfers - to be called in case of emergency
+   * @param _value {bool}
+  */
+  function enableTransfers(bool _value) public onlyController {
+    transfersEnabled = _value;
+  }
 
-    function voidTransaction(uint256 transaction_id){
-        require(
-            msg.sender == transactions[transaction_id].to_address
-            && !transactions[transaction_id].executed
-        && transactions[transaction_id].valid
+  /**
+   * Enable or block transfers - to be called in case of emergency
+   * @param _value {bool}
+  */
+  function enableMasterTransfers(bool _value) public onlyController {
+    masterTransfersEnabled = _value;
+  }
+
+  /**
+   * Internal balance method - gets a certain checkpoint value a a certain _block
+   * @param _checkpoints {Checkpoint[]} List of checkpoints - supply history or balance history
+   * @return value {uint256} Value of _checkpoints at _block
+  */
+  function getValueAt(Checkpoint[] storage _checkpoints, uint256 _block) constant internal returns (uint256) {
+
+      if (_checkpoints.length == 0)
+        return 0;
+      // Shortcut for the actual value
+      if (_block >= _checkpoints[_checkpoints.length-1].fromBlock)
+        return _checkpoints[_checkpoints.length-1].value;
+      if (_block < _checkpoints[0].fromBlock)
+        return 0;
+
+      // Binary search of the value in the array
+      uint256 min = 0;
+      uint256 max = _checkpoints.length-1;
+      while (max > min) {
+          uint256 mid = (max + min + 1) / 2;
+          if (_checkpoints[mid].fromBlock<=_block) {
+              min = mid;
+          } else {
+              max = mid-1;
+          }
+      }
+      return _checkpoints[min].value;
+  }
+
+
+  /**
+  * Internal update method - updates the checkpoint ledger at the current block
+  * @param _checkpoints {Checkpoint[]}  List of checkpoints - supply history or balance history
+  * @return value {uint256} Value to add to the checkpoints ledger
+   */
+  function updateValueAtNow(Checkpoint[] storage _checkpoints, uint256 _value) internal {
+      if ((_checkpoints.length == 0) || (_checkpoints[_checkpoints.length-1].fromBlock < block.number)) {
+              Checkpoint storage newCheckPoint = _checkpoints[_checkpoints.length++];
+              newCheckPoint.fromBlock = uint128(block.number);
+              newCheckPoint.value = uint128(_value);
+          } else {
+              Checkpoint storage oldCheckPoint = _checkpoints[_checkpoints.length-1];
+              oldCheckPoint.value = uint128(_value);
+          }
+  }
+
+
+  function min(uint256 a, uint256 b) internal pure returns (uint) {
+      return a < b ? a : b;
+  }
+
+  /**
+  * Clones Led Token at the given snapshot block
+  * @param _snapshotBlock {uint256}
+  * @param _name {string} - The cloned token name
+  * @param _symbol {string} - The cloned token symbol
+  * @return clonedTokenAddress {address}
+   */
+  function createCloneToken(uint256 _snapshotBlock, string _name, string _symbol) public returns(address) {
+
+      if (_snapshotBlock == 0) {
+        _snapshotBlock = block.number;
+      }
+
+      if (_snapshotBlock > block.number) {
+        _snapshotBlock = block.number;
+      }
+
+      LedToken cloneToken = tokenFactory.createCloneToken(
+          this,
+          _snapshotBlock,
+          _name,
+          _symbol
         );
-        transactions[transaction_id].valid = false;
-        tokContract.transfer(owner, transactions[transaction_id].value);
-        emit voidingTransaction(transaction_id);
+
+
+      cloneToken.transferControl(msg.sender);
+
+      // An event to make the token easy to find on the blockchain
+      emit NewCloneToken(address(cloneToken));
+      return address(cloneToken);
     }
 
-    function getTransactionIdsOf(address to_address) public view returns (uint[]){
-        return transactions_of[to_address];
+}
+
+/**
+ * @title LedToken (LED)
+ * Standard Mintable ERC20 Token
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract LedTokenInterface is Controllable {
+
+  bool public transfersEnabled;
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  event ClaimedTokens(address indexed _token, address indexed _owner, uint _amount);
+  event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
+  function totalSupply() public constant returns (uint);
+  function totalSupplyAt(uint _blockNumber) public constant returns(uint);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint);
+  function transfer(address _to, uint256 _amount) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
+  function approve(address _spender, uint256 _amount) public returns (bool success);
+  function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+  function mint(address _owner, uint _amount) public returns (bool);
+  function importPresaleBalances(address[] _addresses, uint256[] _balances, address _presaleAddress) public returns (bool);
+  function lockPresaleBalances() public returns (bool);
+  function finishMinting() public returns (bool);
+  function enableTransfers(bool _value) public;
+  function enableMasterTransfers(bool _value) public;
+  function createCloneToken(uint _snapshotBlock, string _cloneTokenName, string _cloneTokenSymbol) public returns (address);
+
+}
+
+/**
+ * @title Presale
+ * Presale allows investors to make token purchases and assigns them tokens based
+
+ * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
+ */
+contract Presale is Crowdsale {
+
+  uint256 public tokenCap = PRESALE_TOKENCAP;
+  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
+  uint256 public weiCap = tokenCap * PRESALE_BASE_PRICE_IN_WEI;
+
+  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+    
+
+    startTime = _startTime;
+    endTime = _endTime;
+    ledToken = LedTokenInterface(_tokenAddress);
+
+    assert(_tokenAddress != 0x0);
+    assert(_startTime > 0);
+    assert(_endTime > _startTime);
+  }
+
+    /**
+   * High level token purchase function
+   */
+  function() public payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * Low level token purchase function
+   * @param _beneficiary will receive the tokens.
+   */
+  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
+    uint256 priceInWei = PRESALE_BASE_PRICE_IN_WEI;
+    
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
+    uint256 bonusPercentage = determineBonus(weiAmount);
+    uint256 bonusTokens;
+
+    uint256 initialTokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
+    if(bonusPercentage>0){
+      uint256 initialDivided = initialTokens.div(100);
+      bonusTokens = initialDivided.mul(bonusPercentage);
+    } else {
+      bonusTokens = 0;
     }
+    uint256 tokens = initialTokens.add(bonusTokens);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < cap);
 
-    function getTransaction(uint256 transaction_id) public view returns (uint256 value, address to_address, uint256 time, bool valid, bool executed){
-        Transaction memory t = transactions[transaction_id];
-        value = t.value;
-        to_address = t.to_address;
-        time = t.time;
-        valid = t.valid;
-        executed = t.executed;
-        return;
+    contributors = contributors.add(1);
+
+    ledToken.mint(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  function determineBonus(uint256 _wei) public view returns (uint256) {
+    if(_wei > PRESALE_LEVEL_1) {
+      if(_wei > PRESALE_LEVEL_2) {
+        if(_wei > PRESALE_LEVEL_3) {
+          if(_wei > PRESALE_LEVEL_4) {
+            if(_wei > PRESALE_LEVEL_5) {
+              return PRESALE_PERCENTAGE_5;
+            } else {
+              return PRESALE_PERCENTAGE_4;
+            }
+          } else {
+            return PRESALE_PERCENTAGE_3;
+          }
+        } else {
+          return PRESALE_PERCENTAGE_2;
+        }
+      } else {
+        return PRESALE_PERCENTAGE_1;
+      }
+    } else {
+      return 0;
     }
+  }
 
-    function performTransaction(uint256 transaction_id){
-        Transaction tbp = transactions[transaction_id];
-        require(now > tbp.time && tbp.valid && !tbp.executed, 'Invalid transaction data');
-        tbp.executed = true;
-        transactions[transaction_id] = tbp;
-        tokContract.transfer(tbp.to_address, tbp.value);
+  function finalize() public onlyOwner {
+    require(paused);
+    require(!finalized);
+    surplusTokens = cap - tokensMinted;
+    ledToken.mint(ledMultiSig, surplusTokens);
+    ledToken.transferControl(owner);
+
+    emit Finalized();
+
+    finalized = true;
+  }
+
+  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
+  bool, uint256, uint256){
+    uint256 decimals = 18;
+    string memory symbol = "LED";
+    bool transfersEnabled = ledToken.transfersEnabled();
+    return (
+      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
+      decimals, // Decimals
+      symbol,
+      transfersEnabled,
+      contributors,
+      totalWeiRaised,
+      tokenCap, // Tokencap for the first sale with the decimal point in place.
+      started,
+      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
+      endTime
+    );
+  }
+  
+  function getInfoLevels() public view returns(uint256, uint256, uint256, uint256, uint256, uint256, 
+  uint256, uint256, uint256, uint256){
+    return (
+      PRESALE_LEVEL_1, // Amount of ether needed per bonus level
+      PRESALE_LEVEL_2,
+      PRESALE_LEVEL_3,
+      PRESALE_LEVEL_4,
+      PRESALE_LEVEL_5,
+      PRESALE_PERCENTAGE_1, // Bonus percentage per bonus level
+      PRESALE_PERCENTAGE_2,
+      PRESALE_PERCENTAGE_3,
+      PRESALE_PERCENTAGE_4,
+      PRESALE_PERCENTAGE_5
+    );
+  }
+
+}
+
+/**
+ * @title PrivateSale
+ * PrivateSale allows investors to make token purchases and assigns them tokens based
+
+ * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
+ */
+contract PrivateSale is Crowdsale {
+
+  uint256 public tokenCap = PRIVATESALE_TOKENCAP;
+  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
+  uint256 public weiCap = tokenCap * PRIVATESALE_BASE_PRICE_IN_WEI;
+
+  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+    
+
+    startTime = _startTime;
+    endTime = _endTime;
+    ledToken = LedTokenInterface(_tokenAddress);
+
+    assert(_tokenAddress != 0x0);
+    assert(_startTime > 0);
+    assert(_endTime > _startTime);
+  }
+
+    /**
+   * High level token purchase function
+   */
+  function() public payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * Low level token purchase function
+   * @param _beneficiary will receive the tokens.
+   */
+  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
+    require(validPurchase());
+
+
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
+    uint256 priceInWei = PRIVATESALE_BASE_PRICE_IN_WEI;
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
+    uint256 tokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < cap);
+
+    contributors = contributors.add(1);
+
+    ledToken.mint(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  function finalize() public onlyOwner {
+    require(paused);
+    require(!finalized);
+    surplusTokens = cap - tokensMinted;
+    ledToken.mint(ledMultiSig, surplusTokens);
+    ledToken.transferControl(owner);
+
+    emit Finalized();
+
+    finalized = true;
+  }
+
+  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
+  bool, uint256, uint256){
+    uint256 decimals = 18;
+    string memory symbol = "LED";
+    bool transfersEnabled = ledToken.transfersEnabled();
+    return (
+      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
+      decimals, // Decimals
+      symbol,
+      transfersEnabled,
+      contributors,
+      totalWeiRaised,
+      tokenCap, // Tokencap for the first sale with the decimal point in place.
+      started,
+      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
+      endTime
+    );
+  }
+
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract TokenFactory {
+
+    function createCloneToken(
+        address _parentToken,
+        uint _snapshotBlock,
+        string _tokenName,
+        string _tokenSymbol
+        ) public returns (LedToken) {
+
+        LedToken newToken = new LedToken(
+            this,
+            _parentToken,
+            _snapshotBlock,
+            _tokenName,
+            _tokenSymbol
+        );
+
+        newToken.transferControl(msg.sender);
+        return newToken;
     }
+}
 
-    function transactionStructFromBytesSeriality(bytes data) internal pure returns (Transaction){
-        Transaction memory t;
-        uint offset = 128;
-        bytes memory buffer = new bytes(128);
+contract TokenFactoryInterface {
 
-        t.value = bytesToUint256(offset, data);
-        offset -= sizeOfUint(256);
+    function createCloneToken(
+        address _parentToken,
+        uint _snapshotBlock,
+        string _tokenName,
+        string _tokenSymbol
+      ) public returns (LedToken newToken);
+}
 
-        t.to_address = bytesToAddress(offset, data);
-        offset -= sizeOfAddress();
+/**
+ * @title Tokensale
+ * Tokensale allows investors to make token purchases and assigns them tokens based
 
-        t.time = bytesToUint256(offset, data);
-        offset -= sizeOfUint(256);
+ * on a token per ETH rate. Funds collected are forwarded to a wallet as they arrive.
+ */
+contract TokenSale is Crowdsale {
 
-        t.valid = bytesToBool(offset, data);
-        offset -= sizeOfBool();
+  uint256 public tokenCap = ICO_TOKENCAP;
+  uint256 public cap = tokenCap * DECIMALS_MULTIPLIER;
+  uint256 public weiCap = tokenCap * ICO_BASE_PRICE_IN_WEI;
 
-        t.executed = bytesToBool(offset, data);
-        offset -= sizeOfBool();
-        return t;
+  uint256 public allocatedTokens;
 
+  constructor(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+    
+
+    startTime = _startTime;
+    endTime = _endTime;
+    ledToken = LedTokenInterface(_tokenAddress);
+
+    assert(_tokenAddress != 0x0);
+    assert(_startTime > 0);
+    assert(_endTime > _startTime);
+  }
+
+    /**
+   * High level token purchase function
+   */
+  function() public payable {
+    buyTokens(msg.sender);
+  }
+
+  /**
+   * Low level token purchase function
+   * @param _beneficiary will receive the tokens.
+   */
+  function buyTokens(address _beneficiary) public payable whenNotPaused whenNotFinalized {
+    require(_beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    require(weiAmount >= MIN_PURCHASE_OTHERSALES && weiAmount <= MAX_PURCHASE);
+    uint256 priceInWei = ICO_BASE_PRICE_IN_WEI;
+    totalWeiRaised = totalWeiRaised.add(weiAmount);
+
+    uint256 bonusPercentage = determineBonus(weiAmount);
+    uint256 bonusTokens;
+
+    uint256 initialTokens = weiAmount.mul(DECIMALS_MULTIPLIER).div(priceInWei);
+    if(bonusPercentage>0){
+      uint256 initialDivided = initialTokens.div(100);
+      bonusTokens = initialDivided.mul(bonusPercentage);
+    } else {
+      bonusTokens = 0;
     }
+    uint256 tokens = initialTokens.add(bonusTokens);
+    tokensMinted = tokensMinted.add(tokens);
+    require(tokensMinted < cap);
 
-    function transactionStructToBytesSeriality(Transaction t) private pure returns (bytes){
-        bytes memory buffer = new bytes(128);
-        uint offset = 128;
+    contributors = contributors.add(1);
 
-        uintToBytes(offset, t.value, buffer);
-        offset -= sizeOfUint(256);
+    ledToken.mint(_beneficiary, tokens);
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
 
-        addressToBytes(offset, t.to_address, buffer);
-        offset -= sizeOfAddress();
-
-        uintToBytes(offset, t.time, buffer);
-        offset -= sizeOfUint(256);
-
-        boolToBytes(offset, t.valid, buffer);
-        offset -= sizeOfBool();
-
-        boolToBytes(offset, t.executed, buffer);
-        offset -= sizeOfBool();
-        return buffer;
+  function determineBonus(uint256 _wei) public view returns (uint256) {
+    if(_wei > ICO_LEVEL_1) {
+      if(_wei > ICO_LEVEL_2) {
+        if(_wei > ICO_LEVEL_3) {
+          if(_wei > ICO_LEVEL_4) {
+            if(_wei > ICO_LEVEL_5) {
+              return ICO_PERCENTAGE_5;
+            } else {
+              return ICO_PERCENTAGE_4;
+            }
+          } else {
+            return ICO_PERCENTAGE_3;
+          }
+        } else {
+          return ICO_PERCENTAGE_2;
+        }
+      } else {
+        return ICO_PERCENTAGE_1;
+      }
+    } else {
+      return 0;
     }
+  }
 
-    function transactionRawToBytes(uint256 value, address to_address, uint256 time, bool valid, bool executed) public pure returns (bytes){
-        Transaction memory t;
-        t.value = value;
-        t.to_address = to_address;
-        t.time = time;
-        t.valid = valid;
-        t.executed = executed;
-        return transactionStructToBytesSeriality(t);
-    }
+  function allocateLedTokens() public onlyOwner whenNotFinalized {
+    require(!ledTokensAllocated);
+    allocatedTokens = LEDTEAM_TOKENS.mul(DECIMALS_MULTIPLIER);
+    ledToken.mint(ledMultiSig, allocatedTokens);
+    ledTokensAllocated = true;
+  }
 
-    function tokenFallback(address _from, uint _value, bytes _data) public {
-        require(_value > 0, 'No transaction was added because value was zero');
-        Transaction memory transaction = transactionStructFromBytesSeriality(_data);
-        require(transaction.value == _value, 'Token sent were not equal to token to store');
-        require(transaction.time > now, 'Time was in the past');
-        require(transaction.valid == true && transaction.executed == false, 'Transaction data is invalid');
-        addTransaction(transaction);
-    }
+  function finalize() public onlyOwner {
+    require(paused);
+    require(ledTokensAllocated);
 
-    function rescheduleTransaction(uint256 transaction_id, uint256 newtime) public {
-        require(msg.sender == owner);
-        require(!transactions[transaction_id].executed
-        && transactions[transaction_id].valid
-        && transactions[transaction_id].time > newtime);
-        transactions[transaction_id].time = newtime;
-    }
+    surplusTokens = cap - tokensMinted;
+    ledToken.mint(ledMultiSig, surplusTokens);
+
+    ledToken.finishMinting();
+    ledToken.enableTransfers(true);
+    emit Finalized();
+
+    finalized = true;
+  }
+
+  function getInfo() public view returns(uint256, uint256, string, bool,  uint256, uint256, uint256, 
+  bool, uint256, uint256){
+    uint256 decimals = 18;
+    string memory symbol = "LED";
+    bool transfersEnabled = ledToken.transfersEnabled();
+    return (
+      TOTAL_TOKENCAP, // Tokencap with the decimal point in place. should be 100.000.000
+      decimals, // Decimals
+      symbol,
+      transfersEnabled,
+      contributors,
+      totalWeiRaised,
+      tokenCap, // Tokencap for the first sale with the decimal point in place.
+      started,
+      startTime, // Start time and end time in Unix timestamp format with a length of 10 numbers.
+      endTime
+    );
+  }
+  
+  function getInfoLevels() public view returns(uint256, uint256, uint256, uint256, uint256, uint256, 
+  uint256, uint256, uint256, uint256){
+    return (
+      ICO_LEVEL_1, // Amount of ether needed per bonus level
+      ICO_LEVEL_2,
+      ICO_LEVEL_3,
+      ICO_LEVEL_4,
+      ICO_LEVEL_5,
+      ICO_PERCENTAGE_1, // Bonus percentage per bonus level
+      ICO_PERCENTAGE_2,
+      ICO_PERCENTAGE_3,
+      ICO_PERCENTAGE_4,
+      ICO_PERCENTAGE_5
+    );
+  }
 
 }
