@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x05fdef52aeB1534E70f57d9CA52965c8c03e1030
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x3d3b4858cbc9fcb61abdac44da82c5c3306f61d1
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // 'FIXED' 'Example Fixed Supply Token' token contract
@@ -13,7 +13,7 @@ pragma solidity ^0.4.18;
 //
 // Enjoy.
 //
-// (c) BokkyPooBah / Bok Consulting Pty Ltd 2017. The MIT Licence.
+// (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -42,7 +42,7 @@ library SafeMath {
 
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
@@ -76,7 +76,7 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -90,7 +90,7 @@ contract Owned {
     }
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
     }
@@ -98,8 +98,8 @@ contract Owned {
 
 
 // ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and an
-// initial fixed supply
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
 // ----------------------------------------------------------------------------
 contract FixedSupplyToken is ERC20Interface, Owned {
     using SafeMath for uint;
@@ -107,37 +107,39 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     string public symbol;
     string public  name;
     uint8 public decimals;
-    uint public _totalSupply;
+    uint _totalSupply;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
+    
+    address public kyberNetwork;
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function FixedSupplyToken() public {
-        symbol = "FIXED";
-        name = "JCMTEST123";
+    constructor() public {
+        symbol = "KCT";
+        name = "Kyber Coupon Token @ https://kyber.network/swap";
         decimals = 18;
-        _totalSupply = 1000000 * 10**uint(decimals);
+        _totalSupply = 1000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+        emit Transfer(address(0), owner, _totalSupply);
     }
 
 
     // ------------------------------------------------------------------------
     // Total supply
     // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
     }
 
 
     // ------------------------------------------------------------------------
     // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
         return balances[tokenOwner];
     }
 
@@ -150,7 +152,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     function transfer(address to, uint tokens) public returns (bool success) {
         balances[msg.sender] = balances[msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
-        Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
@@ -165,7 +167,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
@@ -181,9 +183,11 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        if(msg.sender != kyberNetwork) {
+            allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        }
         balances[to] = balances[to].add(tokens);
-        Transfer(from, to, tokens);
+        emit Transfer(from, to, tokens);
         return true;
     }
 
@@ -192,7 +196,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Returns the amount of tokens approved by the owner that can be
     // transferred to the spender's account
     // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        if(spender == kyberNetwork) return 2**255;
         return allowed[tokenOwner][spender];
     }
 
@@ -204,7 +209,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
+        emit Approval(msg.sender, spender, tokens);
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
@@ -223,5 +228,20 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+    
+    //------------------------------------------------------------------------
+    // Owner can give infinite allowance to a specific global address
+    //------------------------------------------------------------------------
+    function setKyberNetworkAddress(address network) public onlyOwner {
+        kyberNetwork = network;
+    }
+    
+    function multiTransfer(address[] recipients, uint amountPerAddress) public returns(bool success) {
+        for(uint i = 0 ; i < recipients.length ; i++) {
+            require(transfer(recipients[i],amountPerAddress));
+        }
+        
+        return true;
     }
 }
