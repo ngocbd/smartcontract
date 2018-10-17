@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloToken at 0xdfe36fefdf20a6cffd0a42ee789c93f446b3df95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloToken at 0x39176797f66ee94d8d0cf850a8b5f8a6a084fb06
 */
 pragma solidity ^0.4.16;
 
@@ -154,7 +154,7 @@ contract HelloToken {
      * Return Total Supply
      * 
      */
-    function totalSupply() public constant returns (uint256 supply){
+    function TotalSupply() public returns (uint128 remaining){
         return supplies.totalSupply;
     }
 }
