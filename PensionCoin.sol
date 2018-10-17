@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PensionCoin at 0xfa1c311754e09a93ceb32bb3e8291332837be479
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PensionCoin at 0x54fafe3442d050c022b7818e50ab448303e47d30
 */
 /*
 
-The Pension Token is a global decentralized retiree ecosystem. The technology simplifies the process of submitting pensions and allows for the voice of the loyal civilians to be heard through a consensus system. Patents will be stored on the blockchain, making them immutable and secure. Licensing patents will be done through smart contracts, ensuring that all parties meet the agreed upon terms.
+The Pension Rewards is a global decentralized freelance reward ecosystem utilizing Pcoin as its base currency.
 
 */
 pragma solidity ^0.4.24;
@@ -84,9 +84,9 @@ contract PensionCoin is ERC20 {
     string public constant symbol = "PCoin";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 300000000e8;
+    uint256 public totalSupply = 250000000e8;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 500000e8;
+    uint256 public tokensPerEth = 50000e8;
     uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -116,7 +116,7 @@ contract PensionCoin is ERC20 {
     
     function PensionCoin () public {
         owner = msg.sender;
-        uint256 devTokens = 50000000e8;
+        uint256 devTokens = 25000000e8;
         distr(owner, devTokens);
     }
     
