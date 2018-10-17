@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xad6942baace09e2aca2818e7ef488e0be854c678
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xd0ea45659ff502851e33a7954b44996135b760f3
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.21;
 
 
 /**
