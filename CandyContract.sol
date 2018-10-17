@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0xfb0f7189b354660e649ae14261a9fe0e8febf369
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0x62dd86ef72f4b360c8859ee7e45694959b932770
 */
 pragma solidity ^0.4.18;
 
@@ -42,7 +42,7 @@ contract CandyContract is owned{
         address addressOfTokenUsedAsReward,
         address collector
     ) public {
-        totalCandyNo = 1e8;
+        totalCandyNo = 1e9;
         tokenReward = token(addressOfTokenUsedAsReward);
         collectorAddress = collector;
     }
@@ -67,11 +67,11 @@ contract CandyContract is owned{
 
     function getCurrentCandyAmount() private view returns (uint amount){
 
-        if (totalCandyNo >= 7.5e7){
+        if (totalCandyNo >= 7.5e8){
             return 2000;
-        }else if (totalCandyNo >= 5e7){
+        }else if (totalCandyNo >= 5e8){
             return 1500;
-        }else if (totalCandyNo >= 2.5e7){
+        }else if (totalCandyNo >= 2.5e8){
             return 1000;
         }else if (totalCandyNo >= 500){
             return 500;
