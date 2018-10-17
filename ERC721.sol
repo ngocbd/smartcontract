@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC721 at 0x1b3237BdFE285fA01b9a01c6D0f66B10805E6092
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC721 at 0xF42ED50058b88A063F8BB4060FA6dc269D90B5b9
 */
 pragma solidity 0.4.24;
 
@@ -246,9 +246,9 @@ contract ERC721 is Ownable, SupportsInterfaceWithLookup {
 
   using AddressUtils for address;
 
-  string private _ERC721name = "Item";
-  string private _ERC721symbol = "MXI";
-  bool private tokenIsChamp = false;
+  string private _ERC721name = "Champ";
+  string private _ERC721symbol = "MXC";
+  bool private tokenIsChamp = true;
   address private controllerAddress;
   MyCryptoChampCore core;
 
