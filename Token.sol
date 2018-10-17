@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xd5126faf9a042507712a1607744b42e3c62bec2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0x12adf6e7bf0fb0fa050e8175723c4ae9c44c0603
 */
 pragma solidity ^0.4.23;
 
@@ -184,7 +184,6 @@ contract token is Control, ERC20Token {
         forSell = forSell.sub(amount);
         balanceOf[msg.sender] = balanceOf[msg.sender].add(amount);
         
-        owner.transfer(msg.value);
         emit Transfer(0, msg.sender, amount);
     }
     
