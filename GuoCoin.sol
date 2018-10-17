@@ -1,19 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GuoCoin at 0x47fe9fc00de8665752c577f4e567cbb3de1c8434
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GUOcoin at 0x2dd7e77483b870451346914f4db98cc53e6d26f3
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ISB' token contract
-//
-// Deployed to : 0x116312c3471C2e7C34C52782D0399eBE601f3F30
-// Symbol      : ?
-// Name        : ?? Guo Global Family Coin
-// Total supply: 1000000000000000000000000000
-// Decimals    : 18
-//
-// Enjoy.
-//
 // (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
@@ -102,28 +92,37 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract GuoCoin is ERC20Interface, Owned, SafeMath {
+contract GUOcoin is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
 
     mapping(address => uint) balances;
+    mapping(address => string) data;
     mapping(address => mapping(address => uint)) allowed;
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function GuoCoin() public {
-        symbol = "?";
-        name = "?? Guo Global Family Coin";
+    function GUOcoin() public {
+        symbol = "GUO";
+        name = "GUOcoin";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
-        balances[0x116312c3471C2e7C34C52782D0399eBE601f3F30] = _totalSupply;
-        Transfer(address(0), 0x116312c3471C2e7C34C52782D0399eBE601f3F30, _totalSupply);
+        _totalSupply = 2100000000000000000000000000;
+        balances[0xFe905C1CC0395240317F4e5A6ff22823f9B1DD3c] = _totalSupply;
+        Transfer(address(0), 0xFe905C1CC0395240317F4e5A6ff22823f9B1DD3c, _totalSupply);
     }
-
+    
+    function getData(address tokenOwner) public constant returns (string returnedData) {
+        return data[tokenOwner];
+    }
+    
+    function setData(address tokenOwner, string toAdd) public constant returns (bool success){
+        data[tokenOwner] = toAdd;
+        return true;
+    }
 
     // ------------------------------------------------------------------------
     // Total supply
