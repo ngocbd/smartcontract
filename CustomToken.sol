@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe90400328cf5192b330c70dc03ae38f5ea082f61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xb5c4b1770c00b07d3828a863fa1c2722bdd9b7de
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 3000000000000000000000000000;
-        name = 'CentRocket';
-        symbol = 'CRT';
-        decimals = 18;
-        balanceOf[0x49d2a86d9c36c6fe55225fdaa6c0deb7fd9d5b39] = totalSupply;
-        Transfer(address(0), 0x49d2a86d9c36c6fe55225fdaa6c0deb7fd9d5b39, totalSupply);
+        totalSupply = 260000000000000000;
+        name = 'Wisdom Agriculture Chain (???)';
+        symbol = 'WAC';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
 }
