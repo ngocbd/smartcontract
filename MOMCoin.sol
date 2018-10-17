@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOMCoin at 0x63e155c5d9be6c700bed4b0d38809b0b3a9792ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOMCoin at 0xf94caf6b14e97dd50681311d8a03a633540fe19b
 */
 pragma solidity ^0.4.18;
 
@@ -119,7 +119,7 @@ contract MOMCoin is ERC20Interface, Owned, SafeMath {
         symbol = "MOM";
         name = "MOMCoin";
         decimals = 18;
-        _totalSupply = 25000000000000000000000000;
+        _totalSupply = 250000000000000000;
         balances[0xdb94ea3f744Ef5f4b385938ec0c118A4b65d5EbF] = _totalSupply;
         Transfer(address(0), 0xdb94ea3f744Ef5f4b385938ec0c118A4b65d5EbF, _totalSupply);
     }
