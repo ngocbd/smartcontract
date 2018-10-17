@@ -1,15 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IprontoToken at 0x68b539381b317a04190c3bd7ce95b9233275d02a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IprontoToken at 0x12f3b110ccee3cf4dcf253ada18ef3f1f0568d56
 */
 pragma solidity ^0.4.18;
-
-
-// CONTRACT USED TO TEST THE ICO CONTRACT
-
-
-
-
-
 
 
 /**
@@ -23,6 +15,7 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
 
 /**
  * @title ERC20 interface
@@ -67,6 +60,7 @@ library SafeMath {
     return c;
   }
 }
+
 
 /**
  * @title Basic token
@@ -185,8 +179,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
 contract IprontoToken is StandardToken {
 
   // Setting Token Name to Mango
@@ -205,6 +197,8 @@ contract IprontoToken is StandardToken {
 
   // Flags address for KYC verrified.
   mapping (address => bool) public validKyc;
+
+  event ApprovedKyc(address[] addrs);
 
   function IprontoToken() public{
     totalSupply = INITIAL_SUPPLY;
@@ -227,6 +221,7 @@ contract IprontoToken is StandardToken {
         while (len-- > 0) {
             validKyc[_addrs[len]] = true;
         }
+        emit ApprovedKyc(_addrs);
         return true;
     }
 
