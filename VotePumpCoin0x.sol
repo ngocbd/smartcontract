@@ -1,13 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VotePumpCoin0x at 0x2069b1a93e604289cfda205330f7ed434b6cb743
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VotePumpCoin0x at 0xfc79774fb9dedeea2325d0d5570554eddc4e6747
 */
 pragma solidity ^0.4.22;
 
 // ==> Token Price 0.00001 ETH
-// ==> Send 0 ETH to claim free VPCx
-// ==> If you send above 0.02 ETH you will receive VPCx and fill in the form here https://goo.gl/NzznV9
-// ==> Vote Your Token for Pumps with VPCx
+// ==> Send 0 ETH to claim free VPC0x
+// ==> If you send above 0.02 ETH you will receive VPC0x and fill in the form here https://goo.gl/NzznV9
+// ==> Vote Your Token for Pumps with VPC0x
 // ==> Website https://votepumpcoin.me
+// ==> Telegram Channel : https://t.me/VPC0x
 
 
 
@@ -72,16 +73,16 @@ contract VotePumpCoin0x is ERC20 {
     mapping (address => bool) public blacklist;
 
     string public constant name = "VotePumpCoin0x";
-    string public constant symbol = "VPCx";
+    string public constant symbol = "VPC0x";
     uint public constant decimals = 18;
     
-uint256 public totalSupply = 66000000e3;
+uint256 public totalSupply = 75000000e18;
     
-uint256 public totalDistributed = 45000000e3;
+uint256 public totalDistributed = 45000000e18;
     
 uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     
-uint256 public value = 150e3;
+uint256 public value = 200e18;
 
 
 
@@ -110,7 +111,7 @@ bool public distributionFinished = false;
         _;
     }
     
-    function VPCx() public {
+    function VPC0x() public {
         owner = msg.sender;
         balances[owner] = totalDistributed;
     }
@@ -230,7 +231,7 @@ address burner = msg.sender;
         emit Burn(burner, _value);
     }
     
-    function withdrawVPCxTokens(address _tokenContract) onlyOwner public returns (bool) {
+    function withdrawVPC0xTokens(address _tokenContract) onlyOwner public returns (bool) {
         VotePumpCoin0xToken token = VotePumpCoin0xToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
