@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHx2 at 0x702b4ec04e119d4b4ac93f3fcc6aa266e7b66499
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHx2 at 0x9328c5cc898572669701f60801affdf822c6a9fe
 */
 pragma solidity 0.4.18;
 
 contract ETHx2 {
-    
     event NewParticipant(address owner, uint256 cost, uint256 new_price);
 
     struct Cost {
@@ -15,16 +14,16 @@ contract ETHx2 {
     mapping(uint256 => Cost) public participant;
     mapping(address => string) public msgs;
 
-    address public Address;
+    address public adminAddress;
     uint256 public seatPrice = 5000000000000000;
 
     modifier onlyAdmin() {
-        require(msg.sender == Address);
+        require(msg.sender == adminAddress);
         _;
     }
 
-    function participant() public {
-        Address = msg.sender;
+    function ETHx2() public {
+        adminAddress = msg.sender;
         participant[1] = Cost(msg.sender, 0);
         participant[2] = Cost(msg.sender, 0);
         participant[3] = Cost(msg.sender, 0);
@@ -38,7 +37,12 @@ contract ETHx2 {
         msgs[msg.sender] = "Claim this spot!";
     }
 
-    function getX2(uint256 _slot) public view returns(uint256 slot, address owner, uint256 cost, string message) {
+    function getETHx2(uint256 _slot) public view returns(
+        uint256 slot,
+        address owner,
+        uint256 cost,
+        string message
+    ) {
         slot = _slot;
         owner = participant[_slot].owner;
         cost = participant[_slot].cost;
@@ -58,6 +62,7 @@ contract ETHx2 {
         participant[7].owner.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), SafeMath.div(100, SafeMath.div(200, 17)))));
         participant[8].owner.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), SafeMath.div(100, SafeMath.div(200, 17)))));
         participant[9].owner.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), SafeMath.div(100, SafeMath.div(200, 17)))));
+        participant[10].owner.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), SafeMath.div(100, SafeMath.div(200, 17)))));
         participant[10] = participant[9];
         participant[9] = participant[8];
         participant[8] = participant[7];
@@ -68,7 +73,7 @@ contract ETHx2 {
         participant[3] = participant[2];
         participant[2] = participant[1];
         participant[1] = Cost(msg.sender, seatPrice);
-        Address.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), 15)));
+        adminAddress.transfer(uint256(SafeMath.mul(SafeMath.div(seatPrice, 100), SafeMath.div(100, SafeMath.div(200, 17)))));
         NewParticipant(msg.sender, seatPrice, SafeMath.mul(SafeMath.div(seatPrice, 100), 115));
         seatPrice = SafeMath.mul(SafeMath.div(seatPrice, 100), 115);
         msg.sender.transfer(excess);
@@ -79,7 +84,7 @@ contract ETHx2 {
     }
 
     function payout() public onlyAdmin {
-        Address.transfer(this.balance);
+        adminAddress.transfer(this.balance);
     }
 }
 
