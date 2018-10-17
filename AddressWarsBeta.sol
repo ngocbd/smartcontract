@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressWarsBeta at 0x6a976d88b497bb65e4715970fed2c1c468eaa7fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressWarsBeta at 0x32e78bdc108565c3f3811a8dc00da797b6c96dfe
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 //
 // AddressWars
 // (http://beta.addresswars.io/)
-// Public Beta
+// Public Beta v1.1
 //
 //
 //     .d8888b.                                    .d8888b.          
@@ -1185,7 +1185,7 @@ contract AddressWarsBeta {
           ) {
 
           // now check if your card has a type advantage increase modifier
-          if (allCards[0][i]._cardModifier != uint256(MODIFIER.A_I)) {
+          if (allCards[0][i]._cardModifier == uint256(MODIFIER.A_I)) {
             allAttackFigures[0][i] = SafeMath.div(SafeMath.mul(allAttackFigures[0][i], 3), 2); // x1.5
             allDefenceFigures[0][i] = SafeMath.div(SafeMath.mul(allDefenceFigures[0][i], 3), 2); // x1.5
           } else {
@@ -1202,7 +1202,7 @@ contract AddressWarsBeta {
           (allCards[1][i]._cardType == uint256(TYPE.WATER) && allCards[0][i]._cardType == uint256(TYPE.FIRE)) ||
           (allCards[1][i]._cardType == uint256(TYPE.NATURE) && allCards[0][i]._cardType == uint256(TYPE.WATER))
           ) {
-          if (allCards[1][i]._cardModifier != uint256(MODIFIER.A_I)) {
+          if (allCards[1][i]._cardModifier == uint256(MODIFIER.A_I)) {
             allAttackFigures[1][i] = SafeMath.div(SafeMath.mul(allAttackFigures[1][i], 3), 2); // x1.5
             allDefenceFigures[1][i] = SafeMath.div(SafeMath.mul(allDefenceFigures[1][i], 3), 2); // x1.5
           } else {
@@ -1541,6 +1541,21 @@ contract AddressWarsBeta {
       allCardAddressesCount[i] = bytes1(ownerCountOfCard(owner, cardsOfOwner[i]));
     }
     return allCardAddressesCount;
+
+  }
+
+  function getAllCardAddressesPriceOfOwner(address owner) public view returns (bytes32[]) {
+    
+    require(cardAddressExists(owner));
+
+    address[] memory cardsOfOwner = _cardsOf[owner];
+    bytes32[] memory allCardAddressesPrice = new bytes32[](cardsOfOwner.length);
+    for (uint256 i = 0; i < cardsOfOwner.length; i++) {
+      uint256 price;
+      ( , , price, , ) = getOwnerOfCardsCheapestWager(owner, cardsOfOwner[i]);
+      allCardAddressesPrice[i] = bytes32(price);
+    }
+    return allCardAddressesPrice;
 
   }
 
