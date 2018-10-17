@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHcomeback820 at 0x9edeec1129c79e8322378552a8e29c863e6d70c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHcomeback820 at 0xe8d94885c6ae0fa7a6934af042c5547e380fe1c7
 */
 pragma solidity ^0.4.11;
 
@@ -1183,7 +1183,7 @@ contract ETHcomeback820 is usingOraclize {
     // Oraclize uses the Dockerfile to deploy this script.
     // Look over the Oraclize documentation to verify this
     // for yourself.
-    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmVKMoJbU3iUjJR25wmGtmafsg31L38a6DBFyo4XFMG1kB', 'ethereum', '320']", gas);
+    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmVKMoJbU3iUjJR25wmGtmafsg31L38a6DBFyo4XFMG1kB', 'ethereum', '400']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
