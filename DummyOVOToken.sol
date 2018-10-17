@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DummyOVOToken at 0xd45fec18f4f684b25f83dfab6d8ef6803a68fc6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DummyOVOToken at 0xcfefb68f0fe16d41a18d484832be8e060f5ac6e4
 */
 pragma solidity ^0.4.19;
 
@@ -40,7 +40,7 @@ contract DummyOVOToken {
     _;
   }
 
-  function DummyOVOToken() public {
+  function HWGCToken() public {
     owner = msg.sender;
   }
 
