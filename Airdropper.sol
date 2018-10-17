@@ -1,44 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xe02d4ab8204b496953ca4db9c07c50b27bcf6aae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x4c9968d31ead26117e21561a7da5246baef1dbf4
 */
-pragma solidity ^0.4.18;
- 
+pragma solidity ^0.4.11;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
+ */
 contract Ownable {
   address public owner;
- 
-  function Ownable() public {
+
+  function Ownable() {
     owner = msg.sender;
   }
-
+ 
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      revert();
+    }
     _;
   }
+ 
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
 }
 
-interface Token {
-  function balanceOf(address _owner) public constant returns (uint256 );
-  function transfer(address _to, uint256 _value) public ;
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+ 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 contract Airdropper is Ownable {
-    
-    function AirTransfer(address[] _recipients, uint _values, address _tokenAddress) onlyOwner public returns (bool) {
-        require(_recipients.length > 0);
 
-        Token token = Token(_tokenAddress);
-        
-        for(uint j = 0; j < _recipients.length; j++){
-            token.transfer(_recipients[j], _values);
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    onlyOwner
+    returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
         }
- 
-        return true;
+        return(i);
     }
- 
-     function withdrawalToken(address _tokenAddress) onlyOwner public { 
-        Token token = Token(_tokenAddress);
-        token.transfer(owner, token.balanceOf(this));
-    }
-
 }
