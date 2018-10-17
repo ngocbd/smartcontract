@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AegisEconomyCoin at 0x5c55678808cbc78b90d2f763c56a0abd622908a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AegisEconomyCoin at 0xe581d52020e36f63ef5347ee5897ea9a1a5996d5
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 // File: contracts/zeppelin/math/SafeMath.sol
 
@@ -342,17 +342,18 @@ contract AegisEconomyCoin is PausableToken {
     string  public constant     name = "Aegis Economy Coin";
     string  public constant     symbol= "AGEC";
     uint256 public constant     decimals= 18;
-    uint256 private     initialSupply = 10*(10**6)* (10**18);
-    uint256 private     finalSupply = 500*(10**6)*(10**18);
-    uint256 private     inflationPeriod = 50 years;
-    uint256 private     inflationPeriodStart = now;
-    uint256 private     releasedTokens;
-    uint256 private     inflationPeriodEnd = inflationPeriodStart + inflationPeriod;
-    uint256 private     inflationResolution = 100 * (10**8);
+    uint256 private constant    initialSupply = 50*(10**6)* (10**18);
+    uint256 private constant    per15Period = 365 days;
+    uint256 private constant    per12Period = 365 days;
+    uint256 private constant    per10Period = 48 * 365 days;
+    uint256 private             inflationPeriodStart;
+    uint256 private             releasedTokens;
+    uint256 private constant    calcresolution = 10000000;
 
 
     constructor() public {
         paused = false;
+        inflationPeriodStart = now;
     }
 
 
@@ -369,45 +370,90 @@ contract AegisEconomyCoin is PausableToken {
         }
     }
 
+
+    function totalSupply() public view returns (uint256 _supply)
+    {
+        uint256 per15perMinute = (150*calcresolution /(365*24*60)  * initialSupply) /(calcresolution*1000);
+        uint256 per12perMinute = (125*calcresolution /(365*24*60)  * initialSupply) /(calcresolution*1000);
+        uint256 per10perMinute = (100*calcresolution /(365*24*60)  * initialSupply) /(calcresolution*1000);
+
+        uint secondsFromStart = now - inflationPeriodStart;
+        uint minutesFromStart = secondsFromStart/60;
+
+
+        // return (per15perMinute,per12perMinute,per10perMinute);
+        uint256 currentTime = now;
+
+        if (currentTime > inflationPeriodStart + per15Period + per12Period) //10% per year Period
+        {
+            uint minutes10perPeriod = (currentTime - (inflationPeriodStart + per15Period + per12Period))/60;
+            uint supply = initialSupply + minutes10perPeriod*per10perMinute + (per12Period*per12perMinute/60) + (per15Period*per15perMinute/60);
+            // return (period,supply,minutesFromStart,secondsFromStart,per10perMinute);
+        }
+        else if (currentTime > inflationPeriodStart + per15Period) //12% per year Period
+        {
+            uint minutes12perPeriod = (currentTime - (inflationPeriodStart + per15Period))/60;
+            supply = initialSupply + minutes12perPeriod*per12perMinute +  (per15Period*per15perMinute/60);
+            // return (period,supply,minutesFromStart,secondsFromStart,per12perMinute);
+        }
+        else {
+            uint minutes15perPeriod = (currentTime - inflationPeriodStart)/60;
+            supply = initialSupply + minutes15perPeriod*per15perMinute;
+            // return (period,supply,minutesFromStart,secondsFromStart,per15perMinute) ;
+        }
+        return supply;
+
+    }
+
     /**
     * @dev Return dynamic totalSuply of this token. It is linear function.
     */
 
-    function totalSupply() public view returns (uint256)
-    {
-      uint256 currentTime = 0 ;
-      uint256 curSupply = 0;
-      currentTime = now;
-      if (currentTime > inflationPeriodEnd)
-      {
-        currentTime = inflationPeriodEnd;
-      }
+    // function totalSupply() public view returns (uint256)
+    // {
+    //   uint256 currentTime = 0 ;
+    //   uint256 curSupply = 0;
+    //   currentTime = now;
+    //   if (currentTime > inflationPeriodEnd)
+    //   {
+    //     currentTime = inflationPeriodEnd;
+    //   }
 
-      uint256 timeLapsed = currentTime - inflationPeriodStart;
-      uint256 timePer = _timePer();
+    //   uint256 timeLapsed = currentTime - inflationPeriodStart;
+    //   uint256 timePer = _timePer();
 
-      curSupply = finalSupply.sub(initialSupply).mul(timePer).div(inflationResolution).add(initialSupply);
-      return curSupply;
-    }
-
-
-
-    function _timePer() internal view returns (uint256 _timePer)
-    {
-             uint currentTime = 0 ;
-             currentTime = now;
-            if (currentTime > inflationPeriodEnd)
-            {
-              currentTime = inflationPeriodEnd;
-            }
-
-           uint256 timeLapsed = currentTime - inflationPeriodStart;
-           uint256 timePer = timeLapsed.mul(inflationResolution).div(inflationPeriod);
-
-           return(timePer);
+    //   curSupply = finalSupply.sub(initialSupply).mul(timePer).div(inflationResolution).add(initialSupply);
+    //   return curSupply;
+    // }
 
 
-    }
+
+    // function _timePer() internal view returns (uint256 _timePer)
+    // {
+    //       uint currentTime = now ;
+
+
+    //       if (currentTime > inflationPeriodStart + per15Period + per12Period) //we are in the 10% period
+    //       {
+    //          //calculate how many yers in 10% period
+    //         uint256 timeInPer10Period = currentTime - (inflationPeriodStart + per15Period + per12Period);
+    //         uint256  yearsInPer10Period = timeInPer10Period.div(365 days);
+    //         uint256  lastYearRatio = timeInPer10Period.sub(yearsInPer10Period * 365 days);
+
+    //       }
+
+    //         if (currentTime > inflationPeriodEnd)
+    //         {
+    //           currentTime = inflationPeriodEnd;
+    //         }
+
+    //       uint256 timeLapsed = currentTime - inflationPeriodStart;
+    //       uint256 timePer = timeLapsed.mul(inflationResolution).div(inflationPeriod);
+
+    //       return(timePer);
+
+
+    // }
 
     function transfer(address _to, uint256 _value) public whenNotPaused returns (bool success) {
         require(balanceOf(msg.sender) >= _value);
