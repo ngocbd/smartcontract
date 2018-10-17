@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0xa960abbb79ccbda2e236de823b623a53c25f2783
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiBuyer at 0x98c1487b6da44ecec425672b219a3815f691e6ee
 */
 pragma solidity ^0.4.24;
 
@@ -243,7 +243,6 @@ contract MultiBuyer is CanReclaimToken {
     function buy(
         IMultiToken _mtkn,
         uint256 _minimumReturn,
-        ERC20 _throughToken,
         address[] _exchanges,
         bytes _datas,
         uint[] _datasIndexes, // including 0 and LENGTH values
@@ -260,14 +259,7 @@ contract MultiBuyer is CanReclaimToken {
             for (uint j = _datasIndexes[i]; j < _datasIndexes[i + 1]; j++) {
                 data[j - _datasIndexes[i]] = _datas[j];
             }
-
-            if (_throughToken != address(0) && i > 0) {
-                _throughToken.approve(_exchanges[i], _throughToken.balanceOf(this));
-            }
             require(_exchanges[i].call.value(_values[i])(data), "buy: exchange arbitrary call failed");
-            if (_throughToken != address(0)) {
-                _throughToken.approve(_exchanges[i], 0);
-            }
         }
 
         j = _mtkn.totalSupply(); // optimization totalSupply
