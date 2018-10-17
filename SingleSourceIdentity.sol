@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingleSourceIdentity at 0xee610919f8c9f2e29464ceceb3176ae1f1922ec4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingleSourceIdentity at 0xf72c66c8a1ca8e1f5475f46632fc804ec7c64660
 */
 pragma solidity ^0.4.17;
 
@@ -39,10 +39,6 @@ contract SafeMath {
 }
 
 contract SingleSourceIdentity is SafeMath {
-    // Events
-    event IdentityApproval(address indexed authority, address indexed walletAddress, uint verifiedAttributes);
-    event IdentityRevoke(address indexed authority, address indexed walletAddress);
-
     // Struct and enum
     struct KYC {
         bool verified;
@@ -254,8 +250,6 @@ contract SingleSourceIdentity is SafeMath {
         });
 
         records[msg.sender] = kyc;
-
-        emit IdentityApproval(verifier, msg.sender, verifiedAttributes);
     }
 
     function approve(address userAddress, uint verifiedAttributes)
@@ -272,8 +266,6 @@ contract SingleSourceIdentity is SafeMath {
         });
 
         records[userAddress] = kyc;
-
-        emit IdentityApproval(msg.sender, userAddress, verifiedAttributes);
     }
 
     function revoke(address userAddress)
@@ -290,7 +282,5 @@ contract SingleSourceIdentity is SafeMath {
         });
 
         records[userAddress] = kyc;
-
-        emit IdentityRevoke(msg.sender, userAddress);
     }
 }
