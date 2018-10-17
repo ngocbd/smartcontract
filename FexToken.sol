@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FexToken at 0x907eb0e2c6c89d956d69b3f4607b9dcd34b65235
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FexToken at 0x47be0ef4327d0ee6b2ec2e9d2b9921a94de0165c
 */
 pragma solidity ^0.4.24;
 
@@ -449,12 +449,13 @@ contract StandardToken is ERC20 {
 
 
 contract FexToken is StandardToken {
-    string public constant name = "FEX SZ Token";
+    string public constant name = "FEX NEW Token";
     string public constant symbol = "FEX";
     uint8 public constant decimals = 18;
+    
   
     constructor() public {
-      uint256  totalSupply = 30000000*(10**18);
-      balances[msg.sender] = totalSupply;
+      totalSupply_ = 30000000000000000000000000;
+      balances[msg.sender] = totalSupply_;
     }
   }
