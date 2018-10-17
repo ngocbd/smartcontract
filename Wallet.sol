@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xca3d09be2b8daa0579d8872c647d8cf693da7fda
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x780b6e67925e35b98b6ff8a1b2653572af73b8f9
 */
 pragma solidity ^0.4.24;
 
@@ -322,7 +322,7 @@ contract multisig {
 // Wallet(w).from(anotherOwner).confirm(h);
 contract Wallet is multisig, multiowned, daylimit {
 
-    uint public version = 3;
+    uint public version = 4;
 
     // TYPES
 
@@ -333,12 +333,19 @@ contract Wallet is multisig, multiowned, daylimit {
         address token;
     }
 
+    ERC20Basic public erc20;
+
     // METHODS
 
     // constructor - just pass on the owner array to the multiowned and
     // the limit to daylimit
-    constructor(address[] _owners, uint _required, uint _daylimit)
+    constructor(address[] _owners, uint _required, uint _daylimit, address _erc20)
             multiowned(_owners, _required) daylimit(_daylimit) public {
+            erc20 = ERC20Basic(_erc20);
+    }
+
+    function changeERC20(address _erc20) onlymanyowners(keccak256(abi.encodePacked(msg.data))) public {
+        erc20 = ERC20Basic(_erc20);
     }
     
     // kills the contract sending everything to `_to`.
@@ -385,14 +392,13 @@ contract Wallet is multisig, multiowned, daylimit {
         }
     }
 
-    function transferERC20(address _to, uint _value, address _token) external onlyowner returns (bytes32 _r) {
+    function transferERC20(address _to, uint _value) external onlyowner returns (bytes32 _r) {
         // first, take the opportunity to check that we're under the daily limit.
         if (underLimit(_value)) {
             emit SingleTransact(msg.sender, _value, _to);
             // yes - just execute the call.
 
-            ERC20Basic token = ERC20Basic(_token);
-            token.transfer(_to, _value);
+            erc20.transfer(_to, _value);
             return 0;
         }
         // determine our operation hash.
@@ -400,8 +406,8 @@ contract Wallet is multisig, multiowned, daylimit {
         if (!confirmERC20(_r) && m_txs[_r].to == 0) {
             m_txs[_r].to = _to;
             m_txs[_r].value = _value;
-            m_txs[_r].token = _token;
-            emit ConfirmationERC20Needed(_r, msg.sender, _value, _to, token);
+            m_txs[_r].token = erc20;
+            emit ConfirmationERC20Needed(_r, msg.sender, _value, _to, erc20);
         }
     }
 
