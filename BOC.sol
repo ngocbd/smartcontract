@@ -1,16 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BOC at 0xd4d78d5b9949d55161afe612cb1c863d8bab2bc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BOC at 0xe631cf71645cfd73f92c96a601f57871225d5a57
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract BOC {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
+    uint8 public decimals = 8;
     uint256 public totalSupply;
 
     // This creates an array with all balances
@@ -24,19 +23,16 @@ contract BOC {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constructor function
+     * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function BOC(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        totalSupply = 5000000000000000;                                 // Update total supply with the decimal amount
+        balanceOf[msg.sender] = 5000000000000000;                       // Give the creator all initial tokens
+        name = "BetOnCoin";                                      // Set the name for display purposes
+        symbol = "BOC";                                          // Set the symbol for display purposes
     }
 
     /**
@@ -48,14 +44,14 @@ contract BOC {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
@@ -132,7 +128,7 @@ contract BOC {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
+        Burn(msg.sender, _value);
         return true;
     }
 
@@ -150,7 +146,7 @@ contract BOC {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
+        Burn(_from, _value);
         return true;
     }
 }
