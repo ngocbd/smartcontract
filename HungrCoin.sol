@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HungrCoin at 0x7058cebf0734c70bdd28097b7453acba562abbf4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HungrCoin at 0x76dba9d4ec7af8842fa4ef6d602e938eea005582
 */
 pragma solidity ^0.4.4;
 
@@ -61,7 +61,7 @@ contract HungrCoin is StandardToken {
     address public fundsWallet;           // Where should the raised ETH go?
 
 
-    function Hungrify() {
+    function HungrCoin() {
         balances[msg.sender] = 10000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 10000000000000000000000000;                        // Update total supply (100000 for example)
         name = "Hungr Coin";                                   // Set the name for display purposes
