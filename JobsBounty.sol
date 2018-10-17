@@ -1,34 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JobsBounty at 0x9895661e433b93e5fb8331ff8d6e89a8de7d962d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JobsBounty at 0xb6855ae3f14d3584beb87937ed4b228525c6d744
 */
 pragma solidity ^0.4.24;
 
 /**
- * @title Helps contracts guard agains reentrancy attacks.
- * @author Remco Bloemen <remco@2?.com>
- * @notice If you mark a function `nonReentrant`, you should also
+ * @title Helps contracts guard against reentrancy attacks.
+ * @author Remco Bloemen <remco@2?.com>, Eenae <alexey@mixbytes.io>
+ * @dev If you mark a function `nonReentrant`, you should also
  * mark it `external`.
  */
 contract ReentrancyGuard {
 
+  /// @dev Constant for unlocked guard state - non-zero to prevent extra gas costs.
+  /// See: https://github.com/OpenZeppelin/openzeppelin-solidity/issues/1056
+  uint private constant REENTRANCY_GUARD_FREE = 1;
+
+  /// @dev Constant for locked guard state
+  uint private constant REENTRANCY_GUARD_LOCKED = 2;
+
   /**
    * @dev We use a single lock for the whole contract.
    */
-  bool private reentrancyLock = false;
+  uint private reentrancyLock = REENTRANCY_GUARD_FREE;
 
   /**
    * @dev Prevents a contract from calling itself, directly or indirectly.
-   * @notice If you mark a function `nonReentrant`, you should also
-   * mark it `external`. Calling one nonReentrant function from
+   * If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one `nonReentrant` function from
    * another is not supported. Instead, you can implement a
-   * `private` function doing the actual work, and a `external`
+   * `private` function doing the actual work, and an `external`
    * wrapper marked as `nonReentrant`.
    */
   modifier nonReentrant() {
-    require(!reentrancyLock);
-    reentrancyLock = true;
+    require(reentrancyLock == REENTRANCY_GUARD_FREE);
+    reentrancyLock = REENTRANCY_GUARD_LOCKED;
     _;
-    reentrancyLock = false;
+    reentrancyLock = REENTRANCY_GUARD_FREE;
   }
 
 }
@@ -42,43 +49,43 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
     // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
     // benefit is lost if 'b' is also tested.
     // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
+    if (_a == 0) {
       return 0;
     }
 
-    c = a * b;
-    assert(c / a == b);
+    c = _a * _b;
+    assert(c / _a == _b);
     return c;
   }
 
   /**
   * @dev Integer division of two numbers, truncating the quotient.
   */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
   }
 
   /**
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
   }
 
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
     return c;
   }
 }
@@ -172,26 +179,33 @@ contract JobsBounty is Ownable, ReentrancyGuard {
     // On Rinkeby
     // address public INDToken = 0x656c7da9501bB3e4A5a544546230D74c154A42eb;
     // On Mainnet
-    address public INDToken = 0xf8e386eda857484f5a12e4b5daa9984e06e73705;
+    // address public INDToken = 0xf8e386eda857484f5a12e4b5daa9984e06e73705;
+    
+    address public INDToken;
     
     constructor(string _companyName,
                 string _jobPost,
-                uint _endDate
+                uint _endDate,
+                address _INDToken
                 ) public{
         companyName = _companyName;
         jobPost = _jobPost ;
         endDate = _endDate;
+        INDToken = _INDToken;
     }
     
     //Helper function, not really needed, but good to have for the sake of posterity
     function ownBalance() public view returns(uint256) {
-        return ERC20(INDToken).balanceOf(this);
+        return SafeMath.div(ERC20(INDToken).balanceOf(this),1 ether);
     }
     
-    function payOutBounty(address _referrerAddress, address _candidateAddress) public onlyOwner nonReentrant returns(bool){
-        uint256 individualAmounts = (ERC20(INDToken).balanceOf(this) / 100) * 50;
-        
+    function payOutBounty(address _referrerAddress, address _candidateAddress) external onlyOwner nonReentrant returns(bool){
         assert(block.timestamp >= endDate);
+        assert(_referrerAddress != address(0x0));
+        assert(_candidateAddress != address(0x0));
+        
+        uint256 individualAmounts = SafeMath.mul(SafeMath.div((ERC20(INDToken).balanceOf(this)),100),50);
+        
         // Tranferring to the candidate first
         assert(ERC20(INDToken).transfer(_candidateAddress, individualAmounts));
         assert(ERC20(INDToken).transfer(_referrerAddress, individualAmounts));
@@ -201,7 +215,7 @@ contract JobsBounty is Ownable, ReentrancyGuard {
     //This function can be used in 2 instances - 
     // 1st one if to withdraw tokens that are accidentally send to this Contract
     // 2nd is to actually withdraw the tokens and return it to the company in case they don't find a candidate
-    function withdrawERC20Token(address anyToken) public onlyOwner nonReentrant returns(bool){
+    function withdrawERC20Token(address anyToken) external onlyOwner nonReentrant returns(bool){
         assert(block.timestamp >= endDate);
         assert(ERC20(anyToken).transfer(owner, ERC20(anyToken).balanceOf(this)));        
         return true;
@@ -209,7 +223,7 @@ contract JobsBounty is Ownable, ReentrancyGuard {
     
     //ETH cannot get locked in this contract. If it does, this can be used to withdraw
     //the locked ether.
-    function withdrawEther() public nonReentrant returns(bool){
+    function withdrawEther() external onlyOwner nonReentrant returns(bool){
         if(address(this).balance > 0){
             owner.transfer(address(this).balance);
         }        
