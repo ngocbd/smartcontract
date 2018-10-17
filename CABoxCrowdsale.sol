@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxCrowdsale at 0xaa43c925c6dac7a88f8aefb3b859adbcbfa1c600
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABoxCrowdsale at 0x322a440b61ef7466e640659b39470d57847666f8
 */
 pragma solidity ^0.4.18;
 
@@ -78,28 +78,6 @@ library SafeMath {
         return c;
     }
 }
-
-
-/**
- * @title Destructible
- * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
- */
-contract Destructible is Ownable {
-
-  function Destructible() public payable { }
-
-  /**
-   * @dev Transfers the current balance to the owner and terminates the contract.
-   */
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-
-  function destroyAndSend(address _recipient) onlyOwner public {
-    selfdestruct(_recipient);
-  }
-}
-
 
 /**
  * @title ERC20Basic
@@ -247,53 +225,30 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
 /**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
  */
-contract MintableToken is StandardToken, Ownable {
+contract BurnableToken is StandardToken {
 
-    uint256 public hardCap;
-
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    bool public mintingFinished = false;
-
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
+    event Burn(address indexed burner, uint256 value);
 
     /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
      */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
     }
 }
-
-
 
 /**
  * @title CABoxToken
@@ -301,30 +256,20 @@ contract MintableToken is StandardToken, Ownable {
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
-contract CABoxToken is MintableToken, Destructible {
+contract CABoxToken is BurnableToken, Ownable {
 
     string public constant name = "CABox";
     string public constant symbol = "CAB";
     uint8 public constant decimals = 18;
+    
+    uint256 public constant INITIAL_SUPPLY = 500 * 1000000 * (10 ** uint256(decimals));
 
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
     function CABoxToken() public {
-        hardCap = 500 * 1000000 * (10 ** uint256(decimals));
-    }
-
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        require(totalSupply.add(_amount) <= hardCap);
-
-        return super.mint(_to, _amount);
+        totalSupply = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
 }
 
@@ -353,9 +298,6 @@ contract CABoxCrowdsale is Ownable{
   // address where development funds are collected
   address public devWallet;
 
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -378,11 +320,10 @@ contract CABoxCrowdsale is Ownable{
   }
 
   // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
+  // override this method to have crowdsale of a specific token.
   function createTokenContract() internal returns (CABoxToken) {
     return new CABoxToken();
   }
-
 
   // fallback function can be used to buy tokens
   function () external payable {
@@ -400,10 +341,7 @@ contract CABoxCrowdsale is Ownable{
     uint256 bonusRate = getBonusRate();
     uint256 tokens = weiAmount.mul(bonusRate);
 
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
+    token.transfer(beneficiary, tokens);
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
     forwardFunds();
@@ -457,5 +395,12 @@ contract CABoxCrowdsale is Ownable{
       token.transferOwnership(_tokenAddress);
 
       TokenContractUpdated(true);
+  }
+  
+  // transfer tokens
+  function transferTokens(address _to, uint256 _amount) onlyOwner {
+      require(_to != address(0));
+      
+      token.transfer(_to, _amount);
   }
 }
