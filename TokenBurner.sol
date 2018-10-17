@@ -1,24 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBurner at 0x8c9f657fe6049f7e5890b3f67f45a2e7a6e0048f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBurner at 0x41e95553bf4dfca4ae323803b379b9e8cdedc565
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
+
+// File: contracts/TokenBurner.sol
 
 contract TokenBurner {
-    address private _burner;
 
-    function TokenBurner() public {
-        _burner = msg.sender;
-    }
+  /**
+    *@dev Constructor
+    */
+  function TokenBurner()
+  public
+  {
+  }
 
-    function () payable public {
-    }
-
-    function BurnMe () public {
-        // Only let ourselves be able to burn
-        if (msg.sender == _burner) {
-            // Selfdestruct and send tokens to self, to burn them 
-            selfdestruct(address(this));
-        }
-        
-    }
 }
