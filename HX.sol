@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HX at 0x097f0d3072b0bb5e364ec7e403285a0fd35d35ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HX at 0xab4e6f106fff4e80f8d0689c61d235fc430f629e
 */
 pragma solidity ^0.4.24;
 
@@ -128,8 +128,10 @@ contract HX is modularShort {
     using NameFilter for string;
     using HXKeysCalcLong for uint256;
 	
-    address community_addr = 0x31D19054aa337207573E3aFf7644a9Fe0EB094C2;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xc6645d6c197f2d634822f08da5809065bad03785);
+    address developer_addr = 0xE5Cb34770248B5896dF380704EC19665F9f39634;
+    address community_addr = 0xb007f725F9260CD57D5e894f3ad33A80F0f02BA3;
+    address token_community_addr = 0xBEFB937103A56b866B391b4973F9E8CCb44Bb851;
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xF7ca07Ff0389d5690EB9306c490842D837A3fA49);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
@@ -138,7 +140,7 @@ contract HX is modularShort {
     string constant public symbol = "HX";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be             // max length a round timer can be
 //==============================================================================
@@ -182,17 +184,17 @@ contract HX is modularShort {
 		// Team allocation percentages
         // (HX, 0) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = HXdatasets.TeamFee(30,0);   //46% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[0] = HXdatasets.TeamFee(30,6);   //46% to pot, 20% to aff, 2% to com, 2% to air drop pot
         fees_[1] = HXdatasets.TeamFee(43,0);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
-        fees_[2] = HXdatasets.TeamFee(56,0);  //20% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[2] = HXdatasets.TeamFee(56,10);  //20% to pot, 20% to aff, 2% to com, 2% to air drop pot
         fees_[3] = HXdatasets.TeamFee(43,8);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
         
         // how to split up the final pot based on which team was picked
         // (HX, 0)
-        potSplit_[0] = HXdatasets.PotSplit(15,0);  //48% to winner, 25% to next round, 12% to com
-        potSplit_[1] = HXdatasets.PotSplit(20,0);   //48% to winner, 20% to next round, 12% to com
-        potSplit_[2] = HXdatasets.PotSplit(25,0);  //48% to winner, 15% to next round, 12% to com
-        potSplit_[3] = HXdatasets.PotSplit(30,0);  //48% to winner, 10% to next round, 12% to com
+        potSplit_[0] = HXdatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 12% to com
+        potSplit_[1] = HXdatasets.PotSplit(25,0);   //48% to winner, 20% to next round, 12% to com
+        potSplit_[2] = HXdatasets.PotSplit(20,20);  //48% to winner, 15% to next round, 12% to com
+        potSplit_[3] = HXdatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 12% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -1239,9 +1241,10 @@ contract HX is modularShort {
         // calculate our winner share, community rewards, gen share, 
         // p3d share, and amount reserved for next pot 
         uint256 _win = (_pot.mul(48)) / 100;
-        uint256 _com = (_pot.mul(6) / 50);
+        uint256 _com = (_pot.mul(2) / 100);
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
-        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen));
+        uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
+        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
         
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1260,6 +1263,9 @@ contract HX is modularShort {
         
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
+
+        if (_p3d > 0)
+            token_community_addr.transfer(_p3d);
         
             
         // prepare event data
@@ -1269,7 +1275,7 @@ contract HX is modularShort {
         _eventData_.winnerName = plyr_[_winPID].name;
         _eventData_.amountWon = _win;
         _eventData_.genAmount = _gen;
-        _eventData_.P3DAmount = 0;
+        _eventData_.P3DAmount = _p3d;
         _eventData_.newPot = _res;
         
         // start next round
@@ -1356,11 +1362,16 @@ contract HX is modularShort {
     {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
-        
-    
+        uint256 _p3d;
+        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
+        if (_p3d > 0)
+        {
+            token_community_addr.transfer(_p3d);
+            _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
+        }
         
         // distribute share to affiliate
-        uint256 _aff = _eth / 5;
+        uint256 _aff = _eth / 10;
         
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1506,7 +1517,7 @@ contract HX is modularShort {
     {
         // only team just can activate 
         require(
-            msg.sender == community_addr, "only community can activate"
+            msg.sender == developer_addr, "only community can activate"
         );
 
         
