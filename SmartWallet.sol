@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0x3ddb01471395C34E9905c492F62BFd860CcBD77E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0x2df514a060bbd105ea428182e8b140454f426d15
 */
 pragma solidity ^0.4.24;
 
@@ -157,7 +157,7 @@ contract WithdrawalConfigurations is Ownable, Utils {
     /*
      *  Events
      */
-    event WithdrawalRequested(address _userWithdrawalAccount, address _sender);
+    event WithdrawalRequested(address _sender, address _smartWallet);
     event SetWithdrawalCoolingPeriod(uint _withdrawalCoolingPeriod);
 
     /*
@@ -208,10 +208,10 @@ contract WithdrawalConfigurations is Ownable, Utils {
         @param _userWithdrawalAccount   User withdrawal account address
         @param _sender                  The user account, activating this request
      */
-    function emitWithrawalRequestEvent(address _userWithdrawalAccount, address _sender) 
+    function emitWithrawalRequestEvent(address _sender, address _smartWallet) 
         public
         {
-            emit WithdrawalRequested(_userWithdrawalAccount, _sender);
+            emit WithdrawalRequested(_sender, _smartWallet);
     }
 }
 
@@ -224,16 +224,14 @@ library SmartWalletLib {
         address operatorAccount;
         address userWithdrawalAccount;
         address feesAccount;
-        uint    withdrawAllowedAt; //In Seconds
+        uint    withdrawAllowedAt; //In seconds
     }
 
     /*
      *  Members
      */
     string constant VERSION = "1.1";
-    //The below is a sample address of a deployed WithdrawalConfigurations contract.
-    //If changed, need to change in the tests as well.
-    address constant withdrawalConfigurationsContract = 0xe9f25cc107e6435ccbe0d5e09331db4e42aaefb9; 
+    address constant withdrawalConfigurationsContract = 0xDdD336eAad17F1D40cc81997Fb956608f00639FF; 
     
     /*
      *  Modifiers
@@ -261,7 +259,6 @@ library SmartWalletLib {
     /*
      *  Events
      */
-    event TransferToBackupAccount(address _token, address _backupAccount, uint _amount);
     event TransferToUserWithdrawalAccount(address _token, address _userWithdrawalAccount, uint _amount, address _feesToken, address _feesAccount, uint _fee);
     event SetUserWithdrawalAccount(address _userWithdrawalAccount);
     event PerformUserWithdraw(address _token, address _userWithdrawalAccount, uint _amount);
@@ -353,7 +350,7 @@ library SmartWalletLib {
             
             _self.withdrawAllowedAt = safeAdd(now, withdrawalConfigurations.getWithdrawalCoolingPeriod());
 
-            withdrawalConfigurations.emitWithrawalRequestEvent(_self.userWithdrawalAccount, msg.sender);
+            withdrawalConfigurations.emitWithrawalRequestEvent(msg.sender, address(this));
     }
 
     /*
@@ -389,7 +386,6 @@ contract SmartWallet {
     /*
      *  Events
      */
-    event TransferToBackupAccount(address _token, address _backupAccount, uint _amount);
     event TransferToUserWithdrawalAccount(address _token, address _userWithdrawalAccount, uint _amount, address _feesToken, address _feesAccount, uint _fee);
     event SetUserWithdrawalAccount(address _userWithdrawalAccount);
     event PerformUserWithdraw(address _token, address _userWithdrawalAccount, uint _amount);
