@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DATAToken at 0xB6E44e06DBbB66967b4f5414ceBFD32731BcEa6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DATAToken at 0x558aad36b5698db2a7e01a6b60d4cd4d5241b01b
 */
 pragma solidity ^0.4.15;
 
@@ -143,19 +143,20 @@ contract StandardToken is ERC20, BasicToken {
 
 contract DATAToken is StandardToken {
 
-  string public constant name = "DATA";
-  string public constant symbol = "DATA";
+  string public constant name = "Clan Chain Of Global";
+  string public constant symbol = "CCOG";
   uint8 public constant decimals = 18;
 
 
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 1913000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
   function DATAToken() public {
     totalSupply = INITIAL_SUPPLY;
-    balances[0xbe09c96a98eF4CcE90B8aC45BD5B38aefB7dAe47] = INITIAL_SUPPLY;
+    balances[0x9C90481e8C39D6D40027Fb3363f4c32a501DfE77] = 1913000000 * (10 ** uint256(decimals));
+    emit Transfer(msg.sender, 0x9C90481e8C39D6D40027Fb3363f4c32a501DfE77, 1913000000 * (10 ** uint256(decimals)));
   }
 
 }
