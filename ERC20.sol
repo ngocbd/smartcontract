@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xba1c78be86b8ddca069d74b872b133c9230b1d8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x296725ff6b0820bbb20d255287e4666ef3a2e4f2
 */
 pragma solidity ^0.4.8;
 
@@ -108,7 +108,7 @@ contract ERC20 is ERC20Interface, BobbyERC20Base {
   uint private _Billion = _Thousand * _Thousand * _Thousand;
 
   //??????
-  string private _name = "BOBBY";     //????
+  string private _name = "OtvCloud Token Bobby";     //????
   string private _symbol = "BOBBY";   //????
   uint8 private _decimals = 9;        //??????
   uint256 private _totalSupply = 10 * _Billion * (10 ** uint256(_decimals));
