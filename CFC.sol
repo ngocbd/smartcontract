@@ -1,224 +1,151 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CFC at 0x7f288ff5a8055f5f6103a80dd806cf8415e035c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CFC at 0xa91248ee273782ee9648dba9d1a2328670443a46
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-contract CFC is ERC20,Ownable{
-	using SafeMath for uint256;
-
-	//the base info of the token
-	string public constant name="Chain Finance";
-	string public constant symbol="CFC";
-	string public constant version = "1.0";
-	uint256 public constant decimals = 18;
-
-	//????10?
-	uint256 public constant MAX_SUPPLY=1000000000*10**decimals;
-
-	//??
-    struct epoch  {
-        uint256 endTime;
-        uint256 amount;
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+    function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        simpleAssert(a == 0 || c / a == b);
+        return c;
     }
 
-	//?????????
-	mapping(address=>epoch[]) public lockEpochsMap;
+    function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        simpleAssert(b > 0);
+        uint256 c = a / b;
+        simpleAssert(a == b * c + a % b);
+        return c;
+    }
+
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+        simpleAssert(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        simpleAssert(c>=a && c>=b);
+        return c;
+    }
+
+    function simpleAssert(bool assertion) internal pure {
+        if (!assertion) {
+            revert();
+        }
+    }
+}
+contract CFC is SafeMath{
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+    address public owner;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public freezeOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* This notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
+
+    /* This notifies clients about the amount frozen */
+    event Freeze(address indexed from, uint256 value);
+
+    /* This notifies clients about the amount unfrozen */
+    event Unfreeze(address indexed from, uint256 value);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    constructor(
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol
+    ) public {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
+        owner = msg.sender;
+    }
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) public {
+        if (_to == 0x0) revert();                               // Prevent transfer to 0x0 address. Use burn() instead
+        if (_value <= 0) revert();
+        if (balanceOf[msg.sender] < _value) revert();           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                     // Subtract from the sender
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                            // Add the same to the recipient
+        emit Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    }
+
+    /* Allow another contract to spend some tokens in your behalf */
+    // ?????????
+    function approve(address _spender, uint256 _value) public
+    returns (bool success) {
+        if (_value <= 0) revert();
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
 
 
-	 
-	//ERC20???
-    mapping(address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        if (_to == 0x0) revert();                                // Prevent transfer to 0x0 address. Use burn() instead
+        if (_value <= 0) revert();
+        if (balanceOf[_from] < _value) revert();                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) revert();  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) revert();     // Check allowance
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                           // Subtract from the sender
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                             // Add the same to the recipient
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
 
-	function CFC(){
-		totalSupply = MAX_SUPPLY;
-		balances[msg.sender] = MAX_SUPPLY;
-		Transfer(0x0, msg.sender, MAX_SUPPLY);
-	}
+    // ????????????????????????
+    function burn(uint256 _value) public returns (bool success) {
+        if (balanceOf[msg.sender] < _value) revert();            // Check if the sender has enough
+        if (_value <= 0) revert();
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
+        totalSupply = SafeMath.safeSub(totalSupply,_value);                                // Updates totalSupply
+        emit Burn(msg.sender, _value);
+        return true;
+    }
 
+    function freeze(uint256 _value) public returns (bool success) {
+        if (balanceOf[msg.sender] < _value) revert();            // Check if the sender has enough
+        if (_value <= 0) revert();
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);                      // Subtract from the sender
+        freezeOf[msg.sender] = SafeMath.safeAdd(freezeOf[msg.sender], _value);                                // Updates totalSupply
+        emit Freeze(msg.sender, _value);
+        return true;
+    }
 
-    function addIssue(uint256 amount) external
-	    onlyOwner
-    {
-		balances[msg.sender] = balances[msg.sender].add(amount);
-		Transfer(0x0, msg.sender, amount);
-	}
+    function unfreeze(uint256 _value) public returns (bool success) {
+        if (freezeOf[msg.sender] < _value) revert();            // Check if the sender has enough
+        if (_value <= 0) revert();
+        freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);                      // Subtract from the sender
+        balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);
+        emit Unfreeze(msg.sender, _value);
+        return true;
+    }
 
-	//???????????
-	function () payable external
-	{
-	}
+    // transfer balance to owner
+    function withdrawEther(uint256 amount) public {
+        if(msg.sender != owner) revert();
+        owner.transfer(amount);
+    }
 
-	//owner?????????eth
-	function etherProceeds() external
-		onlyOwner
-
-	{
-		if(!msg.sender.send(this.balance)) revert();
-	}
-
-	//????
-	function lockBalance(address user, uint256 amount,uint256 endTime) external
-		onlyOwner
-	{
-		 epoch[] storage epochs = lockEpochsMap[user];
-		 epochs.push(epoch(endTime,amount));
-	}
-
-
-
-
-  //?????????????????????????
-  	function transfer(address _to, uint256 _value) public  returns (bool)
- 	{
-		require(_to != address(0));
-		//??????
-		epoch[] epochs = lockEpochsMap[msg.sender];
-		uint256 needLockBalance = 0;
-		for(uint256 i;i<epochs.length;i++)
-		{
-			//??????????????,?????
-			if( now < epochs[i].endTime )
-			{
-				needLockBalance=needLockBalance.add(epochs[i].amount);
-			}
-		}
-
-		require(balances[msg.sender].sub(_value)>=needLockBalance);
-		// SafeMath.sub will throw if there is not enough balance.
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-  	}
-
-  	function balanceOf(address _owner) public constant returns (uint256 balance) 
-  	{
-		return balances[_owner];
-  	}
-
-
-  //??????????????????????-??????????????
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-  	{
-		require(_to != address(0));
-
-		//??????
-		epoch[] epochs = lockEpochsMap[_from];
-		uint256 needLockBalance = 0;
-		for(uint256 i;i<epochs.length;i++)
-		{
-			//??????????????,?????
-			if( now < epochs[i].endTime )
-			{
-				needLockBalance = needLockBalance.add(epochs[i].amount);
-			}
-		}
-
-		require(balances[_from].sub(_value)>=needLockBalance);
-		uint256 _allowance = allowed[_from][msg.sender];
-
-		balances[_from] = balances[_from].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-		return true;
-  	}
-
-  	function approve(address _spender, uint256 _value) public returns (bool) 
-  	{
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-  	}
-
-  	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
-  	{
-		return allowed[_owner][_spender];
-  	}
-
-	  
+    // can accept ether
+    function() public payable {
+    }
 }
