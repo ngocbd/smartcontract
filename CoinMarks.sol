@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinMarks at 0x31267cafd20a8a6e1609b092817546bf60241291
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinMarks at 0x50c6ed8237087d996fc086428d90355384d22e9b
 */
 pragma solidity ^0.4.19;
 
 // Coin Marks (CoinMarks is a decentralized cryptocurrency, constituting a means of payment of alternative advertising) 
-// Token name: Coin Marks
-// Symbol: COIN
+// Token name: CoinMarks
+// Symbol: COINS
 // Decimals: 8
 // Site : tokenmarks.com       Twitter : @TokenMarks 
 
@@ -69,8 +69,8 @@ contract CoinMarks is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;
     mapping (address => bool) public blacklist;
 
-    string public constant name = "Coin Marks";
-    string public constant symbol = "COIN";
+    string public constant name = "CoinMarks";
+    string public constant symbol = "COINS";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000e8;
