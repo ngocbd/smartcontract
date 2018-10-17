@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x6086f10b9718b9baac661fd1141582da55e6a8ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0xf7bb0e7ee82caa529bfe6bcc356268c92c264596
 */
 /**
  * Note for the truffle testversion:
@@ -182,7 +182,7 @@ contract DragonKing is mortal {
 			costs.push(uint128(balloonsCosts[j]) * 1 finney);
 			values.push(costs[balloonsIndex + j] - costs[balloonsIndex + j] / 100 * fee);
 		}
-		eruptionThreshold = uint256(eruptionThresholdInHours) * 60 * 60; // convert to seconds
+		eruptionThreshold = eruptionThresholdInHours * 60 * 60; // convert to seconds
 		percentageToKill = percentageOfCharactersToKill;
 		maxCharacters = 600;
 		nextId = 1;
