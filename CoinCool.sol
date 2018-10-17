@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinCool at 0x576d318810416fb41cffc06ac507d1bd50101e82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinCool at 0xf99d61379e3d41eFDFDc905A57336aa1737Ae7b2
 */
 pragma solidity ^0.4.21;
 /**
@@ -524,7 +524,7 @@ contract Releaseable is Frozenable {
     function Releaseable(
                     address _operator, uint256 _initialSupply
                 ) Frozenable(_operator) public {
-        createTime = 1528732800;
+        createTime = 1529078400;
         releasedSupply = _initialSupply;
         balances[owner] = _initialSupply;
         totalSupply_ = mulDecimals.mul(187140000);
@@ -555,7 +555,7 @@ contract Releaseable is Frozenable {
         return exist;
     }
     // update release amount for single day
-    // according to dividend rule in https://coincool.top
+    // according to dividend rule in https://coincoolotc.com
     function updateReleaseAmount(uint256 timestamp) internal {
         uint256 timeElapse = timestamp.sub(createTime);
         uint256 cycles = timeElapse.div(180 days);
@@ -572,9 +572,9 @@ contract Releaseable is Frozenable {
     }
 }
 contract CoinCool is Releaseable {
-    string public standard = '2018061200';
-    string public name = 'CoolToken';
-    string public symbol = 'CT';
+    string public standard = '2018061610';
+    string public name = 'CoinCoolToken';
+    string public symbol = 'CCT';
     uint8 public decimals = 8;
-    function CoinCool() Releaseable(0x4068D7c2e286Cb1E72Cef90B74C823E990FaB9C2, mulDecimals.mul(3000000)) public {}
+    function CoinCool() Releaseable(0xe8358AfA9Bc309c4A106dc41782340b91817BC64, mulDecimals.mul(3000000)) public {}
 }
