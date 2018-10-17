@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xcdd6e4a8af49493ed5984d57e5e5c292feb9596d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0xa74ae2d3a4c3f6d9454634fee91dc7aab6724cf9
 */
 pragma solidity ^0.4.24;
 contract DSNote {
@@ -51,9 +51,7 @@ contract DSAuth is DSAuthEvents {
     }
 
     function isAuthorized(address src) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
+        if (src == owner) {
             return true;
         } else {
             return false;
@@ -161,10 +159,10 @@ contract DSTokenBase is ERC20, DSMath {
     }
 }
 
-contract DSToken is DSTokenBase(7000000000000000000000000000), DSStop {
+contract DSToken is DSTokenBase(2000000000000000000000000000), DSStop {
 
-    string  public  symbol = "MYT";
-    uint8  public  decimals = 18; // standard token precision. override to customize
+    string  public  symbol = "NES";
+    uint8  public  decimals = 18; 
     event Freeze(address indexed guy, uint wad);
 
     function approve(address guy) public stoppable returns (bool) {
@@ -222,7 +220,7 @@ contract DSToken is DSTokenBase(7000000000000000000000000000), DSStop {
         emit Freeze(guy, wad);
     }
 
-    string   public  name = "MeYou Token";
+    string   public  name = "Gencoin";
 
     function setName(string name_) public auth {
         name = name_;
