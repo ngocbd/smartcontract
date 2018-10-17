@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OmVPNToken at 0x820d1e2319e12c2b13dcaf25720346f0a7ddec74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OmVPNToken at 0x43abd5d5331162aa72e580de11b478f132df8a7c
 */
 pragma solidity ^0.4.18;
 
@@ -104,7 +104,7 @@ contract OmVPNToken is ERC20Interface, Owned, SafeMath {
         symbol = "OmVPN";
         name = "OmVPN Token";
         decimals = 2;
-        _totalSupply = 100000000;
+        _totalSupply = 10000000000;
         balances[0x878B30979b755620D9EaE3D1AA19E5cDA06D81c0] = _totalSupply;
         Transfer(address(0), 0x878B30979b755620D9EaE3D1AA19E5cDA06D81c0, _totalSupply);
     }
