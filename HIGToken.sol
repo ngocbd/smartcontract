@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HIGToken at 0xc74806ad0b2c69d6ad61f736956a2c0ae3bb7164
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HIGToken at 0xa6dea4dcea999c4f9ca4e982e98f068a7ce88f7b
 */
 pragma solidity ^0.4.22;
 
@@ -144,8 +144,8 @@ contract StandardToken is ERC20, BasicToken {
 
 contract HIGToken is StandardToken {
 
-  string public constant name = "Hash Incubator Global";
-  string public constant symbol = "HIG";
+  string public constant name = "Hash Incubator Global Token";
+  string public constant symbol = "HIGT";
   uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 10000000000 * (10 ** uint256(decimals));//10^18
