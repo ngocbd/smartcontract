@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x32f1c992a32376fa0f723aecaa247119d3f7f8bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xa3628ff11aadc96019ea45ebcacc90db488e6454
 */
 pragma solidity ^0.4.23;
 
@@ -291,7 +291,7 @@ contract Zethroll is ZTHReceivingContract {
       TKN memory _tkn;
       _tkn.sender = _from;
       _tkn.value = _value;
-      uint8 chosenNumber = uint8(_data[0]);
+      uint chosenNumber = uint(_data[0]);
       _playerRollDice(chosenNumber, _tkn);
     }
 
