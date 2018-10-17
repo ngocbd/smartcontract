@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BATMO at 0x3dd466b9c9e0d34d6c9005997adb31c8f36b29b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BATMO at 0x37238583c041a2f51964f23fde2710c4fbd29e9e
 */
 pragma solidity ^0.4.24;
 
@@ -1157,7 +1157,7 @@ contract BATMO is FOMOEvents {
         admin.transfer(_dev / 2);
         admin2.transfer(_dev / 2);
 
-        ObokContract.donateDivs.value((_OBOK.sub(_OBOK / 3)).mul(2))();  // 66%
+        address(ObokContract).call.value(_OBOK.sub((_OBOK / 3).mul(2)))(bytes4(keccak256("donateDivs()")));  //66%
 
         round_[_rID].pot = _pot.add(_OBOK / 3);  // 33%
 
@@ -1262,8 +1262,8 @@ contract BATMO is FOMOEvents {
         {
             // deposit to divies contract
             uint256 _potAmount = _OBOK / 2;
-
-            ObokContract.donateDivs.value(_OBOK.sub(_potAmount))();
+            
+            address(ObokContract).call.value(_OBOK.sub(_potAmount))(bytes4(keccak256("donateDivs()")));
 
             round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
