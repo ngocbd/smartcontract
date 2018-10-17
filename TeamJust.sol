@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0x3520393029503f50b7ddce0db4352ecb2e87c0c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0xc314e8f2150cb9075ff0744234739af891df929d
 */
 pragma solidity ^0.4.24;
 /* -Team Just- v0.2.5
@@ -77,15 +77,15 @@ pragma solidity ^0.4.24;
 
 interface JIincForwarderInterface {
     function deposit() external payable returns(bool);
-    //function status() external view returns(address, address, bool);
-    //function startMigration(address _newCorpBank) external returns(bool);
-    //function cancelMigration() external returns(bool);
-    //function finishMigration() external returns(bool);
-    //function setup(address _firstCorpBank) external;
+    function status() external view returns(address, address, bool);
+    function startMigration(address _newCorpBank) external returns(bool);
+    function cancelMigration() external returns(bool);
+    function finishMigration() external returns(bool);
+    function setup(address _firstCorpBank) external;
 }
 
 contract TeamJust {
-    JIincForwarderInterface private Jekyll_Island_Inc = JIincForwarderInterface(0xe5f55d966ef9b4d541b286dd5237209d7de9959f);
+    JIincForwarderInterface private Jekyll_Island_Inc = JIincForwarderInterface(0x0);
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     // SET UP MSFun (note, check signers by name is modified from MSFun sdk)
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -115,20 +115,20 @@ contract TeamJust {
     constructor()
         public
     {
-       // address inventor = 0xDDeD7B59cfF636B9b8d1C7e072817cd75Fa08767;
-       // address mantso   = 0xc974884d397c31cbf2c064d28b22583cbd087204;
-      //  address justo    = 0x6c4575b6283445e5b2e4f46ea706f86ebfbdd1e9;
-      //  address sumpunk  = 0xcae6db99b3eadc9c9ea4a9515c8ddd26894eccdd;
-        address deployer = 0x24e0162606d558ac113722adc6597b434089adb7;
+        address inventor = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
+        address mantso   = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
+        address justo    = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
+        address sumpunk  = 0x0D78E82ECEd57aC3CE65fE3B828f4d52fF712f31;
+		address deployer = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
         
-      //  admins_[inventor] = Admin(true, true, "inventor");
-      //  admins_[mantso]   = Admin(true, true, "mantso");
-      //  admins_[justo]    = Admin(true, true, "justo");
-      //  admins_[sumpunk]  = Admin(true, true, "sumpunk");
-        admins_[deployer] = Admin(true, true, "deployer");
+        admins_[inventor] = Admin(true, true, "inventor");
+        admins_[mantso]   = Admin(true, true, "mantso");
+        admins_[justo]    = Admin(true, true, "justo");
+        admins_[sumpunk]  = Admin(true, true, "sumpunk");
+		admins_[deployer] = Admin(true, true, "deployer");
         
-        adminCount_ = 1;
-        devCount_ = 1;
+        adminCount_ = 5;
+        devCount_ = 5;
         requiredSignatures_ = 1;
         requiredDevSignatures_ = 1;
     }
@@ -142,13 +142,14 @@ contract TeamJust {
         public
         payable
     {
-        Jekyll_Island_Inc.deposit.value(address(this).balance)();        
+        Jekyll_Island_Inc.deposit.value(address(this).balance)();
     }
-   
+    
     function setup(address _addr)
         onlyDevs()
         public
-    {     
+    {
+        require( address(Jekyll_Island_Inc) == address(0) );
         Jekyll_Island_Inc = JIincForwarderInterface(_addr);
     }    
     
