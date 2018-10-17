@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptodraw at 0xcf7480184a6ca7b10eb73467f05ae21b8500f9eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptodraw at 0x78b88f8198fdc9a67cc064c2654cd44962fc6e34
 */
 pragma solidity ^0.4.20;
 
@@ -1188,7 +1188,7 @@ contract Cryptodraw is usingOraclize {
     // Ticketprice per entry
     uint constant ticketPrice = 0.01 ether;
     // Maximum of players to join
-    uint constant maxPlayers = 25;
+    uint constant maxPlayers = 10;
     // Maximum of players to join
     uint constant Fee = 4;
     // Track the poolround
