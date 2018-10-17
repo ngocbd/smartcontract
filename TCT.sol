@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCT at 0x045ce6af36b07f7b1824dfedf43012e60bcc17a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCT at 0x53864ece70ea808ce8a25632e8c67473b99fa93f
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
-contract owned {
+contract Owned {
     address public owner;
 
     constructor() public {
@@ -15,17 +15,18 @@ contract owned {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+    function transferOwnership(address newOwner) onlyOwner public returns (bool success) {
         owner = newOwner;
+        return true;
     }
 }
 
-contract Stopped is owned {
+contract Stopped is Owned {
 
     bool public stopped = true;
 
     modifier noStopped {
-        assert(!stopped);
+        require(!stopped);
         _;
     }
 
@@ -41,30 +42,30 @@ contract Stopped is owned {
 
 contract MathTCT {
 
-    function add(uint256 x, uint256 y) constant internal returns(uint256 z) {
+    function add(uint256 x, uint256 y) pure internal returns(uint256 z) {
       assert((z = x + y) >= x);
     }
 
-    function sub(uint256 x, uint256 y) constant internal returns(uint256 z) {
+    function sub(uint256 x, uint256 y) pure internal returns(uint256 z) {
       assert((z = x - y) <= x);
     }
 }
 
 contract TokenERC20 {
 
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address who) constant public returns (uint256 value);
-    function allowance(address owner, address spender) constant public returns (uint256 _allowance);
-    function transfer(address to, uint value) public returns (bool ok);
-    function transferFrom( address from, address to, uint value) public returns (bool ok);
-    function approve( address spender, uint value) public returns (bool ok);
+    function totalSupply() view public returns (uint256 supply);
+    function balanceOf(address who) view public returns (uint256 value);
+    function allowance(address owner, address spender) view public returns (uint256 _allowance);
+    function transfer(address to, uint256 value) public returns (bool success);
+    function transferFrom(address from, address to, uint256 value) public returns (bool success);
+    function approve(address spender, uint256 value) public returns (bool success);
 
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
 }
 
-contract TCT is owned, Stopped, MathTCT, TokenERC20 {
+contract TCT is Owned, Stopped, MathTCT, TokenERC20 {
 
     string public name;
     string public symbol;
@@ -75,8 +76,8 @@ contract TCT is owned, Stopped, MathTCT, TokenERC20 {
     mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public frozenAccount;
 
-    event FrozenFunds(address target, bool frozen);
-    event Burn(address from, uint256 value);
+    event FrozenFunds(address indexed target, bool frozen);
+    event Burn(address indexed from, uint256 value);
 
     constructor(string _name, string _symbol) public {
         totalSupply = 200000000 * 10 ** uint256(decimals);
@@ -85,19 +86,19 @@ contract TCT is owned, Stopped, MathTCT, TokenERC20 {
         symbol = _symbol;
     }
 
-    function totalSupply() constant public returns (uint256) {
+    function totalSupply() view public returns (uint256 supply) {
         return totalSupply;
     }
 
-    function balanceOf(address who) constant public returns (uint) {
+    function balanceOf(address who) view public returns (uint256 value) {
         return balanceOf[who];
     }
 
-    function allowance(address owner, address spender) constant public returns (uint256) {
+    function allowance(address owner, address spender) view public returns (uint256 _allowance) {
         return allowance[owner][spender];
     }
 
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint256 _value) internal {
         require (_to != 0x0);
         require (balanceOf[_from] >= _value);
         require(!frozenAccount[_from]);
@@ -107,7 +108,7 @@ contract TCT is owned, Stopped, MathTCT, TokenERC20 {
         emit Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) noStopped public returns(bool) {
+    function transfer(address _to, uint256 _value) noStopped public returns(bool success) {
         _transfer(msg.sender, _to, _value);
         return true;
     }
@@ -123,38 +124,43 @@ contract TCT is owned, Stopped, MathTCT, TokenERC20 {
         require(!frozenAccount[msg.sender]);
         require(!frozenAccount[_spender]);
         allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function increaseApproval(address _spender, uint256 _addedValue) noStopped public returns (bool success) {
+        require(!frozenAccount[msg.sender]);
+        require(!frozenAccount[_spender]);
+        allowance[msg.sender][_spender] = add(allowance[msg.sender][_spender], _addedValue);
+        emit Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
         return true;
     }
 
-    function mintToken(address target, uint256 mintedAmount) noStopped onlyOwner public {
-        balanceOf[target] = add(balanceOf[target], mintedAmount);
-        totalSupply = add(totalSupply, mintedAmount);
-        emit Transfer(0, target, mintedAmount);
+    function decreaseApproval(address _spender, uint256 _subtractedValue) noStopped public returns (bool success) {
+        require(!frozenAccount[msg.sender]);
+        require(!frozenAccount[_spender]);
+        uint256 oldValue = allowance[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowance[msg.sender][_spender] = 0;
+        } else {
+            allowance[msg.sender][_spender] = sub(oldValue, _subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
+        return true;
     }
 
-    function freezeAccount(address target, bool freeze) noStopped onlyOwner public {
+    function freezeAccount(address target, bool freeze) noStopped onlyOwner public returns (bool success) {
         frozenAccount[target] = freeze;
         emit FrozenFunds(target, freeze);
+        return true;
     }
 
-    function burn(uint256 _value) noStopped public returns (bool success) {
+    function burn(uint256 _value) noStopped onlyOwner public returns (bool success) {
         require(!frozenAccount[msg.sender]);
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] = sub(balanceOf[msg.sender], _value);
         totalSupply = sub(totalSupply, _value);
         emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) noStopped public returns (bool success) {
-        require(!frozenAccount[msg.sender]);
-        require(!frozenAccount[_from]);
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] = sub(balanceOf[_from], _value);
-        allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
-        totalSupply = sub(totalSupply, _value);
-        emit Burn(_from, _value);
         return true;
     }
 
