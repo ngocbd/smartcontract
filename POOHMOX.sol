@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMOX at 0x643d60febd4f892a36d88ccd1fe8f4bfb5ef8807
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMOX at 0x29171eeaa66a2565b8e26e5403e667258dcc1b3e
 */
 pragma solidity ^0.4.24;
 
@@ -1537,7 +1537,7 @@ library KeysCalc {
         returns(uint256)
     {
          // return ((((((_eth).mul(1000000000000000000)).mul(200000000000000000000000000000000)).add(2500000000000000000000000000000000000000000000000000000000000000)).sqrt()).sub(50000000000000000000000000000000)) / (100000000000000);
-        return (_eth / 0.01 ether) * 1e18;
+        return (_eth / 0.01 ether);
     }
 
     /**
@@ -1550,7 +1550,7 @@ library KeysCalc {
         pure
         returns(uint256)
     {
-       return _keys.mul(0.01 ether)  / 1e18;
+        return _keys.mul(0.01 ether);
        //return ((50000000000000).mul(_keys.sq()).add(((100000000000000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
     }
 }
