@@ -1,8 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPLAY at 0xf3D166d8A0db4D40e66552a5c228B1e46571acBB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPLAY at 0x0bccc88811ac345c7dcc5958cd5701120de44868
 */
 pragma solidity ^0.4.20;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 contract owned {
     address public owner;
     
@@ -27,7 +75,8 @@ contract owned {
     }
 }
 contract ERC20 is owned{
-
+    using SafeMath for *;
+    
     string public name;
     string public symbol;
 
@@ -57,16 +106,16 @@ contract ERC20 is owned{
     }
 
     function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender ]- tokens;
-        balances[to] = balances[to] + tokens;
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender ],tokens);
+        balances[to] = SafeMath.add(balances[to], tokens);
         emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from] - tokens;
-        allowed[from][msg.sender] = allowed[from][msg.sender] - (tokens);
-        balances[to] = balances[to]+(tokens);
+        balances[from] = SafeMath.sub(balances[from], tokens);
+        allowed[from][msg.sender] = SafeMath.sub(allowed[from][msg.sender],(tokens));
+        balances[to] = SafeMath.sub(balances[to],tokens);
         emit Transfer(from, to, tokens);
         return true;
     }
@@ -119,9 +168,10 @@ contract EPLAY is ERC20 {
     }
 
     function burnFrom(address _from, uint256 _value) internal returns (bool success) {
+        require(_from == msg.sender || _from == owner);
         require(balances[_from] >= _value);
-        balances[_from] -= _value;
-        totalSupply -= _value;
+        balances[_from] = SafeMath.sub(balances[_from],_value);
+        totalSupply = SafeMath.sub(totalSupply,_value);
         emit Burn(_from, _value);
         return true;
     }
