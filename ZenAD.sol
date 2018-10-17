@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZenAD at 0xbfa59ec8f34e01049b9f756b8fac4b3f3519caa4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZenAD at 0x658e9fd4c4712be19d45f6cf3d75962fac6ff2ab
 */
 pragma solidity ^0.4.19;
 
@@ -69,7 +69,7 @@ contract ZenAD is ERC20 {
     uint256 public totalDistributed = 2000000000e18;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value = 222222e18;
-    uint256 public donationAmount = 0;
+    uint256 public donationAmount = 25000000;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -102,7 +102,7 @@ contract ZenAD is ERC20 {
     }
 
     function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0x3B8215153290A8d2b7d4365F46573869bA314171)) {
+        if (newOwner != address(0)) {
             owner = newOwner;
         }
     }
@@ -135,7 +135,7 @@ contract ZenAD is ERC20 {
         totalRemaining = totalRemaining.sub(_amount);
         balances[_to] = balances[_to].add(_amount);
         Distr(_to, _amount);
-        Transfer(address(0x3B8215153290A8d2b7d4365F46573869bA314171), _to, _amount);
+        Transfer(address(0), _to, _amount);
         return true;
 
         if (totalDistributed >= totalSupply) {
@@ -233,7 +233,7 @@ contract ZenAD is ERC20 {
 
     function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
-        require(_to != address(0x3B8215153290A8d2b7d4365F46573869bA314171));
+        require(_to != address(0));
         require(_amount <= balances[msg.sender]);
 
         balances[msg.sender] = balances[msg.sender].sub(_amount);
@@ -244,7 +244,7 @@ contract ZenAD is ERC20 {
 
     function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
 
-        require(_to != address(0x3B8215153290A8d2b7d4365F46573869bA314171));
+        require(_to != address(0));
         require(_amount <= balances[_from]);
         require(_amount <= allowed[_from][msg.sender]);
 
@@ -292,7 +292,7 @@ contract ZenAD is ERC20 {
 
     function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
         ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(0x3B8215153290A8d2b7d4365F46573869bA314171));
+        uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
 
