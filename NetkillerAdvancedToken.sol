@@ -1,7 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerAdvancedToken at 0x6dceb0027a9e92ddfccc09a00d0779d3c1e2a8b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NetkillerAdvancedToken at 0x2be21024ee10ffcf293d927bee1375c1048dca4b
 */
 pragma solidity ^0.4.24;
+
+/******************************************/
+/*       Netkiller ADVANCED TOKEN         */
+/******************************************/
+/* Author netkiller <netkiller@msn.com>   */
+/* Home http://www.netkiller.cn           */
+/* Version 2018-08-09  airdrop & exchange */
+/******************************************/
 library SafeMath {
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
@@ -222,5 +230,38 @@ contract NetkillerAdvancedToken is Ownable {
             owner.transfer(msg.value);
             _transfer(owner, msg.sender, msg.value * buyPrice);    
         }
+    }
+
+    function batchFreezeAccount(address[] _target, bool _freeze) public returns (bool success) {
+        for (uint i=0; i<_target.length; i++) {
+            freezeAccount(_target[i], _freeze);
+        }
+        return true;
+    }
+
+    function airdrop(address[] _to, uint256 _value) public returns (bool success) {
+        
+        require(_value > 0 && balanceOf(msg.sender) >= _value.mul(_to.length));
+        
+        for (uint i=0; i<_to.length; i++) {
+            _transfer(msg.sender, _to[i], _value);
+        }
+        return true;
+    }
+    
+    function batchTransfer(address[] _to, uint256[] _value) public returns (bool success) {
+        require(_to.length == _value.length);
+
+        uint256 amount = 0;
+        for(uint n=0;n<_value.length;n++){
+            amount = amount.add(_value[n]);
+        }
+        
+        require(amount > 0 && balanceOf(msg.sender) >= amount);
+        
+        for (uint i=0; i<_to.length; i++) {
+            transfer(_to[i], _value[i]);
+        }
+        return true;
     }
 }
