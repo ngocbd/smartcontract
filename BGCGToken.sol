@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BGCGToken at 0x8444ccf30e86b5b8d27c5341ee2f77ae6f017072
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BGCGToken at 0xa765046a42162329b572692ae90b63914454002f
 */
 pragma solidity ^0.4.22;
 
@@ -182,6 +182,7 @@ contract BGCGToken is Pausable {
 
 //msg.sender approve he's allowance to _spender
   function approve(address _spender, uint256 _value) public whenNotPaused returns (bool success) {
+    require((_value == 0 ) || ( allowance[msg.sender][_spender] == 0  ));
     require(!frozenAccount[msg.sender]);
     require(!frozenAccount[_spender]);
    
@@ -280,18 +281,6 @@ function transferFrom(address _from, address _to, uint256 _value) public whenNot
     emit FrozenFunds(target, freeze);
  }
 
-//only the contract owner can mint token
-  function mintToken(address target, uint256 mintedAmount) public whenNotPaused onlyOwner {
-        require( mintedAmount > 0 );
-        require(target != address(0));
-        
-        require(SafeMath.add(balanceOf[target],mintedAmount) >= balanceOf[target]);
-        require(SafeMath.add(totalSupply,mintedAmount) >= totalSupply);
 
-        balanceOf[target] = SafeMath.add(balanceOf[target],mintedAmount);
-        totalSupply = SafeMath.add(totalSupply,mintedAmount);
-
-        emit Transfer(owner, target, mintedAmount);
- }
 
 }
