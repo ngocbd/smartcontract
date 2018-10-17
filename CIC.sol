@@ -1,17 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIC at 0xedabc2a993cd24d01fe68a200b98190250969714
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CIC at 0x3fa8b5b13471c58be31d16144bc35873ce2cd8e0
 */
-pragma solidity ^0.4.24;
-// sol to CIC token
+pragma solidity 0.4.24;
+// sol to CIC Coin
 // 
 // Senior Development Engineer  CHIEH-HSUAN WANG of Lucas. 
 // Jason Wang  <ixhxpns@gmail.com>
 // reference https://ethereum.org/token
-
 contract owned {
     address public owner;
 
-    constructor()  owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -28,12 +27,12 @@ contract owned {
 contract TokenERC20 is owned {
     address public deployer;
     // Public variables of the token
-    string public name ="Call IN";
+    string public name ="CALL IN";
     string public symbol = "CIC";
     uint8 public decimals = 4;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 1000000000000;
-    
+    uint256 public totalSupply;
+
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -51,7 +50,7 @@ contract TokenERC20 is owned {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor()  public {
+    constructor() public {
         deployer = msg.sender;
     }
 
@@ -132,17 +131,21 @@ contract TokenERC20 is owned {
         emit Burn(msg.sender, _value);
         return true;
     }
+
 }
 
+/******************************************/
+/*       ADVANCED TOKEN STARTS HERE       */
+/******************************************/
 
-contract AdvancedToken is TokenERC20 {
+contract MyAdvancedToken is TokenERC20 {
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    constructor()  TokenERC20() public { }
+    constructor() TokenERC20() public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -182,13 +185,13 @@ contract AdvancedToken is TokenERC20 {
 
 }
 
-contract CIC is AdvancedToken {
+contract CIC is MyAdvancedToken {
     mapping(address => uint) public lockdate;
     mapping(address => uint) public lockTokenBalance;
 
     event LockToken(address account, uint amount, uint unixtime);
 
-    constructor()  AdvancedToken() public {}
+    constructor() MyAdvancedToken() public {}
     function getLockBalance(address account) internal returns(uint) {
         if(now >= lockdate[account]) {
             lockdate[account] = 0;
