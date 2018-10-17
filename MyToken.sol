@@ -1,336 +1,191 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xcdf9baff52117711b33210ade38f1180cfc003ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x1bb2e2e063a58368a592857b0abe8b4a827e5a07
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-interface ERC20 {
-    function transferFrom(address _from, address _to, uint _value) external returns (bool);
-    function approve(address _spender, uint _value) external returns (bool);
-    function allowance(address _owner, address _spender) external view returns (uint);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+// File: contracts/ERC223.sol
+
+contract ERC223 {
+	
+	// Get the account balance of another account with address owner
+	function balanceOf(address owner) public view returns (uint);
+	
+	function name() public view returns (string);
+	function symbol() public view returns (string);
+	function decimals() public view returns (uint8);
+    function totalSupply() public view returns (uint);
+
+	// Needed due to backwards compatibility reasons because of ERC20 transfer function does't have bytes
+	// parameter. This function must transfer tokens and invoke the function tokenFallback(address, uint256,
+	// bytes) in to, if to is a contract. If the tokenFallback function is not implemented in to (receiver 
+	// contract), the transaaction must fail and the transfer of tokens should not occur.
+	function transfer(address to, uint value) public returns (bool success);
+
+	// This function must transfer tokens and invoke the function tokenFallback(address, uint256, bytes) in
+	// to, if to is a contract. If the tokenFallback function is not implemented in to (receiver contract), then
+	// the transaction must fail and the transfer of tokens should not occur.
+	// If to is an externally owned address, then the transaction must be sent without trying to execute
+	// tokenFallback in to.
+	// data can be attached to this token transaction it will stay in blockchain forever(requires more gas).
+	// data can be empty.
+    function transfer(address to, uint value, bytes data) public returns (bool success);
+
+    //
+    function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool success);
+
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed from, address indexed to, uint indexed value, bytes data);
 }
 
-interface ERC223 {
-    function transfer(address _to, uint _value, bytes _data) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+// File: contracts/ERC223ReceivingContract.sol
+
+contract ERC223ReceivingContract { 
+	
+	// A function for handling token transfers, which is called from the token contract, when a token holder sends
+	// tokens. from is the address of the sender of the token, value is the amount of incoming tokens, and data is
+	// attached data siimilar to msg.data of Ether transactions. It works by analogy with the fallback function of
+	// Ether transactions and returns nothing.
+    function tokenFallback(address from, uint value, bytes data) public;
 }
 
-contract ERC223ReceivingContract {
-    function tokenFallback(address _from, uint _value, bytes _data) public;
+// File: contracts/SafeMath.sol
+
+/**
+ * Math operations with safety checks
+ */
+library SafeMath {function mul(uint a, uint b) internal pure returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal pure returns (uint) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint a, uint b) internal pure returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal pure returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    } 
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a >= b ? a : b;
+    }
+
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+         return a < b ? a : b;
+  }
+
 }
 
-contract Token {
+// File: contracts/MyToken.sol
 
-    string internal _symbol;
-    string internal _name;
-
-    uint8 internal _decimals;
-    uint internal _totalSupply;
-
-    mapping (address => uint) internal _balanceOf;
-    mapping (address => mapping (address => uint)) internal _allowances;
-
-    constructor(string symbol, string name, uint8 decimals, uint totalSupply) public {
-        _symbol = symbol;
-        _name = name;
-        _decimals = decimals;
-        _totalSupply = totalSupply;
-    }
-
-    function name()
-        public
-        view
-        returns (string) {
-        return _name;
-    }
-
-    function symbol()
-        public
-        view
-        returns (string) {
-        return _symbol;
-    }
-
-    function decimals()
-        public
-        view
-        returns (uint8) {
-        return _decimals;
-    }
-
-    function totalSupply()
-        public
-        view
-        returns (uint) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address _addr) public view returns (uint);
-    function transfer(address _to, uint _value) public returns (bool);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-}
-
-library SafeMath {
-    function sub(uint _base, uint _value)
-        internal
-        pure
-        returns (uint) {
-        assert(_value <= _base);
-        return _base - _value;
-    }
-
-    function add(uint _base, uint _value)
-        internal
-        pure
-        returns (uint _ret) {
-        _ret = _base + _value;
-        assert(_ret >= _base);
-    }
-
-    function div(uint _base, uint _value)
-        internal
-        pure
-        returns (uint) {
-        assert(_value > 0 && (_base % _value) == 0);
-        return _base / _value;
-    }
-
-    function mul(uint _base, uint _value)
-        internal
-        pure
-        returns (uint _ret) {
-        _ret = _base * _value;
-        assert(0 == _base || _ret / _base == _value);
-    }
-}
-
-library Addresses {
-    function isContract(address _base) internal view returns (bool) {
-        uint codeSize;
-            assembly {
-            codeSize := extcodesize(_base)
-            }
-        return codeSize > 0;
-    }
-}
-
-contract MyToken is Token("LOCA", "Locanza", 8, 5000000000000000), ERC20, ERC223 {
-
+/*
+ * @title Reference implementation fo the ERC223 standard token.
+ */
+contract MyToken is ERC223 {
     using SafeMath for uint;
-    using Addresses for address;
 
-    address owner;
+    mapping(address => uint) balances; // List of user balances.
 
-    struct lockDetail {
-        uint amount;
-        uint lockedDate;
-        uint daysLocked;
-        bool Locked;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint public totalSupply;
+
+ 
+    constructor(string _name, string _symbol, uint _totalSupply) public {
+		name = _name;
+		symbol = _symbol;
+		decimals = 18;
+		totalSupply = _totalSupply * (10 ** uint256(decimals));
+		balances[msg.sender] = totalSupply;
+	}
+
+    function name() public view returns (string) {
+		 return name;
     }
 
-// to keep track of the minting stages
-// The meaning of the 5 stages have yet to be determined
-// minting will be done after 25 years or earlier when mining bounties are relevant
+    function symbol() public view returns (string) {
+		return symbol;
+	}
 
-    enum Stages {
-        FirstLoyaltyProgram,
-        Stage1,
-        Stage2,
-        Stage3,
-        Stage4,
-        Stage5
-    }
-    Stages internal stage = Stages.FirstLoyaltyProgram;
-
-// Locked Balance + Balance = total _totalsupply
-    mapping(address=>lockDetail)  _Locked;
-
-//Lock event
-    event Locked(address indexed _locker, uint _amount);
-// Unlock event
-    event Unlock(address indexed _receiver, uint _amount);
-
-    modifier onlyOwner () {
-        require (owner == msg.sender);
-        _;
+    function decimals() public view returns (uint8) {
+    	return decimals;
     }
 
-//checked
-    constructor()
-        public {
-        owner = msg.sender;
-        _balanceOf[msg.sender] = _totalSupply;
+    function totalSupply() public view returns (uint) {
+    	return totalSupply;
     }
 
-//checked
-    function balanceOf(address _addr)
-        public
-        view
-        returns (uint) {
-        return _balanceOf[_addr];
-    }
-//checked
-    function transfer(address _to, uint _value)
-        public
-        returns (bool) {
-        return transfer(_to, _value, "");
-    }
-//checked
-    function transfer(address _to, uint _value, bytes _data)
-        public
-        returns (bool) {
-        require (_value > 0 &&
-            _value <= _balanceOf[msg.sender]); 
-        
-        _balanceOf[msg.sender] = _balanceOf[msg.sender].sub(_value);
-        _balanceOf[_to] = _balanceOf[_to].add(_value);
 
-        emit Transfer(msg.sender, _to, _value);
+	function balanceOf(address owner) public view returns (uint) {
+		return balances[owner];
+	}
 
-            if (_to.isContract()) {
-                ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
-                _contract.tokenFallback(msg.sender, _value, _data);
-            }
-  
-        
+	function transfer(address to, uint value, bytes data) public returns (bool) {
+		if(balanceOf(msg.sender) < value) revert();
+		// Standard function transfer similar to ERC20 transfer with no data.
+		// Added due to backwards compatibility reasons.
 
-        return true;
-    }
-//checked
-    function transferFrom(address _from, address _to, uint _value)
-        public
-        returns (bool) {
-        return transferFrom(_from, _to, _value, "");
-    }
+		balances[msg.sender] = balances[msg.sender].sub(value);
+		balances[to] = balances[to].add(value);
+		if(isContract(to)) {
+			ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
+			receiver.tokenFallback(msg.sender, value, data);
+		}
+		emit Transfer(msg.sender, to, value, data);
+		return true;
+	}
 
-//checked
-    function transferFrom(address _from, address _to, uint _value, bytes _data)
-        public
-        returns (bool) {
-        require (_allowances[_from][msg.sender] > 0 && 
-            _value > 0 &&
-            _allowances[_from][msg.sender] >= _value &&
-            _balanceOf[_from] >= _value); 
+	function transfer(address to, uint value) public returns (bool) {
+		if(balanceOf(msg.sender) < value) revert();
+		bytes memory empty;
 
-        _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(_value);
-        _balanceOf[_from] = _balanceOf[_from].sub(_value);
-        _balanceOf[_to] = _balanceOf[_to].add(_value);
-
-        emit Transfer(_from, _to, _value);
-
-        if (_to.isContract()) {
-            ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
-            _contract.tokenFallback(msg.sender, _value, _data);
-              }
-
-        return true;
-        
-    }
-// checked
-    function approve(address _spender, uint _value)
-        public
-        returns (bool) {
-        require (_balanceOf[msg.sender] >= _value && _value >= 0); 
-            _allowances[msg.sender][_spender] = _value;
-            emit Approval(msg.sender, _spender, _value);
-            return true;
-    }
-// checked
-    function allowance(address _owner, address _spender)
-        public
-        view
-        returns (uint) {
-        
-        return _allowances[_owner][_spender];
-       
-    }
-
-// minting and locking functionality
-
-
-// Minted coins are added to the total supply
-// Minted coins have to be locked between 30 and 365 to protect tokenholders
-// Only minting sets a new stage (first stage is the FirstLoyaltyProgram after initial token creation)
-
-    function coinMinter (uint _amount, uint _days) public onlyOwner  returns (bool) {
-        require(_amount > 0);
-        // max 1 year lock only
-        require(_days > 30 && _days <= 365);
-    // this is where we eventualy set the total supply
-        require (_amount + _totalSupply <= 10000000000000000);
-        _totalSupply += _amount;
-        stage = Stages(uint(stage)+1);
-        lockAfterMinting(_amount, _days);
-        return true;
-    }
-// Only one stage at a time can be minted
-// Because of the internal call to lockAfterMinting
-
-    function lockAfterMinting( uint _amount, uint _days) internal onlyOwner returns(bool) {
-     // only one token lock (per stage) is possible
-        require(_amount > 0);
-        require(_days > 30 && _days <= 365);
-        require(_Locked[msg.sender].Locked != true);
-        _Locked[msg.sender].amount = _amount;
-        _Locked[msg.sender].lockedDate = now;
-        _Locked[msg.sender].daysLocked = _days;
-        _Locked[msg.sender].Locked = true;
-        emit Locked(msg.sender, _amount);
-        return true;
-    }
-
-    function lockOwnerBalance( uint _amount, uint _days) public onlyOwner returns(bool) {
-   // max 1 year lock only
-        require(_amount > 0);
-        require(_days > 30 && _days <= 365);
-        require(_balanceOf[msg.sender] >= _amount);
-   // only one token lock (per stage) is possible
-        require(_Locked[msg.sender].Locked != true);
-  // extract tokens from the owner balance
-        _balanceOf[msg.sender] -= _amount;
-
-        _Locked[msg.sender].amount = _amount;
-        _Locked[msg.sender].lockedDate = now;
-        _Locked[msg.sender].daysLocked = _days;
-        _Locked[msg.sender].Locked = true;
-        emit Locked(msg.sender, _amount);
-        return true;
-    }
-
-    function lockedBalance() public view returns(uint,uint,uint){
-        
-        return (_Locked[owner].amount,_Locked[owner].lockedDate,_Locked[owner].daysLocked) ;
-    }
-
-// This functions adds te locked tokens to the owner balance
-    function unlockOwnerBalance() public onlyOwner returns(bool){
-
-        require(_Locked[msg.sender].Locked == true);
-// require statement regarding the date time require for unlock
-// for testing purposes only in seconds
-        require(now > _Locked[msg.sender].lockedDate + _Locked[msg.sender].daysLocked * 1 days);
-        _balanceOf[msg.sender] += _Locked[msg.sender].amount;
-        delete _Locked[msg.sender];
-
-        emit Unlock(msg.sender, _Locked[msg.sender].amount);
-        return true;
-    }
-
-    function getStage() public view returns(string){
-
-        if (uint(stage)==0) {
-            return "FirstLoyalty";
-        } else if(uint(stage)==1){
-            return "Stage1";
-         } else if (uint(stage)==2){
-            return "Stage2";
-        }  else if(uint(stage)==3){
-            return "Stage3" ;
-        } else if(uint(stage)==4){
-            return "Stage4" ;
-        }else if(uint(stage)==5){
-            return "Stage5" ;
+		balances[msg.sender] = balances[msg.sender].sub(value);
+        balances[to] = balances[to].add(value);
+        if(isContract(to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(to);
+            receiver.tokenFallback(msg.sender, value, empty);
         }
-    }
+        emit Transfer(msg.sender, to, value, empty);
+        return true;
+	}
 
+	function transfer(address to, uint value, bytes data, string customFallback) public returns (bool) {
+		if(balanceOf(msg.sender) < value) revert();
+
+		balances[msg.sender] = balances[msg.sender].sub(value);
+        balances[to] = balances[to].add(value);
+		if (isContract(to)) {
+            assert(to.call.value(0)(bytes4(keccak256(customFallback)), msg.sender, value, data));
+        }
+        emit Transfer(msg.sender, to, value, data);
+        return true;
+	}
+
+	function isContract(address addr) private view returns (bool) {
+		uint len;
+		assembly {
+			len := extcodesize(addr)
+		}
+		return (len > 0);
+	}
 }
