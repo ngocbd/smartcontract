@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x343797a83fc996c446dfa7bd60a3c8da3515f6eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xbd5bbd30aafaf76a2b7bfa92c9c0f92218609778
 */
 pragma solidity ^0.4.24;
 
@@ -580,7 +580,7 @@ contract FoMo3Dlong is modularLong {
 
     //TODO:
     //JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x508D1c04cd185E693d22125f3Cc6DC81F7Ce9477);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x1e09aF1634Aab1522eDBF84AA668028Ac373bF79);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x1a7bADBc3a718Aacd2723a73D01f34DAf5B69dAb);
   
     address public teamWallet = 0x7a9f5d9f4BdCf4C2Aa93e929d823FCFBD1fa19D0;
 
