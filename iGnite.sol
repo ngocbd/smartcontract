@@ -1,12 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ignite at 0x750120015bb290d0be129b10d786793883a1378d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ignite at 0x6d6a0df44625d70587d971a592d10d9651e0c053
 */
-pragma solidity ^0.4.23;
+//IGNITE-A unprecedented  prediction market of based decentralization network.
+//Website:IGToken.net
 
+pragma solidity ^0.4.18;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+ 
 library SafeMath {
 
-
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
@@ -16,7 +25,9 @@ library SafeMath {
         return c;
     }
 
-
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         // uint256 c = a / b;
@@ -24,12 +35,17 @@ library SafeMath {
         return a / b;
     }
 
-
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
         assert(c >= a);
@@ -69,9 +85,9 @@ contract Ignite is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 800000000e8;
-    uint256 public totalDistributed =  400000000e8;    
+    uint256 public totalDistributed = 400000000e8;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 100000e8;
+    uint256 public tokensPerEth = 75000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -97,9 +113,10 @@ contract Ignite is ERC20 {
         _;
     }
     
-    function Ignite() public {
+    
+    function Ignite () public {
         owner = msg.sender;    
-        distr(owner, totalDistributed);
+        balances[owner] = totalDistributed;
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
