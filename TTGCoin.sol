@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTGCoin at 0xb68bb1f5334da5ea8866d9c8b673c3798a5ca390
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTGCoin at 0x94249cbca4036c381e2a7ce4f64278146ba7d483
 */
 pragma solidity ^0.4.2;
 
@@ -156,7 +156,7 @@ contract StandardToken is ERC20, SafeMath {
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
-     //require(msg.data.length < size + 4);
+     require(msg.data.length >= size + 4);
      _;
   }
 
@@ -294,21 +294,22 @@ contract DistributeToken is StandardToken, Ownable{
   using SafeMathLib for uint;
 
   /* The finalizer contract that allows Distribute token */
-  address public distAgent;
+  // address public distAgent;
+  mapping (address => bool) private distAgents;
 
-  uint public maxAirDrop = 1000*10**18;//need below 1000 TTG
+  uint private maxAirDrop = 1000*10**18;//need below 1000 TTG
 
-  uint public havedAirDrop = 0;
+  uint private havedAirDrop = 0;
   uint public totalAirDrop = 0; //totalSupply * 5%
 
   bool public finishCrowdCoin = false;
-  uint public havedCrowdCoin = 0;
+  uint private havedCrowdCoin = 0;
   uint public totalCrowdCoin = 0; //totalSupply * 50%
 
-  uint public havedDistDevCoin = 0;
+  uint private havedDistDevCoin = 0;
   uint public totalDevCoin = 0;  //totalSupply * 20%
 
-  uint public havedDistFoundCoin = 0;
+  uint private havedDistFoundCoin = 0;
   uint public totalFoundCoin = 0;  //totalSupply * 20%
 
   /**
@@ -318,18 +319,23 @@ contract DistributeToken is StandardToken, Ownable{
   /**
    * .
    */
-  function setDistributeAgent(address addr) onlyOwner  public {
+  function setDistributeAgent(address addr, bool enabled) onlyOwner  public {
      
      require(addr != address(0));
 
     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
-    distAgent = addr;
+    distAgents[addr] = enabled;
   }
 
+  function setTotalAirDrop(uint Amount) onlyOwner  public {
+     
+    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
+    totalAirDrop = Amount;
+  }
 
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyDistributeAgent() {
-    require(msg.sender == distAgent) ;
+    require(distAgents[msg.sender] == true) ;
     _;
   }
 
@@ -345,7 +351,6 @@ contract DistributeToken is StandardToken, Ownable{
     owner.transfer(_amount);
   }
 
- /**?token????*/
  function distributeToFound(address receiver, uint amount) onlyOwner() public  returns (uint actual){ 
   
     require((amount+havedDistFoundCoin) < totalFoundCoin);
@@ -363,7 +368,7 @@ contract DistributeToken is StandardToken, Ownable{
     return amount;
  }
 
- /**?token????*/
+ 
  function  distributeToDev(address receiver, uint amount) onlyOwner()  public  returns (uint actual){
 
     require((amount+havedDistDevCoin) < totalDevCoin);
@@ -380,13 +385,13 @@ contract DistributeToken is StandardToken, Ownable{
     return amount;
  }
 
- /**???????????????? agent???????????????agent??*/
+ 
  function airDrop(address transmitter, address receiver, uint amount) public  returns (uint actual){
 
     require(receiver != address(0));
     require(amount <= maxAirDrop);
     require((amount+havedAirDrop) < totalAirDrop);
-    require(transmitter == distAgent);
+    require(distAgents[msg.sender] == true);
 
     balances[owner] = balances[owner].sub(amount);
     balances[receiver] = balances[receiver].plus(amount);
@@ -399,7 +404,7 @@ contract DistributeToken is StandardToken, Ownable{
     return amount;
   }
 
- /**??ICO??????????ETH????????TTG????ICO?????????*/
+ 
  function crowdDistribution() payable public  returns (uint actual) {
       
     require(msg.sender != address(0));
@@ -701,7 +706,7 @@ contract TTGCoin is ReleasableToken, MintableToken , DistributeToken, RecycleTok
     addAdmin(owner);
 
     name  = "TotalGame Coin";
-    symbol = "TGC";
+    symbol = "TTG";
     totalSupply = 2000000000*10**18;
     decimals = 18;
 
