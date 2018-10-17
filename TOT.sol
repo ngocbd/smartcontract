@@ -1,161 +1,307 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOT at 0xbf3caa1a66f5e5fd4ee4eda7391871dbb06b8dc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOT at 0x66b033c04d4af008fc7f8c0fbb9b71bd99b89b15
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.24;
 
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function toUINT112(uint256 a) internal pure returns(uint112) {
-    assert(uint112(a) == a);
-    return uint112(a);
-  }
-
-  function toUINT120(uint256 a) internal pure returns(uint120) {
-    assert(uint120(a) == a);
-    return uint120(a);
-  }
-
-  function toUINT128(uint256 a) internal pure returns(uint128) {
-    assert(uint128(a) == a);
-    return uint128(a);
-  }
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
 
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+    constructor() public {
+        owner = msg.sender;
+    }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 }
 
-contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and a
+// fixed supply
+// ----------------------------------------------------------------------------
+contract TOT is ERC20Interface, Owned {
+    using SafeMath for uint;
+
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
+        _;
+    }
+
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+
+    // ------------------------------------------------------------------------
+    // airdrop params
+    // ------------------------------------------------------------------------
+    uint256 public _airdropAmount;
+    uint256 public _airdropTotal;
+    uint256 public _airdropSupply;
+    uint256 public _totalRemaining;
+
+    mapping(address => bool) initialized;
+    bool public distributionFinished = false;
+    mapping (address => bool) public blacklist;
+
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "TOT";
+        name = "The Ocean Token";
+        decimals = 18;
+        _totalSupply = 1000000000 * 10 ** uint256(decimals);
+        _airdropAmount = 35000 * 10 ** uint256(decimals);
+        _airdropSupply =  300000000 * 10 ** uint256(decimals);
+        _totalRemaining = _airdropSupply;
+        balances[owner] = _totalSupply.sub(_airdropSupply);
+
+        emit Transfer(address(0), owner, _totalSupply);
+    }
 
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public view returns (uint) {
+        return _totalSupply.sub(balances[address(0)]);
+    }
 
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public view returns (uint balance) {
+        return balances[tokenOwner];
+    }
 
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) onlyPayloadSize(2 * 32) public returns (bool success) {
+        require(to != address(0));
+        require(tokens <= balances[msg.sender]);
 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(msg.sender, to, tokens);
+        return true;
 
-}
-
-contract TOT is StandardToken {
-
-  string public constant name = "Btt Token";
-  string public constant symbol = "TOT";
-  uint8 public constant decimals = 18;
+    }
 
 
-  uint256 public constant INITIAL_SUPPLY = 10000000000 * (10 ** uint256(decimals));
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+    }
 
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function TOT() public {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
 
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+        require(tokens <= balances[from]);
+        require(tokens <= allowed[from][msg.sender]);
+        require(to != address(0));
+
+        balances[from] = balances[from].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    // ------------------------------------------------------------------------
+    // Get the airdrop token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function getBalance(address _address) internal returns (uint256) {
+        if (_airdropTotal < _airdropSupply && !initialized[_address]) {
+            return balances[_address] + _airdropAmount;
+        } else {
+            return balances[_address];
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // internal private functions
+    // ------------------------------------------------------------------------
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+
+        _airdropTotal = _airdropTotal.add(_amount);
+        _totalRemaining = _totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        if (_airdropTotal >= _airdropSupply) {
+            distributionFinished = true;
+        }
+    }
+
+    function () external payable {
+        getTokens();
+    }
+
+
+    function getTokens() payable canDistr onlyWhitelist public {
+
+        if (_airdropAmount > _totalRemaining) {
+            _airdropAmount = _totalRemaining;
+        }
+
+        require(_totalRemaining <= _totalRemaining);
+
+        distr(msg.sender, _airdropAmount);
+
+        if (_airdropAmount > 0) {
+            blacklist[msg.sender] = true;
+        }
+
+        if (_airdropTotal >= _airdropSupply) {
+            distributionFinished = true;
+        }
+
+        _airdropAmount = _airdropAmount.div(100000).mul(99999);
+
+        uint256 etherBalance = this.balance;
+        if (etherBalance > 0) {
+            owner.transfer(etherBalance);
+        }
+    }
 }
