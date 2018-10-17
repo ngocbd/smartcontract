@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xf628099229fae56f0ffbe7140a41d3820a1248f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xee83e20C6AEab2284685Efe0B5ffb250bE5480bf
 */
 pragma solidity ^0.4.24;
 /*
@@ -72,15 +72,39 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0xe15Ccba132Ae5e7faA1C98a33C743a4C7161e136;
-        plyr_[1].name = "inventor";
+        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
+        plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0xe15Ccba132Ae5e7faA1C98a33C743a4C7161e136] = 1;
-        pIDxName_["inventor"] = 1;
-        plyrNames_[1]["inventor"] = true;
-        plyrNameList_[1][1] = "inventor";
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
+        pIDxName_["justo"] = 1;
+        plyrNames_[1]["justo"] = true;
+        plyrNameList_[1][1] = "justo";
         
-        pID_ = 1;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
+        plyr_[2].name = "mantso";
+        plyr_[2].names = 1;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
+        pIDxName_["mantso"] = 2;
+        plyrNames_[2]["mantso"] = true;
+        plyrNameList_[2][1] = "mantso";
+        
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
+        plyr_[3].name = "sumpunk";
+        plyr_[3].names = 1;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
+        pIDxName_["sumpunk"] = 3;
+        plyrNames_[3]["sumpunk"] = true;
+        plyrNameList_[3][1] = "sumpunk";
+        
+        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        plyr_[4].name = "inventor";
+        plyr_[4].names = 1;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
+        pIDxName_["inventor"] = 4;
+        plyrNames_[4]["inventor"] = true;
+        plyrNameList_[4][1] = "inventor";
+        
+        pID_ = 4;
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
