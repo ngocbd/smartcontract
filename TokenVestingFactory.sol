@@ -1,8 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVestingFactory at 0x50188d485742cc2c19c0290741db5eca2e27ad97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVestingFactory at 0x34be54a822bcc7b84257cdd340e48cf897f666e4
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -10,18 +15,119 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    require(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    require(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    require(token.approve(spender, value));
+  }
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -34,64 +140,41 @@ contract Ownable {
   }
 
   /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
   /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
 }
 
-contract TokenVestingFactory is Claimable {
-
-    event Created(VariableRateTokenVesting vesting);
-
-    function create(
-        address _beneficiary,
-        uint256 _start,
-        uint256[] _cumulativeRates,
-        uint256 _interval
-    ) onlyOwner public returns (VariableRateTokenVesting)
-    {
-        VariableRateTokenVesting vesting = new VariableRateTokenVesting(
-            _beneficiary, _start, _cumulativeRates, _interval);
-        emit Created(vesting);
-        return vesting;
-    }
-}
-
+/**
+ * @title TokenVesting
+ * @dev A token holder contract that can release its token balance gradually like a
+ * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
+ * owner.
+ */
 contract TokenVesting is Ownable {
   using SafeMath for uint256;
   using SafeERC20 for ERC20Basic;
@@ -117,10 +200,11 @@ contract TokenVesting is Ownable {
    * of the balance will have vested.
    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
    * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _start the time (as Unix time) at which point vesting starts 
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  function TokenVesting(
+  constructor(
     address _beneficiary,
     uint256 _start,
     uint256 _cliff,
@@ -202,125 +286,27 @@ contract TokenVesting is Ownable {
   }
 }
 
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
+contract TokenVestingFactory {
+  address public defaultOwner;
+  uint256 constant public DEFAULT_CLIFF = 365 days;
+  uint256 constant public DEFAULT_DURATION = 4 * 365 days;
+  bool constant public DEFAULT_REVOCABLE = true;
+
+  event DeployedVestingContract(address indexed vesting, address indexed beneficiary, address indexed owner);
+
+  constructor (address _defaultOwner) public {
+    defaultOwner = _defaultOwner;
   }
 
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    assert(token.transferFrom(from, to, value));
+  function deployDefaultVestingContract(address _beneficiary, uint256 _start) public {
+    deployVestingContract(defaultOwner, _beneficiary, _start, DEFAULT_CLIFF, DEFAULT_DURATION, DEFAULT_REVOCABLE);
   }
 
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
+  function deployVestingContract(address _owner, address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) public {
+    TokenVesting vesting = new TokenVesting(_beneficiary, _start, _cliff, _duration, _revocable);
+
+    vesting.transferOwnership(_owner);
+
+    emit DeployedVestingContract(vesting, _beneficiary, _owner);
   }
-}
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract VariableRateTokenVesting is TokenVesting {
-
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20Basic;
-
-    // Every element between 0 and 100, and should increase monotonically.
-    // [10, 20, 30, ..., 100] means releasing 10% for each period.
-    uint256[] public cumulativeRates;
-
-    // Seconds between each period.
-    uint256 public interval;
-
-    constructor(
-        address _beneficiary,
-        uint256 _start,
-        uint256[] _cumulativeRates,
-        uint256 _interval
-    ) public
-        // We don't need `duration`, also always allow revoking.
-        TokenVesting(_beneficiary, _start, /*cliff*/0, /*duration: uint max*/~uint256(0), true)
-    {
-        // Validate rates.
-        for (uint256 i = 0; i < _cumulativeRates.length; ++i) {
-            require(_cumulativeRates[i] <= 100);
-            if (i > 0) {
-                require(_cumulativeRates[i] >= _cumulativeRates[i - 1]);
-            }
-        }
-
-        cumulativeRates = _cumulativeRates;
-        interval = _interval;
-        // Hardcode owner.
-        owner = 0x0298CF0d5B60a0aD885518adCB4c3fc49b36D347;
-    }
-
-    /// @dev Override to use cumulative rates to calculated amount for vesting.
-    function vestedAmount(ERC20Basic token) public view returns (uint256) {
-        if (now < start) {
-            return 0;
-        }
-
-        uint256 currentBalance = token.balanceOf(this);
-        uint256 totalBalance = currentBalance.add(released[token]);
-
-        uint256 timeSinceStart = now.sub(start);
-        uint256 currentPeriod = timeSinceStart.div(interval);
-        if (currentPeriod >= cumulativeRates.length) {
-            return totalBalance;
-        }
-        return totalBalance.mul(cumulativeRates[currentPeriod]).div(100);
-    }
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
