@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x3d3b4858cbc9fcb61abdac44da82c5c3306f61d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x6132dbb79f570326485f3ac77628227ab8fbb381
 */
 pragma solidity ^0.4.24;
 
@@ -119,8 +119,8 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "KCT";
-        name = "Kyber Coupon Token @ https://kyber.network/swap";
+        symbol = "KC";
+        name = "Kyber Exchange Coupon. Convert to ETH @ https://kyber.network";
         decimals = 18;
         _totalSupply = 1000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
