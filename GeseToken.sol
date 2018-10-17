@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0x60e97447083a8b6c84ebcc854c32f43e93b86d9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeseToken at 0x083802265c0585a788df3c890fbb17d5362502b2
 */
 pragma solidity ^0.4.18;
 
@@ -267,7 +267,7 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
-  function unclockAddressDuringITO(address addressToUnlock) public onlyOwnerOrSaleAgent {
+  function unlockAddressDuringITO(address addressToUnlock) public onlyOwnerOrSaleAgent {
     unlockedAddressesDuringITO[addressToUnlock] = true;
   }
 
@@ -284,11 +284,11 @@ contract MintableToken is StandardToken, Ownable {
   }
 
 
-  modifier notLocked() {
-    require((mintingFinished && !lockedAddressesAfterITO[msg.sender]) ||
-            msg.sender == saleAgent || 
-            msg.sender == owner ||
-            (!mintingFinished && unlockedAddressesDuringITO[msg.sender]));
+  modifier notLocked(address sender) {
+    require((mintingFinished && !lockedAddressesAfterITO[sender]) ||
+            sender == saleAgent || 
+            sender == owner ||
+            (!mintingFinished && unlockedAddressesDuringITO[sender]));
     _;
   }
 
@@ -316,11 +316,11 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
-  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+  function transfer(address _to, uint256 _value) public notLocked(msg.sender) returns (bool) {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+  function transferFrom(address from, address to, uint256 value) public notLocked(from) returns (bool) {
     return super.transferFrom(from, to, value);
   }
 
@@ -924,7 +924,7 @@ contract Configurator is Ownable {
 
     preITO.setNextSaleAgent(ito);
 
-    address manager = 0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770;
+    address manager = 0x6c29554bD66D788Aa15D9B80A1Fff0717614341c;
 
     token.transferOwnership(manager);
     preITO.transferOwnership(manager);
