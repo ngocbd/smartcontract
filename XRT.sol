@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRT at 0x37d404a072056eda0cd10cb714d35552329f8500
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XRT at 0x2a5851fa4f8c015f7c563c22fde9c2d862dea954
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 contract ERC20 {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256 _user);
@@ -169,7 +169,7 @@ contract StandardToken is ERC20{
 
 contract XRT is StandardToken, OnlyOwner{
   uint8 public constant decimals = 18;
-    uint256 private constant multiplier = 10**27;
+    uint256 private constant multiplier = 10**26;
     string public constant name = "XRT Token";
     string public constant symbol = "XRT";
     string public version = "X1.1";
