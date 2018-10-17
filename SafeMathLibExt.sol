@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xDa8002DccdF3d68B5cb310A705aC76aFfd887DF6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xd3d8c70D5892980a498aeA6d2c22C86939cce7Cc
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// Created using Token  by POA Network mode Exchangercoin
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
