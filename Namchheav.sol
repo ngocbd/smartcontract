@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Namchheav at 0x1e90b9dfaf10502e9c9aa961552615686691293b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Namchheav at 0xa7f73369d77eec478f0002b58cc99f74c925eef1
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract Namchheav {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 1000000000 ;  // Update total supply with the decimal amount
+        totalSupply = 2100000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "Namchheav";                                   // Set the name for display purposes
         symbol = "NC";                               // Set the symbol for display purposes
