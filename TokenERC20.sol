@@ -1,161 +1,135 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x429e1b706d95fa6f21eb9ada6416f7891ce1f03a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x8e1439bbeab0df0f29c27e360b2a36b259b7e286
 */
-pragma solidity ^0.4.16;
-
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
-
+pragma solidity ^0.4.24;
+/**
+ * Implementation of the basic standard token
+ * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+ */
 contract TokenERC20 {
-    // Public variables of the token
+    // [ERC20] the name of the token - e.g. "Vehicle Owner’s Benefit"
     string public name;
+    // [ERC20] the symbol of the token. E.g. "VOB".
     string public symbol;
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
+    // [ERC20] the total token supply
     uint256 public totalSupply;
+    // [ERC20] the number of decimals the token uses - e.g. 18
+    uint8 public decimals = 18;
 
-    // This creates an array with all balances
+    // [ERC20] the account balance of another account with address _owner
     mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
 
-    // This generates a public event on the blockchain that will notify clients
+    // [ERC20]the amount which _spender is still allowed to withdraw from _owner.
+    mapping(address => mapping(address => uint256)) allowance;
+
+
+    mapping (address => uint256) public freezeOf;
+
+    // [ERC20] MUST trigger when tokens are transferred, including zero value transfers.
     event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    // This generates a public event on the blockchain that will notify clients
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
+    // [ERC20] MUST trigger on any successful call to approve
+    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
 
-    /**
-     * Constructor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    // This notifies clients about the amount frozen
+    event Freeze(address indexed from, uint256 value);
+
+    // This notifies clients about the amount unfrozen
+    event Unfreeze(address indexed from, uint256 value);
+
+    constructor(uint256 _initialSupply, string _tokenName, string _tokenSymbol, uint8 _decimalUnits) public {
+        totalSupply = _initialSupply;
+        balanceOf[msg.sender] = totalSupply;
+        name = _tokenName;
+        symbol = _tokenSymbol;
+        decimals = _decimalUnits;
     }
 
     /**
-     * Internal transfer, only can be called by this contract
+     * Transfers _value amount of tokens to address _to, and MUST fire the Transfer event.
      */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
+    function _transfer(address _from, address _to, uint256 _value) internal {
+
+        // the _to account address is not invalid
         require(_to != 0x0);
-        // Check if the sender has enough
+
+        // the _from account balance has enough tokens to spend
         require(balanceOf[_from] >= _value);
-        // Check for overflows
+
+        // the _to account balance must not be overflowing after transfer
         require(balanceOf[_to] + _value >= balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
+
         balanceOf[_from] -= _value;
-        // Add the same to the recipient
         balanceOf[_to] += _value;
+
+        // emit event
         emit Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
-     * Transfer tokens
+     * [ERC20]
+     * Transfers _value amount of tokens to address _to, and MUST fire the Transfer event.
+     * The function SHOULD throw if the _from account balance does not have enough tokens to spend.
      *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
+     * Note Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event.
      */
     function transfer(address _to, uint256 _value) public returns (bool success) {
+
         _transfer(msg.sender, _to, _value);
+
         return true;
     }
 
     /**
-     * Transfer tokens from other address
+     * [ERC20]
+     * Transfers _value amount of tokens from address _from to address _to, and MUST fire the Transfer event.
+     * The transferFrom method is used for a withdraw workflow, allowing contracts to transfer tokens on your behalf.
+     * This can be used for example to allow a contract to transfer tokens on your behalf and/or to charge fees in sub-currencies.
+     * The function SHOULD throw unless the _from account has deliberately authorized the sender of the message via some mechanism.
      *
-     * Send `_value` tokens to `_to` on behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
+     * Note Transfers of 0 values MUST be treated as normal transfers and fire the Transfer event.
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        require(allowance[_from][msg.sender] >= _value);     // Check allowance
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
 
     /**
-     * Set allowance for other address
+     * [ERC20]
+     * Allows _spender to withdraw from your account multiple times, up to the _value amount.
+     * If this function is called again it overwrites the current allowance with _value.
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     * NOTE: To prevent attack vectors like the one described here and discussed here,
+     * clients SHOULD make sure to create user interfaces in such a way that they set the allowance first to 0 before setting it to another value for the same spender.
+     * THOUGH The contract itself shouldn't enforce it, to allow backwards compatibility with contracts deployed before
      *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
+    function freeze(uint256 _value) returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);            // Check if the sender has enough
+        require(_value > 0);
+        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
+        freezeOf[msg.sender] += _value;
+        Freeze(msg.sender, _value);
         return true;
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
+    function unfreeze(uint256 _value) returns (bool success) {
+        require(freezeOf[msg.sender]>= _value);            // Check if the sender has enough
+        require(_value > 0);
+        freezeOf[msg.sender] -= _value;                      // Subtract from the sender
+        balanceOf[msg.sender] += _value;
+        Unfreeze(msg.sender, _value);
         return true;
     }
+
+
+
 }
