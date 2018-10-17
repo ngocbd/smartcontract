@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ecopay at 0x585cd061df7f169b7540cb23247fc5ae3adba811
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ecopay at 0x0e836f53cdd35339aca7a00477afed299299a141
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -80,9 +80,9 @@ contract Ecopay is ERC20 {
     uint public constant decimals = 18;
     
     uint256 public totalSupply = 5000000000e18; // Supply
-    uint256 public totalDistributed = 5000000000e18;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 10; // 0.1 Ether
-    uint256 public tokensPerEth = 120000e18;
+    uint256 public totalDistributed = 3000000000e18;    
+    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
+    uint256 public tokensPerEth = 1200000e18;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
