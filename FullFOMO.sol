@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FullFOMO at 0x820dfa17d30f938dc2c172b716630a06ec759d99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FullFOMO at 0x26d76a22859fec45da123dbf3e14053a8b5b0831
 */
 pragma solidity ^0.4.24;
 
@@ -124,16 +124,16 @@ contract FullFOMO is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xA25cc587173EBc4444e5fcd33b8469B451A610F6);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x5A3e43Ba22D1590C21ecB364f8fb46c17d683364);
 
     address private admin = msg.sender;
     string constant public name = "FullFomo";
     string constant public symbol = "FULL";
-    uint256 private rndExtra_ = 1 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 1 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 minutes;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
+    uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 10 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 10 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 22 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
