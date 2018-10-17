@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParkadeCoin at 0xfd51c3a3e6358a586ba6ac1e7a6269a7915fc116
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParkadeCoin at 0x3b5d7063206eb65ea0880ee93beabc65e73c313e
 */
 pragma solidity 0.4.24;
 
@@ -333,8 +333,6 @@ contract ParkadeCoin is StandardToken, Ownable {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Deposit(uint256 value);
   event Withdraw(uint256 paidOut, address indexed to);
-
-  mapping(address => mapping(address => uint256)) public allowance;
 
   /**
   * @dev transfer token for a specified address
