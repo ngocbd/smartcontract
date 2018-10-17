@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x07905e74e5c8a30cd04038cfd60bc1d526b243f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0xf4db7690bb4f617ac0f4c29d627722deef093340
 */
 pragma solidity ^0.4.24;
 
 interface HourglassInterface {
     function buy(address _playerAddress) payable external returns(uint256);
     function withdraw() external;
-    function balanceOf(address _customerAddress) view external returns(uint256);
 }
 
 interface StrongHandsManagerInterface {
@@ -55,7 +54,7 @@ contract StrongHandsManager {
         view
         returns (uint256)
     {
-        return tokenSupply;
+       return tokenSupply;
     }
     
     function balanceOf(address _owner)
@@ -73,7 +72,6 @@ contract StrongHand {
     StrongHandsManagerInterface strongHandManager;
     
     address public owner;
-    uint256 private p3dBalance = 0;
     
     modifier onlyOwner()
     {
@@ -101,13 +99,8 @@ contract StrongHand {
     function purchase(uint256 _amount, address _referrer)
         private
     {
-        p3dContract.buy.value(_amount)(_referrer);
-        uint256 balance = p3dContract.balanceOf(address(this));
-        
-        uint256 diff = balance - p3dBalance;
-        p3dBalance = balance;
-        
-        strongHandManager.mint(owner, diff);
+         uint256 amountPurchased = p3dContract.buy.value(_amount)(_referrer);
+         strongHandManager.mint(owner, amountPurchased);
     }
 
     function withdraw()
