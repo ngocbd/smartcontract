@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ServiceController at 0x7fdb010b2b95317a285157afe1f1093ec4347f83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ServiceController at 0x874055d651aa52c2d8fac36d467742519768f31c
 */
 pragma solidity ^0.4.11;
 
@@ -1101,6 +1101,8 @@ contract MultiSigAdapter is Object {
 /// Serves for managing service instances
 contract ServiceController is MultiSigAdapter {
 
+    event Error(uint _errorCode);
+
     uint constant SERVICE_CONTROLLER = 350000;
     uint constant SERVICE_CONTROLLER_EMISSION_EXIST = SERVICE_CONTROLLER + 1;
     uint constant SERVICE_CONTROLLER_BURNING_MAN_EXIST = SERVICE_CONTROLLER + 2;
@@ -1112,9 +1114,20 @@ contract ServiceController is MultiSigAdapter {
     address public pendingManager;
     address public proxy;
 
+    uint public sideServicesCount;
+    mapping(uint => address) public index2sideService;
+    mapping(address => uint) public sideService2index;
     mapping(address => bool) public sideServices;
-    mapping(address => bool) emissionProviders;
-    mapping(address => bool) burningMans;
+
+    uint public emissionProvidersCount;
+    mapping(uint => address) public index2emissionProvider;
+    mapping(address => uint) public emissionProvider2index;
+    mapping(address => bool) public emissionProviders;
+
+    uint public burningMansCount;
+    mapping(uint => address) public index2burningMan;
+    mapping(address => uint) public burningMan2index;
+    mapping(address => bool) public burningMans;
 
     /// @notice Default ServiceController's constructor
     ///
@@ -1147,7 +1160,7 @@ contract ServiceController is MultiSigAdapter {
     /// @return code
     function addEmissionProvider(address _provider, uint _block) public returns (uint _code) {
         if (emissionProviders[_provider]) {
-            return SERVICE_CONTROLLER_EMISSION_EXIST;
+            return _emitError(SERVICE_CONTROLLER_EMISSION_EXIST);
         }
         _code = _multisig(keccak256(_provider), _block);
         if (OK != _code) {
@@ -1155,6 +1168,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         emissionProviders[_provider] = true;
+        uint _count = emissionProvidersCount + 1;
+        index2emissionProvider[_count] = _provider;
+        emissionProvider2index[_provider] = _count;
+        emissionProvidersCount = _count;
+
         return OK;
     }
 
@@ -1169,7 +1187,21 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete emissionProviders[_provider];
+        uint _idx = emissionProvider2index[_provider];
+        uint _lastIdx = emissionProvidersCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastEmissionProvider = index2emissionProvider[_lastIdx];
+                index2emissionProvider[_idx] = _lastEmissionProvider;
+                emissionProvider2index[_lastEmissionProvider] = _idx;
+            }
+
+            delete emissionProvider2index[_provider];
+            delete index2emissionProvider[_lastIdx];
+            delete emissionProviders[_provider];
+            emissionProvidersCount = _lastIdx - 1;
+        }
+
         return OK;
     }
 
@@ -1180,7 +1212,7 @@ contract ServiceController is MultiSigAdapter {
     /// @return code
     function addBurningMan(address _burningMan, uint _block) public returns (uint _code) {
         if (burningMans[_burningMan]) {
-            return SERVICE_CONTROLLER_BURNING_MAN_EXIST;
+            return _emitError(SERVICE_CONTROLLER_BURNING_MAN_EXIST);
         }
 
         _code = _multisig(keccak256(_burningMan), _block);
@@ -1189,6 +1221,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         burningMans[_burningMan] = true;
+        uint _count = burningMansCount + 1;
+        index2burningMan[_count] = _burningMan;
+        burningMan2index[_burningMan] = _count;
+        burningMansCount = _count;
+
         return OK;
     }
 
@@ -1203,7 +1240,21 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete burningMans[_burningMan];
+        uint _idx = burningMan2index[_burningMan];
+        uint _lastIdx = burningMansCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastBurningMan = index2burningMan[_lastIdx];
+                index2burningMan[_idx] = _lastBurningMan;
+                burningMan2index[_lastBurningMan] = _idx;
+            }
+            
+            delete burningMan2index[_burningMan];
+            delete index2burningMan[_lastIdx];
+            delete burningMans[_burningMan];
+            burningMansCount = _lastIdx - 1;
+        }
+
         return OK;
     }
 
@@ -1262,6 +1313,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         sideServices[_service] = true;
+        uint _count = sideServicesCount + 1;
+        index2sideService[_count] = _service;
+        sideService2index[_service] = _count;
+        sideServicesCount = _count;
+
         return OK;
     }
 
@@ -1271,8 +1327,55 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete sideServices[_service];
+        uint _idx = sideService2index[_service];
+        uint _lastIdx = sideServicesCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastSideService = index2sideService[_lastIdx];
+                index2sideService[_idx] = _lastSideService;
+                sideService2index[_lastSideService] = _idx;
+            }
+            
+            delete sideService2index[_service];
+            delete index2sideService[_lastIdx];
+            delete sideServices[_service];
+            sideServicesCount = _lastIdx - 1;
+        }
+
         return OK;
+    }
+
+    function getEmissionProviders()
+    public
+    view
+    returns (address[] _emissionProviders)
+    {
+        _emissionProviders = new address[](emissionProvidersCount);
+        for (uint _idx = 0; _idx < _emissionProviders.length; ++_idx) {
+            _emissionProviders[_idx] = index2emissionProvider[_idx + 1];
+        }
+    }
+
+    function getBurningMans()
+    public
+    view
+    returns (address[] _burningMans)
+    {
+        _burningMans = new address[](burningMansCount);
+        for (uint _idx = 0; _idx < _burningMans.length; ++_idx) {
+            _burningMans[_idx] = index2burningMan[_idx + 1];
+        }
+    }
+
+    function getSideServices()
+    public
+    view
+    returns (address[] _sideServices)
+    {
+        _sideServices = new address[](sideServicesCount);
+        for (uint _idx = 0; _idx < _sideServices.length; ++_idx) {
+            _sideServices[_idx] = index2sideService[_idx + 1];
+        }
     }
 
     /// @notice Check target address is service
@@ -1288,5 +1391,10 @@ contract ServiceController is MultiSigAdapter {
             emissionProviders[_address] || 
             burningMans[_address] ||
             sideServices[_address];
+    }
+
+    function _emitError(uint _errorCode) internal returns (uint) {
+        Error(_errorCode);
+        return _errorCode;
     }
 }
