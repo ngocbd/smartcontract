@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmiratesCoin at 0x640b0809a3e3fb11e46b7aad55a040b9cd117b1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmiratesCoin at 0x45ca8d5458d7f3f7d2f47daae253924cafc2f331
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.22;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
