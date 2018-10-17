@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x202f291e30fe4aa626792ae01c35eaf7153b44b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x1c49d3c4895e7b136e8f8b804f1279068d4c3c96
 */
 // Ethertote - Official Token Sale Contract
-// 28.07.18
+// 06.08.18
 //
 // Any unsold tokens can be sent directly to the TokenBurn Contract
 // by anyone once the Token Sale is complete - 
@@ -129,7 +129,7 @@ contract TokenSale {
 
   // starting time and closing time of Crowdsale
   // scheduled start on Monday, August 27th 2018 at 5:00pm GMT+1
-  uint public openingTime = 1535385600;
+  uint public openingTime = 1535990400;
   uint public closingTime = openingTime.add(7 days);
   
   // used as a divider so that 1 eth will buy 1000 tokens
