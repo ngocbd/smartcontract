@@ -1,35 +1,81 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x5b919f09e295f5ec441ac21607a0b142a7fb09ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x417ecbab65f29e462a58b6f0516c8e8d5254016b
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.18;
 
-interface TokenContract {
-  function transfer(address _to, uint256 _value) external returns (bool);
-}
-
-contract Airdrop {
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
   address public owner;
-  bool public isTheContract = true;
 
-  constructor() public {
-  
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
     owner = msg.sender;
   }
 
-  function sendTokens(address[] addresses, uint256[] _amount, address _tokenAddress) public {
-    //require(msg.sender == owner);
-    uint256 addressCount = addresses.length;
-    uint256 amountCount = _amount.length;
-    require(addressCount == amountCount);
-    TokenContract tkn = TokenContract(_tokenAddress);
-    for (uint256 i = 0; i < addressCount; i++) {
-      tkn.transfer(addresses[i], _amount[i]);
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
   }
 
-  function destroyMe() public {
-    require(msg.sender == owner);
-    selfdestruct(owner);
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
-    
+
+}
+
+
+
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+contract Airdrop is Ownable {
+
+  function multisend(address _tokenAddr, address[] dests, uint256[] values)
+  onlyOwner public
+  returns (uint256) {
+      uint256 i = 0;
+      while (i < dests.length) {
+         ERC20(_tokenAddr).transfer(dests[i], values[i]);
+         i += 1;
+      }
+      return(i);
+  }
+
 }
