@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopPlayerToken at 0xcfb4b300da0d996702838a5a418903dcfc059869
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopPlayerToken at 0x81f8944781277e6734df100babf8da1b8bde1a2b
 */
 pragma solidity ^0.4.18;
 
@@ -71,8 +71,8 @@ contract TopPlayerToken is ERC20 {
   mapping(address => uint256) balances;
   mapping (address => mapping (address => uint256)) internal allowed;
 
-  string public name = "QTC Token";
-  string public symbol = "QTCT";
+  string public name = "Top Player Token Test";
+  string public symbol = "TPT-TEST";
   uint256 public decimals = 18;
 
   function TopPlayerToken() public {
