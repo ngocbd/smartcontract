@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIGToken at 0xb5256644ddc946f8a09bbba6681a49132266dd38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIGToken at 0x85c015a9e36eb50c574b3b6a049be05c62f0e938
 */
 pragma solidity ^0.4.0;
 
@@ -100,7 +100,7 @@ contract QUIGToken is ERC20Interface, Contactable {
         symbol = "QUIG";
         name = "QUIG Token";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000000000000000000;
+        _totalSupply = 536870912 * uint256(10 ** 18);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
