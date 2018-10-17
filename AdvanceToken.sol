@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x7846ec1ea708131d46e9da39e93834498c4f4a3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0xd2f1108cc622f28ff6447261063262a43db5a915
 */
 pragma solidity ^0.4.20;
 
@@ -58,9 +58,9 @@ contract ERC20 is ERC20Interface,SafeMath {
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "TUCC";
+       symbol = "FSC";
        decimals = 4;
-       totalSupply = 1000000000000;
+       totalSupply = 10000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
@@ -84,7 +84,7 @@ contract ERC20 is ERC20Interface,SafeMath {
       require(_to != address(0));
       require(allowed[_from][msg.sender] >= _value);
       require(balanceOf[_from] >= _value);
-      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
+      require(balanceOf[_to] + _value >= balanceOf[_to]);
 
       balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
       balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to],_value);
@@ -127,8 +127,30 @@ contract owned {
 
 }
 
+contract SelfDesctructionContract is owned {
+   
+   string  public someValue;
+   modifier ownerRestricted {
+      require(owner == msg.sender);
+      _;
+   } 
+   // constructor
+   function SelfDesctructionContract() {
+      owner = msg.sender;
+   }
+   // a simple setter function
+   function setSomeValue(string value){
+      someValue = value;
+   } 
+   // you can call it anything you want
+   function destroyContract() ownerRestricted {
+     selfdestruct(owner);
+   }
+}
 
-contract AdvanceToken is ERC20, owned{
+
+
+contract AdvanceToken is ERC20, owned,SelfDesctructionContract{
 
     mapping (address => bool) public frozenAccount;
 
