@@ -1,16 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CBGToken at 0x76650703bd3fc6501ccd90dd69bba977190e98d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CBGToken at 0xebb3499b37d2e386ff584340d4a91af729fd76d4
 */
 pragma solidity ^0.4.24;
 
-contract ERC20Base {
+// Start CBG Token Code
+
+contract ERC20Foundation {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC20 is ERC20Base {
+contract ERC20 is ERC20Foundation {
   function allowance(address owner, address spender)
     public view returns (uint256);
 
@@ -25,7 +27,7 @@ contract ERC20 is ERC20Base {
   );
 }
 
-contract Ownership {
+contract HasOwner {
   address public owner;
 
   constructor() public {
@@ -36,12 +38,11 @@ contract Ownership {
     require(msg.sender == owner);
     _;
   }
-
+  
   function kill() public onlyOwner { 
       if (msg.sender == owner) selfdestruct(owner); 
       
   }
-  
 }
 
 library SafeMath {
@@ -72,7 +73,7 @@ library SafeMath {
   }
 }
 
-contract Basic is ERC20Base {
+contract Basic is ERC20Foundation {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
@@ -162,7 +163,24 @@ contract StandardToken is ERC20, Basic {
   }
 }
 
-contract Mineable is StandardToken, Ownership {
+contract Burnable is StandardToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+contract Mineable is StandardToken, HasOwner {
 
   event Mine(address indexed to, uint256 amount);
 
@@ -188,7 +206,7 @@ contract Mineable is StandardToken, Ownership {
 
 }
 
-contract CBGToken is Mineable {
+contract CBGToken is Mineable, Burnable {
   string public name = "CBG Token";
   string public symbol = "CBG";
   uint8 public decimals = 3;
