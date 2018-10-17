@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1d72347bfc99b65a61ecf464676994ef725e3294
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x00df926775ff0771e93f5006d49e49b938142ca3
 */
 pragma solidity ^0.4.24;
 
@@ -27,7 +27,7 @@ contract ERC20Token{
  */
 contract StandardToken is ERC20Token{
   string public version = "1.0";
-  string public name = "eleven-dimensional resonnance";
+  string public name = "preserve one's health";
   string public symbol = "POH";
   uint8 public  decimals = 18;
 
@@ -132,9 +132,9 @@ contract Token is StandardToken{
     event Unfreeze(address indexed unlocker, uint256 value);
     event TransferMulti(uint256 count, uint256 total);
 
-    constructor() {
+    constructor(address _developer) {
         owner = msg.sender;
-        balanceOf[owner] = INITIAL_SUPPLY;
+        balanceOf[_developer] = INITIAL_SUPPLY;
         totalSupply = INITIAL_SUPPLY;
     }
 
