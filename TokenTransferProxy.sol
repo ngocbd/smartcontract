@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferProxy at 0xad5aa494bcd729b8ea728f581aade049c4ec4e9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferProxy at 0xca0ca9c0bafac4724daa5bdfccd105f63b194830
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.24;
 
 contract Token {
     function totalSupply() public constant returns (uint);
