@@ -1,248 +1,150 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPCToken at 0x142020a28b22f7e68a9d8f9e9d24c43a2572a8cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PPCToken at 0x11f6b343d131fcf95a10086eaa1e23b0bd488dd1
 */
-pragma solidity ^0.4.18;
-/*
-Author:     www.purplethrone.com
-Email:      aziz@purplethrone.com
+pragma solidity ^0.4.24;
 
-
-*/
-// Math contract to avoid overflow and underflow of variables
-contract SafeMath {
-
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
+    function div(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a / b;
+        return c;
     }
 
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
+    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
+    function add(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
-// Abstracct of ERC20 Token
-contract Token {
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
     uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function balanceOf(address who) public view returns(uint256);
+
+    function transfer(address to, uint256 value) public returns(bool);
+
+    function allowance(address owner, address spender) public view returns(uint256);
+
+    function transferFrom(address from, address to, uint256 value) public returns(bool);
+
+    function approve(address spender, uint256 value) public returns(bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20 {
+    using SafeMath
+    for uint256;
 
-/*  Implementation of ERC20 token standard functions */
-contract StandardToken is Token {
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    /**
+     * @dev Gets the balance of the specified address.
+     * @param _owner The address to query the the balance of.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
+    function balanceOf(address _owner) public view returns(uint256 balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+     * @dev transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transfer(address _to, uint256 _value) public returns(bool) {
+        require(_to != address(0));
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        require(_to != address(0));
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns(bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
 
-contract Ownable {
-  address public owner;
-
-/**
-* @dev The Ownable constructor sets the original `owner` of the contract to the sender
-* account.
-*/
-function Ownable() {
-  owner = msg.sender;
-}
-/**
-* @dev Throws if called by any account other than the owner.
-*/
-modifier onlyOwner() {
-  require(msg.sender == owner);
-_;
-}
-/**
-* @dev Allows the current owner to transfer control of the contract to a newOwner.
-* @param newOwner The address to transfer ownership to.
-*/
-function transferOwnership(address newOwner) onlyOwner {
-  if (newOwner != address(0)) {
-      owner = newOwner;
-  }
-}
-
-}
-
-
-contract PPCToken is StandardToken,Ownable, SafeMath {
-
-    // crowdsale parameters
-    string  public constant name = "PPCCoin";
-    string  public constant symbol = "PPC";
-    uint256 public constant decimals = 18;
-    string  public version = "1.0";
-    address public constant ethFundDeposit= 0x20D9053d3f7fccC069c9a8e7dDEf5374CD22b6C8;                         // Deposit address for ETH
-    bool public emergencyFlag;                                      //  Switched to true in  crownsale end  state
-    uint256 public fundingStartBlock;                              //   Starting blocknumber
-    uint256 public fundingEndBlock;                               //    Ending blocknumber
-    uint256 public constant minTokenPurchaseAmount= .008 ether;  //     Minimum purchase
-    uint256 public constant tokenPreSaleRate=800;    // PPCCoin per 1 ETH during presale
-    uint256 public constant tokenCrowdsaleRate=500; //  PPCCoin per 1 ETH during crowdsale
-    uint256 public constant tokenCreationPreSaleCap =  10 * (10**6) * 10**decimals;// 10 million token cap for presale
-    uint256 public constant tokenCreationCap =  100 * (10**6) * 10**decimals;      //  100 million token generated
-    uint256 public constant preSaleBlockNumber = 169457;
-    uint256 public finalBlockNumber =370711;
-
-
-    // events
-    event CreatePPC(address indexed _to, uint256 _value);// Return address of buyer and purchase token
-    event Mint(address indexed _to,uint256 _value);     //  Reutn address to which we send the mint token and token assigned.
-    // Constructor
-    function PPCToken(){
-      emergencyFlag = false;                             // False at initialization will be false during ICO
-      fundingStartBlock = block.number;                 //  Current deploying block number is the starting block number for ICO
-      fundingEndBlock=safeAdd(fundingStartBlock,finalBlockNumber);  //   Ending time depending upon the block number
-    }
-
+contract PPCToken is StandardToken {
+    string public constant name = "PurpleChain";
+    string public constant symbol = "PPC";
+    uint8 public constant decimals = 18;
+    uint256 public constant INITIAL_SUPPLY = 20000000000 * (10 ** uint256(decimals));
+    // market Address 
+    address public marketAddress = 0x3172f12a77402BB52001A766E1d09b573967De61;
     /**
-    * @dev creates new PPC tokens
-    *      It is a internal function it will be called by fallback function or buyToken functions.
-    */
-    function createTokens() internal  {
-      if (emergencyFlag) revert();                     //  Revert when the sale is over before time and emergencyFlag is true.
-      if (block.number > fundingEndBlock) revert();   //   If the blocknumber exceed the ending block it will revert
-      if (msg.value<minTokenPurchaseAmount)revert();  //    If someone send 0.08 ether it will fail
-      uint256 tokenExchangeRate=tokenRate();        //     It will get value depending upon block number and presale cap
-      uint256 tokens = safeMult(msg.value, tokenExchangeRate);//  Calculating number of token for sender
-      totalSupply = safeAdd(totalSupply, tokens);            //   Add token to total supply
-      if(totalSupply>tokenCreationCap)revert();             //    Check the total supply if it is more then hardcap it will throw
-      balances[msg.sender] += tokens;                      //     Adding token to sender account
-      forwardfunds();                                     //      forwardfunds to the owner
-      CreatePPC(msg.sender, tokens);                      //      Logs sender address and  token creation
+     * Constructor that gives three address all existing tokens.
+     */
+    constructor() public {
+        totalSupply = INITIAL_SUPPLY;
+        balances[marketAddress] = totalSupply;
+        emit Transfer(address(0), marketAddress, totalSupply);
     }
-
-    /**
-    * @dev people can access contract and choose buyToken function to get token
-    *It is used by using myetherwallet
-    *It is a payable function it will be called by sender.
-    */
-    function buyToken() payable external{
-      createTokens();   // This will call the internal createToken function to get token
-    }
-
-    /**
-    * @dev      it is a internal function called by create function to get the amount according to the blocknumber.
-    * @return   It will return the token price at a particular time.
-    */
-    function tokenRate() internal returns (uint256 _tokenPrice){
-      // It is a presale it will return price for presale
-      if(block.number<safeAdd(fundingStartBlock,preSaleBlockNumber)&&(totalSupply<tokenCreationPreSaleCap)){
-          return tokenPreSaleRate;
-        }else
-            return tokenCrowdsaleRate;
-    }
-
-    /**
-    * @dev     it will  assign token to a particular address by owner only
-    * @param   _to the address whom you want to send token to
-    * @param   _amount the amount you want to send
-    * @return  It will return true if success.
-    */
-    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
-      if (emergencyFlag) revert();
-      totalSupply = safeAdd(totalSupply,_amount);// Add the minted token to total suppy
-      if(totalSupply>tokenCreationCap)revert();
-      balances[_to] +=_amount;                 //   Adding token to the input address
-      Mint(_to, _amount);                     //    Log the mint with address and token given to particular address
-      return true;
-    }
-
-    /**
-    * @dev     it will change the ending date of ico and access by owner only
-    * @param   _newBlock enter the future blocknumber
-    * @return  It will return the blocknumber
-    */
-    function changeEndBlock(uint256 _newBlock) external onlyOwner returns (uint256 _endblock )
-    {   // we are expecting that owner will input number greater than current block.
-        require(_newBlock > fundingStartBlock);
-        fundingEndBlock = _newBlock;         // New block is assigned to extend the Crowd Sale time
-        return fundingEndBlock;
-    }
-
-    /**
-    * @dev   it will let Owner withdrawn ether at any time during the ICO
-    **/
-    function drain() external onlyOwner {
-        if (!ethFundDeposit.send(this.balance)) revert();// It will revert if transfer fails.
-    }
-
-    
-    
-    // Automate the ETH drain
-    
-    function forwardfunds() internal {
-         if (!ethFundDeposit.send(this.balance)) revert(); // It will revert if transfer fails.
-        
-        
-    }
-    
-    /**
-    * @dev  it will let Owner Stop the crowdsale and mint function to work.
-    *
-    */
-    
-    function emergencyToggle() external onlyOwner{
-      emergencyFlag = !emergencyFlag;
-    }
-
-    // Fallback function let user send ether without calling the buy function.
-    function() payable {
-      createTokens();
-
-    }
-
-
 }
