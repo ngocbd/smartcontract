@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eastadsCREDITS at 0xc6C9DB23d0Dd0469B0Bf97f365Ae816274baA19a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eastadscredits at 0x99b09a9b9e9c26b3e65d84fcc9a1cd8acb289e25
 */
 pragma solidity ^0.4.18;
 /**
@@ -118,7 +118,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract eastadsCREDITS is StandardToken { // CHANGE THIS. Update the contract name.
+contract eastadscredits is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -138,13 +138,13 @@ contract eastadsCREDITS is StandardToken { // CHANGE THIS. Update the contract n
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function eastadsCREDITS() {
-        balances[msg.sender] = 2000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 2000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+    function eastadscredits() {
+        balances[msg.sender] = 700000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 700000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Eastads Credits";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "ECR";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 200000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 70000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
