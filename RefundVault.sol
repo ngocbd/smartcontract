@@ -1,13 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0x16c9c875ada685f931c8b3de34b3f01dab70d589
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0x6d6ad25064f9903fe346b8cbe1431f9dde62e6db
 */
-pragma solidity 0.4.24;
-/**
- * @title RefundVault for Capital Technologies & Research Crowdsale
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- */
+pragma solidity ^0.4.23;
+
+// File: node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -58,6 +54,8 @@ library SafeMath {
     return c;
   }
 }
+
+// File: node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -118,6 +116,14 @@ contract Ownable {
   }
 }
 
+// File: node_modules/openzeppelin-solidity/contracts/crowdsale/distribution/utils/RefundVault.sol
+
+/**
+ * @title RefundVault
+ * @dev This contract is used for storing funds while a crowdsale
+ * is in progress. Supports refunding the money if crowdsale fails,
+ * and forwarding it if crowdsale is successful.
+ */
 contract RefundVault is Ownable {
   using SafeMath for uint256;
 
