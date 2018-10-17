@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0x2bd9225f37ca4a322fec3ac6e2f9e761a7d5d367
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redenom at 0xa167d071b26b6b9c333fdbfdf500bb63e56a24de
 */
 pragma solidity ^0.4.21;
+// Redenom 2.9.0023
 // The GNU General Public License v3
 // © Musqogees Tech 2018, Redenom ™
 
@@ -157,8 +158,8 @@ contract Redenom is ERC20Interface, Owned{
     event Vote(address indexed voter, uint indexed propId, uint voterBalance, uint indexed curentBallotId);
 
     function Redenom() public {
-        symbol = "NOMT";
-        name = "Redenom_test";
+        symbol = "NOM";
+        name = "Redenom";
         _totalSupply = 0; // total NOM's in the game 
 
         total_fund = 10000000 * 10**decimals; // 100 000 00.00000000, 1Mt
@@ -293,6 +294,7 @@ contract Redenom is ERC20Interface, Owned{
                 accounts[msg.sender].lastVotedBallotId = curentBallotId;
             }
         }
+        assert(accounts[msg.sender].lastVotedBallotId == curentBallotId);
         emit Vote(msg.sender, _id, accounts[msg.sender].balance, curentBallotId);
 
         return true;
@@ -317,8 +319,8 @@ contract Redenom is ERC20Interface, Owned{
 
         curentBallotId++;
         votingActive = true;
-
         delete projects;
+
 
         emit VotingOn(curentBallotId);
         return curentBallotId;
