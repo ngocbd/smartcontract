@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Intellishare at 0x27cdf814dc1c2376f0c3d058f287692a1d29c349
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IntelliShare at 0x86e6a4f512b1290c043970b04e0b570d4fc98291
 */
 pragma solidity ^0.4.24;
 
@@ -274,7 +274,7 @@ contract DetailedERC20 is ERC20 {
   }
 }
 
-contract StandardToken is DetailedERC20('IntellishareToken','ine',18), BasicToken(986000000000000000000000000) {
+contract StandardToken is DetailedERC20('IntelliShare Token','INE',18), BasicToken(986000000000000000000000000) {
 
   mapping (address => mapping (address => uint256)) internal allowed;
 
@@ -400,7 +400,7 @@ contract StandardToken is DetailedERC20('IntellishareToken','ine',18), BasicToke
 }
 
 
-contract Intellishare is StandardToken, Pausable {
+contract IntelliShare is StandardToken, Pausable {
 
   function transfer(
     address _to,
