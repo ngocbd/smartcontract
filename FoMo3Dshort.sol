@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xe1bb663b41a5691a15d960fc2e3f4972bf905ee5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xd9ee30812b0d3d3a7190645caf20f781d64a0bcf
 */
 pragma solidity ^0.4.24;
 
@@ -37,7 +37,7 @@ contract F3Devents {
         uint256 airDropPot
     );
 
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -128,17 +128,17 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xb5D11729091944B8A1af2f02414321BbFBA971ae);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe3dfc0a18cb3f6518519707509049a1cc014e604);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO Short";
-    string constant public symbol = "SHORT";
-    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    string constant public name = "FOMOX";
+    string constant public symbol = "mushroom";
+    uint256 private rndExtra_ = 0 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 0 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
@@ -174,19 +174,19 @@ contract FoMo3Dshort is modularShort {
     constructor()
         public
     {
-		// Team allocation structures
+        // Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-		// Team allocation percentages
+        // Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot   wheal
+        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot   bulk
+        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot   sneak
+        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot   bear
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
@@ -194,7 +194,7 @@ contract FoMo3Dshort is modularShort {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-	}
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -526,10 +526,10 @@ contract FoMo3Dshort is modularShort {
             F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -665,7 +665,7 @@ contract FoMo3Dshort is modularShort {
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
         else // rounds over.  need price for new round
-            return ( 75000000000000 ); // init
+            return ( 750000000000000 ); // init
     }
 
     /**
@@ -809,7 +809,7 @@ contract FoMo3Dshort is modularShort {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-	 * @return player round eth
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -866,7 +866,7 @@ contract FoMo3Dshort is modularShort {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -1055,7 +1055,7 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-		    endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1124,7 +1124,7 @@ contract FoMo3Dshort is modularShort {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract
+     * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1693,7 +1693,14 @@ library F3DKeysCalcShort {
         pure
         returns(uint256)
     {
-        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        // one thound
+        if (_eth < 2000000000000000000000) {
+            return ((((((_eth).mul(1000000000000000000)).mul(31250000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        } else if (_eth < 5000000000000000000000) {
+            return ((((((_eth+18000000000000000000000).mul(10000000000000000000)).mul(312500000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        } else {
+            return ((((((_eth+225000000000000000000000).mul(10000000000000000000)).mul(31250000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        }
     }
 
     /**
@@ -1706,7 +1713,13 @@ library F3DKeysCalcShort {
         pure
         returns(uint256)
     {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
+        if (_keys < 1190449000000000000000000) {
+            return ((781250000).mul(_keys.sq()).add(((1499998437500000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
+        } else if (_keys < 1301685000000000000000000) {
+            return ((7812500000).mul(_keys.sq()).add(((14999984375000000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq()) - 18000000000000000000000;
+        } else {
+            return ((78125000000).mul(_keys.sq()).add(((149999843750000000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq()) - 225000000000000000000000;
+        }
     }
 }
 
