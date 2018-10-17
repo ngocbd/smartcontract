@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpiriaCrowdsale at 0xe052ffd2f36474a5ef3c44f0334359d7f5923503
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpiriaCrowdsale at 0x56ffb3c578906ba9658fccb052fc1a5672275b6a
 */
 pragma solidity ^0.4.21;
 
@@ -980,6 +980,8 @@ contract OpiriaCrowdsale is TimedPresaleCrowdsale, MintedCrowdsale, TokenCappedC
 
     bool public hiddenCapTriggered;
 
+    uint16 public additionalBonusPercent = 0;
+
     mapping(address => uint256) public bonusOf;
 
     // Crowdsale(uint256 _rate, address _wallet, ERC20 _token)
@@ -990,6 +992,8 @@ contract OpiriaCrowdsale is TimedPresaleCrowdsale, MintedCrowdsale, TokenCappedC
     Crowdsale(_initialEtherUsdRate, _wallet, _token) {
         setEtherUsdRate(_initialEtherUsdRate);
         tokensWallet = _tokensWallet;
+
+        require(PausableToken(token).paused());
     }
 
     //overridden
@@ -1000,21 +1004,24 @@ contract OpiriaCrowdsale is TimedPresaleCrowdsale, MintedCrowdsale, TokenCappedC
     }
 
     function _getBonusAmount(uint256 tokens) internal view returns (uint256) {
-        uint8 bonusPercent = _getBonusPercent();
+        uint16 bonusPercent = _getBonusPercent();
         uint256 bonusAmount = tokens.mul(bonusPercent).div(100);
         return bonusAmount;
     }
 
-    function _getBonusPercent() internal view returns (uint8) {
+    function _getBonusPercent() internal view returns (uint16) {
         if (isPresale()) {
             return 20;
         }
         uint256 daysPassed = (now - openingTime) / 1 days;
-        uint8 calcPercent = 0;
+        uint16 calcPercent = 0;
         if (daysPassed < 15) {
             // daysPassed will be less than 15 so no worries about overflow here
             calcPercent = (15 - uint8(daysPassed));
         }
+
+        calcPercent = additionalBonusPercent + calcPercent;
+
         return calcPercent;
     }
 
@@ -1050,11 +1057,14 @@ contract OpiriaCrowdsale is TimedPresaleCrowdsale, MintedCrowdsale, TokenCappedC
     function setEtherUsdRate(uint16 _etherUsdRate) public onlyOwner {
         rate = _etherUsdRate;
 
-        // the presaleWeiLimit must be $2500 in eth at the defined 'etherUsdRate'
-        // presaleWeiLimit = 1 ether / etherUsdRate * 2500
+        // the presaleWeiLimit must be $5000 in eth at the defined 'etherUsdRate'
+        // presaleWeiLimit = 1 ether / etherUsdRate * 5000
         presaleWeiLimit = uint256(1 ether).mul(2500).div(rate);
     }
 
+    function setAdditionalBonusPercent(uint8 _additionalBonusPercent) public onlyOwner {
+        additionalBonusPercent = _additionalBonusPercent;
+    }
     /**
     * Send tokens by the owner directly to an address.
     */
