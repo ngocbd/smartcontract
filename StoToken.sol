@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoToken at 0xfb708485710cbf0a58564c5817f5fd51dff73940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StoToken at 0x612f2350cec28febc57d0cbaf1670ed77b1847e2
 */
 /**
  * Die THE STONE COIN AG sichert zu, dass die von ihr im Rahmen der Token-Ausgabe netto (=nach Abzug ihrer Kosten/Steuern) 
@@ -10,6 +10,7 @@
  * will be invested in the creation and permanent operation of a European real estate portfolio (REAL SHIELD) – taking into 
  * consideration international opportunites.
  */
+
 
 
 //File: node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
@@ -572,7 +573,7 @@ contract StoToken is PausableToken, ERC827Token {
     string public constant name = "Stone Coin";
     string public constant symbol = "STO";
     uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_BALANCE = 10**6 * 10**uint256(decimals);     // 1 million STO tokens
+    uint256 public constant INITIAL_BALANCE = 10**9 * 10**uint256(decimals);     // 1 billion STO tokens
 
     function StoToken(address _owner, address initialAccount) public {
         require(_owner != address(0) && initialAccount != address(0) && _owner != initialAccount);
