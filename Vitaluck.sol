@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vitaluck at 0x51da145cd7b6e6bd8b334d6a5e663dee1d8937fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vitaluck at 0xb36a7cd3f5d3e09045d765b661af575e3b5af24a
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /*
  _    _      _                              _        
@@ -20,19 +20,23 @@ $$ |   $$ |$$\ $$$$$$\    $$$$$$\  $$ |$$\   $$\  $$$$$$$\ $$ |  $$\
   \$$$  /  $$ |  $$ |$$\ $$  __$$ |$$ |$$ |  $$ |$$ |      $$  _$$<  
    \$  /   $$ |  \$$$$  |\$$$$$$$ |$$ |\$$$$$$  |\$$$$$$$\ $$ | \$$\ 
     \_/    \__|   \____/  \_______|\__| \______/  \_______|\__|  \__|
+
+
+This is the main contract for the Vitaluck button game. 
+You can access it here: https://vitaluck.com
 */
 
 contract Vitaluck {
     
+    //
     // Admin
-    address ceoAddress = 0x46d9112533ef677059c430E515775e358888e38b;
-    address cfoAddress = 0x23a49A9930f5b562c6B1096C3e6b5BEc133E8B2E;
-    string MagicKey;
-    uint256 minBetValue = 50000000000000000;
-    uint256 currentJackpot;
+    //
+
+    address ownerAddress = 0x3dcd6f0d7860f93b8bb7d6dcb85346c814243d63;
+    address cfoAddress = 0x5b665218efCE2a15BD64Bd1dE50a27286f456863;
     
     modifier onlyCeo() {
-        require (msg.sender == ceoAddress);
+        require (msg.sender == ownerAddress);
         _;
     }
     
@@ -40,237 +44,214 @@ contract Vitaluck {
     // Events
     //
     
-    event NewPlay(address player, uint number, bool won);
+    event NewPress(address player, uint countPress, uint256 pricePaid, uint32 _timerEnd);
 
     //
-    // GAME
+    // Game
     //
 
-    struct Bet {
-        uint number;            // The number given to the user
-        bool isWinner;          // Has this bet won the jackpot
-        address player;         // We save the address of the player
-        uint32 timestamp;       // We save the timestamp of this bet
-        uint256 JackpotWon;     // The amount won if the user won the jackpot
+    uint countPresses;
+    uint256 countInvestorDividends;
+
+    uint amountPlayed;
+
+    uint32 timerEnd;                                        // The timestamp for the end after this time stamp, the winner can withdraw its reward
+    uint32 timerInterval = 21600;                           // We set the interval of 3h
+
+    address winningAddress;
+    uint256 buttonBasePrice = 20000000000000000;              // This is the current price for a button press (this is updated every 100 presses)
+    uint256 buttonPriceStep = 2000000000000000;
+    //
+    // Mapping for the players
+    //
+    struct Player {
+        address playerAddress;                              // We save the address of the player
+        uint countVTL;                                      // The count of VTL Tokens (should be the same as the count of presses)
     }
-    Bet[] bets;
+    Player[] players;
+    mapping (address => uint) public playersToId;      // We map the player address to its id to make it easier to retrieve
 
-    mapping (address => uint) public ownerBetsCount;    // How many bets have this address made
+    //
+    // Core
+    //
 
-    // Stats
-    uint totalTickets;          // The total amount of bets
-    uint256 amountWon;          // The total amount of ETH won by users
-    uint256 amountPlayed;       // The total amount of ETH played by users
-
-    // The countdown time will be used to reset the winning number after 48 hours if there aren't any new winning number
-    uint cooldownTime = 1 days;
-
-    // To track the current winner
-    address currentWinningAddress;
-    uint currentWinningNumber;
-    uint currentResetTimer;
-
-    // Random numbers that can be modified by the CEO to make the game completely random
-    uint randomNumber = 178;
-    uint randomNumber2;
-    
-    function() public payable { 
-        Play();
-    }
-    
-    /*
-    This is the main function of the game. 
-    It is called when a player sends ETH to the contract or play using Metamask.
-    It calculates the amount of tickets bought by the player (according to the amount received by the contract) and generates a random number for each ticket.
-    We keep the best number of all. -> 1 ticket = 0.01 ETH 
-    */
-    function Play() public payable {
-        // We don't run the function if the player paid less than 0.01 ETH
-        require(msg.value >= minBetValue);
+    // This function is called when a player sends ETH directly to the contract
+    function() public payable {
+        // We calculate the correct amount of presses
+        uint _countPress = msg.value / getButtonPrice();
         
-        // If this is the first ticket ever
-        if(totalTickets == 0) {
-            // We save the current Jackpot value
-            totalTickets++;
-            currentJackpot = currentJackpot + msg.value;
-            return;
+        // We call the function
+        Press(_countPress, 0);
+    }
+        
+    // We use this function to initially fund the contract
+    function FundContract() public payable {
+        
+    }
+    
+    // This function is being called when a user presses the button on the website (or call it directly from the contract)
+    function Press(uint _countPresses, uint _affId) public payable {
+        // We verify that the _countPress value is not < 1
+        require(_countPresses >= 1);
+        
+        // We double check that the players aren't trying to send small amount of ETH to press the button
+        require(msg.value >= buttonBasePrice);
+        
+        // We verify that the game is not finished.
+        require(timerEnd > now);
+
+        // We verify that the value paid is correct.
+        uint256 _buttonPrice = getButtonPrice();
+        require(msg.value >= safeMultiply(_buttonPrice, _countPresses));
+
+        // Process the button press
+        timerEnd = uint32(now + timerInterval);
+        winningAddress = msg.sender;
+
+        // Transfer the commissions to affiliate, investor, pot and dev
+        uint256 TwoPercentCom = (msg.value / 100) * 2;
+        uint256 TenPercentCom = msg.value / 10;
+        uint256 FifteenPercentCom = (msg.value / 100) * 15;
+        
+
+        // Commission #1. Affiliate
+        if(_affId > 0 && _affId < players.length) {
+            // If there is an affiliate we transfer his commission otherwise we keep the commission in the pot
+            players[_affId].playerAddress.transfer(TenPercentCom);
         }
-
-        uint _thisJackpot = currentJackpot;
-        // here we count the number of tickets purchased by the user (each ticket costs 0.01ETH)
-        uint _finalRandomNumber = 0;
+        // Commission #2. Main investor
+        uint[] memory mainInvestors = GetMainInvestor();
+        uint mainInvestor = mainInvestors[0];
+        players[mainInvestor].playerAddress.transfer(FifteenPercentCom);
+        countInvestorDividends = countInvestorDividends + FifteenPercentCom;
         
-        // We save the current Jackpot value
-        currentJackpot = currentJackpot + msg.value;
-        
-        // We generate a random number for each ticket purchased by the player
-        // Example: 1 ticket costs 0.01 ETH, if a user paid 1 ETH, we will run this function 100 times and save the biggest number of all as its result
-        _finalRandomNumber = (uint(now) - 1 * randomNumber * randomNumber2 + uint(now))%1000 + 1;
-        randomNumber = _finalRandomNumber;
-
-        // We keep track of the amount played by the users
-        amountPlayed = amountPlayed + msg.value;
-        totalTickets++;
-        ownerBetsCount[msg.sender]++;
-
-        // We calculate and transfer to the owner a commission of 10%
-        uint256 MsgValue10Percent = msg.value / 10;
-        cfoAddress.transfer(MsgValue10Percent);
-        
-        
-        // We save the current Jackpot value
-        currentJackpot = currentJackpot - MsgValue10Percent;
-
-        // Now that we have the biggest number of the player we check if this is better than the previous winning number
-        if(_finalRandomNumber > currentWinningNumber) {
-            
-            // we update the cooldown time (when the cooldown time is expired, the owner will be able to reset the game)
-            currentResetTimer = now + cooldownTime;
-
-            // The player is a winner and wins the jackpot (he/she wins 90% of the balance, we keep some funds for the next game)
-            uint256 JackpotWon = _thisJackpot;
-            
-            msg.sender.transfer(JackpotWon);
-            
-            // We save the current Jackpot value
-            currentJackpot = currentJackpot - JackpotWon;
-        
-            // We keep track of the amount won by the users
-            amountWon = amountWon + JackpotWon;
-            currentWinningNumber = _finalRandomNumber;
-            currentWinningAddress = msg.sender;
-
-            // We save this bet in the blockchain
-            bets.push(Bet(_finalRandomNumber, true, msg.sender, uint32(now), JackpotWon));
-            NewPlay(msg.sender, _finalRandomNumber, true);
-            
-            // If the user's number is equal to 100 we reset the max number
-            if(_finalRandomNumber >= 900) {
-                // We reset the winning address and set the current winning number to 1 (the next player will have 99% of chances to win)
-                currentWinningAddress = address(this);
-                currentWinningNumber = 1;
+        // Commission #3. 2 to 10 main investors
+        // We loop through all of the top 10 investors and send them their commission
+        for(uint i = 1; i < mainInvestors.length; i++) {
+            if(mainInvestors[i] != 0) {
+                uint _investorId = mainInvestors[i];
+                players[_investorId].playerAddress.transfer(TwoPercentCom);
+                countInvestorDividends = countInvestorDividends + TwoPercentCom;
             }
+        }
+
+        // Commission #4. Dev
+        cfoAddress.transfer(FifteenPercentCom);
+
+        // Update or create the player and issue the VTL Tokens
+        if(playersToId[msg.sender] > 0) {
+            // Player exists, update data
+            players[playersToId[msg.sender]].countVTL = players[playersToId[msg.sender]].countVTL + _countPresses;
         } else {
-            // The player is a loser, we transfer 10% of the bet to the current winner and save the rest in the jackpot
-            currentWinningAddress.transfer(MsgValue10Percent);
+            // Player doesn't exist create it
+            uint playerId = players.push(Player(msg.sender, _countPresses)) - 1;
+            playersToId[msg.sender] = playerId;
+        }
+
+        // Send event
+        emit NewPress(msg.sender, _countPresses, msg.value, timerEnd);
         
-            // We save the current Jackpot value
-            currentJackpot = currentJackpot - MsgValue10Percent;
+        // Increment the total count of presses
+        countPresses = countPresses + _countPresses;
+        amountPlayed = amountPlayed + msg.value;
+    }
+
+    // This function can be called only by the winner once the timer has ended
+    function withdrawReward() public {
+        // We verify that the game has ended and that the address asking for the withdraw is the winning address
+        require(timerEnd < now);
+        require(winningAddress == msg.sender);
         
-            // We save this bet in the blockchain
-            bets.push(Bet(_finalRandomNumber, false, msg.sender, uint32(now), 0));
-            NewPlay(msg.sender, _finalRandomNumber, false);
+        // Send the balance to the winning player
+        winningAddress.transfer(address(this).balance);
+    }
+    
+    // This function returns the details for the players by id (instead of by address)
+    function GetPlayer(uint _id) public view returns(address, uint) {
+        return(players[_id].playerAddress, players[_id].countVTL);
+    }
+    
+    // Return the player id and the count of VTL for the connected player
+    function GetPlayerDetails(address _address) public view returns(uint, uint) {
+        uint _playerId = playersToId[_address];
+        uint _countVTL = 0;
+        if(_playerId > 0) {
+            _countVTL = players[_playerId].countVTL;
+        }
+        return(_playerId, _countVTL);
+    }
+
+    // We loop through all of the players to get the main investor (the one with the largest amount of VTL Token)
+    function GetMainInvestor() public view returns(uint[]) {
+        uint depth = 10;
+        bool[] memory _checkPlayerInRanking = new bool[] (players.length);
+        
+        uint[] memory curWinningVTLAmount = new uint[] (depth);
+        uint[] memory curWinningPlayers = new uint[] (depth);
+        
+        // Loop through the depth to find the player for each rank
+        for(uint j = 0; j < depth; j++) {
+            // We reset some value
+            curWinningVTLAmount[j] = 0;
+            
+            // We loop through all of the players
+            for (uint8 i = 0; i < players.length; i++) {
+                // Iterate through players and insert the current best at the correct position
+                if(players[i].countVTL > curWinningVTLAmount[j] && _checkPlayerInRanking[i] != true) {
+                    curWinningPlayers[j] = i;
+                    curWinningVTLAmount[j] = players[i].countVTL;
+                }
+            }
+            // We record that this player is in the ranking to make sure we don't integrate it multiple times in the ranking
+            _checkPlayerInRanking[curWinningPlayers[j]] = true;
+        }
+
+        // We return the winning player
+        return(curWinningPlayers);
+    }
+    
+    // This function returns the current important stats of the game such as the timer, current balance and current winner, the current press prices...
+    function GetCurrentNumbers() public view returns(uint, uint256, address, uint, uint256, uint256, uint256) {
+        return(timerEnd, address(this).balance, winningAddress, countPresses, amountPlayed, getButtonPrice(), countInvestorDividends);
+    }
+    
+    // This is the initial function called when we create the contract 
+    constructor() public onlyCeo {
+        timerEnd = uint32(now + timerInterval);
+        winningAddress = ownerAddress;
+        
+        // We create the initial player to avoid any bugs
+        uint playerId = players.push(Player(0x0, 0)) - 1;
+        playersToId[msg.sender] = playerId;
+    }
+    
+    // This function returns the current price of the button according to the amount pressed.
+    function getButtonPrice() public view returns(uint256) {
+        // Get price multiplier according to the amount of presses
+        uint _multiplier = 0;
+        if(countPresses > 100) {
+            _multiplier = buttonPriceStep * (countPresses / 100);
+        }
+        
+        // Calculate final button price
+        uint256 _buttonPrice = buttonBasePrice + _multiplier;
+        return(_buttonPrice);
+        
+    }
+    
+    //
+    // Safe Math
+    //
+
+     // Guards against integer overflows.
+    function safeMultiply(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        } else {
+            uint256 c = a * b;
+            assert(c / a == b);
+            return c;
         }
     }
     
-    function TestRandomNumber() public view returns (uint, uint, uint) {
-        uint _randomNumber1;
-        uint _randomNumber2;
-        uint _randomNumber3;
-        
-        _randomNumber1 = (uint(now) - 1 * randomNumber * randomNumber2 + uint(now))%1000 + 1;
-        _randomNumber2 = (uint(now) - 2 * _randomNumber1 * randomNumber2 + uint(now))%1000 + 1;
-        _randomNumber3 = (uint(now) - 3 * _randomNumber2 * randomNumber2 + uint(now))%1000 + 1;
-        
-        return(_randomNumber1,_randomNumber2,_randomNumber3);
-    }
-
-    /*
-    This function can be called by the contract owner (24 hours after the last game) if the game needs to be reset
-    Example: the last number is 99 but the jackpot is too small for players to want to play.
-    When the owner reset the game it:
-        1. Transfers automatically the remaining jackpot (minus 10% that needs to be kept in the contract for the new jackpot) to the last winner 
-        2. It resets the max number to 5 which will motivate new users to play again
-    
-    It can only be called by the owner 24h after the last winning game.
-    */
-    function manuallyResetGame() public onlyCeo {
-        // We verifiy that 24h have passed since the beginning of the game
-        require(currentResetTimer < now);
-
-        // The current winning address wins the jackpot (he/she wins 90% of the balance, we keep 10% to fund the next turn)
-        uint256 JackpotWon = currentJackpot - minBetValue;
-        currentWinningAddress.transfer(JackpotWon);
-        
-        // We save the current Jackpot value
-        currentJackpot = currentJackpot - JackpotWon;
-
-        // We keep track of the amount won by the users
-        amountWon = amountWon + JackpotWon;
-
-        // We reset the winning address and set the current winning number to 1 (the next player will have 99% of chances to win)
-        currentWinningAddress = address(this);
-        currentWinningNumber = 1;
-    }
-
-    /*
-    Those functions are useful to return some important data about the game.
-    */
-    function GetCurrentNumbers() public view returns(uint, uint256, uint) {
-        uint _currentJackpot = currentJackpot;
-        return(currentWinningNumber, _currentJackpot, bets.length);
-    }
-    function GetWinningAddress() public view returns(address) {
-        return(currentWinningAddress);
-    }
-    
-    function GetStats() public view returns(uint, uint256, uint256) {
-        return(totalTickets, amountPlayed, amountWon);
-    }
-
-    // This will returns the data of a bet
-    function GetBet(uint _betId) external view returns (
-        uint number,            // The number given to the user
-        bool isWinner,          // Has this bet won the jackpot
-        address player,         // We save the address of the player
-        uint32 timestamp,       // We save the timestamp of this bet
-        uint256 JackpotWon     // The amount won if the user won the jackpot
-    ) {
-        Bet storage _bet = bets[_betId];
-
-        number = _bet.number;
-        isWinner = _bet.isWinner;
-        player = _bet.player;
-        timestamp = _bet.timestamp;
-        JackpotWon = _bet.JackpotWon;
-    }
-
-    // This function will return only the bets id of a certain address
-    function GetUserBets(address _owner) external view returns(uint[]) {
-        uint[] memory result = new uint[](ownerBetsCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < bets.length; i++) {
-          if (bets[i].player == _owner) {
-            result[counter] = i;
-            counter++;
-          }
-        }
-        return result;
-    }
-    // This function will return only the bets id of a certain address
-    function GetLastBetUser(address _owner) external view returns(uint[]) {
-        uint[] memory result = new uint[](ownerBetsCount[_owner]);
-        uint counter = 0;
-        for (uint i = 0; i < bets.length; i++) {
-          if (bets[i].player == _owner) {
-            result[counter] = i;
-            counter++;
-          }
-        }
-        return result;
-    }
-    /*
-    Those functions are useful to modify some values in the game
-    */
-    function modifyRandomNumber2(uint _newRdNum) public onlyCeo {
-        randomNumber2 = _newRdNum;
-    }
-    function modifyCeo(address _newCeo) public onlyCeo {
-        require(msg.sender == ceoAddress);
-        ceoAddress = _newCeo;
-    }
-    function modifyCfo(address _newCfo) public onlyCeo {
-        require(msg.sender == ceoAddress);
-        cfoAddress = _newCfo;
-    }
 }
