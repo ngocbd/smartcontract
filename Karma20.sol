@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma20 at 0x12145d3191d9f9539032d33b24019e7e4400eaef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma20 at 0x124c801606be4b90bb46fbb03fc0264b461b821b
 */
 pragma solidity ^0.4.21;
 
