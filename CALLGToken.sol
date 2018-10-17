@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLGToken at 0x1cb3d8997bc39667e9cbb2aa70203f94ecda1422
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CALLGToken at 0x6c28f85eb1dbc7651ce02f7af1f29890ad084b94
 */
 pragma solidity 0.4.24;
 /*
@@ -369,11 +369,11 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 /**
- * @title CAPITAL GAS (CALLG) Token
+ * @title Capital GAS (CALLG) Token
  * @dev Token representing CALLG.
  */
 contract CALLGToken is MintableToken {
-	string public name = "CAPITAL GAS";
+	string public name = "Capital GAS";
 	string public symbol = "CALLG";
 	uint8 public decimals = 18;
 }
