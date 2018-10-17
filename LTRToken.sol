@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x724852c8437fcd71a2712f7cd5009fa63d076b61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x22b7eea5e111f6563fec76f65fa4da1985b41035
 */
 pragma solidity ^0.4.4;
 
@@ -112,6 +112,25 @@ contract StandardToken is Token {
             return true;
         } else { return false; }
     }
+    
+    
+   //* @dev Transfer tokens to multiple addresses
+   //* @param _addresses The addresses that will receieve tokens
+   //* @param _amounts The quantity of tokens that will be transferred
+   //* @return True if the tokens are transferred correctly
+  
+  function transferForMultiAddresses(address[] _addresses, uint256[] _amounts) public returns (bool) {
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      require(_addresses[i] != address(0));
+      require(_amounts[i] <= balances[msg.sender]);
+      require(_amounts[i] > 0);
+      // SafeMath.sub will throw if there is not enough balance.
+      balances[msg.sender] = balances[msg.sender].sub(_amounts[i]);
+      balances[_addresses[i]] = balances[_addresses[i]].add(_amounts[i]);
+      Transfer(msg.sender, _addresses[i], _amounts[i]);
+    }
+    return true;
+  }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
@@ -156,9 +175,9 @@ contract LTRToken is StandardToken {
     //Ham khoitao token
     function LTRToken() {
         name = "LTR Token - Lottery Services Global";        // Ten cua token
-        decimals = 18;                     // Token khong co phan thapphan (so nguyen thoi)
+        decimals = 18;                     // Token khong co phan thap phan (so nguyen thoi)
         symbol = "LTR";                   // Ma token
-        balances[msg.sender] = 100000000000 * (10 ** uint256(decimals));      // Nguoi phathanh se namgiu toanbo token  
+        balances[msg.sender] = 100000000000 * (10 ** uint256(decimals));      // Nguoi phat hanh se nam giu toan bo token  
 		totalSupply = 100000000000 * (10 ** uint256(decimals));               // Tong cung token 100000000000 * (10 ** uint256(decimals))
     }
 
