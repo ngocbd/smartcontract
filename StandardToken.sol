@@ -1,167 +1,204 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x0cf004e9634cf978ed4cce28349bf9514609d5e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x86dB27B80108A49f1321D4eEd064B08909F130B5
 */
 pragma solidity ^0.4.24;
 
-
-/*Token contract based on Zeppelin StandardToken contract*/
-
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+    function mul(uint a, uint b) internal pure returns (uint) {
+        uint c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint a, uint b) internal pure returns (uint) {
+        uint c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint a, uint b) internal pure returns (uint) {
+        require(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        require(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max(uint a, uint b) internal pure returns (uint) {
+        return a >= b ? a : b;
+    }
+
+    function min(uint a, uint b) internal pure returns (uint) {
+        return a < b ? a : b;
+    }
+
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * See https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+// The Contract is Standard Token Issue Template.
+//
+// @Author: Tim Mars
+// @Date: 2018.7.15
+// @Seealso: ERC20 Token
+//
+contract StandardToken {
+    
+    // === Event ===
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
 
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
+    // === Defined ===
+    using SafeMath for uint;
+ 
+    // --- ERC20 Token Section ---
+    uint8 constant public decimals = 6; // **** decimals ****
+    uint constant public totalSupply = 1*10**(8+6);  // 100 Million **** decimals ****
+    string constant public name = "Standard Token Template Token";
+    string constant public symbol = "MNT";
+    
+    address public owner;
+    bool public frozen = false; // 
+    
+    mapping(address => uint) ownerance; // Owner Balance
+    mapping(address => mapping(address => uint)) public allowance; // Allower Balance
+    
+    // === Modifier ===
+    modifier isOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-contract StandardToken is ERC20 {
-  using SafeMath for uint;
-     
-    string internal _name;
-    string internal _symbol;
-    uint8 internal _decimals;
-    uint256 internal _totalSupply;
+    modifier isNotFrozen() {
+        require(!frozen);
+        _;
+    }
 
-    mapping (address => uint256) internal balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
+    modifier hasEnoughBalance(uint _amount) {
+        require(ownerance[msg.sender] >= _amount);
+        require(ownerance[msg.sender] + _amount >= ownerance[msg.sender]); // Overflow detected
+        _;
+    }
 
+    modifier hasAllowBalance(address _owner, address _allower, uint _amount) {
+        require(allowance[_owner][_allower] >= _amount);
+        _;
+    }
+
+    modifier isNotEmpty(address _addr, uint _value) {
+        require(_addr != address(0));
+        require(_value != 0);
+        _;
+    }
+
+    modifier isValidAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    // === Constructor ===
     constructor() public {
-        _symbol = "ExShares";
-        _name = "EXS";
-        _decimals = 18;
-        _totalSupply = 100 * (uint256(10)**_decimals);
-        balances[msg.sender] = _totalSupply;
+        owner = msg.sender;
+        ownerance[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
+    }
+    
+    // --- ERC20 Token Section ---
+    function approve(address _spender, uint _value) 
+        isValidAddress
+        isNotFrozen
+        public returns (bool success) 
+    {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0); // must spend to 0 where pre approve balance.
+        allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint _value) 
+        isValidAddress
+        isNotFrozen
+        public returns (bool success) 
+    {
+        require(ownerance[_from] >= _value);
+        require(ownerance[_to] + _value >= ownerance[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        ownerance[_to] = ownerance[_to].add(_value);
+        ownerance[_from] = ownerance[_from].sub(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
-    function name()
-        public
-        view
-        returns (string) {
-        return _name;
+    function balanceOf(address _owner) public
+        constant returns (uint balance) 
+    {
+        balance = ownerance[_owner];
+        return balance;
     }
+    
 
-    function symbol()
-        public
-        view
-        returns (string) {
-        return _symbol;
+    function transfer(address _to, uint _value) public
+        isNotFrozen
+        isValidAddress
+        isNotEmpty(_to, _value)
+        hasEnoughBalance(_value)
+        returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[_to] = ownerance[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
     }
-
-    function decimals()
-        public
-        view
-        returns (uint8) {
-        return _decimals;
+ 
+    // --- Owner Section ---
+    function transferOwner(address _newOwner) 
+        isOwner
+        public returns (bool success)
+    {
+        if (_newOwner != address(0)) {
+            owner = _newOwner;
+        }
+        return true;
     }
-
-    function totalSupply()
-        public
-        view
-        returns (uint256) {
-        return _totalSupply;
+    
+    function freeze() 
+        isOwner
+        public returns (bool success)
+    {
+        frozen = true;
+        return true;
     }
-
-   function transfer(address _to, uint256 _value) public returns (bool) {
-     require(_to != address(0));
-     require(_value <= balances[msg.sender]);
-     balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-     balances[_to] = SafeMath.add(balances[_to], _value);
-     emit Transfer(msg.sender, _to, _value);
-     return true;
-   }
-
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-   }
-
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-     require(_value <= balances[_from]);
-     require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = SafeMath.sub(balances[_from], _value);
-     balances[_to] = SafeMath.add(balances[_to], _value);
-     allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
-    emit Transfer(_from, _to, _value);
-     return true;
-   }
-
-   function approve(address _spender, uint256 _value) public returns (bool) {
-     allowed[msg.sender][_spender] = _value;
-     emit Approval(msg.sender, _spender, _value);
-     return true;
-   }
-
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-     return allowed[_owner][_spender];
-   }
-
-   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-     allowed[msg.sender][_spender] = SafeMath.add(allowed[msg.sender][_spender], _addedValue);
-     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-     return true;
-   }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-     uint oldValue = allowed[msg.sender][_spender];
-     if (_subtractedValue > oldValue) {
-       allowed[msg.sender][_spender] = 0;
-     } else {
-       allowed[msg.sender][_spender] = SafeMath.sub(oldValue, _subtractedValue);
+    
+    function unfreeze() 
+        isOwner
+        public returns (bool success)
+    {
+        frozen = false;
+        return true;
     }
-     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-     return true;
-   }
-
+    
+    function burn(uint _value)
+        isNotFrozen
+        isOwner
+        hasEnoughBalance(_value)
+        public returns (bool success)
+    {
+        ownerance[msg.sender] = ownerance[msg.sender].sub(_value);
+        ownerance[0x0] = ownerance[0x0].add(_value);
+        emit Transfer(msg.sender, 0x0, _value);
+        return true;
+    }
+    
+  
 }
