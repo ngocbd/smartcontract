@@ -1,129 +1,193 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitronCoin at 0xc260b99d8da199383e64378809b671e11d3ecf1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitronCoin at 0xa550a7980f856d5f9dd0a8c405e8736223f0b44a
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
-contract ERC20Basic {
+library SafeMath {
+	function mul(uint256 a, uint256 b) internal pure returns(uint256) {
+		if (a == 0) {
+			return 0;
+		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
 
-	function totalSupply() public view returns (uint256);
-	function balanceOf(address who) public view returns (uint256);
-	function transfer(address to, uint256 value) public returns (bool);
-	function transferFrom(address from, address to, uint value)public returns (bool);
-	function allowance(address owner, address spender)public view returns (uint);
-	function approve(address spender, uint value)public returns (bool ok);
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(address indexed owner, address indexed spender, uint value);
+	function div(uint256 a, uint256 b) internal pure returns(uint256) {
+		assert(b > 0);
+		uint256 c = a / b;
+		assert(a == b * c + a % b);
+		return c;
+	}
 
+	function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+		assert(b <= a);
+		return a - b;
+	}
+
+	function add(uint256 a, uint256 b) internal pure returns(uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
 
-contract BitronCoin is ERC20Basic {
+contract Owned {
 
-	string	public name			= "Bitron Coin";
-	string	public symbol		= "BTO";
-	uint 	public decimals		= 9;
-	uint 	public _totalSupply = 50000000 * 10 ** decimals;
-	uint 	public tokens		= 0;
-	uint 	public oneEth		= 10000;
-	uint 	public icoEndDate	= 1535673600;
-	address public owner		= msg.sender;
-	bool	public stopped		= false;
-	address public ethFundMain  = 0x1e6d1Fc2d934D2E4e2aE5e4882409C3fECD769dF;
+	address public owner;
+	address public newOwner;
 
-	mapping (address => uint) balance;
-	mapping(address => mapping(address => uint)) allowed;
+	event OwnershipTransferred(address indexed _from, address indexed _to);
 
-	modifier onlyOwner() {
-		if(msg.sender != owner){
-			revert();
-		}
+	constructor() public {
+		owner = msg.sender;
+	}
+
+	modifier onlyOwner {
+		require(msg.sender == owner);
 		_;
 	}
 
+	function transferOwnership(address _newOwner) public onlyOwner {
+		newOwner = _newOwner;
+	}
+
+	function acceptOwnership() public {
+		require(msg.sender == newOwner);
+		emit OwnershipTransferred(owner, newOwner);
+		owner = newOwner;
+		newOwner = address(0);
+	}
+}
+
+contract ERC20Interface {
+
+	function totalSupply() public constant returns (uint);
+	function balanceOf(address tokenOwner) public constant returns (uint balance);
+	function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+	function transfer(address to, uint tokens) public returns (bool success);
+	function approve(address spender, uint tokens) public returns (bool success);
+	function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+	event Transfer(address indexed from, address indexed to, uint tokens);
+	event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+
+}
+
+contract ERC20 is ERC20Interface, Owned {
+
+	using SafeMath for uint;
+
+	string  public symbol;
+	string  public name;
+	uint8   public decimals;
+	uint    public totalSupply;
+
 	constructor() public {
+		symbol = "BTO";
+		name = "Bitron Coin";
+		decimals = 9;
+		totalSupply = 50000000 * 10 ** uint(decimals);
+		balances[owner] = totalSupply;
+		emit Transfer(address(0), owner, totalSupply);
+	}
 
-		balance[owner] = _totalSupply;
-		emit Transfer(0x0, owner, _totalSupply);
+	mapping(address => uint) balances;
+	mapping(address => mapping(address => uint)) allowed;
 
+	function totalSupply() public constant returns (uint) {
+		return totalSupply  - balances[address(0)];
+	}
+
+	function balanceOf(address tokenOwner) public constant returns (uint balance) {
+		return balances[tokenOwner];
+	}
+
+	function transfer(address to, uint tokens) public returns (bool success) {
+		require((tokens <= balances[msg.sender]));
+        require((tokens > 0));
+        require(to != address(0));
+		balances[msg.sender] = balances[msg.sender].sub(tokens);
+		balances[to] = balances[to].add(tokens);
+		emit Transfer(msg.sender, to, tokens);
+		return true;
+	}
+
+	function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+	    require((tokens <= allowed[from][msg.sender] ));
+        require((tokens > 0));
+        require(to != address(0));
+		require(balances[from] >= tokens);
+		balances[from] = balances[from].sub(tokens);
+		allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+		balances[to] = balances[to].add(tokens);
+		emit Transfer(from, to, tokens);
+		return true;
+	}
+
+	function approve(address spender, uint tokens) public returns (bool success) {
+	    require(spender != address(0));
+	    require(tokens <= balances[msg.sender]);
+		allowed[msg.sender][spender] = tokens;
+		emit Approval(msg.sender, spender, tokens);
+		return true;
+	}
+
+	function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+		return allowed[tokenOwner][spender];
+	}
+
+}
+
+contract BitronCoin is ERC20 {
+
+	uint    public oneEth       = 10000;
+	uint    public icoEndDate   = 1535673600;
+	bool    public stopped      = false;
+	address public ethFundMain  = 0x1e6d1Fc2d934D2E4e2aE5e4882409C3fECD769dF;
+
+	modifier onlyWhenPause(){
+		require( stopped == true );
+		_;
+	}
+
+	modifier onlyWhenResume(){
+		require( stopped == false );
+		_;
 	}
 
 	function() payable public {
-
 		if( msg.sender != owner && msg.value >= 0.02 ether && now <= icoEndDate && stopped == false ){
-
-			tokens				 = ( msg.value / 10 ** decimals ) * oneEth;
-			balance[msg.sender] += tokens;
-			balance[owner]		-= tokens;
-
+			uint tokens;
+			tokens                = ( msg.value / 10 ** uint(decimals) ) * oneEth;
+			balances[msg.sender] += tokens;
+			balances[owner]      -= tokens;
 			emit Transfer(owner, msg.sender, tokens);
-
 		} else {
 			revert();
 		}
 
 	}
 
-	function totalSupply() public view returns (uint) {
-		return _totalSupply;
-	}
-
-	function balanceOf(address who) public view returns (uint) {
-		return balance[who];
-	}
-
-	function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
-		require( _to != 0x0);
-		tokens = _amount * 10 ** decimals;
-		require(balance[_from] >= tokens && allowed[_from][msg.sender] >= tokens && tokens >= 0);
-		balance[_from] -= tokens;
-		allowed[_from][msg.sender] -= tokens;
-		balance[_to] += tokens;
-		emit Transfer(_from, _to, tokens);
-		return true;
-	}
-
-	function transfer(address to, uint256 value) public returns (bool) {
-
-		tokens			= value * 10 ** decimals;
-		balance[to]		= balance[to] + tokens;
-		balance[owner]	= balance[owner] - tokens;
-
-		emit Transfer(owner, to, tokens);
-
-	}
-
-	function approve(address _spender, uint256 _amount)public returns (bool success) {
-		require( _spender != 0x0);
-		tokens = _amount * 10 ** decimals;
-		allowed[msg.sender][_spender] = tokens;
-		emit Approval(msg.sender, _spender, tokens);
-		return true;
-	}
-
-	function allowance(address _owner, address _spender)public view returns (uint256) {
-		require( _owner != 0x0 && _spender !=0x0);
-		return allowed[_owner][_spender];
-	}
-
 	function drain() external onlyOwner {
 		ethFundMain.transfer(address(this).balance);
 	}
 
-	function PauseICO() external onlyOwner
+	function PauseICO() external onlyOwner onlyWhenResume
 	{
 		stopped = true;
 	}
 
-	function ResumeICO() external onlyOwner
+	function ResumeICO() external onlyOwner onlyWhenPause
 	{
 		stopped = false;
 	}
 	
-	function sendTokens(address[] a, uint[] v) public 
-	{
-	    uint i = 0;
-	    while( i < a.length ){
-	        transfer(a[i], v[i]);
-	        i++;
+	function sendTokens(address[] a, uint[] v) public {
+	    uint i;
+	    uint len = a.length;
+	    for( i=0; i<len; i++  ){
+	        transfer(a[i], v[i] * 10 ** uint(decimals));
 	    }
 	}
 
