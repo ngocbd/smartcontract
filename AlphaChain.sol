@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlphaChain at 0xc0c4a2d6c58ea46f5a3ca1af90a702c20487691a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlphaChain at 0xfb2ea488adb298fd69262167036006fcde4770dd
 */
 pragma solidity ^0.4.23;
 
@@ -81,11 +81,11 @@ contract AlphaChain is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;
 
     string public constant name = "AlphaChain";
-    string public constant symbol = "ACH";
+    string public constant symbol = "ACN";
     uint public constant decimals = 18;
 
     uint256 public totalSupply = 20000000000e18;
-    uint256 public totalDistributed = 15000000000e18;
+    uint256 public totalDistributed = 0;
     uint256 public tokensPerEth = 2000000e18;
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
     uint256 public constant MAX_CONTRIBUTION = 1 ether ; // 1 Ether
@@ -116,9 +116,9 @@ contract AlphaChain is ERC20 {
     }
 
 
-    function AlphaChainConstructor () public {
+    constructor() public {
         owner = msg.sender;
-        distr(owner, totalDistributed);
+        distr(owner, totalSupply.div(10));
     }
 
     function transferOwnership(address newOwner) onlyOwner public {
@@ -257,7 +257,7 @@ contract AlphaChain is ERC20 {
         return bal;
     }
 
-    function withdraw() onlyOwner public {
+    function withdraw() public onlyOwner{
         address myAddress = this;
         uint256 etherBalance = myAddress.balance;
         owner.transfer(etherBalance);
