@@ -1,97 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lambo at 0xd0b0f77c2454b28b925b7430a71df0ebf8a150ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lambo at 0x47aa99614150d1ee9874bdf9fdfcbf521593b709
 */
-pragma solidity ^0.4.21;
+// $Lambo
 
-contract Lambo {
-
-    string public name = "Lambo";      //  token name
-    string public symbol = "LAMBO";           //  token symbol
-    uint256 public decimals = 18;            //  token digit
-
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    uint256 public totalSupply = 0;
-
-    address owner;
-
-    modifier isOwner {
-        assert(owner == msg.sender);
-        _;
-    }
+pragma solidity ^0.4.4;
 
 
+contract Token {
 
-    modifier validAddress {
-        assert(0x0 != msg.sender);
-        _;
-    }
+    function totalSupply() constant returns (uint256 supply) {}
 
-    function Lambo() public {
-        owner = msg.sender;
-        mint(owner);
-    }
 
-    function transfer(address _to, uint256 _value) public validAddress returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    function transferFrom(address _from, address _to, uint256 _value) public validAddress returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        require(allowance[_from][msg.sender] >= _value);
-        balanceOf[_to] += _value;
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    function approve(address _spender, uint256 _value) public validAddress returns (bool success) {
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-        allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+ 
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    // WTF you want to burn LAMBO!?
-    function burn(uint256 _value) public {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[0x0] += _value;
-        emit Transfer(msg.sender, 0x0, _value);
-    }
-    
-    function mint(address who) public {
-        if (who == 0x0){
-            who = msg.sender;
-        }
-        require(balanceOf[who] == 0);
-        _mint(who, 1);
-    }
-    
-    function mintMore(address who) public payable{
-        if (who == 0x0){
-            who = msg.sender;
-        }
-        require(msg.value >= (1 finney));
-        _mint(who,3);
-        owner.transfer(msg.value);
-    }
-    
-    function _mint(address who, uint256 howmuch) internal {
-        balanceOf[who] = balanceOf[who] + howmuch * (10 ** decimals);
-        totalSupply = totalSupply + howmuch * (10 ** decimals);
-        emit Transfer(0x0, who, howmuch * (10 ** decimals));
-    }
-    
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+   
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+}
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {return false;}
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else {return false;}
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+contract Lambo is StandardToken { 
+
+
+    string public name;                
+    uint8 public decimals;           
+    string public symbol;                
+    string public version = "1.0"; 
+    uint256 public unitsOneEthCanBuy;    
+    uint256 public totalEthInWei;         
+    address public fundsWallet;           
+
+ 
+    function Lambo() {
+        balances[msg.sender] = 10000000000000000000000000000;               
+        totalSupply = 10000000000000000000000000000;                        
+        name = "Lambo";                                              
+        decimals = 18;                                               
+        symbol = "LAMBO";                                            
+                                            
+        fundsWallet = msg.sender;                                   
+                          
+    }
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        if (!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) {throw;}
+        return true;
+    }
 }
