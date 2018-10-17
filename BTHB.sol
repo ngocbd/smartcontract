@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHB at 0xff2497b0d500503d55e3f2ba382db6ed333426ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHB at 0xc9e879fd4e65c3b8e8620be8ee80bf6528d8d847
 */
 pragma solidity ^0.4.24;
 
@@ -112,7 +112,7 @@ contract BTHB is StandardToken {
         name = "BTHB"; 
         decimals = 18;                                               
         symbol = "BTHB";                                             
-        unitsOneEthCanBuy = 5000;                                      
+        unitsOneEthCanBuy = 1500;                                      
         fundsWallet = msg.sender;                                    
     }
 
