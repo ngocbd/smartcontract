@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1f77067382064018b5a851e28802d6508f23def0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x58c831ada825510c04caaa1c77ce3624b3956374
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
-    string public name;         //????? World Buddhist business chain
+    string public name;         //?????? FULLERENE SPACE CHAIN
     string public symbol;
     uint8 public decimals = 18;  
     uint256 public totalSupply;  
