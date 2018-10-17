@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RYNOTE at 0x601f0f8cbff0a02bdf9a24e1684de0d36844b8e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RYNOTE at 0x6b8f8921b1dbbadd32ea453ec7792042ba9d8943
 */
 pragma solidity ^0.4.4;
 
@@ -237,9 +237,9 @@ contract RYNOTE is StandardToken {
 
         ) {
 
-        balances[msg.sender] = 50000000000000000;               // Give the creator all initial tokens (100000 for example)
+        balances[msg.sender] = 80000000000;               // Give the creator all initial tokens (100000 for example)
 
-        totalSupply = 50000000000000000;                        // Update total supply (100000 for example)
+        totalSupply = 80000000000;                        // Update total supply (100000 for example)
 
         name = "RYNOTE";                                   // Set the name for display purposes
 
