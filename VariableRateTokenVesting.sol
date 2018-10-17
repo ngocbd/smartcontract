@@ -1,48 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VariableRateTokenVesting at 0x311136948eb1e19205430b9546c9f47497144cb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VariableRateTokenVesting at 0x14ab6549467377f997dfaa41c6a7260d0fa1b39f
 */
 pragma solidity ^0.4.13;
 
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract Ownable {
@@ -80,39 +45,51 @@ contract Ownable {
 
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract TokenVestingFactory is Claimable {
 
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
+    event Created(VariableRateTokenVesting vesting);
 
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
+    function create(
+        address _beneficiary,
+        uint256 _start,
+        uint256[] _cumulativeRates,
+        uint256 _interval
+    ) onlyOwner public returns (VariableRateTokenVesting)
+    {
+        VariableRateTokenVesting vesting = new VariableRateTokenVesting(
+            _beneficiary, _start, _cumulativeRates, _interval);
+        emit Created(vesting);
+        return vesting;
+    }
 }
 
 contract TokenVesting is Ownable {
@@ -225,6 +202,69 @@ contract TokenVesting is Ownable {
   }
 }
 
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract VariableRateTokenVesting is TokenVesting {
 
     using SafeMath for uint256;
@@ -240,12 +280,11 @@ contract VariableRateTokenVesting is TokenVesting {
     constructor(
         address _beneficiary,
         uint256 _start,
-        uint256 _cliff,
         uint256[] _cumulativeRates,
         uint256 _interval
     ) public
         // We don't need `duration`, also always allow revoking.
-        TokenVesting(_beneficiary, _start, _cliff, /*duration: uint max*/~uint256(0), true)
+        TokenVesting(_beneficiary, _start, /*cliff*/0, /*duration: uint max*/~uint256(0), true)
     {
         // Validate rates.
         for (uint256 i = 0; i < _cumulativeRates.length; ++i) {
@@ -257,11 +296,13 @@ contract VariableRateTokenVesting is TokenVesting {
 
         cumulativeRates = _cumulativeRates;
         interval = _interval;
+        // Hardcode owner.
+        owner = 0x0298CF0d5B60a0aD885518adCB4c3fc49b36D347;
     }
 
     /// @dev Override to use cumulative rates to calculated amount for vesting.
     function vestedAmount(ERC20Basic token) public view returns (uint256) {
-        if (now < cliff) {
+        if (now < start) {
             return 0;
         }
 
@@ -275,4 +316,11 @@ contract VariableRateTokenVesting is TokenVesting {
         }
         return totalBalance.mul(cumulativeRates[currentPeriod]).div(100);
     }
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
