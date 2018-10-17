@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOTTO at 0x78af01b310a23d25009bdfb95ef06e9a5584fb80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hotto at 0xd39f7984ff1c60861776bcb42185eb5333127187
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 library SafeMath {
 
     /**
-    * @dev Multiplies two numbers, throws on overflow.
+    * Multiplies two numbers, throws on overflow.
     */
     function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
@@ -21,7 +21,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Integer division of two numbers, truncating the quotient.
+    * Integer division of two numbers, truncating the quotient.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
@@ -31,7 +31,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    * Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
     */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
@@ -39,7 +39,7 @@ library SafeMath {
     }
 
     /**
-    * @dev Adds two numbers, throws on overflow.
+    * Adds two numbers, throws on overflow.
     */
     function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
         c = a + b;
@@ -48,7 +48,7 @@ library SafeMath {
     }
 }
 
-contract ForeignToken {
+contract AltcoinToken {
     function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
@@ -67,7 +67,7 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract HOTTO is ERC20 {
+contract Hotto is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -75,21 +75,25 @@ contract HOTTO is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
 
-    string public constant name = "HOTTO";
+    string public constant name = "Hotto";
     string public constant symbol = "HT";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 10000000000e8; // Supply
-    uint256 public totalDistributed = 3000000000e8;    
-    uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 20000000e8;
+    uint256 public totalSupply = 10000000000e8;
+    uint256 public totalDistributed = 0;        
+    uint256 public tokensPerEth = 30000000e8;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ether
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
+
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
+
     event TokensPerEthUpdated(uint _tokensPerEth);
+    
     event Burn(address indexed burner, uint256 value);
 
     bool public distributionFinished = false;
@@ -105,9 +109,10 @@ contract HOTTO is ERC20 {
     }
     
     
-    function HT () public {
-        owner = msg.sender;        
-        distr(owner, totalDistributed);
+       function HT () public {
+        owner = msg.sender;
+        uint256 devTokens = 1000000000e8;
+        distr(owner, devTokens);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -145,6 +150,7 @@ contract HOTTO is ERC20 {
             distributionFinished = true;
         }
 
+        // log
         emit Airdrop(_participant, _amount, balances[_participant]);
         emit Transfer(address(0), _participant, _amount);
     }
@@ -152,7 +158,6 @@ contract HOTTO is ERC20 {
     function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
-
 
     function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
@@ -170,10 +175,10 @@ contract HOTTO is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        require( msg.value >= MIN_CONTRIBUTION );
+        require( msg.value >= minContribution );
 
         require( msg.value > 0 );
-
+        
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -233,7 +238,7 @@ contract HOTTO is ERC20 {
     }
     
     function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
+        AltcoinToken t = AltcoinToken(tokenAddress);
         uint bal = t.balanceOf(who);
         return bal;
     }
@@ -246,8 +251,7 @@ contract HOTTO is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-
-
+        
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
@@ -255,8 +259,8 @@ contract HOTTO is ERC20 {
         emit Burn(burner, _value);
     }
     
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
+    function withdrawAltcoinTokens(address _tokenContract) onlyOwner public returns (bool) {
+        AltcoinToken token = AltcoinToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
