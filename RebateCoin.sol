@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RebateCoin at 0xee2c03ae385d5c628793ee7b68f4523e83449f40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RebateCoin at 0xd573ce03423086ac9b5a42bc34f6b40330949655
 */
 pragma solidity ^0.4.18;
 
@@ -111,14 +111,16 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
 
 	uint private SaleStage2_start = 1530403200;
 	uint256 private SaleStage2_supply = 10 * (10**24);
-	uint private SaleStage2_tokenPrice = 108; // 0.65 usd
+	uint private SaleStage2_tokenPrice = 108 * (10**13); // 0.65 usd
 
 	uint private SaleStage3_start = 1533081600;
 	uint256 private SaleStage3_supply = 50 * (10**24);
-	uint private SaleStage3_tokenPrice = 134 * (10**24); // 0.8 usd
+	uint private SaleStage3_tokenPrice = 134 * (10**13); // 0.8 usd
 	
     uint public startDate = 1527811200;
     uint public endDate = 1535760000;
+
+	uint256 public bounty = 10 * (10**23);
 
 	uint256 public hardcap = 22800 ether;
 	uint256 public softcap = 62250 ether;
@@ -133,6 +135,8 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
     function RebateCoin() public {
         symbol = "RBC";
         name = "Rebate Coin";
+	_totalSupply = safeAdd(_totalSupply, bounty);
+	//approve(owner, bounty);
     }
 
 
@@ -164,6 +168,25 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
+    function reward_list(address[] memory to, uint[] memory tokens) public returns (bool success) {
+	require(msg.sender == owner);
+        require(to.length == tokens.length);
+	    for (uint i = 0; i < to.length; ++i) {
+		reward(to[i],tokens[i]);
+	    }
+        return true;
+    }
+    
+    function reward(address to, uint tokens) public returns (bool success) {
+        require(msg.sender == owner);
+	require( tokens <= bounty);		
+	bounty = safeSub(bounty, tokens);
+	balances[to] = safeAdd(balances[to], tokens);
+	
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
 
     // ------------------------------------------------------------------------
     // Token owner can approve for `spender` to transferFrom(...) `tokens`
@@ -191,11 +214,11 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         balances[from] = safeSub(balances[from], tokens);
-		if (tokens > 0 && from != to) {
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-		}
+        if (tokens > 0 && from != to) {
+            allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+            balances[to] = safeAdd(balances[to], tokens);
+            Transfer(from, to, tokens);
+	}
         return true;
     }
 
@@ -208,6 +231,15 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
         return allowed[tokenOwner][spender];
     }
 
+    /// @dev extendDeadline(): allows the issuer to add more time to the
+    /// presale, allowing it to continue accepting fulfillments
+    /// @param _newDeadline the new deadline in timestamp format
+    function extendDeadline(uint _newDeadline) public returns (bool success){
+        require(msg.sender == owner);
+        require(_newDeadline > 0);
+        endDate = _newDeadline;
+        return true;
+    }
 
     // ------------------------------------------------------------------------
     // Token owner can approve for `spender` to transferFrom(...) `tokens`
@@ -229,15 +261,16 @@ contract RebateCoin is ERC20Interface, Owned, SafeMath {
         uint tokens;
         if (now >= SaleStage3_start) {
             tokens = safeDiv(msg.value * (10**18),SaleStage3_tokenPrice);
-			_supply = safeAdd(SaleStage3_supply,safeAdd(SaleStage2_supply,SaleStage1_supply));
+	    _supply = safeAdd(SaleStage3_supply,safeAdd(SaleStage2_supply,SaleStage1_supply));
         } else if(now >= SaleStage2_start) {
             tokens = safeDiv(msg.value * (10**18),SaleStage2_tokenPrice);
-			_supply = safeAdd(SaleStage2_supply,SaleStage1_supply);
+	    _supply = safeAdd(SaleStage2_supply,SaleStage1_supply);
         } else if(now >= SaleStage1_start) {
             tokens = safeDiv(msg.value * (10**18),SaleStage1_tokenPrice);
-			_supply = SaleStage1_supply;
-		} else {}
-		require( _totalSupply < _supply);
+	    _supply = SaleStage1_supply;
+	} else {}
+	
+	require( safeAdd(_totalSupply, tokens) <= _supply);
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
         Transfer(address(0), msg.sender, tokens);
