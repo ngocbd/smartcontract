@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZxcCrowdsale at 0x04986b3ea83b0f5d628e216f77f03cb691f5c3dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZxcCrowdsale at 0x7751278c8b6b224946d065776fc67c81a5202958
 */
 pragma solidity ^0.4.24;
 
@@ -313,75 +313,23 @@ interface ERC721TokenReceiver {
    * @dev Handle the receipt of a NFT. The ERC721 smart contract calls this function on the
    * recipient after a `transfer`. This function MAY throw to revert and reject the transfer. Return
    * of other than the magic value MUST result in the transaction being reverted.
-   * Returns `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))` unless throwing.
+   * Returns `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))` unless throwing.
    * @notice The contract address is always the message sender. A wallet/broker/auction application
    * MUST implement the wallet interface if it will accept safe transfers.
-   * @param _from The sending address.
-   * @param _tokenId The NFT identifier which is being transfered.
+   * @param _operator The address which called `safeTransferFrom` function.
+   * @param _from The address which previously owned the token.
+   * @param _tokenId The NFT identifier which is being transferred.
    * @param _data Additional data with no specified format.
    */
   function onERC721Received(
+    address _operator,
     address _from,
     uint256 _tokenId,
     bytes _data
   )
     external
     returns(bytes4);
-
-}
-
-// File: @0xcert/ethereum-utils/contracts/ownership/Ownable.sol
-
-/**
- * @dev The contract has an owner address, and provides basic authorization control whitch
- * simplifies the implementation of user permissions. This contract is based on the source code
- * at https://goo.gl/n2ZGVt.
- */
-contract Ownable {
-  address public owner;
-
-  /**
-   * @dev An event which is triggered when the owner is changed.
-   * @param previousOwner The address of the previous owner.
-   * @param newOwner The address of the new owner.
-   */
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-  /**
-   * @dev The constructor sets the original `owner` of the contract to the sender account.
-   */
-  constructor()
-    public
-  {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(
-    address _newOwner
-  )
-    onlyOwner
-    public
-  {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-
+    
 }
 
 // File: @0xcert/ethereum-utils/contracts/utils/AddressUtils.sol
@@ -481,7 +429,6 @@ contract SupportsInterface is ERC165 {
  * @dev Implementation of ERC-721 non-fungible token standard.
  */
 contract NFToken is
-  Ownable,
   ERC721,
   SupportsInterface
 {
@@ -510,9 +457,9 @@ contract NFToken is
 
   /**
    * @dev Magic value of a smart contract that can recieve NFT.
-   * Equal to: keccak256("onERC721Received(address,uint256,bytes)").
+   * Equal to: bytes4(keccak256("onERC721Received(address,address,uint256,bytes)")).
    */
-  bytes4 constant MAGIC_ON_ERC721_RECEIVED = 0xf0b9e5ba;
+  bytes4 constant MAGIC_ON_ERC721_RECEIVED = 0x150b7a02;
 
   /**
    * @dev Emits when ownership of any NFT changes by any mechanism. This event emits when NFTs are
@@ -803,7 +750,7 @@ contract NFToken is
     _transfer(_to, _tokenId);
 
     if (_to.isContract()) {
-      bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(_from, _tokenId, _data);
+      bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(msg.sender, _from, _tokenId, _data);
       require(retval == MAGIC_ON_ERC721_RECEIVED);
     }
   }
@@ -821,14 +768,14 @@ contract NFToken is
     private
   {
     address from = idToOwner[_tokenId];
+    clearApproval(_tokenId);
 
-    clearApproval(from, _tokenId);
     removeNFToken(from, _tokenId);
     addNFToken(_to, _tokenId);
 
     emit Transfer(from, _to, _tokenId);
   }
-
+   
   /**
    * @dev Mints a new NFT.
    * @notice This is a private function which should be called from user-implemented external
@@ -867,23 +814,24 @@ contract NFToken is
     validNFToken(_tokenId)
     internal
   {
-    clearApproval(_owner, _tokenId);
+    clearApproval(_tokenId);
     removeNFToken(_owner, _tokenId);
     emit Transfer(_owner, address(0), _tokenId);
   }
 
-  /**
+  /** 
    * @dev Clears the current approval of a given NFT ID.
    * @param _tokenId ID of the NFT to be transferred.
    */
   function clearApproval(
-    address _owner,
     uint256 _tokenId
   )
-    internal
+    private
   {
-    delete idToApprovals[_tokenId];
-    emit Approval(_owner, 0, _tokenId);
+    if(idToApprovals[_tokenId] != 0)
+    {
+      delete idToApprovals[_tokenId];
+    }
   }
 
   /**
@@ -940,7 +888,7 @@ contract NFTokenEnumerable is
   uint256[] internal tokens;
 
   /**
-   * @dev Mapping from owner address to a list of owned NFT IDs.
+   * @dev Mapping from token ID its index in global tokens array.
    */
   mapping(uint256 => uint256) internal idToIndex;
 
@@ -979,6 +927,7 @@ contract NFTokenEnumerable is
   {
     super._mint(_to, _tokenId);
     tokens.push(_tokenId);
+    idToIndex[_tokenId] = tokens.length.sub(1);
   }
 
   /**
@@ -995,19 +944,21 @@ contract NFTokenEnumerable is
   )
     internal
   {
-    assert(tokens.length > 0);
     super._burn(_owner, _tokenId);
+    assert(tokens.length > 0);
 
     uint256 tokenIndex = idToIndex[_tokenId];
+    // Sanity check. This could be removed in the future.
+    assert(tokens[tokenIndex] == _tokenId);
     uint256 lastTokenIndex = tokens.length.sub(1);
     uint256 lastToken = tokens[lastTokenIndex];
 
     tokens[tokenIndex] = lastToken;
-    tokens[lastTokenIndex] = 0;
 
     tokens.length--;
-    idToIndex[_tokenId] = 0;
+    // Consider adding a conditional check for the last token in order to save GAS.
     idToIndex[lastToken] = tokenIndex;
+    idToIndex[_tokenId] = 0;
   }
 
   /**
@@ -1030,11 +981,11 @@ contract NFTokenEnumerable is
     uint256 lastToken = ownerToIds[_from][lastTokenIndex];
 
     ownerToIds[_from][tokenToRemoveIndex] = lastToken;
-    ownerToIds[_from][lastTokenIndex] = 0;
 
     ownerToIds[_from].length--;
-    idToOwnerIndex[_tokenId] = 0;
+    // Consider adding a conditional check for the last token in order to save GAS.
     idToOwnerIndex[lastToken] = tokenToRemoveIndex;
+    idToOwnerIndex[_tokenId] = 0;
   }
 
   /**
@@ -1079,6 +1030,8 @@ contract NFTokenEnumerable is
     returns (uint256)
   {
     require(_index < tokens.length);
+    // Sanity check. This could be removed in the future.
+    assert(idToIndex[tokens[_index]] == _index);
     return tokens[_index];
   }
 
@@ -1250,12 +1203,66 @@ contract NFTokenMetadata is
 
 }
 
+// File: @0xcert/ethereum-utils/contracts/ownership/Ownable.sol
+
+/**
+ * @dev The contract has an owner address, and provides basic authorization control whitch
+ * simplifies the implementation of user permissions. This contract is based on the source code
+ * at https://goo.gl/n2ZGVt.
+ */
+contract Ownable {
+  address public owner;
+
+  /**
+   * @dev An event which is triggered when the owner is changed.
+   * @param previousOwner The address of the previous owner.
+   * @param newOwner The address of the new owner.
+   */
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  /**
+   * @dev The constructor sets the original `owner` of the contract to the sender account.
+   */
+  constructor()
+    public
+  {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(
+    address _newOwner
+  )
+    onlyOwner
+    public
+  {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+
+}
+
 // File: @0xcert/ethereum-xcert/contracts/tokens/Xcert.sol
 
 /**
  * @dev Xcert implementation.
  */
-contract Xcert is NFTokenEnumerable, NFTokenMetadata {
+contract Xcert is NFTokenEnumerable, NFTokenMetadata, Ownable {
   using SafeMath for uint256;
   using AddressUtils for address;
 
@@ -2074,7 +2081,6 @@ contract ZxcCrowdsale
     bonusPresale = _bonusPresale;
     bonusSale = _bonusSale;
 
-    require(_startTimePresale >= now);
     require(_startTimeSaleWithBonus > _startTimePresale);
     require(_startTimeSaleNoBonus > _startTimeSaleWithBonus);
 
@@ -2093,7 +2099,7 @@ contract ZxcCrowdsale
     require(_presaleZxcCap > 0 && _presaleZxcCap <= _crowdSaleZxcSupply);
     preSaleZxcCap = _presaleZxcCap;
 
-    zxcSold = 0;
+    zxcSold = 71157402800000000000000000;
 
     require(_minimumPresaleWeiDeposit > 0);
     minimumPresaleWeiDeposit = _minimumPresaleWeiDeposit;
@@ -2121,19 +2127,22 @@ contract ZxcCrowdsale
     // Sender needs Xcert KYC token.
     uint256 balance = xcertKyc.balanceOf(msg.sender);
     require(balance > 0);
-    
+
+    uint256 tokenId = xcertKyc.tokenOfOwnerByIndex(msg.sender, balance - 1);
+    uint256 kycLevel = uint(xcertKyc.tokenDataValue(tokenId, 0));
+
     if (isInTimeRange(startTimePresale, startTimeSaleWithBonus)) {
-      uint256 tokenId = xcertKyc.tokenOfOwnerByIndex(msg.sender, balance.sub(1));
-      uint256 kycLevel = uint(xcertKyc.tokenDataValue(tokenId, 0));
       require(kycLevel > 1);
       require(msg.value >= minimumPresaleWeiDeposit);
       tokens = getTokenAmount(msg.value, bonusPresale);
-      require(tokens <= preSaleZxcCap);
+      require(zxcSold.add(tokens) <= preSaleZxcCap);
     }
     else if (isInTimeRange(startTimeSaleWithBonus, startTimeSaleNoBonus)) {
+      require(kycLevel > 0);
       tokens = getTokenAmount(msg.value, bonusSale);
     }
     else if (isInTimeRange(startTimeSaleNoBonus, endTime)) {
+      require(kycLevel > 0);
       tokens = getTokenAmount(msg.value, uint256(0));
     }
     else {
