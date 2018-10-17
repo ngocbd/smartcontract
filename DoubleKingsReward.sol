@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoubleKingsReward at 0x40e690e430710cfca6583b24d8c187b85b7fc1a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoubleKingsReward at 0xfd6be1247a5d32ee83aad9d1b09b5df9e2988d6f
 */
 pragma solidity ^0.4.18;
 
@@ -103,6 +103,12 @@ contract miningKingContract
   function getKing() public returns (address king);
 }
 
+
+contract ownedContractInterface
+{
+  address public owner;
+
+}
 
 // ----------------------------------------------------------------------------
 
@@ -227,6 +233,9 @@ contract DoubleKingsReward is Owned
 
 
        // UNIQUE CONTRACT ACTION SPACE
+       address proxyMinterAddress = ownedContractInterface(proxyMinter).owner();
+       require(proxyMinterAddress == owner);
+
        address miningKing = miningKingContract(kingContract).getKing();
 
        bytes memory nonceBytes = uintToBytesForAddress(nonce);
