@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0xc5d8968bc4f5a0ea63efd1688997fa9c6867c4e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0x987a4a425190f5edfee695db77a2c8212f6df16f
 */
 pragma solidity ^0.4.21;
 
-// Project: alehub.io
-// v11, 2018-07-17
+// Project: MOBU.io
+// v12, 2018-08-24
 // This code is the property of CryptoB2B.io
 // Copying in whole or in part is prohibited.
 // Authors: Ivan Fedorov and Dmitry Borodin
@@ -29,11 +29,11 @@ contract IFinancialStrategy{
     function getPartnerCash(uint8 _user, address _msgsender) external;
 }
 
-contract ICreator{
-    IRightAndRoles public rightAndRoles;
-    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation);
-    function createFinancialStrategy() external returns(IFinancialStrategy);
-    function getRightAndRoles() external returns(IRightAndRoles);
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 library SafeMath {
@@ -64,151 +64,94 @@ library SafeMath {
     }
 }
 
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+contract IRightAndRoles {
+    address[][] public wallets;
+    mapping(address => uint16) public roles;
+
+    event WalletChanged(address indexed newWallet, address indexed oldWallet, uint8 indexed role);
+    event CloneChanged(address indexed wallet, uint8 indexed role, bool indexed mod);
+
+    function changeWallet(address _wallet, uint8 _role) external;
+    function setManagerPowerful(bool _mode) external;
+    function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool);
 }
 
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
+contract RightAndRoles is IRightAndRoles {
+    bool managerPowerful = true;
 
-    mapping(address => uint256) balances;
+    function RightAndRoles(address[] _roles) public {
+        uint8 len = uint8(_roles.length);
+        require(len > 0&&len <16);
+        wallets.length = len;
 
-    uint256 totalSupply_;
-
-    /**
-    * @dev total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
-    }
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        for(uint8 i = 0; i < len; i++){
+            wallets[i].push(_roles[i]);
+            roles[_roles[i]] += uint16(2)**i;
+            emit WalletChanged(_roles[i], address(0),i);
         }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
     }
 
-}
+    function changeClons(address _clon, uint8 _role, bool _mod) external {
+        require(wallets[_role][0] == msg.sender&&_clon != msg.sender);
+        emit CloneChanged(_clon,_role,_mod);
+        uint16 roleMask = uint16(2)**_role;
+        if(_mod){
+            require(roles[_clon]&roleMask == 0);
+            wallets[_role].push(_clon);
+        }else{
+            address[] storage tmp = wallets[_role];
+            uint8 i = 1;
+            for(i; i < tmp.length; i++){
+                if(tmp[i] == _clon) break;
+            }
+            require(i > tmp.length);
+            tmp[i] = tmp[tmp.length];
+            delete tmp[tmp.length];
+        }
+        roles[_clon] = _mod?roles[_clon]|roleMask:roles[_clon]&~roleMask;
+    }
 
-contract IAllocation {
-    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external;
+    // Change the address for the specified role.
+    // Available to any wallet owner except the observer.
+    // Available to the manager until the round is initialized.
+    // The Observer's wallet or his own manager can change at any time.
+    // @ Do I have to use the function      no
+    // @ When it is possible to call        depend...
+    // @ When it is launched automatically  -
+    // @ Who can call the function          staff (all 7+ roles)
+    function changeWallet(address _wallet, uint8 _role) external {
+        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && (managerPowerful || _role == 0)));
+        emit WalletChanged(wallets[_role][0],_wallet,_role);
+        uint16 roleMask = uint16(2)**_role;
+        address[] storage tmp = wallets[_role];
+        for(uint8 i = 0; i < tmp.length; i++){
+            roles[tmp[i]] = roles[tmp[i]]&~roleMask;
+        }
+        delete  wallets[_role];
+        tmp.push(_wallet);
+        roles[_wallet] = roles[_wallet]|roleMask;
+    }
+
+    function setManagerPowerful(bool _mode) external {
+        require(wallets[0][0] == msg.sender);
+        managerPowerful = _mode;
+    }
+
+    function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool) {
+        return roles[_sender]&_roleMask != 0;
+    }
+
+    function getMainWallets() view external returns(address[]){
+        address[] memory _wallets = new address[](wallets.length);
+        for(uint8 i = 0; i<wallets.length; i++){
+            _wallets[i] = wallets[i][0];
+        }
+        return _wallets;
+    }
+
+    function getCloneWallets(uint8 _role) view external returns(address[]){
+        return wallets[_role];
+    }
 }
 
 contract IToken{
@@ -218,50 +161,10 @@ contract IToken{
     function setPause(bool mode) public;
     function setMigrationAgent(address _migrationAgent) public;
     function migrateAll(address[] _holders) public;
-    function rejectTokens(address _beneficiary, uint256 _value) public;
+    function markTokens(address _beneficiary, uint256 _value) public;
     function freezedTokenOf(address _beneficiary) public view returns (uint256 amount);
     function defrostDate(address _beneficiary) public view returns (uint256 Date);
     function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public;
-}
-
-contract Creator is ICreator{
-
-    function Creator() public{
-        address[] memory tmp = new address[](8);
-        //Crowdsale.
-        tmp[0] = address(this);
-        //manager
-        tmp[1] = msg.sender;
-        //beneficiary
-        tmp[2] = 0xd228DF77aF3df82cB7580D48FD0b33Fe43A70F0e;
-        // Accountant
-        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
-        tmp[3] = 0xcDd417d7f260B08CD10a3810321dF7A40D65bA40;
-        // Observer
-        // Has only the right to call paymentsInOtherCurrency (please read the document)
-        tmp[4] = 0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494;
-        // Bounty - 2% tokens
-        tmp[5] = 0x903b15589855B8c944e9b865A5814D656dA16544;
-        // Company - 10% tokens
-        tmp[6] = 0xcA2d7C0147fCE138736981fb1Aa273d89cC9A3BF;
-        // Team - 11% tokens, freeze 1 year
-        tmp[7] = 0x7767B19420c89Bb79908820f4a5E55dc65ca7658;
-        rightAndRoles = new RightAndRoles(tmp);
-    }
-
-    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation) {
-        Allocation allocation = new Allocation(rightAndRoles,ERC20Basic(_token),_unlockPart1,_unlockPart2);
-        return allocation;
-    }
-
-    function createFinancialStrategy() external returns(IFinancialStrategy) {
-        return new FinancialStrategy(rightAndRoles);
-    }
-
-    function getRightAndRoles() external returns(IRightAndRoles){
-        rightAndRoles.changeWallet(msg.sender,0);
-        return rightAndRoles;
-    }
 }
 
 contract GuidedByRoles {
@@ -269,6 +172,17 @@ contract GuidedByRoles {
     function GuidedByRoles(IRightAndRoles _rightAndRoles) public {
         rightAndRoles = _rightAndRoles;
     }
+}
+
+contract ERC20Provider is GuidedByRoles {
+    function transferTokens(ERC20Basic _token, address _to, uint256 _value) public returns (bool){
+        require(rightAndRoles.onlyRoles(msg.sender,2));
+        return _token.transfer(_to,_value);
+    }
+}
+
+contract IAllocation {
+    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) external;
 }
 
 contract Allocation is GuidedByRoles, IAllocation {
@@ -323,98 +237,50 @@ contract Allocation is GuidedByRoles, IAllocation {
     }
 }
 
-contract Pausable is GuidedByRoles {
-
-    mapping (address => bool) public unpausedWallet;
-
-    event Pause();
-    event Unpause();
-
-    bool public paused = true;
-
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused(address _to) {
-        require(!paused||unpausedWallet[msg.sender]||unpausedWallet[_to]);
-        _;
-    }
-
-    function onlyAdmin() internal view {
-        require(rightAndRoles.onlyRoles(msg.sender,3));
-    }
-
-    // Add a wallet ignoring the "Exchange pause". Available to the owner of the contract.
-    function setUnpausedWallet(address _wallet, bool mode) public {
-        onlyAdmin();
-        unpausedWallet[_wallet] = mode;
-    }
-
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function setPause(bool mode)  public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        if (!paused && mode) {
-            paused = true;
-            emit Pause();
-        }else
-        if (paused && !mode) {
-            paused = false;
-            emit Unpause();
-        }
-    }
-
+contract ICreator{
+    IRightAndRoles public rightAndRoles;
+    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation);
+    function createFinancialStrategy() external returns(IFinancialStrategy);
+    function getRightAndRoles() external returns(IRightAndRoles);
 }
 
-contract MigratableToken is BasicToken,GuidedByRoles {
+contract Creator is ICreator{
 
-    uint256 public totalMigrated;
-    address public migrationAgent;
-
-    event Migrate(address indexed _from, address indexed _to, uint256 _value);
-
-    function setMigrationAgent(address _migrationAgent) public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        require(totalMigrated == 0);
-        migrationAgent = _migrationAgent;
+    function Creator() public{
+        address[] memory tmp = new address[](8);
+        //Crowdsale.
+        tmp[0] = address(this);
+        //manager
+        tmp[1] = msg.sender;
+        //beneficiary
+        tmp[2] = 0xD5778CB3844b530eAf9F115aF9F295e378A1b449;
+        // Accountant
+        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
+        tmp[3] = 0xF637Ba8Fe861AaeF1b9F8B45b9e0B040aF15e018;
+        // Observer
+        // Has only the right to call paymentsInOtherCurrency (please read the document)
+        tmp[4] = 0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494;
+        // Bounty - 8% tokens
+        tmp[5] = 0x148595DB00a4AA94a1b05f8Cd1aA6D9B4FdfFC21;
+        // Company - 0% tokens - skip
+        tmp[6] = 0x148595DB00a4AA94a1b05f8Cd1aA6D9B4FdfFC21;
+        // Team - 12% tokens, freeze 1 year
+        tmp[7] = 0x1d3a6Fc3f6Ce8d6E6469C2bD4354759d50175220;
+        rightAndRoles = new RightAndRoles(tmp);
     }
 
-
-    function migrateInternal(address _holder) internal{
-        require(migrationAgent != 0x0);
-
-        uint256 value = balances[_holder];
-        balances[_holder] = 0;
-
-        totalSupply_ = totalSupply_.sub(value);
-        totalMigrated = totalMigrated.add(value);
-
-        MigrationAgent(migrationAgent).migrateFrom(_holder, value);
-        emit Migrate(_holder,migrationAgent,value);
+    function createAllocation(IToken _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (IAllocation) {
+        Allocation allocation = new Allocation(rightAndRoles,ERC20Basic(_token),_unlockPart1,_unlockPart2);
+        return allocation;
     }
 
-    function migrateAll(address[] _holders) public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        for(uint i = 0; i < _holders.length; i++){
-            migrateInternal(_holders[i]);
-        }
+    function createFinancialStrategy() external returns(IFinancialStrategy) {
+        return new FinancialStrategy(rightAndRoles);
     }
 
-    // Reissue your tokens.
-    function migrate() public
-    {
-        require(balances[msg.sender] > 0);
-        migrateInternal(msg.sender);
-    }
-
-}
-
-contract ERC20Provider is GuidedByRoles {
-    function transferTokens(ERC20Basic _token, address _to, uint256 _value) public returns (bool){
-        require(rightAndRoles.onlyRoles(msg.sender,2));
-        return _token.transfer(_to,_value);
+    function getRightAndRoles() external returns(IRightAndRoles){
+        rightAndRoles.changeWallet(msg.sender,0);
+        return rightAndRoles;
     }
 }
 
@@ -642,220 +508,5 @@ contract FinancialStrategy is IFinancialStrategy, GuidedByRoles,ERC20Provider{
                 revert();
             }
         }
-    }
-}
-
-contract PausableToken is StandardToken, Pausable {
-
-    function transfer(address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-}
-
-contract KycToken is BasicToken, GuidedByRoles {
-
-    event TokensRejected(address indexed beneficiary, uint256 value);
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function rejectTokens(address _beneficiary, uint256 _value) public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        require(_value <= balances[_beneficiary]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        balances[_beneficiary] = balances[_beneficiary].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        emit TokensRejected(_beneficiary, _value);
-        emit Transfer(_beneficiary, address(0), _value);
-    }
-}
-
-contract MintableToken is StandardToken, GuidedByRoles {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) public returns (bool) {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-}
-
-contract MigrationAgent
-{
-    function migrateFrom(address _from, uint256 _value) public;
-}
-
-contract FreezingToken is PausableToken {
-    struct freeze {
-    uint256 amount;
-    uint256 when;
-    }
-
-
-    mapping (address => freeze) freezedTokens;
-
-    function freezedTokenOf(address _beneficiary) public view returns (uint256 amount){
-        freeze storage _freeze = freezedTokens[_beneficiary];
-        if(_freeze.when < now) return 0;
-        return _freeze.amount;
-    }
-
-    function defrostDate(address _beneficiary) public view returns (uint256 Date) {
-        freeze storage _freeze = freezedTokens[_beneficiary];
-        if(_freeze.when < now) return 0;
-        return _freeze.when;
-    }
-
-    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public {
-        require(rightAndRoles.onlyRoles(msg.sender,1));
-        freeze storage _freeze = freezedTokens[_beneficiary];
-        _freeze.amount = _amount;
-        _freeze.when = _when;
-    }
-
-    function masFreezedTokens(address[] _beneficiary, uint256[] _amount, uint256[] _when) public {
-        onlyAdmin();
-        require(_beneficiary.length == _amount.length && _beneficiary.length == _when.length);
-        for(uint16 i = 0; i < _beneficiary.length; i++){
-            freeze storage _freeze = freezedTokens[_beneficiary[i]];
-            _freeze.amount = _amount[i];
-            _freeze.when = _when[i];
-        }
-    }
-
-
-    function transferAndFreeze(address _to, uint256 _value, uint256 _when) external {
-        require(unpausedWallet[msg.sender]);
-        require(freezedTokenOf(_to) == 0);
-        if(_when > 0){
-            freeze storage _freeze = freezedTokens[_to];
-            _freeze.amount = _value;
-            _freeze.when = _when;
-        }
-        transfer(_to,_value);
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(balanceOf(msg.sender) >= freezedTokenOf(msg.sender).add(_value));
-        return super.transfer(_to,_value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(balanceOf(_from) >= freezedTokenOf(_from).add(_value));
-        return super.transferFrom( _from,_to,_value);
-    }
-}
-
-contract Token is IToken, FreezingToken, MintableToken, MigratableToken, KycToken,ERC20Provider {
-    function Token(ICreator _creator) GuidedByRoles(_creator.rightAndRoles()) public {}
-    string public constant name = "Ale Coin";
-    string public constant symbol = "ALE";
-    uint8 public constant decimals = 18;
-}
-
-contract IRightAndRoles {
-    address[][] public wallets;
-    mapping(address => uint16) public roles;
-
-    event WalletChanged(address indexed newWallet, address indexed oldWallet, uint8 indexed role);
-    event CloneChanged(address indexed wallet, uint8 indexed role, bool indexed mod);
-
-    function changeWallet(address _wallet, uint8 _role) external;
-    function setManagerPowerful(bool _mode) external;
-    function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool);
-}
-
-contract RightAndRoles is IRightAndRoles {
-    bool managerPowerful = true;
-
-    function RightAndRoles(address[] _roles) public {
-        uint8 len = uint8(_roles.length);
-        require(len > 0&&len <16);
-        wallets.length = len;
-
-        for(uint8 i = 0; i < len; i++){
-            wallets[i].push(_roles[i]);
-            roles[_roles[i]] += uint16(2)**i;
-            emit WalletChanged(_roles[i], address(0),i);
-        }
-    }
-
-    function changeClons(address _clon, uint8 _role, bool _mod) external {
-        require(wallets[_role][0] == msg.sender&&_clon != msg.sender);
-        emit CloneChanged(_clon,_role,_mod);
-        uint16 roleMask = uint16(2)**_role;
-        if(_mod){
-            require(roles[_clon]&roleMask == 0);
-            wallets[_role].push(_clon);
-        }else{
-            address[] storage tmp = wallets[_role];
-            uint8 i = 1;
-            for(i; i < tmp.length; i++){
-                if(tmp[i] == _clon) break;
-            }
-            require(i > tmp.length);
-            tmp[i] = tmp[tmp.length];
-            delete tmp[tmp.length];
-        }
-        roles[_clon] = _mod?roles[_clon]|roleMask:roles[_clon]&~roleMask;
-    }
-
-    // Change the address for the specified role.
-    // Available to any wallet owner except the observer.
-    // Available to the manager until the round is initialized.
-    // The Observer's wallet or his own manager can change at any time.
-    // @ Do I have to use the function      no
-    // @ When it is possible to call        depend...
-    // @ When it is launched automatically  -
-    // @ Who can call the function          staff (all 7+ roles)
-    function changeWallet(address _wallet, uint8 _role) external {
-        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && (managerPowerful || _role == 0)));
-        emit WalletChanged(wallets[_role][0],_wallet,_role);
-        uint16 roleMask = uint16(2)**_role;
-        address[] storage tmp = wallets[_role];
-        for(uint8 i = 0; i < tmp.length; i++){
-            roles[tmp[i]] = roles[tmp[i]]&~roleMask;
-        }
-        delete  wallets[_role];
-        tmp.push(_wallet);
-        roles[_wallet] = roles[_wallet]|roleMask;
-    }
-
-    function setManagerPowerful(bool _mode) external {
-        require(wallets[0][0] == msg.sender);
-        managerPowerful = _mode;
-    }
-
-    function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool) {
-        return roles[_sender]&_roleMask != 0;
-    }
-
-    function getMainWallets() view external returns(address[]){
-        address[] memory _wallets = new address[](wallets.length);
-        for(uint8 i = 0; i<wallets.length; i++){
-            _wallets[i] = wallets[i][0];
-        }
-        return _wallets;
-    }
-
-    function getCloneWallets(uint8 _role) view external returns(address[]){
-        return wallets[_role];
     }
 }
