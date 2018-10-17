@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0x4E6f3CEfbBE715a858644100f0Aad364832596d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FunderSmartToken at 0x0216a774D40296B54d95352ce5B0460343B7d199
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
 pragma experimental ABIEncoderV2;
 
@@ -32,6 +32,10 @@ library Math {
   struct Fraction {
     uint256 numerator;
     uint256 denominator;
+  }
+
+  function isPositive(Fraction memory fraction) internal pure returns (bool) {
+    return fraction.numerator > 0 && fraction.denominator > 0;
   }
 
   function mul(uint256 a, uint256 b) internal pure returns (uint256 r) {
@@ -71,9 +75,10 @@ library Math {
   function mulDivCeil(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
     r = value * m;
     if (r / value == m) {
-      r /= d;
-      if (r % d != 0) {
-        r += 1;
+      if (r % d == 0) {
+        r /= d;
+      } else {
+        r = (r / d) + 1;
       }
     } else {
       r = mul(value / d, m);
@@ -98,18 +103,20 @@ library Math {
   function divCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
     return mulDivCeil(x, f.denominator, f.numerator);
   }
-}
 
-contract FsTKAllocation {
-
-  function initialize(uint256 _vestedAmount) public;
+  function mul(Fraction memory x, Fraction memory y) internal pure returns (Math.Fraction) {
+    return Math.Fraction({
+      numerator: mul(x.numerator, y.numerator),
+      denominator: mul(x.denominator, y.denominator)
+    });
+  }
 }
 
 contract FsTKAuthority {
 
   function isAuthorized(address sender, address _contract, bytes data) public view returns (bool);
   function isApproved(bytes32 hash, uint256 approveTime, bytes approveToken) public view returns (bool);
-  function validate() public pure returns (bool);
+  function validate() public pure returns (bytes4);
 }
 
 contract Authorizable {
@@ -132,7 +139,7 @@ contract Authorizable {
   }
 
   function setFsTKAuthority(FsTKAuthority _fstkAuthority) public onlyFsTKAuthorized {
-    require(_fstkAuthority.validate());
+    require(_fstkAuthority.validate() == _fstkAuthority.validate.selector);
     emit SetFsTKAuthority(fstkAuthority = _fstkAuthority);
   }
 }
@@ -161,6 +168,8 @@ contract SecureERC20 is ERC20 {
 
 contract FsTKToken {
 
+  event Consume(address indexed from, uint256 value, bytes32 challenge);
+  event IncreaseNonce(address indexed from, uint256 nonce);
   event SetupDirectDebit(address indexed debtor, address indexed receiver, DirectDebitInfo info);
   event TerminateDirectDebit(address indexed debtor, address indexed receiver);
   event WithdrawDirectDebitFailure(address indexed debtor, address indexed receiver);
@@ -192,25 +201,29 @@ contract FsTKToken {
   function spendableAllowance(address owner, address spender) public view returns (uint256);
   function transfer(uint256[] data) public returns (bool);
   function transferAndCall(address to, uint256 value, bytes data) public payable returns (bool);
+
+  function nonceOf(address owner) public view returns (uint256);
+  function increaseNonce() public returns (bool);
   function delegateTransferAndCall(
     uint256 nonce,
-    uint256 gasAmount,
+    uint256 fee,
     address to,
     uint256 value,
     bytes data,
+    address delegator,
     uint8 v,
     bytes32 r,
     bytes32 s
   ) public returns (bool);
 
-  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit);
+  function directDebit(address debtor, address receiver) public view returns (DirectDebit);
   function setupDirectDebit(address receiver, DirectDebitInfo info) public returns (bool);
   function terminateDirectDebit(address receiver) public returns (bool);
   function withdrawDirectDebit(address debtor) public returns (bool);
-  function withdrawDirectDebit(address[] debtors, bool strict) public returns (bool result);
+  function withdrawDirectDebit(address[] debtors, bool strict) public returns (bool);
 }
 
-contract AbstractToken is SecureERC20, FsTKToken {
+contract ERC20Like is SecureERC20, FsTKToken {
   using AddressExtension for address;
   using Math for uint256;
 
@@ -221,6 +234,14 @@ contract AbstractToken is SecureERC20, FsTKToken {
   modifier canUseDirectDebit {
     require(isDirectDebitEnable);
      _;
+  }
+  modifier canDelegate {
+    require(isDelegateEnable);
+     _;
+  }
+  modifier notThis(address _address) {
+    require(_address != address(this));
+    _;
   }
 
   bool public erc20ApproveChecking;
@@ -244,10 +265,8 @@ contract AbstractToken is SecureERC20, FsTKToken {
 
   function transfer(address to, uint256 value) public liquid returns (bool) {
     Account storage senderAccount = accounts[msg.sender];
-    uint256 senderBalance = senderAccount.balance;
-    require(value <= senderBalance);
 
-    senderAccount.balance = senderBalance - value;
+    senderAccount.balance = senderAccount.balance.sub(value);
     accounts[to].balance += value;
 
     emit Transfer(msg.sender, to, value);
@@ -256,14 +275,10 @@ contract AbstractToken is SecureERC20, FsTKToken {
 
   function transferFrom(address from, address to, uint256 value) public liquid returns (bool) {
     Account storage fromAccount = accounts[from];
-    uint256 fromBalance = fromAccount.balance;
     Instrument storage senderInstrument = fromAccount.instruments[msg.sender];
-    uint256 senderAllowance = senderInstrument.allowance;
-    require(value <= fromBalance);
-    require(value <= senderAllowance);
 
-    fromAccount.balance = fromBalance - value;
-    senderInstrument.allowance = senderAllowance - value;
+    fromAccount.balance = fromAccount.balance.sub(value);
+    senderInstrument.allowance = senderInstrument.allowance.sub(value);
     accounts[to].balance += value;
 
     emit Transfer(from, to, value);
@@ -275,9 +290,12 @@ contract AbstractToken is SecureERC20, FsTKToken {
     if (erc20ApproveChecking) {
       require((value == 0) || (spenderInstrument.allowance == 0));
     }
-    spenderInstrument.allowance = value;
 
-    emit Approval(msg.sender, spender, value);
+    emit Approval(
+      msg.sender,
+      spender,
+      spenderInstrument.allowance = value
+    );
     return true;
   }
 
@@ -289,19 +307,22 @@ contract AbstractToken is SecureERC20, FsTKToken {
     Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
     require(spenderInstrument.allowance == expectedValue);
 
-    spenderInstrument.allowance = newValue;
-
-    emit Approval(msg.sender, spender, newValue);
+    emit Approval(
+      msg.sender,
+      spender,
+      spenderInstrument.allowance = newValue
+    );
     return true;
   }
 
   function increaseAllowance(address spender, uint256 value) public returns (bool) {
     Instrument storage spenderInstrument = accounts[msg.sender].instruments[spender];
 
-    uint256 newValue = spenderInstrument.allowance.add(value);
-    spenderInstrument.allowance = newValue;
-
-    emit Approval(msg.sender, spender, newValue);
+    emit Approval(
+      msg.sender,
+      spender,
+      spenderInstrument.allowance = spenderInstrument.allowance.add(value)
+    );
     return true;
   }
 
@@ -315,9 +336,12 @@ contract AbstractToken is SecureERC20, FsTKToken {
     } else if (value < currentValue) {
       newValue = currentValue - value;
     }
-    spenderInstrument.allowance = newValue;
 
-    emit Approval(msg.sender, spender, newValue);
+    emit Approval(
+      msg.sender,
+      spender,
+      spenderInstrument.allowance = newValue
+    );
     return true;
   }
 
@@ -348,6 +372,7 @@ contract AbstractToken is SecureERC20, FsTKToken {
   function transfer(uint256[] data) public liquid returns (bool) {
     Account storage senderAccount = accounts[msg.sender];
     uint256 totalValue;
+
     for (uint256 i = 0; i < data.length; i++) {
       address receiver = address(data[i] >> 96);
       uint256 value = data[i] & 0xffffffffffffffffffffffff;
@@ -358,17 +383,26 @@ contract AbstractToken is SecureERC20, FsTKToken {
       emit Transfer(msg.sender, receiver, value);
     }
 
-    uint256 senderBalance = senderAccount.balance;
-    require(totalValue <= senderBalance);
-    senderAccount.balance = senderBalance - totalValue;
+    senderAccount.balance = senderAccount.balance.sub(totalValue);
 
     return true;
   }
 
-  function transferAndCall(address to, uint256 value, bytes data) public payable liquid returns (bool) {
-    require(to != address(this));
-    require(transfer(to, value));
-    require(data.length >= 68);
+  function transferAndCall(
+    address to,
+    uint256 value,
+    bytes data
+  )
+    public
+    payable
+    liquid
+    notThis(to)
+    returns (bool)
+  {
+    require(
+      transfer(to, value) &&
+      data.length >= 68
+    );
     assembly {
         mstore(add(data, 36), value)
         mstore(add(data, 68), caller)
@@ -377,41 +411,49 @@ contract AbstractToken is SecureERC20, FsTKToken {
     return true;
   }
 
+  function nonceOf(address owner) public view returns (uint256) {
+    return accounts[owner].nonce;
+  }
+
+  function increaseNonce() public returns (bool) {
+    emit IncreaseNonce(msg.sender, accounts[msg.sender].nonce += 1);
+  }
+
   function delegateTransferAndCall(
     uint256 nonce,
-    uint256 gasAmount,
+    uint256 fee,
     address to,
     uint256 value,
     bytes data,
+    address delegator,
     uint8 v,
     bytes32 r,
     bytes32 s
   )
     public
     liquid
+    canDelegate
+    notThis(to)
     returns (bool)
   {
-    require(isDelegateEnable);
-    require(to != address(this));
-
     address signer = ecrecover(
-      keccak256(nonce, gasAmount, to, value, data),
+      keccak256(abi.encodePacked(nonce, fee, to, value, data, delegator)),
       v,
       r,
       s
     );
     Account storage signerAccount = accounts[signer];
-    require(nonce == signerAccount.nonce);
-    signerAccount.nonce = nonce.add(1);
-    uint256 signerBalance = signerAccount.balance;
-    uint256 total = value.add(gasAmount);
-    require(total <= signerBalance);
+    require(
+      nonce == signerAccount.nonce &&
+      (delegator == address(0) || delegator == msg.sender)
+    );
+    emit IncreaseNonce(signer, signerAccount.nonce += 1);
 
-    signerAccount.balance = signerBalance - total;
+    signerAccount.balance = signerAccount.balance.sub(value.add(fee));
     accounts[to].balance += value;
     emit Transfer(signer, to, value);
-    accounts[msg.sender].balance += gasAmount;
-    emit Transfer(signer, msg.sender, gasAmount);
+    accounts[msg.sender].balance += fee;
+    emit Transfer(signer, msg.sender, fee);
 
     if (!to.isAccount()) {
       require(data.length >= 68);
@@ -425,7 +467,7 @@ contract AbstractToken is SecureERC20, FsTKToken {
     return true;
   }
 
-  function directDebitOf(address debtor, address receiver) public view returns (DirectDebit) {
+  function directDebit(address debtor, address receiver) public view returns (DirectDebit) {
     return accounts[debtor].instruments[receiver].directDebit;
   }
 
@@ -452,23 +494,15 @@ contract AbstractToken is SecureERC20, FsTKToken {
     return true;
   }
 
-  function calculateTotalDirectDebitAmount(uint256 amount, uint256 epochNow, uint256 epochLast) pure private returns (uint256) {
-    require(amount > 0);
-    require(epochNow > epochLast);
-    return (epochNow - epochLast).mul(amount);
-  }
-
   function withdrawDirectDebit(address debtor) public liquid canUseDirectDebit returns (bool) {
     Account storage debtorAccount = accounts[debtor];
-    uint256 debtorBalance = debtorAccount.balance;
-    DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
-    uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
-    uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
-    require(amount <= debtorBalance);
-
-    debtorAccount.balance = debtorBalance - amount;
+    DirectDebit storage debit = debtorAccount.instruments[msg.sender].directDebit;
+    uint256 epoch = (block.timestamp.sub(debit.info.startTime) / debit.info.interval).add(1);
+    uint256 amount = epoch.sub(debit.epoch).mul(debit.info.amount);
+    require(amount > 0);
+    debtorAccount.balance = debtorAccount.balance.sub(amount);
     accounts[msg.sender].balance += amount;
-    directDebit.epoch = epoch;
+    debit.epoch = epoch;
 
     emit Transfer(debtor, msg.sender, amount);
     return true;
@@ -477,14 +511,16 @@ contract AbstractToken is SecureERC20, FsTKToken {
   function withdrawDirectDebit(address[] debtors, bool strict) public liquid canUseDirectDebit returns (bool result) {
     Account storage receiverAccount = accounts[msg.sender];
     result = true;
+    uint256 total;
 
     for (uint256 i = 0; i < debtors.length; i++) {
       address debtor = debtors[i];
       Account storage debtorAccount = accounts[debtor];
+      DirectDebit storage debit = debtorAccount.instruments[msg.sender].directDebit;
+      uint256 epoch = (block.timestamp.sub(debit.info.startTime) / debit.info.interval).add(1);
+      uint256 amount = epoch.sub(debit.epoch).mul(debit.info.amount);
+      require(amount > 0);
       uint256 debtorBalance = debtorAccount.balance;
-      DirectDebit storage directDebit = debtorAccount.instruments[msg.sender].directDebit;
-      uint256 epoch = block.timestamp.sub(directDebit.info.startTime) / directDebit.info.interval + 1;
-      uint256 amount = calculateTotalDirectDebitAmount(directDebit.info.amount, epoch, directDebit.epoch);
 
       if (amount > debtorBalance) {
         if (strict) {
@@ -494,16 +530,22 @@ contract AbstractToken is SecureERC20, FsTKToken {
         emit WithdrawDirectDebitFailure(debtor, msg.sender);
       } else {
         debtorAccount.balance = debtorBalance - amount;
-        receiverAccount.balance += amount;
-        directDebit.epoch = epoch;
+        total += amount;
+        debit.epoch = epoch;
 
         emit Transfer(debtor, msg.sender, amount);
       }
     }
+
+    receiverAccount.balance += total;
   }
 }
 
-contract FunderSmartToken is AbstractToken, Authorizable {
+contract FsTKAllocation {
+  function initialize(uint256 _vestedAmount) public;
+}
+
+contract FunderSmartToken is Authorizable, ERC20Like {
 
   string public constant name = "Funder Smart Token";
   string public constant symbol = "FST";
@@ -516,8 +558,8 @@ contract FunderSmartToken is AbstractToken, Authorizable {
     address coldWallet,
     FsTKAllocation allocation
   )
-    AbstractToken(_metadata)
     Authorizable(_fstkAuthority)
+    ERC20Like(_metadata)
     public
   {
     uint256 vestedAmount = totalSupply / 12;
@@ -540,15 +582,15 @@ contract FunderSmartToken is AbstractToken, Authorizable {
   }
 
   function setERC20ApproveChecking(bool approveChecking) public onlyFsTKAuthorized {
-    AbstractToken.setERC20ApproveChecking(approveChecking);
+    super.setERC20ApproveChecking(approveChecking);
   }
 
   function setDelegate(bool delegate) public onlyFsTKAuthorized {
-    AbstractToken.setDelegate(delegate);
+    super.setDelegate(delegate);
   }
 
   function setDirectDebit(bool directDebit) public onlyFsTKAuthorized {
-    AbstractToken.setDirectDebit(directDebit);
+    super.setDirectDebit(directDebit);
   }
 
   function transferToken(ERC20 erc20, address to, uint256 value) public onlyFsTKAuthorized {
