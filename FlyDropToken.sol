@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyDropToken at 0xeaba6368d6fa9ed06e569ba5c57f584a329a5152
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlyDropToken at 0xba2c51c73409daa658c8b78ded2a449cd778a2e8
 */
 pragma solidity ^0.4.21;
 
@@ -74,7 +74,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -103,7 +103,7 @@ contract Claimable is Ownable {
    * @dev Allows the pendingOwner address to finalize the transfer.
    */
   function claimOwnership() onlyPendingOwner public {
-    OwnershipTransferred(owner, pendingOwner);
+    emit OwnershipTransferred(owner, pendingOwner);
     owner = pendingOwner;
     pendingOwner = address(0);
   }
@@ -112,7 +112,7 @@ contract Claimable is Ownable {
 contract FlyDropToken is Claimable {
     using SafeMath for uint256;
 
-    ERC20 internal erc20tk;
+    ERC20 public erc20tk = ERC20(0xFb5a551374B656C6e39787B1D3A03fEAb7f3a98E);
     bytes[] internal approveRecords;
 
     event ReceiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
@@ -126,10 +126,10 @@ contract FlyDropToken is Claimable {
      * @param _extraData bytes the extra data for the record
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public {
-        erc20tk = ERC20(_token);
+        // erc20tk = ERC20(_token);
         require(erc20tk.transferFrom(_from, this, _value)); // transfer tokens to this contract
         approveRecords.push(_extraData);
-        ReceiveApproval(_from, _value, _token, _extraData);
+        emit ReceiveApproval(_from, _value, _token, _extraData);
     }
 
     /**
@@ -149,6 +149,10 @@ contract FlyDropToken is Claimable {
         }
 
         return (i);
+    }
+
+    function changERC20(address _token) onlyOwner public {
+        erc20tk = ERC20(_token);
     }
 
     /**
