@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LQX at 0x0d5d084bf055dbb3713e2c79f4609abce30eea27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LQX at 0x5b3e2ebfa48db0846fe150fe44e57a5cc3faa5e2
 */
 pragma solidity ^0.4.12;
 
