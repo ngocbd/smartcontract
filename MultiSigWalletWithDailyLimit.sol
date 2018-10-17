@@ -1,11 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x4ef7dbc186f8abdd4c24257f2a9ff4fd0b31f843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x7113ed85c7cb31991c110a9406e1a70fa5df8d06
 */
-pragma solidity ^0.4.15;
-// import "./MultiSigWallet.sol";
-// pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
 
-
+/// This Multisignature wallet is based on Gnosis implementation: https://github.com/Gnosis/MultiSigWallet
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
@@ -49,68 +47,58 @@ contract MultiSigWallet {
      *  Modifiers
      */
     modifier onlyWallet() {
-        if (msg.sender != address(this))
-            throw;
+        require(msg.sender == address(this));
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        if (isOwner[owner])
-            throw;
+        require(!isOwner[owner]);
         _;
     }
 
     modifier ownerExists(address owner) {
-        if (!isOwner[owner])
-            throw;
+        require(isOwner[owner]);
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        if (transactions[transactionId].destination == 0)
-            throw;
+        require(transactions[transactionId].destination != 0);
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        if (!confirmations[transactionId][owner])
-            throw;
+        require(confirmations[transactionId][owner]);
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        if (confirmations[transactionId][owner])
-            throw;
+        require(!confirmations[transactionId][owner]);
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        if (transactions[transactionId].executed)
-            throw;
+        require(!transactions[transactionId].executed);
         _;
     }
 
     modifier notNull(address _address) {
-        if (_address == 0)
-            throw;
+        require(_address != 0);
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
-            || _required == 0
-            || ownerCount == 0)
-            throw;
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
         _;
     }
 
     /// @dev Fallback function allows to deposit ether.
-    function()
-        payable
+    function() payable public
     {
         if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
+            emit Deposit(msg.sender, msg.value);
     }
 
     /*
@@ -124,8 +112,7 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -143,7 +130,7 @@ contract MultiSigWallet {
     {
         isOwner[owner] = true;
         owners.push(owner);
-        OwnerAddition(owner);
+        emit OwnerAddition(owner);
     }
 
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
@@ -162,7 +149,7 @@ contract MultiSigWallet {
         owners.length -= 1;
         if (required > owners.length)
             changeRequirement(owners.length);
-        OwnerRemoval(owner);
+        emit OwnerRemoval(owner);
     }
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
@@ -181,8 +168,8 @@ contract MultiSigWallet {
             }
         isOwner[owner] = false;
         isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
+        emit OwnerRemoval(owner);
+        emit OwnerAddition(newOwner);
     }
 
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
@@ -193,7 +180,7 @@ contract MultiSigWallet {
         validRequirement(owners.length, _required)
     {
         required = _required;
-        RequirementChange(_required);
+        emit RequirementChange(_required);
     }
 
     /// @dev Allows an owner to submit and confirm a transaction.
@@ -218,7 +205,7 @@ contract MultiSigWallet {
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
-        Confirmation(msg.sender, transactionId);
+        emit Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
     }
 
@@ -231,7 +218,7 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         confirmations[transactionId][msg.sender] = false;
-        Revocation(msg.sender, transactionId);
+        emit Revocation(msg.sender, transactionId);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction.
@@ -243,15 +230,37 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-            tx.executed = true;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
+            Transaction storage txn = transactions[transactionId];
+            txn.executed = true;
+            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
+                emit Execution(transactionId);
             else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
+                emit ExecutionFailure(transactionId);
+                txn.executed = false;
             }
         }
+    }
+
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+        bool result;
+        assembly {
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                d,
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
+        }
+        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -292,7 +301,7 @@ contract MultiSigWallet {
             executed: false
         });
         transactionCount += 1;
-        Submission(transactionId);
+        emit Submission(transactionId);
     }
 
     /*
@@ -384,8 +393,6 @@ contract MultiSigWallet {
     }
 }
 
-
-
 /// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletWithDailyLimit is MultiSigWallet {
@@ -423,7 +430,7 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
         onlyWallet
     {
         dailyLimit = _dailyLimit;
-        DailyLimitChange(_dailyLimit);
+        emit DailyLimitChange(_dailyLimit);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
@@ -434,19 +441,19 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
         confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
-        Transaction tx = transactions[transactionId];
+        Transaction storage txn = transactions[transactionId];
         bool _confirmed = isConfirmed(transactionId);
-        if (_confirmed || tx.data.length == 0 && isUnderLimit(tx.value)) {
-            tx.executed = true;
+        if (_confirmed || txn.data.length == 0 && isUnderLimit(txn.value)) {
+            txn.executed = true;
             if (!_confirmed)
-                spentToday += tx.value;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
+                spentToday += txn.value;
+            if (txn.destination.call.value(txn.value)(txn.data))
+                emit Execution(transactionId);
             else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
+                emit ExecutionFailure(transactionId);
+                txn.executed = false;
                 if (!_confirmed)
-                    spentToday -= tx.value;
+                    spentToday -= txn.value;
             }
         }
     }
