@@ -1,19 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moac at 0x5f856630adbc27c0f5bc1de1961d4f0fb1805a29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOAC at 0x98dca58f948b8a0b64e41a805332fe421ffc5c35
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract Moac {
+contract MOAC {
     // Public variables of the token
-    string public name = "Moac";
+    string public name = "MOAC";
     string public symbol = "MOAC";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default
     uint256 public totalSupply;
-    uint256 public MoacSupply = 2000000000;
-    uint256 public buyPrice = 190;
+    uint256 public MOACSupply = 2000000000;
+    uint256 public buyPrice = 350;
     address public creator;
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -29,9 +29,9 @@ contract Moac {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function Moac() public {
-        totalSupply = MoacSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;    // Give MoacCoin Mint the total created tokens
+    function MOAC() public {
+        totalSupply = MOACSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;    // Give MOACCoin Mint the total created tokens
         creator = msg.sender;
     }
     /**
@@ -73,7 +73,7 @@ contract Moac {
         amountRaised += msg.value;                            //many thanks bois, couldnt do it without r/me_irl
         require(balanceOf[creator] >= amount);               // checks if it has enough to sell
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[creator] -= amount;                        // sends ETH to MoacCoinMint
+        balanceOf[creator] -= amount;                        // sends ETH to MOACCoinMint
         Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
         creator.transfer(amountRaised);
     }
