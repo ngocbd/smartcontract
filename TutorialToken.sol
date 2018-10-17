@@ -1,49 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TutorialToken at 0x864de9e8dfe7477c2eda4de13a6cac52500d22f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TutorialToken at 0x6faf7017ea20620120c1517a64f1ca6f05c0b766
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.23;
 
-// zeppelin-solidity: 1.9.0
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+
+
+
+
+
+
+
+
 
 /**
  * @title SafeMath
@@ -55,9 +35,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -91,28 +75,7 @@ library SafeMath {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
 /**
  * @title Basic token
@@ -158,6 +121,32 @@ contract BasicToken is ERC20Basic {
 
 }
 
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+
+
 /**
  * @title Standard ERC20 token
  *
@@ -176,7 +165,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -210,7 +206,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
@@ -224,8 +227,15 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
@@ -240,7 +250,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -253,78 +269,14 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
+contract TutorialToken is StandardToken {
+	string public name = "IOTG";
+	string public symbol = "TXT";
+	uint8 public decimals = 18;
+	uint public INITIAL_SUPPLY = 1000000000*(10**18);
 
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
-
-/**
- * @title Standard Burnable Token
- * @dev Adds burnFrom method to ERC20 implementations
- */
-contract StandardBurnableToken is BurnableToken, StandardToken {
-
-  /**
-   * @dev Burns a specific amount of tokens from the target address and decrements allowance
-   * @param _from address The address which you want to send tokens from
-   * @param _value uint256 The amount of token to be burned
-   */
-  function burnFrom(address _from, uint256 _value) public {
-    require(_value <= allowed[_from][msg.sender]);
-    // Should https://github.com/OpenZeppelin/zeppelin-solidity/issues/707 be accepted,
-    // this function needs to emit an event with the updated approval.
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    _burn(_from, _value);
-  }
-}
-
-contract TutorialToken is StandardBurnableToken,Ownable {
-  address public WalletHolder;
-
-  string public constant name = "SLA";
-  string public constant symbol = "SLAVA Token";
-  uint8 public constant decimals = 18;
-
-  uint256 public constant INITIAL_SUPPLY = 880000000 * (10 ** uint256(decimals));
-
-  /**
-   * @dev Constructor that gives WalletHolder all of existing tokens.
-   */
-  function TutorialToken(address _WalletHolder) public {
-    require(_WalletHolder != address(0));
-    WalletHolder = _WalletHolder;
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[WalletHolder] = INITIAL_SUPPLY;
-    emit Transfer(address(this), msg.sender, INITIAL_SUPPLY);
-  }
-
-  /**
-   * @dev  Don't accept ETH.
-   */
-  function () public payable {
-    revert();
-  }
+	constructor() public {
+  	totalSupply_ = INITIAL_SUPPLY;
+  	balances[msg.sender] = INITIAL_SUPPLY;
+	}
 }
