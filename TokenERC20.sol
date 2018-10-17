@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf0a7de805d027f0df41819c98807c23159b91196
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x33c962e0950b2ff7c608e88247e8adac8108a2c7
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
-    string public name;         
+    string public name;                       //?????
     string public symbol;
     uint8 public decimals = 18;  
-    uint256 public totalSupply;  
+    uint256 public totalSupply;                 //?????
 
     mapping (address => uint256) public balanceOf; 
 
