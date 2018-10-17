@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DBXCContract at 0xef47dD38cc0C2856a27fb1964B066Ec33426e979
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DBXCContract at 0xf539b0d4ee8359424d91d100c755e0c579f358d5
 */
 pragma solidity ^0.4.22;
 
@@ -138,20 +138,6 @@ contract DBXCContract {
     }
 
     /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value); 
-        return true;
-    }
-
-    /**
      * IncreaseApproval
      *
      * @param _spender The address authorized to spend
@@ -188,20 +174,11 @@ contract DBXCContract {
         return allowed[_owner][_spender];
     }
 
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
+    /* Allow another contract to spend some tokens in your behalf */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;     
         tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
+        spender.receiveApproval(msg.sender, _value, this, _extraData); 
+        return true; 
     }
 }
