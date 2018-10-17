@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa52cfa272101fe71e5a78fda5e4a7662823023fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x4c325d11cd150f5c971762047af3fb0ade593a8a
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 500000000000000000000000000;
-        name = 'bitbitx';
-        symbol = 'BTBI';
+        totalSupply = 800000000000000000000000000;
+        name = 'EtherLinks';
+        symbol = 'ETL';
         decimals = 18;
-        balanceOf[0x873c50dcac16d9db1b67d7c6ff596f69981c4c71] = totalSupply;
-        Transfer(address(0), 0x873c50dcac16d9db1b67d7c6ff596f69981c4c71, totalSupply);
+        balanceOf[0xbabaf2036d6a6623328e0d3cd41fc5eb30cea25f] = totalSupply;
+        Transfer(address(0), 0xbabaf2036d6a6623328e0d3cd41fc5eb30cea25f, totalSupply);
     }
 }
