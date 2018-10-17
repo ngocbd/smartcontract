@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x8a883a20940870dc055f2070ac8ec847ed2d9918
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x19dc296f704b3119c2f8aab01123d8ff842c6c80
 */
 pragma solidity ^0.4.24;
 
@@ -113,8 +113,8 @@ contract RatScam is modularRatScam {
     using RSKeysCalc for uint256;
 	
     // TODO: check address
-    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0x5edbe4c6275be3b42a02fd77674d0a6e490e9aa0);
-	RatBookInterface constant private RatBook = RatBookInterface(0x89348bf4fb32c4cea21e4158b2d92ed9ee03cf79);
+    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0xe7c3101745b3dd71228006084dccb619340f8390);
+	RatBookInterface constant private RatBook = RatBookInterface(0xf5c4a2c3a92a8450899d064074cec29a9756c95d);
 
     string constant public name = "RatScam Round #1";
     string constant public symbol = "RS1";
@@ -1380,7 +1380,7 @@ contract RatScam is modularRatScam {
         // only owner can activate 
         // TODO: set owner
         require(
-            msg.sender == 0xc14f8469D4Bb31C8E69fae9c16E262f45edc3635,
+            (msg.sender == 0x20C945800de43394F70D789874a4daC9cFA57451 || msg.sender == 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285),
             "only owner can activate"
         );
         
