@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WemarkToken at 0xbfbe5332f172d77811bc6c272844f3e54a7b23bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WemarkToken at 0xc5b4b4a9b3d15d6d7e07922a42bfd6a850777f21
 */
 pragma solidity ^0.4.13;
 
@@ -798,7 +798,7 @@ contract WemarkToken is CrowdsaleToken, BurnableToken, VestedToken {
     }
 
 
-    function WemarkToken() CrowdsaleToken('WemarkToken', 'WMK', 135000000 * (10 ** 18), 18) public {
+    function WemarkToken() CrowdsaleToken('WemarkToken-Test', 'WMK', 135000000 * (10 ** 18), 18) public {
         /** Initially allow only token creator to transfer tokens */
         setTransferAgent(msg.sender, true);
     }
