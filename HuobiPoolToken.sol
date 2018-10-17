@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuobiPoolToken at 0x4198f7c7390db297c696ec234495787f09dfa85e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuobiPoolToken at 0xa66daa57432024023db65477ba87d4e7f5f95213
 */
 pragma solidity ^0.4.10;
 
@@ -93,7 +93,7 @@ contract StandardToken is Token , SafeMath {
 
 contract HuobiPoolToken is StandardToken {
     string public name = "HuobiPoolToken";
-    uint8 public decimals = 8;
+    uint8 public decimals = 18;
     string public symbol = "HPT";
     bool private init =true;
     function turnon() controller {
@@ -104,7 +104,7 @@ contract HuobiPoolToken is StandardToken {
     }
     function HuobiPoolToken() {
         require(init==true);
-        totalSupply = 10000000000;
+        totalSupply = 10000000000*10**18;
         balances[0x3567cafb8bf2a83bbea4e79f3591142fb4ebe86d] = totalSupply;
         init = false;
     }
