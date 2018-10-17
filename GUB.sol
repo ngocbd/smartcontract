@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GUB at 0xad20515052548b45e8bbd6dc7f64cd15a27bf669
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GUB at 0x94473b8fe92a581c8164646508c890ebb3ab7448
 */
 pragma solidity ^0.4.24;
 
@@ -497,7 +497,7 @@ contract GUB is MintableToken {
     string public constant name = "Ancient coins’ chain";
     string public constant symbol = "GUB";
     uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 10000000000;
+    uint256 public constant INITIAL_SUPPLY = 7000000000;
     
     /**
     * @dev Constructor that gives msg.sender all of existing tokens.
