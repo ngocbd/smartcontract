@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0xe170979cd60f6b649bc8b07629dcc82b956cd565
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0xcc171d6b044d921fa61d504ab057cdb10af82dda
 */
 pragma solidity ^0.4.24;
 
@@ -208,8 +208,8 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
         ) public {
 
-        A = 0x9cDc027edFD6D4fa1dbe4D0Fa75B9D67f1f6c69D;
-        B = 0x9cDc027edFD6D4fa1dbe4D0Fa75B9D67f1f6c69D;
+        A = 0x564a1D21886ADF1F46FF9D867CE8827C5Ec1B388;
+        B = 0xB33532656433f4Eca3782F6B20298d1424d1F2CF;
 
 
         balances[A]=balances[A].add(614359681*(uint256(10)**decimals));
