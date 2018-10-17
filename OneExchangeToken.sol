@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneExchangeToken at 0xf0eeb04b00a9c5bc026d22433c1d94315b7219db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneExchangeToken at 0xa62a4a579c8a18ca8aed837aa8825a74e2e54a4f
 */
 pragma solidity ^0.4.21;
 
@@ -196,7 +196,7 @@ contract OneExchangeToken is owned, TokenERC20 {
     /* Initializes contract with initial supply tokens to the creator of the contract */
 
 	
-	function WorldSafetySecurityToken() public {
+	function OneExchangeToken() public {
 		owner = msg.sender;
 		totalSupply = 10000000000000000000000000000;
 		balanceOf[owner]=totalSupply;
