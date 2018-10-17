@@ -1,7 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TucToken at 0x5175b0d077c19e1db45723d3fbc7ac63e91bdfc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TucToken at 0x89238352b0974dd23338ace7b10ec779def80c18
 */
 pragma solidity ^0.4.13;
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 contract Ownable {
   address public owner;
@@ -91,11 +98,19 @@ library SafeMath {
   }
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 contract BasicToken is ERC20Basic {
@@ -136,51 +151,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-contract ERC827 is ERC20 {
-  function approveAndCall(
-    address _spender,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-
-  function transferAndCall(
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
 }
 
 contract StandardToken is ERC20, BasicToken {
@@ -296,6 +266,36 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
+}
+
+contract ERC827 is ERC20 {
+  function approveAndCall(
+    address _spender,
+    uint256 _value,
+    bytes _data
+  )
+    public
+    payable
+    returns (bool);
+
+  function transferAndCall(
+    address _to,
+    uint256 _value,
+    bytes _data
+  )
+    public
+    payable
+    returns (bool);
+
+  function transferFromAndCall(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _data
+  )
+    public
+    payable
+    returns (bool);
 }
 
 contract ERC827Token is ERC827, StandardToken {
@@ -466,7 +466,7 @@ contract TucToken is ERC827Token, Ownable {
     address admin1;
     address admin2;
 
-    address public accountPubPreSale;
+    address public accountPubICOSale;
     uint8 public decimals;
 	string public name;
 	string public symbol;
@@ -489,41 +489,47 @@ contract TucToken is ERC827Token, Ownable {
      * @param _accountFounder The account for the found tokens that receives 1,024,000,000 tokens on creation.
      * @param _accountPrivPreSale The account for the private pre-sale tokens that receives 1,326,000,000 tokens on creation.
      * @param _accountPubPreSale The account for the public pre-sale tokens that receives 1,500,000,000 tokens on creation.
-     * @param _accountSalesMgmt The account for the Sales Management tokens that receives 2,000,000,000 tokens on creation.
+     * @param _accountPubICOSale The account for the public pre-sale tokens that receives 4,150,000,000 tokens on creation.
+	 * @param _accountSalesMgmt The account for the Sales Management tokens that receives 2,000,000,000 tokens on creation.
      * @param _accountTucWorld The account for the TUC World tokens that receives 2,000.000,000 tokens on creation.
      */
     constructor (
         address _admin1,
         address _admin2,
-        address _accountFounder,
-        address _accountPrivPreSale,
-        address _accountPubPreSale,
-        address _accountSalesMgmt,
-        address _accountTucWorld)
+		address _accountFounder,
+		address _accountPrivPreSale,
+		address _accountPubPreSale,
+        address _accountPubICOSale,
+		address _accountSalesMgmt,
+		address _accountTucWorld
+		)
     public 
     payable
     {
         admin1 = _admin1;
         admin2 = _admin2;
-        accountPubPreSale = _accountPubPreSale;
-        decimals = 18;
-
-        balances[_accountFounder] = 1024000000 * 10**(decimals);
-        balances[_accountPrivPreSale] = 1326000000 * 10**(decimals);
-        balances[_accountPubPreSale] = 1500000000 * 10**(decimals);
-        balances[_accountSalesMgmt] = 2000000000 * 10**(decimals);
-        balances[_accountTucWorld] = 2000000000 * 10**(decimals);
-        totalSupply_ += balances[_accountFounder];
-        totalSupply_ += balances[_accountPrivPreSale];
-        totalSupply_ += balances[_accountPubPreSale];
-        totalSupply_ += balances[_accountSalesMgmt];
-        totalSupply_ += balances[_accountTucWorld];
+        accountPubICOSale = _accountPubICOSale;
+        decimals = 18; // 10**decimals=1000000000000000000
+		totalSupply_ = 12000000000000000000000000000;
+		 
+		balances[_accountFounder]     = 1024000000000000000000000000 ; // 1024000000 * 10**(decimals);
+        balances[_accountPrivPreSale] = 1326000000000000000000000000 ; // 1326000000 * 10**(decimals);
+        balances[_accountPubPreSale]  = 1500000000000000000000000000 ; // 1500000000 * 10**(decimals);
+		balances[_accountPubICOSale]  = 4150000000000000000000000000 ; // 4150000000 * 10**(decimals);
+        balances[_accountSalesMgmt]   = 2000000000000000000000000000 ; // 2000000000 * 10**(decimals);
+        balances[_accountTucWorld]    = 2000000000000000000000000000 ; // 2000000000 * 10**(decimals);
+		emit Transfer(0, _accountFounder, 		balances[_accountFounder]);
+		emit Transfer(0, _accountPrivPreSale, 	balances[_accountPrivPreSale]);
+		emit Transfer(0, _accountPubPreSale, 	balances[_accountPubPreSale]);
+		emit Transfer(0, _accountPubICOSale, 	balances[_accountPubICOSale]);
+		emit Transfer(0, _accountSalesMgmt, 	balances[_accountSalesMgmt]);
+		emit Transfer(0, _accountTucWorld, 		balances[_accountTucWorld]);
 		
-	name = "TUC.World";
-	symbol = "TUC";
+		name = "TUC.World";
+		symbol = "TUC";
     }
 
-    /**
+    /** 
      * @dev During the public ICO users can buy TUC tokens by sending ETH to this method.
      * @dev The price per token is fixed to 0.00000540 ETH / TUC.
      *
@@ -535,17 +541,18 @@ contract TucToken is ERC827Token, Ownable {
     external
 	PubICOstarted
     {
-        uint256 tucAmount = (msg.value * 10**(decimals)) / 5400000000000;
-        require(balances[accountPubPreSale] >= tucAmount);
-
+        uint256 tucAmount = (msg.value * 1000000000000000000) / 5400000000000;
+        require(balances[accountPubICOSale] >= tucAmount);
+		
         if (approvedAccounts[msg.sender]) {
             // already kyc approved
             balances[msg.sender] += tucAmount;
+			emit Transfer(accountPubICOSale, msg.sender, tucAmount);
         } else {
             // not kyc approved
             preApprovedBalances[msg.sender] += tucAmount;
         }
-        balances[accountPubPreSale] -= tucAmount;
+        balances[accountPubICOSale] -= tucAmount;
     }
 
     /**
@@ -564,6 +571,7 @@ contract TucToken is ERC827Token, Ownable {
         balances[_user] += preApprovedBalances[_user];
         // account has no more "unapproved" balance
         preApprovedBalances[_user] = 0;
+		emit Transfer(accountPubICOSale, _user, balances[_user]);
     }
 
     /**
@@ -578,11 +586,11 @@ contract TucToken is ERC827Token, Ownable {
     {
 		require(approvedAccounts[_user] == false);
         uint256 tucAmount = preApprovedBalances[_user];
-        uint256 weiAmount = (tucAmount * 5400000000000) / 10**(decimals);
+        uint256 weiAmount = (tucAmount * 5400000000000) / 1000000000000000000;
         // account is not approved now
         approvedAccounts[_user] = false;
         // pubPreSale gets back its tokens
-        balances[accountPubPreSale] += tucAmount;
+        balances[accountPubICOSale] += tucAmount;
         // user has no more balance
         preApprovedBalances[_user] = 0;
         // we transfer the eth back to the user that were used to buy the tokens
