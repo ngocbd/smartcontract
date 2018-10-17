@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0xdf1b19c9fb0fae3b0e6bef73ee792a72a19104e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x66357bf7b40b3d17f2e740e0b7446509d167c8b4
 */
 pragma solidity ^0.4.24;
 
@@ -12,7 +12,7 @@ contract test {
     string[12] public human_readable_blockhash;
     
     modifier one_time_use {
-        require(keccak256(abi.encodePacked(human_readable_blockhash[0])) == keccak256(abi.encodePacked("")));
+        require(keccak256(human_readable_blockhash[0]) == keccak256(""));
         _;
     }
     
