@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSProxyFactory at 0x1043fbd15c10a3234664cbdd944a16a204f945e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSProxyFactory at 0xa26e15c895efc0616177b7c1e7270a4c7d51c997
 */
 // proxy.sol - execute actions atomically through the proxy's identity
 
@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
 contract DSAuthority {
     function canCall(
@@ -35,9 +35,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -45,7 +45,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -53,7 +53,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -93,7 +93,7 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
@@ -107,7 +107,7 @@ contract DSNote {
 contract DSProxy is DSAuth, DSNote {
     DSProxyCache public cache;  // global cache for contracts
 
-    function DSProxy(address _cacheAddr) public {
+    constructor(address _cacheAddr) public {
         require(setCache(_cacheAddr));
     }
 
@@ -167,7 +167,7 @@ contract DSProxy is DSAuth, DSNote {
 // This factory deploys new proxy instances through build()
 // Deployed proxy addresses are logged
 contract DSProxyFactory {
-    event Created(address indexed sender, address proxy, address cache);
+    event Created(address indexed sender, address indexed owner, address proxy, address cache);
     mapping(address=>bool) public isProxy;
     DSProxyCache public cache = new DSProxyCache();
 
@@ -181,7 +181,7 @@ contract DSProxyFactory {
     // sets custom owner of proxy
     function build(address owner) public returns (DSProxy proxy) {
         proxy = new DSProxy(cache);
-        Created(owner, address(proxy), address(cache));
+        emit Created(msg.sender, owner, address(proxy), address(cache));
         proxy.setOwner(owner);
         isProxy[proxy] = true;
     }
