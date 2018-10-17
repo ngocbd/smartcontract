@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KexToken at 0x5726fa52719af7a35238a85ea24d261bb9120b02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KexToken at 0x8f72b2be44d92a47f84d9a185bc24be77120b7e2
 */
 pragma solidity ^0.4.21;
 
@@ -231,7 +231,7 @@ contract KexToken is StandardToken {
     string public constant symbol = "KEX"; 
     uint8 public constant decimals = 18; 
 
-    uint256 public constant INITIAL_SUPPLY = (100 ** 9) * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = (10 ** 10) * (10 ** uint256(decimals));
 
     /**
     * @dev Constructor that gives msg.sender all of existing tokens.
