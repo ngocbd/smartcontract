@@ -1,6 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToponetToken at 0xF4368ACC0F6fcE45e7d1E6eB9a67Ff3e8fB53645
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToponetToken at 0xb46e1012fa3b753d7146189c2ce1fa87a06bf565
 */
+/**
+ * Toponet Token
+ * 
+ * copyright ©? 2018 toponet.io
+ */
+
 pragma solidity ^0.4.18;
 
 /**
