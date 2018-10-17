@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QSHUCOIN at 0x28be79bd9ac609876b03f692d8d85278d8cbc2f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QSHUCOIN at 0x064d0c8d8100ba8c57a63d75a5fb8ede18d7fe4b
 */
 pragma solidity ^0.4.21;
 
@@ -153,7 +153,7 @@ contract QSHUCOIN is ERC223, Ownable {
     using SafeMath for uint256;
 
     string public name = "QSHUCOIN";
-    string public symbol = "QSHC";
+    string public symbol = "QSH";
     uint8 public decimals = 8;
     uint256 public totalSupply = 50e9 * 1e8;
 
@@ -171,7 +171,8 @@ contract QSHUCOIN is ERC223, Ownable {
      */
     function QSHUCOIN() public {
         owner = msg.sender;
-    balanceOf[msg.sender] = totalSupply;
+
+
     }
 
     function name() public view returns (string _name) {
