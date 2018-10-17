@@ -1,18 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PATH at 0xf813f3902bbc00a6dce378634d3b79d84f9803d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PATH at 0x7b94a1281db0335c9efd68aca5c98b494d775c70
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -22,13 +32,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -38,48 +48,20 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-contract Ownable {
-  address public owner;
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -87,6 +69,12 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -110,10 +98,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -122,53 +109,42 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
 }
 
-contract BurnableToken is BasicToken {
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    Burn(burner, _value);
-  }
-}
-
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -180,7 +156,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -188,7 +171,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -204,7 +187,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -214,7 +197,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
@@ -228,9 +218,16 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -244,156 +241,23 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-}
-
-contract TokenVesting is Ownable {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
-
-  event Released(uint256 amount);
-  event Revoked();
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  uint256 public cliff;
-  uint256 public start;
-  uint256 public duration;
-
-  bool public revocable;
-
-  mapping (address => uint256) public released;
-  mapping (address => bool) public revoked;
-
-  /**
-   * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
-   * _beneficiary, gradually in a linear fashion until _start + _duration. By then all
-   * of the balance will have vested.
-   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-   * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _revocable whether the vesting is revocable or not
-   */
-  function TokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) public {
-    require(_beneficiary != address(0));
-    require(_cliff <= _duration);
-
-    beneficiary = _beneficiary;
-    revocable = _revocable;
-    duration = _duration;
-    cliff = _start.add(_cliff);
-    start = _start;
-  }
-
-  /**
-   * @notice Transfers vested tokens to beneficiary.
-   * @param token ERC20 token which is being vested
-   */
-  function release(ERC20Basic token) public {
-    uint256 unreleased = releasableAmount(token);
-
-    require(unreleased > 0);
-
-    released[token] = released[token].add(unreleased);
-
-    token.safeTransfer(beneficiary, unreleased);
-
-    Released(unreleased);
-  }
-
-  /**
-   * @notice Allows the owner to revoke the vesting. Tokens already vested
-   * remain in the contract, the rest are returned to the owner.
-   * @param token ERC20 token which is being vested
-   */
-  function revoke(ERC20Basic token) public onlyOwner {
-    require(revocable);
-    require(!revoked[token]);
-
-    uint256 balance = token.balanceOf(this);
-
-    uint256 unreleased = releasableAmount(token);
-    uint256 refund = balance.sub(unreleased);
-
-    revoked[token] = true;
-
-    token.safeTransfer(owner, refund);
-
-    Revoked();
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested but hasn't been released yet.
-   * @param token ERC20 token which is being vested
-   */
-  function releasableAmount(ERC20Basic token) public view returns (uint256) {
-    return vestedAmount(token).sub(released[token]);
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested.
-   * @param token ERC20 token which is being vested
-   */
-  function vestedAmount(ERC20Basic token) public view returns (uint256) {
-    uint256 currentBalance = token.balanceOf(this);
-    uint256 totalBalance = currentBalance.add(released[token]);
-
-    if (now < cliff) {
-      return 0;
-    } else if (now >= start.add(duration) || revoked[token]) {
-      return totalBalance;
-    } else {
-      return totalBalance.mul(now.sub(start)).div(duration);
-    }
-  }
-}
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint internal returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
 }
 
 contract SafePayloadChecker {
@@ -403,43 +267,38 @@ contract SafePayloadChecker {
   }
 }
 
-contract PATH is MintableToken, BurnableToken, SafePayloadChecker {
-  /**
-   * @dev the original supply, for posterity, since totalSupply will decrement on burn
-   */
-  uint256 public initialSupply = 400000000 * (10 ** uint256(decimals));
-
-  /**
-   * ERC20 Identification Functions
-   */
-  string public constant name    = "PATH Token"; // solium-disable-line uppercase
-  string public constant symbol  = "PATH"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
+contract PATH is StandardToken, SafePayloadChecker {
+  uint256 public initialSupply = 250000000 * (10 ** uint256(decimals));
+  string public constant name = "Path Network Token";
+  string public constant symbol = "PATH";
+  uint8 public constant decimals = 18;
+  address owner;
 
   /**
    * @dev the time at which token holders can begin transferring tokens
    */
   uint256 public transferableStartTime;
 
-  address privatePresaleWallet;
-  address publicPresaleContract;
-  address publicCrowdsaleContract;
-  address pathTeamMultisig;
-  TokenVesting public founderTokenVesting;
+  /**
+   * @dev Constructor
+   */
+  constructor()
+    public
+  {
+    transferableStartTime = now + 40 days;
+    owner = msg.sender;
+    balances[msg.sender] = initialSupply;
+    totalSupply_ = initialSupply;
+  }
 
   /**
    * @dev the token sale contract(s) and team can move tokens
-   * @dev   before the lockup expires
+   * @dev before the lockup expires
    */
   modifier onlyWhenTransferEnabled()
   {
     if (now <= transferableStartTime) {
-      require(
-        msg.sender == privatePresaleWallet || // solium-disable-line operator-whitespace
-        msg.sender == publicPresaleContract || // solium-disable-line operator-whitespace
-        msg.sender == publicCrowdsaleContract || // solium-disable-line operator-whitespace
-        msg.sender == pathTeamMultisig
-      );
+      require(msg.sender == owner, "Sender not authorized.");
     }
     _;
   }
@@ -451,15 +310,6 @@ contract PATH is MintableToken, BurnableToken, SafePayloadChecker {
   {
     require(_addr != address(this));
     _;
-  }
-
-  /**
-   * @dev Constructor
-   */
-  function PATH(uint256 _transferableStartTime)
-    public
-  {
-    transferableStartTime = _transferableStartTime;
   }
 
   /**
@@ -494,36 +344,6 @@ contract PATH is MintableToken, BurnableToken, SafePayloadChecker {
   }
 
   /**
-   * @dev burn tokens, but also include a Transfer(sender, 0x0, value) event
-   * @param _value The amount to be burned.
-   */
-  function burn(uint256 _value)
-    onlyWhenTransferEnabled
-    public
-  {
-    super.burn(_value);
-  }
-
-  /**
-   * @dev burn tokens on behalf of someone
-   * @param _from The address of the owner of the token.
-   * @param _value The amount to be burned.
-   */
-  function burnFrom(address _from, uint256 _value)
-    onlyPayloadSize(32 + 32) // address (32) + uint256 (32)
-    onlyWhenTransferEnabled
-    public
-  {
-    require(_value <= allowed[_from][msg.sender]);
-    require(_value <= balances[_from]);
-
-    balances[_from] = balances[_from].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    Burn(_from, _value);
-    Transfer(_from, address(0), _value);
-  }
-
-  /**
    * @dev override approval functions to include safe payload checking
    */
   function approve(address _spender, uint256 _value)
@@ -548,59 +368,5 @@ contract PATH is MintableToken, BurnableToken, SafePayloadChecker {
     returns (bool)
   {
     return super.decreaseApproval(_spender, _subtractedValue);
-  }
-
-
-  /**
-   * @dev distribute the tokens once the crowdsale addresses are known
-   * @dev only callable once and disables minting at the end
-   */
-  function distributeTokens(
-    address _privatePresaleWallet,
-    address _publicPresaleContract,
-    address _publicCrowdsaleContract,
-    address _pathCompanyMultisig,
-    address _pathAdvisorVault,
-    address _pathFounderAddress
-  )
-    onlyOwner
-    canMint
-    external
-  {
-    // Set addresses
-    privatePresaleWallet = _privatePresaleWallet;
-    publicPresaleContract = _publicPresaleContract;
-    publicCrowdsaleContract = _publicCrowdsaleContract;
-    pathTeamMultisig = _pathCompanyMultisig;
-
-    // Mint all tokens according to the established allocations
-    mint(_privatePresaleWallet, 200000000 * (10 ** uint256(decimals)));
-    // ^ 50%
-    mint(_publicPresaleContract, 32000000 * (10 ** uint256(decimals)));
-    // ^ 8%
-    mint(_publicCrowdsaleContract, 8000000 * (10 ** uint256(decimals)));
-    // ^ 2%
-    mint(_pathCompanyMultisig, 80000000 * (10 ** uint256(decimals)));
-    // ^ 20%
-    mint(_pathAdvisorVault, 40000000 * (10 ** uint256(decimals)));
-    // ^ 10%
-
-    // deploy a token vesting contract for the founder tokens
-    uint256 cliff = 6 * 4 weeks; // 4 months
-    founderTokenVesting = new TokenVesting(
-      _pathFounderAddress,
-      now,   // start vesting now
-      cliff, // cliff time
-      cliff, // 100% unlocked at cliff
-      false  // irrevocable
-    );
-    // and then mint tokens to the vesting contract
-    mint(address(founderTokenVesting), 40000000 * (10 ** uint256(decimals)));
-    // ^ 10%
-
-    // immediately finish minting
-    finishMinting();
-
-    assert(totalSupply_ == initialSupply);
   }
 }
