@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0xe8561c5a1e52e9ea12b17bd9168c230af9be766d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0x07227ab560609efc6d45d953ee333a76f329a74b
 */
 pragma solidity ^0.4.21;
 
@@ -109,11 +109,11 @@ contract ERC20Token {
 contract PUST is ERC20Token {
     
     string public name = "UST Put Option";
-    string public symbol = "PUST";
-    uint public decimals = 0;
+    string public symbol = "PUST12";
+    uint public decimals = 4;
     
     uint256 public totalSupply = 0;
-    uint256 public topTotalSupply = 2000;
+    uint256 public topTotalSupply = 1000 * 10**decimals;
     
     function transfer(address _to, uint256 _value) public returns (bool success) {
     //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -188,11 +188,11 @@ contract ExchangeUST is SafeMath, Owned, PUST {
         require (_pustBalance <= balances[msg.sender]);
         
         // convert units from ether to wei
-        uint _ether = safeMul(_pustBalance, 10 ** 18);
+        uint _ether = safeMul(_pustBalance, 10 ** 14);
         require (address(this).balance >= _ether); 
         
         // UST amount
-        uint _amount = safeMul(_pustBalance, exchangeRate * 10**18);
+        uint _amount = safeMul(_pustBalance, exchangeRate * 10**14);
         require (PUST(ustAddress).transferFrom(msg.sender, officialAddress, _amount) == true);
         
         balances[msg.sender] = safeSub(balances[msg.sender], _pustBalance);
@@ -208,10 +208,10 @@ contract USTputOption is ExchangeUST {
     // constant 
     uint public initBlockEpoch = 40;
     uint public eachUserWeight = 10;
-    uint public initEachPUST = 5 * 10**17 wei;
+    uint public initEachPUST = 3358211 * 10**11 wei;
     uint public lastEpochBlock = block.number + initBlockEpoch;
-    uint public price1=4*9995 * 10**17/10000;
-    uint public price2=99993 * 10**17/100000;
+    uint public price1=26865688 * 9995 * 10**10/10000;
+    uint public price2=6716422 * 99993 * 10**10/100000;
     uint public eachPUSTprice = initEachPUST;
     uint public lastEpochTX = 0;
     uint public epochLast = 0;
@@ -226,7 +226,7 @@ contract USTputOption is ExchangeUST {
         require (topTotalSupply > totalSupply);
         bool firstCallReward = false;
         uint epochNow = whichEpoch(block.number);
-        
+    
         if(epochNow != epochLast) {
             
             lastEpochBlock = safeAdd(lastEpochBlock, ((block.number - lastEpochBlock)/initBlockEpoch + 1)* initBlockEpoch);
@@ -239,19 +239,20 @@ contract USTputOption is ExchangeUST {
         }
 
         uint _value = msg.value;
-        uint _PUST = _value / eachPUSTprice;
-        require(_PUST > 0);
+        //uint _PUST = _value * 10**decimals  / eachPUSTprice;
+        uint _PUST = safeMul(_value, 10**decimals)  / eachPUSTprice;
+        require(_PUST >= 1*10**decimals);
         if (safeAdd(totalSupply, _PUST) > topTotalSupply) {
             _PUST = safeSub(topTotalSupply, totalSupply);
         }
         
-        uint _refound = _value - safeMul(_PUST, eachPUSTprice);
+        uint _refound = safeSub(_value, safeMul(_PUST, eachPUSTprice)/10**decimals);
         
         if(_refound > 0) {
             msg.sender.transfer(_refound);
         }
         
-        officialAddress.transfer(safeMul(_PUST, eachPUSTprice));
+        officialAddress.transfer(safeSub(_value, _refound));
         
         balances[msg.sender] = safeAdd(balances[msg.sender], _PUST);
         totalSupply = safeAdd(totalSupply, _PUST);
@@ -264,7 +265,7 @@ contract USTputOption is ExchangeUST {
         
         if (firstCallReward) {
             uint _firstReward = 0;
-            _firstReward = (_PUST - 1) * 2 / 10 + 1;
+            _firstReward = _PUST * 2 / 10;
             if (safeAdd(totalSupply, _firstReward) > topTotalSupply) {
                 _firstReward = safeSub(topTotalSupply, totalSupply);
             }
@@ -300,10 +301,10 @@ contract USTputOption is ExchangeUST {
         uint dif100 = dif/100;
         dif = dif - dif100*100;        
         for(uint i=0;i<dif100;i++)
-            {
-                price1 = price1-price1*5/100;
-                price2 = price2-price2*7/1000;
-            }
+        {
+            price1 = price1-price1*5/100;
+            price2 = price2-price2*7/1000;
+        }
         price1 = price1 - price1*5*dif/10000;
         price2 = price2 - price2*7*dif/100000;
         
@@ -315,7 +316,7 @@ contract USTputOption is ExchangeUST {
         uint _lastReward = 0;
         
         if(lastCallPUST > 0) {
-            _lastReward = (lastCallPUST-1) * 2 / 10 + 1;
+            _lastReward = lastCallPUST * 2 / 10;
         }
         
         if (safeAdd(totalSupply, _lastReward) > topTotalSupply) {
@@ -330,7 +331,7 @@ contract USTputOption is ExchangeUST {
     function DepositETH(uint _PUST) payable public {
         // deposit ether
         require (msg.sender == officialAddress);
-        topTotalSupply += _PUST;
+        topTotalSupply += _PUST * 10**decimals;
     }
     
     // only end time, onwer can transfer contract's ether out.
