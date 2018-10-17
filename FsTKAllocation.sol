@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKAllocation at 0x9c30b77a71138ead3b89793822d5e6df97073971
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKAllocation at 0x77f95ccd5ce7acf7dcd02f99392b040ccb89c763
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
 pragma experimental ABIEncoderV2;
 
@@ -24,8 +24,10 @@ contract FsTKAllocation {
   ERC20 public token;
 
   function initialize(uint256 _vestedAmount) public {
-    require(address(token) == 0);
-    require(_vestedAmount % 5 == 0);
+    require(
+      address(token) == 0 &&
+      _vestedAmount % 5 == 0
+    );
     vestedAmount = _vestedAmount;
     token = ERC20(msg.sender);
   }
