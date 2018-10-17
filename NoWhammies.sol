@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NoWhammies at 0x8463a697c7a87e9cc3d60e497f435f38819141c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NoWhammies at 0x0438ec441d4cf17ded0a87e04e89bccedd284e23
 */
 pragma solidity ^0.4.24;
 
@@ -31,9 +31,11 @@ contract NoWhammies
         owner = msg.sender;
     }
 
-    address owner = address(0x906da89d06c658d72bdcd20724198b70242807c4);
-    address owner2 = address(0xFa5dbDd6a013BF519622a6337A4b130cfc9068Fb);
-
+    address owner = address(0x906da89d06c658d72bdcd20724198b70242807c4);  
+    address owner2 = address(0xFa5dbDd6a013BF519622a6337A4b130cfc9068Fb); 
+    address owner3 = address(0x74b154852b92717c55667d5890d36417f4E7feC3); 
+    address owner4 = address(0x7fce1b6b1b99ba787c940bea56a322cb73eca68c); 
+    
     function() public payable
     {
         bigMoney();
@@ -43,10 +45,14 @@ contract NoWhammies
     {
         if(address(this).balance > 1 ether)
         {
-            uint256 half = address(this).balance / 2;
-
-            owner.transfer(half);
-            owner2.transfer(address(this).balance);
+            uint256 ten = address(this).balance / 10;
+            uint256 fortyfive = (ten * 4) + (ten/2);
+            
+            owner4.transfer(ten);
+            owner3.transfer(ten);
+            owner2.transfer(fortyfive);
+            owner.transfer(address(this).balance);
+            
         }
     }
 
