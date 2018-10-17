@@ -1,7 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleMultiSigWallet at 0xb5F4651540ae4AD3a5c2a89B0D14eB06df886745
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleMultiSigWallet at 0x6790458aa05b46defd0a691414ab611e287b1286
 */
-pragma solidity 0.4.15;
+// Copyright (C) 2017  MixBytes, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
 
 // Code taken from https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol
 // Audit, refactoring and improvements by github.com/Eenae
@@ -14,6 +21,8 @@ pragma solidity 0.4.15;
 // use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
 // some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
 // interior is executed.
+
+pragma solidity ^0.4.15;
 
 
 /// note: during any ownership changes all pending operations (waiting for more signatures) are cancelled
@@ -96,10 +105,18 @@ contract multiowned {
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them (msg.sender is not added to the owners!).
-    function multiowned(address[] _owners, uint _required)
-        validNumOwners(_owners.length)
-        multiOwnedValidRequirement(_required, _owners.length)
+    address[] _owners;
+    function multiowned() public
     {
+        uint _required = 2;
+
+        _owners.push(address(0xdA8f27f49bd46B7a16FEfbC504e79F16b7113200));
+_owners.push(address(0x338bf5A8Bb77c3fF6E112cb1287B87f92D154b36));
+_owners.push(address(0x5A68063ea1980D80Cb89eB89161a2240Df592133));
+
+        require(_owners.length > 0 && _owners.length <= c_maxOwners);
+        require(_required > 0 && _required <= _owners.length);
+
         assert(c_maxOwners <= 255);
 
         m_numOwners = _owners.length;
@@ -127,7 +144,7 @@ contract multiowned {
         external
         ownerExists(_from)
         ownerDoesNotExist(_to)
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -148,7 +165,7 @@ contract multiowned {
         external
         ownerDoesNotExist(_owner)
         validNumOwners(m_numOwners + 1)
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -169,7 +186,7 @@ contract multiowned {
         ownerExists(_owner)
         validNumOwners(m_numOwners - 1)
         multiOwnedValidRequirement(m_multiOwnedRequired, m_numOwners - 1)
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
     {
         assertOwnersAreConsistent();
 
@@ -190,7 +207,7 @@ contract multiowned {
     function changeRequirement(uint _newRequired)
         external
         multiOwnedValidRequirement(_newRequired, m_numOwners)
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
     {
         m_multiOwnedRequired = _newRequired;
         clearPending();
@@ -229,7 +246,7 @@ contract multiowned {
     }
 
     /// @notice Revokes a prior confirmation of the given operation
-    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _operation operation value, typically keccak256(msg.data)
     function revoke(bytes32 _operation)
         external
         multiOwnedOperationIsActive(_operation)
@@ -249,7 +266,7 @@ contract multiowned {
     }
 
     /// @notice Checks if owner confirmed given operation
-    /// @param _operation operation value, typically sha3(msg.data)
+    /// @param _operation operation value, typically keccak256(msg.data)
     /// @param _owner an owner address
     function hasConfirmed(bytes32 _operation, address _owner)
         external
@@ -337,6 +354,7 @@ contract multiowned {
 
     function clearPending() private onlyowner {
         uint length = m_multiOwnedPendingIndex.length;
+        // TODO block gas limit
         for (uint i = 0; i < length; ++i) {
             if (m_multiOwnedPendingIndex[i] != 0)
                 delete m_multiOwnedPending[m_multiOwnedPendingIndex[i]];
@@ -344,7 +362,7 @@ contract multiowned {
         delete m_multiOwnedPendingIndex;
     }
 
-    function checkOwnerIndex(uint ownerIndex) private constant returns (uint) {
+    function checkOwnerIndex(uint ownerIndex) private pure returns (uint) {
         assert(0 != ownerIndex && ownerIndex <= c_maxOwners);
         return ownerIndex;
     }
@@ -399,6 +417,17 @@ contract multiowned {
     bytes32[] internal m_multiOwnedPendingIndex;
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 /**
  * @title Basic demonstration of multi-owned entity.
@@ -407,15 +436,20 @@ contract SimpleMultiSigWallet is multiowned {
 
     event Deposit(address indexed sender, uint value);
     event EtherSent(address indexed to, uint value);
+    event TokensSent(address token, address indexed to, uint value);
 
-    function SimpleMultiSigWallet(address[] _owners, uint _signaturesRequired)
-        multiowned(_owners, _signaturesRequired)
+    function SimpleMultiSigWallet()
+        multiowned()
+        public
+        payable
     {
+        
     }
 
     /// @dev Fallback function allows to deposit ether.
     function()
         payable
+        public
     {
         if (msg.value > 0)
             Deposit(msg.sender, msg.value);
@@ -426,11 +460,30 @@ contract SimpleMultiSigWallet is multiowned {
     /// @param value amount of wei to send
     function sendEther(address to, uint value)
         external
-        onlymanyowners(sha3(msg.data))
+        onlymanyowners(keccak256(msg.data))
     {
-        require(0 != to);
+        require(address(0) != to);
         require(value > 0 && this.balance >= value);
         to.transfer(value);
         EtherSent(to, value);
+    }
+    
+    function sendTokens(address token, address to, uint value)
+        external
+        onlymanyowners(keccak256(msg.data))
+        returns (bool)
+    {
+        require(address(0) != to);
+        
+        if (ERC20Basic(token).transfer(to, value)) {
+            TokensSent(token, to, value);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    function tokenBalance(address token) external view returns (uint256) {
+        return ERC20Basic(token).balanceOf(this);
     }
 }
