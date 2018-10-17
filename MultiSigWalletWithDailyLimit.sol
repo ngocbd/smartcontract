@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x5c3095c53743b8857d6e1d107e5014cdc7b44efc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xe2d4b960d0c639633582cddef57528461e62083d
 */
-pragma solidity 0.4.4;
+pragma solidity ^0.4.23;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -84,16 +84,15 @@ contract MultiSigWallet {
 
     modifier validRequirement(uint ownerCount, uint _required) {
         if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
-            || _required == 0
-            || ownerCount == 0)
+        || _required > ownerCount
+        || _required == 0
+        || ownerCount == 0)
             throw;
         _;
     }
 
     /// @dev Fallback function allows to deposit ether.
-    function()
-        payable
+    function() payable
     {
         if (msg.value > 0)
             Deposit(msg.sender, msg.value);
@@ -105,9 +104,7 @@ contract MultiSigWallet {
     /// @dev Contract constructor sets initial owners and required number of confirmations.
     /// @param _owners List of initial owners.
     /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
-        public
-        validRequirement(_owners.length, _required)
+    function MultiSigWallet(address[] _owners, uint _required) public validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == 0)
@@ -121,11 +118,11 @@ contract MultiSigWallet {
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of new owner.
     function addOwner(address owner)
-        public
-        onlyWallet
-        ownerDoesNotExist(owner)
-        notNull(owner)
-        validRequirement(owners.length + 1, required)
+    public
+    onlyWallet
+    ownerDoesNotExist(owner)
+    notNull(owner)
+    validRequirement(owners.length + 1, required)
     {
         isOwner[owner] = true;
         owners.push(owner);
@@ -135,9 +132,9 @@ contract MultiSigWallet {
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner.
     function removeOwner(address owner)
-        public
-        onlyWallet
-        ownerExists(owner)
+    public
+    onlyWallet
+    ownerExists(owner)
     {
         isOwner[owner] = false;
         for (uint i=0; i<owners.length - 1; i++)
@@ -155,10 +152,10 @@ contract MultiSigWallet {
     /// @param owner Address of owner to be replaced.
     /// @param owner Address of new owner.
     function replaceOwner(address owner, address newOwner)
-        public
-        onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
+    public
+    onlyWallet
+    ownerExists(owner)
+    ownerDoesNotExist(newOwner)
     {
         for (uint i=0; i<owners.length; i++)
             if (owners[i] == owner) {
@@ -174,9 +171,9 @@ contract MultiSigWallet {
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
     /// @param _required Number of required confirmations.
     function changeRequirement(uint _required)
-        public
-        onlyWallet
-        validRequirement(owners.length, _required)
+    public
+    onlyWallet
+    validRequirement(owners.length, _required)
     {
         required = _required;
         RequirementChange(_required);
@@ -188,8 +185,8 @@ contract MultiSigWallet {
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
     function submitTransaction(address destination, uint value, bytes data)
-        public
-        returns (uint transactionId)
+    public
+    returns (uint transactionId)
     {
         transactionId = addTransaction(destination, value, data);
         confirmTransaction(transactionId);
@@ -198,10 +195,10 @@ contract MultiSigWallet {
     /// @dev Allows an owner to confirm a transaction.
     /// @param transactionId Transaction ID.
     function confirmTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        transactionExists(transactionId)
-        notConfirmed(transactionId, msg.sender)
+    public
+    ownerExists(msg.sender)
+    transactionExists(transactionId)
+    notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
         Confirmation(msg.sender, transactionId);
@@ -211,10 +208,10 @@ contract MultiSigWallet {
     /// @dev Allows an owner to revoke a confirmation for a transaction.
     /// @param transactionId Transaction ID.
     function revokeConfirmation(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
+    public
+    ownerExists(msg.sender)
+    confirmed(transactionId, msg.sender)
+    notExecuted(transactionId)
     {
         confirmations[transactionId][msg.sender] = false;
         Revocation(msg.sender, transactionId);
@@ -223,8 +220,8 @@ contract MultiSigWallet {
     /// @dev Allows anyone to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
+    public
+    notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
             Transaction tx = transactions[transactionId];
@@ -242,9 +239,9 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     /// @return Confirmation status.
     function isConfirmed(uint transactionId)
-        public
-        constant
-        returns (bool)
+    public
+    constant
+    returns (bool)
     {
         uint count = 0;
         for (uint i=0; i<owners.length; i++) {
@@ -264,9 +261,9 @@ contract MultiSigWallet {
     /// @param data Transaction data payload.
     /// @return Returns transaction ID.
     function addTransaction(address destination, uint value, bytes data)
-        internal
-        notNull(destination)
-        returns (uint transactionId)
+    internal
+    notNull(destination)
+    returns (uint transactionId)
     {
         transactionId = transactionCount;
         transactions[transactionId] = Transaction({
@@ -274,7 +271,7 @@ contract MultiSigWallet {
             value: value,
             data: data,
             executed: false
-        });
+            });
         transactionCount += 1;
         Submission(transactionId);
     }
@@ -286,9 +283,9 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     /// @return Number of confirmations.
     function getConfirmationCount(uint transactionId)
-        public
-        constant
-        returns (uint count)
+    public
+    constant
+    returns (uint count)
     {
         for (uint i=0; i<owners.length; i++)
             if (confirmations[transactionId][owners[i]])
@@ -300,22 +297,22 @@ contract MultiSigWallet {
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
     function getTransactionCount(bool pending, bool executed)
-        public
-        constant
-        returns (uint count)
+    public
+    constant
+    returns (uint count)
     {
         for (uint i=0; i<transactionCount; i++)
             if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
+            || executed && transactions[i].executed)
                 count += 1;
     }
 
     /// @dev Returns list of owners.
     /// @return List of owner addresses.
     function getOwners()
-        public
-        constant
-        returns (address[])
+    public
+    constant
+    returns (address[])
     {
         return owners;
     }
@@ -324,9 +321,9 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     /// @return Returns array of owner addresses.
     function getConfirmations(uint transactionId)
-        public
-        constant
-        returns (address[] _confirmations)
+    public
+    constant
+    returns (address[] _confirmations)
     {
         address[] memory confirmationsTemp = new address[](owners.length);
         uint count = 0;
@@ -348,16 +345,16 @@ contract MultiSigWallet {
     /// @param executed Include executed transactions.
     /// @return Returns array of transaction IDs.
     function getTransactionIds(uint from, uint to, bool pending, bool executed)
-        public
-        constant
-        returns (uint[] _transactionIds)
+    public
+    constant
+    returns (uint[] _transactionIds)
     {
         uint[] memory transactionIdsTemp = new uint[](transactionCount);
         uint count = 0;
         uint i;
         for (i=0; i<transactionCount; i++)
             if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
+            || executed && transactions[i].executed)
             {
                 transactionIdsTemp[count] = i;
                 count += 1;
@@ -367,6 +364,7 @@ contract MultiSigWallet {
             _transactionIds[i - from] = transactionIdsTemp[i];
     }
 }
+
 
 /// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -385,9 +383,7 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @param _owners List of initial owners.
     /// @param _required Number of required confirmations.
     /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        MultiSigWallet(_owners, _required)
+    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit) public MultiSigWallet(_owners, _required)
     {
         dailyLimit = _dailyLimit;
     }
@@ -395,8 +391,8 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
     /// @param _dailyLimit Amount in wei.
     function changeDailyLimit(uint _dailyLimit)
-        public
-        onlyWallet
+    public
+    onlyWallet
     {
         dailyLimit = _dailyLimit;
         DailyLimitChange(_dailyLimit);
@@ -405,8 +401,8 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
+    public
+    notExecuted(transactionId)
     {
         Transaction tx = transactions[transactionId];
         bool confirmed = isConfirmed(transactionId);
@@ -432,8 +428,8 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @param amount Amount to withdraw.
     /// @return Returns if amount is under daily limit.
     function isUnderLimit(uint amount)
-        internal
-        returns (bool)
+    internal
+    returns (bool)
     {
         if (now > lastDay + 24 hours) {
             lastDay = now;
@@ -450,12 +446,14 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @dev Returns maximum withdraw amount.
     /// @return Returns amount.
     function calcMaxWithdraw()
-        public
-        constant
-        returns (uint)
+    public
+    constant
+    returns (uint)
     {
         if (now > lastDay + 24 hours)
             return dailyLimit;
+        if (dailyLimit < spentToday)
+            return 0;
         return dailyLimit - spentToday;
     }
 }
