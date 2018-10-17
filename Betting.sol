@@ -1,7 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x32c4ed7b88cfb37cb96b9239d8f9307eb11e85bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x48c71f27e217f16962c9a39ff43d815d74f417e1
 */
 pragma solidity ^0.4.20;
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 
 contract OraclizeI {
@@ -987,33 +1013,7 @@ contract usingOraclize {
     }
         
 }
-// </ORACLIZE_API>
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 contract BettingControllerInterface {
     function remoteBettingClose() external;
     function depositHouseTakeout() external payable;
@@ -1143,7 +1143,7 @@ contract Betting is usingOraclize {
 
         if (myid == coinIndex[coin_pointer].preOraclizeId) {
             if (coinIndex[coin_pointer].pre > 0) {
-            } else if (now >= chronus.starting_time+chronus.betting_duration+ 30 minutes) {
+            } else if (now >= chronus.starting_time+chronus.betting_duration+ 60 minutes) {
                 forceVoidRace();
             } else {
                 coinIndex[coin_pointer].pre = stringToUintNormalize(result);
@@ -1152,7 +1152,7 @@ contract Betting is usingOraclize {
         } else if (myid == coinIndex[coin_pointer].postOraclizeId){
             if (coinIndex[coin_pointer].pre > 0 ){
                 if (coinIndex[coin_pointer].post > 0) {
-                } else if (now >= chronus.starting_time+chronus.race_duration+ 30 minutes) {
+                } else if (now >= chronus.starting_time+chronus.race_duration+ 60 minutes) {
                     forceVoidRace();
                 } else {
                     coinIndex[coin_pointer].post = stringToUintNormalize(result);
