@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x1a4970f07e385805cf6a58de93a4080f2bdeedf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x5deaeec143cd2fd58c3ad9d6ae69e0efeaedb53c
 */
 pragma solidity ^0.4.13;
 
@@ -67,19 +67,89 @@ library ECRecovery {
     }
 }
 
-contract Htlc {
+contract DSMath {
+    function add(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x);
+    }
+    function sub(uint x, uint y) internal pure returns (uint z) {
+        require((z = x - y) <= x);
+    }
+    function mul(uint x, uint y) internal pure returns (uint z) {
+        require(y == 0 || (z = x * y) / y == x);
+    }
+
+    function min(uint x, uint y) internal pure returns (uint z) {
+        return x <= y ? x : y;
+    }
+    function max(uint x, uint y) internal pure returns (uint z) {
+        return x >= y ? x : y;
+    }
+    function imin(int x, int y) internal pure returns (int z) {
+        return x <= y ? x : y;
+    }
+    function imax(int x, int y) internal pure returns (int z) {
+        return x >= y ? x : y;
+    }
+
+    uint constant WAD = 10 ** 18;
+    uint constant RAY = 10 ** 27;
+
+    function wmul(uint x, uint y) internal pure returns (uint z) {
+        z = add(mul(x, y), WAD / 2) / WAD;
+    }
+    function rmul(uint x, uint y) internal pure returns (uint z) {
+        z = add(mul(x, y), RAY / 2) / RAY;
+    }
+    function wdiv(uint x, uint y) internal pure returns (uint z) {
+        z = add(mul(x, WAD), y / 2) / y;
+    }
+    function rdiv(uint x, uint y) internal pure returns (uint z) {
+        z = add(mul(x, RAY), y / 2) / y;
+    }
+
+    // This famous algorithm is called "exponentiation by squaring"
+    // and calculates x^n with x as fixed-point and n as regular unsigned.
+    //
+    // It's O(log n), instead of O(n) for naive repeated multiplication.
+    //
+    // These facts are why it works:
+    //
+    //  If n is even, then x^n = (x^2)^(n/2).
+    //  If n is odd,  then x^n = x * x^(n-1),
+    //   and applying the equation for even x gives
+    //    x^n = x * (x^2)^((n-1) / 2).
+    //
+    //  Also, EVM division is flooring and
+    //    floor[(n-1) / 2] = floor[n / 2].
+    //
+    function rpow(uint x, uint n) internal pure returns (uint z) {
+        z = n % 2 != 0 ? x : RAY;
+
+        for (n /= 2; n != 0; n /= 2) {
+            x = rmul(x, x);
+
+            if (n % 2 != 0) {
+                z = rmul(z, x);
+            }
+        }
+    }
+}
+
+contract Htlc is DSMath {
     using ECRecovery for bytes32;
 
     // TYPES
 
-    struct Multisig { // Locked by time and/or authority approval for HTLC conversion or earlyResolve
-        address owner; // Owns funds deposited in multisig,
+    // ATL Authority timelocked contract
+    struct Multisig { // Locked by authority approval (earlyResolve), time (timoutResolve) or conversion into an atomic swap
+        address owner; // Owns ether deposited in multisig
         address authority; // Can approve earlyResolve of funds out of multisig
         uint deposit; // Amount deposited by owner in this multisig
         uint unlockTime; // Multisig expiration timestamp in seconds
     }
 
-    struct AtomicSwap { // HTLC swap used for regular transfers
+    struct AtomicSwap { // Locked by secret (regularTransfer) or time (reclaimExpiredSwaps)
+        bytes32 msigId; // Corresponding multisigId
         address initiator; // Initiated this swap
         address beneficiary; // Beneficiary of this swap
         uint amount; // If zero then swap not active anymore
@@ -90,9 +160,10 @@ contract Htlc {
 
     // FIELDS
 
-    address constant FEE_RECIPIENT = 0x0E5cB767Cce09A7F3CA594Df118aa519BE5e2b5A;
-    mapping (bytes32 => Multisig) public hashIdToMultisig;
-    mapping (bytes32 => AtomicSwap) public hashIdToSwap;
+    address constant FEE_RECIPIENT = 0x478189a0aF876598C8a70Ce8896960500455A949;
+    uint constant MAX_BATCH_ITERATIONS = 25; // Assumption block.gaslimit around 7500000
+    mapping (bytes32 => Multisig) public multisigs;
+    mapping (bytes32 => AtomicSwap) public atomicswaps;
 
     // EVENTS
 
@@ -110,35 +181,9 @@ contract Htlc {
     function spendFromMultisig(bytes32 msigId, uint amount, address recipient)
         internal
     {
-        // Require sufficient deposit amount; Prevents buffer underflow
-        require(amount <= hashIdToMultisig[msigId].deposit);
-        hashIdToMultisig[msigId].deposit -= amount;
-        if (hashIdToMultisig[msigId].deposit == 0) {
-            // Delete multisig
-            delete hashIdToMultisig[msigId];
-            assert(hashIdToMultisig[msigId].deposit == 0);
-        }
-        // Transfer recipient
-        recipient.transfer(amount);
-    }
-
-    /**
-    @notice Send ether out of this contract to swap beneficiary and update or delete entry in swap mapping
-    @param swapId Unique (initiator, beneficiary, amount, fee, expirationTime, hashedSecret) swap identifier
-    @param amount Spend this amount of ether
-    */
-    function spendFromSwap(bytes32 swapId, uint amount, address recipient)
-        internal
-    {
-        // Require sufficient swap amount; Prevents buffer underflow
-        require(amount <= hashIdToSwap[swapId].amount);
-        hashIdToSwap[swapId].amount -= amount;
-        if (hashIdToSwap[swapId].amount == 0) {
-            // Delete swap
-            delete hashIdToSwap[swapId];
-            assert(hashIdToSwap[swapId].amount == 0);
-        }
-        // Transfer to recipient
+        multisigs[msigId].deposit = sub(multisigs[msigId].deposit, amount);
+        if (multisigs[msigId].deposit == 0)
+            delete multisigs[msigId];
         recipient.transfer(amount);
     }
 
@@ -156,17 +201,18 @@ contract Htlc {
         payable
         returns (bytes32 msigId)
     {
-        // Require not own authority and ether are sent
+        // Require not own authority and non-zero ether amount are sent
         require(msg.sender != authority);
         require(msg.value > 0);
+        // Create unique multisig identifier
         msigId = keccak256(
             msg.sender,
             authority,
             msg.value,
             unlockTime
         );
-
-        Multisig storage multisig = hashIdToMultisig[msigId];
+        // Create multisig
+        Multisig storage multisig = multisigs[msigId];
         if (multisig.deposit == 0) { // New or empty multisig
             // Create new multisig
             multisig.owner = msg.sender;
@@ -177,7 +223,7 @@ contract Htlc {
     }
 
     /**
-    @notice Deposit msg.value ether into a multisig and set unlockTime
+    @notice Multisig msg.value ether into a multisig and set unlockTime
     @dev Can increase deposit and/or unlockTime but not owner or authority
     @param msigId Unique (owner, authority, balance != 0) multisig identifier
     @param unlockTime Lock Ether until unlockTime in seconds.
@@ -186,19 +232,52 @@ contract Htlc {
         public
         payable
     {
-        Multisig storage multisig = hashIdToMultisig[msigId];
-        assert(
-            multisig.deposit + msg.value >=
-            multisig.deposit
-        ); // Throws on overflow.
-        multisig.deposit += msg.value;
+        Multisig storage multisig = multisigs[msigId];
+        multisig.deposit = add(multisig.deposit, msg.value);
         assert(multisig.unlockTime <= unlockTime); // Can only increase unlockTime
         multisig.unlockTime = unlockTime;
     }
 
-    // TODO allow for batch convertIntoHtlc
     /**
-    @notice Convert swap from multisig to htlc mode
+    @notice Withdraw ether and delete the htlc swap. Equivalent to EARLY_RESOLVE in Nimiq
+    @param msigId Unique (owner, authority, balance != 0) multisig identifier
+    @param amount Return this amount from this contract to owner
+    @param hashedMessage bytes32 hash of unique swap hash, the hash is the signed message. What is recovered is the signer address.
+    @param sig bytes signature, the signature is generated using web3.eth.sign()
+    */
+    function earlyResolve(bytes32 msigId, uint amount, bytes32 hashedMessage, bytes sig)
+        public
+    {
+        // Require: msg.sender == (owner or authority)
+        require(
+            multisigs[msigId].owner == msg.sender ||
+            multisigs[msigId].authority == msg.sender
+        );
+        // Require: valid signature from not msg.sending authority
+        address otherAuthority = multisigs[msigId].owner == msg.sender ?
+            multisigs[msigId].authority :
+            multisigs[msigId].owner;
+        require(otherAuthority == hashedMessage.recover(sig));
+        // Return to owner
+        spendFromMultisig(msigId, amount, multisigs[msigId].owner);
+    }
+
+    /**
+    @notice Withdraw ether and delete the htlc swap. Equivalent to TIMEOUT_RESOLVE in Nimiq
+    @param msigId Unique (owner, authority, balance != 0) multisig identifier
+    @dev Only refunds owned multisig deposits
+    */
+    function timeoutResolve(bytes32 msigId, uint amount)
+        public
+    {
+        // Require time has passed
+        require(now >= multisigs[msigId].unlockTime);
+        // Return to owner
+        spendFromMultisig(msigId, amount, multisigs[msigId].owner);
+    }
+
+    /**
+    @notice First or second stage of atomic swap.
     @param msigId Unique (owner, authority, balance != 0) multisig identifier
     @param beneficiary Beneficiary of this swap
     @param amount Convert this amount from multisig into swap
@@ -212,13 +291,18 @@ contract Htlc {
         returns (bytes32 swapId)
     {
         // Require owner with sufficient deposit
-        require(hashIdToMultisig[msigId].owner == msg.sender);
-        require(hashIdToMultisig[msigId].deposit >= amount + fee); // Checks for underflow
-        require(now <= expirationTime && expirationTime <= now + 86400); // Not more than 1 day
+        require(multisigs[msigId].owner == msg.sender);
+        require(multisigs[msigId].deposit >= amount + fee); // Checks for underflow
+        require(
+            now <= expirationTime &&
+            expirationTime <= min(now + 1 days, multisigs[msigId].unlockTime)
+        ); // Not more than 1 day or unlockTime
         require(amount > 0); // Non-empty amount as definition for active swap
         // Account in multisig balance
-        hashIdToMultisig[msigId].deposit -= amount + fee;
+        multisigs[msigId].deposit = sub(multisigs[msigId].deposit, add(amount, fee));
+        // Create swap identifier
         swapId = keccak256(
+            msigId,
             msg.sender,
             beneficiary,
             amount,
@@ -227,29 +311,42 @@ contract Htlc {
             hashedSecret
         );
         // Create swap
-        AtomicSwap storage swap = hashIdToSwap[swapId];
+        AtomicSwap storage swap = atomicswaps[swapId];
+        swap.msigId = msigId;
         swap.initiator = msg.sender;
         swap.beneficiary = beneficiary;
         swap.amount = amount;
         swap.fee = fee;
         swap.expirationTime = expirationTime;
         swap.hashedSecret = hashedSecret;
-        // Transfer fee to multisig.authority
-        hashIdToMultisig[msigId].authority.transfer(fee);
+        // Transfer fee to fee recipient
+        FEE_RECIPIENT.transfer(fee);
     }
 
-    // TODO calc gas limit
     /**
-    @notice Withdraw ether and delete the htlc swap. Equivalent to REGULAR_TRANSFER in Nimiq
-    @dev Transfer swap amount to beneficiary of swap and fee to authority
-    @param swapIds Unique (initiator, beneficiary, amount, fee, expirationTime, hashedSecret) swap identifiers
-    @param secrets Hashed secrets of htlc swaps
+    @notice Batch execution of convertIntoHtlc() function
     */
-    function batchRegularTransfer(bytes32[] swapIds, bytes32[] secrets)
+    function batchConvertIntoHtlc(
+        bytes32[] msigIds,
+        address[] beneficiaries,
+        uint[] amounts,
+        uint[] fees,
+        uint[] expirationTimes,
+        bytes32[] hashedSecrets
+    )
         public
+        returns (bytes32[] swapId)
     {
-        for (uint i = 0; i < swapIds.length; ++i)
-            regularTransfer(swapIds[i], secrets[i]);
+        require(msigIds.length <= MAX_BATCH_ITERATIONS);
+        for (uint i = 0; i < msigIds.length; ++i)
+            convertIntoHtlc(
+                msigIds[i],
+                beneficiaries[i],
+                amounts[i],
+                fees[i],
+                expirationTimes[i],
+                hashedSecrets[i]
+            ); // Gas estimate `infinite`
     }
 
     /**
@@ -262,23 +359,24 @@ contract Htlc {
         public
     {
         // Require valid secret provided
-        require(sha256(secret) == hashIdToSwap[swapId].hashedSecret);
+        require(sha256(secret) == atomicswaps[swapId].hashedSecret);
+        uint amount = atomicswaps[swapId].amount;
+        address beneficiary = atomicswaps[swapId].beneficiary;
+        // Delete swap
+        delete atomicswaps[swapId];
         // Execute swap
-        spendFromSwap(swapId, hashIdToSwap[swapId].amount, hashIdToSwap[swapId].beneficiary);
-        spendFromSwap(swapId, hashIdToSwap[swapId].fee, FEE_RECIPIENT);
+        beneficiary.transfer(amount);
     }
 
     /**
-    @notice Reclaim all the expired, non-empty swaps into a multisig
-    @dev Transfer swap amount to beneficiary of swap and fee to authority
-    @param msigId Unique (owner, authority, balance != 0) multisig identifier to which deposit expired swaps
-    @param swapIds Unique (initiator, beneficiary, amount, fee, expirationTime, hashedSecret) swap identifiers
+    @notice Batch exection of regularTransfer() function
     */
-    function batchReclaimExpiredSwaps(bytes32 msigId, bytes32[] swapIds)
+    function batchRegularTransfer(bytes32[] swapIds, bytes32[] secrets)
         public
     {
+        require(swapIds.length <= MAX_BATCH_ITERATIONS);
         for (uint i = 0; i < swapIds.length; ++i)
-            reclaimExpiredSwaps(msigId, swapIds[i]);
+            regularTransfer(swapIds[i], secrets[i]); // Gas estimate `infinite`
     }
 
     /**
@@ -287,59 +385,31 @@ contract Htlc {
     @param msigId Unique (owner, authority, balance != 0) multisig identifier to which deposit expired swaps
     @param swapId Unique (initiator, beneficiary, amount, fee, expirationTime, hashedSecret) swap identifier
     */
-    function reclaimExpiredSwaps(bytes32 msigId, bytes32 swapId)
+    function reclaimExpiredSwap(bytes32 msigId, bytes32 swapId)
         public
     {
         // Require: msg.sender == ower or authority
         require(
-            hashIdToMultisig[msigId].owner == msg.sender ||
-            hashIdToMultisig[msigId].authority == msg.sender
+            multisigs[msigId].owner == msg.sender ||
+            multisigs[msigId].authority == msg.sender
         );
-        // TODO! link msigId to swapId
+        // Require msigId matches swapId
+        require(msigId == atomicswaps[swapId].msigId);
         // Require: is expired
-        require(now >= hashIdToSwap[swapId].expirationTime);
-        uint amount = hashIdToSwap[swapId].amount;
-        assert(hashIdToMultisig[msigId].deposit + amount >= amount); // Throws on overflow.
-        delete hashIdToSwap[swapId];
-        hashIdToMultisig[msigId].deposit += amount;
+        require(now >= atomicswaps[swapId].expirationTime);
+        uint amount = atomicswaps[swapId].amount;
+        delete atomicswaps[swapId];
+        multisigs[msigId].deposit = add(multisigs[msigId].deposit, amount);
     }
 
     /**
-    @notice Withdraw ether and delete the htlc swap. Equivalent to EARLY_RESOLVE in Nimiq
-    @param hashedMessage bytes32 hash of unique swap hash, the hash is the signed message. What is recovered is the signer address.
-    @param sig bytes signature, the signature is generated using web3.eth.sign()
+    @notice Batch exection of reclaimExpiredSwaps() function
     */
-    function earlyResolve(bytes32 msigId, uint amount, bytes32 hashedMessage, bytes sig)
+    function batchReclaimExpiredSwaps(bytes32 msigId, bytes32[] swapIds)
         public
     {
-        // Require: msg.sender == ower or authority
-        require(
-            hashIdToMultisig[msigId].owner == msg.sender ||
-            hashIdToMultisig[msigId].authority == msg.sender
-        );
-        // Require: valid signature from not tx.sending authority
-        address otherAuthority = hashIdToMultisig[msigId].owner == msg.sender ?
-            hashIdToMultisig[msigId].authority :
-            hashIdToMultisig[msigId].owner;
-        require(otherAuthority == hashedMessage.recover(sig));
-
-        spendFromMultisig(msigId, amount, hashIdToMultisig[msigId].owner);
+        require(swapIds.length <= MAX_BATCH_ITERATIONS); // << block.gaslimit / 88281
+        for (uint i = 0; i < swapIds.length; ++i)
+            reclaimExpiredSwap(msigId, swapIds[i]); // Gas estimate 88281
     }
-
-    /**
-    @notice Withdraw ether and delete the htlc swap. Equivalent to TIMEOUT_RESOLVE in Nimiq
-    @param msigId Unique (owner, authority, balance != 0) multisig identifier
-    @dev Only refunds owned multisig deposits
-    */
-    function timeoutResolve(bytes32 msigId, uint amount)
-        public
-    {
-        // Require sufficient amount and time passed
-        require(hashIdToMultisig[msigId].deposit >= amount);
-        require(now >= hashIdToMultisig[msigId].unlockTime);
-
-        spendFromMultisig(msigId, amount, hashIdToMultisig[msigId].owner);
-    }
-
-    // TODO add timelocked selfdestruct function for initial version
 }
