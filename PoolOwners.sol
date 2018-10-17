@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x3e39a0c976866d9c3347c69191bed3386037be12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x518e5a711cf84666b98dddb00a0d4a0a6c59955e
 */
 pragma solidity ^0.4.3;
 
@@ -191,8 +191,8 @@ contract PoolOwners is Ownable {
 
     mapping(address => uint256) public tokenBalance;
     mapping(address => uint256) public totalReturned;
-    mapping(address => bool)    public whitelist;
-    mapping(address => bool)    public allOwners;
+
+    mapping(address => bool) private whitelist;
 
     itmap.itmap ownerMap;
     
@@ -216,8 +216,8 @@ contract PoolOwners is Ownable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner, uint256 amount);
     event TokenDistributionComplete(address indexed token, uint256 amountOfOwners);
 
-    modifier onlyPoolOwner() {
-        require(allOwners[msg.sender]);
+    modifier onlyWhitelisted() {
+        require(whitelist[msg.sender]);
         _;
     }
 
@@ -274,7 +274,10 @@ contract PoolOwners is Ownable {
             totalOwners += 1;
             o.shareTokens = _amount;
             o.percentage = share;
-            allOwners[_sender] = true;
+        }
+
+        if (!whitelist[msg.sender]) {
+            whitelist[msg.sender] = true;
         }
 
         emit Contribution(_sender, share, _amount);
@@ -309,7 +312,7 @@ contract PoolOwners is Ownable {
 
         Owner storage o = owners[_owner];
         if (o.shareTokens == 0) {
-            allOwners[_owner] = true;
+            whitelist[_owner] = true;
             require(ownerMap.insert(totalOwners, uint(_owner)) == false);
             o.key = totalOwners;
             totalOwners += 1;
@@ -323,7 +326,7 @@ contract PoolOwners is Ownable {
         @param _receiver The address that you're sending to
         @param _amount The amount of ownership to send, for your balance refer to `ownerShareTokens`
      */
-    function sendOwnership(address _receiver, uint256 _amount) public onlyPoolOwner() {
+    function sendOwnership(address _receiver, uint256 _amount) public onlyWhitelisted() {
         Owner storage o = owners[msg.sender];
         Owner storage r = owners[_receiver];
 
@@ -341,9 +344,9 @@ contract PoolOwners is Ownable {
             o.percentage = percent(o.shareTokens, valuation, 5);
         }
         if (r.shareTokens == 0) {
-            if (!allOwners[_receiver]) {
+            if (!whitelist[_receiver]) {
                 r.key = totalOwners;
-                allOwners[_receiver] = true;
+                whitelist[_receiver] = true;
                 totalOwners += 1;
             }
             require(ownerMap.insert(r.key, uint(_receiver)) == false);
@@ -366,7 +369,7 @@ contract PoolOwners is Ownable {
         @dev Start the distribution phase in the contract so owners can claim their tokens
         @param _token The token address to start the distribution of
      */
-    function distributeTokens(address _token) public onlyPoolOwner() {
+    function distributeTokens(address _token) public onlyWhitelisted() {
         require(!distributionActive, "Distribution is already active");
         distributionActive = true;
 
@@ -456,12 +459,29 @@ contract PoolOwners is Ownable {
     }
 
     /**
+        @dev Returns whether the address is whitelisted
+        @param _owner The address of the owner
+     */
+    function isWhitelisted(address _owner) public view returns (bool) {
+        return whitelist[_owner];
+    }
+
+    /**
         @dev Returns the contract balance of the sender for a given token
         @param _token The address of the ERC token
      */
     function getOwnerBalance(address _token) public view returns (uint256) {
         Owner storage o = owners[msg.sender];
         return o.balance[_token];
+    }
+
+    /**
+        @dev Returns a owner, all the values in the struct
+        @param _owner Address of the owner
+     */
+    function getOwner(address _owner) public view returns (uint256, uint256, uint256) {
+        Owner storage o = owners[_owner];
+        return (o.key, o.shareTokens, o.percentage);
     }
 
     /**
