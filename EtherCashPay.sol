@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCashPay at 0x592e8c43a873633a41009151fdbaa32f7a21e58e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCashPay at 0xd45c6d6e5dc15c57296dd8aaed956d3612058908
 */
 pragma solidity ^0.4.9;
 
@@ -169,12 +169,12 @@ contract EtherCashPay is SafeMath {
   event Withdraw(address token, address user, uint amount, uint balance);
 
   function EtherCashPay (address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
-    admin = 0x756dD5bA2b8e20210ddEb345C59D69C3a011a4EC;
-    feeAccount = 0x012662Cac702241e37BC1a2C81Ca7C4ee59aDad8;
-    accountLevelsAddr = 0x0000000000000000000000000000000000000000;
-    feeMake = 0;
-    feeTake = 3000000000000000;
-    feeRebate = 0;
+    admin = admin_;
+    feeAccount = feeAccount_;
+    accountLevelsAddr = accountLevelsAddr_;
+    feeMake = feeMake_;
+    feeTake = feeTake_;
+    feeRebate = feeRebate_;
   }
 
   function() {
