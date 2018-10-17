@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0x5379bfa28446714ba0476841292f9368b8e9572b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0xfc5214b147e27e502d6af6bda9ecf39782b8d2b7
 */
 pragma solidity ^0.4.21;
 
@@ -83,11 +83,6 @@ contract ImmAirDropA{
 	function adminUpdateWallet(address _wallet) public onlyAdmin{
 		require(_wallet != address(0));
 		wallet = _wallet;
-	}
-
-	function adminUpdateToken(ERC20 _token) public onlyOwner{
-		require(_token != address(0));
-		token = _token;
 	}
 
     function signupUserWhitelist(address[] _userlist, uint256 _amttype) public onlyAdmin{
