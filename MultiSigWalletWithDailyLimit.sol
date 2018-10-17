@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xe20b6ce8ce5fc4bd570070abb586e0a170b81ee3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x506ce57a0050ffce5fe9437f606cb1d9db17a7b5
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.15;
 
-/// This Multisignature wallet is based on Gnosis implementation: https://github.com/Gnosis/MultiSigWallet
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
@@ -95,10 +94,11 @@ contract MultiSigWallet {
     }
 
     /// @dev Fallback function allows to deposit ether.
-    function() payable public
+    function()
+        payable
     {
         if (msg.value > 0)
-            emit Deposit(msg.sender, msg.value);
+            Deposit(msg.sender, msg.value);
     }
 
     /*
@@ -130,7 +130,7 @@ contract MultiSigWallet {
     {
         isOwner[owner] = true;
         owners.push(owner);
-        emit OwnerAddition(owner);
+        OwnerAddition(owner);
     }
 
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
@@ -149,7 +149,7 @@ contract MultiSigWallet {
         owners.length -= 1;
         if (required > owners.length)
             changeRequirement(owners.length);
-        emit OwnerRemoval(owner);
+        OwnerRemoval(owner);
     }
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
@@ -168,8 +168,8 @@ contract MultiSigWallet {
             }
         isOwner[owner] = false;
         isOwner[newOwner] = true;
-        emit OwnerRemoval(owner);
-        emit OwnerAddition(newOwner);
+        OwnerRemoval(owner);
+        OwnerAddition(newOwner);
     }
 
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
@@ -180,7 +180,7 @@ contract MultiSigWallet {
         validRequirement(owners.length, _required)
     {
         required = _required;
-        emit RequirementChange(_required);
+        RequirementChange(_required);
     }
 
     /// @dev Allows an owner to submit and confirm a transaction.
@@ -205,7 +205,7 @@ contract MultiSigWallet {
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
-        emit Confirmation(msg.sender, transactionId);
+        Confirmation(msg.sender, transactionId);
         executeTransaction(transactionId);
     }
 
@@ -218,7 +218,7 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         confirmations[transactionId][msg.sender] = false;
-        emit Revocation(msg.sender, transactionId);
+        Revocation(msg.sender, transactionId);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction.
@@ -233,9 +233,9 @@ contract MultiSigWallet {
             Transaction storage txn = transactions[transactionId];
             txn.executed = true;
             if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
-                emit Execution(transactionId);
+                Execution(transactionId);
             else {
-                emit ExecutionFailure(transactionId);
+                ExecutionFailure(transactionId);
                 txn.executed = false;
             }
         }
@@ -301,7 +301,7 @@ contract MultiSigWallet {
             executed: false
         });
         transactionCount += 1;
-        emit Submission(transactionId);
+        Submission(transactionId);
     }
 
     /*
@@ -393,6 +393,7 @@ contract MultiSigWallet {
     }
 }
 
+
 /// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletWithDailyLimit is MultiSigWallet {
@@ -430,7 +431,7 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
         onlyWallet
     {
         dailyLimit = _dailyLimit;
-        emit DailyLimitChange(_dailyLimit);
+        DailyLimitChange(_dailyLimit);
     }
 
     /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
@@ -448,9 +449,9 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
             if (!_confirmed)
                 spentToday += txn.value;
             if (txn.destination.call.value(txn.value)(txn.data))
-                emit Execution(transactionId);
+                Execution(transactionId);
             else {
-                emit ExecutionFailure(transactionId);
+                ExecutionFailure(transactionId);
                 txn.executed = false;
                 if (!_confirmed)
                     spentToday -= txn.value;
