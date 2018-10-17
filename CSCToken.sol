@@ -1,38 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSCToken at 0x7ac6629c2c8e7ca6e9696ad6627725ae42c28df7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSCToken at 0x4b9f8c439419fb30092a57cdb7e18373b6a65b9c
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
-
 
 /**
  * @title ERC20Basic
@@ -41,43 +60,123 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
 /**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract Ownable {
+  address public owner;
 
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
-  mapping(address => uint256) balances;
 
   /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+contract CSCToken is Ownable, ERC20Basic {
+  using SafeMath for uint256;
+
+  string public constant name     = "Crypto Service Capital Token";
+  string public constant symbol   = "CSCT";
+  uint8  public constant decimals = 18;
+
+  bool public mintingFinished = false;
+
+  mapping(address => uint256) public balances;
+  address[] public holders;
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  /**
+  * @dev Function to mint tokens
+  * @param _to The address that will receive the minted tokens.
+  * @param _amount The amount of tokens to mint.
+  * @return A boolean that indicates if the operation was successful.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    if (balances[_to] == 0) { 
+      holders.push(_to);
+    }
+    balances[_to] = balances[_to].add(_amount);
+
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
     return true;
+  }
+
+  /**
+  * @dev Function to stop minting new tokens.
+  * @return True if the operation was successful.
+  */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+  /**
+  * @dev Current token is not transferred.
+  * After start official token sale CSCT, you can exchange your tokens
+  */
+  function transfer(address, uint256) public returns (bool) {
+    revert();
+    return false;
   }
 
   /**
@@ -85,95 +184,12 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
   }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
-
-/**
- * @title REP2 Token
- * @dev REP2 Mintable Token with migration from legacy contract
- */
-contract CSCToken is StandardToken {
-
-  string public constant name = "CROWD SHARE CHAIN";
-  string public constant symbol = "CSC";
-  uint256 public constant decimals = 18;
-
-  /**
-    * @dev Creates a new CSCToken instance
-    */
-  function CSCToken()public {
-    uint256 amt = 5 * (10 ** 8) * (10 ** 18);
-    totalSupply = amt*2;
-    balances[0xe3Fd212163D4252D4d82cfda607010016ec7F31C] = amt;
-    balances[0x10d4259DDe7dD0f704DAb552c47e3c5Dc327a602] = amt;
-	emit Transfer(0, 0xe3Fd212163D4252D4d82cfda607010016ec7F31C, amt );
-	emit Transfer(0, 0x10d4259DDe7dD0f704DAb552c47e3c5Dc327a602, amt );
-  }
-
 }
