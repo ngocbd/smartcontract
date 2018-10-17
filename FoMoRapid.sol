@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoRapid at 0x58aa3d34631a3246c5f314dab59b30d67132a90c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoRapid at 0xee6713c1ee63b817950dbad425b795d2ee14e50d
 */
 pragma solidity ^0.4.24;
 
@@ -1746,7 +1746,14 @@ contract FoMoRapid is F3Devents{
         public
     {
         // only team just can activate 
-        require(msg.sender == admin);
+        require(
+            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
+            msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
+            msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
+            msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
+			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
+            "only team just can activate"
+        );
 
         // can only be ran once
         require(activated_ == false, "fomo3d already activated");
