@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HSB at 0xd75e07c31671c4b575f7ca5d09045d762a8122d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HSB at 0x30f59823408fd150ba9469fac2a327525fe07c20
 */
 pragma solidity ^0.4.18;
 library SafeMath {
@@ -127,7 +127,7 @@ contract StandardToken is BasicToken, ERC20 {
 }
 contract HSB is StandardToken, Ownable {
 
-    string public constant name = "HSB";
+    string public constant name = "???";
     string public constant symbol = "HSB";
     uint256 public constant decimals = 8;
 
