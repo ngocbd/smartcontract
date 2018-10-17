@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alpon at 0x9de71f91f9e5c3054ffcd0f624fca5655e600ac6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alpon at 0x4aff7f37696ce3bb0dbe10dd63bae8dc9f634623
 */
 pragma solidity ^0.4.18;
 
@@ -403,7 +403,7 @@ contract Alpon is ERC223, Ownable {
     }
 
     /**
-     * @dev Function to distribute tokens to the list of addresses by the provided amount
+     * @dev Function to distribute tokens to the list of addresses by the provided amount.
      */
     function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
         require(amount > 0 
