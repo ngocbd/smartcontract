@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyYouContract at 0x9C828Aa56c297e6fb98bef9bb455d9D6A0b5d71f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyYouContract at 0xedbe509e65f7425016265a049941311497c0099c
 */
 pragma solidity ^0.4.18;
 
@@ -148,7 +148,7 @@ contract LuckyYouContract is Pausable {
     bool[5] public timesEnabled = [true, false, false, false, false];
 
     uint[5] public currentCounter = [1, 1, 1, 1, 1];
-    mapping(address => uint[5]) private participatedCounter;
+    mapping(address => uint[5]) public participatedCounter;
     mapping(uint8 => address[]) private participants;
     //todo
     mapping(uint8 => uint256) public participantsCount;
