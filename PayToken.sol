@@ -1,38 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PAYToken at 0x5cd0cb65110ecad11eb7880024495c4e6dfb5900
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PayToken at 0x5b313434e43286bee2189bb5a288242876c44f3e
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'PAY' 'Pay Coin' token contract
+// 'Virgin' token contract
 //
-// Symbol      : PAY
-// Name        : Pay Coin
-// Total supply: 1,000,000,000,000.00
-// Decimals    : 2
+// Deployed to : 0xdbad5408df192eb20ff36d6143dd3ac71a10725d
+// Symbol      : Paytk
+// Name        : Paytoken
+// Total supply: 1000000000000000
+// Decimals    : 18
 //
 // Enjoy.
-//
+// Coding by Jarmo van de Seijp
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function sub(uint a, uint b) internal pure returns (uint c) {
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function mul(uint a, uint b) internal pure returns (uint c) {
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function div(uint a, uint b) internal pure returns (uint c) {
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -97,12 +99,10 @@ contract Owned {
 
 
 // ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and an
-// initial PAY supply
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
 // ----------------------------------------------------------------------------
-contract PAYToken is ERC20Interface, Owned {
-    using SafeMath for uint;
-
+contract PayToken is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -115,13 +115,13 @@ contract PAYToken is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function PAYToken() public {
-        symbol = "PAY";
-        name = "Pay Coin";
-        decimals = 2;
-        _totalSupply = 1000000000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+    function PayToken() public {
+        symbol = "PAYTK";
+        name = "PayToken";
+        decimals = 18;
+        _totalSupply = 1000000000000000000000000000;
+        balances[0xdbad5408df192eb20ff36d6143dd3ac71a10725d] = _totalSupply;
+        Transfer(address(0), 0xdbad5408df192eb20ff36d6143dd3ac71a10725d, _totalSupply);
     }
 
 
@@ -134,7 +134,7 @@ contract PAYToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -142,20 +142,20 @@ contract PAYToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
         Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
@@ -170,18 +170,18 @@ contract PAYToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
+    // Transfer tokens from the from account to the to account
     // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
         Transfer(from, to, tokens);
         return true;
     }
@@ -197,9 +197,9 @@ contract PAYToken is ERC20Interface, Owned {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
