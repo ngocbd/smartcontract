@@ -1,138 +1,214 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kujira at 0x5f5521192f99b5d158d056fdbe3d5ea040e02765
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kujira at 0x93fc1a2360c97a3083e091346f8105972cd1534c
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.21;
 
-contract Token {
+/* This contract is the Proof of Community whale contract that will buy and sell tokens to share dividends to token holders.
+   This contract can also handle multiple games to donate ETH to it, which will be needed for future game developement.
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+    Kenny - Solidity developer
+	Bungalogic - website developer, concept and design, graphics. 
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+   ???????????????????????????????????
+   ?????????????????ETH???????????????  
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+   Kenny  -  Solidity????
+   Bungalogic  - ????????????????
+*/
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract Kujira 
+{ 
+    /*
+      Modifiers
+      ???
+     */
 
+    // Only the people that published this contract
+    // ??????????
+    modifier onlyOwner()
+    {
+        require(msg.sender == owner || msg.sender == owner2);
+        _;
+    }
+    
+    // Only PoC token contract
+    // ??PoC????
+    modifier notPoC(address aContract)
+    {
+        require(aContract != address(pocContract));
+        _;
+    }
+   
+    /*
+      Events
+      ??
+     */
+    event Deposit(uint256 amount, address depositer);
+    event Purchase(uint256 amountSpent, uint256 tokensReceived);
+    event Sell();
+    event Payout(uint256 amount, address creditor);
+    event Transfer(uint256 amount, address paidTo);
+
+   /**
+      Global Variables
+      ????
+     */
+    address owner;
+    address owner2;
+    PoC pocContract;
+    uint256 tokenBalance;
+   
+    
+    /*
+       Constructor
+       ???
+     */
+    constructor(address owner2Address) 
+    public 
+    {
+        owner = msg.sender;
+        owner2 = owner2Address;
+        pocContract = PoC(address(0x1739e311ddBf1efdFbc39b74526Fd8b600755ADa));
+        tokenBalance = 0;
+    }
+    
+    function() payable public { }
+     
+    /*
+      Only way to give contract ETH and have it immediately use it, is by using donate function
+      ???ETH???????????????????
+     */
+    function donate() 
+    public payable 
+    {
+        //You have to send more than 1000000 wei
+        //???????1000000 wei
+        require(msg.value > 1000000 wei);
+        uint256 ethToTransfer = address(this).balance;
+        uint256 PoCEthInContract = address(pocContract).balance;
+       
+        // if PoC contract balance is less than 5 ETH, PoC is dead and there is no reason to pump it
+        // ??PoC??????5 ETH?PoC?????????????
+        if(PoCEthInContract < 5 ether)
+        {
+            pocContract.exit();
+            tokenBalance = 0;
+            ethToTransfer = address(this).balance;
+
+            owner.transfer(ethToTransfer);
+            emit Transfer(ethToTransfer, address(owner));
+        }
+
+        // let's buy and sell tokens to give dividends to PoC tokenholders
+        // ????????PoC???????
+        else
+        {
+            tokenBalance = myTokens();
+
+             // if token balance is greater than 0, sell and rebuy 
+             // ????????0?????????
+
+            if(tokenBalance > 0)
+            {
+                pocContract.exit();
+                tokenBalance = 0; 
+
+                ethToTransfer = address(this).balance;
+
+                if(ethToTransfer > 0)
+                {
+                    pocContract.buy.value(ethToTransfer)(0x0);
+                }
+                else
+                {
+                    pocContract.buy.value(msg.value)(0x0);
+                }
+            }
+            else
+            {   
+                // we have no tokens, let's buy some if we have ETH balance
+                // ????????????ETH?????????
+                if(ethToTransfer > 0)
+                {
+                    pocContract.buy.value(ethToTransfer)(0x0);
+                    tokenBalance = myTokens();
+                    emit Deposit(msg.value, msg.sender);
+                }
+            }
+        }
+    }
+
+    
+    /**
+       Number of tokens the contract owns.
+       ??????????
+     */
+    function myTokens() 
+    public 
+    view 
+    returns(uint256)
+    {
+        return pocContract.myTokens();
+    }
+    
+    /**
+       Number of dividends owed to the contract.
+       ?????????
+     */
+    function myDividends() 
+    public 
+    view 
+    returns(uint256)
+    {
+        return pocContract.myDividends(true);
+    }
+
+    /**
+       ETH balance of contract
+       ???ETH??
+     */
+    function ethBalance() 
+    public 
+    view 
+    returns (uint256)
+    {
+        return address(this).balance;
+    }
+
+    /**
+       If someone sends tokens other than PoC tokens, the owner can return them.
+       ???????PoC???????????????????
+     */
+    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) 
+    public 
+    onlyOwner() 
+    notPoC(tokenAddress) 
+    returns (bool success) 
+    {
+        return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
+    }
+    
 }
 
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+// Define the PoC token for the contract
+// ?????PoC??
+contract PoC 
+{
+    function buy(address) public payable returns(uint256);
+    function exit() public;
+    function myTokens() public view returns(uint256);
+    function myDividends(bool) public view returns(uint256);
+    function totalEthereumBalance() public view returns(uint);
 }
 
-contract Kujira is StandardToken {
-
-    /* Public variables of the token */
-    string public name;                   // The Token Name Identifier
-    uint8 public decimals;                // Total Decimals
-    string public symbol;                 // An identifier
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     // ICO Value per ETH
-    uint256 public totalEthInWei;         // Total ETH Raised 
-    address public fundsWallet;           // ICO Raised Funds Address
-
-    // This is a constructor function 
-    // which means the following function name has to match the contract name declared above
-    function Kujira() {
-        balances[msg.sender] = 10000000000000000000000000000;               // Starting supply
-        totalSupply = 10000000000000000000000000000;                        // Total supply
-        name = "Kujira";                                   // Token Display Name
-        decimals = 18;                                               // Decimals
-        symbol = "KUJ";                                             // Token Symbol
-        unitsOneEthCanBuy = 750;                                      // ICO Price
-        fundsWallet = msg.sender;                                    // ETH in return for KUJ token during ICO
-    }
-
-    function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcasted Message
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                               
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
-    }
+// Define ERC20Interface.transfer, so contract can transfer tokens accidently sent to it.
+// ??ERC20 Interface.transfer???????????????????
+contract ERC20Interface 
+{
+    function transfer(address to, uint256 tokens) 
+    public 
+    returns (bool success);
 }
