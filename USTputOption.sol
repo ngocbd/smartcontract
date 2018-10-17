@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0x44433a29280b9bec267b6d22b59bd32251652553
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USTputOption at 0xe8561c5a1e52e9ea12b17bd9168c230af9be766d
 */
 pragma solidity ^0.4.21;
 
@@ -40,9 +40,9 @@ contract Owned {
 
 contract SafeMath {
     function safeMul(uint a, uint b) pure internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
     
     function safeSub(uint a, uint b) pure internal returns (uint) {
@@ -113,7 +113,7 @@ contract PUST is ERC20Token {
     uint public decimals = 0;
     
     uint256 public totalSupply = 0;
-    uint256 public topTotalSupply = 0;
+    uint256 public topTotalSupply = 2000;
     
     function transfer(address _to, uint256 _value) public returns (bool success) {
     //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -167,8 +167,7 @@ contract ExchangeUST is SafeMath, Owned, PUST {
     
     // UST address
     address public ustAddress = address(0xFa55951f84Bfbe2E6F95aA74B58cc7047f9F0644);
-    // our hardWallet address
-    //address public ustHolderAddress = address(0xe88a5b4b01c683FcE5D6cb4494c8E5705c993145);
+    
     // offical Address
     address public officialAddress = address(0x472fc5B96afDbD1ebC5Ae22Ea10bafe45225Bdc6);
     
@@ -188,15 +187,18 @@ contract ExchangeUST is SafeMath, Owned, PUST {
         require (now < ExerciseEndTime);
         require (_pustBalance <= balances[msg.sender]);
         
-        uint _ether = _pustBalance * 10 ** 18;
+        // convert units from ether to wei
+        uint _ether = safeMul(_pustBalance, 10 ** 18);
         require (address(this).balance >= _ether); 
         
-        uint _amount = _pustBalance * exchangeRate * 10**18;
+        // UST amount
+        uint _amount = safeMul(_pustBalance, exchangeRate * 10**18);
         require (PUST(ustAddress).transferFrom(msg.sender, officialAddress, _amount) == true);
         
         balances[msg.sender] = safeSub(balances[msg.sender], _pustBalance);
-        totalSupply = safeSub(totalSupply, _pustBalance);
-        msg.sender.transfer(_ether);   // convert units from ether to wei 
+        balances[officialAddress] = safeAdd(balances[officialAddress], _pustBalance);
+        //totalSupply = safeSub(totalSupply, _pustBalance);
+        msg.sender.transfer(_ether);    
         emit exchange(address(this), msg.sender, _pustBalance);
     }
 }
@@ -206,9 +208,9 @@ contract USTputOption is ExchangeUST {
     // constant 
     uint public initBlockEpoch = 40;
     uint public eachUserWeight = 10;
-    uint public initEachPUST = 5*10**17 wei;
+    uint public initEachPUST = 5 * 10**17 wei;
     uint public lastEpochBlock = block.number + initBlockEpoch;
-    uint public price1=4*9995*10**17/10000;
+    uint public price1=4*9995 * 10**17/10000;
     uint public price2=99993 * 10**17/100000;
     uint public eachPUSTprice = initEachPUST;
     uint public lastEpochTX = 0;
@@ -217,6 +219,7 @@ contract USTputOption is ExchangeUST {
     uint public lastCallPUST;
 
     event buyPUST (address caller, uint PUST);
+    event Reward (address indexed _from, address indexed _to, uint256 _value);
     
     function () payable public {
         require (now < ExerciseEndTime);
@@ -241,14 +244,18 @@ contract USTputOption is ExchangeUST {
         if (safeAdd(totalSupply, _PUST) > topTotalSupply) {
             _PUST = safeSub(topTotalSupply, totalSupply);
         }
-        uint _refound = _value - _PUST * eachPUSTprice;
+        
+        uint _refound = _value - safeMul(_PUST, eachPUSTprice);
+        
         if(_refound > 0) {
             msg.sender.transfer(_refound);
         }
         
+        officialAddress.transfer(safeMul(_PUST, eachPUSTprice));
+        
         balances[msg.sender] = safeAdd(balances[msg.sender], _PUST);
         totalSupply = safeAdd(totalSupply, _PUST);
-        emit buyPUST(msg.sender, _PUST);
+        emit Transfer(address(this), msg.sender, _PUST);
         
         // alloc first reward in a new or init epoch
         if(lastCallAddress == address(0) && epochLast == 0) {
@@ -259,13 +266,12 @@ contract USTputOption is ExchangeUST {
             uint _firstReward = 0;
             _firstReward = (_PUST - 1) * 2 / 10 + 1;
             if (safeAdd(totalSupply, _firstReward) > topTotalSupply) {
-                _firstReward = safeSub(topTotalSupply,totalSupply);
+                _firstReward = safeSub(topTotalSupply, totalSupply);
             }
             balances[msg.sender] = safeAdd(balances[msg.sender], _firstReward);
             totalSupply = safeAdd(totalSupply, _firstReward);
-            
+            emit Reward(address(this), msg.sender, _firstReward);
         }
-        
         
         lastEpochTX += 1;
         
@@ -281,8 +287,7 @@ contract USTputOption is ExchangeUST {
     function whichEpoch(uint _blocknumber) internal view returns (uint _epochNow) {
         if (lastEpochBlock >= _blocknumber ) {
             _epochNow = epochLast;
-        }
-        else {
+        } else {
             //lastEpochBlock = safeAdd(lastEpochBlock, thisEpochBlockCount);
             //thisEpochBlockCount = initBlockEpoch;
             _epochNow = epochLast + (_blocknumber - lastEpochBlock) / initBlockEpoch + 1;
@@ -309,7 +314,7 @@ contract USTputOption is ExchangeUST {
         if (lastEpochTX == 1) return false;
         uint _lastReward = 0;
         
-        if(lastCallPUST != 0) {
+        if(lastCallPUST > 0) {
             _lastReward = (lastCallPUST-1) * 2 / 10 + 1;
         }
         
@@ -318,18 +323,18 @@ contract USTputOption is ExchangeUST {
         }
         balances[lastCallAddress] = safeAdd(balances[lastCallAddress], _lastReward);
         totalSupply = safeAdd(totalSupply, _lastReward);
+        emit Reward(address(this), lastCallAddress, _lastReward);
     }
 
     // only owner can deposit ether into put option contract
-    function DepositETH() payable public {
+    function DepositETH(uint _PUST) payable public {
         // deposit ether
         require (msg.sender == officialAddress);
-        topTotalSupply += msg.value / 10**18;
+        topTotalSupply += _PUST;
     }
     
     // only end time, onwer can transfer contract's ether out.
     function WithdrawETH() payable public onlyOwner {
-        require (now >= ExerciseEndTime);
         officialAddress.transfer(address(this).balance);
     } 
     
