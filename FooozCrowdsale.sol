@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FooozCrowdsale at 0xdee5d321084cfd5425a14354dbff5063025e1846
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FooozCrowdsale at 0x2c676953448add0d450ae0dc4e9afbc228dba62c
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 
 library SafeMath {
@@ -107,7 +107,7 @@ contract BasicToken is ERC20Basic {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -142,7 +142,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -158,7 +158,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -180,7 +180,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -192,7 +192,7 @@ contract StandardToken is ERC20, BasicToken {
         else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -214,7 +214,7 @@ contract Ownable {
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-    function Ownable() public {
+    constructor() public {
     }
 
 
@@ -233,7 +233,7 @@ contract Ownable {
      */
     function changeOwnerTwo(address _newOwner) onlyOwner public {
         require(_newOwner != address(0));
-        OwnerChanged(owner, _newOwner);
+        emit OwnerChanged(owner, _newOwner);
         ownerTwo = _newOwner;
     }
 
@@ -271,8 +271,8 @@ contract MintableToken is StandardToken, Ownable {
     function mint(address _to, uint256 _amount, address _owner) canMint internal returns (bool) {
         balances[_to] = balances[_to].add(_amount);
         balances[_owner] = balances[_owner].sub(_amount);
-        Mint(_to, _amount);
-        Transfer(_owner, _to, _amount);
+        emit Mint(_to, _amount);
+        emit Transfer(_owner, _to, _amount);
         return true;
     }
 
@@ -282,7 +282,7 @@ contract MintableToken is StandardToken, Ownable {
      */
     function finishMinting() onlyOwner canMint internal returns (bool) {
         mintingFinished = true;
-        MintFinished();
+        emit MintFinished();
         return true;
     }
 
@@ -292,7 +292,7 @@ contract MintableToken is StandardToken, Ownable {
      */
     function claimTokens(address _token) public onlyOwner {
         if (_token == 0x0) {
-            owner.transfer(this.balance);
+            owner.transfer(address(this).balance);
             return;
         }
 
@@ -300,7 +300,7 @@ contract MintableToken is StandardToken, Ownable {
         uint256 balance = token.balanceOf(this);
         token.transfer(owner, balance);
 
-        Transfer(_token, owner, balance);
+        emit Transfer(_token, owner, balance);
     }
 }
 
@@ -324,11 +324,7 @@ contract Crowdsale is Ownable {
 
     uint256 public hardWeiCap = 119000 * (10 ** 18);
 
-    function Crowdsale(
-    address _wallet
-    )
-    public
-    {
+    constructor (address _wallet) public {
         require(_wallet != address(0));
         wallet = _wallet;
     }
@@ -353,14 +349,15 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
     address public addressFundAdministration = 0xFe3905B9Bd7C0c4164873180dfE0ee85FbFe9F19;
 
 
-    uint256[] public discount  = [50, 25, 20, 15, 10, 5];
+    uint256[] public discount  = [50, 25, 20, 15, 10];
 
 
 
     uint256 public weiMinSalePreIco = 1190 * 10 ** 15;
     uint256 public weiMinSaleIco = 29 * 10 ** 15;
-    uint256 priceToken = 3362; // $0.25 = 1 token => $1,000 = 1.19 ETH =>
-                         //4,000 token = 1.19 ETH => 1 ETH = 4,000/1.19 = 3362 token
+    uint256 priceToken = 3362;
+    // $0.25 = 1 token => $1,000 = 1.19 ETH =>
+    //4,000 token = 1.19 ETH => 1 ETH = 4,000/1.19 = 3362 token
 
     uint256 public countInvestor;
     uint256 public currentAfterIcoPeriod;
@@ -370,7 +367,7 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
     event HardCapReached();
     event Finalized();
 
-    function FooozCrowdsale (address _owner, address _ownerTwo) public
+    constructor (address _owner, address _ownerTwo) public
     Crowdsale(_owner)
     {
         require(_owner != address(0));
@@ -410,7 +407,7 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
         tokenAllocated = tokenAllocated.add(tokens);
         mint(_investor, tokens, owner);
 
-        TokenPurchase(_investor, weiAmount, tokens);
+        emit TokenPurchase(_investor, weiAmount, tokens);
         if (deposited[_investor] == 0) {
             countInvestor = countInvestor.add(1);
         }
@@ -421,69 +418,64 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
 
     function getTotalAmountOfTokens(uint256 _weiAmount) internal view returns (uint256) {
         uint256 currentDate = now;
-        //currentDate = 1526342400; //for test's (Tue, 15 May 2018 00:00:00 GMT)
+        //currentDate = 1534204800; //for test's (Tue, 14 Aug 2018 00:00:00 GMT)
         uint256 currentPeriod = getPeriod(currentDate);
         uint256 amountOfTokens = 0;
-        if(currentPeriod < 6){
+        if(currentPeriod < 5){
             amountOfTokens = _weiAmount.mul(priceToken).mul(discount[currentPeriod] + 100).div(100);
         }
         if(currentPeriod == 0 && _weiAmount < weiMinSalePreIco){
             amountOfTokens = 0;
         }
-        if(0 < currentPeriod && currentPeriod < 6 && _weiAmount < weiMinSaleIco){
+        if(0 < currentPeriod && currentPeriod < 5 && _weiAmount < weiMinSaleIco){
             amountOfTokens = 0;
         }
         return amountOfTokens;
     }
 
     /**
-    * Pre-ICO sale starts on 31 of March, ends on 06 April 2018
-    * 1st. Stage starts 07 of April , ends on 16 of April , 2018
-    * 2nd. Stage starts 17 of April , ends on 26 of April , 2018
-    * 3rd. Stage starts 27 of April , ends on 06 of May , 2018
-    * 4th. Stage starts 07 of May,    ends on 16  of May , 2018
-    * 4th. Stage starts 17 of May,    ends on 31 of May , 2018
+    * Pre-ICO sale starts on 01 of Jul, ends on 05 Jul 2018
+    * 1st. Stage starts 06 of Jul, ends on 15 of Jul , 2018
+    * 2nd. Stage starts 16 of Jul, ends on 25 of Jul , 2018
+    * 3rd. Stage starts 26 of Jul, ends on 05 of Aug , 2018
+    * 4th. Stage starts 06 of Aug, ends on 15  of Aug , 2018
     */
     function getPeriod(uint256 _currentDate) public pure returns (uint) {
-        //1522454400 - March, 31, 2018 00:00:00 && 1523059199 - April, 06, 2018 23:59:59
-        if( 1522454400 <= _currentDate && _currentDate <= 1523059199){
+        //1530403200 - July, 01, 2018 00:00:00 && 1530835199 - July, 05, 2018 23:59:59
+        if( 1530403200 <= _currentDate && _currentDate <= 1530835199){
             return 0;
         }
-        //1523059200 - April, 07, 2018 00:00:00 && 1523923199 - April, 16, 2018 23:59:59
-        if( 1523059200 <= _currentDate && _currentDate <= 1523923199){
+        //1530835200 - July, 06, 2018 00:00:00 && 1531699199 - July, 15, 2018 23:59:59
+        if( 1530835200 <= _currentDate && _currentDate <= 1531699199){
             return 1;
         }
-        //1523923200 - April, 17, 2018 00:00:00 && 1524787199 - April, 26, 2018 23:59:59
-        if( 1523923200 <= _currentDate && _currentDate <= 1524787199){
+        //1531699200 - July, 16, 2018 00:00:00 && 1532563199 - July, 25, 2018 23:59:59
+        if( 1531699200 <= _currentDate && _currentDate <= 1532563199){
             return 2;
         }
-        //1524787200 - April, 27, 2018 00:00:00 && 1525651199 - May,   06, 2018 23:59:59
-        if( 1524787200 <= _currentDate && _currentDate <= 1525651199){
+        //1532563200 - July, 26, 2018 00:00:00 && 1533513599 - August,   05, 2018 23:59:59
+        if( 1532563200 <= _currentDate && _currentDate <= 1533513599){
             return 3;
         }
-        //1525651200 - May,   07, 2018 00:00:00 && 1526515199 - May,   16, 2018 23:59:59
-        if( 1525651200 <= _currentDate && _currentDate <= 1526515199){
+        //1533513600 - August,   06, 2018 00:00:00 && 1534377599 - August,   15, 2018 23:59:59
+        if( 1533513600 <= _currentDate && _currentDate <= 1534377599){
             return 4;
-        }
-        //1526515200 - May,   17, 2018 00:00:00 && 1527811199 - May,   31, 2018 23:59:59
-        if( 1526515200 <= _currentDate && _currentDate <= 1527811199){
-            return 5;
         }
         return 10;
     }
 
     function getAfterIcoPeriod(uint256 _currentDate) public pure returns (uint) {
-        uint256 endIco = 1527811199; // May,   31, 2018 23:59:59
-        if( endIco < _currentDate && _currentDate <= endIco + 2 years){
+        uint256 endIco = 1534377600; // August,   16, 2018 00:00:00
+        if( endIco < _currentDate && _currentDate <= endIco + 2*365 days){
             return 100;
         }
-        if( endIco + 2 years < _currentDate && _currentDate <= endIco + 4 years){
+        if( endIco + 2*365 days < _currentDate && _currentDate <= endIco + 4*365 days){
             return 200;
         }
-        if( endIco + 4 years < _currentDate && _currentDate <= endIco + 6 years){
+        if( endIco + 4*365 days < _currentDate && _currentDate <= endIco + 6*365 days){
             return 300;
         }
-        if( endIco + 6 years < _currentDate && _currentDate <= endIco + 8 years){
+        if( endIco + 6*365 days < _currentDate && _currentDate <= endIco + 8*365 days){
             return 400;
         }
         return 0;
@@ -493,7 +485,7 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
         uint256 totalCost = tokenAllocated.div(priceToken);
         uint256 fivePercent = 0;
         uint256 currentDate = now;
-        //currentDate = 1564704000; //for test Aug, 02, 2019
+        //currentDate = 1571101199; //for test Oct, 15, 2019
         bool changePeriod = false;
         uint256 nonSoldToken = totalSupply.sub(tokenAllocated);
         uint256 mintTokens = 0;
@@ -542,11 +534,11 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
     function validPurchaseTokens(uint256 _weiAmount) public inState(State.Active) returns (uint256) {
         uint256 addTokens = getTotalAmountOfTokens(_weiAmount);
         if (tokenAllocated.add(addTokens) > fundForSale) {
-            TokenLimitReached(tokenAllocated, addTokens);
+            emit TokenLimitReached(tokenAllocated, addTokens);
             return 0;
         }
         if (weiRaised.add(_weiAmount) > hardWeiCap) {
-            HardCapReached();
+            emit HardCapReached();
             return 0;
         }
         return addTokens;
@@ -555,9 +547,9 @@ contract FooozCrowdsale is Ownable, Crowdsale, MintableToken {
     function finalize() public onlyOwner inState(State.Active) returns (bool result) {
         result = false;
         state = State.Closed;
-        wallet.transfer(this.balance);
+        wallet.transfer(address(this).balance);
         finishMinting();
-        Finalized();
+        emit Finalized();
         result = true;
     }
 
