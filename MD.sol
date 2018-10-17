@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MD at 0xb801f917bcfa3da003ec64ae9b90526add3377ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MD at 0xee669a214bfffb0e53fd44e603a5e7413b1d893e
 */
 pragma solidity ^0.4.24;
 
+// import "./SafeMath.sol";
+// import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+// import "openzeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
 library SafeMath {
 
   /**
@@ -102,7 +105,6 @@ contract MD  {
     constructor(address _owner) public{
         owner = _owner;
         balances[owner] = _totalSupply;
-        emit Transfer(0x0, _owner, _totalSupply);
     }
 
     /**
