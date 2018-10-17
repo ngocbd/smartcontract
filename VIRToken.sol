@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRToken at 0x15a893ae8a8df3538b4ea7d1d3d60e5f059137c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRToken at 0xd061acc723da38af8482f3d0abfa04560adf5c81
 */
 pragma solidity 0.4.24;
 
@@ -130,12 +130,12 @@ contract Ownable {
 
 contract VIRToken is StandardToken, Ownable
 {
-    string public name = "VIR";
-    string public symbol = "Virtual Reality Token";
+    string public symbol = "VIR";
+    string public name = "Virtual Reality Token";
 
     uint public decimals = 18;
 
-    uint private constant initialSupply = 250e9 * 1e18; // 25 billions + 18 decimals
+    uint private constant initialSupply = 25e9 * 1e18; // 25 billions + 18 decimals
 
     constructor() public
     {
