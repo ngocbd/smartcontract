@@ -1,16 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xe73f0398e64be73982b7ee20a7d2a234b68f9321
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xfea67002dc737f6466bd8518af7179b005e59681
 */
-pragma solidity 0.4.24;
+/**
+ * Originally from https://github.com/ConsenSys/MultiSigWallet
+ */
 
-// ----------------------------------------------------------------------------
-// ConsenSys/Gnosis MultiSig for 'UCOT' from:
-// https://github.com/ConsenSys/MultiSigWallet/commit/359c4efb482d97f6a0c0dbea8cd4b95add13bcc4
-//
-// Deployed by Radek Ostrowski / http://startonchain.com
-// Third-Party Software Disclaimer: Contract is deployed “as is”, without warranty of any kind, 
-// either expressed or implied and such software is to be used at your own risk.
-// ----------------------------------------------------------------------------
+
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
