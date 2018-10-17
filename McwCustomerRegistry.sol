@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract McwCustomerRegistry at 0xea6c8aefdd26c887779f72c41670277a9c23d282
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract McwCustomerRegistry at 0xd5e84e9427bf9427b0c3f8b381051dec6fbd0194
 */
 pragma solidity ^0.4.24;
 
@@ -78,6 +78,7 @@ contract TxRegistry is Ownable {
 
     // @dev Structure for TX data
     struct TxData {
+        bytes32 txOrigMcwTransfer;
         uint256 amountMCW;
         uint256 amountKWh;
         uint256 timestampPaymentMCW;
@@ -102,20 +103,29 @@ contract TxRegistry is Ownable {
     /**
     * @dev Owner can add a new Tx of payment for MCW to the customer's TxRegistry
     * @param _txPaymentForMCW the Tx of payment for MCW which will be added
+    * @param _txOrigMcwTransfer the Tx of original MCW transfer in Ethereum network which acts as source for this Tx of payment for MCW
     * @param _amountMCW the amount of MCW tokens which will be recorded to the new Tx
     * @param _amountKWh the amount of KWh which will be recorded to the new Tx
     * @param _timestamp the timestamp of payment for MCW which will be recorded to the new Tx
     */
     function addTxToRegistry(
         bytes32 _txPaymentForMCW,
+        bytes32 _txOrigMcwTransfer,
         uint256 _amountMCW,
         uint256 _amountKWh,
         uint256 _timestamp
         ) public onlyOwner returns(bool)
     {
-        require(_txPaymentForMCW != 0 && _amountMCW != 0 && _amountKWh != 0 && _timestamp != 0);
-        require(txRegistry[_txPaymentForMCW].timestampPaymentMCW == 0);
+        require(
+            _txPaymentForMCW != 0 && _txOrigMcwTransfer != 0 && _amountMCW != 0 && _amountKWh != 0 && _timestamp != 0,
+            "All parameters must be not empty."
+        );
+        require(
+            txRegistry[_txPaymentForMCW].timestampPaymentMCW == 0,
+            "Tx with such hash is already exist."
+        );
 
+        txRegistry[_txPaymentForMCW].txOrigMcwTransfer = _txOrigMcwTransfer;
         txRegistry[_txPaymentForMCW].amountMCW = _amountMCW;
         txRegistry[_txPaymentForMCW].amountKWh = _amountKWh;
         txRegistry[_txPaymentForMCW].timestampPaymentMCW = _timestamp;
@@ -130,9 +140,18 @@ contract TxRegistry is Ownable {
     * @param _timestamp the timestamp of payment for KWh which will be recorded to the Tx
     */
     function setTxAsSpent(bytes32 _txPaymentForMCW, bytes32 _txPaymentForKWh, uint256 _timestamp) public onlyOwner returns(bool) {
-        require(_txPaymentForMCW != 0 && _txPaymentForKWh != 0 && _timestamp != 0);
-        require(txRegistry[_txPaymentForMCW].timestampPaymentMCW != 0);
-        require(txRegistry[_txPaymentForMCW].timestampPaymentKWh == 0);
+        require(
+            _txPaymentForMCW != 0 && _txPaymentForKWh != 0 && _timestamp != 0,
+            "All parameters must be not empty."
+        );
+        require(
+            txRegistry[_txPaymentForMCW].timestampPaymentMCW != 0,
+            "Tx with such hash doesn't exist."
+        );
+        require(
+            txRegistry[_txPaymentForMCW].timestampPaymentKWh == 0,
+            "Tx with such hash is already spent."
+        );
 
         txRegistry[_txPaymentForMCW].txPaymentKWh = _txPaymentForKWh;
         txRegistry[_txPaymentForMCW].timestampPaymentKWh = _timestamp;
@@ -152,6 +171,14 @@ contract TxRegistry is Ownable {
     */  
     function getTxAtIndex(uint256 _index) public view returns(bytes32) {
         return txIndex[_index];
+    }
+
+    /**
+    * @dev Get the customer's Tx of payment for MCW data - Tx of original MCW transfer in Ethereum network which is recorded in the Tx
+    * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
+    */  
+    function getTxOrigMcwTransfer(bytes32 _txPaymentForMCW) public view returns(bytes32) {
+        return txRegistry[_txPaymentForMCW].txOrigMcwTransfer;
     }
 
     /**
@@ -264,7 +291,14 @@ contract McwCustomerRegistry is Ownable {
 
     // @dev Events for dashboard
     event NewCustomer(address indexed customer, address indexed txRegistry);
-    event NewCustomerTx(address indexed customer, bytes32 txPaymentForMCW, uint256 amountMCW, uint256 amountKWh, uint256 timestamp);
+    event NewCustomerTx(
+        address indexed customer,
+        bytes32 txPaymentForMCW,
+        bytes32 txOrigMcwTransfer,
+        uint256 amountMCW,
+        uint256 amountKWh,
+        uint256 timestamp
+    );
     event SpendCustomerTx(address indexed customer, bytes32 txPaymentForMCW, bytes32 txPaymentForKWh, uint256 timestamp);
 
     // @dev Constructor
@@ -277,8 +311,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _customer the address of a new customer to add
     */
     function addCustomerToRegistry(address _customer) public onlyOwner returns(bool) {
-        require(_customer != address(0));
-        require(registry[_customer] == address(0));
+        require(
+            _customer != address(0),
+            "Parameter must be not empty."
+        );
+        require(
+            registry[_customer] == address(0),
+            "Customer is already in the registry."
+        );
 
         address txRegistry = new TxRegistry(_customer);
         registry[_customer] = txRegistry;
@@ -292,12 +332,25 @@ contract McwCustomerRegistry is Ownable {
     * @dev Generates the Tx of payment for MCW (hash as proof of payment) and writes the Tx data to the customer's TxRegistry
     * @dev Related event will be generated
     * @param _customer the address of a customer to whom to add a new Tx
+    * @param _txOrigMcwTransfer the Tx of original MCW transfer in Ethereum network which acts as source for a new Tx of payment for MCW
     * @param _amountMCW the amount of MCW tokens which will be recorded to the new Tx
     * @param _amountKWh the amount of KWh which will be recorded to the new Tx
     */
-    function addTxToCustomerRegistry(address _customer, uint256 _amountMCW, uint256 _amountKWh) public onlyOwner returns(bool) {
-        require(isValidCustomer(_customer));
-        require(_amountMCW != 0 && _amountKWh != 0);
+    function addTxToCustomerRegistry(
+        address _customer,
+        bytes32 _txOrigMcwTransfer,
+        uint256 _amountMCW,
+        uint256 _amountKWh
+        ) public onlyOwner returns(bool)
+    {
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txOrigMcwTransfer != 0 && _amountMCW != 0 && _amountKWh != 0,
+            "All parameters must be not empty."
+        );
 
         uint256 timestamp = now;
         bytes32 txPaymentForMCW = keccak256(
@@ -309,17 +362,22 @@ contract McwCustomerRegistry is Ownable {
             );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
-        require(txRegistry.getTxTimestampPaymentMCW(txPaymentForMCW) == 0);
+        require(
+            txRegistry.getTxTimestampPaymentMCW(txPaymentForMCW) == 0,
+            "Tx with such hash is already exist."
+        );
 
         if (!txRegistry.addTxToRegistry(
             txPaymentForMCW,
+            _txOrigMcwTransfer,
             _amountMCW,
             _amountKWh,
             timestamp))
-            revert ();
+            revert ("Something went wrong.");
         emit NewCustomerTx(
             _customer,
             txPaymentForMCW,
+            _txOrigMcwTransfer,
             _amountMCW,
             _amountKWh,
             timestamp);
@@ -334,11 +392,20 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW which will be marked as spent
     */
     function setCustomerTxAsSpent(address _customer, bytes32 _txPaymentForMCW) public onlyOwner returns(bool) {
-        require(isValidCustomer(_customer));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
-        require(txRegistry.getTxTimestampPaymentMCW(_txPaymentForMCW) != 0);
-        require(txRegistry.getTxTimestampPaymentKWh(_txPaymentForMCW) == 0);
+        require(
+            txRegistry.getTxTimestampPaymentMCW(_txPaymentForMCW) != 0,
+            "Tx with such hash doesn't exist."
+        );
+        require(
+            txRegistry.getTxTimestampPaymentKWh(_txPaymentForMCW) == 0,
+            "Tx with such hash is already spent."
+        );
 
         uint256 timestamp = now;
         bytes32 txPaymentForKWh = keccak256(
@@ -348,7 +415,7 @@ contract McwCustomerRegistry is Ownable {
             );
 
         if (!txRegistry.setTxAsSpent(_txPaymentForMCW, txPaymentForKWh, timestamp))
-            revert ();
+            revert ("Something went wrong.");
         emit SpendCustomerTx(
             _customer,
             _txPaymentForMCW,
@@ -385,7 +452,10 @@ contract McwCustomerRegistry is Ownable {
     * @param _customer the address of a customer which need to be checked
     */   
     function isValidCustomer(address _customer) public view returns(bool) {
-        require(_customer != address(0));
+        require(
+            _customer != address(0),
+            "Parameter must be not empty."
+        );
 
         bool isValid = false;
         address txRegistry = registry[_customer];
@@ -402,7 +472,10 @@ contract McwCustomerRegistry is Ownable {
     * @param _customer the address of a customer for whom to get
     */   
     function getCustomerTxCount(address _customer) public view returns(uint256) {
-        require(isValidCustomer(_customer));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         uint256 txCount = txRegistry.getTxCount();
@@ -415,11 +488,34 @@ contract McwCustomerRegistry is Ownable {
     * @param _index the index of a customer's Tx of payment for MCW in the customer's Tx list
     */       
     function getCustomerTxAtIndex(address _customer, uint256 _index) public view returns(bytes32) {
-        require(isValidCustomer(_customer));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bytes32 txIndex = txRegistry.getTxAtIndex(_index);
         return txIndex;
+    }
+
+    /**
+    * @dev Get the customer's Tx of payment for MCW data - Tx of original MCW transfer in Ethereum network which is recorded in the Tx
+    * @param _customer the address of a customer for whom to get
+    * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
+    */  
+    function getCustomerTxOrigMcwTransfer(address _customer, bytes32 _txPaymentForMCW) public view returns(bytes32) {
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
+
+        TxRegistry txRegistry = TxRegistry(registry[_customer]);
+        bytes32 txOrigMcwTransfer = txRegistry.getTxOrigMcwTransfer(_txPaymentForMCW);
+        return txOrigMcwTransfer;
     }
 
     /**
@@ -428,8 +524,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
     */  
     function getCustomerTxAmountMCW(address _customer, bytes32 _txPaymentForMCW) public view returns(uint256) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         uint256 amountMCW = txRegistry.getTxAmountMCW(_txPaymentForMCW);
@@ -442,8 +544,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
     */  
     function getCustomerTxAmountKWh(address _customer, bytes32 _txPaymentForMCW) public view returns(uint256) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         uint256 amountKWh = txRegistry.getTxAmountKWh(_txPaymentForMCW);
@@ -456,8 +564,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
     */  
     function getCustomerTxTimestampPaymentMCW(address _customer, bytes32 _txPaymentForMCW) public view returns(uint256) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         uint256 timestampPaymentMCW = txRegistry.getTxTimestampPaymentMCW(_txPaymentForMCW);
@@ -470,8 +584,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
     */  
     function getCustomerTxPaymentKWh(address _customer, bytes32 _txPaymentForMCW) public view returns(bytes32) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bytes32 txPaymentKWh = txRegistry.getTxPaymentKWh(_txPaymentForMCW);
@@ -484,8 +604,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW for which to get data
     */  
     function getCustomerTxTimestampPaymentKWh(address _customer, bytes32 _txPaymentForMCW) public view returns(uint256) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         uint256 timestampPaymentKWh = txRegistry.getTxTimestampPaymentKWh(_txPaymentForMCW);
@@ -498,8 +624,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW which need to be checked
     */  
     function isValidCustomerTxPaymentForMCW(address _customer, bytes32 _txPaymentForMCW) public view returns(bool) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bool isValid = txRegistry.isValidTxPaymentForMCW(_txPaymentForMCW);
@@ -512,8 +644,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForMCW the Tx of payment for MCW which need to be checked
     */
     function isSpentCustomerTxPaymentForMCW(address _customer, bytes32 _txPaymentForMCW) public view returns(bool) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForMCW != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForMCW != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bool isSpent = txRegistry.isSpentTxPaymentForMCW(_txPaymentForMCW);
@@ -526,8 +664,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForKWh the Tx of payment for KWh which need to be checked
     */
     function isValidCustomerTxPaymentForKWh(address _customer, bytes32 _txPaymentForKWh) public view returns(bool) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForKWh != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForKWh != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bool isValid = txRegistry.isValidTxPaymentForKWh(_txPaymentForKWh);
@@ -540,8 +684,14 @@ contract McwCustomerRegistry is Ownable {
     * @param _txPaymentForKWh the Tx of payment for KWh
     */
     function getCustomerTxPaymentMCW(address _customer, bytes32 _txPaymentForKWh) public view returns(bytes32) {
-        require(isValidCustomer(_customer));
-        require(_txPaymentForKWh != bytes32(0));
+        require(
+            isValidCustomer(_customer),
+            "Customer is not in the registry."
+        );
+        require(
+            _txPaymentForKWh != bytes32(0),
+            "Parameter must be not empty."
+        );
 
         TxRegistry txRegistry = TxRegistry(registry[_customer]);
         bytes32 txMCW = txRegistry.getTxPaymentMCW(_txPaymentForKWh);
