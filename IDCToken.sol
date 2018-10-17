@@ -1,560 +1,311 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDCToken at 0xdbe16aa3c77ff1bc391f2b311152b86610de1494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDCToken at 0x73d7e1dcfac94282dfda16c8f369b488580f7408
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-// Based on https://github.com/OpenZeppelin/zeppelin-solidity
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+      if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+  
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0);
+    uint256 c = a / b;
+    assert(a == b * c + a % b); 
+    return c;
+  }
 }
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
-    address public owner;
 
+  address public owner;
+  event SetOwner(address indexed oldOwner, address indexed newOwner);
+  
+  constructor() internal {
+    owner = msg.sender;
+  }
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
+  function setOwner(address _newOwner) external onlyOwner {
+    emit SetOwner(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
+contract Saleable is Ownable {
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
+  address public saler;
+  event SetSaler(address indexed oldSaler, address indexed newSaler);
+
+  modifier onlySaler() {
+    require(msg.sender == saler);
+    _;
+  }
+
+  function setSaler(address _newSaler) external onlyOwner {
+    emit SetSaler(saler, _newSaler);
+    saler = _newSaler;
+  }
+}
+
 contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
 
-    bool public paused = false;
+  bool public paused = false;
 
+  event Pause();
+  event Unpause();
 
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
+  modifier notPaused() {
+    require(!paused);
+    _;
+  }
 
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
+  modifier isPaused() {
+    require(paused);
+    _;
+  }
 
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
+  function pause() onlyOwner notPaused public {
+    paused = true;
+    emit Pause();
+  }
 
-    /**
-     * @dev called by the owner to unpause, returns to normal state
-     */
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
+  function unpause() onlyOwner isPaused public {
+    paused = false;
+    emit Unpause();
+  }
 }
 
-/**
- * @title Pausable token
- *
- * @dev StandardToken modified with pausable transfers.
- **/
+contract ERC20Interface {
+    
+  function totalSupply() public view returns (uint256);
+  function decimals() public view returns (uint8);
+  function balanceOf(address _owner) public view returns (uint256);
+  function transfer(address _to, uint256 _value) public returns (bool);
+ 
+  function allowance(address _owner, address _spender) public view returns (uint256);
+  function approve(address _spender, uint256 _value) public returns (bool);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
 
-contract PausableToken is StandardToken, Pausable {
-
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+contract StandToken is ERC20Interface {
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
+  using SafeMath for uint256;
 
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 public totalSupply;
 
-    bool public mintingFinished = false;
+  mapping(address => uint256) balances;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
+  function totalSupply() public view returns (uint256) {
+    return totalSupply;
+  }
+  
+  function decimals() public view returns (uint8) {
+    return decimals;
+  }
+  
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
 
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
 }
 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
+contract BurnableToken is StandToken {
 
-    event Burn(address indexed burner, uint256 value);
+  event Burn(address indexed burner, uint256 value);
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    emit Burn(burner, _value);
+  }
 }
 
+contract IDCToken is BurnableToken, Pausable, Saleable {
 
-/**
- * @title IDC Token
- * @dev IDC Mintable Token with migration from legacy contract
- */
-contract IDCToken is PausableToken, MintableToken, BurnableToken {
-    using SafeMath for uint256;
+  address public addrTeam;
+  address public addrSale;
+  address public addrMine;
 
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint256 public decimals;
+  mapping(address => uint256) public tokenAngel;
+  mapping(address => uint256) public tokenPrivate;
+  mapping(address => uint256) public tokenCrowd;
 
-    // start and end timestamps where investments are allowed (both inclusive)
-    uint256 public startTime;
-    uint256 public endTime;
+  uint256 public release = 0;
+  uint256 private teamLocked = 0;
+  
+  uint256 constant private DAY_10 = 10 days;
+  uint256 constant private DAY_90 = 90 days;
+  uint256 constant private DAY_120 = 120 days;
+  uint256 constant private DAY_150 = 150 days;
+  uint256 constant private DAY_180 = 180 days;
+  uint256 constant private DAY_360 = 360 days;
+  uint256 constant private DAY_720 = 720 days;
+  
+  event TransferToken(uint8 stage, address indexed to, uint256 value);
+  event TokenRelease(address caller, uint256 time);
 
-    // how many token units a buyer gets per wei
-    uint256 public rate;
+  constructor(address _team, address _sale, address _mine) public {
+    name = "IDC Token";
+    symbol = "IT";
+    decimals = 18;
+    totalSupply = 3*10**9*10**uint256(decimals); //3 billion        
+    
+    addrTeam = _team;
+    addrSale = _sale;
+    addrMine = _mine;
+    
+    balances[_team] = totalSupply.mul(2).div(5); //40% for team
+    balances[_sale] = totalSupply.mul(1).div(5); //20% for sale
+    balances[_mine] = totalSupply.mul(2).div(5); //40% for mining
+    teamLocked = balances[_team];    
+    
+    emit Transfer(0,_team,balances[_team]);
+    emit Transfer(0,_sale,balances[_sale]);
+    emit Transfer(0,_mine,balances[_mine]);
+  }
 
-    // amount of raised eth in wei
-    uint256 public weiRaised;
-
-    // amount of token selled
-    uint256 public tokenSelled;
-
-    // creator of contract
-    // will get init tokens when create contract
-    address public creator;
-
-    // address where funds are collected
-    address public wallet;
-
-    // whiteList of user who can buy tokens
-    mapping(address => address) whiteList;
-
-    // record of amount of tokens selled to user in white list
-    mapping(address => uint256) tokensBuyed;
-
-    // cap of tokens per address
-    uint256 public capPerAddress;
-
-    event SellTokens(address indexed recipient, uint sellTokens, uint payEther, uint ratio);
-
-    /**
-     * Set up the initialization parameter
-     */
-    function IDCToken (
-        string    _tokenName,
-        string    _tokenSymbol,
-        uint256   _tokenDecimals,
-        uint256   _startTime,
-        uint256   _endTime,
-        uint256   _totalSupply,
-        uint256   _rate,
-        uint256   _capPerAddress,
-        address   _wallet
-    ) public {
-
-        // simple check
-        require(_endTime >= _startTime);
-        require(_startTime >= now);
-        require(_totalSupply > 0);
-        require(_capPerAddress > 0);
-        require(_wallet != address(0));
-
-        name = _tokenName;
-        symbol = _tokenSymbol;
-        decimals = _tokenDecimals;
-        startTime = _startTime;
-        endTime = _endTime;
-        totalSupply = _totalSupply;
-        rate = _rate;
-        capPerAddress = _capPerAddress;
-        wallet = _wallet;
-
-        // give all init tokens to creator
-        balances[msg.sender] = totalSupply;
-        creator = msg.sender;
+  function transfer(address _to, uint256 _value) notPaused public returns (bool) {
+    if(msg.sender == addrTeam || tokenAngel[msg.sender] > 0 || tokenPrivate[msg.sender] > 0) {
+      require(balanceOfUnlocked(msg.sender) >= _value);
     }
-
-    /**
-     * @dev add user to whilteList(only people in whileList can buy tokens)
-     */
-    function addWhiteList(address user) public onlyOwner {
-        require(user != address(0));
-
-        // no need to check exist of user(will cover if exist)
-        whiteList[user] = user;
+    StandToken.transfer(_to, _value);
+    return true;
+  }
+  
+  function transferFrom(address _from, address _to, uint256 _value) notPaused public returns (bool) {
+    if(_from == addrTeam || tokenAngel[_from] > 0 || tokenPrivate[_from] > 0) {
+      require(balanceOfUnlocked(_from) >= _value);
     }
-
-    /**
-     * @dev check exist of user in whiteList
-     */
-    function checkExist(address user) public view returns(bool) {
-        return(whiteList[user] == user);
+    StandToken.transferFrom(_from, _to, _value);
+    return true;
+  }  
+  
+  function balanceOfUnlocked(address _sender) public view returns (uint256) {
+    require(release > 0 && now > release);
+    uint256 tmPast = now.sub(release);
+    uint256 balance = balanceOf(_sender);
+    
+    if(_sender == addrTeam) {
+      if(tmPast < DAY_180) {
+        balance = balance.sub(teamLocked);
+      }
+      else if(tmPast >= DAY_180 && tmPast < DAY_360) {
+        balance = balance.sub(teamLocked.mul(7).div(10));
+      }
+      else if(tmPast >= DAY_360 && tmPast < DAY_720) {
+        balance = balance.sub(teamLocked.mul(4).div(10));
+      }
     }
-
-    /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     *
-     * sell tokens automatic
-     */
-    function () external payable whenNotPaused preSaleActive {
-        sellTokens();
+    if(tokenAngel[_sender] > 0) {
+      if(tmPast < DAY_120) {
+        balance = balance.sub(tokenAngel[_sender]);
+      }
+      else if(tmPast >= DAY_120 && tmPast < DAY_150) {
+        balance = balance.sub(tokenAngel[_sender].mul(7).div(10));
+      }
+      else if(tmPast >= DAY_150 && tmPast < DAY_180) {
+        balance = balance.sub(tokenAngel[_sender].mul(4).div(10));
+      }
     }
-
-    /**
-     * @dev Sell tokens to msg.sender
-     *
-     */
-    function sellTokens() public payable whenNotPaused preSaleActive {
-
-        require(msg.value > 0);
-        // check user in whiteList or not
-        require(checkExist(msg.sender) == true);
-
-        uint256 amount = msg.value;
-        uint256 tokens =  calculateTokenAmount(amount);
-
-        // check the cap of per user in whiteList
-        require(tokensBuyed[msg.sender].add(tokens) <= calculateTokenAmount(capPerAddress));
-        // check there are tokens for sale;
-        require(tokens <= balances[creator]);
-
-        // record of tokens selled to buyer
-        // in case to user transfer IDC tokens to others, then buy tokens again
-        tokensBuyed[msg.sender] = tokensBuyed[msg.sender].add(tokens);
-
-        tokenSelled = tokenSelled.add(tokens);
-        weiRaised = weiRaised.add(amount);
-
-        // send tokens to buyer
-        // creator has all initSupply tokens
-        // no need to check address
-        balances[creator] = balances[creator].sub(tokens);
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-
-        Transfer(creator, msg.sender, tokens);
-        SellTokens(msg.sender, tokens, amount, rate);
-
-        forwardFunds();
+    if(tokenPrivate[_sender] > 0) {
+      if(tmPast < DAY_90) {
+        balance = balance.sub(tokenPrivate[_sender].div(2));
+      }
     }
-
-    // send ether to the fund collection wallet
-    // override to create custom fund forwarding mechanisms
-    function forwardFunds() internal {
-        wallet.transfer(msg.value);
+    return balance;
+  }
+  
+  function transferToken(uint8 _stage, address _to, uint256 _tokens) onlySaler external payable {
+    require(_stage >= 0 && _stage <= 2);
+    if(_stage == 0) { 
+      tokenAngel[_to] = tokenAngel[_to].add(_tokens);
     }
-
-    /**
-     * @dev check ico is active or not
-     */
-    modifier preSaleActive() {
-        require(now >= startTime);
-        require(now <= endTime);
-        _;
+    else if(_stage == 1) {
+      tokenPrivate[_to] = tokenPrivate[_to].add(_tokens);
     }
-
-    /**
-     * @dev return now time
-     */
-    function timeNow() public view returns(uint256) {
-        return now;
+    else if(_stage == 2) { 
+      tokenCrowd[_to] = tokenCrowd[_to].add(_tokens);
     }
+    balances[addrSale] = balances[addrSale].sub(_tokens);
+    balances[_to] = balances[_to].add(_tokens);
+    emit Transfer(addrSale, _to, _tokens);
+    emit TransferToken(_stage, _to, _tokens);
+  }
 
-    /**
-     * @dev calculate tokens should be send to buyer by rate which is setted when deploying
-     * @param amount eth send by buyer
-     */
-    function calculateTokenAmount(uint256 amount) public constant returns(uint256) {
-        return amount.mul(rate);
-    }
+  function burnToken(uint256 _tokens) onlySaler external returns (bool) {
+    require(_tokens > 0);
+    balances[addrSale] = balances[addrSale].sub(_tokens);
+    totalSupply = totalSupply.sub(_tokens);
+    emit Burn(addrSale, _tokens);
+  }
+  
+  function tokenRelease() onlySaler external returns (bool) {
+    require(release == 0);
+    release = now + DAY_10;
+    emit TokenRelease(msg.sender, release);
+    return true;
+  }
 }
