@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKColdWallet at 0x1160ec99b6f5fb875b55e61644f715353839909c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKColdWallet at 0xE38eF9A2566D551C251d4FdEd0a44D2DF854B3fc
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
 pragma experimental ABIEncoderV2;
 
@@ -10,6 +10,10 @@ library Math {
   struct Fraction {
     uint256 numerator;
     uint256 denominator;
+  }
+
+  function isPositive(Fraction memory fraction) internal pure returns (bool) {
+    return fraction.numerator > 0 && fraction.denominator > 0;
   }
 
   function mul(uint256 a, uint256 b) internal pure returns (uint256 r) {
@@ -49,9 +53,10 @@ library Math {
   function mulDivCeil(uint256 value, uint256 m, uint256 d) internal pure returns (uint256 r) {
     r = value * m;
     if (r / value == m) {
-      r /= d;
-      if (r % d != 0) {
-        r += 1;
+      if (r % d == 0) {
+        r /= d;
+      } else {
+        r = (r / d) + 1;
       }
     } else {
       r = mul(value / d, m);
@@ -75,6 +80,13 @@ library Math {
 
   function divCeil(uint256 x, Fraction memory f) internal pure returns (uint256) {
     return mulDivCeil(x, f.denominator, f.numerator);
+  }
+
+  function mul(Fraction memory x, Fraction memory y) internal pure returns (Math.Fraction) {
+    return Math.Fraction({
+      numerator: mul(x.numerator, y.numerator),
+      denominator: mul(x.denominator, y.denominator)
+    });
   }
 }
 
@@ -136,8 +148,10 @@ contract FsTKColdWallet {
   bytes32[] public pendingOperation;
 
   constructor(address[] _authorities, uint256 required, uint256 _daylimit) public {
-    require(required > 0);
-    require(authorities.length >= required);
+    require(
+      required > 0 &&
+      authorities.length >= required
+    );
 
     numAuthorities = _authorities.length;
     for (uint256 i = 0; i < _authorities.length; i += 1) {
@@ -245,7 +259,7 @@ contract FsTKColdWallet {
     if ((data.length == 0 && checkAndUpdateLimit(value)) || requiredAuthorities == 1) {
       emit SingleTransaction(msg.sender, to, value, data, execute0(to, value, data));
     } else {
-      operation = keccak256(msg.data, pendingOperation.length);
+      operation = keccak256(abi.encodePacked(msg.data, pendingOperation.length));
       PendingTransactionState storage status = pendingTransaction[operation];
       if (status.info.to == 0 && status.info.value == 0 && status.info.data.length == 0) {
         status.info = TransactionInfo({
