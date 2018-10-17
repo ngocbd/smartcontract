@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAYToken at 0xd98e95984ac615ec3bcebad81368b44f2c05c599
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAYToken at 0x1fc7afcd4b46c4180b449f16d93968f1b63161ae
 */
 pragma solidity ^0.4.24;
 
@@ -436,10 +436,10 @@ contract SmartToken is ISmartToken, Owned, ERC20Token, TokenHolder {
 // File: contracts/BAYToken.sol
 
 /**
- * @title DAICO Bay Token
- * @dev DAICO Bay Token is a Smart Token based on Bancor Protocol
+ * @title daicobay token
+ * @dev daicobay token is a Smart Token based on Bancor Protocol
  */
-contract BAYToken is SmartToken ( "DAICO Bay Token", "BAY", 18){
+contract BAYToken is SmartToken ( "daicobay token", "BAY", 18){
   constructor() {
     issue(msg.sender, 10**10 * 10**18);
   }
