@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0x87e5212a30135d562501143cec9f95ffb1de4e9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FranklinFarmer at 0x0bf5fd285f0c6c323564293ed5d6b64d90d50c4f
 */
 pragma solidity ^0.4.20;
 
@@ -15,7 +15,7 @@ contract Ownable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor() public {
-        owner = 0x60FF5ceEB385434E162E5f2Fd22d2EC53f0B671f;
+        owner = 0xfd52FA412913096A6B2E84374baBF84b6FF2baf6;
     }
 
     modifier onlyOwner() {
@@ -124,7 +124,7 @@ contract FranklinFarmer is Ownable {
         return calculateKnowledgeBuy(eth,this.balance);
     }
     function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,10),100); // 10%
+        return SafeMath.div(SafeMath.mul(amount,50),100); // 50%
     }
     function seedMarket(uint256 knowledge) external payable {
         require(marketKnowledge==0);
