@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTVToken at 0xa41aa09607ca80ee60d2ce166d4c02a71860e5c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XTVToken at 0x2d92102bf50c111d59b93f7a10bafd13e770ed61
 */
 pragma solidity ^0.4.23;
 
@@ -422,9 +422,9 @@ contract ERC20Token is ERC20, Ownable {
 contract XTVToken is XTVNetworkGuard, ERC20Token {
   using SafeMath for uint256;
 
-  string public name = "XTV Network";
-  string public symbol = "XTV";
-  uint public decimals = 18;
+  string public constant name = "XTV Network";
+  string public constant symbol = "XTV";
+  uint public constant decimals = 18;
 
   address public fullfillTeamAddress;
   address public fullfillFounder;
@@ -438,20 +438,21 @@ contract XTVToken is XTVNetworkGuard, ERC20Token {
   uint public XTVBurned;
   mapping(address => bool) public claimed;
   
-  uint256 public constant INITIAL_SUPPLY = 500000000;
-  uint256 public constant EXPECTED_TOTAL_SUPPLY = 1000000000;
   uint256 private constant TOKEN_MULTIPLIER = 1000000;
+  uint256 private constant DECIMALS = 10 ** decimals;
+  uint256 public constant INITIAL_SUPPLY = 500 * TOKEN_MULTIPLIER * DECIMALS;
+  uint256 public constant EXPECTED_TOTAL_SUPPLY = 1000 * TOKEN_MULTIPLIER * DECIMALS;
 
   // 33%
-  uint256 public constant ALLOC_TEAM = 330 * TOKEN_MULTIPLIER;
+  uint256 public constant ALLOC_TEAM = 330 * TOKEN_MULTIPLIER * DECIMALS;
   // 7%
-  uint256 public constant ALLOC_ADVISORS = 70 * TOKEN_MULTIPLIER;
+  uint256 public constant ALLOC_ADVISORS = 70 * TOKEN_MULTIPLIER * DECIMALS;
   // 10%
-  uint256 public constant ALLOC_FOUNDER = 100 * TOKEN_MULTIPLIER;
+  uint256 public constant ALLOC_FOUNDER = 100 * TOKEN_MULTIPLIER * DECIMALS;
   // 50%
-  uint256 public constant ALLOC_AIRDROP = 500 * TOKEN_MULTIPLIER;
+  uint256 public constant ALLOC_AIRDROP = 500 * TOKEN_MULTIPLIER * DECIMALS;
 
-  uint256 public constant AIRDROP_CLAIM_AMMOUNT = 500;
+  uint256 public constant AIRDROP_CLAIM_AMMOUNT = 500 * DECIMALS;
 
   modifier isAirdropActive() {
     require(airdropActive);
