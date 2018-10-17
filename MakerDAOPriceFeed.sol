@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MakerDAOPriceFeed at 0x02ab3549536c140af39ebb1c42f25a8e70b4a10a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MakerDAOPriceFeed at 0x54bf24e1070784d7f0760095932b47ce55eb3a91
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 // File: contracts/interfaces/EthPriceFeedI.sol
 
 interface EthPriceFeedI {
-    function updateRate(uint256 _weiPerUnitRate) external;
+    function getUnit() external view returns(string);
     function getRate() external view returns(uint256);
     function getLastTimeUpdated() external view returns(uint256); 
 }
@@ -15,7 +15,7 @@ interface EthPriceFeedI {
 
 // https://github.com/makerdao/feeds/blob/master/src/abi/readable.json
 
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 interface ReadableI {
 
@@ -39,9 +39,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -86,14 +90,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -106,15 +114,30 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 // File: contracts/MakerDAOPriceFeed.sol
@@ -138,7 +161,7 @@ contract MakerDAOPriceFeed is Ownable, EthPriceFeedI {
         _;
     }
 
-    constructor(ReadableI _makerDAOMedianizer) {
+    constructor(ReadableI _makerDAOMedianizer) public {
         require(_makerDAOMedianizer != address(0));
         makerDAOMedianizer = _makerDAOMedianizer;
 
@@ -147,7 +170,7 @@ contract MakerDAOPriceFeed is Ownable, EthPriceFeedI {
     }
     
     /// @dev Receives rate from outside oracle
-    /// @param _weiPerUnitRate calculated off chain and received to the contract
+    /// @param _weiPerUnitRate calculated off chain and received in the contract
     function updateRate(uint256 _weiPerUnitRate) 
         external 
         onlyOwner
@@ -158,6 +181,14 @@ contract MakerDAOPriceFeed is Ownable, EthPriceFeedI {
         lastTimeUpdated = now; 
 
         emit RateUpdated(_weiPerUnitRate, now);
+    }
+
+    function getUnit()
+        external
+        view 
+        returns(string)
+    {
+        return "USD";
     }
 
     /// @dev View function to see the rate stored in the contract.
@@ -178,11 +209,13 @@ contract MakerDAOPriceFeed is Ownable, EthPriceFeedI {
         return lastTimeUpdated;
     }
 
+    /// @dev Checks that a rate is valid.
+    /// @param _weiPerUnitRate The rate to check
+    /// @return True iff the rate is valid
     function validRate(uint256 _weiPerUnitRate) public view returns(bool) {
         if (_weiPerUnitRate == 0) return false;
-        bytes32 value;
-        bool valid;
-        (value, valid) = makerDAOMedianizer.peek();
+
+        (bytes32 value, bool valid) = makerDAOMedianizer.peek();
 
         // If the value from the medianizer is not valid, use the current rate as reference
         uint256 currentRate = valid ? convertToRate(value) : weiPerUnitRate;
@@ -193,6 +226,9 @@ contract MakerDAOPriceFeed is Ownable, EthPriceFeedI {
         return diff <= currentRate.mul(RATE_THRESHOLD_PERCENTAGE).div(100);
     }
 
+    /// @dev Transforms a bytes32 value taken from MakerDAO's Medianizer contract into wei per usd rate
+    /// @param _fromMedianizer Value taken from MakerDAO's Medianizer contract
+    /// @return The wei per usd rate
     function convertToRate(bytes32 _fromMedianizer) internal pure returns(uint256) {
         uint256 value = uint256(_fromMedianizer);
         return MAKERDAO_FEED_MULTIPLIER.div(value);
