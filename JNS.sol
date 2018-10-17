@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JNS at 0xb2c0aeaacfebbd7df7951a95d423a4e82cfb18eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JNS at 0x023fa9e2a97799b3d87b3fa35674b50b8b5c9f4e
 */
 pragma solidity 0.4.24;
 
@@ -14,7 +14,7 @@ contract JNS {
     }
     
     function registerAddress (string _nickname, address _address) public payable returns (bool) {
-        require (msg.value > 1000000000000000, "Send more money");
+        require (msg.value >= 1000000000000000, "Send more money");
         require (strToAddr[_nickname] == address(0), "Name already registered");
         require (keccak256(addrToStr[_address]) == keccak256(""), "Address already registered");
         
