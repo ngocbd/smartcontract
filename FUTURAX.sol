@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTURAX at 0xc92d6e3e64302c59d734f3292e2a13a13d7e1817
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTURAX at 0x41875c2332b0877cdfaa699b641402b7d4642c32
 */
 pragma solidity ^0.4.18;
 
@@ -76,11 +76,11 @@ contract FUTURAX is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;    
 
     string public constant name = "FUTURAX";
-    string public constant symbol = "FXC";
+    string public constant symbol = "FTXT";
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8; // Supply
-    uint256 public totalDistributed = 3000000000e8;    
+    uint256 public totalDistributed = 0;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
     uint256 public tokensPerEth = 20000000e8;
 
