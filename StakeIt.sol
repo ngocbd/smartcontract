@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeIt at 0x7d266ed871f24d7b47b5a8b80abb391178c48bac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeIt at 0x26fccc1f97dec0fe1e6845e3deafb98d5242b0e0
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 /**
  * @title SafeMath
@@ -48,8 +48,6 @@ library SafeMath {
     return c;
   }
 }
-
-pragma solidity ^0.4.23;
 
 
 /**
@@ -215,7 +213,7 @@ contract StakeIt is ERC20, StakeItStandard, Ownable {
     function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) public returns (bool) {
         require(_to != address(0));
 
-        var _allowance = allowed[_from][msg.sender];
+        uint _allowance = allowed[_from][msg.sender];
 
         // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
         // require (_value <= _allowance);
