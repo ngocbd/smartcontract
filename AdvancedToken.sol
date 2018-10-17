@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0x1276aa1f8a8ca249420cbe30ec20d5127c1c2b3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0x9c716897afc498f394e23f55b38d9915ba5164f5
 */
 pragma solidity 0.4.16;
 
@@ -301,8 +301,8 @@ contract AdvancedToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "Opes Protocol";
-    string public symbol = "OPX";
+    string public name = "FChain";
+    string public symbol = "FY";
     string public version = '3.0.0';
     uint8 public decimals = 18;
 
@@ -310,7 +310,7 @@ contract AdvancedToken is PausableToken {
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
     function AdvancedToken() {
-      totalSupply = 20000000000 * (10**(uint256(decimals)));
+      totalSupply = 100 * 10000 * 10000 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
     }
 
