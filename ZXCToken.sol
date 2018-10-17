@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZXCToken at 0xd4a89E95d6A2bB9BFcb1eBf450b9fB0fD5153D5C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZXCToken at 0x1b0946808d840b37eb7cf3f6b8cf4c980ba253ff
 */
 pragma solidity ^0.4.21;
 
@@ -33,7 +33,6 @@ library SafeMath {
         return c;
     }
 }
-
 
 /**
 * @title Ownable
@@ -70,7 +69,6 @@ contract Ownable {
     }
 }
 
-
 /**
  * @title ERC20Basic
     * @dev Simpler version of ERC20 interface
@@ -83,36 +81,36 @@ contract ERC20Basic {
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
+    * @dev Basic version of StandardToken, with no allowances. 
+       */
 contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-    mapping(address => uint256) balances;
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
 
   /**
   * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        return true;
-    }
+      * @param _to The address to transfer to.
+          * @param _value The amount to be transferred.
+              */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
   /**
   * @dev Gets the balance of the specified address.
-      * @param _owner The address to query the the balance of.
+      * @param _owner The address to query the the balance of. 
           * @return An uint256 representing the amount owned by the passed address.
               */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 }
-
 
 /**
  * @title ERC20 interface
@@ -125,47 +123,65 @@ contract ERC20 is ERC20Basic {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
 /**
  * @title Standard ERC20 token
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- */
+    *
+      * @dev Implementation of the basic standard token.
+         * @dev https://github.com/ethereum/EIPs/issues/20
+            * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+               */
 contract StandardToken is ERC20, BasicToken {
-    mapping (address => mapping (address => uint256)) allowed;
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        uint256 _allowance = allowed[_from][msg.sender];
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+        * @param _from address The address which you want to send tokens from
+             * @param _to address The address which you want to transfer to
+                  * @param _value uint256 the amout of tokens to be transfered
+                       */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
     // require (_value <= _allowance);
 
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        return true;
-    }
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+        * @param _spender The address which will spend the funds.
+             * @param _value The amount of tokens to be spent.
+                  */
+  function approve(address _spender, uint256 _value) returns (bool) {
 
-        allowed[msg.sender][_spender] = _value;
-        return true;
-    }
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
   /**
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
+        * @param _owner address The address which owns the funds.
+             * @param _spender address The address which will spend the funds.
+                  * @return A uint256 specifing the amount of tokens still avaible for the spender.
+                       */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
 }
 
 
@@ -173,10 +189,10 @@ contract StandardToken is ERC20, BasicToken {
 contract ZXCToken is StandardToken, Ownable {
     using SafeMath for uint256;
 
-    // Token Information
-    string  public constant NAME = "0XCoin";
-    string  public constant SYMBOL = "0XC";
-    uint8   public constant DECIMALS = 18;
+    // Token ??
+    string  public constant name = "M726 Coin";
+    string  public constant symbol = "M726";
+    uint8   public constant decimals = 18;
 
     // Sale period1.
     uint256 public startDate1;
@@ -186,7 +202,7 @@ contract ZXCToken is StandardToken, Ownable {
     uint256 public startDate2;
     uint256 public endDate2;
 
-     //SaleCap
+     //?????
     uint256 public saleCap;
 
     // Address Where Token are keep
@@ -215,11 +231,7 @@ contract ZXCToken is StandardToken, Ownable {
         buyTokens(msg.sender, msg.value);
     }
 
-    function getDate() public view returns(uint256 _date) {
-        _date = getCurrentTimestamp();
-    }
-
-    //Initial Contract
+    //?????
     function initialize(address _tokenWallet, address _fundWallet, uint256 _start1, uint256 _end1,
                         uint256 _saleCap, uint256 _totalSupply) public
                         onlyOwner uninitialized {
@@ -240,7 +252,7 @@ contract ZXCToken is StandardToken, Ownable {
         balances[0xb1] = _totalSupply.sub(saleCap);
     }
 
-    //Set PreSale Time
+    //??????
     function setPeriod(uint period, uint256 _start, uint256 _end) public onlyOwner {
         require(_end > _start);
         if (period == 1) {
@@ -267,7 +279,7 @@ contract ZXCToken is StandardToken, Ownable {
     function setSaleCap(uint256 _saleCap) public onlyOwner {
         require(balances[0xb1].add(balances[tokenWallet]).sub(_saleCap) > 0);
         uint256 amount=0;
-        //Check SaleCap
+        //????? ?? ????
         if (balances[tokenWallet] > _saleCap) {
             amount = balances[tokenWallet].sub(_saleCap);
             balances[0xb1] = balances[0xb1].add(amount);
@@ -293,7 +305,7 @@ contract ZXCToken is StandardToken, Ownable {
     }
 
     function getBounsByAmount(uint256 etherAmount, uint256 tokenAmount) public pure returns (uint256) {
-        //Max 40%
+        //??40%
         uint256 bonusRatio = etherAmount.div(500 ether);
         if (bonusRatio > 4) {
             bonusRatio = 4;
@@ -304,7 +316,7 @@ contract ZXCToken is StandardToken, Ownable {
         return realBouns;
     }
 
-    //Stop Contract
+    //????
     function finalize() public onlyOwner {
         require(!saleActive());
 
@@ -313,7 +325,7 @@ contract ZXCToken is StandardToken, Ownable {
         balances[0xb1] = 0;
     }
     
-    //Check SaleActive
+    //????????
     function saleActive() public constant returns (bool) {
         return (
             (getCurrentTimestamp() >= startDate1 &&
@@ -328,7 +340,7 @@ contract ZXCToken is StandardToken, Ownable {
         return now;
     }
 
-     //Buy Token
+     //??Token
     function buyTokens(address sender, uint256 value) internal {
         //Check Sale Status
         require(saleActive());
@@ -339,7 +351,7 @@ contract ZXCToken is StandardToken, Ownable {
         // Calculate token amount to be purchased
         uint256 bonus = getBonusByTime(getCurrentTimestamp());
         uint256 amount = value.mul(bonus);
-        // If ETH > 500 the add 10%
+        // ???????????????500Ether????10%
         if (getCurrentTimestamp() >= startDate1 && getCurrentTimestamp() < endDate1) {
             uint256 p1Bouns = getBounsByAmount(value, amount);
             amount = amount + p1Bouns;
@@ -350,7 +362,8 @@ contract ZXCToken is StandardToken, Ownable {
         // Transfer
         balances[tokenWallet] = balances[tokenWallet].sub(amount);
         balances[sender] = balances[sender].add(amount);
-
+        TokenPurchase(sender,value, amount);
+        
         saleCap = saleCap - amount;
 
         // Update state.
