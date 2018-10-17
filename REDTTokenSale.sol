@@ -1,16 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDTTokenSale at 0xd4737b3ca85761c5d96a61882786eab9d56cf2be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDTTokenSale at 0x4e29ff51029e9fbb5e4ce3f8ae3a6b10e0e7dfdb
 */
 pragma solidity ^0.4.23;
 // produced by the Solididy File Flattener (c) David Appleton 2018
 // contact : dave@akomba.com
 // released under Apache 2.0 licence
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract REDTTokenConfig {
+    string public constant NAME = "Real Estate Doc Token";
+    string public constant SYMBOL = "REDT";
+    uint8 public constant DECIMALS = 18;
+    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
+    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
 }
+
 
 contract Ownable {
   address public owner;
@@ -115,42 +117,11 @@ library SafeMath {
   }
 }
 
-contract REDTTokenConfig {
-    string public constant NAME = "Real Estate Doc Token";
-    string public constant SYMBOL = "REDT";
-    uint8 public constant DECIMALS = 18;
-    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
-    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
-}
-
-
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  }
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract Pausable is Ownable {
@@ -193,6 +164,65 @@ contract Pausable is Ownable {
   }
 }
 
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+contract REDTTokenSaleConfig is REDTTokenConfig {
+    uint public constant MIN_CONTRIBUTION      = 100 finney;
+
+    
+
+    
+
+    uint public constant RESERVE_AMOUNT = 500000000 * DECIMALSFACTOR;
+
+    uint public constant SALE_START = 1537189200;
+    uint public constant SALE_END = 1540990800;
+    
+    uint public constant SALE0_END = 1537794000;
+    uint public constant SALE0_RATE = 24000;
+    uint public constant SALE0_CAP = 400000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE1_END = 1538398800;
+    uint public constant SALE1_RATE = 22000;
+    uint public constant SALE1_CAP = 500000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE2_END = 1540990800;
+    uint public constant SALE2_RATE = 20000;
+    uint public constant SALE2_CAP = 500000000 * DECIMALSFACTOR;
+    
+    uint public constant SALE_CAP = 500000000 * DECIMALSFACTOR;
+
+    address public constant MULTISIG_ETH = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
+    address public constant MULTISIG_TKN = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
+
+}
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender)
     public view returns (uint256);
@@ -248,75 +278,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract Operatable is Claimable {
-    address public minter;
-    address public whiteLister;
-    address public launcher;
-
-    modifier canOperate() {
-        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
-        _;
-    }
-
-    constructor() public {
-        minter = owner;
-        whiteLister = owner;
-        launcher = owner;
-    }
-
-    function setMinter (address addr) public onlyOwner {
-        minter = addr;
-    }
-
-    function setWhiteLister (address addr) public onlyOwner {
-        whiteLister = addr;
-    }
-
-    modifier onlyMinter()  {
-        require (msg.sender == minter);
-        _;
-    }
-
-    modifier onlyLauncher()  {
-        require (msg.sender == minter);
-        _;
-    }
-
-    modifier onlyWhiteLister()  {
-        require (msg.sender == whiteLister);
-        _;
-    }
-}
-contract REDTTokenSaleConfig is REDTTokenConfig {
-    uint public constant MIN_CONTRIBUTION      = 100 finney;
-
-    
-
-    
-
-    
-
-    uint public constant SALE_START = 1537189200;
-    uint public constant SALE_END = 1540990800;
-    
-    uint public constant SALE0_END = 1537794000;
-    uint public constant SALE0_RATE = 24000;
-    uint public constant SALE0_CAP = 400000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE1_END = 1538398800;
-    uint public constant SALE1_RATE = 22000;
-    uint public constant SALE1_CAP = 500000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE2_END = 1540990800;
-    uint public constant SALE2_RATE = 20000;
-    uint public constant SALE2_CAP = 500000000 * DECIMALSFACTOR;
-    
-    uint public constant SALE_CAP = 500000000 * DECIMALSFACTOR;
-
-    address public constant MULTISIG_ETH = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
-    address public constant MULTISIG_TKN = 0x25C7A30F23a107ebF430FDFD582Afe1245B690Af;
-
-}
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -429,33 +390,50 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract WhiteListed is Operatable {
+contract Operatable is Claimable {
+    address public minter;
+    address public whiteLister;
+    address public launcher;
 
-
-    uint public count;
-    mapping (address => bool) public whiteList;
-
-    event Whitelisted(address indexed addr, uint whitelistedCount, bool isWhitelisted);
-
-    function addWhiteListed(address[] addrs) external canOperate {
-        uint c = count;
-        for (uint i = 0; i < addrs.length; i++) {
-            if (!whiteList[addrs[i]]) {
-                whiteList[addrs[i]] = true;
-                c++;
-                emit Whitelisted(addrs[i], count, true);
-            }
-        }
-        count = c;
+    modifier canOperate() {
+        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
+        _;
     }
 
-    function removeWhiteListed(address addr) external canOperate {
-        require(whiteList[addr]);
-        whiteList[addr] = false;
-        count--;
-        emit Whitelisted(addr, count, false);
+    constructor() public {
+        minter = owner;
+        whiteLister = owner;
+        launcher = owner;
     }
 
+    function setMinter (address addr) public onlyOwner {
+        minter = addr;
+    }
+
+    function setWhiteLister (address addr) public onlyOwner {
+        whiteLister = addr;
+    }
+
+    modifier onlyMinter()  {
+        require (msg.sender == minter);
+        _;
+    }
+
+    modifier ownerOrMinter()  {
+        require ((msg.sender == minter) || (msg.sender == owner));
+        _;
+    }
+
+
+    modifier onlyLauncher()  {
+        require (msg.sender == minter);
+        _;
+    }
+
+    modifier onlyWhiteLister()  {
+        require (msg.sender == whiteLister);
+        _;
+    }
 }
 contract Salvageable is Operatable {
     // Salvage other tokens that are accidentally sent into this token
@@ -526,6 +504,34 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+contract WhiteListed is Operatable {
+
+
+    uint public count;
+    mapping (address => bool) public whiteList;
+
+    event Whitelisted(address indexed addr, uint whitelistedCount, bool isWhitelisted);
+
+    function addWhiteListed(address[] addrs) external canOperate {
+        uint c = count;
+        for (uint i = 0; i < addrs.length; i++) {
+            if (!whiteList[addrs[i]]) {
+                whiteList[addrs[i]] = true;
+                c++;
+                emit Whitelisted(addrs[i], count, true);
+            }
+        }
+        count = c;
+    }
+
+    function removeWhiteListed(address addr) external canOperate {
+        require(whiteList[addr]);
+        whiteList[addr] = false;
+        count--;
+        emit Whitelisted(addr, count, false);
+    }
+
+}
 contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
     using SafeMath for uint;
 
@@ -536,6 +542,8 @@ contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
 
     event Mint(address indexed to, uint amount);
     event MintFinished();
+    event Burn(address indexed burner, uint256 value);
+
 
     modifier canMint() {
         require(!mintingFinished);
@@ -559,6 +567,18 @@ contract REDTToken is PausableToken, REDTTokenConfig, Salvageable {
         mintingFinished = true;
         emit MintFinished();
         return true;
+    }
+
+    function burn(uint256 _value) public {
+        _burn(msg.sender, _value);
+    }
+
+    function _burn(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+        balances[_who] = balances[_who].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+        emit Burn(_who, _value);
+        emit Transfer(_who, address(0), _value);
     }
 
     function sendBatchCS(address[] _recipients, uint[] _values) external canOperate returns (bool) {
@@ -593,6 +613,14 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
     event TokenPurchase(address indexed beneficiary, uint value, uint amount);
     event TokenPresale(address indexed purchaser, uint amount);
 
+    struct capRec  {
+        uint time;
+        uint amount;
+    }
+    capRec[] public capz;
+    uint public capDefault;
+
+
     constructor( WhiteListed _whiteListed ) public {
         
         require(now < SALE_START);
@@ -602,7 +630,45 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
         whiteListed = _whiteListed;
 
         token = new REDTToken(owner);
+        token.mint(MULTISIG_TKN,RESERVE_AMOUNT);
+        initCaps();
     }
+
+    
+    function initCaps() public {
+        uint[4] memory caps = [uint(10),20,30,40];
+        uint[4] memory times = [uint(1),4,12,24];
+        for (uint i = 0; i < caps.length; i++) {
+            capRec memory cr;
+            cr.time = times[i];
+            cr.amount = caps[i];
+            capz.push(cr);
+        }
+        capDefault = 100;
+    }
+    
+    function setCapRec(uint[] capsInEther, uint[] timesInHours, uint defaultCapInEther) public onlyOwner {
+        //capRec[] memory cz = new capRec[](caps.length);
+        require(capsInEther.length == timesInHours.length);
+        capz.length = 0;
+        for (uint i = 0; i < capsInEther.length; i++) {
+            capRec memory cr;
+            cr.time = timesInHours[i];
+            cr.amount = capsInEther[i];
+            capz.push(cr);
+        }
+        capDefault = defaultCapInEther;
+        
+    }
+    
+    function currentCap() public view returns (uint) {
+        for (uint i = 0; i < capz.length; i++) {
+            if (now < SALE_START + capz[i].time * 1 hours)
+                return (capz[i].amount * 1 ether);
+        }
+        return capDefault;
+    }
+
 
     function getRateAndCheckCap() public view returns (uint) {
         
@@ -626,6 +692,7 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
     }
 
     function buyTokens(address beneficiary, uint weiAmount) internal whenNotPaused {
+        require(contributions[beneficiary].add(weiAmount) < currentCap());
         require(whiteListed.whiteList(beneficiary));
         require((weiAmount > MIN_CONTRIBUTION) || (weiAmount == SALE_CAP.sub(MIN_CONTRIBUTION)));
 
@@ -636,6 +703,8 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
             numContributors++;
         }
 
+        tokensRaised = tokensRaised.add(tokens);
+
         contributions[beneficiary] = contributions[beneficiary].add(weiAmount);
         token.mint(beneficiary, tokens);
         emit TokenPurchase(beneficiary, weiAmount, tokens);
@@ -644,11 +713,9 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
 
     function placeTokens(address beneficiary, uint256 numtokens) 
     public
-	  onlyOwner
+	  ownerOrMinter
     {
-        
-        require(now < SALE_START);
-        
+        require(now < SALE_START);  
         tokensRaised = tokensRaised.add(numtokens);
         token.mint(beneficiary,numtokens);
     }
@@ -682,9 +749,6 @@ contract REDTTokenSale is REDTTokenSaleConfig, Claimable, Pausable, Salvageable 
 
     // Stops the minting and transfer token ownership to sale owner. Mints unsold tokens to owner
     function finalization() internal {
-        
-        token.mint(MULTISIG_TKN,tokensUnsold());
-        
         token.finishMinting();
         token.transferOwnership(owner);
     }
