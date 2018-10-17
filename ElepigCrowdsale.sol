@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElepigCrowdsale at 0x4145492ad5039b802bd7e58098c8d71706a2cd14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElepigCrowdsale at 0xe6be085afbe3119907725e901679f0b9a5ebc6da
 */
 pragma solidity ^0.4.24;
 
@@ -667,11 +667,5 @@ contract ElepigCrowdsale is CappedCrowdsale, RefundableCrowdsale, ControlledAcce
     }
   // ===============================
 
-
-    //JUST USED FOR TESTING, REMOVE WHEN GOING TO PROD
-
-    function forwardEndTime(uint256 _endTime) public {
-        endTime = _endTime;
-    }
   
 }
