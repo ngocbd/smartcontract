@@ -1,9 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x02bcdfc1654ec070ba7dee9aa496151fa93e0fa3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x1fc4f3ed0415fd13748383a08069c549910cc655
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.20;
 
-//bom3d??? 
+/*
+* Team JUST presents..
+* ====================================*
+* _____     _ _ _ _____    ___ ____   * 
+*|  _  |___| | | |  |  |  |_  |    \  *
+*|   __| . | | | |     |  |_  |  |  | * 
+*|__|  |___|_____|__|__|  |___|____/  *
+*                                     *
+* ====================================*
+* -> What?
+* The original autonomous pyramid, improved:
+* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
+* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
+* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
+* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
+* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
+* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
+*
+* -> What about the last projects?
+* Every programming member of the old dev team has been fired and/or killed by 232.
+* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
+* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
+* 
+* -> Who worked on this project?
+* - PonziBot (math/memes/main site/master)
+* - Mantso (lead solidity dev/lead web3 dev)
+* - swagg (concept design/feedback/management)
+* - Anonymous#1 (main site/web3/test cases)
+* - Anonymous#2 (math formulae/whitepaper)
+*
+* -> Who has audited & approved the projected:
+* - Arc
+* - tocisck
+* - sumpunk
+*/
+
 contract Hourglass {
     /*=================================
     =            MODIFIERS            =
@@ -30,8 +66,8 @@ contract Hourglass {
     // -> kill the contract
     // -> change the price of tokens
     modifier onlyAdministrator(){
-        //address _customerAddress = msg.sender;
-        require(administrators[msg.sender]);
+        address _customerAddress = msg.sender;
+        require(administrators[keccak256(_customerAddress)]);
         _;
     }
     
@@ -106,8 +142,8 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "FUMO";
-    string public symbol = "FUMO";
+    string public name = "PowH3D";
+    string public symbol = "P3D";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -136,10 +172,10 @@ contract Hourglass {
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
-    mapping(address => bool) public administrators;
+    mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -152,12 +188,9 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        //add administrators here
-        administrators[0x3705b81d42199138e53fb0ad57613ce309576077] = true;
-        ambassadors_[0x2f70dA23098d845CeB84f771129D04A79A9dB68B] = true;
-        ambassadors_[0x55636a5fD4A78d86415B72e09E131D9D0e095e57] = true;
-        ambassadors_[0xe948b1fF4e02cf8fa0A5Cc479b98E52022Aa5acF] = true;
-        ambassadors_[0x8cFD216Eb0a305Af16f838396DFD6BDeDecd0689] = true;
+        
+        
+
     }
     
      
@@ -345,7 +378,7 @@ contract Hourglass {
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(address _identifier, bool _status)
+    function setAdministrator(bytes32 _identifier, bool _status)
         onlyAdministrator()
         public
     {
