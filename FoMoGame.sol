@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0x86d179c28cceb120cd3f64930cf1820a88b77d60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMoGame at 0xc91b94cce1f5fae9c73ad182102ad8759a4919a8
 */
 pragma solidity ^0.4.24;
 //==============================================================================
@@ -131,12 +131,9 @@ contract FoMoGame is modularLong {
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
 
-    otherFoMo3D private otherF3D_;
-
-    ForwarderInterface constant private Team_Forwarder = ForwarderInterface(0xBd4C9aB2F3e241F1291D55af51CB0D949077B591);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe97fad5ccb766cbd515067e4bdc3cb1a2a112195);
-    address private swapDeposit = 0x24F73508ee8FBF5ac39e51C363ff87E736fe659b;
-
+    address private team = 0xBd01103c36f400344b427Cb51934B765007e16f6;
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xB066135b92A122225bf786C38BC5d2284BE7A27e);
+    
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
@@ -145,9 +142,9 @@ contract FoMoGame is modularLong {
     string constant public symbol = "FGame";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
+    uint256 constant private rndInit_ = 12 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 15 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -189,17 +186,18 @@ contract FoMoGame is modularLong {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(36,0);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(66,0);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(50,0);   //36% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(20,0);   //57% to pot, 20% to aff, 2% to com, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(45,0);   //32% to pot, 20% to aff, 2% to com, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(57,0);  //20% to pot, 20% to aff, 2% to com, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(39,0);   //38% to pot, 20% to aff, 2% to com, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(20,0);  //48% to winner, 30% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(45,0);  //48% to winner, 5% to next round, 2% to com
+        // What's the difference
+        potSplit_[0] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(45,0);   //48% to winner, 5% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(45,0);  //48% to winner, 5% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(40,0);  //48% to winner, 10% to next round, 2% to com
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -219,8 +217,10 @@ contract FoMoGame is modularLong {
      */
     modifier isHuman() {
         address _addr = msg.sender;
+        require (_addr == tx.origin);
+        
         uint256 _codeLength;
-
+        
         assembly {_codeLength := extcodesize(_addr)}
         require(_codeLength == 0, "sorry humans only");
         _;
@@ -1274,21 +1274,16 @@ contract FoMoGame is modularLong {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-        if (!address(Team_Forwarder).call.value(_com)(bytes4(keccak256("deposit()"))))
-        {
-            _p3d = _p3d.add(_com);
-            _com = 0;
-        }
+        team.transfer(_com);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
 
         // send share for p3d to divies
+        // ??????0
         if (_p3d > 0)
         {
-            if (!address(Team_Forwarder).call.value(_p3d)(bytes4(keccak256("deposit()")))){
-                _res = _p3d.add(_res);
-            }
+            team.transfer(_p3d);
         }
 
         // prepare event data
@@ -1385,22 +1380,14 @@ contract FoMoGame is modularLong {
     {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
-        // pay 1% more
-        uint256 _long = _eth / 100;
-        if(_long > 0)
-            swapDeposit.transfer(_long);
         
-        uint256 _p3d;
-        if (!address(Team_Forwarder).call.value(_com)(bytes4(keccak256("deposit()"))))
-        {  
-            _p3d = _com;
-            _com = 0;
-        }
+        uint256 _p3d = 0;
+        team.transfer(_com);
 
         
 
         // distribute share to affiliate
-        uint256 _aff = _eth / 10;
+        uint256 _aff = _eth / 5;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1412,15 +1399,12 @@ contract FoMoGame is modularLong {
         }
 
         // pay out p3d
+        // ??????0
         _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
         if (_p3d > 0)
         {
             // deposit to divies contract
-            if(!address(Team_Forwarder).call.value(_p3d)(bytes4(keccak256("deposit()"))))
-            {
-                uint256 __rID = rID_ + 1;
-                round_[__rID].pot = round_[__rID].pot.add(_p3d);
-            }
+            team.transfer(_p3d);
             _p3d = 0;
 
             // set up event data
@@ -1456,7 +1440,7 @@ contract FoMoGame is modularLong {
         airDropPot_ = airDropPot_.add(_air);
 
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        _eth = _eth.sub(((_eth.mul(23)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
 
         // calculate pot
         uint256 _pot = _eth.sub(_gen);
@@ -1571,9 +1555,10 @@ contract FoMoGame is modularLong {
         public
     {
         
+        // MARK: ?????
         require(
-            msg.sender == 0x937328B032B7d9A972D5EB8CbDC0D3c9B0EB379D ||
-			msg.sender == 0xF934458553D76d17A2C728BD427560eecdd75912,
+            msg.sender == 0x3C21550C76B9C0Eb32ceA5f7ea71d54f366961a1 ||
+			msg.sender == 0x3123AD3e691bC320aaCC8ab91A0E32A7eE4C4b9a,
             "only team can activate"
         );
         
@@ -1589,22 +1574,6 @@ contract FoMoGame is modularLong {
         round_[1].end = now + rndInit_ + rndExtra_;
     }
     
-    function setOtherFomo(address _otherF3D)
-        public
-    {
-        // only team just can activate
-        require(
-            msg.sender == 0x937328B032B7d9A972D5EB8CbDC0D3c9B0EB379D ||
-			msg.sender == 0xF934458553D76d17A2C728BD427560eecdd75912,
-            "only team can activate"
-        );
-
-        // make sure that it HASNT yet been linked.
-        require(address(otherF3D_) == address(0), "silly dev, you already did that");
-
-        // set up other fomo3d (fast or long) for pot swap
-        otherF3D_ = otherFoMo3D(_otherF3D);
-    }
 }
 
 //==============================================================================
@@ -1746,20 +1715,7 @@ library F3DKeysCalcLong {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
-interface otherFoMo3D {
-    function potSwap() external payable;
-}
 
-
-interface DiviesInterface {
-    function deposit() external payable;
-    function balances() public view returns(uint256);
-}
-
-interface ForwarderInterface {
-    function deposit() external payable returns(bool);
-    function setup(address _firstCorpBank) external;
-}
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
