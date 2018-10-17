@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0x7bC9fafC8C0Aa0D3A26Bba670a7321E920164D74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLibExt at 0xd2f929C4184285f3191A6ea1Ed82f915e13e0062
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 /**
