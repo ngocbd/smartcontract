@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0x67f9d598df00cf5f89584953fa9bb0df9bcb5247
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0xef85aab02ca93c559eab61a861b983ceabc4fda0
 */
 pragma solidity ^0.4.24;
 
@@ -173,7 +173,7 @@ contract ESSENTIA_ERC20 is Ownable {
         return true;
     }
 
-    /*  and then communicate the  contract in a single tx */
+    /* Approve and then communicate the approved contract in a single tx */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
 
@@ -203,8 +203,8 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
         ) public {
 
-        A = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
-        B = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
+        A = 0x564a1D21886ADF1F46FF9D867CE8827C5Ec1B388;
+        B = 0x58b087a9FdF12fEd53E8AC7643727Bb5001Fd183;
 
 
         balances[A]=balances[A].add(614359681*(uint256(10)**decimals));
