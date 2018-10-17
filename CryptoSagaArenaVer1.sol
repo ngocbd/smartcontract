@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0x6403670a03596ca2316b84595bce37d5313a2ec4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaVer1 at 0x9d7db617fbf50ae4860d3f8a5383149656778a6e
 */
 pragma solidity ^0.4.18;
 
@@ -1662,9 +1662,10 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 }
 
 
+
 /**
  * @title CryptoSagaArenaVer1
- * @dev The actual gameplay is done by this contract. Version 1.0.0.
+ * @dev The actual gameplay is done by this contract. Version 1.0.1.
  */
 contract CryptoSagaArenaVer1 is Claimable, Pausable {
 
@@ -1824,6 +1825,14 @@ contract CryptoSagaArenaVer1 is Claimable, Pausable {
     public
   {
     isTurnDataSaved = _value;
+  }
+
+  // @dev Set Record Contract.
+  function setRecordContract(address _address)
+    onlyOwner
+    public
+  {
+    recordContract = CryptoSagaArenaRecord(_address);
   }
 
   // @dev Constructor.
