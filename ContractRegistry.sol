@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractRegistry at 0xd1997064f0fef8748c1de9b5ba53468c548738b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractRegistry at 0xa3BF8e49C0e0510B8eCEb14D09a7d7B63e718E6A
 */
 pragma solidity ^0.4.21;
 
@@ -12,6 +12,85 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Utilities & Common Modifiers
+*/
+contract Utils {
+    /**
+        constructor
+    */
+    function Utils() public {
+    }
+
+    // verifies that an amount is greater than zero
+    modifier greaterThanZero(uint256 _amount) {
+        require(_amount > 0);
+        _;
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
+    }
+
+    // Overflow protected math functions
+
+    /**
+        @dev returns the sum of _x and _y, asserts if the calculation overflows
+
+        @param _x   value 1
+        @param _y   value 2
+
+        @return sum
+    */
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
+        return z;
+    }
+
+    /**
+        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+
+        @param _x   minuend
+        @param _y   subtrahend
+
+        @return difference
+    */
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
+    }
+
+    /**
+        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
+
+        @param _x   factor 1
+        @param _y   factor 2
+
+        @return product
+    */
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
+    }
 }
 
 /*
@@ -59,13 +138,6 @@ contract Owned is IOwned {
     }
 }
 
-/*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function getAddress(bytes32 _contractName) public view returns (address);
-}
-
 /**
     Contract Registry
 
@@ -75,10 +147,17 @@ contract IContractRegistry {
     Other contracts can query the registry to get updated addresses instead of depending on specific
     addresses.
 
-    Note that contract names are limited to 32 bytes, UTF8 strings to optimize gas costs
+    Note that contract names are limited to 32 bytes UTF8 strings to optimize gas costs
 */
-contract ContractRegistry is IContractRegistry, Owned {
-    mapping (bytes32 => address) addresses;
+contract ContractRegistry is IContractRegistry, Owned, Utils {
+    struct RegistryItem {
+        address contractAddress;
+        uint256 nameIndex;
+        bool isSet;
+    }
+
+    mapping (bytes32 => RegistryItem) private items;    // name -> address mapping
+    bytes32[] public names;                             // list of all registered contract names
 
     event AddressUpdate(bytes32 indexed _contractName, address _contractAddress);
 
@@ -96,19 +175,59 @@ contract ContractRegistry is IContractRegistry, Owned {
         @return contract address
     */
     function getAddress(bytes32 _contractName) public view returns (address) {
-        return addresses[_contractName];
+        return items[_contractName].contractAddress;
     }
 
     /**
-        @dev registers a new address for the contract name
+        @dev registers a new address for the contract name in the registry
 
        @param _contractName     contract name
        @param _contractAddress  contract address
     */
-    function registerAddress(bytes32 _contractName, address _contractAddress) public ownerOnly {
-        require(_contractName.length > 0); // validating input
+    function registerAddress(bytes32 _contractName, address _contractAddress)
+        public
+        ownerOnly
+        validAddress(_contractAddress)
+    {
+        require(_contractName.length > 0); // validate input
 
-        addresses[_contractName] = _contractAddress;
+        // update the address in the registry
+        items[_contractName].contractAddress = _contractAddress;
+        
+        if (!items[_contractName].isSet) {
+            // mark the item as set
+            items[_contractName].isSet = true;
+            // add the contract name to the name list and update the item's index in the list
+            items[_contractName].nameIndex = names.push(_contractName) - 1;
+        }
+
+        // dispatch the address update event
         emit AddressUpdate(_contractName, _contractAddress);
+    }
+
+    /**
+        @dev removes an existing contract address from the registry
+
+       @param _contractName contract name
+    */
+    function unregisterAddress(bytes32 _contractName) public ownerOnly {
+        require(_contractName.length > 0); // validate input
+
+        // remove the address from the registry
+        items[_contractName].contractAddress = address(0);
+
+        if (items[_contractName].isSet) {
+            // mark the item as empty
+            items[_contractName].isSet = false;
+            // move the last element to the deleted element's position
+            names[items[_contractName].nameIndex] = names[names.length - 1];
+            // remove the last element from the name list
+            names.length--;
+            // zero the deleted element's index
+            items[_contractName].nameIndex = 0;
+        }
+
+        // dispatch the address update event
+        emit AddressUpdate(_contractName, address(0));
     }
 }
