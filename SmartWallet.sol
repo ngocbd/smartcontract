@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0xEfc7dE761ae038b3bb3080ecFb98ceA51Fd442Ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartWallet at 0x3ddb01471395C34E9905c492F62BFd860CcBD77E
 */
 pragma solidity ^0.4.24;
 
@@ -224,14 +224,16 @@ library SmartWalletLib {
         address operatorAccount;
         address userWithdrawalAccount;
         address feesAccount;
-        uint    withdrawAllowedAt; //In seconds
+        uint    withdrawAllowedAt; //In Seconds
     }
 
     /*
      *  Members
      */
     string constant VERSION = "1.1";
-    address constant withdrawalConfigurationsContract = 0x0D6745B445A7F3C4bC12FE997a7CcbC490F06476; 
+    //The below is a sample address of a deployed WithdrawalConfigurations contract.
+    //If changed, need to change in the tests as well.
+    address constant withdrawalConfigurationsContract = 0xe9f25cc107e6435ccbe0d5e09331db4e42aaefb9; 
     
     /*
      *  Modifiers
