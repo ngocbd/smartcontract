@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofofHumanity at 0x4798480a81fe05d4194b1922dd4e20fe1742f51b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofofHumanity at 0x9fdd7af3949c3ca8f5b50802850a30e4d2fc2fdd
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 
 contract AcceptsProofofHumanity {
     ProofofHumanity public tokenContract;
 
-    function AcceptsProofofHumanity(address _tokenContract) public {
+    constructor(address _tokenContract) public {
         tokenContract = ProofofHumanity(_tokenContract);
     }
 
@@ -43,8 +43,8 @@ contract ProofofHumanity {
         _;
     }
 
-    modifier notContract() {
-      require (msg.sender == tx.origin);
+    modifier noUnapprovedContracts() {
+      require (msg.sender == tx.origin || approvedContracts[msg.sender] == true);
       _;
     }
 
@@ -150,12 +150,12 @@ contract ProofofHumanity {
     uint256 public totalEthCharityCollected; // total ETH charity collected in this contract
 
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 10e18;
+    uint256 public stakingRequirement = 100e18;
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 0.4 ether;
-    uint256 constant internal ambassadorQuota_ = 10 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 0.5 ether;
+    uint256 constant internal ambassadorQuota_ = 1.5 ether;
 
 
 
@@ -174,11 +174,13 @@ contract ProofofHumanity {
     mapping(address => bool) public administrators;
 
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
 
     // Special ProofofHumanity Platform control from scam game contracts on ProofofHumanity platform
     mapping(address => bool) public canAcceptTokens_; // contracts, which can accept ProofofHumanity tokens
 
+    // Special ProofofHumanity approved contracts that can purchase/sell/transfer PoH tokens
+    mapping(address => bool) public approvedContracts;
 
 
     /*=======================================
@@ -187,14 +189,20 @@ contract ProofofHumanity {
     /*
     * -- APPLICATION ENTRY POINTS --
     */
-    function ProofofHumanity()
+    constructor()
         public
     {
         // add administrators here
-        administrators[0xFEb461A778Be56aEE6F8138D1ddA8fcc768E5800] = true;
+        administrators[0x9d71D8743F41987597e2AE3663cca36Ca71024F4] = true;
+        administrators[0x2De78Fbc7e1D1c93aa5091aE28dd836CC71e8d4c] = true;
 
         // add the ambassadors here.
-        ambassadors_[0xFEb461A778Be56aEE6F8138D1ddA8fcc768E5800] = true;
+        ambassadors_[0x9d71D8743F41987597e2AE3663cca36Ca71024F4] = true;
+        ambassadors_[0x2De78Fbc7e1D1c93aa5091aE28dd836CC71e8d4c] = true;
+        ambassadors_[0xc7F15d0238d207e19cce6bd6C0B85f343896F046] = true;
+        ambassadors_[0x908599102d61A59F9a4458D73b944ec2f66F3b4f] = true;
+        ambassadors_[0x41e8cee8068eb7344d4c61304db643e68b1b7155] = true;
+        ambassadors_[0x25d8670ba575b9122670a902fab52aa14aebf8be] = true;
         
     }
 
@@ -256,7 +264,7 @@ contract ProofofHumanity {
         uint256 _tokens = purchaseTokens(_dividends, 0x0);
 
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
 
     /**
@@ -296,7 +304,7 @@ contract ProofofHumanity {
         _customerAddress.transfer(_dividends);
 
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
 
     /**
@@ -308,7 +316,7 @@ contract ProofofHumanity {
     {
         // setup data
         address _customerAddress = msg.sender;
-        // russian hackers BTFO
+        
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
@@ -337,7 +345,7 @@ contract ProofofHumanity {
         }
 
         // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+        emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
 
 
@@ -371,7 +379,7 @@ contract ProofofHumanity {
 
 
         // fire event
-        Transfer(_customerAddress, _toAddress, _amountOfTokens);
+        emit Transfer(_customerAddress, _toAddress, _amountOfTokens);
 
         // ERC20
         return true;
@@ -408,6 +416,18 @@ contract ProofofHumanity {
        assembly { length := extcodesize(_addr) }
        return length > 0;
      }
+
+      /**
+     * This function is a way to spread dividends to tokenholders from other contracts
+     */
+     function sendDividends () payable public
+    {
+        require(msg.value > 10000 wei);
+
+        uint256 _dividends = msg.value;
+        // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
+        profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
+    }      
 
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
@@ -470,6 +490,16 @@ contract ProofofHumanity {
         symbol = _symbol;
     }
 
+     /**
+     * Set approved contracts that can purchase/sell tokens (this is if we ever need a whale contract in the future)
+     */
+     function setApprovedContracts(address contractAddress, bool yesOrNo)
+        onlyAdministrator()
+        public
+     {
+        approvedContracts[contractAddress] = yesOrNo;
+     }
+
 
     /*----------  HELPERS AND CALCULATORS  ----------*/
     /**
@@ -481,7 +511,7 @@ contract ProofofHumanity {
         view
         returns(uint)
     {
-        return this.balance;
+        return address(this).balance;
     }
 
     /**
@@ -632,7 +662,7 @@ contract ProofofHumanity {
 
     // Make sure we will send back excess if user sends more then 5 ether before 100 ETH in contract
     function purchaseInternal(uint256 _incomingEthereum, address _referredBy)
-      notContract()// no contracts allowed
+      noUnapprovedContracts()// no unapproved contracts allowed
       internal
       returns(uint256) {
 
@@ -723,7 +753,7 @@ contract ProofofHumanity {
         payoutsTo_[msg.sender] += _updatedPayouts;
 
         // fire event
-        onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
 
         return _amountOfTokens;
     }
