@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintingContract at 0x9532014dadb2c980e43fe4665c86c2c0b1b4603d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintingContract at 0xe7c79deb6a9b74f691d5f882b7c588bba5db1a20
 */
 contract SafeMath {
     
@@ -52,7 +52,6 @@ contract Owned {
     event OwnerUpdate(address _prevOwner, address _newOwner);
 }
 
-
 contract Lockable is Owned {
 
     uint256 public lockedUntilBlock;
@@ -76,7 +75,17 @@ contract Lockable is Owned {
     }
 }
 
+contract ERC20TokenInterface {
+  function totalSupply() public constant returns (uint256 _totalSupply);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+  function approve(address _spender, uint256 _value) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 contract ERC20PrivateInterface {
     uint256 supply;
     mapping (address => uint256) balances;
@@ -89,7 +98,6 @@ contract ERC20PrivateInterface {
 contract tokenRecipientInterface {
   function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
 }
-
 contract OwnedInterface {
     address public owner;
     address public newOwner;
@@ -99,17 +107,167 @@ contract OwnedInterface {
     }
 }
 
-contract ERC20TokenInterface {
-  function totalSupply() public constant returns (uint256 _totalSupply);
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) public returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-  function approve(address _spender, uint256 _value) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+contract ERC20Token is ERC20TokenInterface, SafeMath, Owned, Lockable {
 
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    // Name of token
+    string public name;
+    // Abbreviation of tokens name
+    string public symbol;
+    // Number of decimals token has
+    uint8 public decimals;
+    // Address of the contract with minting logic
+    address public mintingContract;
+
+    // Current supply of tokens
+    uint256 supply = 0;
+    // Map of users balances
+    mapping (address => uint256) balances;
+    // Map of users allowances
+    mapping (address => mapping (address => uint256)) allowances;
+
+    // Event that shows that new tokens were created
+    event Mint(address indexed _to, uint256 _value);
+    // Event that shows that old tokens were destroyed
+    event Burn(address indexed _from, uint _value);
+
+    /**
+    * @dev Returns number of tokens in circulation
+    *
+    * @return total number od tokens
+    */
+    function totalSupply() public constant returns (uint256) {
+        return supply;
+    }
+
+    /**
+    * @dev Returns the balance of specific account
+    *
+    * @param _owner The account that caller wants to querry
+    * @return the balance on this account
+    */
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    /**
+    * @dev User can transfer tokens with this method, method is disabled if emergencyLock is activated
+    *
+    * @param _to Reciever of tokens
+    * @param _value The amount of tokens that will be sent 
+    * @return if successful returns true
+    */
+    function transfer(address _to, uint256 _value) lockAffected public returns (bool success) {
+        require(_to != 0x0 && _to != address(this));
+        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev This is used to allow some account to utilise transferFrom and sends tokens on your behalf, this method is disabled if emergencyLock is activated
+    *
+    * @param _spender Who can send tokens on your behalf
+    * @param _value The amount of tokens that are allowed to be sent 
+    * @return if successful returns true
+    */
+    function approve(address _spender, uint256 _value) lockAffected public returns (bool success) {
+        allowances[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+    * @dev This is used to send tokens and execute code on other smart contract, this method is disabled if emergencyLock is activated
+    *
+    * @param _spender Contract that is receiving tokens
+    * @param _value The amount that msg.sender is sending
+    * @param _extraData Additional params that can be used on reciving smart contract
+    * @return if successful returns true
+    */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) lockAffected public returns (bool success) {
+        tokenRecipientInterface spender = tokenRecipientInterface(_spender);
+        approve(_spender, _value);
+        spender.receiveApproval(msg.sender, _value, this, _extraData);
+        return true;
+    }
+
+    /**
+    * @dev Sender can transfer tokens on others behalf, this method is disabled if emergencyLock is activated
+    *
+    * @param _from The account that will send tokens
+    * @param _to Account that will recive the tokens
+    * @param _value The amount that msg.sender is sending
+    * @return if successful returns true
+    */
+    function transferFrom(address _from, address _to, uint256 _value) lockAffected public returns (bool success) {
+        require(_to != 0x0 && _to != address(this));
+        balances[_from] = safeSub(balanceOf(_from), _value);
+        balances[_to] = safeAdd(balanceOf(_to), _value);
+        allowances[_from][msg.sender] = safeSub(allowances[_from][msg.sender], _value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev Returns the amount od tokens that can be sent from this addres by spender
+    *
+    * @param _owner Account that has tokens
+    * @param _spender Account that can spend tokens
+    * @return remaining balance to spend
+    */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowances[_owner][_spender];
+    }
+
+    /**
+    * @dev Creates new tokens as long as total supply does not reach limit
+    *
+    * @param _to Reciver od newly created tokens
+    * @param _amount Amount of tokens to be created;
+    */
+    function mint(address _to, uint256 _amount) public {
+        require(msg.sender == mintingContract);
+        supply = safeAdd(supply, _amount);
+        balances[_to] = safeAdd(balances[_to], _amount);
+        emit Mint(_to, _amount);
+        emit Transfer(0x0, _to, _amount);
+    }
+
+    /**
+    * @dev Destroys the amount of tokens and lowers total supply
+    *
+    * @param _amount Number of tokens user wants to destroy
+    */
+    function burn(uint _amount) public {
+        balances[msg.sender] = safeSub(balanceOf(msg.sender), _amount);
+        supply = safeSub(supply, _amount);
+        emit Burn(msg.sender, _amount);
+        emit Transfer(msg.sender, 0x0, _amount);
+    }
+
+    /**
+    * @dev Saves exidentaly sent tokens to this contract, can be used only by owner
+    *
+    * @param _tokenAddress Address of tokens smart contract
+    * @param _to Where to send the tokens
+    * @param _amount The amount of tokens that we are salvaging
+    */
+    function salvageTokensFromContract(address _tokenAddress, address _to, uint _amount) onlyOwner public {
+        ERC20TokenInterface(_tokenAddress).transfer(_to, _amount);
+    }
+
+    /**
+    * @dev Disables the contract and wipes all the balances, can be used only by owner
+    */
+    function killContract() public onlyOwner {
+        selfdestruct(owner);
+    }
 }
+
+
+
+
 
 
 
@@ -117,35 +275,57 @@ contract MintableTokenInterface {
     function mint(address _to, uint256 _amount) public;
 }
 
-contract MintingContract is Owned {
+
+contract MintingContract is Owned, SafeMath{
     
     address public tokenAddress;
-    enum state { crowdsaleMinintg, teamMinting, finished}
+    uint256 public tokensAlreadyMinted;
 
+    enum state { crowdsaleMinting, teamMinting, finished}
     state public mintingState; 
-    uint public crowdsaleMintingCap;
-    uint public tokensAlreadyMinted;
-    
-    uint public teamTokensPercent;
+
+    address public crowdsaleContractAddress;
+    uint256 public crowdsaleMintingCap;
+
+    uint256 public teamTokensCap;
     address public teamTokenAddress;
-    uint public communityTokens;
-    uint public communityTokens2;
+
+    uint256 public communityTokensCap;
     address public communityAddress;
+    uint256 public comunityMintedTokens;
     
-    constructor() public {
-        crowdsaleMintingCap = 570500000 * 10**18;
-        teamTokensPercent = 27;
-        teamTokenAddress = 0xc2180bC387B7944FabE5E5e25BFaC69Af2Dc888A;
-        communityTokens = 24450000 * 10**18;
-        communityTokens2 = 5705000 * 10**18;
-        communityAddress = 0x4FAAc921781122AA61cfE59841A7669840821b86;
+    function MintingContract() public {
+        tokensAlreadyMinted = 0;
+        crowdsaleMintingCap = 200000000 * 10**18;
+        teamTokensCap = 45000000 * 10**18;
+        teamTokenAddress = 0x0;
+        communityTokensCap = 5000000 * 10**18;
+        communityAddress = 0x0;
+
     }
     
-    function doCrowdsaleMinting(address _destination, uint _tokensToMint) onlyOwner public {
-        require(mintingState == state.crowdsaleMinintg);
-        require(tokensAlreadyMinted + _tokensToMint <= crowdsaleMintingCap);
+    function doCommunityMinting(address _destination, uint _tokensToMint) public {
+        require(msg.sender == communityAddress || msg.sender == owner);
+        require(safeAdd(comunityMintedTokens, _tokensToMint) <= communityTokensCap);
+
         MintableTokenInterface(tokenAddress).mint(_destination, _tokensToMint);
-        tokensAlreadyMinted += _tokensToMint;
+        comunityMintedTokens = safeAdd(comunityMintedTokens, _tokensToMint);
+    }
+
+    function doPresaleMinting(address _destination, uint _tokensToMint) public onlyOwner {
+        require(mintingState == state.crowdsaleMinting);
+        require(safeAdd(tokensAlreadyMinted, _tokensToMint) <= crowdsaleMintingCap);
+
+        MintableTokenInterface(tokenAddress).mint(_destination, _tokensToMint);
+        tokensAlreadyMinted = safeAdd(tokensAlreadyMinted, _tokensToMint);
+    }
+    function doCrowdsaleMinting(address _destination, uint _tokensToMint) public {
+        require(msg.sender == crowdsaleContractAddress);
+        require(mintingState == state.crowdsaleMinting);
+        require(safeAdd(tokensAlreadyMinted, _tokensToMint) <= crowdsaleMintingCap);
+
+        MintableTokenInterface(tokenAddress).mint(_destination, _tokensToMint);
+        tokensAlreadyMinted = safeAdd(tokensAlreadyMinted, _tokensToMint);
     }
     
     function finishCrowdsaleMinting() onlyOwner public {
@@ -154,14 +334,24 @@ contract MintingContract is Owned {
     
     function doTeamMinting() public {
         require(mintingState == state.teamMinting);
-        uint onePercent = tokensAlreadyMinted/70;
-        MintableTokenInterface(tokenAddress).mint(communityAddress, communityTokens2);
-        MintableTokenInterface(tokenAddress).mint(teamTokenAddress, communityTokens - communityTokens2);
-        MintableTokenInterface(tokenAddress).mint(teamTokenAddress, (teamTokensPercent * onePercent));
+        MintableTokenInterface(tokenAddress).mint(teamTokenAddress, safeSub(crowdsaleMintingCap, tokensAlreadyMinted));
+        MintableTokenInterface(tokenAddress).mint(teamTokenAddress, teamTokensCap);
         mintingState = state.finished;
     }
 
     function setTokenAddress(address _tokenAddress) onlyOwner public {
         tokenAddress = _tokenAddress;
+    }
+
+    function setCrowdsaleContractAddress(address _crowdsaleContractAddress) onlyOwner public {
+        crowdsaleContractAddress = _crowdsaleContractAddress;
+    }
+    
+    function setTeamTokenAddress(address _address) onlyOwner public {
+        teamTokenAddress = _address;
+    }
+    
+    function setCommunityAddress(address _address) onlyOwner public {
+        communityAddress = _address;
     }
 }
