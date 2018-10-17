@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MVPToken at 0x393ecc74fe2665ed2195eec00d5b9861be727cdf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MVPToken at 0xcf4487de7fda8e852dab5820bc74746211d73e92
 */
 pragma solidity ^0.4.16;
 
@@ -89,7 +89,7 @@ contract MVPToken is owned, TokenERC20 {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MVPToken(
-    ) TokenERC20(10000000000, "Media Value Point", "MVP") public {}
+    ) TokenERC20(10000000000, "Media Value Pact Token", "MVPT") public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
