@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodLuckCoin at 0xb7244e49b4b64644dc781e9ea298d0b608f9715f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodLuckCoin at 0x23eb30d47674feaaf195056cb6e7ceebf36ef0b2
 */
 pragma solidity ^0.4.4;
 
@@ -87,45 +87,44 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract GoodLuckCoin is StandardToken { // CHANGE THIS. Update the contract name.
+contract GoodLuckCoin is StandardToken { 
 
     /* Public variables of the token */
 
-    /*
-    NOTE:********G O O D L U C K C O I N**************G O O D L U C K C O I N******
-GoodLuckCoin GoodLuckCoin GoodLuckCoin ********G O O D L U C K C O I N****** GoodLuckCoin GoodLuckCoin GoodLuckCoin GoodLuckCoin 
-  And there would be a cryptocurrency, and it would do wonders, 
-   and the Luck would say unto thee followers buy thee Goodluck Coin, 
-    at the highest possible value”. GoodLuckCoin GoodLuckCoin GoodLuckCoin GoodLuckCoin
-    
-    The money & good luck spells of the Good Luck coins in your crypto-wallet are designed 
-    with the heartfelt intention that you connect more deeply with your true creative power
-    The good luck coins in your e-wallet shall caste a heavy spell on your crypto trading activities, your health and other activities 
-    as when you purchase the coins you directly and indirectly get good luck
-    GoodLuckCoin GoodLuckCoin GoodLuckCoin GoodLuckCoin********G O O D L U C K C O I N******
-********G O O D L U C K C O I N**************G O O D L U C K C O I N******    */
-    string public name;                   // Token 
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: ..
+    string public name;
+    uint8 public decimals;
+    string public symbol;
     string public version = 'H1.0'; 
-    uint256 public Goodluckcoin ;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address  fundsWallet;           // Where should the raised ETH go?
+    uint256 public unitsOneEthCanBuy;
+    uint256 public totalEthInWei; 
+    address public fundsWallet;
 
-    // This is a constructor function 
-    // which means the following function name has to match the contract name declared above
+    //constructor function 
     function GoodLuckCoin() {
-        balances[msg.sender] = 2319099;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 2319099;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "GoodLuckCoin";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 0;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "LUCK";                                             // Set the symbol for display purposes (CHANGE THIS)
-                                              // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        balances[msg.sender] = 100000000;
+        totalSupply = 100000000;
+        name = "GoodLuck Coin";
+        decimals = 0;
+        symbol = "GLC";
+        unitsOneEthCanBuy = 485;
+        fundsWallet = msg.sender;
     }
-                                
 
-/* Approves and then calls the receiving contract */
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
+    }
+
+    /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
