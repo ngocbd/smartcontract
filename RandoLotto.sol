@@ -1,90 +1,186 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x954791f9a0f0ff7841cffea32c556ac71168eff8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RandoLotto at 0x68512f25c762a61047e652c51c71757593a2e9e6
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 // Random lottery
 // Smart contracts can't bet
 
 // Pay 0.001 to get a random number
 // If your random number is the highest so far you're in the lead
-// If no one beats you in 1 day you can claim your winnnings - the entire balance.
+// If no one beats you in 1 day you can claim your winnnings - half of the pot.
+
+// Three pots total - hour long, day long, and week long.
+// Successfully getting the highest value on one of them resets only that one.
+
+// When you bet, you bet for ALL THREE pots. (each is a different random number)
 
 contract RandoLotto {
     
-    uint256 PrizePool;
-    uint256 highScore;
-    address currentWinner;
-    uint256 lastTimestamp;
+    bool activated;
+    address internal owner;
+    uint256 internal devFee;
+    uint256 internal seed;
     
-    constructor () public {
-        highScore = 0;
-        currentWinner = msg.sender;
-        lastTimestamp = now;
+    uint256 public totalBids;
+    
+    // Three pots
+    uint256 public hourPot;
+    uint256 public dayPot;
+    uint256 public weekPot;
+    
+    // Each put has a current winner
+    address public hourPotLeader;
+    address public dayPotLeader;
+    address public weekPotLeader;
+    
+    // Each pot has a current high score
+    uint256 public hourPotHighscore;
+    uint256 public dayPotHighscore;
+    uint256 public weekPotHighscore;
+    
+    // Each pot has an expiration - reset when someone else takes leader of that pot
+    uint256 public hourPotExpiration;
+    uint256 public dayPotExpiration;
+    uint256 public weekPotExpiration;
+    
+    struct threeUints {
+        uint256 a;
+        uint256 b; 
+        uint256 c;
     }
     
-    function () public payable {
-        require(msg.sender == tx.origin);
-        require(msg.value >= 0.001 ether);
+    mapping (address => threeUints) playerLastScores;
     
-        uint256 randomNumber = uint256(keccak256(blockhash(block.number - 1)));
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    constructor () public {
+        owner = msg.sender;
         
-        if (randomNumber > highScore) {
-            currentWinner = msg.sender;
-            lastTimestamp = now;
+        activated = false;
+        totalBids = 0;
+        
+        hourPotHighscore = 0;
+        dayPotHighscore = 0;
+        weekPotHighscore = 0;
+        
+        hourPotLeader = msg.sender;
+        dayPotLeader = msg.sender;
+        weekPotLeader = msg.sender;
+    }
+    
+    function activate() public payable onlyOwner {
+        require(!activated);
+        require(msg.value >= 0 ether);
+        
+        hourPotExpiration = now + 1 hours;
+        dayPotExpiration = now + 1 days;
+        weekPotExpiration = now + 1 weeks;
+        
+        hourPot = msg.value / 3;
+        dayPot = msg.value / 3;
+        weekPot = msg.value - hourPot - dayPot;
+        
+        activated = true;
+    }
+    
+    // Fallback function calls bid.
+    function () public payable {
+        bid();
+    }
+    
+    // Bid function.
+    function bid() public payable returns (uint256, uint256, uint256) {
+        // Humans only unlike F3D
+        require(msg.sender == tx.origin);
+        require(msg.value == 0.01 ether);
+
+        checkRoundEnd();
+
+        // Add monies to pot
+        devFee = devFee + (msg.value / 100);
+        uint256 toAdd = msg.value - (msg.value / 100);
+        hourPot = hourPot + (toAdd / 3);
+        dayPot = dayPot + (toAdd / 3);
+        weekPot = weekPot + (toAdd - ((toAdd/3) + (toAdd/3)));
+
+        // Random number via blockhash    
+        seed = uint256(keccak256(blockhash(block.number - 1), seed, now));
+        uint256 seed1 = seed;
+        
+        if (seed > hourPotHighscore) {
+            hourPotLeader = msg.sender;
+            hourPotExpiration = now + 1 hours;
+            hourPotHighscore = seed;
+        }
+        
+        seed = uint256(keccak256(blockhash(block.number - 1), seed, now));
+        uint256 seed2 = seed;
+        
+        if (seed > dayPotHighscore) {
+            dayPotLeader = msg.sender;
+            dayPotExpiration = now + 1 days;
+            dayPotHighscore = seed;
+        }
+        
+        seed = uint256(keccak256(blockhash(block.number - 1), seed, now));
+        uint256 seed3 = seed;
+        
+        if (seed > weekPotHighscore) {
+            weekPotLeader = msg.sender;
+            weekPotExpiration = now + 1 weeks;
+            weekPotHighscore = seed;
+        }
+        
+        totalBids++;
+        
+        playerLastScores[msg.sender] = threeUints(seed1, seed2, seed3);
+        return (seed1, seed2, seed3);
+    }
+    
+    function checkRoundEnd() internal {
+        if (now > hourPotExpiration) {
+            uint256 hourToSend = hourPot / 2;
+            hourPot = hourPot - hourToSend;
+            hourPotLeader.send(hourToSend);
+            hourPotLeader = msg.sender;
+            hourPotHighscore = 0;
+            hourPotExpiration = now + 1 hours;
+        }
+        
+        if (now > dayPotExpiration) {
+            uint256 dayToSend = dayPot / 2;
+            dayPot = dayPot - dayToSend;
+            dayPotLeader.send(dayToSend);
+            dayPotLeader = msg.sender;
+            dayPotHighscore = 0;
+            dayPotExpiration = now + 1 days;
+        }
+        
+        if (now > weekPotExpiration) {
+            uint256 weekToSend = weekPot / 2;
+            weekPot = weekPot - weekToSend;
+            weekPotLeader.send(weekToSend);
+            weekPotLeader = msg.sender;
+            weekPotHighscore = 0;
+            weekPotExpiration = now + 1 weeks;
         }
     }
     
     function claimWinnings() public {
-        require(now > lastTimestamp + 1 days);
-        require(msg.sender == currentWinner);
-        
-        msg.sender.transfer(address(this).balance);
+        checkRoundEnd();
     }
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+    
+    function getMyLastScore() public view returns (uint256, uint256, uint256) {
+        return (playerLastScores[msg.sender].a, playerLastScores[msg.sender].b, playerLastScores[msg.sender].c);
     }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    
+    function devWithdraw() public onlyOwner {
+        uint256 toSend = devFee;
+        devFee = 0;
+        owner.transfer(toSend);
     }
 }
