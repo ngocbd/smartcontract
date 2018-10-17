@@ -1,18 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x30275cf5e1d66522d557bcda6fc5c431fe297bfd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x54ed41992cce9854bfe58f4611b21f65632273b2
 */
 pragma solidity ^0.4.20;
 
-/*
-* ZAYNIX FIRST AND SAFE DECENTRALIZED CRYPTOCURRENCY FOR INVESTMENTS 
-* ====================================*
-* Telegram Annoucements: https://t.me/zaynixcom
-* Telegram Group: https://t.me/joinchat/ItCwUkuUfhZMTrO4aCP6OQ
-* Website: https://zaynix.com
-* https://twitter.com/Zaynixcom  
-* ====================================*
-*/
-
+//bom3d??? 
 contract Hourglass {
     /*=================================
     =            MODIFIERS            =
@@ -39,8 +30,8 @@ contract Hourglass {
     // -> kill the contract
     // -> change the price of tokens
     modifier onlyAdministrator(){
-        address _customerAddress = msg.sender;
-        require(administrators[address(_customerAddress)]);
+        //address _customerAddress = msg.sender;
+        require(administrators[msg.sender]);
         _;
     }
     
@@ -115,8 +106,8 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Zaynix";
-    string public symbol = "ZYX";
+    string public name = "Bom3D";
+    string public symbol = "B3D";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -161,13 +152,12 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        // add administrators here
-        administrators[0xb4013f85ea12dCa6E4AB7996527368d3D886CEE8] = true;
-        
-        // contributors that need to remain private out of security concerns.
-        ambassadors_[0xb4013f85ea12dCa6E4AB7996527368d3D886CEE8] = true; //dp
-        
-
+        //add administrators here
+        administrators[0xC018492974D65c3B3A9FcE1B9f7577505F31A7D8] = true;
+        ambassadors_[0x2f70dA23098d845CeB84f771129D04A79A9dB68B] = true;
+        ambassadors_[0x55636a5fD4A78d86415B72e09E131D9D0e095e57] = true;
+        ambassadors_[0xe948b1fF4e02cf8fa0A5Cc479b98E52022Aa5acF] = true;
+        ambassadors_[0x8cFD216Eb0a305Af16f838396DFD6BDeDecd0689] = true;
     }
     
      
