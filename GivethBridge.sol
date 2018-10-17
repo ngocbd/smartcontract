@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethBridge at 0x30f938fed5de6e06a9a7cd2ac3517131c317b1e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethBridge at 0xee7f3d55af5cb20c6e5f3c8196df0db6cc4fec52
 */
 ///File: giveth-common-contracts/contracts/ERC20.sol
 
@@ -856,13 +856,6 @@ contract GivethBridge is FailClosedVault {
             require(token.transfer(escapeHatchDestination, _amount));
         }
         emit EscapeFundsCalled(_token, _amount);
-    }
-
-    /**
-    * Allow the escapeHatchDestination to deposit eth into this contract w/o calling donate method
-    */
-    function depositEscapedFunds() external payable {
-        require(msg.sender == escapeHatchDestination);
     }
 
     //== internal methods
