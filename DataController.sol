@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataController at 0xb019ed7fc2fe1e6c57e438c94799af02dee0e22d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataController at 0x52e40b625f52c3fd4097bacfa5be299a140fdc67
 */
 pragma solidity ^0.4.18;
 
@@ -170,13 +170,23 @@ contract OracleMethodAdapter is Object {
         }
     }
 
-    function addOracles(bytes4[] _signatures, address[] _oracles) onlyContractOwner external returns (uint) {
+    function addOracles(
+        bytes4[] _signatures, 
+        address[] _oracles
+    ) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         require(_signatures.length == _oracles.length);
         bytes4 _sig;
         address _oracle;
         for (uint _idx = 0; _idx < _signatures.length; ++_idx) {
             (_sig, _oracle) = (_signatures[_idx], _oracles[_idx]);
-            if (!oracles[_sig][_oracle]) {
+            if (_oracle != 0x0 
+                && _sig != bytes4(0) 
+                && !oracles[_sig][_oracle]
+            ) {
                 oracles[_sig][_oracle] = true;
                 _emitOracleAdded(_sig, _oracle);
             }
@@ -184,13 +194,23 @@ contract OracleMethodAdapter is Object {
         return OK;
     }
 
-    function removeOracles(bytes4[] _signatures, address[] _oracles) onlyContractOwner external returns (uint) {
+    function removeOracles(
+        bytes4[] _signatures, 
+        address[] _oracles
+    ) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         require(_signatures.length == _oracles.length);
         bytes4 _sig;
         address _oracle;
         for (uint _idx = 0; _idx < _signatures.length; ++_idx) {
             (_sig, _oracle) = (_signatures[_idx], _oracles[_idx]);
-            if (oracles[_sig][_oracle]) {
+            if (_oracle != 0x0 
+                && _sig != bytes4(0) 
+                && oracles[_sig][_oracle]
+            ) {
                 delete oracles[_sig][_oracle];
                 _emitOracleRemoved(_sig, _oracle);
             }
@@ -266,8 +286,6 @@ contract ERC20 {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
 
-
-
 contract Platform {
     mapping(bytes32 => address) public proxies;
     function name(bytes32 _symbol) public view returns (string);
@@ -289,9 +307,6 @@ contract Platform {
 
 contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
 
-    // Timespan for users to review the new implementation and make decision.
-    uint constant UPGRADE_FREEZE_TIME = 3 days;
-
     using SafeMath for uint;
 
     /**
@@ -301,12 +316,6 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
 
     // Current asset implementation contract address.
     address latestVersion;
-
-    // Proposed next asset implementation contract address.
-    address pendingVersion;
-
-    // Upgrade freeze-time start.
-    uint pendingVersionTimestamp;
 
     // Assigned platform, immutable.
     Platform public platform;
@@ -561,24 +570,6 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
     }
 
     /**
-     * Returns proposed next asset implementation contract address.
-     *
-     * @return asset implementation contract address.
-     */
-    function getPendingVersion() public view returns (address) {
-        return pendingVersion;
-    }
-
-    /**
-     * Returns upgrade freeze-time start.
-     *
-     * @return freeze-time start.
-     */
-    function getPendingVersionTimestamp() public view returns (uint) {
-        return pendingVersionTimestamp;
-    }
-
-    /**
      * Propose next asset implementation contract address.
      *
      * Can only be called by current asset owner.
@@ -590,58 +581,14 @@ contract ATxAssetProxy is ERC20, Object, ServiceAllowance {
      * @return success.
      */
     function proposeUpgrade(address _newVersion) public onlyAssetOwner returns (bool) {
-        // Should not already be in the upgrading process.
-        if (pendingVersion != 0x0) {
-            return false;
-        }
         // New version address should be other than 0x0.
         if (_newVersion == 0x0) {
             return false;
         }
-        // Don't apply freeze-time for the initial setup.
-        if (latestVersion == 0x0) {
-            latestVersion = _newVersion;
-            return true;
-        }
-        pendingVersion = _newVersion;
-        pendingVersionTimestamp = now;
-        UpgradeProposal(_newVersion);
-        return true;
-    }
+        
+        latestVersion = _newVersion;
 
-    /**
-     * Cancel the pending upgrade process.
-     *
-     * Can only be called by current asset owner.
-     *
-     * @return success.
-     */
-    function purgeUpgrade() public onlyAssetOwner returns (bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
-        return true;
-    }
-
-    /**
-     * Finalize an upgrade process setting new asset implementation contract address.
-     *
-     * Can only be called after an upgrade freeze-time.
-     *
-     * @return success.
-     */
-    function commitUpgrade() public returns (bool) {
-        if (pendingVersion == 0x0) {
-            return false;
-        }
-        if (pendingVersionTimestamp.add(UPGRADE_FREEZE_TIME) > now) {
-            return false;
-        }
-        latestVersion = pendingVersion;
-        delete pendingVersion;
-        delete pendingVersionTimestamp;
+        UpgradeProposal(_newVersion); 
         return true;
     }
 
@@ -1679,6 +1626,8 @@ contract MultiSigAdapter is Object {
 /// Serves for managing service instances
 contract ServiceController is MultiSigAdapter {
 
+    event Error(uint _errorCode);
+
     uint constant SERVICE_CONTROLLER = 350000;
     uint constant SERVICE_CONTROLLER_EMISSION_EXIST = SERVICE_CONTROLLER + 1;
     uint constant SERVICE_CONTROLLER_BURNING_MAN_EXIST = SERVICE_CONTROLLER + 2;
@@ -1690,9 +1639,20 @@ contract ServiceController is MultiSigAdapter {
     address public pendingManager;
     address public proxy;
 
+    uint public sideServicesCount;
+    mapping(uint => address) public index2sideService;
+    mapping(address => uint) public sideService2index;
     mapping(address => bool) public sideServices;
-    mapping(address => bool) emissionProviders;
-    mapping(address => bool) burningMans;
+
+    uint public emissionProvidersCount;
+    mapping(uint => address) public index2emissionProvider;
+    mapping(address => uint) public emissionProvider2index;
+    mapping(address => bool) public emissionProviders;
+
+    uint public burningMansCount;
+    mapping(uint => address) public index2burningMan;
+    mapping(address => uint) public burningMan2index;
+    mapping(address => bool) public burningMans;
 
     /// @notice Default ServiceController's constructor
     ///
@@ -1725,7 +1685,7 @@ contract ServiceController is MultiSigAdapter {
     /// @return code
     function addEmissionProvider(address _provider, uint _block) public returns (uint _code) {
         if (emissionProviders[_provider]) {
-            return SERVICE_CONTROLLER_EMISSION_EXIST;
+            return _emitError(SERVICE_CONTROLLER_EMISSION_EXIST);
         }
         _code = _multisig(keccak256(_provider), _block);
         if (OK != _code) {
@@ -1733,6 +1693,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         emissionProviders[_provider] = true;
+        uint _count = emissionProvidersCount + 1;
+        index2emissionProvider[_count] = _provider;
+        emissionProvider2index[_provider] = _count;
+        emissionProvidersCount = _count;
+
         return OK;
     }
 
@@ -1747,7 +1712,21 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete emissionProviders[_provider];
+        uint _idx = emissionProvider2index[_provider];
+        uint _lastIdx = emissionProvidersCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastEmissionProvider = index2emissionProvider[_lastIdx];
+                index2emissionProvider[_idx] = _lastEmissionProvider;
+                emissionProvider2index[_lastEmissionProvider] = _idx;
+            }
+
+            delete emissionProvider2index[_provider];
+            delete index2emissionProvider[_lastIdx];
+            delete emissionProviders[_provider];
+            emissionProvidersCount = _lastIdx - 1;
+        }
+
         return OK;
     }
 
@@ -1758,7 +1737,7 @@ contract ServiceController is MultiSigAdapter {
     /// @return code
     function addBurningMan(address _burningMan, uint _block) public returns (uint _code) {
         if (burningMans[_burningMan]) {
-            return SERVICE_CONTROLLER_BURNING_MAN_EXIST;
+            return _emitError(SERVICE_CONTROLLER_BURNING_MAN_EXIST);
         }
 
         _code = _multisig(keccak256(_burningMan), _block);
@@ -1767,6 +1746,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         burningMans[_burningMan] = true;
+        uint _count = burningMansCount + 1;
+        index2burningMan[_count] = _burningMan;
+        burningMan2index[_burningMan] = _count;
+        burningMansCount = _count;
+
         return OK;
     }
 
@@ -1781,7 +1765,21 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete burningMans[_burningMan];
+        uint _idx = burningMan2index[_burningMan];
+        uint _lastIdx = burningMansCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastBurningMan = index2burningMan[_lastIdx];
+                index2burningMan[_idx] = _lastBurningMan;
+                burningMan2index[_lastBurningMan] = _idx;
+            }
+            
+            delete burningMan2index[_burningMan];
+            delete index2burningMan[_lastIdx];
+            delete burningMans[_burningMan];
+            burningMansCount = _lastIdx - 1;
+        }
+
         return OK;
     }
 
@@ -1840,6 +1838,11 @@ contract ServiceController is MultiSigAdapter {
         }
 
         sideServices[_service] = true;
+        uint _count = sideServicesCount + 1;
+        index2sideService[_count] = _service;
+        sideService2index[_service] = _count;
+        sideServicesCount = _count;
+
         return OK;
     }
 
@@ -1849,8 +1852,55 @@ contract ServiceController is MultiSigAdapter {
             return _code;
         }
 
-        delete sideServices[_service];
+        uint _idx = sideService2index[_service];
+        uint _lastIdx = sideServicesCount;
+        if (_idx != 0) {
+            if (_idx != _lastIdx) {
+                address _lastSideService = index2sideService[_lastIdx];
+                index2sideService[_idx] = _lastSideService;
+                sideService2index[_lastSideService] = _idx;
+            }
+            
+            delete sideService2index[_service];
+            delete index2sideService[_lastIdx];
+            delete sideServices[_service];
+            sideServicesCount = _lastIdx - 1;
+        }
+
         return OK;
+    }
+
+    function getEmissionProviders()
+    public
+    view
+    returns (address[] _emissionProviders)
+    {
+        _emissionProviders = new address[](emissionProvidersCount);
+        for (uint _idx = 0; _idx < _emissionProviders.length; ++_idx) {
+            _emissionProviders[_idx] = index2emissionProvider[_idx + 1];
+        }
+    }
+
+    function getBurningMans()
+    public
+    view
+    returns (address[] _burningMans)
+    {
+        _burningMans = new address[](burningMansCount);
+        for (uint _idx = 0; _idx < _burningMans.length; ++_idx) {
+            _burningMans[_idx] = index2burningMan[_idx + 1];
+        }
+    }
+
+    function getSideServices()
+    public
+    view
+    returns (address[] _sideServices)
+    {
+        _sideServices = new address[](sideServicesCount);
+        for (uint _idx = 0; _idx < _sideServices.length; ++_idx) {
+            _sideServices[_idx] = index2sideService[_idx + 1];
+        }
     }
 
     /// @notice Check target address is service
@@ -1866,6 +1916,11 @@ contract ServiceController is MultiSigAdapter {
             emissionProviders[_address] || 
             burningMans[_address] ||
             sideServices[_address];
+    }
+
+    function _emitError(uint _errorCode) internal returns (uint) {
+        Error(_errorCode);
+        return _errorCode;
     }
 }
 
@@ -1934,7 +1989,7 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     }
 
     modifier onlyAsset {
-        if (msg.sender == assetAddress) {
+        if (msg.sender == _getATxToken().getLatestVersion()) {
             _;
         }
     }
@@ -1947,12 +2002,10 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
 
     /// @notice Constructor for _holderData controller.
     /// @param _serviceController service controller
-    function DataController(address _serviceController, address _asset) public {
+    function DataController(address _serviceController) public {
         require(_serviceController != 0x0);
-        require(_asset != 0x0);
 
         serviceController = _serviceController;
-        assetAddress = _asset;
     }
 
     function() payable public {
@@ -1962,6 +2015,17 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     function setWithdraw(address _withdrawal) onlyContractOwner external returns (uint) {
         require(_withdrawal != 0x0);
         withdrawal = _withdrawal;
+        return OK;
+    }
+
+    function setServiceController(address _serviceController) 
+    onlyContractOwner
+    external
+    returns (uint)
+    {
+        require(_serviceController != 0x0);
+        
+        serviceController = _serviceController;
         return OK;
     }
 
@@ -2005,7 +2069,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return holderIndex[holderAddress2Id[_address]] != 0;
     }
 
-    function isHolderOwnAddress(bytes32 _externalHolderId, address _address) public view returns (bool) {
+    function isHolderOwnAddress(
+        bytes32 _externalHolderId, 
+        address _address
+    ) 
+    public 
+    view 
+    returns (bool) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         if (_holderIndex == 0) {
             return false;
@@ -2013,7 +2084,13 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return holders[_holderIndex].address2Index[_address] != 0;
     }
 
-    function getCountryInfo(uint _countryCode) public view returns (uint _maxHolderNumber, uint _currentHolderCount) {
+    function getCountryInfo(uint _countryCode) 
+    public 
+    view 
+    returns (
+        uint _maxHolderNumber, 
+        uint _currentHolderCount
+    ) {
         CountryLimits storage _data = countryLimitsList[countryIndex[_countryCode]];
         return (_data.maxTokenHolderNumber, _data.currentTokenHolderNumber);
     }
@@ -2036,7 +2113,15 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId holder address.
     /// @param _countryCode country code.
     /// @return error code.
-    function registerHolder(bytes32 _externalHolderId, address _holderAddress, uint _countryCode) onlyOracleOrOwner external returns (uint) {
+    function registerHolder(
+        bytes32 _externalHolderId, 
+        address _holderAddress, 
+        uint _countryCode
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         require(_holderAddress != 0x0);
         require(holderIndex[_externalHolderId] == 0);
         uint _holderIndex = holderIndex[holderAddress2Id[_holderAddress]];
@@ -2066,7 +2151,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId external holder identifier.
     /// @param _newAddress adding address.
     /// @return error code.
-    function addHolderAddress(bytes32 _externalHolderId, address _newAddress) onlyOracleOrOwner external returns (uint) {
+    function addHolderAddress(
+        bytes32 _externalHolderId, 
+        address _newAddress
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2091,7 +2183,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _externalHolderId external holder identifier.
     /// @param _address removing address.
     /// @return error code.
-    function removeHolderAddress(bytes32 _externalHolderId, address _address) onlyOracleOrOwner external returns (uint) {
+    function removeHolderAddress(
+        bytes32 _externalHolderId, 
+        address _address
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2119,7 +2218,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _operational operational status.
     ///
     /// @return result code.
-    function changeOperational(bytes32 _externalHolderId, bool _operational) onlyOracleOrOwner external returns (uint) {
+    function changeOperational(
+        bytes32 _externalHolderId, 
+        bool _operational
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2136,7 +2242,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _text changing text.
     ///
     /// @return result code.
-    function updateTextForHolder(bytes32 _externalHolderId, bytes _text) onlyOracleOrOwner external returns (uint) {
+    function updateTextForHolder(
+        bytes32 _externalHolderId, 
+        bytes _text
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2152,7 +2265,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function updateLimitPerDay(bytes32 _externalHolderId, uint _limit) onlyOracleOrOwner external returns (uint) {
+    function updateLimitPerDay(
+        bytes32 _externalHolderId, 
+        uint _limit
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2170,7 +2290,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function updateLimitPerMonth(bytes32 _externalHolderId, uint _limit) onlyOracleOrOwner external returns (uint) {
+    function updateLimitPerMonth(
+        bytes32 _externalHolderId, 
+        uint _limit
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _holderIndex = holderIndex[_externalHolderId];
         require(_holderIndex != 0);
 
@@ -2188,13 +2315,20 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     /// @param _limit limit value.
     ///
     /// @return result code.
-    function changeCountryLimit(uint _countryCode, uint _limit) onlyOracleOrOwner external returns (uint) {
+    function changeCountryLimit(
+        uint _countryCode, 
+        uint _limit
+    ) 
+    onlyOracleOrOwner 
+    external 
+    returns (uint) 
+    {
         uint _countryIndex = countryIndex[_countryCode];
         require(_countryIndex != 0);
 
         uint _currentTokenHolderNumber = countryLimitsList[_countryIndex].currentTokenHolderNumber;
         if (_currentTokenHolderNumber > _limit) {
-            return DATA_CONTROLLER_CURRENT_WRONG_LIMIT;
+            return _emitError(DATA_CONTROLLER_CURRENT_WRONG_LIMIT);
         }
 
         countryLimitsList[_countryIndex].maxTokenHolderNumber = _limit;
@@ -2203,7 +2337,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function withdrawFrom(address _holderAddress, uint _value) public onlyAsset returns (uint) {
+    function withdrawFrom(
+        address _holderAddress, 
+        uint _value
+    ) 
+    onlyAsset 
+    public 
+    returns (uint) 
+    {
         bytes32 _externalHolderId = holderAddress2Id[_holderAddress];
         HoldersData storage _holderData = holders[holderIndex[_externalHolderId]];
         _holderData.sendLimPerDay = _holderData.sendLimPerDay.sub(_value);
@@ -2211,7 +2352,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function depositTo(address _holderAddress, uint _value) public onlyAsset returns (uint) {
+    function depositTo(
+        address _holderAddress, 
+        uint _value
+    ) 
+    onlyAsset 
+    public 
+    returns (uint) 
+    {
         bytes32 _externalHolderId = holderAddress2Id[_holderAddress];
         HoldersData storage _holderData = holders[holderIndex[_externalHolderId]];
         _holderData.sendLimPerDay = _holderData.sendLimPerDay.add(_value);
@@ -2219,7 +2367,14 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         return OK;
     }
 
-    function updateCountryHoldersCount(uint _countryCode, uint _updatedHolderCount) public onlyAsset returns (uint) {
+    function updateCountryHoldersCount(
+        uint _countryCode, 
+        uint _updatedHolderCount
+    ) 
+    public 
+    onlyAsset 
+    returns (uint) 
+    {
         CountryLimits storage _data = countryLimitsList[countryIndex[_countryCode]];
         assert(_data.maxTokenHolderNumber >= _updatedHolderCount);
         _data.currentTokenHolderNumber = _updatedHolderCount;
@@ -2227,10 +2382,9 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
     }
 
     function changeAllowance(address _from, uint _value) public onlyWithdrawal returns (uint) {
-        ServiceController _serviceController = ServiceController(serviceController);
-        ATxAssetProxy token = ATxAssetProxy(_serviceController.proxy());
+        ATxAssetProxy token = _getATxToken();
         if (token.balanceOf(_from) < _value) {
-            return DATA_CONTROLLER_WRONG_ALLOWANCE;
+            return _emitError(DATA_CONTROLLER_WRONG_ALLOWANCE);
         }
         allowance[_from] = _value;
         return OK;
@@ -2253,5 +2407,10 @@ contract DataController is OracleMethodAdapter, DataControllerEmitter {
         }
 
         return (countryId, _created);
+    }
+
+    function _getATxToken() private view returns (ATxAssetProxy) {
+        ServiceController _serviceController = ServiceController(serviceController);
+        return ATxAssetProxy(_serviceController.proxy());
     }
 }
