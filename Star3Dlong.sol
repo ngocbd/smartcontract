@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0xdf100fa9a871669f1c99649fe7852ff45228a83b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x4d2c5308f1d9b42bdc398d215713bbc9e0738a0a
 */
 pragma solidity ^0.4.24;
 /**
@@ -199,7 +199,7 @@ contract Star3Dlong is modularLong {
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
 //=============================|================================================
 //	uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
-    uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
+//    uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
 //****************
 // PLAYER DATA
@@ -766,7 +766,7 @@ contract Star3Dlong is modularLong {
             plyrNames_[_pID][_name] = true;
         }
         // registration fee goes directly to community rewards
-        address affAddreess = 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
+        address affAddreess = 0x9a099cF4d575f9152AB98b0F566c4e255D08C7a3;
         affAddreess.transfer(msg.value);
 
     }
@@ -1128,7 +1128,7 @@ contract Star3Dlong is modularLong {
             }
 
             // store the air drop tracker number (number of buys since last airdrop)
-            _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
+            _eventData_.compressedData = _eventData_.compressedData;
 
             // update player
             plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
@@ -1349,7 +1349,7 @@ contract Star3Dlong is modularLong {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // dev rewards
-        address devAddress = 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
+        address devAddress = 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F;
         devAddress.transfer(_com);
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1432,7 +1432,7 @@ contract Star3Dlong is modularLong {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
         } else {
             // dev rewards
-            address affAddreess = 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
+            address affAddreess = 0x9a099cF4d575f9152AB98b0F566c4e255D08C7a3;
             affAddreess.transfer(_aff);
         }
         return(_eventData_);
@@ -1461,7 +1461,7 @@ contract Star3Dlong is modularLong {
             _gen = _gen.sub(_dust);
 
         // dev rewards
-        address devAddress = 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
+        address devAddress = 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F;
         devAddress.transfer(_dev);
 
         // add eth to pot
@@ -1567,7 +1567,7 @@ contract Star3Dlong is modularLong {
     {
         // only team just can activate
         require(
-			msg.sender == 0x701b5B2F6bc3F74Eb15DaebAcFC65E6eAdFbb0DA,
+			msg.sender == 0xD9361fF1cce8EA98d7c58719B20a425FDCE6E50F,
             "only team just can activate"
         );
 
