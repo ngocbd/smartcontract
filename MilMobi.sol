@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilMobi at 0x892fbef3128d61f09ede0ff77ee03feee98bbe30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilMobi at 0x0ff08b0f1e88fe02915517ef9ac568f884fbf78e
 */
 pragma solidity ^0.4.16;
 
@@ -9,7 +9,7 @@ contract MilMobi {
     // Public variables of the token
     string public name = 'MilMobi Token' ;
     string public symbol = 'MMT';
-    uint8 public decimals = 0;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply = 194000000;
 
