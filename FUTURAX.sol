@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTURAX at 0x38d5e1f36eca1dcf9b8b400ad034c9bb875a14da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FUTURAX at 0xc92d6e3e64302c59d734f3292e2a13a13d7e1817
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
@@ -81,7 +80,7 @@ contract FUTURAX is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 10000000000e8; // Supply
-    uint256 public totalDistributed = 4000000000e8;    
+    uint256 public totalDistributed = 3000000000e8;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
     uint256 public tokensPerEth = 20000000e8;
 
@@ -150,11 +149,12 @@ contract FUTURAX is ERC20 {
         emit Transfer(address(0), _participant, _amount);
     }
 
-    function adminClaimAirdrop(address _participant, uint _amount) external {        
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
 
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) external {        
+
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
     }
 
@@ -190,6 +190,7 @@ contract FUTURAX is ERC20 {
         return balances[_owner];
     }
 
+    // mitigates the ERC20 short address attack
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length >= size + 4);
         _;
@@ -220,6 +221,7 @@ contract FUTURAX is ERC20 {
     }
     
     function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
