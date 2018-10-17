@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Chromium at 0x04bd346f40fe66303a39225bec1f28f66711582e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Chromium at 0xb4e1C7526D71F706F5d10056a3977580D6787759
 */
 pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
 
@@ -78,23 +77,19 @@ contract Chromium is ERC20 {
 
     string public constant name = "Chromium";
     string public constant symbol = "CHRM";
-    uint public constant decimals = 8;
+    uint public constant decimals = 18;
     
-    uint256 public totalSupply = 10000000000e8;
-    uint256 public totalDistributed = 0;    
+    uint256 public totalSupply = 10000000000e18; // Supply
+    uint256 public totalDistributed = 3000000000e18;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 10000000e8;
+    uint256 public tokensPerEth = 10000000e18;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
     event Distr(address indexed to, uint256 amount);
     event DistrFinished();
-
     event Airdrop(address indexed _owner, uint _amount, uint _balance);
-
     event TokensPerEthUpdated(uint _tokensPerEth);
-    
     event Burn(address indexed burner, uint256 value);
 
     bool public distributionFinished = false;
@@ -111,7 +106,7 @@ contract Chromium is ERC20 {
     
     
     function Chromium () public {
-        owner = msg.sender;    
+        owner = msg.sender;        
         distr(owner, totalDistributed);
     }
     
@@ -150,7 +145,6 @@ contract Chromium is ERC20 {
             distributionFinished = true;
         }
 
-        // log
         emit Airdrop(_participant, _amount, balances[_participant]);
         emit Transfer(address(0), _participant, _amount);
     }
@@ -158,6 +152,7 @@ contract Chromium is ERC20 {
     function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
+
 
     function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
@@ -175,12 +170,10 @@ contract Chromium is ERC20 {
     function getTokens() payable canDistr  public {
         uint256 tokens = 0;
 
-        // minimum contribution
         require( msg.value >= MIN_CONTRIBUTION );
 
         require( msg.value > 0 );
 
-        // get baseline number of tokens
         tokens = tokensPerEth.mul(msg.value) / 1 ether;        
         address investor = msg.sender;
         
@@ -253,8 +246,7 @@ contract Chromium is ERC20 {
     
     function burn(uint256 _value) onlyOwner public {
         require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
 
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
