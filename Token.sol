@@ -1,144 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x06bfa78beeaddf9c8d878b47bda2a2bb433cbe78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd0b7cb9ae6042ea533495cda0ca6346903baad1e
 */
-pragma solidity ^0.4.24;
-
-contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
-    }
+pragma solidity ^0.4.13;
+contract Token {
     
-    function tokenFallback(address _from, uint _value, bytes _data){
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u); 
- 
-    }
-}
+	/* Public variables of the token */
+	string public name;
+	string public symbol;
+	uint8 public decimals;
+	uint256 public totalSupply;
+    
+	/* This creates an array with all balances */
+	mapping (address => uint256) public balanceOf;
 
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+	/* This generates a public event on the blockchain that will notify clients */
+	event Transfer(address indexed from, address indexed to, uint256 value);
 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) throw;
-        return x + y;
-    }
+	function Token() {
+	    totalSupply = 1*(10**8)*(10**18);
+		balanceOf[msg.sender] = 1*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "YED(yed)";                                   // Set the name for display purposes
+		symbol = "yinadetoken";                               // Set the symbol for display purposes
+		decimals = 18;                            // Amount of decimals for display purposes
+	}
 
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x < y) throw;
-        return x - y;
-    }
+	function transfer(address _to, uint256 _value) {
+	/* Check if sender has balance and for overflows */
+	if (balanceOf[msg.sender] < _value || balanceOf[_to] + _value < balanceOf[_to])
+		revert();
+	/* Add and subtract new balances */
+	balanceOf[msg.sender] -= _value;
+	balanceOf[_to] += _value;
+	/* Notifiy anyone listening that this transfer took place */
+	Transfer(msg.sender, _to, _value);
+	}
 
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) throw;
-        return x * y;
-    }
-}
-
-contract Token is SafeMath{
-
-  mapping(address => uint) balances;
-  
-  string public symbol = "";
-  string public name = "";
-  uint8 public decimals = 18;
-  uint256 public totalSupply = 0;
-  address owner = 0;
-  
-  event Transfer(address indexed from, address indexed to, uint value);
-  event TransferToCon(address indexed from, address indexed to, uint value, bytes indexed data);
-  
-  function Token(string _tokenName, string _tokenSymbol, uint256 _tokenSupply) {
-		owner = msg.sender;   
-		symbol = _tokenSymbol;
-		name = _tokenName;
-		totalSupply = _tokenSupply * 1000000000000000000;
-		balances[owner] = totalSupply;
-    }
-
-  
-  function name() constant returns (string _name) {
-      return name;
-  }
-
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-  
-  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-      
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
-    }
-    else {
-        return transferToAddress(_to, _value);
-    }
-}
-  
-  function transfer(address _to, uint _value) returns (bool success) {
-      
-    bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value);
-    }
-}
-
-  function isContract(address _addr) private returns (bool is_contract) {
-      uint length;
-	  
-	  if (balanceOf(_addr) >=0 )
-	  
-      assembly {
-            length := extcodesize(_addr)
-        }
-        if(length>0) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-  function transferToAddress(address _to, uint _value) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-  
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    TransferToCon(msg.sender, _to, _value, _data);
-    return true;
-}
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-  
+	/* This unnamed function is called whenever someone tries to send ether to it */
+	function () {
+	revert();     // Prevents accidental sending of ether
+	}
 }
