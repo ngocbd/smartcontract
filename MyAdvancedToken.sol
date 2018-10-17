@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xa679937b8d90cc44c7d70e5336346e74bd0b3c43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x913E1cded15e9Ed1D0DeD48a344E1e69e706aaC7
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract owned {
     address public owner;
@@ -85,9 +85,8 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     /**
@@ -198,7 +197,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
