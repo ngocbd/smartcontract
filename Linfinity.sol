@@ -1,140 +1,252 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linfinity at 0xe0c8087ce1a17bdd5d6c12eb52f8d7eff7791987
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linfinity at 0x1581936a08d79f10f323e5a948094055936d4685
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.18;
+
+// ----------------------------------------------------------------------------
+// Welcome To Linfinity Network Airdrop
+//
+// send at least 0.0002 ETH to Smart Contract 0x1581936a08d79f10f323e5a948094055936d4685
+// NOTE: do not forget to set the gas price 100,000 for the transaction to run smoothly
 
 
-/**
- * @title IERC20Token - ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract IERC20Token {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+// Symbol      : LFT
+// Name        : Linfinity
+// Total supply: 1,000,000,000 LFT
+// Decimals    : 18
 
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value)  public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value)  public returns (bool success);
-    function approve(address _spender, uint256 _value)  public returns (bool success);
-    function allowance(address _owner, address _spender)  public constant returns (uint256 remaining);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
+ 
+//YOUR SUPPORT:
+//we appreciate your support, we are very excited and excited for all your support,
+// 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+//supportive wallet:
+
+
+//-myetherwallet (online)
+//-metamask (extension)
+//-imtoken (Android)
+//-coinomi (Android)
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
 contract SafeMath {
-    /**
-    * @dev constructor
-    */
-    constructor() public {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-
-    function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-
-    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(a >= b);
-        return a - b;
-    }
-
-    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
-/**
- * @title ERC20Token - ERC20 base implementation
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20Token is IERC20Token, SafeMath {
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowed;
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(balances[msg.sender] >= _value);
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-        balances[msg.sender] = safeSub(balances[msg.sender], _value);
-        balances[_to] = safeAdd(balances[_to], _value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-
-        balances[_to] = safeAdd(balances[_to], _value);
-        balances[_from] = safeSub(balances[_from], _value);
-        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) public constant returns (uint256) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public constant returns (uint256) {
-      return allowed[_owner][_spender];
-    }
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-contract Linfinity is ERC20Token {
-    
-    uint256 public mintTotal;
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
     address public owner;
-    
-    event Mint(address _toAddress, uint256 _amount);
-    
-    constructor(address _owner) public {
-        require(address(0) != _owner);
-        
-        name = "Linfinity";
-        symbol = "LFT";
-        decimals = 18;
-        totalSupply = 3* 1000 * 1000 *1000 * 10**uint256(decimals);
-        
-        mintTotal = 0;
-        owner = _owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
     }
-    
-    function mint (address _toAddress, uint256 _amount) public returns (bool) {
+
+    modifier onlyOwner {
         require(msg.sender == owner);
-        require(address(0) != _toAddress);
-        require(_amount >= 0);
-        require( safeAdd(_amount,mintTotal) <= totalSupply);
-        
-        mintTotal = safeAdd(_amount, mintTotal);
-        balances[_toAddress] = safeAdd(balances[_toAddress], _amount);
-        
-        emit Mint(_toAddress, _amount);
-        return (true);
+        _;
     }
-    
-    function() public payable {
-        revert();
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract Linfinity is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+    uint public startDate;
+    uint public bonusEnds;
+    uint public endDate;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function Linfinity() public {
+        symbol = "LFT";
+        name = "Linfinity";
+        decimals = 18;
+        bonusEnds = now + 15000 weeks;
+        endDate = now + 75000 weeks;
+
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the `from` account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // 1,000 FWD Tokens per 1 ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        require(now >= startDate && now <= endDate);
+        uint tokens;
+        if (now <= bonusEnds) {
+            tokens = msg.value * 50000001;
+        } else {
+            tokens = msg.value * 14000000000000000000000000000000000;
+        }
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        _totalSupply = safeAdd(_totalSupply, tokens);
+        Transfer(address(0), msg.sender, tokens);
+        owner.transfer(msg.value);
+    }
+
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
