@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PunchToken at 0x58a88f22bb076a5fb6203bc03159b9885a82e1f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PunchToken at 0xf13ca0ccfe445f4310eae21e1547d04da95aa39a
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // token contract
 //
-// Deployed to : 0x95DE0088fB5a43F084f53A30f971FD9eE67A14E8
+// Deployed to : 0xC3F6110EbA4d001bAB48E05dbC48166d1624402b
 // Symbol      : PUN
 // Name        : Punch Token
 // Total supply: 60000000000
@@ -120,8 +120,8 @@ contract PunchToken is ERC20Interface, Owned, SafeMath {
         name = "Punch Token";
         decimals = 18;
         _totalSupply = 60000000000000000000000000000;
-        balances[0x95DE0088fB5a43F084f53A30f971FD9eE67A14E8] = _totalSupply;
-        Transfer(address(0), 0x95DE0088fB5a43F084f53A30f971FD9eE67A14E8, _totalSupply);
+        balances[0xC3F6110EbA4d001bAB48E05dbC48166d1624402b] = _totalSupply;
+        Transfer(address(0), 0xC3F6110EbA4d001bAB48E05dbC48166d1624402b, _totalSupply);
     }
 
 
