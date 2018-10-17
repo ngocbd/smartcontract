@@ -1,16 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinancialStrategy at 0x10c0be5becdfafa53a2b20a987f7d55f24cb2011
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinancialStrategy at 0x841e177e2523cb1385723d99cc1920fb28b12eb5
 */
-// Project: AleHub
-// v1, 2018-05-24
+pragma solidity ^0.4.21;
+
+// Project: alehub.io
+// v11, 2018-07-17
 // This code is the property of CryptoB2B.io
 // Copying in whole or in part is prohibited.
 // Authors: Ivan Fedorov and Dmitry Borodin
 // Do you want the same TokenSale platform? www.cryptob2b.io
 
-// *.sol in 1 file - https://cryptob2b.io/solidity/alehub/
-
-pragma solidity ^0.4.21;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+    function minus(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (b>=a) return 0;
+        return a - b;
+    }
+}
 
 contract IFinancialStrategy{
 
@@ -31,6 +57,13 @@ contract IFinancialStrategy{
     function getPartnerCash(uint8 _user, address _msgsender) external;
 }
 
+contract GuidedByRoles {
+    IRightAndRoles public rightAndRoles;
+    function GuidedByRoles(IRightAndRoles _rightAndRoles) public {
+        rightAndRoles = _rightAndRoles;
+    }
+}
+
 contract IRightAndRoles {
     address[][] public wallets;
     mapping(address => uint16) public roles;
@@ -43,14 +76,21 @@ contract IRightAndRoles {
     function onlyRoles(address _sender, uint16 _roleMask) view external returns(bool);
 }
 
-contract GuidedByRoles {
-    IRightAndRoles public rightAndRoles;
-    function GuidedByRoles(IRightAndRoles _rightAndRoles) public {
-        rightAndRoles = _rightAndRoles;
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20Provider is GuidedByRoles {
+    function transferTokens(ERC20Basic _token, address _to, uint256 _value) public returns (bool){
+        require(rightAndRoles.onlyRoles(msg.sender,2));
+        return _token.transfer(_to,_value);
     }
 }
 
-contract FinancialStrategy is IFinancialStrategy, GuidedByRoles{
+contract FinancialStrategy is IFinancialStrategy, GuidedByRoles,ERC20Provider{
     using SafeMath for uint256;
 
     uint8 public step;
@@ -274,33 +314,5 @@ contract FinancialStrategy is IFinancialStrategy, GuidedByRoles{
                 revert();
             }
         }
-    }
-}
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-    function minus(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (b>=a) return 0;
-        return a - b;
     }
 }
