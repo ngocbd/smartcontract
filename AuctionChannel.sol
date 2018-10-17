@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionChannel at 0x4d33d1eeab8f2e892849e81239b249d63f09d2d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionChannel at 0xd3fae2cd9140a179a279038f383291fc36ce411d
 */
 pragma solidity ^0.4.24;
+
 
 /**
  * @title Eliptic curve signature operations
@@ -9,7 +10,7 @@ pragma solidity ^0.4.24;
  * TODO Remove this library once solidity supports passing a signature to ecrecover.
  * See https://github.com/ethereum/solidity/issues/864
  */
-contract ECRecovery {
+library ECRecovery {
 
     /**
     * @dev Recover signer address from a message by using their signature
@@ -17,7 +18,7 @@ contract ECRecovery {
     * @param sig bytes signature, the signature is generated using web3.eth.sign()
     */
     function recover(bytes32 hash, bytes sig)
-        public
+        internal
         pure
         returns (address)
     {
@@ -76,7 +77,7 @@ contract ECRecovery {
 /**
  * @title Auction state channel
  */
-contract AuctionChannel is ECRecovery {
+contract AuctionChannel {
     
     // phase constants
     uint8 public constant PHASE_OPEN = 0;
@@ -140,10 +141,10 @@ contract AuctionChannel is ECRecovery {
             )
         );
 
-        _fingerprint = toEthSignedMessageHash(_fingerprint);
+        _fingerprint = ECRecovery.toEthSignedMessageHash(_fingerprint);
 
-        require(_auctioneer == recover(_fingerprint, _signatureAuctioneer));
-        require(_assistant == recover(_fingerprint, _signatureAssistant));
+        require(_auctioneer == ECRecovery.recover(_fingerprint, _signatureAuctioneer));
+        require(_assistant == ECRecovery.recover(_fingerprint, _signatureAssistant));
 
         auctioneer = _auctioneer;
         assistant = _assistant;
@@ -188,10 +189,10 @@ contract AuctionChannel is ECRecovery {
             )
         );
 
-        _fingerprint = toEthSignedMessageHash(_fingerprint);
+        _fingerprint = ECRecovery.toEthSignedMessageHash(_fingerprint);
 
-        require(auctioneer == recover(_fingerprint, _signatureAuctioneer));
-        require(assistant == recover(_fingerprint, _signatureAssistant));
+        require(auctioneer == ECRecovery.recover(_fingerprint, _signatureAuctioneer));
+        require(assistant == ECRecovery.recover(_fingerprint, _signatureAssistant));
         
         winnerBidder = _bidder;
         winnerBidValue = _bidValue;
