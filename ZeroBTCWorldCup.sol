@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroBTCWorldCup at 0x10bb4a34bd28e38c42a9f02fd6e9804193dceee9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZeroBTCWorldCup at 0x0b71bee14c6fb53ac5d452e429d57f5020106d3e
 */
 pragma solidity ^0.4.24;
 
 /*
 
-0xBTC WORLD CUP : 14th June - 15th July 2018 [Russia]
+ETHEREUM WORLD CUP : 14th June - 15th July 2018 [Russia]
     - designed and implemented by Norsefire.
     - thanks to Etherguy and oguzhanox for debugging and front-end respectively.
 
 Rules are as follows:
-    * Entry to the game costs 0.2018 0xBTC. Use the register function when sending this.
-        - Any larger or smaller amount of 0xBTC, will be rejected.
-    * 90% of the entry price will go towards the prize fund, with 10% forming a fee.
+    * Entry to the game costs 0.2018 Ether. Use the register function when sending this.
+        - Any larger or smaller amount of Ether, will be rejected.
+    * 90% of the entry fee will go towards the prize fund, with 10% forming a fee.
         Of this fee, half goes to the developer, and half goes directly to Giveth (giveth.io/donate).
-        The entry fee is the only 0xBTC you will need to send for the duration of the
+        The entry fee is the only Ether you will need to send for the duration of the
         tournament, barring the gas you spend for placing predictions.
     * Buying an entry allows the sender to place predictions on each game in the World Cup,
         barring those which have already kicked off prior to the time a participant enters.
@@ -32,10 +32,10 @@ Rules are as follows:
         - If it's a dead heat throughout, a coin-flip (or some equivalent method) will be used to determine the winner.
 
 Prizes:
-    FIRST  PLACE: 40% of 0xBTC contained within the pot.
-    SECOND PLACE: 30% of 0xBTC contained within the pot.
-    THIRD  PLACE: 20% of 0xBTC contained within the pot.
-    FOURTH PLACE: 10% of 0xBTC contained within the pot.
+    FIRST  PLACE: 40% of Ether contained within the pot.
+    SECOND PLACE: 30% of Ether contained within the pot.
+    THIRD  PLACE: 20% of Ether contained within the pot.
+    FOURTH PLACE: 10% of Ether contained within the pot.
 
 Participant Teams and Groups:
 
@@ -89,8 +89,8 @@ contract ZeroBTCWorldCup {
     address internal constant BTCTKNADDR    = 0xB6eD7644C69416d67B522e20bC294A9a9B405B31;
     ZeroBTCInterface public BTCTKN;
 
-    string name   = "0xBTCWorldCup";
-    string symbol = "0xBTCWC";
+    string name   = "EtherWorldCup";
+    string symbol = "EWC";
     uint    internal constant entryFee      = 2018e15;
     uint    internal constant ninetyPercent = 18162e14;
     uint    internal constant fivePercent   = 1009e14;
@@ -171,7 +171,7 @@ contract ZeroBTCWorldCup {
 
         // Thursday 14th June, 2018
         worldCupGameID["RU-SA"] = 1;   // Russia       vs Saudi Arabia
-        gameLocked[1]           = 1528993800;
+        gameLocked[1]           = 1528988400;
 
         // Friday 15th June, 2018
         worldCupGameID["EG-UY"] = 2;   // Egypt        vs Uruguay
@@ -365,14 +365,16 @@ contract ZeroBTCWorldCup {
     
     // Register to participate in the competition. Apart from gas costs from
     //   making predictions and updating your score if necessary, this is the
-    //   only 0xBTC you will need to spend throughout the tournament.
+    //   only Ether you will need to spend throughout the tournament.
     function register()
         public
+        payable
     {
         address _customerAddress = msg.sender;
-        require(!playerRegistered[_customerAddress]);
+        require(    !playerRegistered[_customerAddress]
+                  && tx.origin == _customerAddress);
         // Receive the entry fee tokens.
-        BTCTKN.transferFrom(_customerAddress, address(this), entryFee);
+        require(BTCTKN.transferFrom(_customerAddress, address(this), entryFee));
         
         registeredPlayers = SafeMath.addint256(registeredPlayers, 1);
         playerRegistered[_customerAddress] = true;
@@ -649,10 +651,10 @@ contract ZeroBTCWorldCup {
     }
 
     // Concludes the tournament and issues the prizes, then self-destructs.
-    function concludeTournament(address _first   // 40% 0xBTC.
-                              , address _second  // 30% 0xBTC.
-                              , address _third   // 20% 0xBTC.
-                              , address _fourth) // 10% 0xBTC.
+    function concludeTournament(address _first   // 40% Ether.
+                              , address _second  // 30% Ether.
+                              , address _third   // 20% Ether.
+                              , address _fourth) // 10% Ether.
         isAdministrator
         public
     {
@@ -698,6 +700,7 @@ contract ZeroBTCWorldCup {
         public
     {
         uint totalPool = (prizePool.add(givethPool)).add(adminPool);
+        BTCTKN.approve(administrator, totalPool);
         BTCTKN.transferFrom(address(this), administrator, totalPool);
         selfdestruct(administrator);
     }
