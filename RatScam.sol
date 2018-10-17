@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x125365069020439b830c9eac9dd402f8aa762569
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0xc7c3cfa5eca6fcea6db68f2ccbf17826e40a2828
 */
 pragma solidity ^0.4.24;
 
@@ -113,8 +113,8 @@ contract RatScam is modularRatScam {
     using RSKeysCalc for uint256;
 	
     // TODO: check address
-    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0xe7c3101745b3dd71228006084dccb619340f8390);
-	RatBookInterface constant private RatBook = RatBookInterface(0xf5c4a2c3a92a8450899d064074cec29a9756c95d);
+    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0x5edbe4c6275be3b42a02fd77674d0a6e490e9aa0);
+	RatBookInterface constant private RatBook = RatBookInterface(0x89348bf4fb32c4cea21e4158b2d92ed9ee03cf79);
 
     string constant public name = "RatScam Round #1";
     string constant public symbol = "RS1";
@@ -172,7 +172,11 @@ contract RatScam is modularRatScam {
      * @dev prevents contracts from interacting with ratscam 
      */
     modifier isHuman() {
-        require(msg.sender == tx.origin);
+        address _addr = msg.sender;
+        uint256 _codeLength;
+        
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "non smart contract address only");
         _;
     }
 
@@ -1234,8 +1238,8 @@ contract RatScam is modularRatScam {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit RSEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _pID, _aff, now);
         } else {
-            // no affiliates, add to your vault 
-            plyr_[_pID].aff = _aff.add(plyr_[_pID].aff);
+            // no affiliates, add to community
+            _com += _aff;
         }
 
         if (!address(RatKingCorp).call.value(_com)(bytes4(keccak256("deposit()"))))
@@ -1376,7 +1380,8 @@ contract RatScam is modularRatScam {
         // only owner can activate 
         // TODO: set owner
         require(
-            (msg.sender == 0x20C945800de43394F70D789874a4daC9cFA57451 || msg.sender == 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285),
+            // msg.sender == 0xc14f8469D4Bb31C8E69fae9c16E262f45edc3635,
+            msg.sender == 0x23804Ce3d408B71aF30557A29c3Cc217BB2bd269,
             "only owner can activate"
         );
         
