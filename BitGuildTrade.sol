@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitGuildTrade at 0x21598cebb98796f2746bcca0704b4a8d89b70e62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitGuildTrade at 0x20b2EC1fe89c6977f6c1f9E5b7D5475F588186BD
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -75,6 +75,7 @@ contract AccessAdmin is Ownable {
   }
 }
 
+
 interface BitGuildTokenInterface { // implements ERC20Interface
   function totalSupply() public constant returns (uint);
   function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -148,7 +149,8 @@ interface RareInterface {
   function transferToken(address _from, address _to, uint256 _tokenId) external;
   function setRarePrice(uint256 _rareId, uint256 _price) external;
 }
-
+/// @notice Purchase on BitGuild
+/// @author rainysiu rainy@livestar.com
 contract BitGuildTrade is AccessAdmin {
   BitGuildTokenInterface public tokenContract;
    //data contract
@@ -167,7 +169,7 @@ contract BitGuildTrade is AccessAdmin {
   event BuyRareCard(address player, address previous, uint256 rareId,uint256 iPrice);
   event UnitSold(address player, uint256 unitId, uint256 amount);
 
-  mapping(address => mapping(uint256 => uint256)) unitsOwnedOfPLAT; //cards bought through plat
+ 
   function() external payable {
     revert();
   }
@@ -290,7 +292,7 @@ contract BitGuildTrade is AccessAdmin {
     uint256 existing = cards.getOwnedCount(_player,_cardId);
     uint256 total = SafeMath.add(existing, _amount);
     if (total > 99) { // Default unit limit
-      require(total <= cards.getMaxCap(msg.sender,_cardId)); // Housing upgrades (allow more units)
+      require(total <= cards.getMaxCap(_player,_cardId)); // Housing upgrades (allow more units)
     }
 
     uint256 coinProduction;
@@ -334,7 +336,6 @@ contract BitGuildTrade is AccessAdmin {
     }
     cards.setUintsOwnerCount(_player,_amount, true);
     cards.setOwnedCount(_player,_cardId,_amount,true);
-    unitsOwnedOfPLAT[_player][_cardId] = SafeMath.add(unitsOwnedOfPLAT[_player][_cardId],_amount);
     //event
     UnitBought(_player, _cardId, _amount);
   }
@@ -487,9 +488,6 @@ contract BitGuildTrade is AccessAdmin {
       ethCost = SafeMath.mul(schema.unitPLATCost(_unitId),_amount); // plat 
     }
     require(sellable);  // can be refunded
-    if (ethCost>0) {
-      require(unitsOwnedOfPLAT[msg.sender][_unitId]>=_amount);
-    }
     if (coinCost>0) {
       coinChange = SafeMath.add(cards.balanceOfUnclaimed(msg.sender), SafeMath.div(SafeMath.mul(coinCost,70),100)); // Claim unsaved goo whilst here
     } else {
@@ -514,9 +512,7 @@ contract BitGuildTrade is AccessAdmin {
 
     cards.setOwnedCount(msg.sender,_unitId,_amount,false); 
     cards.setUintsOwnerCount(msg.sender,_amount,false);
-    if (ethCost>0) {
-      unitsOwnedOfPLAT[msg.sender][_unitId] = SafeMath.sub(unitsOwnedOfPLAT[msg.sender][_unitId],_amount);
-    }
+
     //tell the world
     UnitSold(msg.sender, _unitId, _amount);
   }
@@ -535,11 +531,8 @@ contract BitGuildTrade is AccessAdmin {
     tokenContract.transfer(msg.sender, amount);
   }
 
-  function getCanSellUnit(address _address, uint256 unitId) external view returns (uint256) {
-    return unitsOwnedOfPLAT[_address][unitId];
-  }
-
 }
+
 
 library SafeMath {
 
