@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerkleDrops at 0x6a54e0e0d3704c8f886145ec04290076889631d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerkleDrops at 0x3a7785298ba5e27e9e338f45244994363a2da295
 */
 pragma solidity 0.4.24;
 
@@ -589,7 +589,7 @@ contract MerkleDrops is Pausable, Whitelist {
   }
 
   function withdrawTokens(ERC20 _token) public onlyIfWhitelisted(msg.sender) {
-    _token.transfer(msg.sender, _token.balanceOf(this));
+    token.transfer(msg.sender, _token.balanceOf(this));
   }
 
   function changeRoot(bytes32 _rootHash) public onlyIfWhitelisted(msg.sender) {
