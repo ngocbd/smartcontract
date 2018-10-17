@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GDC at 0xdae5447cec97be20a187244d4a8b4338367680de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GDC at 0x0c884e5f876781d108689b533c29cf7cb33d94e7
 */
 pragma solidity ^0.4.24;
 
 contract ERC20 {
     function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function balanceOf(address _owner) constant public returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public returns (uint remaining);
+    event Transfer(address _from, address _to, uint _value);
+    event Approval(address _owner, address _spender, uint _value);
 }
 
 contract Token is ERC20 {
@@ -57,6 +57,10 @@ contract Token is ERC20 {
 }
 
 contract GDC is Token{
+	modifier onlyOwner() {
+      if (msg.sender!=owner) revert();
+      _;
+    }
     
     constructor() public{
         symbol = "GDC";
@@ -65,6 +69,11 @@ contract GDC is Token{
         totalSupply = 2000000000000;
         owner = msg.sender;
         balances[owner] = totalSupply;
+    }
+    
+    function transferOwnership(address newOwner) public onlyOwner {
+        require (newOwner!=0);
+        owner = newOwner;
     }
     
     function () payable public {
