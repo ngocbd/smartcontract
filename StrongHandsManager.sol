@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x0982e408ba8a50199559d371860eeb61a6d84768
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x36eef7ccefb1cc1ffe76df5562bd3e704e4ec9d7
 */
 pragma solidity ^0.4.24;
 
@@ -20,9 +20,16 @@ contract StrongHandsManager {
     {
         require(strongHands[msg.sender] == address(0), "you already became a Stronghand");
         
-        strongHands[msg.sender] = (new StrongHand).value(msg.value)(msg.sender, _referrer);
+        strongHands[msg.sender] = new StrongHand(msg.sender, _referrer);
         
         emit CreateStrongHand(msg.sender, strongHands[msg.sender]);
+    }
+    
+    function()
+        public
+        payable
+    {
+        getStrong(msg.sender);
     }
 }
 
