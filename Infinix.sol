@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Infinix at 0xd2a47e88770d134dee158bdc04232e2d7495f6d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Infinix at 0xed7ba4be221370e31101341f53d38b16d96e54d8
 */
 pragma solidity ^0.4.16;
 
@@ -8,11 +8,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract Infinix {
     // Public variables of the token
     string public name = "Infinix";
-    string public symbol = "INF";
+    string public symbol = "IFNX";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default
     uint256 public totalSupply;
-    uint256 public datboiSupply = 3000000000;
+    uint256 public InfinixSupply = 4000000000;
     uint256 public buyPrice = 10000000;
     address public creator;
     // This creates an array with all balances
@@ -29,9 +29,9 @@ contract Infinix {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function Aeron() public {
-        totalSupply = datboiSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;    // Give DatBoiCoin Mint the total created tokens
+    function Infinix() public {
+        totalSupply = InfinixSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;    // Give InfinixCoin Mint the total created tokens
         creator = msg.sender;
     }
     /**
@@ -73,7 +73,7 @@ contract Infinix {
         amountRaised += msg.value;                            //many thanks bois, couldnt do it without r/me_irl
         require(balanceOf[creator] >= amount);               // checks if it has enough to sell
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[creator] -= amount;                        // sends ETH to DatBoiCoinMint
+        balanceOf[creator] -= amount;                        // sends ETH to InfinixCoinMint
         Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
         creator.transfer(amountRaised);
     }
