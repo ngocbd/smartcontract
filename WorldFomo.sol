@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldFomo at 0xe1f338e069f202f2113d32c8a5d1046d83c92ca4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldFomo at 0xa9cd85313cb403c25a49fe9c2bd83e3e8fc0d6aa
 */
 pragma solidity ^0.4.24;
 /**
@@ -172,7 +172,7 @@ contract WorldFomo is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x6ed17ee485821cd47531f2e4c7b9ef8b48f2bab5);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x77abd49884c36193e7d1fccc6898fcdbd9d23ecc);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
