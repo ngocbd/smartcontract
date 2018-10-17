@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xb2b3d6feae1ab2af4a07cf4c047d69aa01d809aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xb5d11729091944b8a1af2f02414321bbfba971ae
 */
 pragma solidity ^0.4.24;
 /*
@@ -15,7 +15,7 @@ pragma solidity ^0.4.24;
  *                            (__ /          (_/ (, /                                      /)™
  *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
  * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
- * ??????? ? ??? ??   ?                      (__ /              .-/  © none Inc. 2018
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
  * ?  ??????????????? ?                                        (_/
  *     ______   _                                 ______                 _          
  *====(_____ \=| |===============================(____  \===============| |=============*
@@ -72,34 +72,34 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0xFF94E18e9679365d4D25884A6899B5134B06b55F;
+        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0xFF94E18e9679365d4D25884A6899B5134B06b55F] = 1;
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
         
-        plyr_[2].addr = 0x117575090F06D7a169870D12E086c1F63Bf81156;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
         plyr_[2].name = "mantso";
         plyr_[2].names = 1;
-        pIDxAddr_[0x117575090F06D7a169870D12E086c1F63Bf81156] = 2;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
         pIDxName_["mantso"] = 2;
         plyrNames_[2]["mantso"] = true;
         plyrNameList_[2][1] = "mantso";
         
-        plyr_[3].addr = 0x0dcBAdC1c6fFeC156a3B764b711D15BbEc2a02B5;
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
         plyr_[3].name = "sumpunk";
         plyr_[3].names = 1;
-        pIDxAddr_[0x0dcBAdC1c6fFeC156a3B764b711D15BbEc2a02B5] = 3;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
         pIDxName_["sumpunk"] = 3;
         plyrNames_[3]["sumpunk"] = true;
         plyrNameList_[3][1] = "sumpunk";
         
-        plyr_[4].addr = 0x49e0954bacBBb196e45BFa6faaF96Cd05df06024;
+        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         plyr_[4].name = "inventor";
         plyr_[4].names = 1;
-        pIDxAddr_[0x49e0954bacBBb196e45BFa6faaF96Cd05df06024] = 4;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
         pIDxName_["inventor"] = 4;
         plyrNames_[4]["inventor"] = true;
         plyrNameList_[4][1] = "inventor";
@@ -121,12 +121,7 @@ contract PlayerBook {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
-
-    modifier onlyDevs() 
-    {
-        require(admin == msg.sender, "msg sender is not a dev");
-        _;
-    }
+   
     
     modifier isRegisteredGame()
     {
@@ -581,7 +576,6 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
@@ -598,7 +592,6 @@ contract PlayerBook {
     }
     
     function setRegistrationFee(uint256 _fee)
-        onlyDevs()
         public
     {
       registrationFee_ = _fee;
