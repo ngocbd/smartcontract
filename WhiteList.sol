@@ -1,121 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x062e41d1037745dc203e8c1aaca651b8d157da96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x715641fd955890299863a73c906209b71a8a4ce9
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.11;
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-/**
- * @title Whitelist
- * @dev The Whitelist contract has a whitelist of addresses, and provides basic authorization control functions.
- * @dev This simplifies the implementation of "user permissions".
- */
-contract Whitelist is Ownable {
-  mapping(address => bool) public whitelist;
-  
-  event WhitelistedAddressAdded(address addr);
-  event WhitelistedAddressRemoved(address addr);
-
-  /**
-   * @dev Throws if called by any account that's not whitelisted.
-   */
-  modifier onlyWhitelisted() {
-    require(whitelist[msg.sender]);
-    _;
-  }
-
-  /**
-   * @dev add an address to the whitelist
-   * @param addr address
-   * @return true if the address was added to the whitelist, false if the address was already in the whitelist 
-   */
-  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (!whitelist[addr]) {
-      whitelist[addr] = true;
-      WhitelistedAddressAdded(addr);
-      success = true; 
+contract WhiteList {
+    
+    mapping (address => bool)   public  whiteList;
+    
+    address  public  owner;
+    
+    function WhiteList() public {
+        owner = msg.sender;
+        whiteList[owner] = true;
     }
-  }
-
-  /**
-   * @dev add addresses to the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was added to the whitelist, 
-   * false if all addresses were already in the whitelist  
-   */
-  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (addAddressToWhitelist(addrs[i])) {
-        success = true;
-      }
+    
+    function addToWhiteList(address [] _addresses) public {
+        require(msg.sender == owner);
+        
+        for (uint i = 0; i < _addresses.length; i++) {
+            whiteList[_addresses[i]] = true;
+        }
     }
-  }
-
-  /**
-   * @dev remove an address from the whitelist
-   * @param addr address
-   * @return true if the address was removed from the whitelist, 
-   * false if the address wasn't in the whitelist in the first place 
-   */
-  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (whitelist[addr]) {
-      whitelist[addr] = false;
-      WhitelistedAddressRemoved(addr);
-      success = true;
+    
+    function removeFromWhiteList(address [] _addresses) public {
+        require (msg.sender == owner);
+        for (uint i = 0; i < _addresses.length; i++) {
+            whiteList[_addresses[i]] = false;
+        }
     }
-  }
-
-  /**
-   * @dev remove addresses from the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was removed from the whitelist, 
-   * false if all addresses weren't in the whitelist in the first place
-   */
-  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (removeAddressFromWhitelist(addrs[i])) {
-        success = true;
-      }
-    }
-  }
-
 }
