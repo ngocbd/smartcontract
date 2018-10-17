@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EYHToken at 0xe2c5c27c7dcebc0c957623ff9fc0550c51a75b3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EYHToken at 0x3a6ad3b097a5623fcea2eb490c921654ee9630ac
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract EYHToken is StandardToken, Ownable {
     // Constants
-    string  public constant name = "EYH Token";
-    string  public constant symbol = "EYH";
+    string  public constant name = "DQO Coin";
+    string  public constant symbol = "DQO";
     uint8   public constant decimals = 8;
-    uint256 public constant INITIAL_SUPPLY      =  10000000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY      =  50000000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
