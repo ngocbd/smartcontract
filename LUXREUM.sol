@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0xd278bf17c8b04cecf11187e92190430f009dc5ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0x3757ec7fe6e8f024354eefd373b9fe719b1bd393
 */
 pragma solidity ^0.4.16;
-// Luxreum Token contract based on the full ERC20 Token standard
+// LUXREUM Smart contract based on the full ERC20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
 // Verified Status: ERC20 Verified Token
-// Luxreum Symbol: LXR
+// LUXREUM Symbol: LXR
 
 
 contract LUXREUMToken { 
@@ -55,7 +55,7 @@ contract LUXREUMToken {
 
 
 /**
- * Luxreum Token Math operations with safety checks to avoid unnecessary conflicts
+ * LUXREUM tokens Math operations with safety checks to avoid unnecessary conflicts
  */
 
 library ABCMaths {
@@ -204,9 +204,9 @@ contract LUXREUM is LXRStandardToken {
     Some wallets/interfaces might not even bother to look at this information.
     */
     
-    uint256 constant public decimals = 16;
-    uint256 public totalSupply = 60 * (10**7) * 10**16 ; // 600 million tokens, 16 decimal places
-    string constant public name = "Luxreum";
+    uint256 constant public decimals = 18;
+    uint256 public totalSupply = 200 * (10**7) * 10**18 ; // 2 Billion tokens, 18 decimal places, 
+    string constant public name = "LUXREUM";
     string constant public symbol = "LXR";
     
     function LUXREUM(){
