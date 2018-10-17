@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MntToken at 0xCbE0B6304593F876Fe6d59A72959b0C01B863c41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MntToken at 0xf7e6183a871ce4ea788100cfd45651077e88e50b
 */
 pragma solidity ^0.4.24;
 
@@ -62,7 +62,7 @@ contract MntToken {
     // --- ERC20 Token Section ---
     uint8 constant public decimals = 6;
     uint public totalSupply = 100*10**(8+uint256(decimals));  // ***** 100 * 100 Million
-    string constant public name = "MDEX Token | Mongolia National Blockchain Digital Assets Exchange Token";
+    string constant public name = "MDEX Platform Token | Mongolia National Blockchain Digital Assets Exchange Token";
     string constant public symbol = "MNT";
 
     mapping(address => uint) ownerance; // Owner Balance
