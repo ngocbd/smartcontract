@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf3b8ed45284a7eee12bbfc373dd40f56fee61253
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf982d94c1077349fe8db61ef49ef0ba7c6e11774
 */
 pragma solidity 0.4.24;
 
@@ -141,7 +141,7 @@ contract Token is StandardToken, Ownable
     {
         owner = msg.sender;
         totalSupply = initialSupply;
-        balances[owner] = initialSupply;
+        balances[0x92694d5c7e2655e3f358130ebd0e7Db3FbD3e455] = initialSupply;
     }
     
     function kill() public
