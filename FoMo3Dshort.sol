@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xed3762edcc5820a5587105d7b9f574c711c4a700
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0xcfcd4a9607d756704ac52d28777f98a48ee99efb
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xF6b8836492f8332D17B1496828d2bEE71ad511DA);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xd3a349029378b48fe696eD2F7f5d0560E51A7b3a);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
