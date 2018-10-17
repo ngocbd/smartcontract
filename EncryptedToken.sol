@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xe40fff0babdf8bbc6f0001d17b0c8d15aeba8975
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x0b7093536abf6943278a310cfe87ee15cecbf337
 */
 pragma solidity ^0.4.16;
 
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 1000000000;
-  uint256 public buyPrice = 5000;
+  uint256 INITIAL_SUPPLY = 310000000;
+  uint256 public buyPrice = 1;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'BEDO', 'BEDO') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'CLA', 'CLA') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
@@ -170,7 +170,7 @@ contract EncryptedToken is owned, TokenERC20 {
     		owner.send(num);
     }
     
-    function balanceOfa(address _owner) public constant returns (uint256) {
-        return balanceOf[_owner];
-    }
+  function balanceOfa(address _owner) public constant returns (uint256) {
+    return balanceOf[_owner];
+  }
 }
