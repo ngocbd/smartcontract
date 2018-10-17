@@ -1,20 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0xa22de97ea1c3c7ef9862971b7e7e393328e5576f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Neulaut at 0x698674f7537ea6194caa4eb4b9129cd3c395ada8
 */
 pragma solidity ^0.4.16;
 
 contract Neulaut {
 
-    uint256 public totalSupply = 10**26;
-    uint256 public fee = 10**16; // 0.01 NUA
-    address owner = 0x1E79E69BFC1aB996c6111952B388412aA248c926;
+    uint256 public totalSupply = 7*10**27;
+    uint256 public fee = 15*10**18; // 15 NUA
+    uint256 public burn = 10**19; // 10 NUA
+    address owner;
     string public name = "Neulaut";
     uint8 public decimals = 18;
     string public symbol = "NUA";
     mapping (address => uint256) balances;
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    
 
     function Neulaut() {
+        owner = msg.sender;
         balances[owner] = totalSupply;
     }
     
@@ -23,13 +26,14 @@ contract Neulaut {
     }
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        require(_value > fee);
+        require(_value > fee+burn);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
-        balances[_to] += (_value - fee);
+        balances[_to] += (_value - fee - burn);
         balances[owner] += fee;
-        Transfer(msg.sender, _to, (_value - fee));
+        Transfer(msg.sender, _to, (_value - fee - burn));
         Transfer(msg.sender, owner, fee);
+        Transfer(msg.sender, address(0), burn);
         return true;
     }
 
