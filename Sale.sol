@@ -1,53 +1,106 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xc5a985ded73fb42d7bbee2e8051c12dfe0a8134b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x41238f745046a3e6486003c3e43fe301542ff60f
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-interface token {
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a / b;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Sale {
-    address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
-    address private owner = 0xabc45921642cbe058555361490f49b6321ed6989;
-    address private owner8 = 0x9857c0f4E72Dd3004f0C66329F139Bcd6568294b;
-    address private owner6 = 0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e;                
-    uint256 private sendtoken;
-    uint256 public cost1token = 0.0004 ether;
-    uint256 private ethersum;
-    uint256 private ethersum8;
-    uint256 private ethersum6;                
-    token public tokenReward;
+interface Token {
+    function transfer(address _to, uint256 _value) external;
+}
+
+contract Sale{
+
+    using SafeMath for uint256;
     
-    function Sale() public {
-        tokenReward = token(maintoken);
+    Token public tokenReward;
+    address public creator;
+    address public owner = 0x99C4EF0a180C19e929452e94972AA60cAc1b0B7D;
+
+    uint256 public price;
+    uint256 public startDate;
+    uint256 public endDate;
+
+    modifier isCreator() {
+        require(msg.sender == creator);
+        _;
+    }
+
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    constructor() public {
+        creator = msg.sender;
+        startDate = 1532943398;
+        endDate = 1538351999;
+        price = 10000;
+        tokenReward = Token(0xecea1d051a5c3339983ecc2dbdc3f38a7f52c636);
+    }
+
+    function setOwner(address _owner) isCreator public {
+        owner = _owner;      
+    }
+
+    function setCreator(address _creator) isCreator public {
+        creator = _creator;      
+    }
+
+    function setStartDate(uint256 _startDate) isCreator public {
+        startDate = _startDate;      
+    }
+
+    function setEndtDate(uint256 _endDate) isCreator public {
+        endDate = _endDate;      
     }
     
-    function() external payable {
-        sendtoken = (msg.value)/cost1token;
-        if (msg.value >= 5 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*125/100;
-        }
-        if (msg.value >= 10 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*150/100;
-        }
-        if (msg.value >= 15 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*175/100;
-        }
-        if (msg.value >= 20 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*200/100;
-        }
-        tokenReward.transferFrom(owner, msg.sender, sendtoken);
-        
-        ethersum8 = (msg.value)*8/100;
-        ethersum6 = (msg.value)*6/100;    	    	    	    	
-    	    	ethersum = (msg.value)-ethersum8-ethersum6;    	    	    	        
-        owner8.transfer(ethersum8);
-        owner6.transfer(ethersum6);    	    	    	        
-        owner.transfer(ethersum);
+    function setPrice(uint256 _price) isCreator public {
+        price = _price;      
+    }
+
+    function setToken(address _token) isCreator public {
+        tokenReward = Token(_token);      
+    }
+
+    function sendToken(address _to, uint256 _value) isCreator public {
+        tokenReward.transfer(_to, _value);      
+    }
+
+    function kill() isCreator public {
+        selfdestruct(owner);
+    }
+
+    function () public payable {
+        require(msg.value > 70000000000000000);
+        require(now > startDate);
+        require(now < endDate);
+        uint256 amount = msg.value.mul(price); 
+       
+        tokenReward.transfer(msg.sender, amount);
+        emit FundTransfer(msg.sender, amount, true);
+        owner.transfer(msg.value);
     }
 }
