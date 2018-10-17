@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x68e0348f1fb9d62046e93c4e61451e2a76fb6fcf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x8735ee170b3d2cffc335473addc55dacb1744081
 */
 // <ORACLIZE_API>
 /*
@@ -950,6 +950,9 @@ contract usingOraclize {
         bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
         assembly {
             mstore(unonce, 0x20)
+            // the following variables can be relaxed
+            // check relaxed random contract under ethereum-examples repo
+            // for an idea on how to override and replace comit hash vars
             mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
             mstore(sessionKeyHash, 0x20)
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
@@ -1233,10 +1236,11 @@ contract GladiethersOraclize is usingOraclize
 {
     address public m_Owner;
     
-    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0xfca7d75cf8cad941a48ab9b5e1af0ae571923378);
+    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0xf3a7347cde5928688a41b6b521a1ead2999f9c34);
     mapping (bytes32 => address) public queryIdToGladiator;
     mapping (bytes32 => bool) public queryIdToIsEthPrice;
-    uint public gasprice = 15000000000;
+    uint public initGameAt = 1529532000;
+    uint public gasprice = 5000000000;
     uint public eth_price = 500000;
     uint public totalGas = 169185;
     
@@ -1252,18 +1256,18 @@ contract GladiethersOraclize is usingOraclize
           return (totalGas*gasprice) +(5*1 ether)/eth_price;
     }
     
-
-    function update(uint delay) payable {
+    function update(uint _gasprice) payable {
         if (oraclize_getPrice("URL") > this.balance) {
         } else {
-            bytes32 queryId = oraclize_query(delay, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+            bytes32 queryId = oraclize_query(0, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+            gasprice = _gasprice;
             queryIdToIsEthPrice[queryId] = true;
         }
     }
     
     function scheduleFight() public payable{
     
-        require(now > 1527638340 && m_Gladiethers.getQueueLenght() > 1 && m_Gladiethers.getGladiatorPower(msg.sender) >= 10 finney); // to be changed with a real date
+        require(now > initGameAt && m_Gladiethers.getQueueLenght() > 1 && m_Gladiethers.getGladiatorPower(msg.sender) >= 10 finney && m_Gladiethers.getGladiatorCooldown(msg.sender) != 9999999999999); // to be changed with a real date
         uint callbackGas = totalGas; // amount of gas we want Oraclize to set for the callback function
         require(msg.value >= getOraclizePrice()); 
         uint N = 7; // number of random bytes we want the datasource to return
@@ -1293,6 +1297,8 @@ contract GladiethersOraclize is usingOraclize
        
        
     }
+    
+
 
 }
 contract AbstractGladiethers
@@ -1301,4 +1307,6 @@ contract AbstractGladiethers
     function fight(address gladiator1,string _result);
     function getQueueLenght() returns (uint);
     function getGladiatorPower(address gladiator) public view returns (uint);
+    function getGladiatorCooldown(address gladiator) public view returns (uint);
+
 }
