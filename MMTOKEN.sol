@@ -1,54 +1,50 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MMTOKEN at 0x08c8a35a912cd845f91806074152d39ee84b9b7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MMToken at 0x38057b3fe6e0f27dbac4828ca35d28ca83ac8658
 */
-pragma solidity ^0.4.16;
-
+pragma solidity ^0.4.4;
 contract Token {
 
-    /// @return total amount of tokens
+    /// @return ??token????
     function totalSupply() constant returns (uint256 supply) {}
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
+    /// @param _owner ???????token??
+    /// @return The balance ????
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
+    /// @notice msg.sender????????? _value??????? token ? _to?????  
+    /// @param _to ??????
+    /// @param _value ??token???
+    /// @return ????
     function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
+    /// @notice ??? ?? _value??????? token ? _to?????  
+    /// @param _from ??????
+    /// @param _to ??????
+    /// @param _value ?????
+    /// @return ????
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
+    /// @notice ??? ?? ???????????token
+    /// @param _spender ????token???
+    /// @param _value ??token???
+    /// @return ????
     function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
+    /// @param _owner ??token???
+    /// @param _spender ????token???
+    /// @return ??????token???
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
+    /// ??Token??
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    /// ????
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
 }
-
-
-
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
+        //??token???????(2^256 - 1)
+        //??????????????????????token?????????????????? if ??
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
@@ -59,7 +55,7 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //????????????????????????
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
@@ -88,39 +84,47 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
 }
-
-
-contract MMTOKEN is StandardToken {
+contract MMToken is StandardToken {
 
     function () {
+        //if ether is sent to this address, send it back.
         throw;
     }
 
     /* Public variables of the token */
 
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
-    string public version = 'H1.0';    
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //token??: MyFreeCoin 
+    uint8 public decimals;                //???
+    string public symbol;                 //??
+    string public version = 'H0.1';       //???
 
-
-    function MMTOKEN(
+    function MMToken(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
         ) {
-        balances[msg.sender] = 12000000000000000000000000;
-        totalSupply = 12000000000000000000000000;
-        name = "Maximum Token";
-        decimals = 18;
-        symbol = "MMT";
+        balances[msg.sender] = _initialAmount;               // ?????????????
+        totalSupply = _initialAmount;                        // ???
+        name = _tokenName;                                   // token??
+        decimals = _decimalUnits;                            // token???
+        symbol = _tokenSymbol;                               // token??
     }
 
-    /* Approves and then calls the receiving contract */
+    /* ?????????? */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //?????????? receiveApprovalcall ?? ?????????????????????
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        //?????????????????vanilla approve?
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
