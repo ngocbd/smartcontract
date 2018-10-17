@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlairDrop at 0xb75e0b03a116ec81ef8c45ddce8a2e049dd5216e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlairDrop at 0x919467ab00d50bb3bbf75cc4e2dd4f74684bb308
 */
 pragma solidity ^0.4.24;
 
@@ -198,7 +198,7 @@ contract FlairDrop is ERC20Token {
         address(manager).transfer(msg.value);
         uint tokensBought = msg.value.div(tokenPrice);
         balances[msg.sender] = balances[msg.sender].add(tokensBought);
-        totalSupply = totalSupply.add(tokensBought);
+        totalSupply += tokensBought;
         emit Transfer(address(this),msg.sender,tokensBought);
     }
 
@@ -211,6 +211,8 @@ contract FlairDrop is ERC20Token {
         tokenPrice = 10000000000000; //0.01 finney
         manager = msg.sender;
         balances[manager] = 100000000;
+        totalSupply = balances[manager];
+        emit Transfer(address(this),manager,balances[manager]);
         
     }
 
@@ -230,7 +232,7 @@ contract FlairDrop is ERC20Token {
 
         address target;
         
-        while(gasleft() > 10000 && x <= droptargets.length - 1 ){
+        while(gasleft() > 21000 && x <= droptargets.length - 1 ){
             target = droptargets[x];
             
             if(amounts.length == droptargets.length){
@@ -244,7 +246,8 @@ contract FlairDrop is ERC20Token {
         }
         
         balances[msg.sender] -= x;
-        totalSupply -= x;
+        totalSupply  = totalSupply >= x ? totalSupply - x : 0;
+    
         emit Transfer(msg.sender, address(0), x);
         emit AirDropEvent(parent,droptargets,amounts);
     }
