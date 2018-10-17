@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZEROxBTCHate at 0x0cadda17bb04bc3df33d04174861b3cc9048010b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZEROxBTCHate at 0xf01f5fb688b249e6ba160d07c27410dc980075fc
 */
 pragma solidity ^0.4.24;
 
@@ -41,9 +41,7 @@ contract ZEROxBTCHate {
             // reward: an 0xBTC hate token 
             ZEROxBTCHaters[hash] = true; 
             balanceOf[msg.sender] += (10 ** 18);
-            for (uint i = 0; i < 100; i++) {
-                emit Transfer(0xB6eD7644C69416d67B522e20bC294A9a9B405B31, msg.sender, 10**18); // kek 
-            }
+            emit Transfer(0xe05dEadE05deADe05deAde05dEADe05dEeeEAAAd, msg.sender, 10**18); // kek 
             emit New0xBTCHate(msg.sender, reason);
             totalSupply += (10 ** 18); // CANNOT OVERFLOW THIS BECAUSE WE ONLY HAVE UINT HASHES (HACKERS BTFO)
         }
