@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ISOToken at 0x5a827a78cdda15b72ecf793352604e77a856f83d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ISOToken at 0x7657ede18c6fcb53e3c53136ff8928fb8d230b19
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 
 //import "./ERC20.sol";
@@ -129,7 +129,7 @@ contract ISOToken is StandardToken {
     // public variables
     string public name = "International Service Organization";
     string public symbol = "ISO";
-    uint8 public decimals = 18;
+    uint8 public decimals = 6;
 
     // internal variables
 
