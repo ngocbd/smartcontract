@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlueHillMining at 0x20bef025e43bfb22cf9a7f4eac5de630ac842720
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlueHillMining at 0x32a90d93e208596ed2f4bcfcba8249d5e8a64de0
 */
 pragma solidity ^0.4.13;
 
@@ -280,11 +280,11 @@ address bounty = 0x610c6CA66FF6380391a725ea2CE5cE436D5c7708;
 
 address reserve = 0x8AAAe9Ee2CCFCc15A6B889085c172d48adc168a5;
 
-uint constant companyTokens = 50000000e18;
-uint constant teamTokens =  30000000e18;
-uint constant crowdsaleTokens = 350000000e18;
-uint constant bountyTokens = 20000000e18;
-uint constant reserveTokens = 50000000e18;
+uint constant companyTokens = 70000000e18;
+uint constant teamTokens =  42000000e18;
+uint constant crowdsaleTokens = 490000000e18;
+uint constant bountyTokens = 28000000e18;
+uint constant reserveTokens = 70000000e18;
 
 function BlueHillMining() public {
 
