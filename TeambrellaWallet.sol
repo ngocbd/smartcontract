@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeambrellaWallet at 0x44852faefcb42e392f2c55c6df53a50a732df298
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeambrellaWallet at 0xa46d6689bb3f055cb8e8228498760f5a10cbbce7
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
+
+interface IRescue {
+    function canRescue(address _addr) external returns (bool);
+}
 
 contract TeambrellaWallet {
     
@@ -10,6 +14,8 @@ contract TeambrellaWallet {
     address public m_owner;
     address[] public m_cosigners;
     address[] public m_cosignersApprovedDisband;    
+
+    address m_rescuer;
     
     modifier orderedOps(uint opNum) {
         require(opNum >= m_opNum);
@@ -146,9 +152,10 @@ contract TeambrellaWallet {
         }
     }
 
-    function TeambrellaWallet() public payable {
+    constructor() public payable {
         m_opNum = 1;
 		m_owner = msg.sender;
+		m_rescuer = 0x127c4605cFe96C4649A58ff6db7B216440C9EFa2; // mainnet
     }
     
      function assignOwner(address[] cosigners, uint teamId, address newOwner) onlyOwner external {
@@ -183,7 +190,7 @@ contract TeambrellaWallet {
         bytes sigCosigner1,
         bytes sigCosigner2,
         bytes sigOwner 
-        ) onlyOwner orderedOps(opNum) external {
+        ) orderedOps(opNum) external {
 
         bytes32 hash = keccak256("NS", m_teamId, opNum, toBytes(newCosigners));
         require(checkSignatures2(hash, sigCosigner0, sigCosigner1, sigCosigner2));
@@ -213,7 +220,7 @@ contract TeambrellaWallet {
         bytes sigCosigner2
         ) onlyOwner orderedOps(opNum) external {
 
-        require (getsum(values) <= this.balance);
+        require (getsum(values) <= address(this).balance);
         bytes32 hash = keccak256("TR", m_teamId, opNum, toBytes(tos), toBytes(values));
         require (checkSignatures(hash, cosignersPos, sigCosigner0, sigCosigner1, sigCosigner2));
         m_opNum = opNum + 1;
@@ -230,7 +237,7 @@ contract TeambrellaWallet {
         bytes sigOwner
         ) external {
         require(opNum >= m_opNum);
-        require (getsum(values) <= this.balance);
+        require (getsum(values) <= address(this).balance);
         bytes32 hash = keccak256("TR", m_teamId, opNum, toBytes(tos), toBytes(values));
         require(checkSignatures2(hash, sigCosigner0, sigCosigner1, sigCosigner2));
         require(ecverify(hash, sigOwner, m_owner));
@@ -271,6 +278,16 @@ contract TeambrellaWallet {
         }
         require(approved > 0);
 
-        to.transfer(this.balance);
+        to.transfer(address(this).balance);
+    }
+    
+    function rescue(
+        address _to 
+        ) onlyOwner external {
+
+        IRescue rescuer = IRescue(m_rescuer);
+        require(rescuer.canRescue(msg.sender));
+        
+        _to.transfer(address(this).balance);
     }
 }
