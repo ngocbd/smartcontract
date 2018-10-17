@@ -1,71 +1,175 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0x9ffa45c5943a0203ee462c48c8b97064abbe28f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract investment at 0xAc0bCFfB2C52e6061fdc67Bf26548e501aDdCf45
 */
-/**
-*	This investment contract accepts investments, which will be sent to the Edgeless ICO contract as soon as it starts buy calling buyTokens().
-*     This way investors do not have to buy tokens in time theirselves and still do profit from the power hour offer.
-*	Investors may withdraw their funds anytime if they change their mind as long as the tokens have not yet been purchased.
-*	Author: Julia Altenried
-**/
+pragma solidity ^0.4.18;
 
-pragma solidity ^0.4.8;
+contract BCSToken {
+    
+    function BCSToken() internal {}
+    function transfer(address _to, uint256 _value) public {}
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
 
-contract Crowdsale {
-	function invest(address receiver) payable{}
 }
 
-contract Investment{
-	Crowdsale public ico;
-	address[] public investors;
-	mapping(address => uint) public balanceOf;
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract investment{
+    using SafeMath for uint;
+    
+    address public owner;
+    mapping (address => uint) private amount;
+    mapping (address => uint) private day;
+    mapping (address => uint) private dateDeposit;
+    mapping (address => uint) private rewardPerYear;
+    mapping (address => uint) private outcome;
+    
+    struct a{
+        uint aday;
+        uint adateDeposit;
+        uint aamount;
+    }
+    BCSToken dc;
+    function investment(address _t) public {
+        dc = BCSToken(_t);
+        owner = msg.sender;
+    }
+    function Datenow () public view returns (uint timeNow){
+        return block.timestamp;
+    }
+    
+    
+    function calculate(address _user) private returns (bool status) {
+        uint _amount =amount[_user];
+        uint _day =day[_user];
+        uint _rewardPerYear = 1000;
 
 
-	/** constructs an investment contract for an ICO contract **/
-	function Investment(){
-		ico = Crowdsale(0x0807a2d6a675e7196a3d9b1910700cae9795b72a);
-	}
-
-	/** make an investment **/
-	function() payable{
-		if(!isInvestor(msg.sender)){
-			investors.push(msg.sender);
-		}
-		balanceOf[msg.sender] += msg.value;
-	}
-
-	/** checks if the address already invested **/
-	function isInvestor(address who) returns (bool){
-		for(uint i = 0; i< investors.length; i++)
-			if(investors[i] == who)
-				return true;
-		return false;
-	}
-
-	/** buys tokens in behalf of the investors by calling the ico contract
-	*   starting with the investor at index from and ending with investor at index to.
-	*   This function will be called as soon as the ICO starts and as often as necessary, until all investments were made. **/
-	function buyTokens(uint from, uint to){
-		uint amount;
-		if(to>investors.length)
-			to = investors.length;
-		for(uint i = from; i < to; i++){
-			if(balanceOf[investors[i]]>0){
-				amount = balanceOf[investors[i]];
-				delete balanceOf[investors[i]];
-				ico.invest.value(amount)(investors[i]);
-			}
-		}
-	}
-
-	/** In case an investor wants to retrieve his or her funds he or she can call this function.
-	*   (only possible before tokens are bought) **/
-	function withdraw(){
-		msg.sender.send(balanceOf[msg.sender]);
-	}
-
-	/** returns the number of investors **/
-	function getNumInvestors() constant returns(uint){
-		return investors.length;
-	}
+        if(_day == 90 && _amount >= SafeMath.mul(1000000,10**8)){
+            _rewardPerYear = 180;
+        }else if(_day == 60 && _amount >= SafeMath.mul(1000000,10**8)){
+            _rewardPerYear = 160;
+        }else if(_day == 90 && _amount >= SafeMath.mul(800000,10**8)){
+            _rewardPerYear = 140;
+        }else if(_day == 60 && _amount >= SafeMath.mul(800000,10**8)){
+            _rewardPerYear = 120;
+        }else if(_day == 90 && _amount >= SafeMath.mul(500000,10**8)){
+            _rewardPerYear = 100;
+        }else if(_day == 60 && _amount >= SafeMath.mul(500000,10**8)){
+            _rewardPerYear = 80;
+        }else if(_day == 90 && _amount >= SafeMath.mul(300000,10**8)){
+            _rewardPerYear = 60;
+        }else if(_day == 60 && _amount >= SafeMath.mul(300000,10**8)){
+            _rewardPerYear = 40;
+        }else if(_day == 30 && _amount >= SafeMath.mul(50001,10**8)){
+            _rewardPerYear = 15;
+        }else if(_day == 60 && _amount >= SafeMath.mul(50001,10**8)){ 
+            _rewardPerYear = 25;
+        }else if(_day == 90 && _amount >= SafeMath.mul(50001,10**8)){
+            _rewardPerYear = 45;
+        }else if(_day == 30 && _amount >= SafeMath.mul(10001,10**8)){
+            _rewardPerYear = 5;
+        }else if(_day == 60 && _amount >= SafeMath.mul(10001,10**8)){
+            _rewardPerYear = 15;
+        }else if(_day == 90 && _amount >= SafeMath.mul(10001,10**8)){
+            _rewardPerYear = 25;
+        }else{
+            return false;
+        }
+        
+        rewardPerYear[_user]=_rewardPerYear;
+        outcome[_user] = SafeMath.add((SafeMath.div(SafeMath.mul(SafeMath.mul((_amount), rewardPerYear[_user]), _day), 365000)), _amount);
+        return true;
+    }
+    
+    function _withdraw(address _user) private returns (bool result){
+        
+        require(timeLeft(_user) == 0);
+        dc.transfer(_user, outcome[_user]);
+        amount[_user] = 0;
+        day[_user] = 0;
+        dateDeposit[_user] = 0;
+        rewardPerYear[_user] = 0;
+        outcome[_user] = 0;
+        return true;
+    }
+    
+    function timeLeft(address _user) view private returns (uint result){
+        
+        uint temp = SafeMath.add(SafeMath.mul(SafeMath.mul(SafeMath.mul(60,60),24),day[_user]),dateDeposit[_user]); // for mainnet (day-month)
+        if(now >= temp){
+            return 0;
+        }else{
+            return SafeMath.sub(temp,now);
+        }
+    }
+    
+    function deposit(uint _amount, uint _day) public returns (bool result){
+        require(amount[msg.sender]==0);
+        require(( _day == 90 || _day == 60 || _day == 30));
+        require(_amount >= SafeMath.mul(10001,10**8));
+        dc.transferFrom(msg.sender, this, _amount);
+        amount[msg.sender] = _amount;
+        day[msg.sender] = _day;
+        dateDeposit[msg.sender] = now;
+        calculate(msg.sender);
+        return true;
+    }
+    function withdraw(address _user) public returns (bool result) {
+        require(owner == msg.sender);
+        return _withdraw(_user);
+        
+    }
+    
+    function withdraw() public returns (bool result){
+        return _withdraw(msg.sender);
+    }
+    
+    function info(address _user) public view returns (uint principle, uint secondLeft, uint annualized, uint returnInvestment, uint packetDay, uint timestampDeposit){
+        return (amount[_user],timeLeft(_user),rewardPerYear[_user],outcome[_user],day[_user],dateDeposit[_user] );
+    }
 
 }
