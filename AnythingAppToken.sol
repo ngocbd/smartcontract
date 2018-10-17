@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnythingAppToken at 0x36f74e50de0b79f9b0bbeb644af9d40e3cc26433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnythingAppToken at 0x0b6e701cd51a9e1b5829a4c4fe2130d60c0c4f6c
 */
 pragma solidity ^0.4.11;
 
@@ -285,7 +285,7 @@ contract ERC223ReceivingContract {
  */
 contract AnythingAppToken is Burnable, Ownable {
 
-  string public constant name = "AnythingApp Token";
+  string public constant name = "AnyCoin";
   string public constant symbol = "ANY";
   uint8 public constant decimals = 18;
   uint public constant INITIAL_SUPPLY = 400000000 * 1 ether;
@@ -298,8 +298,6 @@ contract AnythingAppToken is Burnable, Ownable {
 
   /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
   mapping (address => bool) public transferAgents;
-
-  event Transfer(address indexed from, address indexed to, uint value, bytes data);
 
   /**
    * Limit token transfer until the crowdsale is over.
@@ -386,7 +384,7 @@ contract AnythingAppToken is Burnable, Ownable {
           ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
           receiver.tokenFallback(msg.sender, _value, _data);
       }
-      Transfer(msg.sender, _to, _value, _data);
+      Transfer(msg.sender, _to, _value);
       return true;
     }
 
@@ -416,7 +414,7 @@ contract AnythingAppToken is Burnable, Ownable {
           ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
           receiver.tokenFallback(msg.sender, _value, empty);
       }
-      Transfer(msg.sender, _to, _value, empty);
+      Transfer(msg.sender, _to, _value);
       return true;
     }
 
