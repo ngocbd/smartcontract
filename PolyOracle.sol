@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolyOracle at 0x60dfe64f5fc1e1bc66bfdb47c6339c9584cb5c1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolyOracle at 0xfc2a00bb5b7e3b0b310ffb6de4fd1ea3835c9b27
 */
 pragma solidity ^0.4.24;
 
@@ -1371,7 +1371,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
 
     bool public freezeOracle;
 
-    event LogPriceUpdated(uint256 _price, uint256 _oldPrice, uint256 _time);
+    event LogPriceUpdated(uint256 _price, uint256 _oldPrice, bytes32 _queryId, uint256 _time);
     event LogNewOraclizeQuery(uint256 _time, bytes32 _queryId, string _query);
     event LogAdminSet(address _admin, bool _valid, uint256 _time);
 
@@ -1406,8 +1406,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
           require(newPOLYUSD >= POLYUSD.sub(bound), "Result is too small");
         }
         latestUpdate = requestIds[_requestId];
-        delete requestIds[_requestId];
-        emit LogPriceUpdated(newPOLYUSD, POLYUSD, latestUpdate);
+        emit LogPriceUpdated(newPOLYUSD, POLYUSD, _requestId, latestUpdate);
         POLYUSD = newPOLYUSD;
     }
 
@@ -1417,24 +1416,27 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     */
     function schedulePriceUpdatesFixed(uint256[] _times) payable isAdminOrOwner public {
         bytes32 requestId;
+        uint256 maximumScheduledUpdated;
         if (_times.length == 0) {
-            require(oraclize_getPrice("URL") <= address(this).balance, "Insufficient Funds");
+            require(oraclize_getPrice("URL", gasLimit) <= address(this).balance, "Insufficient Funds");
             requestId = oraclize_query("URL", oracleURL, gasLimit);
             requestIds[requestId] = now;
-            if (latestScheduledUpdate < requestIds[requestId]) {
-                latestScheduledUpdate = requestIds[requestId];
-            }
+            maximumScheduledUpdated = now;
             emit LogNewOraclizeQuery(now, requestId, oracleURL);
         } else {
-            require(oraclize_getPrice("URL") * _times.length <= address(this).balance, "Insufficient Funds");
+            require(oraclize_getPrice("URL", gasLimit) * _times.length <= address(this).balance, "Insufficient Funds");
             for (uint256 i = 0; i < _times.length; i++) {
+                require(_times[i] >= now, "Past scheduling is not allowed and scheduled time should be absolute timestamp");
                 requestId = oraclize_query(_times[i], "URL", oracleURL, gasLimit);
                 requestIds[requestId] = _times[i];
+                if (maximumScheduledUpdated < requestIds[requestId]) {
+                    maximumScheduledUpdated = requestIds[requestId];
+                }
                 emit LogNewOraclizeQuery(_times[i], requestId, oracleURL);
             }
-            if (latestScheduledUpdate < requestIds[requestId]) {
-                latestScheduledUpdate = requestIds[requestId];
-            }
+        }
+        if (latestScheduledUpdate < maximumScheduledUpdated) {
+            latestScheduledUpdate = maximumScheduledUpdated;
         }
     }
 
@@ -1446,7 +1448,10 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     */
     function schedulePriceUpdatesRolling(uint256 _startTime, uint256 _interval, uint256 _iters) payable isAdminOrOwner public {
         bytes32 requestId;
-        require(oraclize_getPrice("URL") * _iters <= address(this).balance, "Insufficient Funds");
+        require(_interval > 0, "Interval between scheduled time should be greater than zero");
+        require(_iters > 0, "No iterations specified");
+        require(_startTime >= now, "Past scheduling is not allowed and scheduled time should be absolute timestamp");
+        require(oraclize_getPrice("URL", gasLimit) * _iters <= address(this).balance, "Insufficient Funds");
         for (uint256 i = 0; i < _iters; i++) {
             uint256 scheduledTime = _startTime + (i * _interval);
             requestId = oraclize_query(scheduledTime, "URL", oracleURL, gasLimit);
@@ -1463,7 +1468,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     * @param _price POLYUSD price
     */
     function setPOLYUSD(uint256 _price) onlyOwner public {
-        emit LogPriceUpdated(_price, POLYUSD, now);
+        emit LogPriceUpdated(_price, POLYUSD, 0, now);
         POLYUSD = _price;
         latestUpdate = now;
     }
@@ -1515,7 +1520,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     * @notice NB - this will only impact newly scheduled Oraclize queries, not future queries which have already been scheduled
     * @param _gasLimit gas limit to use for Oraclize callbacks
     */
-    function setGasLimit(uint256 _gasLimit) onlyOwner public {
+    function setGasLimit(uint256 _gasLimit) isAdminOrOwner public {
         gasLimit = _gasLimit;
     }
 
@@ -1584,6 +1589,13 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     function getPrice() external view returns(uint256) {
         require(latestUpdate >= now - staleTime);
         return POLYUSD;
+    }
+
+    /**
+    * @notice Returns balance to owner
+    */
+    function drainContract() external onlyOwner {
+        msg.sender.transfer(address(this).balance);
     }
 
 }
