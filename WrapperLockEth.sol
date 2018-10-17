@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x1294d23b74c103d0e6d9c8f98abe9383c7900735
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x768c42ff6f5805bd2631ac7cc9eabe3af17b4b41
 */
 pragma solidity 0.4.24;
 
@@ -180,7 +180,10 @@ contract Ownable {
 
 /*
 
-Copyright Will Harborne (Ethfinex) 2017
+  Copyright Ethfinex Inc 2018
+
+  Licensed under the Apache License, Version 2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 */
 
@@ -188,7 +191,7 @@ contract WrapperLockEth is BasicToken, Ownable {
     using SafeMath for uint256;
 
     address public TRANSFER_PROXY;
-    mapping (address => bool) private isSigner;
+    mapping (address => bool) public isSigner;
 
     string public name;
     string public symbol;
@@ -210,15 +213,16 @@ contract WrapperLockEth is BasicToken, Ownable {
         require(_forTime >= 1);
         require(now + _forTime * 1 hours >= depositLock[msg.sender]);
         balances[msg.sender] = balances[msg.sender].add(msg.value);
+        totalSupply_ = totalSupply_.add(msg.value);
         depositLock[msg.sender] = now + _forTime * 1 hours;
         return true;
     }
 
     function withdraw(
+        uint _value,
         uint8 v,
         bytes32 r,
         bytes32 s,
-        uint _value,
         uint signatureValidUntilBlock
     )
         public
@@ -228,11 +232,14 @@ contract WrapperLockEth is BasicToken, Ownable {
         require(balanceOf(msg.sender) >= _value);
         if (now > depositLock[msg.sender]) {
             balances[msg.sender] = balances[msg.sender].sub(_value);
+            totalSupply_ = totalSupply_.sub(msg.value);
             msg.sender.transfer(_value);
         } else {
             require(block.number < signatureValidUntilBlock);
             require(isValidSignature(keccak256(msg.sender, address(this), signatureValidUntilBlock), v, r, s));
             balances[msg.sender] = balances[msg.sender].sub(_value);
+            totalSupply_ = totalSupply_.sub(msg.value);
+            depositLock[msg.sender] = 0;
             msg.sender.transfer(_value);
         }
         return true;
@@ -253,8 +260,10 @@ contract WrapperLockEth is BasicToken, Ownable {
     }
 
     function transferFrom(address _from, address _to, uint _value) public {
+        require(isSigner[_to] || isSigner[_from]);
         assert(msg.sender == TRANSFER_PROXY);
         balances[_to] = balances[_to].add(_value);
+        depositLock[_to] = depositLock[_to] > now ? depositLock[_to] : now + 1 hours;
         balances[_from] = balances[_from].sub(_value);
         Transfer(_from, _to, _value);
     }
