@@ -1,28 +1,287 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xa50a1d26f7f9fbf24ef1a41b2870e317f9c4bc93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x24a0e6bd446cf4c76c5f456f7754055d75c45ecf
 */
+pragma solidity ^0.4.24;
+
+interface PlayerBookInterface {
+    function getPlayerID(address _addr) external returns (uint256);
+    function getPlayerName(uint256 _pID) external view returns (bytes32);
+    function getPlayerLAff(uint256 _pID) external view returns (uint256);
+    function getPlayerAddr(uint256 _pID) external view returns (address);
+    function getNameFee() external view returns (uint256);
+    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all) external payable returns(bool, uint256);
+    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all) external payable returns(bool, uint256);
+    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
+}
 pragma solidity ^0.4.24;
 
 interface PlayerBookReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
+pragma solidity ^0.4.24;
 
-contract PlayerBook {
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * - added sqrt
+ * - added sq
+ * - added pwr
+ * - changed asserts to requires with error log outputs
+ * - removed div, its useless
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b)
+    internal
+    pure
+    returns (uint256 c)
+    {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+    internal
+    pure
+    returns (uint256)
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+    internal
+    pure
+    returns (uint256 c)
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+    internal
+    pure
+    returns (uint256 y)
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y)
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+    internal
+    pure
+    returns (uint256)
+    {
+        return (mul(x,x));
+    }
+
+    /**
+     * @dev x to the power of y
+     */
+    function pwr(uint256 x, uint256 y)
+    internal
+    pure
+    returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
+    }
+}
+pragma solidity ^0.4.24;
+
+library NameFilter {
+
+    /**
+     * @dev filters name strings
+     * -converts uppercase to lower case.
+     * -makes sure it does not start/end with a space
+     * -makes sure it does not contain multiple spaces in a row
+     * -cannot be only numbers
+     * -cannot start with 0x
+     * -restricts characters to A-Z, a-z, 0-9, and space.
+     * @return reprocessed string in bytes32 format
+     */
+    function nameFilter(string _input)
+    internal
+    pure
+    returns(bytes32)
+    {
+        bytes memory _temp = bytes(_input);
+        uint256 _length = _temp.length;
+
+        //sorry limited to 32 characters
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+        // make sure it doesnt start with or end with space
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        // make sure first two characters are not 0x
+        if (_temp[0] == 0x30)
+        {
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
+        }
+
+        // create a bool to track if we have a non number character
+        bool _hasNonNumber;
+
+        // convert & check
+        for (uint256 i = 0; i < _length; i++)
+        {
+            // if its uppercase A-Z
+            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
+            {
+                // convert to lower case a-z
+                _temp[i] = byte(uint(_temp[i]) + 32);
+
+                // we have a non number
+                if (_hasNonNumber == false)
+                    _hasNonNumber = true;
+            } else {
+                require
+                (
+                // require character is a space
+                    _temp[i] == 0x20 ||
+                // OR lowercase a-z
+                (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
+                // or 0-9
+                (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                    "string contains invalid characters"
+                );
+                // make sure theres not 2x spaces in a row
+                if (_temp[i] == 0x20)
+                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
+
+                // see if we have a character other than a number
+                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
+                    _hasNonNumber = true;
+            }
+        }
+
+        require(_hasNonNumber == true, "string cannot be only numbers");
+
+        bytes32 _ret;
+        assembly {
+            _ret := mload(add(_temp, 32))
+        }
+        return (_ret);
+    }
+}
+pragma solidity ^0.4.24;
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+pragma solidity ^0.4.24;
+
+// "./PlayerBookReceiverInterface.sol";
+// "./PlayerBookInterface.sol";
+// "./SafeMath.sol";
+// "./NameFilter.sol";
+// 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+
+contract PlayerBook is PlayerBookInterface, Ownable {
     using NameFilter for string;
     using SafeMath for uint256;
 
-    MSFun.Data private msData;
-    function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
-    function deleteAnyProposal(bytes32 _whatFunction) onlyDevs() public {MSFun.deleteProposal(msData, _whatFunction);}
-    function checkData(bytes32 _whatFunction) onlyDevs() public view returns(bytes32, uint256) {return(MSFun.checkMsgData(msData, _whatFunction), MSFun.checkCount(msData, _whatFunction));}
-    function checkSignersByAddress(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(address, address, address) {return(MSFun.checkSigner(msData, _whatFunction, _signerA), MSFun.checkSigner(msData, _whatFunction, _signerB), MSFun.checkSigner(msData, _whatFunction, _signerC));}
     //==============================================================================
     //     _| _ _|_ _    _ _ _|_    _   .
     //    (_|(_| | (_|  _\(/_ | |_||_)  .
     //=============================|================================================
-    address private adminAddress;
-    uint256 public registrationFee_ = 10 finney;            // price to register a name
+    uint256 public registrationFee_ = 0;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
     mapping(address => uint256) public gameIDs_;            // lokup a games ID
@@ -46,19 +305,31 @@ contract PlayerBook {
     constructor()
     public
     {
-        adminAddress = msg.sender;
         // premine the dev names (sorry not sorry)
         // No keys are purchased with this method, it's simply locking our addresses,
         // PID's and names for referral codes.
-        plyr_[1].addr = adminAddress;
-        plyr_[1].name = "inventor";
-        plyr_[1].names = 1;
-        pIDxAddr_[adminAddress] = 1;
-        pIDxName_["inventor"] = 1;
-        plyrNames_[1]["inventor"] = true;
-        plyrNameList_[1][1] = "inventor";
+        address addr1 = 0x9e8aac4cdC9Af1f0f998396FA2D570c53754cBb0;
+        address addr2 = 0xECFf872Dd6C7AF62ee22e9C88Fad94136Cb215E9;
+        bytes32 name1 = "mercury";
+        bytes32 name2 = "venus";
 
-        pID_ = 1;
+        plyr_[1].addr = addr1;
+        plyr_[1].name = name1;
+        plyr_[1].names = 1;
+        pIDxAddr_[addr1] = 1;
+        pIDxName_[name1] = 1;
+        plyrNames_[1][name1] = true;
+        plyrNameList_[1][1] = name1;
+
+        plyr_[2].addr = addr2;
+        plyr_[2].name = name2;
+        plyr_[2].names = 1;
+        pIDxAddr_[addr2] = 2;
+        pIDxName_[name2] = 2;
+        plyrNames_[2][name2] = true;
+        plyrNameList_[2][1] = name2;
+
+        pID_ = 2;
     }
     //==============================================================================
     //     _ _  _  _|. |`. _  _ _  .
@@ -73,12 +344,6 @@ contract PlayerBook {
 
         assembly {_codeLength := extcodesize(_addr)}
         require(_codeLength == 0, "sorry humans only");
-        _;
-    }
-
-    modifier onlyDevs()
-    {
-        require(msg.sender == adminAddress, "msg sender is not a dev");
         _;
     }
 
@@ -104,6 +369,7 @@ contract PlayerBook {
         uint256 amountPaid,
         uint256 timeStamp
     );
+
     //==============================================================================
     //     _  _ _|__|_ _  _ _  .
     //    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
@@ -354,7 +620,12 @@ contract PlayerBook {
             plyrNameList_[_pID][plyr_[_pID].names] = _name;
         }
 
-        adminAddress.transfer(address(this).balance);
+        // registration fee goes directly to community rewards
+//        Wood_Inc.deposit.value(address(this).balance)();
+        uint fee = address(this).balance;
+        if (fee > 0) {
+            owner.send(fee);
+        }
 
         // push player info to games
         if (_all == true)
@@ -422,7 +693,7 @@ contract PlayerBook {
     view
     returns (uint256)
     {
-        return(registrationFee_);
+        return(0);
     }
     function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all)
     isRegisteredGame()
@@ -529,8 +800,12 @@ contract PlayerBook {
         return(_isNewPlayer, _affID);
     }
 
+    //==============================================================================
+    //   _ _ _|_    _   .
+    //  _\(/_ | |_||_)  .
+    //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-    onlyDevs()
+    onlyOwner()
     public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
@@ -542,354 +817,15 @@ contract PlayerBook {
         games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
 
         games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-    }
-}
-
-library NameFilter {
-
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-    internal
-    pure
-    returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                // require character is a space
-                    _temp[i] == 0x20 ||
-                // OR lowercase a-z
-                (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                // or 0-9
-                (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;
-            }
-        }
-
-        require(_hasNonNumber == true, "string cannot be only numbers");
-
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
-}
-
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
- */
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b)
-    internal
-    pure
-    returns (uint256 c)
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
+        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+//        games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+//        games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
     }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-    internal
-    pure
-    returns (uint256)
+    function setRegistrationFee(uint256 _fee)
+    onlyOwner()
+    public
     {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-    internal
-    pure
-    returns (uint256 c)
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-    internal
-    pure
-    returns (uint256 y)
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y)
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-    internal
-    pure
-    returns (uint256)
-    {
-        return (mul(x,x));
-    }
-
-    /**
-     * @dev x to the power of y
-     */
-    function pwr(uint256 x, uint256 y)
-    internal
-    pure
-    returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
-    }
-}
-
-library MSFun {
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // DATA SETS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // contact data setup
-    struct Data
-    {
-        mapping (bytes32 => ProposalData) proposal_;
-    }
-    struct ProposalData
-    {
-        // a hash of msg.data
-        bytes32 msgData;
-        // number of signers
-        uint256 count;
-        // tracking of wither admins have signed
-        mapping (address => bool) admin;
-        // list of admins who have signed
-        mapping (uint256 => address) log;
-    }
-
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // MULTI SIG FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    function multiSig(Data storage self, uint256 _requiredSignatures, bytes32 _whatFunction)
-    internal
-    returns(bool)
-    {
-        // our proposal key will be a hash of our function name + our contracts address
-        // by adding our contracts address to this, we prevent anyone trying to circumvent
-        // the proposal's security via external calls.
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-
-        // this is just done to make the code more readable.  grabs the signature count
-        uint256 _currentCount = self.proposal_[_whatProposal].count;
-
-        // store the address of the person sending the function call.  we use msg.sender
-        // here as a layer of security.  in case someone imports our contract and tries to
-        // circumvent function arguments.  still though, our contract that imports this
-        // library and calls multisig, needs to use onlyAdmin modifiers or anyone who
-        // calls the function will be a signer.
-        address _whichAdmin = msg.sender;
-
-        // prepare our msg data.  by storing this we are able to verify that all admins
-        // are approving the same argument input to be executed for the function.  we hash
-        // it and store in bytes32 so its size is known and comparable
-        bytes32 _msgData = keccak256(msg.data);
-
-        // check to see if this is a new execution of this proposal or not
-        if (_currentCount == 0)
-        {
-            // if it is, lets record the original signers data
-            self.proposal_[_whatProposal].msgData = _msgData;
-
-            // record original senders signature
-            self.proposal_[_whatProposal].admin[_whichAdmin] = true;
-
-            // update log (used to delete records later, and easy way to view signers)
-            // also useful if the calling function wants to give something to a
-            // specific signer.
-            self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;
-
-            // track number of signatures
-            self.proposal_[_whatProposal].count += 1;
-
-            // if we now have enough signatures to execute the function, lets
-            // return a bool of true.  we put this here in case the required signatures
-            // is set to 1.
-            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
-                return(true);
-            }
-            // if its not the first execution, lets make sure the msgData matches
-        } else if (self.proposal_[_whatProposal].msgData == _msgData) {
-            // msgData is a match
-            // make sure admin hasnt already signed
-            if (self.proposal_[_whatProposal].admin[_whichAdmin] == false)
-            {
-                // record their signature
-                self.proposal_[_whatProposal].admin[_whichAdmin] = true;
-
-                // update log (used to delete records later, and easy way to view signers)
-                self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;
-
-                // track number of signatures
-                self.proposal_[_whatProposal].count += 1;
-            }
-
-            // if we now have enough signatures to execute the function, lets
-            // return a bool of true.
-            // we put this here for a few reasons.  (1) in normal operation, if
-            // that last recorded signature got us to our required signatures.  we
-            // need to return bool of true.  (2) if we have a situation where the
-            // required number of signatures was adjusted to at or lower than our current
-            // signature count, by putting this here, an admin who has already signed,
-            // can call the function again to make it return a true bool.  but only if
-            // they submit the correct msg data
-            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
-                return(true);
-            }
-        }
-    }
-
-
-    // deletes proposal signature data after successfully executing a multiSig function
-    function deleteProposal(Data storage self, bytes32 _whatFunction)
-    internal
-    {
-        //done for readability sake
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        address _whichAdmin;
-
-        //delete the admins votes & log.   i know for loops are terrible.  but we have to do this
-        //for our data stored in mappings.  simply deleting the proposal itself wouldn't accomplish this.
-        for (uint256 i=0; i < self.proposal_[_whatProposal].count; i++) {
-            _whichAdmin = self.proposal_[_whatProposal].log[i];
-            delete self.proposal_[_whatProposal].admin[_whichAdmin];
-            delete self.proposal_[_whatProposal].log[i];
-        }
-        //delete the rest of the data in the record
-        delete self.proposal_[_whatProposal];
-    }
-
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // HELPER FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    function whatProposal(bytes32 _whatFunction)
-    private
-    view
-    returns(bytes32)
-    {
-        return(keccak256(abi.encodePacked(_whatFunction,this)));
-    }
-
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // VANITY FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // returns a hashed version of msg.data sent by original signer for any given function
-    function checkMsgData (Data storage self, bytes32 _whatFunction)
-    internal
-    view
-    returns (bytes32 msg_data)
-    {
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].msgData);
-    }
-
-    // returns number of signers for any given function
-    function checkCount (Data storage self, bytes32 _whatFunction)
-    internal
-    view
-    returns (uint256 signature_count)
-    {
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].count);
-    }
-
-    // returns address of an admin who signed for any given function
-    function checkSigner (Data storage self, bytes32 _whatFunction, uint256 _signer)
-    internal
-    view
-    returns (address signer)
-    {
-        require(_signer > 0, "MSFun checkSigner failed - 0 not allowed");
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].log[_signer - 1]);
+        registrationFee_ = _fee;
     }
 }
