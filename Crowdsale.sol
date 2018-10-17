@@ -1,356 +1,314 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3d3209362c7edb604c77e7bf22143c948ddf3d28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8427eb8cc2f86a778bc9554e808bf02fffc32f6c
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
+contract owned {
+    address public owner;
 
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
+    function owned() {
+        owner = msg.sender;
+    }
 
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
+    }
 }
 
-/**
- * @title DetailedERC20 token
- * @dev The decimals are only for visualization purposes.
- * All the operations are done using the smallest and indivisible token unit,
- * just as on Ethereum all the operations are done in wei.
- */
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
 
-  constructor(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+
+contract token {
+    /* Public variables of the token */
+    string public standard = "ClassyCoin 1.0";
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function token(
+        uint256 initialSupply,
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol
+        ) {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
+    }
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    }
+
+    /* Allow another contract to spend some tokens in your behalf */
+    function approve(address _spender, uint256 _value)
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /* Approve and then communicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /* A contract attempts _ to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
+        balanceOf[_from] -= _value;                          // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /* This unnamed function is called whenever someone tries to send ether to it */
+    function () {
+        throw;     // Prevents accidental sending of ether
+    }
+}
+
+contract ClassyCoin is owned, token {
+
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    mapping(address=>bool) public frozenAccount;
+
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    uint256 public constant initialSupply = 100000000 * 10**16;
+    uint8 public constant decimalUnits = 16;
+    string public tokenName = "ClassyCoin";
+    string public tokenSymbol = "ClassyCoin";
+    function ClassyCoin() token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
+     /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        if (frozenAccount[msg.sender]) throw;                // Check if frozen
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    }
+
+
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (frozenAccount[_from]) throw;                        // Check if frozen
+        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
+        balanceOf[_from] -= _value;                          // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function mintToken(address target, uint256 mintedAmount) onlyOwner {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
+    }
+
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    function buy() payable {
+        uint amount = msg.value / buyPrice;                // calculates the amount
+        if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
+        balanceOf[this] -= amount;                         // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
+    }
+
+    function sell(uint256 amount) {
+        if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
+        balanceOf[this] += amount;                         // adds the amount to owner's balance
+        balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
+        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
+            throw;                                         // to do this last to avoid recursion attacks
+        } else {
+            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
+        }
+    }
+}
+
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public{
+    owner = msg.sender;
+  }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 }
 
 /**
- * Crowdsale has a life span during which investors can make
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
  * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to beneficiary
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
  * as they arrive.
- *
- * A crowdsale is defined by:
- *	offset (required) - crowdsale start, unix timestamp
- *	length (required) - crowdsale length in seconds
- *  price (required) - token price in wei
- *	soft cap (optional) - minimum amount of funds required for crowdsale success, can be zero (if not used)
- *	hard cap (optional) - maximum amount of funds crowdsale can accept, can be zero (unlimited)
- *  quantum (optional) - enables value accumulation effect to reduce value transfer costs, usually is not used (set to zero)
- *    if non-zero value passed specifies minimum amount of wei to transfer to beneficiary
- *
- * This crowdsale doesn't own tokens and doesn't perform any token emission.
- * It expects enough tokens to be available on its address:
- * these tokens are used for issuing them to investors.
- * Token redemption is done in opposite way: tokens accumulate back on contract's address
- * Beneficiary is specified by its address.
- * This implementation can be used to make several crowdsales with the same token being sold.
  */
-contract Crowdsale {
-	/**
-	* Descriptive name of this Crowdsale. There could be multiple crowdsales for same Token.
-	*/
-	string public name;
+contract Crowdsale is Ownable {
+  using SafeMath for uint256;
 
-	// contract creator, owner of the contract
-	// creator is also supplier of tokens
-	address private creator;
+  // The token being sold
+  token myToken;
+  
+  // address where funds are collected
+  address public wallet;
+  
+  // rate => tokens per ether
+  uint256 public rate = 750000 ; 
 
-	// crowdsale start (unix timestamp)
-	uint public offset;
+  // amount of raised money in wei
+  uint256 public weiRaised;
 
-	// crowdsale length in seconds
-	uint public length;
+  /**
+   * event for token purchase logging
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
 
-	// one token price in wei
-	uint public price;
 
-	// crowdsale minimum goal in wei
-	uint public softCap;
+  constructor(address tokenContractAddress, address _walletAddress) public{
+    wallet = _walletAddress;
+    myToken = token(tokenContractAddress);
+  }
 
-	// crowdsale maximum goal in wei
-	uint public hardCap;
+  // fallback function can be used to buy tokens
+  function () payable public{
+    buyTokens(msg.sender);
+  }
 
-	// minimum amount of value to transfer to beneficiary in automatic mode
-	uint private quantum;
+  function getBalance() public constant returns(uint256){
+      return myToken.balanceOf(this);
+  }    
 
-	// how much value collected (funds raised)
-	uint public collected;
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(msg.value >= 10000000000000000);// min contribution 0.01ETH
+    require(msg.value <= 1000000000000000000);// max contribution 1ETH
 
-	// how many different addresses made an investment
-	uint public investorsCount;
+    uint256 weiAmount = msg.value;
 
-	// how much value refunded (if crowdsale failed)
-	uint public refunded;
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate).div(100);
 
-	// how much tokens issued to investors
-	uint public tokensIssued;
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
 
-	// how much tokens redeemed and refunded (if crowdsale failed)
-	uint public tokensRedeemed;
+    myToken.transfer(beneficiary, tokens);
 
-	// how many successful transactions (with tokens being send back) do we have
-	uint public transactions;
+    emit TokenPurchase(beneficiary, weiAmount, tokens);
+  }
 
-	// how many refund transactions (in exchange for tokens) made (if crowdsale failed)
-	uint public refunds;
+  // to change rate
+  function updateRate(uint256 new_rate) onlyOwner public{
+    rate = new_rate;
+  }
 
-	// The token being sold
-	DetailedERC20 private token;
 
-	// decimal coefficient (k) enables support for tokens with non-zero decimals
-	uint k;
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() onlyOwner internal {
+    wallet.transfer(msg.value);
+  }
 
-	// address where funds are collected
-	address public beneficiary;
+  function transferBackTo(uint256 tokens, address beneficiary) onlyOwner public returns (bool){
+    myToken.transfer(beneficiary, tokens);
+    return true;
+  }
 
-	// investor's mapping, required for token redemption in a failed crowdsale
-	// making this field public allows to extend investor-related functionality in the future
-	mapping(address => uint) public balances;
-
-	// events to log
-	event InvestmentAccepted(address indexed holder, uint tokens, uint value);
-	event RefundIssued(address indexed holder, uint tokens, uint value);
-
-	// a crowdsale is defined by a set of parameters passed here
-	// make sure _end timestamp is in the future in order for crowdsale to be operational
-	// _price must be positive, this is a price of one token in wei
-	// _hardCap must be greater then _softCap or zero, zero _hardCap means unlimited crowdsale
-	// _quantum may be zero, in this case there will be no value accumulation on the contract
-	function Crowdsale(
-		string _name,
-		uint _offset,
-		uint _length,
-		uint _price,
-		uint _softCap,
-		uint _hardCap,
-		uint _quantum,
-		address _beneficiary,
-		address _token
-	) public {
-
-		// validate crowdsale settings (inputs)
-		// require(_offset > 0); // we don't really care
-		require(_length > 0);
-		require(now < _offset + _length); // crowdsale must not be already finished
-		// softCap can be anything, zero means crowdsale doesn't fail
-		require(_hardCap > _softCap || _hardCap == 0);
-		// hardCap must be greater then softCap
-		// quantum can be anything, zero means no accumulation
-		require(_price > 0);
-		require(_beneficiary != address(0));
-		require(_token != address(0));
-
-		name = _name;
-
-		// setup crowdsale settings
-		offset = _offset;
-		length = _length;
-		softCap = _softCap;
-		hardCap = _hardCap;
-		quantum = _quantum;
-		price = _price;
-		creator = msg.sender;
-
-		// define beneficiary
-		beneficiary = _beneficiary;
-
-		// allocate tokens: link and init coefficient
-		__allocateTokens(_token);
-	}
-
-	// accepts crowdsale investment, requires
-	// crowdsale to be running and not reached its goal
-	function invest() public payable {
-		// perform validations
-		assert(now >= offset && now < offset + length); // crowdsale is active
-		assert(collected + price <= hardCap || hardCap == 0); // its still possible to buy at least 1 token
-		require(msg.value >= price); // value sent is enough to buy at least one token
-
-		// call 'sender' nicely - investor
-		address investor = msg.sender;
-
-		// how much tokens we must send to investor
-		uint tokens = msg.value / price;
-
-		// how much value we must send to beneficiary
-		uint value = tokens * price;
-
-		// ensure we are not crossing the hardCap
-		if (value + collected > hardCap || hardCap == 0) {
-			value = hardCap - collected;
-			tokens = value / price;
-			value = tokens * price;
-		}
-
-		// update crowdsale status
-		collected += value;
-		tokensIssued += tokens;
-
-		// transfer tokens to investor
-		__issueTokens(investor, tokens);
-
-		// transfer the change to investor
-		investor.transfer(msg.value - value);
-
-		// accumulate the value or transfer it to beneficiary
-		if (collected >= softCap && this.balance >= quantum) {
-			// transfer all the value to beneficiary
-			__beneficiaryTransfer(this.balance);
-		}
-
-		// log an event
-		InvestmentAccepted(investor, tokens, value);
-	}
-
-	// refunds an investor of failed crowdsale,
-	// requires investor to allow token transfer back
-	function refund() public payable {
-		// perform validations
-		assert(now >= offset + length); // crowdsale ended
-		assert(collected < softCap); // crowdsale failed
-
-		// call 'sender' nicely - investor
-		address investor = msg.sender;
-
-		// find out how much tokens should be refunded
-		uint tokens = __redeemAmount(investor);
-
-		// calculate refund amount
-		uint refundValue = tokens * price;
-
-		// additional validations
-		require(tokens > 0);
-
-		// update crowdsale status
-		refunded += refundValue;
-		tokensRedeemed += tokens;
-		refunds++;
-
-		// transfer the tokens back
-		__redeemTokens(investor, tokens);
-
-		// make a refund
-		investor.transfer(refundValue + msg.value);
-
-		// log an event
-		RefundIssued(investor, tokens, refundValue);
-	}
-
-	// sends all the value to the beneficiary
-	function withdraw() public {
-		// perform validations
-		assert(creator == msg.sender || beneficiary == msg.sender); // only creator or beneficiary can initiate this call
-		assert(collected >= softCap); // crowdsale must be successful
-		assert(this.balance > 0); // there should be something to transfer
-
-		// how much to withdraw (entire balance obviously)
-		uint value = this.balance;
-
-		// perform the transfer
-		__beneficiaryTransfer(value);
-	}
-
-	// performs an investment, refund or withdrawal,
-	// depending on the crowdsale status
-	function() public payable {
-		// started or finished
-		require(now >= offset);
-
-		if(now < offset + length) {
-			// crowdsale is running, invest
-			invest();
-		}
-		else if(collected < softCap) {
-			// crowdsale failed, try to refund
-			refund();
-		}
-		else {
-			// crowdsale is successful, investments are not accepted anymore
-			// but maybe poor beneficiary is begging for change...
-			withdraw();
-		}
-	}
-
-	// ----------------------- internal section -----------------------
-
-	// allocates token source (basically links token)
-	function __allocateTokens(address _token) internal {
-		// link tokens, tokens are not owned by a crowdsale
-		// should be transferred to crowdsale after the deployment
-		token = DetailedERC20(_token);
-
-		// obtain decimals and calculate coefficient k
-		k = 10 ** uint(token.decimals());
-	}
-
-	// transfers tokens to investor, validations are not required
-	function __issueTokens(address investor, uint tokens) internal {
-		// if this is a new investor update investor count
-		if (balances[investor] == 0) {
-			investorsCount++;
-		}
-
-		// for open crowdsales we track investors balances
-		balances[investor] += tokens;
-
-		// issue tokens, taking into account decimals
-		token.transferFrom(creator, investor, tokens * k);
-	}
-
-	// calculates amount of tokens available to redeem from investor, validations are not required
-	function __redeemAmount(address investor) internal view returns (uint amount) {
-		// round down allowance taking into account token decimals
-		uint allowance = token.allowance(investor, this) / k;
-
-		// for open crowdsales we check previously tracked investor balance
-		uint balance = balances[investor];
-
-		// return allowance safely by checking also the balance
-		return balance < allowance ? balance : allowance;
-	}
-
-	// transfers tokens from investor, validations are not required
-	function __redeemTokens(address investor, uint tokens) internal {
-		// for open crowdsales we track investors balances
-		balances[investor] -= tokens;
-
-		// redeem tokens, taking into account decimals coefficient
-		token.transferFrom(investor, creator, tokens * k);
-	}
-
-	// transfers a value to beneficiary, validations are not required
-	function __beneficiaryTransfer(uint value) internal {
-		beneficiary.transfer(value);
-	}
-
-	// !---------------------- internal section ----------------------!
 }
