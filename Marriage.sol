@@ -1,81 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xc1d9cc0dbe86aee761ea402fe8465c3e89d6ccf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xa7921c751578be7bca94fee4a58ff23f35e6ab10
 */
-pragma solidity ^0.4.24;
-/**
- * Marriage
- * Copyright (c) 2018 MING-CHIEN LEE
- */
-contract owned {
-    address public owner;
+pragma solidity ^0.4.17;
 
-    constructor() public {
-        owner = msg.sender;
+contract Marriage {
+    struct Signage {
+        string name1;
+        string vow1;
+        string name2;
+        string vow2;
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    address public sealer;
+    string public sealedBy;
+    uint256 public numMarriages;
+
+    Signage[] signages;
+
+    function Marriage(string sealerName, address sealerAddress) public {
+        sealedBy = sealerName;
+        sealer = sealerAddress;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-contract Marriage is owned {
-    // Marriage data variables
-    bytes32 public partner1;
-    bytes32 public partner2;
-    uint256 public marriageDate;
-    bytes32 public marriageStatus;
-    bytes public imageHash;
-    bytes public marriageProofDoc;
-    
-    constructor() public {
-        createMarriage();
+    function sign(string vow1, string name1, string vow2, string name2) public {
+        require(msg.sender == sealer);
+
+        Signage memory signage = Signage(
+            vow1,
+            name1,
+            vow2,
+            name2
+        );
+        signages.push(signage);
+        numMarriages +=1 ;
     }
 
-    // Create initial marriage contract
-    function createMarriage() onlyOwner public {
-        partner1 = "Edison Lee";
-        partner2 = "Chino Kafuu";
-        marriageDate = 1526983200;
-        setStatus("Married");
-        bytes32 name = "Marriage Contract Creation";
-        
-        majorEventFunc(marriageDate, name, "We got married!");
-    }
-    
-    // Set the marriage status if it changes
-    function setStatus(bytes32 status) onlyOwner public {
-        marriageStatus = status;
-        majorEventFunc(block.timestamp, "Changed Status", status);
-    }
-    
-    // Set the IPFS hash of the image of the couple
-    function setImage(bytes IPFSImageHash) onlyOwner public {
-        imageHash = IPFSImageHash;
-        majorEventFunc(block.timestamp, "Entered Marriage Image", "Image is in IPFS");
-    }
-    
-    // Upload documentation for proof of marrage like a marriage certificate
-    function marriageProof(bytes IPFSProofHash) onlyOwner public {
-        marriageProofDoc = IPFSProofHash;
-        majorEventFunc(block.timestamp, "Entered Marriage Proof", "Marriage proof in IPFS");
-    }
-
-    // Log major life events
-    function majorEventFunc(uint256 eventTimeStamp, bytes32 name, bytes32 description) public {
-        emit MajorEvent(block.timestamp, eventTimeStamp, name, description);
-    }
-
-    // Declare event structure
-    event MajorEvent(uint256 logTimeStamp, uint256 eventTimeStamp, bytes32 indexed name, bytes32 indexed description);
-    
-    // This function gets executed if a transaction with invalid data is sent to
-    // the contract or just ether without data. We revert the send so that no-one
-    // accidentally loses money when using the contract.
-    function () public {
-        revert();
+    function getMarriage(uint256 index)
+        public
+        constant returns (string, string, string, string)
+    {
+        return (signages[index].vow1, signages[index].name1, signages[index].vow2, signages[index].name2);
     }
 }
