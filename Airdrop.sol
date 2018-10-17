@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract airDrop at 0xc3055016fb247a6f7512ce35d07949a6b98f3720
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract airDrop at 0xfdafba5784f3487c9c24c447475ad7683b10bb16
 */
 pragma solidity ^0.4.21;
 
@@ -99,7 +99,8 @@ contract airDrop is Owned {
         uint i;
 
         for (i=0;i<lucky.length;i++){
-            if(!tokenLedger.transfer(lucky[i],value)){revert();}
+            //if(!tokenLedger.transfer(lucky[i],value)){revert();}
+            if(!tokenLedger.transferFrom(msg.sender,lucky[i],value)){revert();}
         }
 
         return true;
@@ -108,6 +109,10 @@ contract airDrop is Owned {
     function applyToken(address token) onlyOwner whenPaused public returns (bool success) {
         tokenLedger=tokenInterface(token);
         return true;
+    }
+    
+    function checkToken() public view returns(address){
+        return address(tokenLedger);
     }
     
     function tokenDecimals() public view returns(uint8 dec){
