@@ -1,17 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressList at 0xcfcf8f75cc1fdc673ced1c8434dcbf3af038cb0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressList at 0x40f822334aac23a418eea931a5b7b6bbc20c4869
 */
-pragma solidity ^0.4.23;
+/**
+ * MonetaryCoin AddressList Smart contract
+ * For full details see: https://github.com/Monetary-Foundation/MonetaryCoin
+ */
 
+pragma solidity ^0.4.24;
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -25,59 +44,94 @@ contract Ownable {
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 }
 
-contract Claimable is Ownable {
-  address public pendingOwner;
+
+
+/**
+ * @title AddressList
+ * @dev AddressList
+ * Simple storage for addresses that can participate in the distribution
+ */
+contract AddressList is Ownable {
 
   /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
+  * @dev Map of addresses that have been whitelisted (and passed KYC).
+  * Whitelist value > 0 indicates the address has been whitelisted.
+  */
+  mapping(address => uint8) public whitelist;
+  
+  address operator_;
+
+  /**
+  * @dev init the contract and the operator address
+  */
+  constructor(address _operator) public{
+    require(_operator != address(0));
+    operator_ = _operator;
+  }
+
+  /**
+  * @dev Modifier Throws if called by any account other than the operator_ or owner.
+  */
+  modifier onlyOps() {
+    require((msg.sender == operator_) || (msg.sender == owner));
     _;
   }
 
+  event OperatorTransferred(address indexed newOperator);
+
   /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   */
-  function transferOwnership(address newOwner) public onlyOwner{
-    pendingOwner = newOwner;
+  * @dev Allows the current Owner to transfer control to a newOperator.
+  * @param newOperator The address to transfer operator to.
+  */
+  function transferOperator(address newOperator) public onlyOwner {
+    operator_ = newOperator;
+    emit OperatorTransferred(operator_);
   }
 
   /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
+  * @dev get operator
+  * @return the address of the operator
+  */
+  function operator() public view returns (address) {
+    return operator_;
   }
-}
 
-contract AddressList is Claimable {
-    string public name;
-    mapping (address => bool) public onList;
 
-    function AddressList(string _name, bool nullValue) public {
-        name = _name;
-        onList[0x0] = nullValue;
-    }
-    event ChangeWhiteList(address indexed to, bool onList);
+  event WhitelistUpdated(address indexed account, uint8 phase);
 
-    // Set whether _to is on the list or not. Whether 0x0 is on the list
-    // or not cannot be set here - it is set once and for all by the constructor.
-    function changeList(address _to, bool _onList) onlyOwner public {
-        require(_to != 0x0);
-        if (onList[_to] != _onList) {
-            onList[_to] = _onList;
-            ChangeWhiteList(_to, _onList);
-        }
-    }
+  /**
+  * @dev Allows ops to add accounts to the whitelist.
+  * Only those accounts will be allowed to contribute during the distribution.
+  * _phase > 0: Can contribute
+  * _phase = 0: Cannot contribute at all (not whitelisted).
+  * @return true
+  */
+  function updateWhitelist(address _account, uint8 _phase) external onlyOps returns (bool) {
+    require(_account != address(0));
+    require(_phase <= 2);
+
+    whitelist[_account] = _phase;
+
+    emit WhitelistUpdated(_account, _phase);
+
+    return true;
+  }
+
 }
