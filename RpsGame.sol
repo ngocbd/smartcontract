@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0x94efc284035e91143fb0d2d1f1abbadaf9b9b16c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0xa8f9c7ff9f605f401bde6659fd18d9a0d0a802c5
 */
 pragma solidity ^0.4.24;
 
@@ -39,7 +39,7 @@ contract AccessControl is SafeMath{
     address newContractAddress;
 
     uint public tip_total = 0;
-    uint public tip_rate = 20000000000000000;
+    uint public tip_rate = 10000000000000000;
 
     // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
     bool public paused = false;
@@ -219,6 +219,7 @@ contract RpsGame is SafeMath , AccessControl{
     /// @dev Create a game
     function createGame(bytes32 dealerHash, address player) public payable whenNotPaused returns (uint){
         require(dealerHash != 0x0);
+
         maxgame += 1;
         Game storage game = games[maxgame];
         game.dealer = msg.sender;
@@ -238,6 +239,7 @@ contract RpsGame is SafeMath , AccessControl{
     /// @dev Join a game
     function joinGame(uint gameid, uint8 choice) public payable whenNotPaused returns (uint){
         Game storage game = games[gameid];
+
         require(msg.value == game.dealerValue && game.dealer != address(0) && game.dealer != msg.sender && game.playerChoice==NONE);
         require(game.player == address(0) || game.player == msg.sender);
         require(!game.closed);
@@ -280,17 +282,16 @@ contract RpsGame is SafeMath , AccessControl{
     /// @dev Close game settlement rewards
     function close(uint gameid) public returns(bool) {
         Game storage game = games[gameid];
+
         require(!game.closed);
         require(now > game.expireTime || (game.dealerChoice != NONE && game.playerChoice != NONE));
 
-        uint totalAmount = safeAdd(game.dealerValue, game.playerValue);
-        uint reward = amountWithTip(totalAmount);
         uint8 result = payoff[game.dealerChoice][game.playerChoice];
 
         if(result == DEALERWIN){
-            require(game.dealer.send(reward));
+            require(game.dealer.send(amountWithTip(safeAdd(game.dealerValue, game.playerValue))));
         }else if(result == PLAYERWIN){
-            require(game.player.send(reward));
+            require(game.player.send(amountWithTip(safeAdd(game.dealerValue, game.playerValue))));
         }else if(result == DRAW){
             require(game.dealer.send(game.dealerValue) && game.player.send(game.playerValue));
         }
