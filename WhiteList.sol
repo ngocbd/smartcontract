@@ -1,15 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x0a29c3a3e13f763138b43998d3d2dd0ff1b684c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x1758e5afccd53f6eaaa3039bc44d0e1f7bf6e476
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-// File: _contracts/WhiteList.sol
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-contract WhiteList {
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
-  function canTransfer(address _from, address _to)
-  public
-  returns (bool) {
-    return true;
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
   }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+contract Whitelist is Ownable {
+    mapping(address => uint256) public whitelist;
+
+    event Whitelisted(address indexed who);
+    
+    uint256 public nextUserId = 1;
+
+    function addAddress(address who) external onlyOwner {
+        require(who != address(0));
+        require(whitelist[who] == 0);
+        whitelist[who] = nextUserId;
+        nextUserId++;
+        emit Whitelisted(who); // solhint-disable-line
+    }
+
+    function addAddresses(address[] addresses) external onlyOwner {
+        require(addresses.length <= 100);
+        address who;
+        uint256 userId = nextUserId;
+        for (uint256 i = 0; i < addresses.length; i++) {
+            who = addresses[i];
+            require(whitelist[who] == 0);
+            whitelist[who] = userId;
+            userId++;
+            emit Whitelisted(who); // solhint-disable-line
+        }
+        nextUserId = userId;
+    }
 }
