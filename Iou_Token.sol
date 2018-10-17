@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Iou_Token at 0x48a049d63a13f1c05beb8f79233b59416c2e7d66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Iou_Token at 0x9adc8a707ee86497461472c4055e039d99e70d6d
 */
 // ----------------------------------------------------------------------------------------------
 // Developer Nechesov Andrey & ObjectMicro, Inc 
@@ -74,9 +74,9 @@ pragma solidity ^0.4.23;
       uint256 _totalSupply = ownerSupply;  
 
       uint256 public constant token_price = 10**18*1/800; 
-      uint256 public pre_ico_start = 1528416000; // Jun 8, 2018 utc
-      uint256 public ico_start = 1531008000; // Jul 8, 2018 utc
-      uint256 public ico_finish = 1541635200; // Nov 8, 2018 utc
+      uint256 public pre_ico_start = 1528416000; 
+      uint256 public ico_start = 1531008000; 
+      uint256 public ico_finish = 1541635200; 
       uint public constant minValuePre = 10**18*1/1000000; 
       uint public constant minValue = 10**18*1/1000000; 
       uint public constant maxValue = 3000*10**18;
@@ -126,6 +126,12 @@ pragma solidity ^0.4.23;
           _;
       }
 
+      // Functions change owner
+      function changeOwner(address _owner) onlyOwner returns (bool result) {                    
+          owner = _owner;
+          return true;
+      }            
+
       // Functions change moderator
       function changeModerator(address _moderator) onlyOwner returns (bool result) {                    
           moderator = _moderator;
@@ -135,7 +141,7 @@ pragma solidity ^0.4.23;
       // Constructor
       function Iou_Token() {
           //owner = msg.sender;
-          owner = 0x0a166E90071b0FfE77724F5b1cDADF62ACC63d10;
+          owner = 0x25f701bff644601a4bb9c3daff3b9978e2455bcd;
           moderator = 0x788C45Dd60aE4dBE5055b5Ac02384D5dc84677b0;
           balances[owner] = ownerSupply;
       }
