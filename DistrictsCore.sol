@@ -1,11 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistrictsCore at 0x0fe67385579c144d45b9c2d309b711e988cde705
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistrictsCore at 0xe8c7ecb55a88bfd682fb3ad67eb68e3c88840334
 */
 pragma solidity ^ 0.4.19;
 
 // DopeRaider Districts Contract
 // by gasmasters.io
 // contact: team@doperaider.com
+
+// special thanks to :
+//                    8???????
+//                    Etherguy
 
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
 contract ERC721 {
@@ -54,7 +58,6 @@ contract NarcosCoreInterface is ERC721 {
   function setCooldown(uint256 _narcoId , uint256 _index , uint256 _new) public;
   function getRemainingCapacity(uint256 _id) public view returns (uint8 capacity);
 }
-
 
 // File: contracts/Ownable.sol
 
@@ -177,13 +180,32 @@ contract DistrictsAdmin is Ownable, Pausable {
     ContractUpgrade(_v2Address);
   }
 
+
+  // token manager contract
+  address [6] public tokenContractAddresses;
+
+  function setTokenAddresses(address[6] _addresses) public onlyOwner {
+      tokenContractAddresses = _addresses;
+  }
+
   modifier onlyDopeRaiderContract() {
     require(msg.sender == coreAddress);
     _;
   }
 
-}
+  modifier onlyTokenContract() {
+    require(
+        msg.sender == tokenContractAddresses[0] ||
+        msg.sender == tokenContractAddresses[1] ||
+        msg.sender == tokenContractAddresses[2] ||
+        msg.sender == tokenContractAddresses[3] ||
+        msg.sender == tokenContractAddresses[4] ||
+        msg.sender == tokenContractAddresses[5]
+      );
+    _;
+  }
 
+}
 
 
 // File: contracts/DistrictsCore.sol
@@ -199,8 +221,8 @@ contract DistrictsCore is DistrictsAdmin {
   event EscapedHijack(uint256 indexed hijacker, uint256 indexed victim , uint8 escapeLocation);
 
   uint256 public airLiftPrice = 0.01 ether; // home dorothy price
-  uint256 public hijackPrice = 0.002 ether; // universal hijackPrice
-  uint256 public travelPrice = 0.001 ether; // universal travelPrice
+  uint256 public hijackPrice = 0.008 ether; // universal hijackPrice
+  uint256 public travelPrice = 0.002 ether; // universal travelPrice
   uint256 public spreadPercent = 5; // universal spread between buy and sell
   uint256 public devFeePercent = 2; // on various actions
   uint256 public currentDevFees = 0;
@@ -302,6 +324,11 @@ contract DistrictsCore is DistrictsAdmin {
     districts[_index].cokePot = 0.001 ether;
   }
 
+  function initializeSupply(uint256 _index, uint256 _weedSupply, uint256 _cokeSupply) public onlyOwner{
+    districts[_index].weedAmountHere = _weedSupply;
+    districts[_index].cokeAmountHere = _cokeSupply;
+  }
+
   function configureDistrict(uint256 _index, uint256[6]_exits, uint256[24] _prices, bool[24] _isStocked) public onlyOwner{
     districts[_index].exits = _exits; // clockwise starting at noon
     districts[_index].marketPrices = _prices;
@@ -315,6 +342,22 @@ contract DistrictsCore is DistrictsAdmin {
   function increaseDistrictCoke(uint256 _district, uint256 _quantity) public onlyDopeRaiderContract{
     districts[_district].cokeAmountHere += _quantity;
   }
+
+  // proxy updates to main contract
+  function updateConsumable(uint256 _narcoId,  uint256 _index ,uint8 _newQuantity) public onlyTokenContract {
+    narcoCore.updateConsumable(_narcoId,  _index, _newQuantity);
+  }
+
+  function updateWeedTotal(uint256 _narcoId,  uint16 _total) public onlyTokenContract {
+    narcoCore.updateWeedTotal(_narcoId,  true , _total);
+    districts[getNarcoLocation(_narcoId)].weedAmountHere += uint8(_total);
+  }
+
+  function updatCokeTotal(uint256 _narcoId,  uint16 _total) public onlyTokenContract {
+    narcoCore.updateCokeTotal(_narcoId,  true , _total);
+    districts[getNarcoLocation(_narcoId)].cokeAmountHere += uint8(_total);
+  }
+
 
   function getNarcoLocation(uint256 _narcoId) public view returns(uint8 location){
     location = narcoIndexToLocation[_narcoId];
@@ -438,6 +481,8 @@ contract DistrictsCore is DistrictsAdmin {
 
     // progression through the upgrades for non consumable items (>=6)
     if (_itemIndex>=6) {
+      require (_quantity==1);
+
       if (marketItems[_itemIndex].skillAffected!=5){
             // regular items
             require (marketItems[_itemIndex].levelRequired==0 || narcoSkills[marketItems[_itemIndex].skillAffected]<marketItems[_itemIndex].upgradeAmount);
@@ -470,7 +515,7 @@ contract DistrictsCore is DistrictsAdmin {
         narcoCore.updateSkill(
           _narcoId,
           marketItems[_itemIndex].skillAffected,
-          uint16(narcoSkills[marketItems[_itemIndex].skillAffected] + (marketItems[_itemIndex].upgradeAmount * _quantity))
+          uint16(narcoSkills[marketItems[_itemIndex].skillAffected] + (marketItems[_itemIndex].upgradeAmount))
         );
         _distributeRevenue(costPrice, _district , 50, 50);
     }
@@ -533,13 +578,13 @@ contract DistrictsCore is DistrictsAdmin {
     // do the updates
     if (_itemIndex == 0) {
       narcoCore.updateWeedTotal(_narcoId, false, uint16(_quantity));
-      districts[_district].weedPot-=salePrice*_quantity;
-      districts[_district].weedAmountHere -= _quantity;
+      districts[_district].weedPot=sub(districts[_district].weedPot,salePrice*_quantity);
+      districts[_district].weedAmountHere=sub(districts[_district].weedAmountHere,_quantity);
     }
     if (_itemIndex == 1) {
       narcoCore.updateCokeTotal(_narcoId, false, uint16(_quantity));
-      districts[_district].cokePot-=salePrice*_quantity;
-      districts[_district].cokeAmountHere -= _quantity;
+      districts[_district].cokePot=sub(districts[_district].cokePot,salePrice*_quantity);
+      districts[_district].cokeAmountHere=sub(districts[_district].cokeAmountHere,_quantity);
     }
     narcoCore.incrementStat(_narcoId, 0); // dealsCompleted
     // transfer the amount to the seller - should be owner of, but for now...
@@ -578,7 +623,7 @@ contract DistrictsCore is DistrictsAdmin {
     ) = narcoCore.getNarco(_narcoId);
 
     // travel cooldown must have expired and narco must have some gas
-    require(now>narcoCooldowns[0] && narcoConsumables[0]>0);
+    require(now>narcoCooldowns[0] && (narcoConsumables[0]>0 || _exitId==7));
 
     uint8 sourceLocation = getNarcoLocation(_narcoId);
     District storage sourceDistrict = districts[sourceLocation]; // find out source
@@ -609,14 +654,16 @@ contract DistrictsCore is DistrictsAdmin {
     narcoIndexToLocation[_narcoId] = targetLocation;
 
     // distribute the travel revenue
-    _distributeRevenue(travelPrice, targetLocation , 50, 50);
+    _distributeRevenue(msg.value, targetLocation , 50, 50);
 
     // increase the weed pot and cocaine pot for the destination district with the travel cost
     districts[targetLocation].weedAmountHere += narcoWeedTotal;
     districts[targetLocation].cokeAmountHere += narcoCokeTotal;
 
     // consume some gas (gas index = 0)
-    narcoCore.updateConsumable(_narcoId, 0 , narcoConsumables[0]-1);
+    if (_exitId!=7){
+      narcoCore.updateConsumable(_narcoId, 0 , narcoConsumables[0]-1);
+    }
     // set travel cooldown (speed skill = 0)
     //narcoCore.setCooldown( _narcoId ,  0 , now + min(3 minutes,(455-(5*narcoSkills[0])* 1 seconds)));
     narcoCore.setCooldown( _narcoId ,  0 , now + (455-(5*narcoSkills[0])* 1 seconds));
@@ -713,7 +760,7 @@ contract DistrictsCore is DistrictsAdmin {
       // 3 = attackIndex
       // 4 = defenseIndex
 
-      if (uint8(random((hijackerSkills[3]+victimSkills[4]))+1) >victimSkills[4]) {
+      if (random((hijackerSkills[3]+victimSkills[4]))+1 >victimSkills[4]) {
         // successful hijacking
 
         doHijack(_hijackerId  , _victimId , victimWeedTotal , victimCokeTotal);
@@ -784,7 +831,10 @@ contract DistrictsCore is DistrictsAdmin {
    function max(uint a, uint b) private pure returns (uint) {
             return a > b ? a : b;
    }
-
+   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+     assert(b <= a);
+     return a - b;
+   }
   // never call this from a contract
   /// @param _loc that we are interested in
   function narcosByDistrict(uint8 _loc) public view returns(uint256[] narcosHere) {
