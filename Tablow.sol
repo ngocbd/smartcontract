@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tablow at 0xeab447c1e2b5a76b57f15e55eab504801aa6ceb0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tablow at 0x55dd6348b0f97ba5417cc3c3d9d98c36e14b7d44
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -64,23 +64,87 @@ contract ERC223ReceivingContract {
  */
     function tokenFallback(address _from, uint _value, bytes _data);
 }
-contract ERC223  {
+contract ERC223Interface {
    
     function balanceOf(address who) constant returns (uint);
     function transfer(address to, uint value);
     function transfer(address to, uint value, bytes data);
     event Transfer(address indexed from, address indexed to, uint value, bytes data);
 }
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
-
- 
-contract Tablow is ERC223 {
-     
+contract ERC223Token is ERC223Interface {
     using SafeMath for uint;
 
+    mapping(address => uint) balances; // List of user balances.
+    
+    /**
+     * @dev Transfer the specified amount of tokens to the specified address.
+     *      Invokes the `tokenFallback` function if the recipient is a contract.
+     *      The token transfer fails if the recipient is a contract
+     *      but does not implement the `tokenFallback` function
+     *      or the fallback function to receive funds.
+     *
+     * @param _to    Receiver address.
+     * @param _value Amount of tokens that will be transferred.
+     * @param _data  Transaction metadata.
+     */
+    function transfer(address _to, uint _value, bytes _data) {
+        // Standard function transfer similar to ERC20 transfer with no _data .
+        // Added due to backwards compatibility reasons .
+        uint codeLength;
+
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly .
+            codeLength := extcodesize(_to)
+        }
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
+        }
+       Transfer(msg.sender, _to, _value, _data);
+    }
+    
+    /**
+     * @dev Transfer the specified amount of tokens to the specified address.
+     *      This function works the same with the previous one
+     *      but doesn't contain `_data` param.
+     *      Added due to backwards compatibility reasons.
+     *
+     * @param _to    Receiver address.
+     * @param _value Amount of tokens that will be transferred.
+     */
+    function transfer(address _to, uint _value) {
+        uint codeLength;
+        bytes memory empty;
+
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly .
+            codeLength := extcodesize(_to)
+        }
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, empty);
+        }
+         Transfer(msg.sender, _to, _value, empty);
+    }
+
+    
+    /**
+     * @dev Returns balance of the `_owner`.
+     *
+     * @param _owner   The address whose balance will be returned.
+     * @return balance Balance of the `_owner`.
+     */
+    function balanceOf(address _owner) constant returns (uint balance) {
+        return balances[_owner];
+    }
+}
+contract Tablow is ERC223Token {
     string public symbol = "TC";
     string public name = "Tablow Club";
     uint8 public constant decimals = 18;
@@ -326,56 +390,9 @@ contract Tablow is ERC223 {
     function IsDistribStarted() public constant returns(bool IsDistribStartedFlag) {
         return DistribStarted;
     }
-    
-     
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    
 
-    
-      function transfer(address _to, uint _value, bytes _data) {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-       Transfer(msg.sender, _to, _value, _data);
-    }
-
-
-      function transfer(address _to, uint _value) {
-        uint codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
-        }
-         Transfer(msg.sender, _to, _value, empty);
+    function balanceOf(address _owner) public constant returns(uint256 balance) {
+        return balances[_owner];
     }
 
     
@@ -404,18 +421,8 @@ contract Tablow is ERC223 {
         Approval(msg.sender, _spender, _amount);
         return true;
     }
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
 
     function allowance(address _owner, address _spender) public constant returns(uint256 remaining) {
         return allowed[_owner][_spender];
     }
-    function balanceOf(address _owner) public constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-    
-    
 }
