@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xca6cae607334aaa12ed0f859de09aaab6bc5e17f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd85f623a883fee9df018c6f2d956c4eaec1eafda
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 120000000;               // Give the creator all initial tokens (120000000 for example)
-        totalSupply = 120000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 90000000;               // Give the creator all initial tokens (90000000 for example)
+        totalSupply = 90000000;                        // Update total supply (100000 for example)
         name = "ExamLit";                                   // Set the name for display purposes
-        decimals = 9;                            // Amount of decimals for display purposes
-        symbol = "XLT";                               // Set the symbol for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "XLIT";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
