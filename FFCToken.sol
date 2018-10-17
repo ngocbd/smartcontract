@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFCToken at 0xeebb05e96b042002812e5ad63325adce431e6a34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFCToken at 0xd64129ac9ec6307b9625869e817b6c45eaee80a9
 */
 pragma solidity ^0.4.11;
 
@@ -258,13 +258,13 @@ contract FFCToken is StandardToken, Pausable {
   }
   mapping ( address => LockTokenSet ) addressTimeLock;
   mapping ( address => bool ) lockAdminList;
-  event TransferWithLockEvt(address indexed from, address indexed to, uint256 value,uint256 lockValue,uint32 lockTime );
+  event TransferWithLockEvt(address indexed from, address indexed to, uint256 value,uint32 lockTime );
   /**
     * @dev Creates a new MPKToken instance
     */
   constructor() public {
     totalSupply = 10 * (10 ** 8) * (10 ** 18);
-    balances[0xC0FF6587381Ed1690baC9954f9Ace2768738BaDa] = totalSupply;
+    balances[msg.sender] = totalSupply;
   }
   
   function transfer(address _to, uint256 _value)public whenNotPaused returns (bool) {
@@ -299,19 +299,16 @@ contract FFCToken is StandardToken, Pausable {
       return ( lockAmount,lockTime );
   }
   
-  function transferWithLock( address _to, uint256 _value,uint256 _lockValue,uint32 _lockTime )public whenNotPaused {
-      if( lockAdminList[msg.sender] != true ){
-            return;
-      }
+  function transferWithLock( address _to, uint256 _value,uint32 _lockTime )public whenNotPaused {
+      assert( lockAdminList[msg.sender] == true  );
       assert( _lockTime > now  );
-      assert( _lockValue > 0 && _lockValue <= _value );
       transfer( _to, _value );
       bool needNewLock = true;
       for( uint32 i = 0 ; i< addressTimeLock[_to].lockList.length; i ++ ){
           if( addressTimeLock[_to].lockList[i].time < now ){
               addressTimeLock[_to].lockList[i].time = _lockTime;
-              addressTimeLock[_to].lockList[i].amount = _lockValue;
-              emit TransferWithLockEvt( msg.sender,_to,_value,_lockValue,_lockTime );
+              addressTimeLock[_to].lockList[i].amount = _value;
+              emit TransferWithLockEvt( msg.sender,_to,_value,_lockTime );
               needNewLock = false;
               break;
           }
@@ -320,11 +317,12 @@ contract FFCToken is StandardToken, Pausable {
           // add a lock
           addressTimeLock[_to].lockList.length ++ ;
           addressTimeLock[_to].lockList[(addressTimeLock[_to].lockList.length-1)].time = _lockTime;
-          addressTimeLock[_to].lockList[(addressTimeLock[_to].lockList.length-1)].amount = _lockValue;
-          emit TransferWithLockEvt( msg.sender,_to,_value,_lockValue,_lockTime);
+          addressTimeLock[_to].lockList[(addressTimeLock[_to].lockList.length-1)].amount = _value;
+          emit TransferWithLockEvt( msg.sender,_to,_value,_lockTime);
       }
   }
   function setLockAdmin(address _to,bool canUse)public onlyOwner{
+      assert( lockAdminList[_to] != canUse );
       lockAdminList[_to] = canUse;
   }
   function canUseLock()  public view returns (bool){
