@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSender at 0xb6b2aadddbef17d3a2e67d2e1e321a394176784a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSender at 0x6a15488ef88d399cd1ac1823ef3e61e2ff215f87
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /**
  * @title ERC20Basic
@@ -39,5 +39,22 @@ contract TokenSender {
                 return;
             }
         }
+    }
+
+    function bulkTransferEther(address[] receivers, uint256[] amounts) external payable {
+        uint256 length = receivers.length;
+        uint256 totalSend = 0;
+        for (uint256 i = 0; i < length; i++){
+            if (!receivers[i].send(amounts[i])) {
+                emit TransferFail(i, receivers[i], amounts[i]);
+                return;
+            }
+            totalSend += amounts[i];
+        }
+        uint256 balances = msg.value - totalSend;
+        if (balances > 0) {
+            msg.sender.transfer(balances);
+        }
+        require(this.balance == 0);
     }
 }
