@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSDRAM at 0x6a28eb3087bf37c1bbd5772d48d90e56db6b8e88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSDRAM at 0x9e2f9a4bba90f76c7829dc84828f1159fd850188
 */
 pragma solidity ^0.4.19;
 
@@ -47,7 +47,6 @@ contract EOSDRAM is ERC20Interface {
         //reserved for dev and exchanges
         balances[msg.sender] = 7108864 * 10000;
         _totalSupply = balances[msg.sender];
-        Transfer(0, owner, 71088640000);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
@@ -130,7 +129,6 @@ contract EOSDRAM is ERC20Interface {
             claimeddram[msg.sender] = true;
             balances[msg.sender] += _airdropAmount;
             _totalSupply += _airdropAmount;
-            Transfer(0, msg.sender, _airdropAmount);
             return true;
         } else {
             return false;
