@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POHMO at 0x5041d5c444c2d730b406ae5ec9199cd8e47e463c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POHMO at 0x2885bcc512dc278602d426ec153045ab878d4f22
 */
 pragma solidity ^0.4.24;
 
@@ -126,7 +126,7 @@ contract POHMO is PoHEVENTS {
     using KeysCalc for uint256;
 
     PlayerBookInterface private PlayerBook;
-    POHCONTRACT private POHToken;
+    POHCONTRACT private POHToken = POHCONTRACT(0x9FDd7aF3949c3ca8f5b50802850a30e4d2fC2fDD);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -167,18 +167,18 @@ contract POHMO is PoHEVENTS {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================
-    constructor(address token, address playerbook)
+    constructor(address playerbook)
         public
     {
-        POHToken = POHCONTRACT(token);
+      
         PlayerBook = PlayerBookInterface(playerbook);
 
         //no teams... only POH-heads
         // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = POHMODATASETS.TeamFee(47,12);   //30% to pot, 10% to aff, 1% to dev,
+        fees_[0] = POHMODATASETS.TeamFee(47,13);   //30% to pot, 10% to aff, 0% to dev,
        
 
-        potSplit_[0] = POHMODATASETS.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to dev
+        potSplit_[0] = POHMODATASETS.PotSplit(15,12);  //48% to winner, 25% to next round, 0% to dev
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -1147,10 +1147,10 @@ contract POHMO is PoHEVENTS {
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
         uint256 _win = (_pot.mul(48)) / 100;   //48%
-        uint256 _dev = (_pot / 50);            //2%
+       // uint256 _dev = (_pot / 50);            //2%
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100; //15
         uint256 _PoH = (_pot.mul(potSplit_[_winTID].poh)) / 100; // 10
-        uint256 _res = (((_pot.sub(_win)).sub(_dev)).sub(_gen)).sub(_PoH); //25
+        uint256 _res = ((_pot.sub(_win)).sub(_gen)).sub(_PoH); //25
 
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1166,7 +1166,7 @@ contract POHMO is PoHEVENTS {
 
         // community rewards
 
-        admin.transfer(_dev);
+       // admin.transfer(_dev);
 
         POHToken.call.value(_PoH)(bytes4(keccak256("sendDividends()")));
 
@@ -1248,14 +1248,14 @@ contract POHMO is PoHEVENTS {
         returns(POHMODATASETS.EventReturns)
     {
         // pay 1% out to dev
-        uint256 _dev = _eth / 100;  // 1%
+       // uint256 _dev = _eth / 100;  // 1%
 
         uint256 _PoH = 0;
-        if (!address(admin).call.value(_dev)())
-        {
-            _PoH = _dev;
-            _dev = 0;
-        }
+        // if (!address(admin).call.value(_dev)())
+        // {
+        //     _PoH = _dev;
+        //     _dev = 0;
+        // }
 
 
         // distribute share to affiliate
