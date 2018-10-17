@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe9d858654530CD2EA5525bC57f8Db10dC6EDCF45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x90daea93225ab1b2a6f9e84ca7792f66f331abbc
 */
 pragma solidity ^0.4.4;
 
@@ -215,7 +215,7 @@ contract ERC20Token is StandardToken {
 
         decimals = 0;                            // Amount of decimals for display purposes
 
-        symbol = "BTCM";                               // Set the symbol for display purposes
+        symbol = "BMAX";                               // Set the symbol for display purposes
 
     }
 
