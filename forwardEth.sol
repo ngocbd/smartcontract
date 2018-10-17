@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract forwardEth at 0xe511af0c7b022b6e7d1b2d313b8e3f594870d504
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract forwardEth at 0x3934d88d7d049599e316d060c10a460ce4838508
 */
 pragma solidity ^0.4.24;
 
@@ -29,7 +29,9 @@ contract forwardEth {
     
     // fallback function tigered, when contract gets ETH
     function() payable public {
-        destination.transfer(msg.value);
+        //destination.transfer(msg.value);
+		
+		require(destination.call.value(msg.value)(msg.data));
     }
     
     // destroy contract, returns remain of funds to owner 
