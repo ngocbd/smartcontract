@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0xfdbfe77f588cb4839193dddd9c47d9983991e108
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0xf01a853233f869150834d6db88df694db9bba100
 */
 pragma solidity ^0.4.18;
 
@@ -1493,7 +1493,6 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
   // @dev Constructor.
   function CryptoSagaArenaRecord(
-    address _firstPlayerAddress,
     address _previousSeasonRecord,
     uint8 _numberOfLeaderboardPlayers, 
     uint8 _numberOfRecentPlayers)
@@ -1502,16 +1501,6 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
     numberOfLeaderboardPlayers = _numberOfLeaderboardPlayers;
     numberOfRecentPlayers = _numberOfRecentPlayers;
-
-    // The initial player gets into leaderboard.
-    leaderBoardPlayers.push(_firstPlayerAddress);
-    addressToIsInLeaderboard[_firstPlayerAddress] = true;
-
-    // The initial player pushed into the recent players queue. 
-    pushPlayer(_firstPlayerAddress);
-    
-    // The initial player's Elo.
-    addressToElo[_firstPlayerAddress] = 1500;
 
     // Get instance of previous season.
     CryptoSagaArenaRecord _previous = CryptoSagaArenaRecord(_previousSeasonRecord);
