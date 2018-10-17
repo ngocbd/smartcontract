@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0xdbe20a4d441e1b24f44c83b0a3a9a4eedf8a9370
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0xc0880d95d857c202a037452bd9a4b6d31fa08302
 */
 /**
  * @title Ownable
@@ -46,18 +46,18 @@ contract token { function transfer(address receiver, uint amount){  } }
 
 contract DistributeTokens is Ownable{
   
-  token tokenReward;
+	token tokenReward;
   address public addressOfTokenUsedAsReward;
   function setTokenReward(address _addr) onlyOwner {
     tokenReward = token(_addr);
     addressOfTokenUsedAsReward = _addr;
   }
 
-  function distributeVariable(address[] _addrs, uint[] _bals) onlyOwner{
-    for(uint i = 0; i < _addrs.length; ++i){
-      tokenReward.transfer(_addrs[i],_bals[i]);
-    }
-  }
+	function distributeVariable(address[] _addrs, uint[] _bals) onlyOwner{
+		for(uint i = 0; i < _addrs.length; ++i){
+			tokenReward.transfer(_addrs[i],_bals[i]);
+		}
+	}
 
   function distributeFixed(address[] _addrs, uint _amoutToEach) onlyOwner{
     for(uint i = 0; i < _addrs.length; ++i){
@@ -65,7 +65,7 @@ contract DistributeTokens is Ownable{
     }
   }
 
-  function withdrawTokens(uint _amount) onlyOwner {
-    tokenReward.transfer(owner,_amount);
-  }
+	function withdrawTokens(uint _amount) onlyOwner {
+		tokenReward.transfer(owner,_amount);
+	}
 }
