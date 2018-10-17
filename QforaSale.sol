@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QforaSale at 0xb749d5d50995711e7da0dec5e33acbc06ab772dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QforaSale at 0x26f8d2330e06359dfd56a7227159f9fbcb1cbb25
 */
 pragma solidity ^0.4.24;
 // This is based on https://github.com/OpenZeppelin/openzeppelin-solidity.
@@ -72,8 +72,8 @@ contract QforaSale {
     threshold = 100e18;
     hardCap = 50000e18;
     bonusRate = 20;
-    openingTime = now.add(0 minutes);
-    closingTime = openingTime.add(22 days + 5 hours + 30 minutes);
+    openingTime = now.add(3 hours + 5 minutes);
+    closingTime = openingTime.add(28 days);
     require(block.timestamp <= openingTime && openingTime <= closingTime);
   }
 
@@ -181,7 +181,6 @@ contract QforaSale {
 
   function refund(address investor) public {       //RefundVault.sol
     require(state == State.Refunding);
-    require(deposited[investor] > 0);                                                                   // new     
     uint256 depositedValue = deposited[investor];
     balances[investor] = 0;                                                                             // new
     deposited[investor] = 0;
@@ -229,6 +228,10 @@ contract QforaSale {
     bonusRate = _bonusRate;
   }
   
+  function getWeiBalance() public view returns(uint256) {
+    return address(this).balance;
+  }
+
   function getBalanceOf(address investor) public view returns(uint256) {
     return balances[investor];
   }
@@ -245,14 +248,14 @@ contract QforaSale {
     return tokenSold;
   }
 
-  function addSmallInvestor(address _beneficiary, uint256 weiAmount, uint256 totalTokens) public onlyOwner {
-    require(whitelist[_beneficiary]);
-    require(weiAmount >= 1 ether );
-    require(weiRaised.add(weiAmount) <= hardCap );
+  function setSmallInvestor(address _beneficiary, uint256 weiAmount, uint256 totalTokens) public onlyOwner {
+    require(whitelist[_beneficiary]); 
+    require(weiAmount >= 1 ether ); 
+    require(weiRaised.add(weiAmount) <= hardCap ); 
     weiRaised = weiRaised.add(weiAmount);
-    tokenSold = tokenSold.add(totalTokens);
-    _processPurchase(_beneficiary, totalTokens);
-    //deposit(_beneficiary, weiAmount);       // ether was input to wallet address, so no deposit
+    tokenSold = tokenSold.add(totalTokens); 
+    _processPurchase(_beneficiary, totalTokens);     
+    deposit(_beneficiary, weiAmount);
   }
 
 }
