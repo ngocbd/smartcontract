@@ -1,14 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KT at 0x72268385b3620157f0b051e876c801841a716b8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KT at 0x39e8beab6ba0737929283ba90697ba00cccd8abd
 */
 /**
  * Token name: KT
  * Interface: ERC721
- * This token is established by Krypital Group LLC, mainly used as a gift for Krypital supporters.
- * Total supply of KTs is set to 2100.
+ * This token is established by Krypital Group, mainly used as a commemorative token for Krypital supporters.
+ * Total supply of KTs is limited to 2100.
  * A KT holder can either hold it as a souvenir (leave message on the message board), or play the game by merging/decomposing tokens.
+ * Tokens can used to exchange for future holder benefits provided by Krypital. Details coming soon on Krypital's website: https://krypital.com/  
+ * More news about Krypital on Telegram: https://t.me/KrypitalNews
+ * @author: https://github.com/1994wyh-WYH
  */
-
 pragma solidity ^0.4.19;
 
 
@@ -115,7 +117,7 @@ contract erc721 {
 
 /**
  *  @title KTaccess
- *  @author Yihan -- CyberMiles
+ *  @author https://github.com/1994wyh-WYH
  *  @dev This contract is for regulating the owners' addr.
  *  Inherited by KTfactory.
  */
@@ -157,7 +159,7 @@ contract KTaccess is ownable{
 
 /**
  * @title KTfactory
- * @author Yihan -- CyberMiles
+ * @author https://github.com/1994wyh-WYH
  * @dev This main contract for creating KTs.
  * 
  * A KT, which is the token issued by Krypital, has the following properties: 
@@ -184,6 +186,7 @@ contract KTfactory is ownable, KTaccess {
   event UpdateNote(string newNote, uint256 tokenId);
   event PauseToken(uint256 tokenId);
   event UnpauseToken(uint256 tokenId);
+  event Burn(uint256 tokenId);
 
   struct KT {
     string officialNote;
@@ -235,12 +238,11 @@ contract KTfactory is ownable, KTaccess {
      */
   function _createKT(string oNote) public onlyOLevel withinTotal {
     uint thisId = maxId + 1;
-    string pNote;
     uint256 thisGene = uint256(keccak256(oNote));
     
     KT memory thisKT = KT({
         officialNote: oNote, 
-        personalNote: pNote, 
+        personalNote: "", 
         paused: false, 
         gene: thisGene, 
         level: 1, 
@@ -286,20 +288,36 @@ contract KTfactory is ownable, KTaccess {
     currKT.paused = false;
     emit UnpauseToken(token_id);
   }
+  
+  /**
+   * @dev Burns a token, reduce the current number of KTs by 1.
+   * @param token_id - simply token id.
+   */
+   function burn(uint token_id) public onlyOLevel hasKT(token_id){
+       KT storage currKT = KTs[token_id];
+       currKT.id=0;
+       currKT.level=0;
+       currKT.gene=0;
+       currKT.officialNote="";
+       currKT.personalNote="";
+       currKT.paused=true;
+       curr_number=curr_number.sub(1);
+       emit Burn(token_id);
+   } 
 
 }
 
 
 /**
  * @title KT
- * @author Yihan -- CyberMiles
+ * @author https://github.com/1994wyh-WYH
  * @dev This contract is the contract regulating the transfer, decomposition, merging mechanism amaong the tokens.
  */
 contract KT is KTfactory, erc721 {
 
   using safemath for uint256;
 
-  mapping (uint => address) KTApprovals;
+  mapping (uint => address) public KTApprovals;
   
   /**
    * @dev The modifer to regulate a KT's decomposability.
@@ -366,7 +384,6 @@ contract KT is KTfactory, erc721 {
      * @param _tokenId - just token id
      */
   function approve(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId) hasKT(_tokenId) {
-    require(_to != address(0));
     KTApprovals[_tokenId] = _to;
     emit Approval(msg.sender, _to, _tokenId);
   }
