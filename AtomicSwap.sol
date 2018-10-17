@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomicSwap at 0x7702cbba3e02788dd50535afb691fabcb64308cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AtomicSwap at 0x0ff1ced0d5525a331e562c7c79186045b4d98cfa
 */
 pragma solidity ^0.4.19;
 
@@ -28,6 +28,9 @@ contract AtomicSwap {
     bool exists;
   }
 
+  event InitiateSwap(address _initiator, address _participant, uint _expiration, bytes20 _hash, address _token, bool _isToken, uint256 _value);
+  event RedeemSwap(address _participant, bytes20 _hash, bytes32 _secret);
+  event RefundSwap(address _initiator, address _participant, bytes20 _hash);
   // maps the redeemer and bytes20 hash to a swap    
   mapping(address => mapping(bytes20 => Swap)) public swaps;
 
@@ -47,6 +50,7 @@ contract AtomicSwap {
     }
     // create the new swap
     swaps[_participant][_hash] = Swap(_expiration, msg.sender, _participant, _isToken ? _value : msg.value, _isToken, _token, true);
+    InitiateSwap(msg.sender, _participant, _expiration, _hash, _token, _isToken, _isToken ? _value : msg.value);
   }
 
   function redeem(bytes32 _secret) public {
@@ -68,6 +72,8 @@ contract AtomicSwap {
     } else {
       msg.sender.transfer(s.value);
     }
+
+    RedeemSwap(msg.sender, hash, _secret);
   }
 
   function refund(bytes20 _hash, address _participant) public {
@@ -86,5 +92,7 @@ contract AtomicSwap {
     } else {
       msg.sender.transfer(s.value);
     }
+
+    RefundSwap(msg.sender, s.participant, _hash);
   }
 }
