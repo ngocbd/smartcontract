@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POH at 0x884e8698b645fb92961391d66213280adc1f79ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POH at 0x9989affe1de9abb9efe02cf091e7696cdf9ce57a
 */
 pragma solidity ^0.4.20;
 
@@ -68,7 +68,7 @@ contract Ownable {
 contract POH is Ownable {
 
   string public constant name = "POH Lottery";
-  uint public playersRequired = 125000;
+  uint public playersRequired = 50;
   uint256 public priceOfTicket = 1e15 wei;
 
   event newWinner(address winner, uint256 ticketNumber);
