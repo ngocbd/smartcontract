@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xfc43c08c4bd1fb6201271da828bb87d888351278
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x62585added65faa5de66cf0b7fd2374eed47589f
 */
 contract Token {
 
@@ -119,8 +119,8 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 20000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 20000000000000;                        // Update total supply (100000 for example)
-        name = "bloQ fund";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
+        name = "bloQfund";                                   // Set the name for display purposes
+        decimals = 4;                            // Amount of decimals for display purposes
         symbol = "BLQ";                               // Set the symbol for display purposes
     }
 
