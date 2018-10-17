@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xb2eef4b79140b0095569fc756275b517aab7fab4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x866e52643cfc4ac3fc5232a82cd1658c13a89d55
 */
 pragma solidity ^0.4.24;
 
 contract owned {
     address public owner;
 
-    function owned() public {
+    constructor () public {
         owner = msg.sender;
     }
 
@@ -14,14 +14,18 @@ contract owned {
         require(msg.sender == owner);
         _;
     }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
 }
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract ERC20 is owned {
     // Public variables of the token
-    string public name = "PerfectChain Network";
-    string public symbol = "PNN";
+    string public name = "Intcoex coin";
+    string public symbol = "ITX";
     uint8 public decimals = 18;
     uint256 public totalSupply = 200000000 * 10 ** uint256(decimals);
 
@@ -38,9 +42,6 @@ contract ERC20 is owned {
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-    
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
@@ -49,7 +50,7 @@ contract ERC20 is owned {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function ERC20() public {
+    constructor () public {
         balanceOf[owner] = totalSupply;
     }
     modifier canTransfer() {
@@ -60,10 +61,11 @@ contract ERC20 is owned {
     function releaseToken() public onlyOwner {
         released = true;
     }
+    
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint _value) canTransfer internal {
+    function _transfer(address _from, address _to, uint256 _value) canTransfer internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -75,7 +77,7 @@ contract ERC20 is owned {
         // Check if recipient is frozen
         require(!frozenAccount[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
@@ -144,48 +146,6 @@ contract ERC20 is owned {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
             return true;
         }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
-        return true;
-    }
-
-    /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens
-    /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        emit Transfer(this, target, mintedAmount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
