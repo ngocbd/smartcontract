@@ -1,237 +1,253 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityToken at 0xb1ea18b3195d25847fedc83511043ac2be9e9bf1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityToken at 0x1134432c86c977cff26665d5929d4208176812ae
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.12;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract IMigrationContract {
+    function migrate(address addr, uint256 nas) returns (bool success);
 }
 
-/**
- * @title Contract that will work with ERC223 tokens.
- */
- 
-contract ERC223ReceivingContract {
+/* ?????NAS  coin*/
+contract SafeMath {
 
-  struct TKN {
-    address sender;
-    uint value;
-    bytes data;
-    bytes4 sig;
-  }
 
-  /**
-   * @dev Standard ERC223 function that will handle incoming token transfers.
-   *
-   * @param _from  Token sender address.
-   * @param _value Amount of tokens.
-   * @param _data  Transaction metadata.
-   */
-  function tokenFallback(address _from, uint _value, bytes _data) public pure {
-    TKN memory tkn;
-    tkn.sender = _from;
-    tkn.value = _value;
-    tkn.data = _data;
-    if(_data.length > 0) {
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
+    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
+        uint256 z = x + y;
+        assert((z >= x) && (z >= y));
+        return z;
     }
 
-    /* tkn variable is analogue of msg variable of Ether transaction
-    *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-    *  tkn.value the number of tokens that were sent   (analogue of msg.value)
-    *  tkn.data is data of token transaction   (analogue of msg.data)
-    *  tkn.sig is 4 bytes signature of function
-    *  if data of token transaction is a function execution
-    */
-  }
+    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
+        assert(x >= y);
+        uint256 z = x - y;
+        return z;
+    }
+
+    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
+        uint256 z = x * y;
+        assert((x == 0)||(z/x == y));
+        return z;
+    }
 
 }
 
-contract ERC223Interface {
-  uint public totalSupply;
-  function balanceOf(address who) public view returns (uint);
-  function allowedAddressesOf(address who) public view returns (bool);
-  function getTotalSupply() public view returns (uint);
+contract Token {
+    uint256 public totalSupply;
+    function balanceOf(address _owner) constant returns (uint256 balance);
 
-  function transfer(address to, uint value) public returns (bool ok);
-  function transfer(address to, uint value, bytes data) public returns (bool ok);
-  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
-
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-/**
- * @title Unity Token is ERC223 token.
- * @author Vladimir Kovalchuk
- */
 
-contract UnityToken is ERC223Interface {
-  using SafeMath for uint;
-
-  string public constant name = "Unity Token";
-  string public constant symbol = "UNT";
-  uint8 public constant decimals = 18;
-
-
-  /* The supply is initially 100UNT to the precision of 18 decimals */
-  uint public constant INITIAL_SUPPLY = 100000 * (10 ** uint(decimals));
-
-  mapping(address => uint) balances; // List of user balances.
-  mapping(address => bool) allowedAddresses;
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function addAllowed(address newAddress) public onlyOwner {
-    allowedAddresses[newAddress] = true;
-  }
-
-  function removeAllowed(address remAddress) public onlyOwner {
-    allowedAddresses[remAddress] = false;
-  }
-
-
-  address public owner;
-
-  /* Constructor initializes the owner's balance and the supply  */
-  function UnityToken() public {
-    owner = msg.sender;
-    totalSupply = INITIAL_SUPPLY;
-    balances[owner] = INITIAL_SUPPLY;
-  }
-
-  function getTotalSupply() public view returns (uint) {
-    return totalSupply;
-  }
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-    if (isContract(_to)) {
-      require(allowedAddresses[_to]);
-      if (balanceOf(msg.sender) < _value)
-        revert();
-
-      balances[msg.sender] = balances[msg.sender].sub(_value);
-      balances[_to] = balances[_to].add(_value);
-      assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-      Transfer(msg.sender, _to, _value);
-      return true;
+/*  ERC 20 token */
+contract StandardToken is Token {
+  //??token???????(2^256 - 1)
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
     }
-    else {
-      return transferToAddress(_to, _value);
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
     }
-  }
 
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
-
-    if (isContract(_to)) {
-      return transferToContract(_to, _value, _data);
-    } else {
-      return transferToAddress(_to, _value);
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-  }
 
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint _value) public returns (bool success) {
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if (isContract(_to)) {
-      return transferToContract(_to, _value, empty);
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-    else {
-      return transferToAddress(_to, _value);
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
-  }
 
-  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private view returns (bool is_contract) {
-    uint length;
-    assembly {
-    //retrieve the size of the code on target address, this needs assembly
-      length := extcodesize(_addr)
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+}
+
+contract UnityToken is StandardToken, SafeMath {
+
+    // metadata
+    string  public constant name = "Ping";
+    string  public constant symbol = "PIN";
+    uint256 public constant decimals = 3;
+    string  public version = "1.0";
+
+    // contracts
+    address public ethFundDeposit;          // ETH????
+    address public newContractAddr;         // token????
+
+    // crowdsale parameters
+    bool    public isFunding;                // ?????true
+    uint256 public fundingStartBlock;
+    uint256 public fundingStopBlock;
+
+    uint256 public currentSupply;           // ??????tokens??
+    uint256 public tokenRaised = 0;         // ??????token
+    uint256 public tokenMigrated = 0;     // ??????? token
+    uint256 public tokenExchangeRate = 3;             // 3 Unity ?? 1 finney
+
+    // events
+    event AllocateToken(address indexed _to, uint256 _value);   // ???????token;
+    event IssueToken(address indexed _to, uint256 _value);      // ???????token;
+    event IncreaseSupply(uint256 _value);
+    event DecreaseSupply(uint256 _value);
+    event Migrate(address indexed _to, uint256 _value);
+
+    // ??
+    function formatDecimals(uint256 _value) internal returns (uint256 ) {
+        return _value * 10 ** decimals;
     }
-    return (length > 0);
-  }
 
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value)
-      revert();
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+    // constructor
+    function UnityToken(
+        address _ethFundDeposit,
+        uint256 _currentSupply)
+    {
+        ethFundDeposit = _ethFundDeposit;
 
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    require(allowedAddresses[_to]);
-    if (balanceOf(msg.sender) < _value)
-      revert();
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+        isFunding = false;                           //?????CrowdS ale??
+        fundingStartBlock = 0;
+        fundingStopBlock = 0;
 
+        currentSupply = formatDecimals(_currentSupply);
+        totalSupply = formatDecimals(10000000);
+        balances[msg.sender] = totalSupply;
+        if(currentSupply > totalSupply) throw;
+    }
 
-  function balanceOf(address _owner) public view returns (uint balance) {
-    return balances[_owner];
-  }
+    modifier isOwner()  { require(msg.sender == ethFundDeposit); _; }
 
-  function allowedAddressesOf(address _owner) public view returns (bool allowed) {
-    return allowedAddresses[_owner];
-  }
+    ///  ??token??
+    function setTokenExchangeRate(uint256 _tokenExchangeRate) isOwner external {
+        if (_tokenExchangeRate == 0) throw;
+        if (_tokenExchangeRate == tokenExchangeRate) throw;
+
+        tokenExchangeRate = _tokenExchangeRate;
+    }
+
+    /// @dev ??token??
+    function increaseSupply (uint256 _value) isOwner external {
+        uint256 value = formatDecimals(_value);
+        if (value + currentSupply > totalSupply) throw;
+        currentSupply = safeAdd(currentSupply, value);
+        IncreaseSupply(value);
+    }
+
+    /// @dev ??token??
+    function decreaseSupply (uint256 _value) isOwner external {
+        uint256 value = formatDecimals(_value);
+        if (value + tokenRaised > currentSupply) throw;
+
+        currentSupply = safeSubtract(currentSupply, value);
+        DecreaseSupply(value);
+    }
+
+    ///  ?????? ?????
+    function startFunding (uint256 _fundingStartBlock, uint256 _fundingStopBlock) isOwner external {
+        if (isFunding) throw;
+        if (_fundingStartBlock >= _fundingStopBlock) throw;
+        if (block.number >= _fundingStartBlock) throw;
+
+        fundingStartBlock = _fundingStartBlock;
+        fundingStopBlock = _fundingStopBlock;
+        isFunding = true;
+    }
+
+    ///  ????????
+    function stopFunding() isOwner external {
+        if (!isFunding) throw;
+        isFunding = false;
+    }
+
+    /// ????????????token?????token?
+    function setMigrateContract(address _newContractAddr) isOwner external {
+        if (_newContractAddr == newContractAddr) throw;
+        newContractAddr = _newContractAddr;
+    }
+
+    /// ?????????
+    function changeOwner(address _newFundDeposit) isOwner() external {
+        if (_newFundDeposit == address(0x0)) throw;
+        ethFundDeposit = _newFundDeposit;
+    }
+
+    ///??token?????
+    function migrate() external {
+        if(isFunding) throw;
+        if(newContractAddr == address(0x0)) throw;
+
+        uint256 tokens = balances[msg.sender];
+        if (tokens == 0) throw;
+
+        balances[msg.sender] = 0;
+        tokenMigrated = safeAdd(tokenMigrated, tokens);
+
+        IMigrationContract newContract = IMigrationContract(newContractAddr);
+        if (!newContract.migrate(msg.sender, tokens)) throw;
+
+        Migrate(msg.sender, tokens);               // log it
+    }
+
+    /// ??ETH ?Unity??
+    function transferETH() isOwner external {
+        if (this.balance == 0) throw;
+        if (!ethFundDeposit.send(this.balance)) throw;
+    }
+
+    ///  ?Unity token?????????
+    function allocateToken (address _addr, uint256 _fin) isOwner public {
+        if (_fin == 0) throw;
+        if (_addr == address(0x0)) throw;
+
+        uint256 tokens = safeMult(formatDecimals(_fin), tokenExchangeRate);
+
+        if (tokens + tokenRaised > currentSupply) throw;
+
+        tokenRaised = safeAdd(tokenRaised, tokens);
+
+        balances[_addr] += tokens;
+        //balances[ethFundDeposit] -= tokens;
+        AllocateToken(_addr, tokens);  // ??token??
+    }
+
+    /// ??token
+    function () payable {
+        if (!isFunding) throw;
+        if (msg.value == 0) throw;
+
+        if (block.number < fundingStartBlock) throw;
+        if (block.number > fundingStopBlock) throw;
+
+        uint256 tokens = safeMult(msg.value, tokenExchangeRate);
+        if (tokens + tokenRaised > currentSupply) throw;
+
+        tokenRaised = safeAdd(tokenRaised, tokens);
+        balances[msg.sender] += tokens;
+
+        IssueToken(msg.sender, tokens);  //????
+    }
 }
