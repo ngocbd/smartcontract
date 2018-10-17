@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T at 0xf106ddddf18c6d2a238598773b7ae7bf16499f9c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T at 0x5fd5deb92f87d5204c3e112fd4a09247b71f2d3d
 */
 pragma solidity ^0.4.24;
 
@@ -56,7 +56,7 @@ contract T is ERC20 {
 		running = true;
 		owner = msg.sender;
 		decimals = 18;
-		totalSupply = 2500000000 * uint(10)**decimals;
+		totalSupply = 2 * uint(10)**(decimals + 9);
 		balances[owner] = totalSupply;
 		name = "HOTCOIN";
 		symbol = "HCN";
