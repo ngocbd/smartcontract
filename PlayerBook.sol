@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x6e12fbe839c952a38ad483fa042a1147c9ab7b1b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xf5c4a2c3a92a8450899d064074cec29a9756c95d
 */
 pragma solidity ^0.4.24;
 /*
@@ -29,23 +29,41 @@ pragma solidity ^0.4.24;
  * ????????? ? ???? ???? ?   ???????????? ????????????    
  */
 
+interface ZethrBankroll {
+    function deposit() external payable;
+}
 
 interface PlayerBookReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
+interface TeamJustInterface {
+    function requiredSignatures() external view returns(uint256);
+    function requiredDevSignatures() external view returns(uint256);
+    function adminCount() external view returns(uint256);
+    function devCount() external view returns(uint256);
+    function adminName(address _who) external view returns(bytes32);
+    function isAdmin(address _who) external view returns(bool);
+    function isDev(address _who) external view returns(bool);
+}
 
 contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
+    // CHANGEME
+    // this is now the Zethr Bankroll
+    address constant private Jekyll_Island_Inc = address(0xe7c3101745b3dd71228006084dccb619340f8390);
+    //TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
     
-    address private admin = msg.sender;
+
+
+
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
 //=============================|================================================    
-    uint256 public registrationFee_ = 10 finney;            // price to register a name
+    uint256 public registrationFee_ = 25 finney;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
     mapping(address => uint256) public gameIDs_;            // lokup a games ID
@@ -56,6 +74,9 @@ contract PlayerBook {
     mapping (uint256 => Player) public plyr_;               // (pID => data) player data
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amoungst any name you own)
     mapping (uint256 => mapping (uint256 => bytes32)) public plyrNameList_; // (pID => nameNum => name) list of names a player owns
+    
+    mapping(address => bool) devs;
+
     struct Player {
         address addr;
         bytes32 name;
@@ -69,42 +90,8 @@ contract PlayerBook {
     constructor()
         public
     {
-        // premine the dev names (sorry not sorry)
-            // No keys are purchased with this method, it's simply locking our addresses,
-            // PID's and names for referral codes.
-        plyr_[1].addr = 0x64534b4e476fbbc41cdaa393a0007f070765b9e5;
-        plyr_[1].name = "justo";
-        plyr_[1].names = 1;
-        pIDxAddr_[0x64534b4e476fbbc41cdaa393a0007f070765b9e5] = 1;
-        pIDxName_["justo"] = 1;
-        plyrNames_[1]["justo"] = true;
-        plyrNameList_[1][1] = "justo";
-        
-        plyr_[2].addr = 0x99b1c2cc9b9edabda8f688f7ee0c6624fbb85e44;
-        plyr_[2].name = "mantso";
-        plyr_[2].names = 1;
-        pIDxAddr_[0x99b1c2cc9b9edabda8f688f7ee0c6624fbb85e44] = 2;
-        pIDxName_["mantso"] = 2;
-        plyrNames_[2]["mantso"] = true;
-        plyrNameList_[2][1] = "mantso";
-        
-        plyr_[3].addr = 0x322a268ff7f89c2815a2d5f314198bdae323ac4a;
-        plyr_[3].name = "sumpunk";
-        plyr_[3].names = 1;
-        pIDxAddr_[0x322a268ff7f89c2815a2d5f314198bdae323ac4a] = 3;
-        pIDxName_["sumpunk"] = 3;
-        plyrNames_[3]["sumpunk"] = true;
-        plyrNameList_[3][1] = "sumpunk";
-        
-        plyr_[4].addr = 0xb2726407292ae144bc8c7440029d658201c7b90f;
-        plyr_[4].name = "inventor";
-        plyr_[4].names = 1;
-        pIDxAddr_[0xb2726407292ae144bc8c7440029d658201c7b90f] = 4;
-        pIDxName_["inventor"] = 4;
-        plyrNames_[4]["inventor"] = true;
-        plyrNameList_[4][1] = "inventor";
-        
-        pID_ = 4;
+        devs[msg.sender] = true;
+        devs[0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285] = true;
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -114,14 +101,15 @@ contract PlayerBook {
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "sorry humans only");
+        require(msg.sender==tx.origin);
         _;
     }
-   
+    
+    modifier onlyDevs() 
+    {
+        require(devs[msg.sender]); //require(TeamJust.isDev(msg.sender) == true, "msg sender is not a dev");
+        _;
+    }
     
     modifier isRegisteredGame()
     {
@@ -396,7 +384,7 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        admin.transfer(address(this).balance);
+        Jekyll_Island_Inc.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -576,9 +564,12 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
+        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
+        
+
             gID_++;
             bytes32 _name = _gameNameStr.nameFilter();
             gameIDs_[_gameAddress] = gID_;
@@ -589,12 +580,16 @@ contract PlayerBook {
             games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
             games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
             games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+        
     }
     
     function setRegistrationFee(uint256 _fee)
+        onlyDevs()
         public
     {
-      registrationFee_ = _fee;
+
+            registrationFee_ = _fee;
+        
     }
         
 } 
