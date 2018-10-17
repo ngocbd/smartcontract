@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeciserToken at 0xe58633a7c2affb6f84f9659c21b2485845643c01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeciserToken at 0xbda4f6c850f67f263bc2c1ea94bbccbf0c44de03
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // 'Deciser' token contract
 //
-// Deployed to : 0xE58633a7C2AFFb6f84F9659C21B2485845643c01
+// Deployed to : 0xBDa4f6C850F67F263BC2c1Ea94bbCCbF0C44De03
 // Symbol      : DEC
 // Name        : Deciser Token
-// Total supply: 1000000000000000000000000
+// Total supply: 10'000'000'000 (total DEC coins, no decimals)
 // Decimals    : 6
 //
 // Enjoy.
@@ -110,7 +110,7 @@ contract DeciserToken is ERC20Interface, Owned, SafeMath {
         symbol = "DEC";
         name = "Deciser Token";
         decimals = 6;
-        totalSupply = 1000000000000000000000000;
+        totalSupply = 10000000000000000;
         if (msg.sender == owner) {
           balances[owner] = totalSupply;
           Transfer(address(0), owner, totalSupply);
