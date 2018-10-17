@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Membership at 0x4286b9997df2af09e186c332e655e9cef71a40fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Membership at 0xd33615c5ea5d703f06d237f6c56ff2400b564c77
 */
 pragma solidity ^0.4.24;
 
@@ -35,6 +35,7 @@ library SafeMath {
 }
 
 
+
 /**
 *This contract allows users to sign up for the DDA Cooperative Membership.
 *To complete membership DDA will provide instructions to complete KYC/AML verification
@@ -61,6 +62,7 @@ contract Membership {
     //Members information
     mapping(address => Member) public members;
     address[] public membersAccts;
+    mapping (address => uint) public membersAcctsIndex;
 
     /*Events*/
     event UpdateMemberAddress(address _from, address _to);
@@ -116,7 +118,7 @@ contract Membership {
         require(newAddress.memberId == 0);
         newAddress.memberId = currentAddress.memberId;
         newAddress.membershipType = currentAddress.membershipType;
-		membersAccts[currentAddress.memberId - 1] = _to;
+        membersAccts[currentAddress.memberId - 1] = _to;
         currentAddress.memberId = 0;
         currentAddress.membershipType = 0;
         emit UpdateMemberAddress(_from, _to);
@@ -130,6 +132,52 @@ contract Membership {
     function setMembershipType(address _memberAddress,  uint _membershipType) public onlyOwner{
         Member storage memberAddress = members[_memberAddress];
         memberAddress.membershipType = _membershipType;
+    }
+
+    /**
+    *@dev Use this function to set memberId for the member
+    *@param _memberAddress address of member that we need to update membershipType
+    *@param _memberId is the manually assigned memberId
+    */
+    function setMemberId(address _memberAddress,  uint _memberId) public onlyOwner{
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.memberId = _memberId;
+    }
+
+    /**
+    *@dev Use this function to remove member acct from array memberAcct
+    *@param _memberAddress address of member to remove
+    */
+    function removeMemberAcct(address _memberAddress) public onlyOwner{
+        require(_memberAddress != address(0));
+        uint256 indexToDelete;
+        uint256 lastAcctIndex;
+        address lastAdd;
+        Member storage memberAddress = members[_memberAddress];
+        memberAddress.memberId = 0;
+        memberAddress.membershipType = 0;
+        indexToDelete = membersAcctsIndex[_memberAddress];
+        lastAcctIndex = membersAccts.length.sub(1);
+        lastAdd = membersAccts[lastAcctIndex];
+        membersAccts[indexToDelete]=lastAdd;
+        membersAcctsIndex[lastAdd] = indexToDelete;   
+        membersAccts.length--;
+        membersAcctsIndex[_memberAddress]=0; 
+    }
+
+
+    /**
+    *@dev Use this function to member acct from array memberAcct
+    *@param _memberAddress address of member to add
+    */
+    function addMemberAcct(address _memberAddress) public onlyOwner{
+        require(_memberAddress != address(0));
+        Member storage memberAddress = members[_memberAddress];
+        membersAcctsIndex[_memberAddress] = membersAccts.length; 
+        membersAccts.push(_memberAddress);
+        memberAddress.memberId = membersAccts.length;
+        memberAddress.membershipType = 1;
+        emit NewMember(_memberAddress, memberAddress.memberId, memberAddress.membershipType);
     }
 
     /**
@@ -178,10 +226,7 @@ contract Membership {
     function refund(address _to, uint _amount) public onlyOwner {
         require (_to != address(0));
         if (_amount == 0) {_amount = memberFee;}
-        Member storage currentAddress = members[_to];
-        membersAccts[currentAddress.memberId-1] = 0;
-        currentAddress.memberId = 0;
-        currentAddress.membershipType = 0;
+        removeMemberAcct(_to);
         _to.transfer(_amount);
         emit Refund(_to, _amount);
     }
