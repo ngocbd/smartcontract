@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x612e2c129a310e7e8709f4f24b1e8e375cac782e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x722327604be7cf1b3d9b111a87605c56512112c3
 */
 pragma solidity 0.4.24;
 
@@ -26,11 +26,11 @@ contract Crowdsale {
      * Setup the owner
      */
     function Crowdsale() public {
-        beneficiary = address(0x02063eFBC5653989BdDeddaCD3949260aC451ee2);
-        startTime = 1530403200;
-        endTime = 1533081599;
-        price = 5000;
-        tokenReward = Token(0xa5982ff8a26818d6a78a0bc49f080d4a96dd0491);
+        beneficiary = address(0x22dA2fC310DC5F24a107823796684A518A672aCd);
+        startTime = 1530230400;
+        endTime = 1530403199;
+        price = 4500;
+        tokenReward = Token(0x791ff572c19f711d96ce454f574958b5717ffd15);
     }
 
 
@@ -64,7 +64,7 @@ contract Crowdsale {
         require(now > endTime);
         uint balance = tokenReward.balanceOf(address(this));
         if(balance > 0){
-            tokenReward.transfer(address(0x02063eFBC5653989BdDeddaCD3949260aC451ee2), balance);
+            tokenReward.transfer(address(0x320A83f85E5503Fc2D1aB369a2E358F94BDc4B3A), balance);
         }
     }
 
