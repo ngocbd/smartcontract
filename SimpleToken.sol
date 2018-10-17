@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x8c354db161a8e90bbd29dfcbabf95444b893e4c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x39c10fe43901c8d198c90cd838ff1bab9851483a
 */
-pragma solidity ^0.4.24;
-
-
-
+pragma solidity ^0.4.11;
 
 library SafeMath {
 
@@ -52,75 +49,12 @@ library SafeMath {
   }
 }
 
-
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-
-
-
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender)
@@ -136,7 +70,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
 
 
 contract BasicToken is ERC20Basic {
@@ -159,8 +92,8 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
     require(_value <= balances[msg.sender]);
+    require(_to != address(0));
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -180,7 +113,13 @@ contract BasicToken is ERC20Basic {
 }
 
 
-
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -200,9 +139,9 @@ contract StandardToken is ERC20, BasicToken {
     public
     returns (bool)
   {
-    require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0));
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -282,7 +221,7 @@ contract StandardToken is ERC20, BasicToken {
     returns (bool)
   {
     uint256 oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
+    if (_subtractedValue >= oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
@@ -294,29 +233,12 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-contract TokenDestructible is Ownable {
+contract SimpleToken is StandardToken {
 
-  constructor() public payable { }
-
-  /**
-   * @notice Terminate contract and refund to owner
-   * @notice The called token contracts could try to re-enter this contract. Only
-   supply token contracts you trust.
-   */
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-}
-
-
-
-contract SimpleToken is StandardToken, TokenDestructible {
-
-  string public constant name = "Ironx"; // solium-disable-line uppercase
-  string public constant symbol = "RNX"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
-
-  uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
+  string public constant name = "XRPCOIN";
+  string public constant symbol = "XRPC";
+  uint8 public constant decimals = 18;
+  uint256 public constant INITIAL_SUPPLY = 5000000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
