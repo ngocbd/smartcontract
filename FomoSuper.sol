@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0x6e4c0f93cfa81ce9ab66bf07dd9264957d1ca10c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0x47f7c36c033a6ee53636375bf7536886a778f8b2
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FomoSuper is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xB2b3d6feAE1AB2af4a07Cf4C047D69aa01D809Aa);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x4Cc47443f9452b64CC5923EDA771BB7f6E505BB4);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
