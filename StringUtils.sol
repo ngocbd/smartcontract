@@ -1,103 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StringUtils at 0x0ffd57f2f2072e11c58b92b3b51eb68f85cd8355
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StringUtils at 0x2ca3e5fc099bb49e46ca6ec78ca647dad915c18c
 */
 pragma solidity ^0.4.23;
 
 
-// thanks to https://github.com/willitscale/solidity-util and https://github.com/Arachnid/solidity-stringutils
 library StringUtils {
-    struct slice {
-        uint _len;
-        uint _ptr;
-    }
-
-    /*
-     * @dev Returns a slice containing the entire string.
-     * @param self The string to make a slice from.
-     * @return A newly allocated slice containing the entire string.
-     */
-    function toSlice(string self) internal pure returns (slice) {
-        uint ptr;
-        assembly {
-            ptr := add(self, 0x20)
-        }
-        return slice(bytes(self).length, ptr);
-    }
-
-    /*
-     * @dev Returns a new slice containing the same data as the current slice.
-     * @param self The slice to copy.
-     * @return A new slice containing the same data as `self`.
-     */
-    function copy(slice self) internal pure returns (slice) {
-        return slice(self._len, self._ptr);
-    }
-
-    /*
-     * @dev Copies a slice to a new string.
-     * @param self The slice to copy.
-     * @return A newly allocated string containing the slice's text.
-     */
-    function toString(slice self) internal pure returns (string) {
-        string memory ret = new string(self._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
-
-        memcpy(retptr, self._ptr, self._len);
-        return ret;
-    }
-
-    /**
-    * Lower
-    *
-    * Converts all the values of a string to their corresponding lower case
-    * value.
-    *
-    * @param _base When being used for a data type this is the extended object
-    *              otherwise this is the string base to convert to lower case
-    * @return string
-    */
-    function lower(string _base) internal pure returns (string) {
-        bytes memory _baseBytes = bytes(_base);
-        for (uint i = 0; i < _baseBytes.length; i++) {
-            _baseBytes[i] = _lower(_baseBytes[i]);
-        }
-        return string(_baseBytes);
-    }
-
-    /**
-    * Lower
-    *
-    * Convert an alphabetic character to lower case and return the original
-    * value when not alphabetic
-    *
-    * @param _b1 The byte to be converted to lower case
-    * @return bytes1 The converted value if the passed value was alphabetic
-    *                and in a upper case otherwise returns the original value
-    */
-    function _lower(bytes1 _b1) internal pure returns (bytes1) {
-        if (_b1 >= 0x41 && _b1 <= 0x5A) {
-            return bytes1(uint8(_b1) + 32);
-        }
-        return _b1;
-    }
-
-    function memcpy(uint dest, uint src, uint len) private pure {
-        // Copy word-length chunks while possible
-        for (; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-    }
+  /// @dev Does a byte-by-byte lexicographical comparison of two strings.
+  /// @return a negative number if `_a` is smaller, zero if they are equal
+  /// and a positive numbe if `_b` is smaller.
+  function compare(string _a, string _b) public pure returns (int) {
+    bytes memory a = bytes(_a);
+    bytes memory b = bytes(_b);
+    uint minLength = a.length;
+    if (b.length < minLength) minLength = b.length;
+    //@todo unroll the loop into increments of 32 and do full 32 byte comparisons
+    for (uint i = 0; i < minLength; i ++)
+      if (a[i] < b[i])
+        return -1;
+      else if (a[i] > b[i])
+        return 1;
+    if (a.length < b.length)
+      return -1;
+    else if (a.length > b.length)
+      return 1;
+    else
+      return 0;
+  }
+  /// @dev Compares two strings and returns true iff they are equal.
+  function equal(string _a, string _b) public pure returns (bool) {
+    return compare(_a, _b) == 0;
+  }
+  /// @dev Finds the index of the first occurrence of _needle in _haystack
+  function indexOf(string _haystack, string _needle) public pure returns (int) {
+   	bytes memory h = bytes(_haystack);
+  	bytes memory n = bytes(_needle);
+   	if(h.length < 1 || n.length < 1 || (n.length > h.length)) 
+      return -1;
+    else if(h.length > (2**128 -1)) // since we have to be able to return -1 (if the char isn't found or input error), this function must return an "int" type with a max length of (2^128 - 1)
+      return -1;									
+    else {
+      uint subindex = 0;
+      for (uint i = 0; i < h.length; i ++) {
+        if (h[i] == n[0]) { // found the first char of b
+    	  subindex = 1;
+    	  while(subindex < n.length && (i + subindex) < h.length && h[i + subindex] == n[subindex]) {// search until the chars don't match or until we reach the end of a or b
+    		subindex++;
+    	  }	
+    	  if(subindex == n.length) 
+    		return int(i);
+    	}
+      }
+      return -1;
+    }	
+  }
 }
