@@ -1,20 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponsoredItemGooRaffle at 0x6a11dd91b4de3322d879d458a80606f6b69960cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SponsoredItemGooRaffle at 0xfc8bdbbf0b121387f914194f53fb3c278ffea9a5
 */
 pragma solidity ^0.4.0;
-
-// GOO
-// ~~ https://ethergoo.io ~~
-
-// Allows players to purchase tickets for rare ERC721 items using Goo! (ERC20)
-// Get in touch if you are a game with ERC721 items and wish to sponsor us (in return for raffle-placement on our main game page)
 
 contract SponsoredItemGooRaffle {
     
     Goo goo = Goo(0x57b116da40f21f91aec57329ecb763d29c1b2355);
     
-    ERC721 erc;
-    uint256 tokenId;
     address owner;
     
     // Raffle tickets
@@ -48,14 +40,9 @@ contract SponsoredItemGooRaffle {
         owner = msg.sender;
     }
     
-    function startTokenRaffle(uint256 endTime, address tokenContract, uint256 id) external {
+    function startTokenRaffle(uint256 endTime, address tokenContract, uint256 id, bool hasItemAlready) external {
         require(msg.sender == owner);
         require(block.timestamp < endTime);
-        
-        // Grab ownership of token
-        erc = ERC721(tokenContract);
-        tokenId = id;
-        erc.transferFrom(msg.sender, this, id);
         
         if (raffleId != 0) { // Sanity to assure raffle has ended before next one starts
             require(raffleWinner != 0);
@@ -105,7 +92,6 @@ contract SponsoredItemGooRaffle {
     function awardRafflePrize(address checkWinner, uint256 checkIndex) external {
         require(raffleEndTime < block.timestamp);
         require(raffleWinner == 0);
-        require(erc.ownerOf(tokenId) == address(this));
         
         if (!raffleWinningTicketSelected) {
             drawRandomWinner(); // Ideally do it in one call (gas limit cautious)
@@ -117,7 +103,7 @@ contract SponsoredItemGooRaffle {
             if (tickets.numPurchases > 0 && checkIndex < tickets.numPurchases && tickets.raffleId == raffleId) {
                 TicketPurchase storage checkTicket = tickets.ticketsBought[checkIndex];
                 if (raffleTicketThatWon >= checkTicket.startId && raffleTicketThatWon <= checkTicket.endId) {
-                    assignRafflePrize(checkWinner); // WINNER!
+                    assignRaffleWinner(checkWinner); // WINNER!
                     return;
                 }
             }
@@ -134,7 +120,7 @@ contract SponsoredItemGooRaffle {
                 for (uint256 j = 0; j < playersTickets.numPurchases; j++) {
                     TicketPurchase storage playerTicket = playersTickets.ticketsBought[j];
                     if (raffleTicketThatWon >= playerTicket.startId && raffleTicketThatWon <= playerTicket.endId) {
-                        assignRafflePrize(player); // WINNER!
+                        assignRaffleWinner(player); // WINNER!
                         return;
                     }
                 }
@@ -142,9 +128,8 @@ contract SponsoredItemGooRaffle {
         }
     }
     
-    function assignRafflePrize(address winner) internal {
+    function assignRaffleWinner(address winner) internal {
         raffleWinner = winner;
-        erc.transfer(winner, tokenId);
     }
     
     // Random enough for small contests (Owner only to prevent trial & error execution)
@@ -197,14 +182,6 @@ interface Goo {
     function transfer(address to, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
 }
-
-
-interface ERC721 {
-    function transfer(address to, uint tokenId) public payable;
-    function transferFrom(address from, address to, uint tokenId) public;
-    function ownerOf(uint tokenId) public view returns (address owner);
-}
-
 
 library SafeMath {
 
