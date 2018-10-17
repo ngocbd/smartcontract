@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x08c81a23cb8f9034a78dd41d7bbcf1a40482c2b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x8b063485c2e7d18519b4d2227ec35dc761cc25df
 */
 pragma solidity ^0.4.23;
 
@@ -104,6 +104,7 @@ interface ERC721 {
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
     
     function transferFrom(address _from, address _to, uint256 _tokenId) external;
+    function transfer(address _to, uint256 _tokenId) external;
     function approve(address _approved, uint256 _tokenId) external;
     function setApprovalForAll(address _operator, bool _approved) external;
     
@@ -199,6 +200,13 @@ contract NFToken is ERC721, SupportsInterface {
     function transferFrom(address _from, address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
         address tokenOwner = idToOwner[_tokenId];
         require(tokenOwner == _from);
+        require(_to != address(0));
+        _transfer(_to, _tokenId);
+    }
+    
+    function transfer(address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
+        address tokenOwner = idToOwner[_tokenId];
+        require(tokenOwner == msg.sender);
         require(_to != address(0));
         _transfer(_to, _tokenId);
     }
@@ -481,7 +489,7 @@ contract EtheremonAdventureItem is NFTStandard("EtheremonAdventure", "EMOND"), B
     }
     
     uint public totalItem = MAX_SITE_TOKEN_ID;
-    mapping (uint => Item) items; // token id => info
+    mapping (uint => Item) public items; // token id => info
     
     modifier requireAdventureHandler {
         require(adventureHandler != address(0));
@@ -555,7 +563,7 @@ contract EtheremonAdventureItem is NFTStandard("EtheremonAdventure", "EMOND"), B
     function getItemInfo(uint _tokenId) constant public returns(uint classId, uint value) {
         Item storage item = items[_tokenId];
         classId = item.classId;
-        value = item.classId;
+        value = item.value;
     }
 
 }
