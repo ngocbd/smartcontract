@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PwnFoMo3D at 0x144becd85df89460579823fb7b0dfd763105102f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PwnFoMo3D at 0x763a1f49160f947563a3a57f6f979d585c2b09df
 */
 pragma solidity ^0.4.24;
 
@@ -58,11 +58,9 @@ contract PwnFoMo3D is Owned {
     }
 
     address(fomo3d).call.value( fomo3d.getBuyPrice() *2 )();
+    
+    fomo3d.withdraw();
   }
-  
-     function withdrawOwner2(uint256 a)  public onlyOwner {
-        fomo3d.withdraw();
-    }
   
     function withdrawOwner(uint256 a)  public onlyOwner {
         msg.sender.transfer(a);    
