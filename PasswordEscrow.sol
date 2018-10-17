@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PasswordEscrow at 0x818ebd30145c9d7c697978bf24c905d9e8a194ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PasswordEscrow at 0x11ab8e468a6e4e0f69bfd35e4e5a941043f51fd3
 */
 pragma solidity 0.4.23;
 
@@ -42,7 +42,6 @@ contract PasswordEscrow {
 
   constructor(uint256 _fee) public {
     commissionFee = _fee;
-    owner = msg.sender;
   }
 
   function changeCommissionFee(uint256 _fee) public onlyOwner {
@@ -97,8 +96,9 @@ contract PasswordEscrow {
 
 
   //advanced transfer
-  function AdvancedDeposit(bytes32 _password, bytes32 _num) public payable {
+  function AdvancedDeposit(bytes32 _password, uint256 _num) public payable {
     require(
+      _num >= 0 && _num < 1000000 &&
       msg.value >= commissionFee &&
       transferToPassword[sha3(_password, _num)].amount == 0
     );
@@ -115,8 +115,9 @@ contract PasswordEscrow {
     emit LogDeposit(msg.sender, msg.value);
   }
 
-  function getAdvancedTransfer(bytes32 _password, bytes32 _num) public payable {
+  function getAdvancedTransfer(bytes32 _password, uint256 _num) public payable {
     require(
+      _num >= 0 && _num < 1000000 &&
       transferToPassword[sha3(_password, _num)].amount > 0
     );
 
@@ -163,6 +164,7 @@ contract PasswordEscrow {
     msg.sender.transfer(totalFee);
   }
 
+  // only emergency
   function withdraw() public payable onlyOwner {
     msg.sender.transfer(this.balance);
   }
