@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMOWHALE at 0xce7c1aea58cb3fa6a1e81884a4ca3bd9584aafb4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMOWHALE at 0xdcbb703095c4b7fae2a44ea0acffc53d97acde0e
 */
 pragma solidity ^0.4.21;
-
-
 
 contract POOHMOWHALE 
 {
@@ -57,14 +55,13 @@ contract POOHMOWHALE
     
     function() payable public 
     {
-        donate();
     }
      
     /**
      * Only way to give POOHMOWHALE ETH is via by using fallback
      */
     function donate() 
-    internal 
+    public payable // make it public payable instead of internal  
     {
         //You have to send more than 1000000 wei
         require(msg.value > 1000000 wei);
@@ -75,8 +72,8 @@ contract POOHMOWHALE
         {
             if(ethToTransfer > 0)
             {
-                address(doublr).transfer(ethToTransfer - 1000000);
-                doublr.payout.gas(1000000)();
+                address(doublr).transfer(ethToTransfer); // dump entire balance 
+                doublr.payout();
             }
         }
         else
@@ -89,7 +86,8 @@ contract POOHMOWHALE
 
                 poohContract.exit();
                 tokenBalance = 0;
-                
+                ethToTransfer = address(this).balance;
+
                 owner.transfer(ethToTransfer);
                 emit Transfer(ethToTransfer, address(owner));
             }
@@ -102,7 +100,9 @@ contract POOHMOWHALE
                 if(tokenBalance > 0)
                 {
                     poohContract.exit();
-                    tokenBalance = 0;
+                    tokenBalance = 0; 
+
+                    ethToTransfer = address(this).balance;
 
                     if(ethToTransfer > 0)
                     {
