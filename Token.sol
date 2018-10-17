@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb1fcbf92146b461972df54dd1dfc5a78284564ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xcc9fe9e5633ac1de42a3799235b302b09cf80b5b
 */
 pragma solidity ^0.4.18;
 
@@ -192,7 +192,7 @@ contract Token is StandardToken {
 
     string public name    = "ChainManIdentification";
     string public symbol  = "CMI";
-    uint8 public decimals = 18;
+    uint8 public decimals = 5;
 
     uint256 public constant INITIAL_SUPPLY = 610321;
 
