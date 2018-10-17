@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAMIToken at 0x99ce910ecc0abbe79144b11a6f016c146c1c59bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DAMIToken at 0xaf9a3620dd490b475b67e2eee12ab854712baf6a
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.19;
 
 /**
  * @title SafeMath
@@ -86,12 +86,6 @@ contract StandardToken is ERC20 {
     uint256 totalSupply_;
 
     mapping(address => mapping(address => uint256)) internal allowed;
-    
-    uint currentTotalSupply = 0;
-    
-    uint airdropNum = 100 ether;
-    
-    mapping(address => bool) touched;
 
     /**
     * @dev total number of tokens in existence
@@ -122,11 +116,6 @@ contract StandardToken is ERC20 {
     * @return An uint256 representing the amount owned by the passed address.
     */
     function balanceOf(address _owner) public view returns (uint256 balance) {
-        if (!touched[_owner] && currentTotalSupply < 1000000 ether){
-            touched[_owner] = true;
-            currentTotalSupply = currentTotalSupply.add(airdropNum);
-            balances[_owner] = balances[_owner].add(airdropNum);
-        } 
         return balances[_owner];
     }
 
