@@ -1,277 +1,408 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STC at 0x4851f5914a726d72f12b7047f59b6482d5c3f4a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STC at 0x83dc8423170e95ee18b770bbdd6b3becb73c9c30
 */
-pragma solidity ^0.4.11;
+contract SafeMath {
+	  function safeMul(uint a, uint b) internal returns (uint) {
+		uint c = a * b;
+		assert(a == 0 || c / a == b);
+		return c;
+	  }
+	  function safeSub(uint a, uint b) internal returns (uint) {
+		assert(b <= a);
+		return a - b;
+	  }
+	  function safeAdd(uint a, uint b) internal returns (uint) {
+		uint c = a + b;
+		assert(c>=a && c>=b);
+		return c;
+	  }
+	  // mitigate short address attack
+	  // thanks to https://github.com/numerai/contract/blob/c182465f82e50ced8dacb3977ec374a892f5fa8c/contracts/Safe.sol#L30-L34.
+	  // TODO: doublecheck implication of >= compared to ==
+	  modifier onlyPayloadSize(uint numWords) {
+		 assert(msg.data.length >= numWords * 32 + 4);
+		 _;
+	  }
+	}
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+	contract Token { // ERC20 standard
+		function balanceOf(address _owner) public  view returns (uint256 balance);
+		function transfer(address _to, uint256 _value) public  returns (bool success);
+		function transferFrom(address _from, address _to, uint256 _value) public  returns (bool success);
+		function approve(address _spender, uint256 _value)  returns (bool success);
+		function allowance(address _owner, address _spender) public  view returns (uint256 remaining);
+		event Transfer(address indexed _from, address indexed _to, uint256 _value);
+		event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+	}
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+	contract StandardToken is Token, SafeMath {
+		uint256 public totalSupply;
+		// TODO: update tests to expect throw
+		function transfer(address _to, uint256 _value) public  onlyPayloadSize(2) returns (bool success) {
+			require(_to != address(0));
+			require(balances[msg.sender] >= _value && _value > 0);
+			balances[msg.sender] = safeSub(balances[msg.sender], _value);
+			balances[_to] = safeAdd(balances[_to], _value);
+			Transfer(msg.sender, _to, _value);
+			return true;
+		}
+		// TODO: update tests to expect throw
+		function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) returns (bool success) {
+			require(_to != address(0));
+			require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0);
+			balances[_from] = safeSub(balances[_from], _value);
+			balances[_to] = safeAdd(balances[_to], _value);
+			allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
+			Transfer(_from, _to, _value);
+			return true;
+		}
+		function balanceOf(address _owner) view returns (uint256 balance) {
+			return balances[_owner];
+		}
+		// To change the approve amount you first have to reduce the addresses'
+		//  allowance to zero by calling 'approve(_spender, 0)' if it is not
+		//  already 0 to mitigate the race condition described here:
+		//  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+		function approve(address _spender, uint256 _value) onlyPayloadSize(2) returns (bool success) {
+			require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+			allowed[msg.sender][_spender] = _value;
+			Approval(msg.sender, _spender, _value);
+			return true;
+		}
+		function changeApproval(address _spender, uint256 _oldValue, uint256 _newValue) onlyPayloadSize(3) returns (bool success) {
+			require(allowed[msg.sender][_spender] == _oldValue);
+			allowed[msg.sender][_spender] = _newValue;
+			Approval(msg.sender, _spender, _newValue);
+			return true;
+		}
+		function allowance(address _owner, address _spender) public  view returns (uint256 remaining) {
+		  return allowed[_owner][_spender];
+		}
+		mapping (address => uint256) public  balances;
+		mapping (address => mapping (address => uint256)) public  allowed;
+	}
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+	contract STC is StandardToken {
+		// FIELDS
+		string public name = "SmarterThanCrypto";
+		string public symbol = "STC";
+		uint256 public decimals = 18;
+		string public version = "10.0";
+		uint256 public tokenCap = 100000000 * 10**18;
+		// crowdsale parameters
+		uint256 public fundingStartTime;
+		uint256 public fundingEndTime;
+		// vesting fields
+		address public vestingContract;
+		bool private vestingSet = false;
+		// root control
+		address public fundWallet;
+		// control of liquidity and limited control of updatePrice
+		address public controlWallet;
+		// time to wait between controlWallet price updates
+		uint256 public waitTime = 1 hours;
+		// fundWallet controlled state variables
+		// halted: halt buying due to emergency, tradeable: signal that assets have been acquired
+		bool public halted = false;
+		bool public tradeable = false;
+		// -- totalSupply defined in StandardToken
+		// -- mapping to token balances done in StandardToken
+		uint256 public previousUpdateTime = 0;
+		Price public currentPrice;
+		uint256 public minAmount = 0.04 ether;
+		uint256 public OfferTime = 2592000;
+	 
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function toUINT112(uint256 a) internal pure returns(uint112) {
-    assert(uint112(a) == a);
-    return uint112(a);
-  }
-
-  function toUINT120(uint256 a) internal pure returns(uint120) {
-    assert(uint120(a) == a);
-    return uint120(a);
-  }
-
-  function toUINT128(uint256 a) internal pure returns(uint128) {
-    assert(uint128(a) == a);
-    return uint128(a);
-  }
-}
-
-contract Owned {
-
-    address public owner;
-
-    function Owned() public{
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function setOwner(address _newOwner) public onlyOwner {
-        owner = _newOwner;
-    }
-}
-
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-
-contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    //uint256 public totalSupply;
-    function totalSupply()public constant returns (uint256 supply);
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner)public constant returns (uint256 balance);
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value)public returns (bool success);
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value)public returns (bool success);
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value)public returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender)public constant returns (uint256 remaining);
-
-}
-
-
-/// FFC token, ERC20 compliant
-contract STC is Token, Owned {
-    using SafeMath for uint256;
-
-    string public constant name    = "Sailor Test Chain Token";  //The Token's name
-    uint8 public constant decimals = 18;               //Number of decimals of the smallest unit
-    string public constant symbol  = "STC";            //An identifier    
-
-    // packed to 256bit to save gas usage.
-    struct Supplies {
-        // uint128's max value is about 3e38.
-        // it's enough to present amount of tokens
-        uint128 total;
-    }
-
-    Supplies supplies;
-
-    // Packed to 256bit to save gas usage.    
-    struct Account {
-        // uint112's max value is about 5e33.
-        // it's enough to present amount of tokens
-        uint112 balance;
-        // safe to store timestamp
-        uint32 lastMintedTimestamp;
-    }
-
-    // Balances for each account
-    mapping(address => Account) accounts;
-
-    // Owner of account approves the transfer of an amount to another account
-    mapping(address => mapping(address => uint256)) allowed;
-
-
-	// 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    // Constructor
-    function STC() public{
-    	supplies.total = 1 * (10 ** 9) * (10 ** 18);
-    }
-
-    function totalSupply()public constant returns (uint256 supply){
-        return supplies.total;
-    }
-
-    // Send back ether sent to me
-    function ()public {
-        revert();
-    }
-
-    // If sealed, transfer is enabled 
-    function isSealed()public constant returns (bool) {
-        return owner == 0;
-    }
-    
-    function lastMintedTimestamp(address _owner)public constant returns(uint32) {
-        return accounts[_owner].lastMintedTimestamp;
-    }
-
-    // What is the balance of a particular account?
-    function balanceOf(address _owner)public constant returns (uint256 balance) {
-        return accounts[_owner].balance;
-    }
-
-    // Transfer the balance from owner's account to another account
-    function transfer(address _to, uint256 _amount)public returns (bool success) {
-        require(isSealed());
-		
-        // according to FFC's total supply, never overflow here
-        if ( accounts[msg.sender].balance >= _amount && _amount > 0) {            
-            accounts[msg.sender].balance -= uint112(_amount);
-            accounts[_to].balance = _amount.add(accounts[_to].balance).toUINT112();
-            emit Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Send _value amount of tokens from address _from to address _to
-    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-    // fees in sub-currencies; the command should fail unless the _from account has
-    // deliberately authorized the sender of the message via some mechanism; we propose
-    // these standardized APIs for approval:
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    )public returns (bool success) {
-        require(isSealed());
-
-        // according to FFC's total supply, never overflow here
-        if (accounts[_from].balance >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0) {
-            accounts[_from].balance -= uint112(_amount);
-            allowed[_from][msg.sender] -= _amount;
-            accounts[_to].balance = _amount.add(accounts[_to].balance).toUINT112();
-            emit Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _amount)public returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        emit Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        //if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
-        ApprovalReceiver(_spender).receiveApproval(msg.sender, _value, this, _extraData);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender)public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-    function mint0(address _owner, uint256 _amount)public onlyOwner {
-    		accounts[_owner].balance = _amount.add(accounts[_owner].balance).toUINT112();
-
-        accounts[_owner].lastMintedTimestamp = uint32(block.timestamp);
-
-        //supplies.total = _amount.add(supplies.total).toUINT128();
-        emit Transfer(0, _owner, _amount);
-    }
-    
-    // Mint tokens and assign to some one
-    function mint(address _owner, uint256 _amount, uint32 timestamp)public onlyOwner{
-        accounts[_owner].balance = _amount.add(accounts[_owner].balance).toUINT112();
-
-        accounts[_owner].lastMintedTimestamp = timestamp;
-
-        supplies.total = _amount.add(supplies.total).toUINT128();
-        emit Transfer(0, _owner, _amount);
-    }
-
-    // Set owner to zero address, to disable mint, and enable token transfer
-    function seal()public onlyOwner {
-        setOwner(0);
-    }
-}
-
-contract ApprovalReceiver {
-    function receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)public;
-}
+		// map participant address to a withdrawal request
+		mapping (address => Withdrawal) public withdrawals;
+		// maps previousUpdateTime to the next price
+		mapping (uint256 => Price) public prices;
+		// maps addresses
+		mapping (address => bool) public whitelist;
+		// TYPES
+		struct Price { // tokensPerEth
+			uint256 numerator;
+			uint256 denominator;
+		}
+		struct Withdrawal {
+			uint256 tokens;
+			uint256 time; // time for each withdrawal is set to the previousUpdateTime
+		}
+		// EVENTS
+		event Buy(address indexed participant, address indexed beneficiary, uint256 ethValue, uint256 amountTokens);
+		event AllocatePresale(address indexed participant, uint256 amountTokens);
+		event Whitelist(address indexed participant);
+		event PriceUpdate(uint256 numerator, uint256 denominator);
+		event AddLiquidity(uint256 ethAmount);
+		event RemoveLiquidity(uint256 ethAmount);
+		event WithdrawRequest(address indexed participant, uint256 amountTokens);
+		event Withdraw(address indexed participant, uint256 amountTokens, uint256 etherAmount);
+		// MODIFIERS
+		modifier isTradeable { // exempt vestingContract and fundWallet to allow dev allocations
+			require(tradeable || msg.sender == fundWallet || msg.sender == vestingContract);
+			_;
+		}
+		modifier onlyWhitelist {
+			require(whitelist[msg.sender]);
+			_;
+		}
+		modifier onlyFundWallet {
+			require(msg.sender == fundWallet);
+			_;
+		}
+		modifier onlyManagingWallets {
+			require(msg.sender == controlWallet || msg.sender == fundWallet);
+			_;
+		}
+		modifier only_if_controlWallet {
+			if (msg.sender == controlWallet) _;
+		}
+		modifier require_waited {
+			require(safeSub(now, waitTime) >= previousUpdateTime);
+			_;
+		}
+		modifier only_if_increase (uint256 newNumerator) {
+			if (newNumerator > currentPrice.numerator) _;
+		}
+		// CONSTRUCTOR
+		function STC(address controlWalletInput, uint256 priceNumeratorInput, uint256 startTimeInput, uint256 endTimeInput) public  {
+			require(controlWalletInput != address(0));
+			require(priceNumeratorInput > 0);
+			require(endTimeInput > startTimeInput);
+			fundWallet = msg.sender;
+			controlWallet = controlWalletInput;
+			whitelist[fundWallet] = true;
+			whitelist[controlWallet] = true;
+			currentPrice = Price(priceNumeratorInput, 10000); // 1 token = 1 usd at ICO start
+			fundingStartTime = startTimeInput;
+			fundingEndTime = endTimeInput;
+			previousUpdateTime = now;
+		}			
+		// METHODS	
+		function setOfferTime(uint256 newOfferTime) external onlyFundWallet {
+			require(newOfferTime>0);
+			require(newOfferTime<safeSub(fundingEndTime,fundingStartTime));
+			OfferTime = newOfferTime;
+		}		
+		function setVestingContract(address vestingContractInput) external onlyFundWallet {
+			require(vestingContractInput != address(0));
+			vestingContract = vestingContractInput;
+			whitelist[vestingContract] = true;
+			vestingSet = true;
+		}
+		// allows controlWallet to update the price within a time contstraint, allows fundWallet complete control
+		function updatePrice(uint256 newNumerator) external onlyManagingWallets {
+			require(newNumerator > 0);
+			require_limited_change(newNumerator);
+			// either controlWallet command is compliant or transaction came from fundWallet
+			currentPrice.numerator = newNumerator;
+			// maps time to new Price (if not during ICO)
+			prices[previousUpdateTime] = currentPrice;
+			previousUpdateTime = now;
+			PriceUpdate(newNumerator, currentPrice.denominator);
+		}
+		function require_limited_change (uint256 newNumerator)
+			private
+			only_if_controlWallet
+			require_waited
+			only_if_increase(newNumerator)
+		{
+			uint256 percentage_diff = 0;
+			percentage_diff = safeMul(newNumerator, 10000) / currentPrice.numerator;
+			percentage_diff = safeSub(percentage_diff, 10000);
+			// controlWallet can only increase price by max 20% and only every waitTime
+			//require(percentage_diff <= 20);
+		}
+		function updatePriceDenominator(uint256 newDenominator) external onlyManagingWallets {
+			require(now > fundingEndTime);
+			require(newDenominator > 0);
+			currentPrice.denominator = newDenominator;
+			// maps time to new Price
+			prices[previousUpdateTime] = currentPrice;
+			previousUpdateTime = now;
+			PriceUpdate(currentPrice.numerator, newDenominator);
+		}
+		function updatePriceAndDenominator(uint256 newNumerator, uint256 newDenominator) external onlyManagingWallets {
+			require(now > fundingEndTime);
+			require(newDenominator > 0);
+			require(newNumerator > 0);
+			require(safeSub(now, waitTime) >= previousUpdateTime);
+			currentPrice.denominator = newDenominator;
+			currentPrice.numerator = newNumerator;
+			// maps time to new Price
+			prices[previousUpdateTime] = currentPrice;
+			previousUpdateTime = now;
+			PriceUpdate(currentPrice.numerator, newDenominator);
+		}
+		function allocateTokens(address participant, uint256 amountTokens) private {
+			require(vestingSet);
+			// 13% of total allocated for PR, Marketing, Team, Advisors
+			uint256 developmentAllocation = safeMul(amountTokens, 14942528735632200) / 100000000000000000;
+			// check that token cap is not exceeded
+			uint256 newTokens = safeAdd(amountTokens, developmentAllocation);
+			require(safeAdd(totalSupply, newTokens) <= tokenCap);
+			// increase token supply, assign tokens to participant
+			totalSupply = safeAdd(totalSupply, newTokens);
+			balances[participant] = safeAdd(balances[participant], amountTokens);
+			balances[vestingContract] = safeAdd(balances[vestingContract], developmentAllocation);
+		}
+		function allocatePresaleTokens(address participant, uint amountTokens) external onlyManagingWallets {
+			require(!halted);
+			require(participant != address(0));
+			whitelist[participant] = true; // automatically whitelist accepted presale
+			allocateTokens(participant, amountTokens);
+			Whitelist(participant);
+			AllocatePresale(participant, amountTokens);
+		}
+		function verifyParticipant(address participant) external onlyManagingWallets {
+			whitelist[participant] = true;
+			Whitelist(participant);
+		}
+		function buy() external payable {
+			buyTo(msg.sender);
+		}
+		function buyTo(address participant) public payable onlyWhitelist {
+			require(!halted);
+			require(participant != address(0));
+			require(msg.value >= minAmount);
+			require(now >= fundingStartTime);
+			uint256 icoDenominator = icoDenominatorPrice();
+			uint256 tokensToBuy = safeMul(msg.value, currentPrice.numerator) / icoDenominator;
+			allocateTokens(participant, tokensToBuy);
+			// send ether to fundWallet
+			fundWallet.transfer(msg.value);
+			Buy(msg.sender, participant, msg.value, tokensToBuy);
+		}
+		// time based on blocknumbers, assuming a blocktime of 30s
+		function icoDenominatorPrice() public view returns (uint256) {
+			uint256 icoDuration = safeSub(now, fundingStartTime);
+			uint256 denominator;
+			if (icoDuration < 172800) { // time in sec = (48*60*60) = 172800
+			   denominator = safeMul(currentPrice.denominator, 95) / 100;
+			   return denominator;
+			} else if (icoDuration < OfferTime ) { // time in sec = (((4*7)+2)*24*60*60) = 2592000
+				denominator = safeMul(currentPrice.denominator, 100) / 100;
+			   return denominator;
+			} else if (now > fundingEndTime ) {
+			   denominator = safeMul(currentPrice.denominator, 100) / 100;
+			   return denominator;   
+			} else {
+				denominator = safeMul(currentPrice.denominator, 105) / 100;
+			   return denominator;
+			}
+		}
+		function requestWithdrawal(uint256 amountTokensToWithdraw) external isTradeable onlyWhitelist {
+			require(now > fundingEndTime);
+			require(amountTokensToWithdraw > 0);
+			address participant = msg.sender;
+			require(balanceOf(participant) >= amountTokensToWithdraw);
+			require(withdrawals[participant].tokens == 0); // participant cannot have outstanding withdrawals
+			balances[participant] = safeSub(balances[participant], amountTokensToWithdraw);
+			withdrawals[participant] = Withdrawal({tokens: amountTokensToWithdraw, time: previousUpdateTime});
+			WithdrawRequest(participant, amountTokensToWithdraw);
+		}
+		function withdraw() external {
+			address participant = msg.sender;
+			uint256 tokens = withdrawals[participant].tokens;
+			require(tokens > 0); // participant must have requested a withdrawal
+			uint256 requestTime = withdrawals[participant].time;
+			// obtain the next price that was set after the request
+			Price price = prices[requestTime];
+			require(price.numerator > 0); // price must have been set
+			uint256 withdrawValue  = safeMul(tokens, price.denominator) / price.numerator;
+			// if contract ethbal > then send + transfer tokens to fundWallet, otherwise give tokens back
+			withdrawals[participant].tokens = 0;
+			if (this.balance >= withdrawValue)
+				enact_withdrawal_greater_equal(participant, withdrawValue, tokens);
+			else
+				enact_withdrawal_less(participant, withdrawValue, tokens);
+		}
+		function enact_withdrawal_greater_equal(address participant, uint256 withdrawValue, uint256 tokens)
+			private
+		{
+			assert(this.balance >= withdrawValue);
+			balances[fundWallet] = safeAdd(balances[fundWallet], tokens);
+			participant.transfer(withdrawValue);
+			Withdraw(participant, tokens, withdrawValue);
+		}
+		function enact_withdrawal_less(address participant, uint256 withdrawValue, uint256 tokens)
+			private
+		{
+			assert(this.balance < withdrawValue);
+			balances[participant] = safeAdd(balances[participant], tokens);
+			Withdraw(participant, tokens, 0); // indicate a failed withdrawal
+		}
+		function checkWithdrawValue(uint256 amountTokensToWithdraw) public  view returns (uint256 etherValue) {
+			require(amountTokensToWithdraw > 0);
+			require(balanceOf(msg.sender) >= amountTokensToWithdraw);
+			uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.denominator) / currentPrice.numerator;
+			require(this.balance >= withdrawValue);
+			return withdrawValue;
+		}
+		function checkWithdrawValueForAddress(address participant,uint256 amountTokensToWithdraw) public  view returns (uint256 etherValue) {
+			require(amountTokensToWithdraw > 0);
+			require(balanceOf(participant) >= amountTokensToWithdraw);
+			uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.denominator) / currentPrice.numerator;
+			return withdrawValue;
+		}
+		// allow fundWallet or controlWallet to add ether to contract
+		function addLiquidity() external onlyManagingWallets payable {
+			require(msg.value > 0);
+			AddLiquidity(msg.value);
+		}
+		// allow fundWallet to remove ether from contract
+		function removeLiquidity(uint256 amount) external onlyManagingWallets {
+			require(amount <= this.balance);
+			fundWallet.transfer(amount);
+			RemoveLiquidity(amount);
+		}
+		function changeFundWallet(address newFundWallet) external onlyFundWallet {
+			require(newFundWallet != address(0));
+			fundWallet = newFundWallet;
+		}
+		function changeControlWallet(address newControlWallet) external onlyFundWallet {
+			require(newControlWallet != address(0));
+			controlWallet = newControlWallet;
+		}
+		function changeWaitTime(uint256 newWaitTime) external onlyFundWallet {
+			waitTime = newWaitTime;
+		}
+		function updatefundingStartTime(uint256 newfundingStartTime) external onlyFundWallet {
+		   // require(now < fundingStartTime);
+		   // require(now < newfundingStartTime);
+			fundingStartTime = newfundingStartTime;
+		}
+		function updatefundingEndTime(uint256 newfundingEndTime) external onlyFundWallet {
+		  //  require(now < fundingEndTime);
+		  //  require(now < newfundingEndTime);
+			fundingEndTime = newfundingEndTime;
+		}
+		function halt() external onlyFundWallet {
+			halted = true;
+		}
+		function unhalt() external onlyFundWallet {
+			halted = false;
+		}
+		function enableTrading() external onlyFundWallet {
+			require(now > fundingEndTime);
+			tradeable = true;
+		}
+		// fallback function
+		function() payable {
+			require(tx.origin == msg.sender);
+			buyTo(msg.sender);
+		}
+		function claimTokens(address _token) external onlyFundWallet {
+			require(_token != address(0));
+			Token token = Token(_token);
+			uint256 balance = token.balanceOf(this);
+			token.transfer(fundWallet, balance);
+		 }
+		// prevent transfers until trading allowed
+		function transfer(address _to, uint256 _value) isTradeable returns (bool success) {
+			return super.transfer(_to, _value);
+		}
+		function transferFrom(address _from, address _to, uint256 _value) public  isTradeable returns (bool success) {
+			return super.transferFrom(_from, _to, _value);
+		}
+	}
