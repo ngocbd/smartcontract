@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyExchange at 0x8e52fd6f49066caafcaab5bf02f5be645399f354
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseyExchange at 0xf688b76988ae1230470b6bc4f43d2983928cc59d
 */
 pragma solidity ^0.4.24;
 
@@ -38,21 +38,32 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
     owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
 }
 
@@ -88,7 +99,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused public {
+  function pause() public onlyOwner whenNotPaused {
     paused = true;
     emit Pause();
   }
@@ -96,57 +107,63 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused public {
+  function unpause() public onlyOwner whenPaused {
     paused = false;
     emit Unpause();
   }
 }
 
-// File: ..\openzeppelin-solidity\contracts\math\SafeMath.sol
+// File: ..\openzeppelin-solidity\contracts\token\ERC721\ERC721Receiver.sol
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC721 token receiver interface
+ * @dev Interface for any contract that wants to support safeTransfers
+ * from ERC721 asset contracts.
  */
-library SafeMath {
+contract ERC721Receiver {
+  /**
+   * @dev Magic value to be returned upon successful reception of an NFT
+   *  Equals to `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`,
+   *  which can be also obtained as `ERC721Receiver(0).onERC721Received.selector`
+   */
+  bytes4 internal constant ERC721_RECEIVED = 0x150b7a02;
 
   /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+   * @notice Handle the receipt of an NFT
+   * @dev The ERC721 smart contract calls this function on the recipient
+   * after a `safetransfer`. This function MAY throw to revert and reject the
+   * transfer. Return of other than the magic value MUST result in the
+   * transaction being reverted.
+   * Note: the contract address is always the message sender.
+   * @param _operator The address which called `safeTransferFrom` function
+   * @param _from The address which previously owned the token
+   * @param _tokenId The NFT identifier which is being transferred
+   * @param _data Additional data with no specified format
+   * @return `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`
+   */
+  function onERC721Received(
+    address _operator,
+    address _from,
+    uint256 _tokenId,
+    bytes _data
+  )
+    public
+    returns(bytes4);
+}
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
+// File: ..\openzeppelin-solidity\contracts\token\ERC721\ERC721Holder.sol
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
+contract ERC721Holder is ERC721Receiver {
+  function onERC721Received(
+    address,
+    address,
+    uint256,
+    bytes
+  )
+    public
+    returns(bytes4)
+  {
+    return ERC721_RECEIVED;
   }
 }
 
@@ -174,9 +191,7 @@ contract ERC721Basic {
     2. Cancel sale
     3. Purchase token
 **/
-contract HorseyExchange is Pausable { //also Ownable
-
-    using SafeMath for uint256;
+contract HorseyExchange is Pausable, ERC721Holder { //also Ownable
 
     event HorseyDeposit(uint256 tokenId, uint256 price);
     event SaleCanceled(uint256 tokenId);
@@ -206,7 +221,7 @@ contract HorseyExchange is Pausable { //also Ownable
     mapping (address => uint256[]) userBarn;
 
     /// @dev initialize
-    constructor() Pausable() public {
+    constructor() Pausable() ERC721Holder() public {
     }
 
     /**
@@ -330,7 +345,7 @@ contract HorseyExchange is Pausable { //also Ownable
         //Return over paid amount to sender if necessary
         if(msg.value > totalToPay) //overpaid
         {
-            msg.sender.transfer(msg.value.sub(totalToPay));
+            msg.sender.transfer(msg.value - totalToPay);
         }
 
         emit HorseyPurchased(tokenId, msg.sender, totalToPay);
@@ -529,9 +544,7 @@ contract EthorseHelpers {
 
         //check the bet amount of the eth_address on the winner horse
         uint256 bet_amount = 0;
-        if(eth_address != address(0)) {
-            (,,,, bet_amount) = race.getCoinIndex(horse, eth_address);
-        }
+        (,,,, bet_amount) = race.getCoinIndex(horse, eth_address);
         
         //winner if the eth_address had a bet > 0 on the winner horse
         return (bet_amount > 0, horse);
@@ -572,7 +585,6 @@ contract RoyalStablesInterface {
     @dev EthorseHelpers and AccessManager
 */
 contract HorseyToken is EthorseHelpers,Pausable {
-    using SafeMath for uint256;
 
     /// @dev called when someone claims a token
     event Claimed(address raceAddress, address eth_address, uint256 tokenId);
@@ -735,7 +747,7 @@ contract HorseyToken is EthorseHelpers,Pausable {
         //call _isWinnerOf with a 0 address to simply get the winner horse
         bytes32 winner;
         bool res;
-        (res,winner) = _isWinnerOf(raceAddress, address(0));
+        (res,winner) = _isWinnerOf(raceAddress, msg.sender);
         require(winner != bytes32(0),"Winner is zero");
         require(res,"can_claim return false");
         //require(!exists(id)); should already be checked by mining function
@@ -762,7 +774,7 @@ contract HorseyToken is EthorseHelpers,Pausable {
         //Return over paid amount to sender if necessary
         if(msg.value > renamingFee) //overpaid
         {
-            msg.sender.transfer(msg.value.sub(renamingFee));
+            msg.sender.transfer(msg.value - renamingFee);
         }
         //store the new name
         stables.storeName(tokenId,newName);
@@ -884,7 +896,7 @@ contract HorseyToken is EthorseHelpers,Pausable {
         uint8 tier;
         uint8 feedingCounter;
         (,,feedingCounter,tier) = stables.horseys(tokenId);
-        uint256 probabilityByRarity = 10 ** (uint256(tier).add(1));
+        uint256 probabilityByRarity = 10 ** uint256(tier + 1);
         uint256 randNum = uint256(keccak256(abi.encodePacked(tokenId, blockHash))) % probabilityByRarity;
 
         //Scale probability based on horsey's level
@@ -933,7 +945,7 @@ contract HorseyToken is EthorseHelpers,Pausable {
         uint8 tier;
         bytes32 dna;
         (,dna,,tier) = stables.horseys(tokenId);
-        if(tier < 255)
+        if(tier < 254)
             stables.modifyHorseyTier(tokenId,tier+1);
         uint256 random = uint256(keccak256(abi.encodePacked(tokenId, blockHash)));
         //this creates a mask of 256 bits such as one of the first 16 bits will be 1
