@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x84815cf503c3f184c094aeb84e8ec5bc8407a1bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xfc68c50fbc83a89abdc1f7abe1ae3e8849e6ca12
 */
 pragma solidity ^0.4.19;
 
@@ -45,91 +45,13 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoBegintime;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    function ico() public payable {
-        require(now >= icoBegintime && now <= icoEndtime);
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() public {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 300000000000000000000000000;
-        name = 'Betcruisez';
-        symbol = 'BCZ';
+        totalSupply = 10000000000000000000000000000;
+        name = 'Digital Life Technology Treasure';
+        symbol = 'DLTT';
         decimals = 18;
-        balanceOf[0xa7e29380eaa0f4fdb9601a06eab1791772dbd24e] = totalSupply;
-        Transfer(address(0), 0xa7e29380eaa0f4fdb9601a06eab1791772dbd24e, totalSupply);
-
-        icoRatio = 4000;
-        icoBegintime = 1531191600;
-        icoEndtime = 1539183600;
-        icoSender = 0xa7e29380eaa0f4fdb9601a06eab1791772dbd24e;
-        icoHolder = 0xa7e29380eaa0f4fdb9601a06eab1791772dbd24e;
-
-        lockedAddresses[0xcdd751d8f54ba3ba339959f5cff0495209766742] = LockMeta({amount: 129000000000000000000000000, endtime: 1562770800});
-    }
-
-    function() public payable {
-        ico();
+        balanceOf[0xD5F8fEd6F45A4a82E54e4D922C7F050B18566Cab] = totalSupply;
+        Transfer(address(0), 0xD5F8fEd6F45A4a82E54e4D922C7F050B18566Cab, totalSupply);
     }
 }
