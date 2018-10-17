@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernalCup at 0x2fc7a61a978204f467c417f757447421d6367528
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernalCup at 0x839192fc5a302732736060a0d59eefa1ed92cbe8
 */
 pragma solidity 0.4.23;
 
@@ -116,7 +116,7 @@ contract EthernalCup is Ownable {
 	);
 
 	uint public constant LOCK_START = 1531663200; // 2018/07/15 2:00pm (UTC)
-	uint public constant LOCK_END = 1500145200; // 2018/07/15 19:00pm (UTC)
+	uint public constant LOCK_END = 1531681200; // 2018/07/15 19:00pm (UTC)
 	uint public constant TOURNAMENT_ENDS = 1531677600; // 2018/07/15 18:00pm (UTC)
 
 	int public constant BUY_INCREASE = 20;
