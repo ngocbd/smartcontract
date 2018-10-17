@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineCrowdsale at 0x693f87d7f397dd3be02fe9899d2a6d2132d5a460
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineCrowdsale at 0x77b2d3681c8c715e7def3ac47e35b00b73de4272
 */
 pragma solidity ^0.4.23;
 
@@ -826,8 +826,8 @@ contract GrapevineCrowdsale is CappedCrowdsale, TimedCrowdsale, Pausable, Refund
     authorisedInvestors = _authorisedInvestors;
     earlyInvestors = _earlyInvestors;
     // token delivery starts 5 days after the crowdsale ends.
-    //deliveryTime = _closingTime.add(60*60*24*5);
-    deliveryTime = _closingTime.add(60*5);
+    deliveryTime = _closingTime.add(60*60*24*5);
+    // deliveryTime = _closingTime.add(60*5);
   }
 
   /**
