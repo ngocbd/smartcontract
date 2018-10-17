@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veen at 0x5206186997FeC1951482C2304A246BeF34dcEE12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veen at 0x54F0E3b0d7CcBB65E56D166350aa86F7E71cE20b
 */
 pragma solidity ^0.4.18;
 
@@ -73,12 +73,12 @@ contract Ownable {
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   using SafeMath for uint256;
-
+  uint256 public startdate;
 
   function Ownable() public {
 
     owner = msg.sender;
-
+    startdate = now;
   }
 
   modifier onlyOwner() {
@@ -104,9 +104,11 @@ contract Ownable {
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
-
+  mapping(address => uint256) private _lock_list_period;
+  mapping(address => bool) private _lock_list;
   bool public paused = false;
-
+  mapping(address => uint256) internal _balances;
+  uint256 internal _tokenSupply;
 
   /**
    * @dev Modifier to make a function callable only when the contract is not paused.
@@ -123,6 +125,48 @@ contract Pausable is Ownable {
     require(paused);
     _;
   }
+  /**
+   *
+   */
+
+
+
+  modifier isLockAddress() {
+    check_lock_period(msg.sender);
+    if(_lock_list[msg.sender]){
+        revert();
+    }
+
+    _;
+
+  }
+
+  function check_lock_period(address check_address) {
+      if(now > _lock_list_period[check_address] && _lock_list[check_address]){
+        _lock_list[check_address] = false;
+        _tokenSupply = _tokenSupply.add(_balances[check_address]);
+      }
+
+  }
+
+  function check_period(address check_address) constant public returns(uint256){
+      return _lock_list_period[check_address];
+
+  }
+
+  function check_lock(address check_address) constant public returns(bool){
+
+      return _lock_list[check_address];
+
+  }
+  /**
+   *
+   */
+  function set_lock_list(address lock_address, uint period) onlyOwner external {
+      _lock_list_period[lock_address] = startdate + (period * 1 days);
+      _lock_list[lock_address]  = true;
+      _tokenSupply = _tokenSupply.sub(_balances[lock_address]);
+  }
 
   /**
    * @dev called by the owner to pause, triggers stopped state
@@ -131,7 +175,6 @@ contract Pausable is Ownable {
     paused = true;
     Pause();
   }
-
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
@@ -153,7 +196,6 @@ contract Pausable is Ownable {
        \__/   \___| \___||_| |_|
 
     @title Veen Token Contract.
-    @author Dohyeon Lee
     @description ERC-20 Interface
 
 */
@@ -182,17 +224,17 @@ interface ERC223 {
 /*
  * Contract that is working with ERC223 tokens
  */
- 
+
  contract ContractReceiver {
-     
+
     struct TKN {
         address sender;
         uint value;
         bytes data;
         bytes4 sig;
     }
-    
-    
+
+
     function tokenFallback(address _from, uint _value, bytes _data) public pure {
       TKN memory tkn;
       tkn.sender = _from;
@@ -200,7 +242,7 @@ interface ERC223 {
       tkn.data = _data;
       uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
       tkn.sig = bytes4(u);
-      
+
       /* tkn variable is analogue of msg variable of Ether transaction
       *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
       *  tkn.value the number of tokens that were sent   (analogue of msg.value)
@@ -222,7 +264,6 @@ interface ERC223 {
        \__/   \___| \___||_| |_|
 
     @title Veen Token Contract.
-    @author Dohyeon Lee
     @description Veen token is a ERC20-compliant token.
 
 */
@@ -234,9 +275,9 @@ contract Veen is ERC20Token, Pausable, ERC223{
     string public constant name = "Veen";
     string public constant symbol = "VEEN";
     uint8 public constant decimals = 18;
-    uint private _tokenSupply;
+
     uint private _totalSupply;
-    mapping(address => uint256) private _balances;
+
     mapping(address => mapping(address => uint256)) private _allowed;
     event MintedLog(address to, uint256 amount);
     event Transfer(address indexed from, address indexed to, uint value);
@@ -276,7 +317,7 @@ contract Veen is ERC20Token, Pausable, ERC223{
         return _balances[tokenOwner];
     }
 
-    function transfer(address to, uint tokens) whenNotPaused public returns(bool success){
+    function transfer(address to, uint tokens) whenNotPaused isLockAddress public returns(bool success){
     bytes memory empty;
     	if(isContract(to)) {
         	return transferToContract(to, tokens, empty);
@@ -329,7 +370,7 @@ contract Veen is ERC20Token, Pausable, ERC223{
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
-  
+
   //function that is called when transaction target is a contract
   function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
     if (balanceOf(msg.sender) < _value) revert();
