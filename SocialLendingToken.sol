@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialLendingToken at 0x8bc88556445659186f7e7c0acfb0fd266906f1a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SocialLendingToken at 0x851017523ae205adc9195e7f97d029f4cfe7794c
 */
 pragma solidity ^0.4.18;
 
@@ -359,30 +359,6 @@ contract BurnableToken is BasicToken, Ownable {
     }
 }
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is Standard223Token, Ownable {
-    event Mint(address indexed to, uint256 amount);
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-        require(!isContract(_to));
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-}
 
 /**
  * @title Frozen token
@@ -422,11 +398,12 @@ contract ERC223Receiver {
  * ERC20 token
  * SLT
  */
-contract SocialLendingToken is Pausable, BurnableToken, MintableToken, FrozenToken {
+contract SocialLendingToken is Pausable, BurnableToken, Standard223Token, FrozenToken {
 
     string public name;
     string public symbol;
     uint public decimals;
+    address public airdroper;
 
 
     function SocialLendingToken(uint _initialSupply, string _name, string _symbol, uint _decimals) public {
@@ -434,6 +411,7 @@ contract SocialLendingToken is Pausable, BurnableToken, MintableToken, FrozenTok
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        airdroper = msg.sender;
         balances[msg.sender] = _initialSupply;
         Transfer(0x0, msg.sender, _initialSupply);
     }
@@ -469,48 +447,61 @@ contract SocialLendingToken is Pausable, BurnableToken, MintableToken, FrozenTok
 
     event Airdrop(address indexed from, uint addressCount, uint totalAmount);
     event AirdropDiff(address indexed from, uint addressCount, uint totalAmount);
-    
+    event SetAirdroper(address indexed airdroper);
+
+    function setAirdroper(address _airdroper) public onlyOwner returns (bool){
+        require(_airdroper != address(0) && _airdroper != airdroper);
+        airdroper = _airdroper;
+        SetAirdroper(_airdroper);
+        return true;
+    }
+
+    modifier onlyAirdroper(){
+        require(msg.sender == airdroper);
+        _;
+    }
+
     /**
      * @dev airdrop token to address list, each address distributes the same number of token
      *
      * @param _addresses address list to distributes
      * @param _value Amount of tokens.
      */
-    function airdrop(uint _value,address[] _addresses) public whenNotPaused onlyOwner returns (bool success){
+    function airdrop(uint _value, address[] _addresses) public whenNotPaused onlyAirdroper returns (bool success){
         uint addressCount = _addresses.length;
         require(addressCount > 0 && addressCount <= 1000);
         uint totalAmount = _value.mul(addressCount);
         require(_value > 0 && balances[msg.sender] >= totalAmount);
 
         balances[msg.sender] = balances[msg.sender].sub(totalAmount);
-        for(uint i=0; i<addressCount; i++){
+        for (uint i = 0; i < addressCount; i++) {
             require(_addresses[i] != address(0));
             balances[_addresses[i]] = balances[_addresses[i]].add(_value);
             Transfer(msg.sender, _addresses[i], _value);
         }
-        Airdrop(msg.sender,addressCount,totalAmount);
+        Airdrop(msg.sender, addressCount, totalAmount);
         return true;
     }
-    
-    function airdropDiff(uint[] _values,address[] _addresses) public whenNotPaused onlyOwner returns (bool success){
+
+    function airdropDiff(uint[] _values, address[] _addresses) public whenNotPaused onlyAirdroper returns (bool success){
         uint addressCount = _addresses.length;
 
         require(addressCount == _values.length);
         require(addressCount > 0 && addressCount <= 1000);
 
         uint totalAmount = 0;
-        for(uint i=0; i<addressCount; i++){
-            require(_values[i] > 0 );
+        for (uint i = 0; i < addressCount; i++) {
+            require(_values[i] > 0);
             totalAmount = totalAmount.add(_values[i]);
         }
         require(balances[msg.sender] >= totalAmount);
         balances[msg.sender] = balances[msg.sender].sub(totalAmount);
-        for(uint j=0; j<addressCount; j++){
+        for (uint j = 0; j < addressCount; j++) {
             require(_addresses[j] != address(0));
             balances[_addresses[j]] = balances[_addresses[j]].add(_values[j]);
             Transfer(msg.sender, _addresses[j], _values[j]);
         }
-        AirdropDiff(msg.sender,addressCount,totalAmount);
+        AirdropDiff(msg.sender, addressCount, totalAmount);
         return true;
     }
 }
