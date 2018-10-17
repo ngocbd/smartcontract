@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DNEW at 0xbbddb9e125e6ccdeb11829484c15141f39b20586
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DNEW at 0x0fc5c437610152223aac0546b0b7d986248fd6d0
 */
 pragma solidity ^0.4.24;
 
@@ -135,7 +135,7 @@ contract F3DNEW is modularShort {
     //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
     //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "F3DTOP";
+    string constant public name = "F3D TOP";
     string constant public symbol = "F3DTOP";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
