@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0xb85a54944b58342b07887942e6f530f616479efd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0xb389327f8325d9568826b0f3ca63ef613687cfab
 */
 pragma solidity ^0.4.21;
 
@@ -252,8 +252,8 @@ contract EthTeamContract is StandardToken, Ownable {
         require(_value <= balances_[msg.sender] && status == 0);
         // If gameTime is enabled (larger than 1514764800 (2018-01-01))
         if (gameTime > 1514764800) {
-            // We will not allowed to sell after 5 minutes (300 seconds) before game start
-            require(gameTime - 300 > block.timestamp);
+            // We will not allowed to sell after game start
+            require(gameTime > block.timestamp);
         }
         balances_[msg.sender] = balances_[msg.sender].sub(_value);
         totalSupply_ = totalSupply_.sub(_value);
@@ -273,8 +273,8 @@ contract EthTeamContract is StandardToken, Ownable {
         require(status == 0 && price > 0);
         // If gameTime is enabled (larger than 1514764800 (2018-01-01))
         if (gameTime > 1514764800) {
-            // We will not allowed to sell after 5 minutes (300 seconds) before game start
-            require(gameTime - 300 > block.timestamp);
+            // We will not allowed to buy after game start
+            require(gameTime > block.timestamp);
         }
         uint256 amount = msg.value.div(price);
         balances_[msg.sender] = balances_[msg.sender].add(amount);
@@ -294,6 +294,16 @@ contract EthTeamContract is StandardToken, Ownable {
         require(status != _status);
         status = _status;
         emit ChangeStatus(address(this), _status);
+    }
+
+    /**
+    * @dev Change the fee owner.
+    *
+    * @param _feeOwner The new fee owner.
+    */
+    function changeFeeOwner(address _feeOwner) onlyOwner public {
+        require(_feeOwner != feeOwner && _feeOwner != address(0));
+        feeOwner = _feeOwner;
     }
 
     /**
