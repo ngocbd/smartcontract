@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x13b9B6F3244AA81C651e75298efE19EBFbfeE245
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xb0C1517fAd0027C58a8872Dc4C0a1AAbF395e162
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
 
 pragma solidity ^0.4.8;
@@ -111,25 +110,19 @@ contract Ownable {
 
 }
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -173,9 +166,7 @@ library SafeMathLibExt {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -222,9 +213,7 @@ contract Haltable is Ownable {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -276,9 +265,7 @@ contract PricingStrategy {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -312,9 +299,7 @@ contract FinalizeAgent {
 
 }
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  */
 
 
@@ -949,7 +934,7 @@ contract CrowdsaleExt is Haltable {
 }
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
@@ -957,7 +942,7 @@ contract CrowdsaleExt is Haltable {
 
 
 /**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ * This smart contract code is Copyright 2018 K Systems Ltd. For more information see https://ksystems.io
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
