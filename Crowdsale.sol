@@ -1,111 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc6c940113cec3c2dd611d6af54be01fc9bf33f43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x48d14cbdb5c6ffbc32762d76b32f5e35e2a7d3d3
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.18;
 
-interface DreamToken {
-    function transfer(address receiver, uint amount) external;
-    function transferFrom(address from, address to, uint tokens) external returns (bool success);
-    function totalSupply() external constant returns (uint);
+interface token {
+    function transfer(address receiver, uint amount) public;
 }
 
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
+contract Crowdsale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
 
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
+    /**
+     * Constructor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint etherCostOfEachToken,
+        address addressOfTokenUsedAsReward
+    ) public{
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        deadline = 1529362800 + durationInMinutes * 1 minutes;
+        price = etherCostOfEachToken * 33 szabo;
+        tokenReward = token(addressOfTokenUsedAsReward);
 }
 
-contract Owned {
-    address public owner;
-    address public newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() public {
-        owner = msg.sender;
+     /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () payable public{
+        require(!crowdsaleClosed);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount * 10**18 / price);
+        FundTransfer(msg.sender, amount, true);
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline public{
+        if (amountRaised >= fundingGoal){
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
-    }
 
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline public{
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
 
-contract Crowdsale is Owned, SafeMath {
-    address public escrowAddress;
-    uint public totalEthInWei;
-    
-    uint start = 1529274449;
-    uint period = 1;
-    uint amountPerEther = 1500;
-    uint minAmount = 1e16; // 0.01 ETH
-    DreamToken token;
-
-    function Crowdsale() public {
-        escrowAddress = owner;
-        token = DreamToken(0xBcd4012cECBbFc7a73EC4a14EBb39406D361a0f5);
-    }
-
-    function setEscrowAddress(address newAddress)
-    public onlyOwner returns (bool success) {
-        escrowAddress = newAddress;
-
-        return true;
-    }
-    
-    function setAmountPerEther(uint newAmount)
-    public onlyOwner returns (bool success) {
-        amountPerEther = newAmount;
-
-        return true;
-    }
-    
-    function getSaleIsOn()
-    public constant returns (bool success) {
-        
-        return now > start && now < start + period * 13 days;
-    }
-    
-    function() external payable {
-        require(getSaleIsOn());
-        require(msg.value >= minAmount);
-        totalEthInWei = totalEthInWei + msg.value;
-        
-        if (owner != msg.sender) {
-            uint amount = safeDiv(msg.value, 1e10);
-            amount = safeMul(amount, amountPerEther);
-            token.transferFrom(owner, msg.sender, amount);
-            
-            //Transfer ether to fundsWallet
-            escrowAddress.transfer(msg.value);
-            //emit Transfer(msg.sender, _to, _value);
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
         }
     }
 }
