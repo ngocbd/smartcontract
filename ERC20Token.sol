@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20token at 0x7d3bef56d19f4f1e1ef6eec8e8816a2de29d0721
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20token at 0x1f67f06f949a912973ee75086f56b5d2478987b0
 */
 pragma solidity ^0.4.16;
 
@@ -57,10 +57,6 @@ contract ERC20token{
         frozenAccount[_target] = _freeze;
         return true;
     }
-    
-    // function cgadmin(address _newadmin) public returns (bool){
-    //      require(msg.sender == admin);
-    // }
     
     function approve(address _spender, uint256 _value) public returns (bool success)
     {
