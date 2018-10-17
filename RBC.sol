@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RBC at 0xa33957f3cE69A01c0BB99B82bECc94A23DDB0302
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RBC at 0x8275dfa0a01d85f77c33a0230c4242b74eb9a7e2
 */
 pragma solidity ^0.4.16;
 contract RBC{
@@ -23,7 +23,7 @@ contract RBC{
     function RBC() public {
         balances[msg.sender] = 20000000000000;               // Give the creator all initial tokens
         totalSupply = 20000000000000;                        // Update total supply
-        name = "bccbtoken";                                   // Set the name for display purposes
+        name = "Riceball coin";                                   // Set the name for display purposes
         decimals =4;                            // Amount of decimals for display purposes
         symbol = "RBC";                               // Set the symbol for display purposes
     }
