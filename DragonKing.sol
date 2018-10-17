@@ -1,7 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x58bf4d7869517fb67fdc4fac0897e7829d19f47e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0xa03b5ea89ede664ccb3b4a49c5b25f6a4658e174
 */
 /**
+ * Note for the truffle testversion:
+ * DragonKingTest inherits from DragonKing and adds one more function for testing the volcano from truffle.
+ * For deployment on ropsten or mainnet, just deploy the DragonKing contract and remove this comment before verifying on
+ * etherscan.
+ * */
+
+ /**
   * Dragonking is a blockchain game in which players may purchase dragons and knights of different levels and values.
   * Once every period of time the volcano erupts and wipes a few of them from the board. The value of the killed characters
   * gets distributed amongst all of the survivors. The dragon king receive a bigger share than the others.
@@ -14,11 +21,16 @@
 
 pragma solidity ^ 0.4 .17;
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
@@ -30,6 +42,7 @@ contract Ownable {
     owner = msg.sender;
   }
 
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -38,35 +51,30 @@ contract Ownable {
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 }
 
-contract mortal is Ownable{
+contract mortal is Ownable {
+	address owner;
 
-	function mortal() public {
+	function mortal() {
+		owner = msg.sender;
 	}
 
 	function kill() internal {
-		selfdestruct(owner);
+		suicide(owner);
 	}
 }
-
 
 contract Token {
 	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
@@ -123,6 +131,8 @@ contract DragonKing is mortal {
 	/** knight cooldown. contains the timestamp of the earliest possible moment to start a fight */
 	mapping(uint32 => uint) public cooldown;
 	uint256 public constant CooldownThreshold = 1 days;
+	/** fight factor, used to compute extra probability in fight **/
+	uint8 public fightFactor;
 
 	/** the teleport token contract used to send knights to the game scene */
 	Token teleportToken;
@@ -135,10 +145,15 @@ contract DragonKing is mortal {
 	/** tells the number of times a character is protected */
 	mapping(uint32 => uint8) public protection;
 
-	// MODIFIER
+	/** the SKL token contract **/
+	Token sklToken;
+	/** the XP token contract **/
+	Token xperToken;
+
+	// EVENTS
 
 	/** is fired when new characters are purchased (who bought how many characters of which type?) */
-	event NewPurchase(address player, uint8 characterType, uint8 amount, uint32 startId);
+	event NewPurchase(address player, uint8 characterType, uint16 amount, uint32 startId);
 	/** is fired when a player leaves the game */
 	event NewExit(address player, uint256 totalBalance, uint32[] removedCharacters);
 	/** is fired when an eruption occurs */
@@ -146,14 +161,22 @@ contract DragonKing is mortal {
 	/** is fired when a single character is sold **/
 	event NewSell(uint32 characterId, address player, uint256 value);
 	/** is fired when a knight fights a dragon **/
-	event NewFight(uint32 winnerID, uint32 loserID, uint256 value);
+	event NewFight(uint32 winnerID, uint32 loserID, uint256 value, uint16 probability, uint16 dice);
 	/** is fired when a knight is teleported to the field **/
 	event NewTeleport(uint32 characterId);
 	/** is fired when a protection is purchased **/
 	event NewProtection(uint32 characterId, uint8 lifes);
 
 	/** initializes the contract parameters	 */
-	function DragonKing(address teleportTokenAddress, address neverdieTokenAddress, uint8 eruptionThresholdInHours, uint8 percentageOfCharactersToKill, uint8 characterFee, uint16[] charactersCosts, uint16[] balloonsCosts) public onlyOwner {
+	function DragonKing(address teleportTokenAddress,
+											address neverdieTokenAddress,
+											address sklTokenAddress,
+											address xperTokenAddress,
+											uint8 eruptionThresholdInHours,
+											uint8 percentageOfCharactersToKill,
+											uint8 characterFee,
+											uint16[] charactersCosts,
+											uint16[] balloonsCosts) public onlyOwner {
 		fee = characterFee;
 		for (uint8 i = 0; i < charactersCosts.length * 2; i++) {
 			costs.push(uint128(charactersCosts[i % numDragonTypes]) * 1 finney);
@@ -164,7 +187,7 @@ contract DragonKing is mortal {
 			costs.push(uint128(balloonsCosts[j]) * 1 finney);
 			values.push(costs[balloonsIndex + j] - costs[balloonsIndex + j] / 100 * fee);
 		}
-		eruptionThreshold = eruptionThresholdInHours * 60 * 60; // convert to seconds
+		eruptionThreshold = uint(eruptionThresholdInHours) * 60 * 60; // convert to seconds
 		percentageToKill = percentageOfCharactersToKill;
 		maxCharacters = 600;
 		nextId = 1;
@@ -172,6 +195,9 @@ contract DragonKing is mortal {
 		teleportPrice = 1000000000000000000;
 		neverdieToken = Token(neverdieTokenAddress);
 		protectionPrice = 1000000000000000000;
+		fightFactor = 4;
+		sklToken = Token(sklTokenAddress);
+		xperToken = Token(xperTokenAddress);
 	}
 
 	/**
@@ -179,7 +205,7 @@ contract DragonKing is mortal {
 	 * @param characterType the type of the character
 	 */
 	function addCharacters(uint8 characterType) payable public {
-		uint8 amount = uint8(msg.value / costs[characterType]);
+		uint16 amount = uint16(msg.value / costs[characterType]);
 		uint16 nchars = numCharacters;
 		if (characterType >= costs.length || msg.value < costs[characterType] || nchars + amount > maxCharacters) revert();
 		uint32 nid = nextId;
@@ -230,9 +256,9 @@ contract DragonKing is mortal {
 		uint playerBalance;
 		uint16 nchars = numCharacters;
 		for (uint16 i = 0; i < nchars; i++) {
-			if (characters[ids[i]].owner == msg.sender) {
+			if (characters[ids[i]].owner == msg.sender && characters[ids[i]].characterType < 2*numDragonTypes) {
 				//first delete all characters at the end of the array
-				while (nchars > 0 && characters[ids[nchars - 1]].owner == msg.sender) {
+				while (nchars > 0 && characters[ids[nchars - 1]].owner == msg.sender && characters[ids[nchars - 1]].characterType < 2*numDragonTypes) {
 					nchars--;
 					lastId = ids[nchars];
 					numCharactersXType[characters[lastId].characterType]--;
@@ -242,7 +268,7 @@ contract DragonKing is mortal {
 					if (lastId == oldest) oldest = 0;
 					delete characters[lastId];
 				}
-				//if the last character does not belong to the player, replace the players character by this last one
+				//replace the players character by the last one
 				if (nchars > i + 1) {
 					playerBalance += characters[ids[i]].value;
 					removed[count] = ids[i];
@@ -312,18 +338,16 @@ contract DragonKing is mortal {
 			NewEruption(hitCharacters, 0, gasCost);
 	}
 
-
 	/**
 	 * A knight may attack a dragon, but not choose which one.
-	 * The creature with the higher level wins. The level is determined by characterType % numDragonTypes.
-	 * The value of the loser is transfered to the winner. In case of a the same level, the winner is chosen randomly.
+	 * The value of the loser is transfered to the winner.
 	 * @param knightID the ID of the knight to perfrom the attack
 	 * @param knightIndex the index of the knight in the ids-array. Just needed to save gas costs.
-	 *					  In case it's unknown or incorrect, the index is looked up in the array.
+	 *						In case it's unknown or incorrect, the index is looked up in the array.
 	 * */
 	function fight(uint32 knightID, uint16 knightIndex) public {
 		if (knightID != ids[knightIndex])
-			knightID = getCharacterIndex(knightID);
+			knightIndex = getCharacterIndex(knightID);
 		Character storage knight = characters[knightID];
 		require(cooldown[knightID] + CooldownThreshold <= now);
 		require(knight.owner == msg.sender);
@@ -333,9 +357,37 @@ contract DragonKing is mortal {
 		assert(dragonIndex < maxCharacters);
 		uint32 dragonID = ids[dragonIndex];
 		Character storage dragon = characters[dragonID];
-		uint16 tieBreaker = uint16(now % 2);
 		uint128 value;
-		if (knight.characterType - numDragonTypes > dragon.characterType || (knight.characterType - numDragonTypes == dragon.characterType && tieBreaker == 0)) {
+		uint16 base_probability;
+		uint16 dice = uint16(generateRandomNumber(knightID) % 100);
+		uint256 knightPower = sklToken.balanceOf(knight.owner) / 10**15 + xperToken.balanceOf(knight.owner);
+		uint256 dragonPower = sklToken.balanceOf(dragon.owner) / 10**15 + xperToken.balanceOf(dragon.owner);
+		if (knight.value == dragon.value) {
+				base_probability = 50;
+			if (knightPower > dragonPower) {
+				base_probability += uint16(100 / fightFactor);
+			} else if (dragonPower > knightPower) {
+				base_probability -= uint16(100 / fightFactor);
+			}
+		} else if (knight.value > dragon.value) {
+			base_probability = 100;
+			if (dragonPower > knightPower) {
+				base_probability -= uint16((100 * dragon.value) / knight.value / fightFactor);
+			}
+		} else if (knightPower > dragonPower) {
+				base_probability += uint16((100 * knight.value) / dragon.value / fightFactor);
+		}
+  
+		if (dice >= base_probability) {
+			// dragon won
+			value = hitCharacter(knightIndex, numCharacters);
+			if (value > 0) {
+				numCharacters--;
+			}
+			dragon.value += value;
+			NewFight(dragonID, knightID, value, base_probability, dice);
+		} else {
+			// knight won
 			value = hitCharacter(dragonIndex, numCharacters);
 			if (value > 0) {
 				numCharacters--;
@@ -343,15 +395,7 @@ contract DragonKing is mortal {
 			knight.value += value;
 			cooldown[knightID] = now;
 			if (oldest == 0) findOldest();
-			NewFight(knightID, dragonID, value);
-		}
-		else {
-			value = hitCharacter(knightIndex, numCharacters);
-			if (value > 0) {
-				numCharacters--;
-			}
-			dragon.value += value;
-			NewFight(dragonID, knightID, value);
+			NewFight(knightID, dragonID, value, base_probability, dice);
 		}
 	}
 
@@ -470,13 +514,23 @@ contract DragonKing is mortal {
 	}
 
 	/**
+	 * pays out the players.
+	 * */
+	function payOut() public onlyOwner {
+		for (uint16 i = 0; i < numCharacters; i++) {
+			characters[ids[i]].owner.transfer(characters[ids[i]].value);
+			delete characters[ids[i]];
+		}
+		delete ids;
+		numCharacters = 0;
+	}
+
+	/**
 	 * pays out the players and kills the game.
 	 * */
 	function stop() public onlyOwner {
 		withdraw();
-		for (uint16 i = 0; i < numCharacters; i++) {
-			characters[ids[i]].owner.transfer(characters[ids[i]].value);
-		}
+		payOut();
 		kill();
 	}
 
@@ -656,10 +710,18 @@ contract DragonKing is mortal {
 	 * @param prices the prices in finney
 	 * */
 	function setPrices(uint16[] prices) public onlyOwner {
-		for (uint8 i = 0; i < prices.length * 2; i++) {
-			costs[i] = uint128(prices[i % numDragonTypes]) * 1 finney;
+		for (uint8 i = 0; i < prices.length; i++) {
+			costs[i] = uint128(prices[i]) * 1 finney;
 			values[i] = costs[i] - costs[i] / 100 * fee;
 		}
+	}
+
+	/**
+	 * sets the fight factor
+	 * @param _factor the new fight factor
+	 * */
+	function setFightFactor(uint8 _factor) public onlyOwner {
+		fightFactor = _factor;
 	}
 
 	/**
@@ -693,7 +755,7 @@ contract DragonKing is mortal {
 	function setProtectionPrice(uint price) public onlyOwner {
 		protectionPrice = price;
 	}
-	
+
 	/**
 	 * sets the eruption threshold
 	 * @param et the new eruption threshold in seconds
@@ -702,6 +764,9 @@ contract DragonKing is mortal {
 		eruptionThreshold = et;
 	}
 
+  function setPercentageToKill(uint8 percentage) public onlyOwner {
+    percentageToKill = percentage;
+  }
 
 	/************* HELPERS ****************/
 
