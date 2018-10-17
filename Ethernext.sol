@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethernext at 0xb5d83af67a7ae382ae16687c893e6ab725b8411e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethernext at 0x05d2b0239e6646765865abe47a72202916caf559
 */
 pragma solidity ^0.4.18;
 
