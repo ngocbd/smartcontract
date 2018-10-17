@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FantomToken at 0x4198958c0324d322c0d7118495a5327304fa624b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FantomToken at 0xb426d168489b87326a0de11ed29b7391750e8ebd
 */
 pragma solidity ^0.4.18;
 
@@ -108,8 +108,8 @@ contract FantomToken is ERC20Interface, Owned, SafeMath {
         name = "Fantom Token";
         decimals = 18;
         _totalSupply = 3175000000000000000000000000;
-        balances[0x77fFE7227F78237c59D43EDdEC6cC259e1556bF6] = _totalSupply;
-        Transfer(address(0), 0x77fFE7227F78237c59D43EDdEC6cC259e1556bF6, _totalSupply);
+        balances[0xaf892edC9515Ba62151d44219eA2149A86B86F93] = _totalSupply;
+        Transfer(address(0), 0xaf892edC9515Ba62151d44219eA2149A86B86F93, _totalSupply);
     }
 
 
