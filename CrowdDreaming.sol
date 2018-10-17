@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdDreaming at 0x932846377682c5e0077ff7b9dc67140c2257c089
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdDreaming at 0x085558b7561b51ffb0a4dabe7459d359c05b58cc
 */
 pragma solidity ^0.4.16;
 
@@ -151,6 +151,5 @@ contract CrowdDreaming is ERC20 {
         uint256 amount = token.balanceOf(address(this));
         return token.transfer(owner, amount);
     }
-
 
 }
