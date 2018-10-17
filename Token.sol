@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xae9080243b0123a0c52aacdb955a5807cc4e7803
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6206387a8644647f9e02a360b247dc081b7bcd99
 */
-/*! iqcash.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+/*! greentoken.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
 pragma solidity 0.4.24;
 
@@ -326,7 +326,7 @@ contract Manageable is Ownable {
 
 
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(11380000e8) StandardToken("IQ Receipt", "IQ", 8) public {
+    constructor() CappedToken(500000000e8) StandardToken("Greentoken", "GTN", 8) public {
         
     }
 }
