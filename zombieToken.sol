@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieToken at 0x83b8c8a08938b878017fdf0ec0a689313f75739d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract zombieToken at 0x2bb48fe71ba5f73ab1c2b9775cfe638400110d34
 */
 pragma solidity ^0.4.18;
 
@@ -105,7 +105,7 @@ contract ERC20Token {
     mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, uint256 value, address indexed to, bytes extraData);
+    event Approval(address indexed from, uint256 value, address indexed to);
 
     function ERC20Token() public {
     }
@@ -169,11 +169,10 @@ contract ERC20Token {
      *
      * @param spender The address authorized to spend
      * @param value the max amount they can spend
-     * @param extraData some extra information to send to the approved contract
      */
-    function approve(address spender, uint256 value, bytes extraData) public returns (bool success) {
+    function approve(address spender, uint256 value) public returns (bool success) {
         allowance[msg.sender][spender] = value;
-        Approval(msg.sender, value, spender, extraData);
+        Approval(msg.sender, value, spender);
         return true;
     }
 
