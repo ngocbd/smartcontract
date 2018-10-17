@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0xa6b6cba3a9f54b9b900add306024c0a27af4034c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0x81f99272f195cacc08e3bdf413f0c32a90aa20e6
 */
 pragma solidity ^0.4.24;
 
@@ -118,7 +118,6 @@ contract ESSENTIA_PE is Ownable {
     // Constant to simplify the conversion of token amounts into integer form
     uint256 public tokenUnit = uint256(10)**decimals;
 
-    TokenCHK essToken;
 
 
     //
@@ -146,7 +145,7 @@ contract ESSENTIA_PE is Ownable {
         ) public {
         FWDaddrETH = toETHaddr;
         ESSgenesis = addrESSgenesis;
-        essToken = TokenCHK(addrESSgenesis);
+
     }
 
 
@@ -158,32 +157,32 @@ contract ESSENTIA_PE is Ownable {
 
 
 
-    function setFWDaddrETH(address _value) public onlyOwner{
-      FWDaddrETH=_value;     // Set the forward address default toETHaddr
+    function setFWDaddrETH(address _value) public onlyOwner {
+      FWDaddrETH = _value;     // Set the forward address default toETHaddr
 
     }
 
 
-    function setGenesis(address _value) public onlyOwner{
-      ESSgenesis=_value;     // Set the ESS erc20 genesis contract address default ESSgenesis
+    function setGenesis(address _value) public onlyOwner {
+      ESSgenesis = _value;     // Set the ESS erc20 genesis contract address default ESSgenesis
 
     }
 
 
-    function setMaxCap(uint256 _value) public onlyOwner{
-      maxCap=_value;         // Set the max cap in ETH default 0
+    function setMaxCap(uint256 _value) public onlyOwner {
+      maxCap = _value;         // Set the max cap in ETH default 0
 
     }
 
 
-    function setPrice(uint256 _value) public onlyOwner{
-      tokenPrice=_value;     // Set the token price default 0
+    function setPrice(uint256 _value) public onlyOwner {
+      tokenPrice = _value;     // Set the token price default 0
 
     }
 
 
-    function setPubEnd(uint256 _value) public onlyOwner{
-      pubEnd=_value;         // Set the END of the public engagement unixtime default 0
+    function setPubEnd(uint256 _value) public onlyOwner {
+      pubEnd = _value;         // Set the END of the public engagement unixtime default 0
 
     }
 
@@ -194,6 +193,7 @@ contract ESSENTIA_PE is Ownable {
 
         require(block.timestamp < pubEnd);          // Require the current unixtime to be lower than the END unixtime
         require(msg.value > 0);                     // Require the sender to send an ETH tx higher than 0
+        require(msg.value <= msg.sender.balance + msg.value);   // Require the sender to have sufficient ETH balance for the tx
 
         // Requiring this to avoid going out of tokens, aka we are getting just true/false from the transfer call
         require(msg.value + totalSold <= maxCap);
@@ -202,7 +202,7 @@ contract ESSENTIA_PE is Ownable {
         uint256 tokenAmount = (msg.value * tokenUnit) / tokenPrice;
 
         // Requiring sufficient token balance on this contract to accept the tx
-        require(tokenAmount <= essToken.balanceOf(this));
+        require(tokenAmount<=TokenCHK(ESSgenesis).balanceOf(contractAddr));
 
         transferBuy(msg.sender, tokenAmount);       // Instruct the accounting function
         totalSold = totalSold.add(msg.value);       // Account for the total contributed/sold
