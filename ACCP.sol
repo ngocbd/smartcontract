@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACCP at 0x12313dcf43120bd3d568deee13cb4c2c49e50782
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACCP at 0xfcb7d670682145d64b11958a64414c227133b725
 */
 pragma solidity ^0.4.24;
 
@@ -69,7 +69,7 @@ contract tokenRecipient {
 
 /**
  * The ACCP contract
- * ver. 1.0
+ * ver. 2.0
  */
 contract ACCP {
 
@@ -127,7 +127,7 @@ contract ACCP {
     // https://medium.com/@codetractio/a-look-into-paritys-multisig-wallet-bug-affecting-100-million-in-ether-and-tokens-356f5ba6e90a
     constructor() public {
         // owner = msg.sender;
-        owner = 0x55515db2570D6A502d5d6176aF2A118ce0c68007;
+        owner = 0xff809E4ebB5F94171881b3CA9a0EBf4405C6370a;
         // (!!!) all tokens initially belong to smart contract itself
         balanceOf[this] = totalSupply;
     }
