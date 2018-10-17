@@ -1,77 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x622acd8139b9388515dcac990cb791b45cfd9643
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x5b919f09e295f5ec441ac21607a0b142a7fb09ac
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-/**
- * SmartEth.co
- * ERC20 Token and ICO smart contracts development, smart contracts audit, ICO websites.
- * contact@smarteth.co
- */
+interface TokenContract {
+  function transfer(address _to, uint256 _value) external returns (bool);
+}
 
-/**
- * @title Ownable
- */
-contract Ownable {
+contract Airdrop {
   address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  bool public isTheContract = true;
 
   constructor() public {
-    owner = 0x459b3157d46BA0D8C419d7A733871C684505583E;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-/**
- * @title ERC20Basic
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract Airdrop is Ownable {
-
-  ERC20 public token = ERC20(0x75B90f32DCB0Fefa6b72930BbDBe4D289c678d93);
-
-  function airdrop(address[] recipient, uint256[] amount) public onlyOwner returns (uint256) {
-    uint256 i = 0;
-      while (i < recipient.length) {
-        token.transfer(recipient[i], amount[i]);
-        i += 1;
-      }
-    return(i);
-  }
   
-  function airdropSameAmount(address[] recipient, uint256 amount) public onlyOwner returns (uint256) {
-    uint256 i = 0;
-      while (i < recipient.length) {
-        token.transfer(recipient[i], amount);
-        i += 1;
-      }
-    return(i);
+    owner = msg.sender;
   }
+
+  function sendTokens(address[] addresses, uint256[] _amount, address _tokenAddress) public {
+    //require(msg.sender == owner);
+    uint256 addressCount = addresses.length;
+    uint256 amountCount = _amount.length;
+    require(addressCount == amountCount);
+    TokenContract tkn = TokenContract(_tokenAddress);
+    for (uint256 i = 0; i < addressCount; i++) {
+      tkn.transfer(addresses[i], _amount[i]);
+    }
+  }
+
+  function destroyMe() public {
+    require(msg.sender == owner);
+    selfdestruct(owner);
+  }
+    
 }
