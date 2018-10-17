@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0xd65cf79e1d52c92372c1dc70922eac555c94ea74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantCrowdsale at 0xee15c19b575893bdb1fe94e1e699def94d912a73
 */
 pragma solidity 0.4.24;
 
@@ -1115,7 +1115,8 @@ contract CompliantCrowdsale is Validator, FinalizableCrowdsale {
     }
 
     function finalization() internal {
-        transferTokenOwnership(validator);
+        token.finishMinting();
+        transferTokenOwnership(owner);
         super.finalization();
     }
 
