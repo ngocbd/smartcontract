@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreditCarToken at 0xbc6712604ded80bbd728fcb8103e91a6fe507089
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreditCarToken at 0xbe7f41612a2657703169674fba90d63b27b049b8
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -203,7 +203,7 @@ contract HumanStandardToken is StandardToken {
     }
 }
 
-contract CreditCarToken is HumanStandardToken(5000000000000000000000000000,"CreditCar Token",18,"CAR"){
+contract CreditCarToken is HumanStandardToken(10000000000000000000000000000,"CreditCar Token",18,"XCAR"){
  function () public {
         //if ether is sent to this address, send it back.
         throw;
