@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DetherCore at 0x013183d8e0a14a843aa3bc170a29f959d9614d28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DetherCore at 0x72C1f8e060E269827571011C5aeD4A611b06A593
 */
 contract Certifier {
 	event Confirmed(address indexed who);
@@ -7,6 +7,7 @@ contract Certifier {
 	function certified(address _who) view public returns (bool);
 }
 
+/// @title Contract that supports the receival of ERC223 tokens.
 contract ERC223ReceivingContract {
 
     /// @dev Standard ERC223 function that will handle incoming token transfers.
@@ -15,36 +16,6 @@ contract ERC223ReceivingContract {
     /// @param _data  Transaction metadata.
     function tokenFallback(address _from, uint _value, bytes _data) public;
 
-}
-
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC223Basic is ERC20Basic {
-
-    /**
-      * @dev Transfer the specified amount of tokens to the specified address.
-      *      Now with a new parameter _data.
-      *
-      * @param _to    Receiver address.
-      * @param _value Amount of tokens that will be transferred.
-      * @param _data  Transaction metadata.
-      */
-    function transfer(address _to, uint _value, bytes _data) public returns (bool);
-
-    /**
-      * @dev triggered when transfer is successfully called.
-      *
-      * @param _from  Sender address.
-      * @param _to    Receiver address.
-      * @param _value Amount of tokens that will be transferred.
-      * @param _data  Transaction metadata.
-      */
-    event Transfer(address indexed _from, address indexed _to, uint256 indexed _value, bytes _data);
 }
 
 
@@ -90,145 +61,36 @@ contract SafeMath {
   }
 }
 
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
-contract DetherBank is ERC223ReceivingContract, Ownable, SafeMath  {
-  using BytesLib for bytes;
+contract ERC223Basic is ERC20Basic {
 
-  /*
-   * Event
-   */
-  event receiveDth(address _from, uint amount);
-  event receiveEth(address _from, uint amount);
-  event sendDth(address _from, uint amount);
-  event sendEth(address _from, uint amount);
+    /**
+      * @dev Transfer the specified amount of tokens to the specified address.
+      *      Now with a new parameter _data.
+      *
+      * @param _to    Receiver address.
+      * @param _value Amount of tokens that will be transferred.
+      * @param _data  Transaction metadata.
+      */
+    function transfer(address _to, uint _value, bytes _data) public returns (bool);
 
-  mapping(address => uint) public dthShopBalance;
-  mapping(address => uint) public dthTellerBalance;
-  mapping(address => uint) public ethShopBalance;
-  mapping(address => uint) public ethTellerBalance;
-
-  ERC223Basic public dth;
-  bool public isInit = false;
-
-  /**
-   * INIT
-   */
-  function setDth (address _dth) external onlyOwner {
-    require(!isInit);
-    dth = ERC223Basic(_dth);
-    isInit = true;
-  }
-
-  /**
-   * Core fonction
-   */
-  // withdraw DTH when teller delete
-  function withdrawDthTeller(address _receiver) external onlyOwner {
-    require(dthTellerBalance[_receiver] > 0);
-    uint tosend = dthTellerBalance[_receiver];
-    dthTellerBalance[_receiver] = 0;
-    require(dth.transfer(_receiver, tosend));
-  }
-  // withdraw DTH when shop delete
-  function withdrawDthShop(address _receiver) external onlyOwner  {
-    require(dthShopBalance[_receiver] > 0);
-    uint tosend = dthShopBalance[_receiver];
-    dthShopBalance[_receiver] = 0;
-    require(dth.transfer(_receiver, tosend));
-  }
-  // withdraw DTH when a shop add by admin is delete
-  function withdrawDthShopAdmin(address _from, address _receiver) external onlyOwner  {
-    require(dthShopBalance[_from]  > 0);
-    uint tosend = dthShopBalance[_from];
-    dthShopBalance[_from] = 0;
-    require(dth.transfer(_receiver, tosend));
-  }
-
-  // add DTH when shop register
-  function addTokenShop(address _from, uint _value) external onlyOwner {
-    dthShopBalance[_from] = SafeMath.add(dthShopBalance[_from], _value);
-  }
-  // add DTH when token register
-  function addTokenTeller(address _from, uint _value) external onlyOwner{
-    dthTellerBalance[_from] = SafeMath.add(dthTellerBalance[_from], _value);
-  }
-  // add ETH for escrow teller
-  function addEthTeller(address _from, uint _value) external payable onlyOwner returns (bool) {
-    ethTellerBalance[_from] = SafeMath.add(ethTellerBalance[_from] ,_value);
-    return true;
-  }
-  // withdraw ETH for teller escrow
-  function withdrawEth(address _from, address _to, uint _amount) external onlyOwner {
-    require(ethTellerBalance[_from] >= _amount);
-    ethTellerBalance[_from] = SafeMath.sub(ethTellerBalance[_from], _amount);
-    _to.transfer(_amount);
-  }
-  // refund all ETH from teller contract
-  function refundEth(address _from) external onlyOwner {
-    uint toSend = ethTellerBalance[_from];
-    if (toSend > 0) {
-      ethTellerBalance[_from] = 0;
-      _from.transfer(toSend);
-    }
-  }
-
-  /**
-   * GETTER
-   */
-  function getDthTeller(address _user) public view returns (uint) {
-    return dthTellerBalance[_user];
-  }
-  function getDthShop(address _user) public view returns (uint) {
-    return dthShopBalance[_user];
-  }
-
-  function getEthBalTeller(address _user) public view returns (uint) {
-    return ethTellerBalance[_user];
-  }
-  /// @dev Standard ERC223 function that will handle incoming token transfers.
-  // DO NOTHING but allow to receive token when addToken* function are called
-  // by the dethercore contract
-  function tokenFallback(address _from, uint _value, bytes _data) {
-    require(msg.sender == address(dth));
-  }
-
+    /**
+      * @dev triggered when transfer is successfully called.
+      *
+      * @param _from  Sender address.
+      * @param _to    Receiver address.
+      * @param _value Amount of tokens that will be transferred.
+      * @param _data  Transaction metadata.
+      */
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _value, bytes _data);
 }
-
 
 contract DetherAccessControl {
     // This facet controls access control for Dether. There are four roles managed here:
@@ -252,6 +114,7 @@ contract DetherAccessControl {
     address public ceoAddress;
     address public cmoAddress;
     address public csoAddress; // CHIEF SHOP OFFICER
+    address public cfoAddress; // CHIEF FINANCIAL OFFICER
 	  mapping (address => bool) public shopModerators;   // centralised moderator, would become decentralised
     mapping (address => bool) public tellerModerators;   // centralised moderator, would become decentralised
 
@@ -270,10 +133,15 @@ contract DetherAccessControl {
         _;
     }
 
-    function isCSO(address _addr) public view returns (bool) {
-      return (_addr == csoAddress);
+    modifier onlyCSO() {
+        require(msg.sender == csoAddress);
+        _;
     }
 
+    modifier onlyCFO() {
+        require(msg.sender == cfoAddress);
+        _;
+    }
 
     modifier isShopModerator(address _user) {
       require(shopModerators[_user]);
@@ -301,6 +169,11 @@ contract DetherAccessControl {
     function setCSO(address _newCSO) external onlyCEO {
         require(_newCSO != address(0));
         csoAddress = _newCSO;
+    }
+
+    function setCFO(address _newCFO) external onlyCEO {
+        require(_newCFO != address(0));
+        cfoAddress = _newCFO;
     }
 
     function setShopModerator(address _moderator) external onlyCEO {
@@ -351,6 +224,7 @@ contract DetherAccessControl {
     }
 }
 
+
 contract DetherSetup is DetherAccessControl  {
 
   bool public run1 = false;
@@ -389,6 +263,13 @@ contract DetherSetup is DetherAccessControl  {
     _;
   }
 
+  function isTier1(address _user) public view returns(bool) {
+    return smsCertifier.certified(_user);
+  }
+  function isTier2(address _user) public view returns(bool) {
+    return kycCertifier.certified(_user);
+  }
+
   /**
    * INIT
    */
@@ -424,8 +305,6 @@ contract DetherSetup is DetherAccessControl  {
     openedCountryTeller[_country] = false;
   }
 }
-
-
 
 library BytesLib {
     function concat(bytes memory _preBytes, bytes memory _postBytes) internal pure returns (bytes) {
@@ -877,7 +756,26 @@ library BytesLib {
         return success;
     }
 }
+contract ExchangeRateOracle {
+  function getWeiPriceOneUsd() external view returns(uint256);
+}
 
+// only interface to save gas
+contract DetherBank {
+  function withdrawDthTeller(address _receiver) external;
+  function withdrawDthShop(address _receiver) external;
+  function withdrawDthShopAdmin(address _from, address _receiver) external;
+  function addTokenShop(address _from, uint _value) external;
+  function addTokenTeller(address _from, uint _value) external;
+  function addEthTeller(address _from, uint _value) external payable returns (bool);
+  function withdrawEth(address _from, address _to, uint _amount) external;
+  function refundEth(address _from) external;
+  function getDthTeller(address _user) public view returns (uint);
+  function getDthShop(address _user) public view returns (uint);
+  function getEthBalTeller(address _user) public view returns (uint);
+  function getWeiSoldToday(address _user) public view returns (uint256 weiSoldToday);
+  function transferOwnership(address newOwner) public;
+}
 
 contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   using BytesLib for bytes;
@@ -924,6 +822,8 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   // bank contract where are stored ETH and DTH
   DetherBank public bank;
 
+  ExchangeRateOracle public priceOracle;
+
   // teller struct
   struct Teller {
     int32 lat;            // Latitude
@@ -935,11 +835,16 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     bytes16 messenger;    // telegrame nickname
     int8 avatarId;        // 1 - 100 , regarding the front-end app you use
     int16 rates;          // margin of tellers , -999 - +9999 , corresponding to -99,9% x 10  , 999,9% x 10
+    bool buyer;           // appear as a buyer as well on the map
+    int16 buyRates;         // margin of tellers of
 
     uint zoneIndex;       // index of the zone mapping
     uint generalIndex;    // index of general mapping
     bool online;          // switch online/offline, if the tellers want to be inactive without deleting his point
   }
+
+  mapping(address => mapping(address => uint)) internal pairSellsLoyaltyPerc;
+  //      from               to         percentage of loyalty points from gets
 
   /*
    * Reputation field V0.1
@@ -948,6 +853,7 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   mapping(address => uint) volumeBuy;
   mapping(address => uint) volumeSell;
   mapping(address => uint) nbTrade;
+  mapping(address => uint256) loyaltyPoints;
 
   // general mapping of teller
   mapping(address => Teller) teller;
@@ -992,6 +898,10 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     isStarted = true;
   }
 
+  function setPriceOracle (address _priceOracle) external onlyCFO {
+    priceOracle = ExchangeRateOracle(_priceOracle);
+  }
+
   /**
    * Core fonction
    */
@@ -1019,7 +929,7 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     bytes1 _func = _data.toBytes1(0);
     int32 posLat = _data.toBytes1(1) == bytes1(0x01) ? int32(_data.toBytes4(2)) * -1 : int32(_data.toBytes4(2));
     int32 posLng = _data.toBytes1(6) == bytes1(0x01) ? int32(_data.toBytes4(7)) * -1 : int32(_data.toBytes4(7));
-    if (_func == bytes1(0x31)) { // shop registration
+    if (_func == bytes1(0x31)) { // shop registration // GAS USED 311000
       // require staked greater than licence price
       require(_value >= licenceShop[_data.toBytes2(11)]);
       // require its not already shop
@@ -1040,7 +950,7 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
       emit RegisterShop(_from);
       bank.addTokenShop(_from,_value);
       dth.transfer(address(bank), _value);
-    } else if (_func == bytes1(0x32)) { // teller registration
+    } else if (_func == bytes1(0x32)) { // teller registration -- GAS USED 310099
       // require staked greater than licence price
       require(_value >= licenceTeller[_data.toBytes2(11)]);
       // require is not already a teller
@@ -1056,6 +966,8 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
       teller[_from].currencyId = int8(_data.toBytes1(30));
       teller[_from].messenger = _data.toBytes16(31);
       teller[_from].rates = int16(_data.toBytes2(47));
+      teller[_from].buyer = _data.toBytes1(49) == bytes1(0x01) ? true : false;
+      teller[_from].buyRates = int16(_data.toBytes2(50));
       teller[_from].generalIndex = tellerIndex.push(_from) - 1;
       teller[_from].zoneIndex = tellerInZone[_data.toBytes2(11)][_data.toBytes16(13)].push(_from) - 1;
       teller[_from].online = true;
@@ -1124,19 +1036,78 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     emit UpdateTeller(msg.sender);
   }
 
+  // mapping for limiting the sell amount
+  //      tier             countryId usdDailyLimit
+  mapping(uint => mapping (bytes2 => uint)) limitTier;
+
+  function setSellDailyLimit(uint _tier, bytes2 _countryId, uint256 _limitUsd) public onlyCFO {
+    limitTier[_tier][_countryId] = _limitUsd;
+  }
+  function getSellDailyLimit(uint _tier, bytes2 _countryId) public view returns(uint256 limitUsd) {
+    limitUsd = limitTier[_tier][_countryId];
+  }
+
+  modifier doesNotExceedDailySellLimit(address _teller, uint256 _weiSellAmount) {
+    // limits are set per country
+    bytes2 countryId = teller[_teller].countryId;
+
+    // user is always tier1, and could be tier2
+    uint256 usdDailyLimit = getSellDailyLimit(isTier2(_teller) ? 2 : 1, countryId);
+
+    // weiPriceOneUsd is set by the oracle (which runs every day at midnight)
+    uint256 weiDailyLimit = SafeMath.mul(priceOracle.getWeiPriceOneUsd(), usdDailyLimit);
+
+    // with each sell we update wei sold today for that user inside the Bank contract
+    uint256 weiSoldToday = bank.getWeiSoldToday(_teller);
+
+    uint256 newWeiSoldToday = SafeMath.add(weiSoldToday, _weiSellAmount);
+
+    // we may not exceed the daily wei limit with this sell
+    require(newWeiSoldToday <= weiDailyLimit);
+    _;
+  }
+
+  function getPairSellLoyaltyPerc(address _from, address _to) public view returns(uint256) {
+    return pairSellsLoyaltyPerc[_from][_to];
+  }
+
+  function getLoyaltyPoints(address who) public view returns (uint256) {
+    return loyaltyPoints[who];
+  }
+
   /**
    * SellEth
+   * average gas cost: 123173
    * @param _to -> the address for the receiver
    * @param _amount -> the amount to send
    */
-  function sellEth(address _to, uint _amount) whenNotPaused external {
+  function sellEth(address _to, uint _amount)
+    whenNotPaused
+    doesNotExceedDailySellLimit(msg.sender, _amount)
+    external
+  {
     require(isTeller(msg.sender));
     require(_to != msg.sender);
     // send eth to the receiver from the bank contract
+    // this will also update eth amount sold 'today' by msg.sender
     bank.withdrawEth(msg.sender, _to, _amount);
+
     // increase reput for the buyer and the seller Only if the buyer is also whitelisted,
     // It's a way to incentive user to trade on the system
     if (smsCertifier.certified(_to)) {
+      uint currentSellerLoyaltyPointsPerc = pairSellsLoyaltyPerc[msg.sender][_to];
+      if (currentSellerLoyaltyPointsPerc == 0) {
+        // this is the first sell between seller and buyer, set to 100%
+        pairSellsLoyaltyPerc[msg.sender][_to] = 10000;
+        currentSellerLoyaltyPointsPerc = 10000;
+      }
+
+      // add percentage of loyaltyPoints of this sell to seller's loyaltyPoints
+      loyaltyPoints[msg.sender] = SafeMath.add(loyaltyPoints[msg.sender], SafeMath.mul(_amount, currentSellerLoyaltyPointsPerc) / 10000);
+
+      // update the loyaltyPoints percentage of the seller, there will be a 21% decrease with every sell to the same buyer (100 - 21 = 79)
+      pairSellsLoyaltyPerc[msg.sender][_to] = SafeMath.mul(currentSellerLoyaltyPointsPerc, 79) / 100;
+
       volumeBuy[_to] = SafeMath.add(volumeBuy[_to], _amount);
       volumeSell[msg.sender] = SafeMath.add(volumeSell[msg.sender], _amount);
       nbTrade[msg.sender] += 1;
@@ -1186,6 +1157,7 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   // gas used 67841
   // A moderator can delete a sellpoint
   function deleteTellerMods(address _toDelete) isTellerModerator(msg.sender) external {
+    require(isTeller(_toDelete));
     uint rowToDelete1 = teller[_toDelete].zoneIndex;
     address keyToMove1 = tellerInZone[teller[_toDelete].countryId][teller[_toDelete].postalCode][tellerInZone[teller[_toDelete].countryId][teller[_toDelete].postalCode].length - 1];
     tellerInZone[teller[_toDelete].countryId][teller[_toDelete].postalCode][rowToDelete1] = keyToMove1;
@@ -1262,8 +1234,8 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     int16 rates,
     uint balance,
     bool online,
-    uint sellVolume,
-    uint numTrade
+    bool buyer,
+    int16 buyRates
     ) {
     Teller storage theTeller = teller[_teller];
     lat = theTeller.lat;
@@ -1275,8 +1247,8 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
     avatarId = theTeller.avatarId;
     rates = theTeller.rates;
     online = theTeller.online;
-    sellVolume = volumeSell[_teller];
-    numTrade = nbTrade[_teller];
+    buyer = theTeller.buyer;
+    buyRates = theTeller.buyRates;
     balance = bank.getEthBalTeller(_teller);
   }
 
@@ -1310,11 +1282,13 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   function getReput(address _teller) public view returns (
    uint buyVolume,
    uint sellVolume,
-   uint numTrade
+   uint numTrade,
+   uint256 loyaltyPoints_
    ) {
      buyVolume = volumeBuy[_teller];
      sellVolume = volumeSell[_teller];
      numTrade = nbTrade[_teller];
+     loyaltyPoints_ = loyaltyPoints[_teller];
   }
   // return balance of teller put in escrow
   function getTellerBalance(address _teller) public view returns (uint) {
