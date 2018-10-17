@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kubic at 0xa17c4ec994fada57e3a8bcaee70d45c276831249
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kubic at 0xd5ff48cec419abea3b1477e68139b68464dc0b4a
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -247,13 +247,11 @@ contract BurnableToken is StandardToken {
 }
 
 contract Kubic is BurnableToken, Ownable {
-
-
-    //you just have to touch these 4 lines don't touch anything else , else you might break the code.
-    string public constant name = "Kubic";//here you define the name
-    string public constant symbol = "KIC";//here yuou define the symbol of token
-    uint public constant decimals = 8; //just till here.
-    uint256 public constant initialSupply = 300000000 * (10 ** uint256(decimals));//500crore right yes ok let's deploy it now
+ 
+    string public constant name = "Kubic"; 
+    string public constant symbol = "KIC"; 
+    uint public constant decimals = 8;  
+    uint256 public constant initialSupply = 200000000 * (10 ** uint256(decimals)); 
 
     // Constructor
     function Kubic() {
