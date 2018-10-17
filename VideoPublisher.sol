@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VideoPublisher at 0x9048A059c4beF8775ecF6E24197Fd987B387edc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VideoPublisher at 0x54df6e2D8f0E9a015Bf804b64ed8e9BAd6ccbaca
 */
 /// math.sol -- mixin for inline numerical wizardry
 
@@ -408,40 +408,66 @@ contract DSToken is DSTokenBase(0), DSStop {
     }
 }
 
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.24;
 
-// This contract allows people to use VIEW tokens to publish videos on Viewly.
+// Pay to publish videos on Viewly.
 contract VideoPublisher is DSAuth, DSMath {
 
     DSToken public viewToken;
-    uint public price;
-    mapping (bytes12 => bool) public videos;
-    event Published(
-        bytes12 videoID,
-        uint price
-    );
+    uint public priceView;
+    uint public priceEth;
+    // videoID => publisher
+    mapping (bytes12 => address) public videos;
+    event Published(bytes12 videoID);
 
-    function VideoPublisher(DSToken viewToken_, uint price_) public {
+    function VideoPublisher(
+        DSToken viewToken_,
+        uint priceView_,
+        uint priceEth_) public {
         viewToken = viewToken_;
-        price = price_;
+        priceView = priceView_;
+        priceEth = priceEth_;
     }
 
-    function publish(bytes12 videoID) public {
-        require(!videos[videoID]);
-        require(viewToken.transferFrom(msg.sender, this, price));
-        videos[videoID] = true;
-        Published(videoID, price);
+    function publish(bytes12 videoID) payable public {
+        require(videos[videoID] == 0);
+        if (msg.value == 0) {
+            require(viewToken.transferFrom(msg.sender, address(this), priceView));
+        } else {
+            require(msg.value >= priceEth);
+        }
+        videos[videoID] = msg.sender;
+        emit Published(videoID);
     }
 
-    function setPrice(uint newPrice) public auth {
-        price = newPrice;
+    function publishFor(bytes12 videoID, address beneficiary) payable public {
+        require(videos[videoID] == 0);
+        if (msg.value == 0) {
+            require(viewToken.transferFrom(msg.sender, address(this), priceView));
+        } else {
+            require(msg.value >= priceEth);
+        }
+        videos[videoID] = beneficiary;
+        emit Published(videoID);
     }
 
-    function withdraw(address addr) public auth {
-        viewToken.transfer(addr, viewToken.balanceOf(this));
+    function setPrices(uint priceView_, uint priceEth_) public auth {
+        priceView = priceView_;
+        priceEth = priceEth_;
     }
 
-    function destruct(address addr) public auth {
+    function withdraw(address addr) public payable auth {
+        uint tokenBalance = viewToken.balanceOf(this);
+        if (tokenBalance > 0) {
+            viewToken.transfer(addr, tokenBalance);
+        }
+        if (address(this).balance > 0) {
+            addr.transfer(address(this).balance);
+        }
+    }
+
+    function destruct(address addr) public payable auth {
+        require(address(this).balance == 0);
         require(viewToken.balanceOf(this) == 0);
         selfdestruct(addr);
     }
