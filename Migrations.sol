@@ -1,28 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x168f4673768cfad58d43649cb9ffd33516cc1a13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xf3fc686c3a1472f0eae9e6631d1ecf8463b88977
 */
-pragma solidity 0.4.24;
-// produced by the Solididy File Flattener (c) David Appleton 2018
-// contact : dave@akomba.com
-// released under Apache 2.0 licence
+pragma solidity ^0.4.23;
+
 contract Migrations {
-    address public owner;
-    uint public last_completed_migration;
+  address public owner;
+  uint public last_completed_migration;
 
-    modifier restricted() {
-        if (msg.sender == owner) _;
-    }
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    constructor() public {
-        owner = msg.sender;
-    }
+  modifier restricted() {
+    if (msg.sender == owner) _;
+  }
 
-    function setCompleted(uint completed) public restricted {
-        last_completed_migration = completed;
-    }
+  function setCompleted(uint completed) public restricted {
+    last_completed_migration = completed;
+  }
 
-    function upgrade(address new_address) public restricted {
-        Migrations upgraded = Migrations(new_address);
-        upgraded.setCompleted(last_completed_migration);
-    }
+  function upgrade(address new_address) public restricted {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
 }
