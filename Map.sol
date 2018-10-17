@@ -1,629 +1,673 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0x8cb08d6379e79aa4b84a809bcf55ba5a00407e93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Map at 0x94c01429d67a275de013e457eff6e028e10763d9
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.20;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) { return 0; }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract IAugur {
+    function createChildUniverse(bytes32 _parentPayoutDistributionHash, uint256[] _parentPayoutNumerators, bool _parentInvalid) public returns (IUniverse);
+    function isKnownUniverse(IUniverse _universe) public view returns (bool);
+    function trustedTransfer(ERC20 _token, address _from, address _to, uint256 _amount) public returns (bool);
+    function logMarketCreated(bytes32 _topic, string _description, string _extraInfo, IUniverse _universe, address _market, address _marketCreator, bytes32[] _outcomes, int256 _minPrice, int256 _maxPrice, IMarket.MarketType _marketType) public returns (bool);
+    function logMarketCreated(bytes32 _topic, string _description, string _extraInfo, IUniverse _universe, address _market, address _marketCreator, int256 _minPrice, int256 _maxPrice, IMarket.MarketType _marketType) public returns (bool);
+    function logInitialReportSubmitted(IUniverse _universe, address _reporter, address _market, uint256 _amountStaked, bool _isDesignatedReporter, uint256[] _payoutNumerators, bool _invalid) public returns (bool);
+    function disputeCrowdsourcerCreated(IUniverse _universe, address _market, address _disputeCrowdsourcer, uint256[] _payoutNumerators, uint256 _size, bool _invalid) public returns (bool);
+    function logDisputeCrowdsourcerContribution(IUniverse _universe, address _reporter, address _market, address _disputeCrowdsourcer, uint256 _amountStaked) public returns (bool);
+    function logDisputeCrowdsourcerCompleted(IUniverse _universe, address _market, address _disputeCrowdsourcer) public returns (bool);
+    function logInitialReporterRedeemed(IUniverse _universe, address _reporter, address _market, uint256 _amountRedeemed, uint256 _repReceived, uint256 _reportingFeesReceived, uint256[] _payoutNumerators) public returns (bool);
+    function logDisputeCrowdsourcerRedeemed(IUniverse _universe, address _reporter, address _market, uint256 _amountRedeemed, uint256 _repReceived, uint256 _reportingFeesReceived, uint256[] _payoutNumerators) public returns (bool);
+    function logFeeWindowRedeemed(IUniverse _universe, address _reporter, uint256 _amountRedeemed, uint256 _reportingFeesReceived) public returns (bool);
+    function logMarketFinalized(IUniverse _universe) public returns (bool);
+    function logMarketMigrated(IMarket _market, IUniverse _originalUniverse) public returns (bool);
+    function logReportingParticipantDisavowed(IUniverse _universe, IMarket _market) public returns (bool);
+    function logMarketParticipantsDisavowed(IUniverse _universe) public returns (bool);
+    function logOrderCanceled(IUniverse _universe, address _shareToken, address _sender, bytes32 _orderId, Order.Types _orderType, uint256 _tokenRefund, uint256 _sharesRefund) public returns (bool);
+    function logOrderCreated(Order.Types _orderType, uint256 _amount, uint256 _price, address _creator, uint256 _moneyEscrowed, uint256 _sharesEscrowed, bytes32 _tradeGroupId, bytes32 _orderId, IUniverse _universe, address _shareToken) public returns (bool);
+    function logOrderFilled(IUniverse _universe, address _shareToken, address _filler, bytes32 _orderId, uint256 _numCreatorShares, uint256 _numCreatorTokens, uint256 _numFillerShares, uint256 _numFillerTokens, uint256 _marketCreatorFees, uint256 _reporterFees, uint256 _amountFilled, bytes32 _tradeGroupId) public returns (bool);
+    function logCompleteSetsPurchased(IUniverse _universe, IMarket _market, address _account, uint256 _numCompleteSets) public returns (bool);
+    function logCompleteSetsSold(IUniverse _universe, IMarket _market, address _account, uint256 _numCompleteSets) public returns (bool);
+    function logTradingProceedsClaimed(IUniverse _universe, address _shareToken, address _sender, address _market, uint256 _numShares, uint256 _numPayoutTokens, uint256 _finalTokenBalance) public returns (bool);
+    function logUniverseForked() public returns (bool);
+    function logFeeWindowTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logReputationTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logDisputeCrowdsourcerTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logShareTokensTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logReputationTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logReputationTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logShareTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logShareTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logDisputeCrowdsourcerTokensBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logDisputeCrowdsourcerTokensMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeWindowCreated(IFeeWindow _feeWindow, uint256 _id) public returns (bool);
+    function logFeeTokenTransferred(IUniverse _universe, address _from, address _to, uint256 _value) public returns (bool);
+    function logFeeTokenBurned(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logFeeTokenMinted(IUniverse _universe, address _target, uint256 _amount) public returns (bool);
+    function logTimestampSet(uint256 _newTimestamp) public returns (bool);
+    function logInitialReporterTransferred(IUniverse _universe, IMarket _market, address _from, address _to) public returns (bool);
+    function logMarketTransferred(IUniverse _universe, address _from, address _to) public returns (bool);
+    function logMarketMailboxTransferred(IUniverse _universe, IMarket _market, address _from, address _to) public returns (bool);
+    function logEscapeHatchChanged(bool _isOn) public returns (bool);
+}
+
+contract IControlled {
+    function getController() public view returns (IController);
+    function setController(IController _controller) public returns(bool);
+}
+
+contract Controlled is IControlled {
+    IController internal controller;
+
+    modifier onlyWhitelistedCallers {
+        require(controller.assertIsWhitelisted(msg.sender));
+        _;
+    }
+
+    modifier onlyCaller(bytes32 _key) {
+        require(msg.sender == controller.lookup(_key));
+        _;
+    }
+
+    modifier onlyControllerCaller {
+        require(IController(msg.sender) == controller);
+        _;
+    }
+
+    modifier onlyInGoodTimes {
+        require(controller.stopInEmergency());
+        _;
+    }
+
+    modifier onlyInBadTimes {
+        require(controller.onlyInEmergency());
+        _;
+    }
+
+    function Controlled() public {
+        controller = IController(msg.sender);
+    }
+
+    function getController() public view returns(IController) {
+        return controller;
+    }
+
+    function setController(IController _controller) public onlyControllerCaller returns(bool) {
+        controller = _controller;
+        return true;
+    }
+}
+
+contract IController {
+    function assertIsWhitelisted(address _target) public view returns(bool);
+    function lookup(bytes32 _key) public view returns(address);
+    function stopInEmergency() public view returns(bool);
+    function onlyInEmergency() public view returns(bool);
+    function getAugur() public view returns (IAugur);
+    function getTimestamp() public view returns (uint256);
+}
+
+contract DelegationTarget is Controlled {
+    bytes32 public controllerLookupName;
+}
+
+contract IOwnable {
+    function getOwner() public view returns (address);
+    function transferOwnership(address newOwner) public returns (bool);
+}
+
+contract ITyped {
+    function getTypeName() public view returns (bytes32);
+}
+
+contract Initializable {
+    bool private initialized = false;
+
+    modifier afterInitialized {
+        require(initialized);
+        _;
+    }
+
+    modifier beforeInitialized {
+        require(!initialized);
+        _;
+    }
+
+    function endInitialization() internal beforeInitialized returns (bool) {
+        initialized = true;
+        return true;
+    }
+
+    function getInitialized() public view returns (bool) {
+        return initialized;
+    }
+}
+
+contract Ownable is IOwnable {
+    address internal owner;
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function getOwner() public view returns (address) {
+        return owner;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner) public onlyOwner returns (bool) {
+        if (_newOwner != address(0)) {
+            onTransferOwnership(owner, _newOwner);
+            owner = _newOwner;
+        }
+        return true;
+    }
+
+    // Subclasses of this token may want to send additional logs through the centralized Augur log emitter contract
+    function onTransferOwnership(address, address) internal returns (bool);
+}
+
+contract Map is DelegationTarget, Ownable, Initializable {
+    mapping(bytes32 => bytes32) private items;
+    uint256 private count;
+
+    function initialize(address _owner) public beforeInitialized returns (bool) {
+        endInitialization();
+        owner = _owner;
+        return true;
+    }
+
+    function add(bytes32 _key, bytes32 _value) public onlyOwner returns (bool) {
+        if (contains(_key)) {
+            return false;
+        }
+        items[_key] = _value;
+        count += 1;
+        return true;
+    }
+
+    function add(bytes32 _key, address _value) public onlyOwner returns (bool) {
+        return add(_key, bytes32(_value));
+    }
+
+    function remove(bytes32 _key) public onlyOwner returns (bool) {
+        if (!contains(_key)) {
+            return false;
+        }
+        delete items[_key];
+        count -= 1;
+        return true;
+    }
+
+    function getValueOrZero(bytes32 _key) public view returns (bytes32) {
+        return items[_key];
+    }
+
+    function get(bytes32 _key) public view returns (bytes32) {
+        bytes32 _value = items[_key];
+        require(_value != bytes32(0));
+        return _value;
+    }
+
+    function getAsAddressOrZero(bytes32 _key) public view returns (address) {
+        return address(getValueOrZero(_key));
+    }
+
+    function getAsAddress(bytes32 _key) public view returns (address) {
+        return address(get(_key));
+    }
+
+    function contains(bytes32 _key) public view returns (bool) {
+        return items[_key] != bytes32(0);
+    }
+
+    function getCount() public view returns (uint256) {
+        return count;
+    }
+
+    function onTransferOwnership(address, address) internal returns (bool) {
+        return true;
+    }
+}
+
+library SafeMathUint256 {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a <= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
+    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a >= b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
+    function getUint256Min() internal pure returns (uint256) {
+        return 0;
+    }
+
+    function getUint256Max() internal pure returns (uint256) {
+        return 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    }
+
+    function isMultipleOf(uint256 a, uint256 b) internal pure returns (bool) {
+        return a % b == 0;
+    }
+
+    // Float [fixed point] Operations
+    function fxpMul(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
+        return div(mul(a, b), base);
+    }
+
+    function fxpDiv(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
+        return div(mul(a, base), b);
+    }
 }
 
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  function resetTimer(string _kingdomKey);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    function balanceOf(address _who) public view returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+    function totalSupply() public view returns (uint256);
 }
 
-contract PullPayment {
-  using SafeMath for uint256;
-  mapping(address => uint256) public payments;
-  uint256 public totalPayments;
-  function withdrawPayments() public {
-    address payee = msg.sender;
-    uint256 payment = payments[payee];
-    require(payment != 0);
-    require(this.balance >= payment);
-    totalPayments = totalPayments.sub(payment);
-    payments[payee] = 0;
-    assert(payee.send(payment));
-  }
-  function asyncSend(address dest, uint256 amount) internal {
-    payments[dest] = payments[dest].add(amount);
-    totalPayments = totalPayments.add(amount);
-  }
+contract ERC20 is ERC20Basic {
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function allowance(address _owner, address _spender) public view returns (uint256);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+    function approve(address _spender, uint256 _value) public returns (bool);
 }
 
-contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+contract IFeeToken is ERC20, Initializable {
+    function initialize(IFeeWindow _feeWindow) public returns (bool);
+    function getFeeWindow() public view returns (IFeeWindow);
+    function feeWindowBurn(address _target, uint256 _amount) public returns (bool);
+    function mintForReportingParticipant(address _target, uint256 _amount) public returns (bool);
 }
 
-contract Destructible is Ownable {
-  function Destructible() public payable { }
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-  function destroyAndSend(address _recipient) onlyOwner public {
-    selfdestruct(_recipient);
-  }
+contract IFeeWindow is ITyped, ERC20 {
+    function initialize(IUniverse _universe, uint256 _feeWindowId) public returns (bool);
+    function getUniverse() public view returns (IUniverse);
+    function getReputationToken() public view returns (IReputationToken);
+    function getStartTime() public view returns (uint256);
+    function getEndTime() public view returns (uint256);
+    function getNumMarkets() public view returns (uint256);
+    function getNumInvalidMarkets() public view returns (uint256);
+    function getNumIncorrectDesignatedReportMarkets() public view returns (uint256);
+    function getNumDesignatedReportNoShows() public view returns (uint256);
+    function getFeeToken() public view returns (IFeeToken);
+    function isActive() public view returns (bool);
+    function isOver() public view returns (bool);
+    function onMarketFinalized() public returns (bool);
+    function buy(uint256 _attotokens) public returns (bool);
+    function redeem(address _sender) public returns (bool);
+    function redeemForReportingParticipant() public returns (bool);
+    function mintFeeTokens(uint256 _amount) public returns (bool);
+    function trustedUniverseBuy(address _buyer, uint256 _attotokens) public returns (bool);
 }
 
-contract ReentrancyGuard {
-  bool private reentrancy_lock = false;
-  modifier nonReentrant() {
-    require(!reentrancy_lock);
-    reentrancy_lock = true;
-    _;
-    reentrancy_lock = false;
-  }
+contract IMailbox {
+    function initialize(address _owner, IMarket _market) public returns (bool);
+    function depositEther() public payable returns (bool);
 }
 
-contract Map is PullPayment, Destructible, ReentrancyGuard {
-    using SafeMath for uint256;
-    
-    // STRUCTS
-
-    struct Transaction {
-        string kingdomKey;
-        address compensationAddress;
-        uint buyingPrice;
-        uint compensation;
-        uint jackpotContribution;
-        uint date;
+contract IMarket is ITyped, IOwnable {
+    enum MarketType {
+        YES_NO,
+        CATEGORICAL,
+        SCALAR
     }
 
-    struct Kingdom {
-        string title;
-        string key;
-        uint kingdomTier;
-        uint kingdomType;
-        uint minimumPrice; 
-        uint lastTransaction;
-        uint transactionCount;
-        uint returnPrice;
-        address owner;
-        bool locked;
+    function initialize(IUniverse _universe, uint256 _endTime, uint256 _feePerEthInAttoeth, ICash _cash, address _designatedReporterAddress, address _creator, uint256 _numOutcomes, uint256 _numTicks) public payable returns (bool _success);
+    function derivePayoutDistributionHash(uint256[] _payoutNumerators, bool _invalid) public view returns (bytes32);
+    function getUniverse() public view returns (IUniverse);
+    function getFeeWindow() public view returns (IFeeWindow);
+    function getNumberOfOutcomes() public view returns (uint256);
+    function getNumTicks() public view returns (uint256);
+    function getDenominationToken() public view returns (ICash);
+    function getShareToken(uint256 _outcome)  public view returns (IShareToken);
+    function getMarketCreatorSettlementFeeDivisor() public view returns (uint256);
+    function getForkingMarket() public view returns (IMarket _market);
+    function getEndTime() public view returns (uint256);
+    function getMarketCreatorMailbox() public view returns (IMailbox);
+    function getWinningPayoutDistributionHash() public view returns (bytes32);
+    function getWinningPayoutNumerator(uint256 _outcome) public view returns (uint256);
+    function getReputationToken() public view returns (IReputationToken);
+    function getFinalizationTime() public view returns (uint256);
+    function getInitialReporterAddress() public view returns (address);
+    function deriveMarketCreatorFeeAmount(uint256 _amount) public view returns (uint256);
+    function isContainerForShareToken(IShareToken _shadyTarget) public view returns (bool);
+    function isContainerForReportingParticipant(IReportingParticipant _reportingParticipant) public view returns (bool);
+    function isInvalid() public view returns (bool);
+    function finalize() public returns (bool);
+    function designatedReporterWasCorrect() public view returns (bool);
+    function designatedReporterShowed() public view returns (bool);
+    function isFinalized() public view returns (bool);
+    function finalizeFork() public returns (bool);
+    function assertBalances() public view returns (bool);
+}
+
+contract IReportingParticipant {
+    function getStake() public view returns (uint256);
+    function getPayoutDistributionHash() public view returns (bytes32);
+    function liquidateLosing() public returns (bool);
+    function redeem(address _redeemer) public returns (bool);
+    function isInvalid() public view returns (bool);
+    function isDisavowed() public view returns (bool);
+    function migrate() public returns (bool);
+    function getPayoutNumerator(uint256 _outcome) public view returns (uint256);
+    function getMarket() public view returns (IMarket);
+    function getSize() public view returns (uint256);
+}
+
+contract IDisputeCrowdsourcer is IReportingParticipant, ERC20 {
+    function initialize(IMarket market, uint256 _size, bytes32 _payoutDistributionHash, uint256[] _payoutNumerators, bool _invalid) public returns (bool);
+    function contribute(address _participant, uint256 _amount) public returns (uint256);
+}
+
+contract IReputationToken is ITyped, ERC20 {
+    function initialize(IUniverse _universe) public returns (bool);
+    function migrateOut(IReputationToken _destination, uint256 _attotokens) public returns (bool);
+    function migrateIn(address _reporter, uint256 _attotokens) public returns (bool);
+    function trustedReportingParticipantTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedMarketTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedFeeWindowTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedUniverseTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function getUniverse() public view returns (IUniverse);
+    function getTotalMigrated() public view returns (uint256);
+    function getTotalTheoreticalSupply() public view returns (uint256);
+    function mintForReportingParticipant(uint256 _amountMigrated) public returns (bool);
+}
+
+contract IUniverse is ITyped {
+    function initialize(IUniverse _parentUniverse, bytes32 _parentPayoutDistributionHash) external returns (bool);
+    function fork() public returns (bool);
+    function getParentUniverse() public view returns (IUniverse);
+    function createChildUniverse(uint256[] _parentPayoutNumerators, bool _invalid) public returns (IUniverse);
+    function getChildUniverse(bytes32 _parentPayoutDistributionHash) public view returns (IUniverse);
+    function getReputationToken() public view returns (IReputationToken);
+    function getForkingMarket() public view returns (IMarket);
+    function getForkEndTime() public view returns (uint256);
+    function getForkReputationGoal() public view returns (uint256);
+    function getParentPayoutDistributionHash() public view returns (bytes32);
+    function getDisputeRoundDurationInSeconds() public view returns (uint256);
+    function getOrCreateFeeWindowByTimestamp(uint256 _timestamp) public returns (IFeeWindow);
+    function getOrCreateCurrentFeeWindow() public returns (IFeeWindow);
+    function getOrCreateNextFeeWindow() public returns (IFeeWindow);
+    function getOpenInterestInAttoEth() public view returns (uint256);
+    function getRepMarketCapInAttoeth() public view returns (uint256);
+    function getTargetRepMarketCapInAttoeth() public view returns (uint256);
+    function getOrCacheValidityBond() public returns (uint256);
+    function getOrCacheDesignatedReportStake() public returns (uint256);
+    function getOrCacheDesignatedReportNoShowBond() public returns (uint256);
+    function getOrCacheReportingFeeDivisor() public returns (uint256);
+    function getDisputeThresholdForFork() public view returns (uint256);
+    function getInitialReportMinValue() public view returns (uint256);
+    function calculateFloatingValue(uint256 _badMarkets, uint256 _totalMarkets, uint256 _targetDivisor, uint256 _previousValue, uint256 _defaultValue, uint256 _floor) public pure returns (uint256 _newValue);
+    function getOrCacheMarketCreationCost() public returns (uint256);
+    function getCurrentFeeWindow() public view returns (IFeeWindow);
+    function getOrCreateFeeWindowBefore(IFeeWindow _feeWindow) public returns (IFeeWindow);
+    function isParentOf(IUniverse _shadyChild) public view returns (bool);
+    function updateTentativeWinningChildUniverse(bytes32 _parentPayoutDistributionHash) public returns (bool);
+    function isContainerForFeeWindow(IFeeWindow _shadyTarget) public view returns (bool);
+    function isContainerForMarket(IMarket _shadyTarget) public view returns (bool);
+    function isContainerForReportingParticipant(IReportingParticipant _reportingParticipant) public view returns (bool);
+    function isContainerForShareToken(IShareToken _shadyTarget) public view returns (bool);
+    function isContainerForFeeToken(IFeeToken _shadyTarget) public view returns (bool);
+    function addMarketTo() public returns (bool);
+    function removeMarketFrom() public returns (bool);
+    function decrementOpenInterest(uint256 _amount) public returns (bool);
+    function decrementOpenInterestFromMarket(uint256 _amount) public returns (bool);
+    function incrementOpenInterest(uint256 _amount) public returns (bool);
+    function incrementOpenInterestFromMarket(uint256 _amount) public returns (bool);
+    function getWinningChildUniverse() public view returns (IUniverse);
+    function isForking() public view returns (bool);
+}
+
+contract ICash is ERC20 {
+    function depositEther() external payable returns(bool);
+    function depositEtherFor(address _to) external payable returns(bool);
+    function withdrawEther(uint256 _amount) external returns(bool);
+    function withdrawEtherTo(address _to, uint256 _amount) external returns(bool);
+    function withdrawEtherToIfPossible(address _to, uint256 _amount) external returns (bool);
+}
+
+contract IOrders {
+    function saveOrder(Order.Types _type, IMarket _market, uint256 _fxpAmount, uint256 _price, address _sender, uint256 _outcome, uint256 _moneyEscrowed, uint256 _sharesEscrowed, bytes32 _betterOrderId, bytes32 _worseOrderId, bytes32 _tradeGroupId) public returns (bytes32 _orderId);
+    function removeOrder(bytes32 _orderId) public returns (bool);
+    function getMarket(bytes32 _orderId) public view returns (IMarket);
+    function getOrderType(bytes32 _orderId) public view returns (Order.Types);
+    function getOutcome(bytes32 _orderId) public view returns (uint256);
+    function getAmount(bytes32 _orderId) public view returns (uint256);
+    function getPrice(bytes32 _orderId) public view returns (uint256);
+    function getOrderCreator(bytes32 _orderId) public view returns (address);
+    function getOrderSharesEscrowed(bytes32 _orderId) public view returns (uint256);
+    function getOrderMoneyEscrowed(bytes32 _orderId) public view returns (uint256);
+    function getBetterOrderId(bytes32 _orderId) public view returns (bytes32);
+    function getWorseOrderId(bytes32 _orderId) public view returns (bytes32);
+    function getBestOrderId(Order.Types _type, IMarket _market, uint256 _outcome) public view returns (bytes32);
+    function getWorstOrderId(Order.Types _type, IMarket _market, uint256 _outcome) public view returns (bytes32);
+    function getLastOutcomePrice(IMarket _market, uint256 _outcome) public view returns (uint256);
+    function getOrderId(Order.Types _type, IMarket _market, uint256 _fxpAmount, uint256 _price, address _sender, uint256 _blockNumber, uint256 _outcome, uint256 _moneyEscrowed, uint256 _sharesEscrowed) public pure returns (bytes32);
+    function getTotalEscrowed(IMarket _market) public view returns (uint256);
+    function isBetterPrice(Order.Types _type, uint256 _price, bytes32 _orderId) public view returns (bool);
+    function isWorsePrice(Order.Types _type, uint256 _price, bytes32 _orderId) public view returns (bool);
+    function assertIsNotBetterPrice(Order.Types _type, uint256 _price, bytes32 _betterOrderId) public view returns (bool);
+    function assertIsNotWorsePrice(Order.Types _type, uint256 _price, bytes32 _worseOrderId) public returns (bool);
+    function recordFillOrder(bytes32 _orderId, uint256 _sharesFilled, uint256 _tokensFilled) public returns (bool);
+    function setPrice(IMarket _market, uint256 _outcome, uint256 _price) external returns (bool);
+    function incrementTotalEscrowed(IMarket _market, uint256 _amount) external returns (bool);
+    function decrementTotalEscrowed(IMarket _market, uint256 _amount) external returns (bool);
+}
+
+contract IShareToken is ITyped, ERC20 {
+    function initialize(IMarket _market, uint256 _outcome) external returns (bool);
+    function createShares(address _owner, uint256 _amount) external returns (bool);
+    function destroyShares(address, uint256 balance) external returns (bool);
+    function getMarket() external view returns (IMarket);
+    function getOutcome() external view returns (uint256);
+    function trustedOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedFillOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+    function trustedCancelOrderTransfer(address _source, address _destination, uint256 _attotokens) public returns (bool);
+}
+
+library Order {
+    using SafeMathUint256 for uint256;
+
+    enum Types {
+        Bid, Ask
     }
 
-    struct Jackpot {
-        address winner;
-        uint balance;
+    enum TradeDirections {
+        Long, Short
     }
 
-    // struct RoundPoints {
-    //     mapping(address => uint) points;
-    // }
+    struct Data {
+        // Contracts
+        IOrders orders;
+        IMarket market;
+        IAugur augur;
 
-    struct Round {
-        Jackpot jackpot1;
-        Jackpot jackpot2;
-        Jackpot jackpot3;
-        Jackpot jackpot4;
-        Jackpot jackpot5;
-
-        mapping(string => bool) kingdomsCreated;
-        mapping(address => uint) nbKingdoms;
-        mapping(address => uint) nbTransactions;
-        mapping(address => uint) nbKingdomsType1;
-        mapping(address => uint) nbKingdomsType2;
-        mapping(address => uint) nbKingdomsType3;
-        mapping(address => uint) nbKingdomsType4;
-        mapping(address => uint) nbKingdomsType5;
-
-        uint startTime;
-        uint endTime;
-
-        mapping(string => uint) kingdomsKeys;
-        mapping(address => uint) scores;
-
+        // Order
+        bytes32 id;
+        address creator;
+        uint256 outcome;
+        Order.Types orderType;
+        uint256 amount;
+        uint256 price;
+        uint256 sharesEscrowed;
+        uint256 moneyEscrowed;
+        bytes32 betterOrderId;
+        bytes32 worseOrderId;
     }
 
+    //
+    // Constructor
+    //
 
-    Kingdom[] public kingdoms;
-    Transaction[] public kingdomTransactions;
-    uint public currentRound;
-    address public bookerAddress;
-    
-    mapping(uint => Round) rounds;
-    mapping(address => uint) lastTransaction;
+    // No validation is needed here as it is simply a librarty function for organizing data
+    function create(IController _controller, address _creator, uint256 _outcome, Order.Types _type, uint256 _attoshares, uint256 _price, IMarket _market, bytes32 _betterOrderId, bytes32 _worseOrderId) internal view returns (Data) {
+        require(_outcome < _market.getNumberOfOutcomes());
+        require(_price < _market.getNumTicks());
 
-    uint constant public ACTION_TAX = 0.02 ether;
-    uint constant public STARTING_CLAIM_PRICE_WEI = 0.03 ether;
-    uint constant MAXIMUM_CLAIM_PRICE_WEI = 800 ether;
-    uint constant KINGDOM_MULTIPLIER = 20;
-    uint constant TEAM_COMMISSION_RATIO = 20;
+        IOrders _orders = IOrders(_controller.lookup("Orders"));
+        IAugur _augur = _controller.getAugur();
 
-    // MODIFIERS
+        return Data({
+            orders: _orders,
+            market: _market,
+            augur: _augur,
+            id: 0,
+            creator: _creator,
+            outcome: _outcome,
+            orderType: _type,
+            amount: _attoshares,
+            price: _price,
+            sharesEscrowed: 0,
+            moneyEscrowed: 0,
+            betterOrderId: _betterOrderId,
+            worseOrderId: _worseOrderId
+        });
+    }
 
-    modifier checkKingdomCap(address _owner, uint _kingdomType) {
-        if (_kingdomType == 1) {
-            require((rounds[currentRound].nbKingdomsType1[_owner] + 1) < 9);
-        } else if (_kingdomType == 2) {
-            require((rounds[currentRound].nbKingdomsType2[_owner] + 1) < 9);
-        } else if (_kingdomType == 3) {
-            require((rounds[currentRound].nbKingdomsType3[_owner] + 1) < 9);
-        } else if (_kingdomType == 4) {
-            require((rounds[currentRound].nbKingdomsType4[_owner] + 1) < 9);
-        } else if (_kingdomType == 5) {
-            require((rounds[currentRound].nbKingdomsType5[_owner] + 1) < 9);
+    //
+    // "public" functions
+    //
+
+    function getOrderId(Order.Data _orderData) internal view returns (bytes32) {
+        if (_orderData.id == bytes32(0)) {
+            bytes32 _orderId = _orderData.orders.getOrderId(_orderData.orderType, _orderData.market, _orderData.amount, _orderData.price, _orderData.creator, block.number, _orderData.outcome, _orderData.moneyEscrowed, _orderData.sharesEscrowed);
+            require(_orderData.orders.getAmount(_orderId) == 0);
+            _orderData.id = _orderId;
         }
-        _;
+        return _orderData.id;
     }
 
-    modifier checkKingdomCreated(string _key) {
-        require(rounds[currentRound].kingdomsCreated[_key] == false);
-        _;
+    function getOrderTradingTypeFromMakerDirection(Order.TradeDirections _creatorDirection) internal pure returns (Order.Types) {
+        return (_creatorDirection == Order.TradeDirections.Long) ? Order.Types.Bid : Order.Types.Ask;
     }
 
-    modifier onlyForRemainingKingdoms() {
-        uint remainingKingdoms = getRemainingKingdoms();
-        require(remainingKingdoms > kingdoms.length);
-        _;
+    function getOrderTradingTypeFromFillerDirection(Order.TradeDirections _fillerDirection) internal pure returns (Order.Types) {
+        return (_fillerDirection == Order.TradeDirections.Long) ? Order.Types.Ask : Order.Types.Bid;
     }
 
-    modifier checkKingdomExistence(string key) {
-        require(rounds[currentRound].kingdomsCreated[key] == true);
-        _;
+    function escrowFunds(Order.Data _orderData) internal returns (bool) {
+        if (_orderData.orderType == Order.Types.Ask) {
+            return escrowFundsForAsk(_orderData);
+        } else if (_orderData.orderType == Order.Types.Bid) {
+            return escrowFundsForBid(_orderData);
+        }
     }
 
-    modifier checkIsNotLocked(string kingdomKey) {
-        require(kingdoms[rounds[currentRound].kingdomsKeys[kingdomKey]].locked != true);
-        _;
+    function saveOrder(Order.Data _orderData, bytes32 _tradeGroupId) internal returns (bytes32) {
+        return _orderData.orders.saveOrder(_orderData.orderType, _orderData.market, _orderData.amount, _orderData.price, _orderData.creator, _orderData.outcome, _orderData.moneyEscrowed, _orderData.sharesEscrowed, _orderData.betterOrderId, _orderData.worseOrderId, _tradeGroupId);
     }
-
-    modifier checkIsClosed() {
-        require(now >= rounds[currentRound].endTime);
-        _;
-    }
-
-    modifier onlyKingdomOwner(string _key, address _sender) {
-        require (kingdoms[rounds[currentRound].kingdomsKeys[_key]].owner == _sender);
-        _;
-    }
-    
-    // ERC20 
-    address public woodAddress;
-    ERC20Basic woodInterface;
-    // ERC20Basic rock;
-    // ERC20Basic 
-
-    // EVENTS
-
-    event LandCreatedEvent(string kingdomKey, address monarchAddress);
-    event LandPurchasedEvent(string kingdomKey, address monarchAddress);
 
     //
-    //  CONTRACT CONSTRUCTOR
+    // Private functions
     //
-    function Map(address _bookerAddress, address _woodAddress, uint _startTime, uint _endTime) {
-        bookerAddress = _bookerAddress;
-        woodAddress = _woodAddress;
-        woodInterface = ERC20Basic(_woodAddress);
-        currentRound = 1;
-        rounds[currentRound] = Round(Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), 0, 0);
-        rounds[currentRound].jackpot1 = Jackpot(address(0), 0);
-        rounds[currentRound].jackpot2 = Jackpot(address(0), 0);
-        rounds[currentRound].jackpot3 = Jackpot(address(0), 0);
-        rounds[currentRound].jackpot4 = Jackpot(address(0), 0);
-        rounds[currentRound].jackpot5 = Jackpot(address(0), 0);
-        rounds[currentRound].startTime = _startTime;
-        rounds[currentRound].endTime = _endTime;
-     }
 
-    function () { }
+    function escrowFundsForBid(Order.Data _orderData) private returns (bool) {
+        require(_orderData.moneyEscrowed == 0);
+        require(_orderData.sharesEscrowed == 0);
+        uint256 _attosharesToCover = _orderData.amount;
+        uint256 _numberOfOutcomes = _orderData.market.getNumberOfOutcomes();
 
-    function setWoodAddress (address _woodAddress) public onlyOwner  {
-        woodAddress = _woodAddress;
-        woodInterface = ERC20Basic(_woodAddress);
-    }
+        // Figure out how many almost-complete-sets (just missing `outcome` share) the creator has
+        uint256 _attosharesHeld = 2**254;
+        for (uint256 _i = 0; _i < _numberOfOutcomes; _i++) {
+            if (_i != _orderData.outcome) {
+                uint256 _creatorShareTokenBalance = _orderData.market.getShareToken(_i).balanceOf(_orderData.creator);
+                _attosharesHeld = SafeMathUint256.min(_creatorShareTokenBalance, _attosharesHeld);
+            }
+        }
 
-    function getRemainingKingdoms() public view returns (uint nb) {
-        for (uint i = 1; i < 10; i++) {
-            if (now < rounds[currentRound].startTime + (i * 12 hours)) {
-                uint result = (10 * i);
-                if (result > 100) { 
-                    return 100; 
-                } else {
-                    return result;
+        // Take shares into escrow if they have any almost-complete-sets
+        if (_attosharesHeld > 0) {
+            _orderData.sharesEscrowed = SafeMathUint256.min(_attosharesHeld, _attosharesToCover);
+            _attosharesToCover -= _orderData.sharesEscrowed;
+            for (_i = 0; _i < _numberOfOutcomes; _i++) {
+                if (_i != _orderData.outcome) {
+                    _orderData.market.getShareToken(_i).trustedOrderTransfer(_orderData.creator, _orderData.market, _orderData.sharesEscrowed);
                 }
             }
         }
-    }
-
-    //
-    //  This is the main function. It is called to buy a kingdom
-    //
-    function purchaseKingdom(string _key, string _title, bool _locked, address affiliate) public 
-    payable 
-    nonReentrant()
-    checkKingdomExistence(_key)
-    checkIsNotLocked(_key)
-    {
-        require(now < rounds[currentRound].endTime);
-        Round storage round = rounds[currentRound];
-        uint kingdomId = round.kingdomsKeys[_key];
-        Kingdom storage kingdom = kingdoms[kingdomId];
-        require((kingdom.kingdomTier + 1) < 6);
-        uint requiredPrice = kingdom.minimumPrice;
-        if (_locked == true) {
-            requiredPrice = requiredPrice.add(ACTION_TAX);
+        // If not able to cover entire order with shares alone, then cover remaining with tokens
+        if (_attosharesToCover > 0) {
+            _orderData.moneyEscrowed = _attosharesToCover.mul(_orderData.price);
+            require(_orderData.augur.trustedTransfer(_orderData.market.getDenominationToken(), _orderData.creator, _orderData.market, _orderData.moneyEscrowed));
         }
 
-        require (msg.value >= requiredPrice);
-        uint jackpotCommission = (msg.value).sub(kingdom.returnPrice);
+        return true;
+    }
 
-        if(affiliate != address(0)) {
-            uint affiliateValue = jackpotCommission.mul(10).div(100);
-            asyncSend(affiliate, affiliateValue);
-            jackpotCommission = jackpotCommission.sub(affiliateValue);
+    function escrowFundsForAsk(Order.Data _orderData) private returns (bool) {
+        require(_orderData.moneyEscrowed == 0);
+        require(_orderData.sharesEscrowed == 0);
+        IShareToken _shareToken = _orderData.market.getShareToken(_orderData.outcome);
+        uint256 _attosharesToCover = _orderData.amount;
+
+        // Figure out how many shares of the outcome the creator has
+        uint256 _attosharesHeld = _shareToken.balanceOf(_orderData.creator);
+
+        // Take shares in escrow if user has shares
+        if (_attosharesHeld > 0) {
+            _orderData.sharesEscrowed = SafeMathUint256.min(_attosharesHeld, _attosharesToCover);
+            _attosharesToCover -= _orderData.sharesEscrowed;
+            _shareToken.trustedOrderTransfer(_orderData.creator, _orderData.market, _orderData.sharesEscrowed);
         }
 
-        if (kingdom.returnPrice > 0) {
-            round.nbKingdoms[kingdom.owner]--;
-            if (kingdom.kingdomType == 1) {
-                round.nbKingdomsType1[kingdom.owner]--;
-            } else if (kingdom.kingdomType == 2) {
-                round.nbKingdomsType2[kingdom.owner]--;
-            } else if (kingdom.kingdomType == 3) {
-                round.nbKingdomsType3[kingdom.owner]--;
-            } else if (kingdom.kingdomType == 4) {
-                round.nbKingdomsType4[kingdom.owner]--;
-            } else if (kingdom.kingdomType == 5) {
-                round.nbKingdomsType5[kingdom.owner]--;
-            }
-            compensateLatestMonarch(kingdom.lastTransaction, kingdom.returnPrice);
-        }
-        
-        // woodInterface.resetTimer(_key);
-
-        kingdom.kingdomTier++;
-        kingdom.title = _title;
-
-        if (kingdom.kingdomTier == 5) {
-            kingdom.returnPrice = 0;
-            kingdom.minimumPrice = 5 ether;
-        } else if (kingdom.kingdomTier == 2) {
-            kingdom.returnPrice = 0.1125 ether;
-            kingdom.minimumPrice = 0.27 ether;
-        } else if (kingdom.kingdomTier == 3) {
-            kingdom.returnPrice = 0.3375 ether;
-            kingdom.minimumPrice = 0.81 ether;
-        } else if (kingdom.kingdomTier == 4) {
-            kingdom.returnPrice = 1.0125 ether;
-            kingdom.minimumPrice = 2.43 ether;
-        }
-        
-        kingdom.owner = msg.sender;
-        kingdom.locked = _locked;
-
-        uint transactionId = kingdomTransactions.push(Transaction("", msg.sender, msg.value, 0, jackpotCommission, now)) - 1;
-        kingdomTransactions[transactionId].kingdomKey = _key;
-        kingdom.transactionCount++;
-        kingdom.lastTransaction = transactionId;
-        lastTransaction[msg.sender] = now;
-
-        setNewJackpot(kingdom.kingdomType, jackpotCommission, msg.sender);
-        LandPurchasedEvent(_key, msg.sender);
-    }
-
-    function setNewJackpot(uint kingdomType, uint jackpotSplitted, address sender) internal {
-        rounds[currentRound].nbTransactions[sender]++;
-        rounds[currentRound].nbKingdoms[sender]++;
-        if (kingdomType == 1) {
-            rounds[currentRound].nbKingdomsType1[sender]++;
-            rounds[currentRound].jackpot1.balance = rounds[currentRound].jackpot1.balance.add(jackpotSplitted);
-        } else if (kingdomType == 2) {
-            rounds[currentRound].nbKingdomsType2[sender]++;
-            rounds[currentRound].jackpot2.balance = rounds[currentRound].jackpot2.balance.add(jackpotSplitted);
-        } else if (kingdomType == 3) {
-            rounds[currentRound].nbKingdomsType3[sender]++;
-            rounds[currentRound].jackpot3.balance = rounds[currentRound].jackpot3.balance.add(jackpotSplitted);
-        } else if (kingdomType == 4) {
-            rounds[currentRound].nbKingdomsType4[sender]++;
-            rounds[currentRound].jackpot4.balance = rounds[currentRound].jackpot4.balance.add(jackpotSplitted);
-        } else if (kingdomType == 5) {
-            rounds[currentRound].nbKingdomsType5[sender]++;
-            rounds[currentRound].jackpot5.balance = rounds[currentRound].jackpot5.balance.add(jackpotSplitted);
-        }
-    }
-
-    function setLock(string _key, bool _locked) public payable checkKingdomExistence(_key) onlyKingdomOwner(_key, msg.sender) {
-        if (_locked == true) { require(msg.value >= ACTION_TAX); }
-        kingdoms[rounds[currentRound].kingdomsKeys[_key]].locked = _locked;
-        if (msg.value > 0) { asyncSend(bookerAddress, msg.value); }
-    }
-
-    function giveKingdom(address owner, string _key, string _title, uint _type) onlyOwner() public {
-        require(_type > 0);
-        require(_type < 6);
-        require(rounds[currentRound].kingdomsCreated[_key] == false);
-        uint kingdomId = kingdoms.push(Kingdom("", "", 1, _type, 0, 0, 1, 0.02 ether, address(0), false)) - 1;
-        kingdoms[kingdomId].title = _title;
-        kingdoms[kingdomId].owner = owner;
-        kingdoms[kingdomId].key = _key;
-        kingdoms[kingdomId].minimumPrice = 0.03 ether;
-        kingdoms[kingdomId].locked = false;
-        rounds[currentRound].kingdomsKeys[_key] = kingdomId;
-        rounds[currentRound].kingdomsCreated[_key] = true;
-        uint transactionId = kingdomTransactions.push(Transaction("", msg.sender, 0.01 ether, 0, 0, now)) - 1;
-        kingdomTransactions[transactionId].kingdomKey = _key;
-        kingdoms[kingdomId].lastTransaction = transactionId;
-    }
-
-    function sendAffiliateValue(uint basePrice, address affiliate) internal returns (uint jackpotValue) {
-        uint result = basePrice;
-        if(affiliate != address(0)) {
-            asyncSend(affiliate, 0.003 ether);
-            result = basePrice - (0.003 ether);
-        }
-        return result;
-    }
-
-    //
-    //  User can call this function to generate new kingdoms (within the limits of available land)
-    //
-    function createKingdom(string _key, string _title, uint _type, address affiliate, bool _locked) checkKingdomCap(msg.sender, _type) onlyForRemainingKingdoms() public payable {
-        require(now < rounds[currentRound].endTime);
-        require(_type > 0);
-        require(_type < 6);
-        uint basePrice = STARTING_CLAIM_PRICE_WEI;
-        uint requiredPrice = basePrice;
-        if (_locked == true) { requiredPrice = requiredPrice.add(ACTION_TAX); }
-        require(msg.value >= requiredPrice);
-
-        uint refundPrice = 0.0375 ether; // (STARTING_CLAIM_PRICE_WEI.mul(125)).div(100);
-        uint nextMinimumPrice = 0.09 ether; // STARTING_CLAIM_PRICE_WEI.add(STARTING_CLAIM_PRICE_WEI.mul(2));
-
-        uint kingdomId = kingdoms.push(Kingdom("", "", 1, 0, 0, 0, 1, refundPrice, address(0), false)) - 1;
-        
-        kingdoms[kingdomId].kingdomType = _type;
-        kingdoms[kingdomId].title = _title;
-        kingdoms[kingdomId].owner = msg.sender;
-        kingdoms[kingdomId].key = _key;
-        kingdoms[kingdomId].minimumPrice = nextMinimumPrice;
-        kingdoms[kingdomId].locked = _locked;
-
-        rounds[currentRound].kingdomsKeys[_key] = kingdomId;
-        rounds[currentRound].kingdomsCreated[_key] = true;
-        
-        if(_locked == true) {
-            asyncSend(bookerAddress, ACTION_TAX);
+        // If not able to cover entire order with shares alone, then cover remaining with tokens
+        if (_attosharesToCover > 0) {
+            _orderData.moneyEscrowed = _orderData.market.getNumTicks().sub(_orderData.price).mul(_attosharesToCover);
+            require(_orderData.augur.trustedTransfer(_orderData.market.getDenominationToken(), _orderData.creator, _orderData.market, _orderData.moneyEscrowed));
         }
 
-        uint transactionId = createTransaction(_type, msg.sender, msg.value, basePrice, affiliate);
-        kingdomTransactions[transactionId].kingdomKey = _key;
-        kingdoms[kingdomId].lastTransaction = transactionId;
-        LandCreatedEvent(_key, msg.sender);
-    }
-
-    function createTransaction(uint _type, address _sender, uint _value, uint _basePrice, address _affiliate) internal returns (uint id) {
-        uint jackpotValue = sendAffiliateValue(_basePrice, _affiliate);
-        uint transactionId = kingdomTransactions.push(Transaction("", _sender, _value, 0, jackpotValue, now)) - 1;
-        lastTransaction[_sender] = now;
-        setNewJackpot(_type, jackpotValue, msg.sender);
-        return transactionId;
-    }
-
-    //
-    //  Send transaction to compensate the previous owner
-    //
-    function compensateLatestMonarch(uint lastTransaction, uint compensationWei) internal {
-        address compensationAddress = kingdomTransactions[lastTransaction].compensationAddress;
-        kingdomTransactions[lastTransaction].compensation = compensationWei;
-        asyncSend(compensationAddress, compensationWei);
-    }
-
-    //
-    //  This function may be useful to force withdraw if user never come back to get his money
-    //
-    function forceWithdrawPayments(address payee) public onlyOwner {
-        uint256 payment = payments[payee];
-        require(payment != 0);
-        require(this.balance >= payment);
-        totalPayments = totalPayments.sub(payment);
-        payments[payee] = 0;
-        assert(payee.send(payment));
-    }
-
-    function getStartTime() public view returns (uint startTime) {
-        return rounds[currentRound].startTime;
-    }
-
-    function getEndTime() public view returns (uint endTime) {
-        return rounds[currentRound].endTime;
-    }
-
-    function payJackpot1() internal checkIsClosed() {
-        address winner = getWinner(1);
-        if (rounds[currentRound].jackpot1.balance > 0 && winner != address(0)) {
-            require(this.balance >= rounds[currentRound].jackpot1.balance);
-            rounds[currentRound].jackpot1.winner = winner;
-            uint teamComission = (rounds[currentRound].jackpot1.balance.mul(TEAM_COMMISSION_RATIO)).div(100);
-            bookerAddress.transfer(teamComission);
-            uint jackpot = rounds[currentRound].jackpot1.balance.sub(teamComission);
-            asyncSend(winner, jackpot);
-            rounds[currentRound].jackpot1.balance = 0;
-        }
-    }
-
-    function payJackpot2() internal checkIsClosed() {
-        address winner = getWinner(2);
-        if (rounds[currentRound].jackpot2.balance > 0 && winner != address(0)) {
-            require(this.balance >= rounds[currentRound].jackpot2.balance);
-            rounds[currentRound].jackpot2.winner = winner;
-            uint teamComission = (rounds[currentRound].jackpot2.balance.mul(TEAM_COMMISSION_RATIO)).div(100);
-            bookerAddress.transfer(teamComission);
-            uint jackpot = rounds[currentRound].jackpot2.balance.sub(teamComission);
-            asyncSend(winner, jackpot);
-            rounds[currentRound].jackpot2.balance = 0;
-        }
-    }
-
-    function payJackpot3() internal checkIsClosed() {
-        address winner = getWinner(3);
-        if (rounds[currentRound].jackpot3.balance > 0 && winner != address(0)) {
-            require(this.balance >= rounds[currentRound].jackpot3.balance);
-            rounds[currentRound].jackpot3.winner = winner;
-            uint teamComission = (rounds[currentRound].jackpot3.balance.mul(TEAM_COMMISSION_RATIO)).div(100);
-            bookerAddress.transfer(teamComission);
-            uint jackpot = rounds[currentRound].jackpot3.balance.sub(teamComission);
-            asyncSend(winner, jackpot);
-            rounds[currentRound].jackpot3.balance = 0;
-        }
-    }
-
-    function payJackpot4() internal checkIsClosed() {
-        address winner = getWinner(4);
-        if (rounds[currentRound].jackpot4.balance > 0 && winner != address(0)) {
-            require(this.balance >= rounds[currentRound].jackpot4.balance);
-            rounds[currentRound].jackpot4.winner = winner;
-            uint teamComission = (rounds[currentRound].jackpot4.balance.mul(TEAM_COMMISSION_RATIO)).div(100);
-            bookerAddress.transfer(teamComission);
-            uint jackpot = rounds[currentRound].jackpot4.balance.sub(teamComission);
-            asyncSend(winner, jackpot);
-            rounds[currentRound].jackpot4.balance = 0;
-        }
-    }
-
-    function payJackpot5() internal checkIsClosed() {
-        address winner = getWinner(5);
-        if (rounds[currentRound].jackpot5.balance > 0 && winner != address(0)) {
-            require(this.balance >= rounds[currentRound].jackpot5.balance);
-            rounds[currentRound].jackpot5.winner = winner;
-            uint teamComission = (rounds[currentRound].jackpot5.balance.mul(TEAM_COMMISSION_RATIO)).div(100);
-            bookerAddress.transfer(teamComission);
-            uint jackpot = rounds[currentRound].jackpot5.balance.sub(teamComission);
-            asyncSend(winner, jackpot);
-            rounds[currentRound].jackpot5.balance = 0;
-        }
-    }
-
-    //
-    //  After time expiration, owner can call this function to activate the next round of the game
-    //
-    function activateNextRound(uint _startTime) public checkIsClosed() {
-        payJackpot1();
-        payJackpot2();
-        payJackpot3();
-        payJackpot4();
-        payJackpot5();
-
-        currentRound++;
-        rounds[currentRound] = Round(Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), Jackpot(address(0), 0), 0, 0);
-        rounds[currentRound].startTime = _startTime;
-        rounds[currentRound].endTime = _startTime + 7 days;
-        delete kingdoms;
-        delete kingdomTransactions;
-    }
-
-    // GETTER AND SETTER FUNCTIONS
-
-    function getKingdomCount() public view returns (uint kingdomCount) {
-        return kingdoms.length;
-    }
-
-    function getJackpot(uint _nb) public view returns (address winner, uint balance) {
-        if (_nb == 1) {
-            return (getWinner(1), rounds[currentRound].jackpot1.balance);
-        } else if (_nb == 2) {
-            return (getWinner(2), rounds[currentRound].jackpot2.balance);
-        } else if (_nb == 3) {
-            return (getWinner(3), rounds[currentRound].jackpot3.balance);
-        } else if (_nb == 4) {
-            return (getWinner(4), rounds[currentRound].jackpot4.balance);
-        } else if (_nb == 5) {
-            return (getWinner(5), rounds[currentRound].jackpot5.balance);
-        }
-    }
-
-    function getKingdomType(string _kingdomKey) public view returns (uint kingdomType) {
-        return kingdoms[rounds[currentRound].kingdomsKeys[_kingdomKey]].kingdomType;
-    }
-
-    function getKingdomOwner(string _kingdomKey) public view returns (address owner) {
-        return kingdoms[rounds[currentRound].kingdomsKeys[_kingdomKey]].owner;
-    }
-
-    function getKingdomInformations(string _kingdomKey) public view returns (string title, uint minimumPrice, uint lastTransaction, uint transactionCount, address currentOwner, uint kingdomType, bool locked) {
-        uint kingdomId = rounds[currentRound].kingdomsKeys[_kingdomKey];
-        Kingdom storage kingdom = kingdoms[kingdomId];
-        return (kingdom.title, kingdom.minimumPrice, kingdom.lastTransaction, kingdom.transactionCount, kingdom.owner, kingdom.kingdomType, kingdom.locked);
-    }
- 
-    // function upgradeTier(string _key) public {
-    //     // require(now < rounds[currentRound].endTime);
-    //     Round storage round = rounds[currentRound];
-    //     uint kingdomId = round.kingdomsKeys[_key];
-    //     Kingdom storage kingdom = kingdoms[kingdomId];
-    //     uint wood = woodInterface.balanceOf(kingdom.owner);
-    //     require(wood >= 1);
-    //     kingdom.kingdomTier++;
-    // }
-
-    function getWinner(uint _type) public returns (address winner) {
-        require(_type > 0);
-        require(_type < 6);
-
-        address addr;
-        uint maxPoints = 0;
-        Round storage round = rounds[currentRound];
-
-        for (uint index = 0; index < kingdoms.length; index++) {
-            if (_type == kingdoms[index].kingdomType) {
-                address userAddress = kingdoms[index].owner;
-                if(kingdoms[index].kingdomTier == 1) {
-                    round.scores[msg.sender] = round.scores[msg.sender] + 1;
-                } else if(kingdoms[index].kingdomTier == 2) {
-                    round.scores[msg.sender] = round.scores[msg.sender] + 3;
-                } else if (kingdoms[index].kingdomTier == 3) {
-                    round.scores[msg.sender] = round.scores[msg.sender] + 5;
-                } else if (kingdoms[index].kingdomTier == 4) {
-                    round.scores[msg.sender] = round.scores[msg.sender] + 8;
-                } else if (kingdoms[index].kingdomTier == 5) {
-                    round.scores[msg.sender] = round.scores[msg.sender] + 13;
-                }
-                
-                if(round.scores[msg.sender] != 0 && round.scores[msg.sender] == maxPoints) {
-                    if(lastTransaction[userAddress] < lastTransaction[addr]) {
-                        addr = userAddress;
-                    }
-                } else if (round.scores[msg.sender] > maxPoints) {
-                    maxPoints = round.scores[msg.sender];
-                    addr = userAddress;
-                }
-            }
-        }
-        return addr;
+        return true;
     }
 }
