@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTFM at 0x9072d0bc3e9e3a0691c06be1938665a297ee25e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTFM at 0xe4f1bcae296ff9385842fc24cc7d18ab94121223
 */
 pragma solidity ^0.4.18;
 
@@ -115,6 +115,10 @@ contract BTFM is ERC20Interface {
         // if sender's balance has enough unit and amount >= 0,
         //      and the sum is not overflow,
         // then do transfer
+        
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        require(_amount >= 0);
         if ( (balances[msg.sender] >= _amount) &&
              (_amount >= 0) &&
              (balances[_to] + _amount > balances[_to]) ) {
@@ -142,6 +146,9 @@ contract BTFM is ERC20Interface {
     public
 
     returns (bool success) {
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+        require(_amount >= 0);
         if (balances[_from] >= _amount && _amount > 0 && allowed[_from][msg.sender] >= _amount) {
             balances[_from] -= _amount;
             allowed[_from][msg.sender] -= _amount;
