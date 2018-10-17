@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EraSwapToken at 0x2ce59e1f4c4159e087d1e2e16db2b606f67a2f3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EraSwapToken at 0x262316b5837d915d1fc985b6fd5c720a36a673a8
 */
 pragma solidity 0.4.24;
 
@@ -251,7 +251,7 @@ contract MintableToken is StandardToken, Ownable {
   event BeneficiariesAdded();
   
   uint256 public lastMintingTime;
-  uint256 public mintingStartTime = 1543622400;
+  uint256 public mintingStartTime = 1531815638;
   uint256 public mintingThreshold = 31536000;
   uint256 public lastMintedTokens = 91000000000000000;
 
