@@ -1,475 +1,225 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x1e8b362f354ca409c936f37d0cbae16b4f15bdf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x5eb475d04638eb988a477aa0db786084f22f567d
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.20;
 
-contract ERC20 {
-  function totalSupply() public view returns (uint256);
-
-  function balanceOf(address _who) public view returns (uint256);
-
-  function allowance(address _owner, address _spender)
-    public view returns (uint256);
-
-  function transfer(address _to, uint256 _value) public returns (bool);
-
-  function approve(address _spender, uint256 _value)
-    public returns (bool);
-
-  function transferFrom(address _from, address _to, uint256 _value)
-    public returns (bool);
-
-  event Transfer(address indexed from, address indexed to,  uint256 value );
-
-  event Approval(  address indexed owner,  address indexed spender,  uint256 value );
-
-  }
-  
-  library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) public pure  returns (uint256)  {
     uint256 c = a * b;
-    require(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeDiv(uint256 a, uint256 b)public pure returns (uint256) {
+    assert(b > 0);
     uint256 c = a / b;
+    assert(a == b * c + a % b);
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a);
+  function safeSub(uint256 a, uint256 b)public pure returns (uint256) {
+    assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function safeAdd(uint256 a, uint256 b)public pure returns (uint256) {
     uint256 c = a + b;
-    require(c >= a);
+    assert(c>=a && c>=b);
     return c;
   }
+
+  function _assert(bool assertion)public pure {
+    assert(!assertion);
+  }
 }
 
- contract StandardToken is ERC20 {
-  using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-  uint256 totalSupply_;
-
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-
-  function allowance(
-    address _owner,
-    address _spender
-   )
-    public
-    view
-    returns (uint256)
-  {
-    return allowed[_owner][_spender];
-  }
-
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_value <= balances[msg.sender]);
-    require(_to != address(0));
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    returns (bool)
-  {
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    require(_to != address(0));
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-}
+contract ERC20Interface {
+  string public name;
+  string public symbol;
+  uint8 public  decimals;
+  uint public totalSupply;
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
   
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) view returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ }
  
-// ERC20 standard token
-contract AdvanceToken is StandardToken {
-    address public owner; 
-    string public name = "XYCoin(?????)"; 
-    string public symbol = "XYC"; 
-    uint8 public decimals =4; 
-    uint256 public totalSupply = 10000000000e4; 
-    
-    mapping (address => bool) public frozenAccount; 
-    mapping (address => uint256) public frozenTimestamp; 
+contract ERC20 is ERC20Interface,SafeMath {
 
-    bool public exchangeFlag = true; 
-   
-    uint256 public minWei = 1;  
-    uint256 public maxWei = 2e18; 
-    uint256 public maxRaiseAmount =20e18; 
-    uint256 public raisedAmount = 0; 
-    uint256 public raiseRatio = 200000; 
-     
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    // ?????????????balanceOf????
+    mapping(address => uint256) public balanceOf;
+
+    // allowed?????????????????address?? ????????????(?????address)?????uint256??
+    mapping(address => mapping(address => uint256)) allowed;
+
+    constructor(string _name) public {
+       name = _name;  // "UpChain";
+       symbol = "MIT";
+       decimals = 4;
+       totalSupply = 10000000000000;
+       balanceOf[msg.sender] = totalSupply;
+    }
+
+  // ???
+  function transfer(address _to, uint256 _value) returns (bool success) {
+      require(_to != address(0));
+      require(balanceOf[msg.sender] >= _value);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);  
+
+      balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender],_value) ;
+      balanceOf[_to] =SafeMath.safeAdd(balanceOf[_to] ,_value);
 
    
-    constructor() public {
-        totalSupply_ = totalSupply;
+      emit Transfer(msg.sender, _to, _value);
+
+      return true;
+  }
+
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+      require(_to != address(0));
+      require(allowed[_from][msg.sender] >= _value);
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[_to] + _value >= balanceOf[_to]);
+
+      balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
+      balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to],_value);
+
+      allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender], _value);
+
+      emit Transfer(msg.sender, _to, _value);
+      return true;
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool success) {
+      allowed[msg.sender][_spender] = _value;
+
+      emit Approval(msg.sender, _spender, _value);
+      return true;
+  }
+
+  function allowance(address _owner, address _spender) view returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+  }
+
+}
+
+
+contract owned {
+    address public owner;
+
+    constructor () public {
         owner = msg.sender;
-        balances[msg.sender] = totalSupply;
     }
 
-
-    function()
-    public payable {
-        require(msg.value > 0);
-        if (exchangeFlag) {
-            if (msg.value >= minWei && msg.value <= maxWei){
-                if (raisedAmount < maxRaiseAmount) {
-                    uint256 valueNeed = msg.value;
-                    raisedAmount = raisedAmount.add(msg.value);
-                    if (raisedAmount > maxRaiseAmount) {
-                        uint256 valueLeft = raisedAmount.sub(maxRaiseAmount);
-                        valueNeed = msg.value.sub(valueLeft);
-                        msg.sender.transfer(valueLeft);
-                        raisedAmount = maxRaiseAmount;
-                    }
-                    if (raisedAmount >= maxRaiseAmount) {
-                        exchangeFlag = false;
-                    }
-                    
-                    uint256 _value = valueNeed.mul(raiseRatio);
-
-                    require(_value <= balances[owner]);
-                    balances[owner] = balances[owner].sub(_value);
-                    balances[msg.sender] = balances[msg.sender].add(_value);
-
-                    emit Transfer(owner, msg.sender, _value);
-
-                }
-            } else {
-                msg.sender.transfer(msg.value);
-            }
-        } else {
-            msg.sender.transfer(msg.value);
-        }
-    }
-
-    
-    
-    function changeowner(
-        address _newowner
-    )
-    public
-    returns (bool)  {
+    modifier onlyOwner {
         require(msg.sender == owner);
-        require(_newowner != address(0));
-        owner = _newowner;
-        return true;
-    }
-    
-    
-    function generateToken(
-        address _target,
-        uint256 _amount
-    )
-    public
-    returns (bool)  {
-        require(msg.sender == owner);
-        require(_target != address(0));
-        balances[_target] = balances[_target].add(_amount);
-        totalSupply_ = totalSupply_.add(_amount);
-        totalSupply = totalSupply_;
-        return true;
+        _;
     }
 
-    
-    function withdraw (
-        uint256 _amount
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        msg.sender.transfer(_amount);
-        return true;
-    }
-    
-    
-    function freeze(
-        address _target,
-        bool _freeze
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        require(_target != address(0));
-        frozenAccount[_target] = _freeze;
-        return true;
-    }
-    
-    
-    function freezeWithTimestamp(
-        address _target,
-        uint256 _timestamp
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        require(_target != address(0));
-        frozenTimestamp[_target] = _timestamp;
-        return true;
+    function transferOwnerShip(address newOwer) public onlyOwner {
+        owner = newOwer;
     }
 
+}
+
+contract SelfDesctructionContract is owned {
    
-    function multiFreeze(
-        address[] _targets,
-        bool[] _freezes
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        require(_targets.length == _freezes.length);
-        uint256 len = _targets.length;
-        require(len > 0);
-        for (uint256 i = 0; i < len; i = i.add(1)) {
-            address _target = _targets[i];
-            require(_target != address(0));
-            bool _freeze = _freezes[i];
-            frozenAccount[_target] = _freeze;
-        }
-        return true;
-    }
-    
-    
-    function multiFreezeWithTimestamp(
-        address[] _targets,
-        uint256[] _timestamps
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        require(_targets.length == _timestamps.length);
-        uint256 len = _targets.length;
-        require(len > 0);
-        for (uint256 i = 0; i < len; i = i.add(1)) {
-            address _target = _targets[i];
-            require(_target != address(0));
-            uint256 _timestamp = _timestamps[i];
-            frozenTimestamp[_target] = _timestamp;
-        }
-        return true;
-    }
-    
-    function multiTransfer(
-        address[] _tos,
-        uint256[] _values
-    )
-    public
-    returns (bool) {
-        require(!frozenAccount[msg.sender]);
-        require(now > frozenTimestamp[msg.sender]);
-        require(_tos.length == _values.length);
-        uint256 len = _tos.length;
-        require(len > 0);
-        uint256 amount = 0;
-        for (uint256 i = 0; i < len; i = i.add(1)) {
-            amount = amount.add(_values[i]);
-        }
-        require(amount <= balances[msg.sender]);
-        for (uint256 j = 0; j < len; j = j.add(1)) {
-            address _to = _tos[j];
-            require(_to != address(0));
-            balances[_to] = balances[_to].add(_values[j]);
-            balances[msg.sender] = balances[msg.sender].sub(_values[j]);
-            emit Transfer(msg.sender, _to, _values[j]);
-        }
-        return true;
-    }
-     
-    function transfer(
-        address _to,
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(!frozenAccount[msg.sender]);
-        require(now > frozenTimestamp[msg.sender]);
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-     
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _value
-    )
-    public
-    returns (bool)
-    {
-        require(!frozenAccount[_from]);
-        require(now > frozenTimestamp[msg.sender]);
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-  
-  
-    function approve(
-        address _spender,
-        uint256 _value
-    ) public
-    returns (bool) {
-        
-        
-        allowed[msg.sender][_spender] = _value;
-
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    
-    
-    function getFrozenTimestamp(
-        address _target
-    )
-    public view
-    returns (uint256) {
-        require(_target != address(0));
-        return frozenTimestamp[_target];
-    }
-   
-    function getFrozenAccount(
-        address _target
-    )
-    public view
-    returns (bool) {
-        require(_target != address(0));
-        return frozenAccount[_target];
-    }
-   
-   
-    function getBalance()
-    public view
-    returns (uint256) {
-        return address(this).balance;
-    }
-   
-   
-
+   string  public someValue;
+   modifier ownerRestricted {
+      require(owner == msg.sender);
+      _;
+   } 
  
-    function setExchangeFlag (
-        bool _flag
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        exchangeFlag = _flag;
-        return true;
+   function SelfDesctructionContract() {
+      owner = msg.sender;
+   }
+   
+   function setSomeValue(string value){
+      someValue = value;
+   } 
+
+   function destroyContract() ownerRestricted {
+     selfdestruct(owner);
+   }
+}
+
+
+
+contract AdvanceToken is ERC20, SelfDesctructionContract{
+
+    mapping (address => bool) public frozenAccount;
+
+    event AddSupply(uint amount);
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address target, uint amount);
+
+    constructor (string _name) ERC20(_name) public {
 
     }
-   
-   
-    function setMinWei (
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        minWei = _value;
-        return true;
 
-    }
-   
-   
-    function setMaxWei (
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        maxWei = _value;
-        return true;
-    }
-   
-   
-    function setMaxRaiseAmount (
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        maxRaiseAmount = _value;
-        return true;
+    function mine(address target, uint amount) public onlyOwner {
+        totalSupply =SafeMath.safeAdd(totalSupply,amount) ;
+        balanceOf[target] = SafeMath.safeAdd(balanceOf[target],amount);
+
+        emit AddSupply(amount);
+        emit Transfer(0, target, amount);
     }
 
-    
-    function setRaisedAmount (
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        raisedAmount = _value;
-        return true;
+    function freezeAccount(address target, bool freeze) public onlyOwner {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
     }
 
-    
-    function setRaiseRatio (
-        uint256 _value
-    )
-    public
-    returns (bool) {
-        require(msg.sender == owner);
-        raiseRatio = _value;
+
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+        success = _transfer(msg.sender, _to, _value);
+  }
+
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(allowed[_from][msg.sender] >= _value);
+        success =  _transfer(_from, _to, _value);
+        allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender],_value) ;
+  }
+
+  function _transfer(address _from, address _to, uint256 _value) internal returns (bool) {
+      require(_to != address(0));
+      require(!frozenAccount[_from]);
+
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
+
+      balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
+      balanceOf[_to] =SafeMath.safeAdd(balanceOf[_to],_value) ;
+
+      emit Transfer(_from, _to, _value);
+      return true;
+  }
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+
+        totalSupply =SafeMath.safeSub(totalSupply,_value) ;
+        balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender],_value) ;
+
+        emit Burn(msg.sender, _value);
         return true;
     }
 
-    
-    function kill()
-    public {
-        require(msg.sender == owner);
-        selfdestruct(owner);
-    }
+    function burnFrom(address _from, uint256 _value)  public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(allowed[_from][msg.sender] >= _value);
 
+        totalSupply =SafeMath.safeSub(totalSupply,_value) ;
+        balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender], _value);
+        allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender],_value);
+
+        emit Burn(msg.sender, _value);
+        return true;
+    }
 }
