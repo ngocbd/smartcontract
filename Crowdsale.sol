@@ -1,12 +1,320 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4BCC39c2E1d107984DC510236e599ba48c504872
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x54d17db378717b433c1369d1628d92840202dc88
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-contract Token {
-  function saleTransfer(address _to, uint256 _value) public returns (bool);
-  function burnTokensForSale() public returns (bool);
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+
+
+contract GigERC20 is StandardToken, Ownable {
+    /* Public variables of the token */
+    uint256 public creationBlock;
+
+    uint8 public decimals;
+
+    string public name;
+
+    string public symbol;
+
+    string public standard;
+
+    bool public locked;
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function GigERC20(
+        uint256 _totalSupply,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol,
+        bool _transferAllSupplyToOwner,
+        bool _locked
+    ) public {
+        standard = 'ERC20 0.1';
+        locked = _locked;
+        totalSupply_ = _totalSupply;
+
+        if (_transferAllSupplyToOwner) {
+            balances[msg.sender] = totalSupply_;
+        } else {
+            balances[this] = totalSupply_;
+        }
+        name = _tokenName;
+        // Set the name for display purposes
+        symbol = _tokenSymbol;
+        // Set the symbol for display purposes
+        decimals = _decimalUnits;
+        // Amount of decimals for display purposes
+        creationBlock = block.number;
+    }
+
+    function setLocked(bool _locked) public onlyOwner {
+        locked = _locked;
+    }
+
+    /* public methods */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(locked == false);
+        return super.transfer(_to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        if (locked) {
+            return false;
+        }
+        return super.approve(_spender, _value);
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
+        if (locked) {
+            return false;
+        }
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
+        if (locked) {
+            return false;
+        }
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        if (locked) {
+            return false;
+        }
+
+        return super.transferFrom(_from, _to, _value);
+    }
+
+}
+
+
+
 
 /**
  * @title SafeMath
@@ -54,1498 +362,833 @@ library SafeMath {
   }
 }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conform
- * the base architecture for crowdsales. They are *not* intended to be modified / overriden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override 
- * the methods to add functionality. Consider using 'super' where appropiate to concatenate
- * behavior.
- */
 
- contract OraclizeI {
-    address public cbAddress;
-    function query(uint _timestamp, string _datasource, string _arg) external payable returns (bytes32 _id);
-    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) external payable returns (bytes32 _id);
-    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) public payable returns (bytes32 _id);
-    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) external payable returns (bytes32 _id);
-    function queryN(uint _timestamp, string _datasource, bytes _argN) public payable returns (bytes32 _id);
-    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) external payable returns (bytes32 _id);
-    function getPrice(string _datasource) public returns (uint _dsprice);
-    function getPrice(string _datasource, uint gaslimit) public returns (uint _dsprice);
-    function setProofType(byte _proofType) external;
-    function setCustomGasPrice(uint _gasPrice) external;
-    function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
-}
-
-contract OraclizeAddrResolverI {
-    function getAddress() public returns (address _addr);
-}
 
 /*
-Begin solidity-cborutils
-https://github.com/smartcontractkit/solidity-cborutils
-MIT License
-Copyright (c) 2018 SmartContract ChainLink, Ltd.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
+This contract manages the minters and the modifier to allow mint to happen only if called by minters
+This contract contains basic minting functionality though
+*/
+contract MintingERC20 is GigERC20 {
 
-library Buffer {
-    struct buffer {
-        bytes buf;
-        uint capacity;
-    }
+    using SafeMath for uint256;
 
-    function init(buffer memory buf, uint capacity) internal pure {
-        if(capacity % 32 != 0) capacity += 32 - (capacity % 32);
-        // Allocate space for the buffer data
-        buf.capacity = capacity;
-        assembly {
-            let ptr := mload(0x40)
-            mstore(buf, ptr)
-            mstore(0x40, add(ptr, capacity))
-        }
-    }
+    //Variables
+    mapping (address => bool) public minters;
 
-    function resize(buffer memory buf, uint capacity) private pure {
-        bytes memory oldbuf = buf.buf;
-        init(buf, capacity);
-        append(buf, oldbuf);
-    }
+    uint256 public maxSupply;
 
-    function max(uint a, uint b) private pure returns(uint) {
-        if(a > b) {
-            return a;
-        }
-        return b;
-    }
-
-    /**
-     * @dev Appends a byte array to the end of the buffer. Reverts if doing so
-     *      would exceed the capacity of the buffer.
-     * @param buf The buffer to append to.
-     * @param data The data to append.
-     * @return The original buffer.
-     */
-    function append(buffer memory buf, bytes data) internal pure returns(buffer memory) {
-        if(data.length + buf.buf.length > buf.capacity) {
-            resize(buf, max(buf.capacity, data.length) * 2);
-        }
-
-        uint dest;
-        uint src;
-        uint len = data.length;
-        assembly {
-            // Memory address of the buffer data
-            let bufptr := mload(buf)
-            // Length of existing buffer data
-            let buflen := mload(bufptr)
-            // Start address = buffer address + buffer length + sizeof(buffer length)
-            dest := add(add(bufptr, buflen), 32)
-            // Update buffer length
-            mstore(bufptr, add(buflen, mload(data)))
-            src := add(data, 32)
-        }
-
-        // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
-            assembly {
-                mstore(dest, mload(src))
-            }
-            dest += 32;
-            src += 32;
-        }
-
-        // Copy remaining bytes
-        uint mask = 256 ** (32 - len) - 1;
-        assembly {
-            let srcpart := and(mload(src), not(mask))
-            let destpart := and(mload(dest), mask)
-            mstore(dest, or(destpart, srcpart))
-        }
-
-        return buf;
-    }
-
-    /**
-     * @dev Appends a byte to the end of the buffer. Reverts if doing so would
-     * exceed the capacity of the buffer.
-     * @param buf The buffer to append to.
-     * @param data The data to append.
-     * @return The original buffer.
-     */
-    function append(buffer memory buf, uint8 data) internal pure {
-        if(buf.buf.length + 1 > buf.capacity) {
-            resize(buf, buf.capacity * 2);
-        }
-
-        assembly {
-            // Memory address of the buffer data
-            let bufptr := mload(buf)
-            // Length of existing buffer data
-            let buflen := mload(bufptr)
-            // Address = buffer address + buffer length + sizeof(buffer length)
-            let dest := add(add(bufptr, buflen), 32)
-            mstore8(dest, data)
-            // Update buffer length
-            mstore(bufptr, add(buflen, 1))
-        }
-    }
-
-    /**
-     * @dev Appends a byte to the end of the buffer. Reverts if doing so would
-     * exceed the capacity of the buffer.
-     * @param buf The buffer to append to.
-     * @param data The data to append.
-     * @return The original buffer.
-     */
-    function appendInt(buffer memory buf, uint data, uint len) internal pure returns(buffer memory) {
-        if(len + buf.buf.length > buf.capacity) {
-            resize(buf, max(buf.capacity, len) * 2);
-        }
-
-        uint mask = 256 ** len - 1;
-        assembly {
-            // Memory address of the buffer data
-            let bufptr := mload(buf)
-            // Length of existing buffer data
-            let buflen := mload(bufptr)
-            // Address = buffer address + buffer length + sizeof(buffer length) + len
-            let dest := add(add(bufptr, buflen), len)
-            mstore(dest, or(and(mload(dest), not(mask)), data))
-            // Update buffer length
-            mstore(bufptr, add(buflen, len))
-        }
-        return buf;
-    }
-}
-
-library CBOR {
-    using Buffer for Buffer.buffer;
-
-    uint8 private constant MAJOR_TYPE_INT = 0;
-    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
-    uint8 private constant MAJOR_TYPE_BYTES = 2;
-    uint8 private constant MAJOR_TYPE_STRING = 3;
-    uint8 private constant MAJOR_TYPE_ARRAY = 4;
-    uint8 private constant MAJOR_TYPE_MAP = 5;
-    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
-
-    function encodeType(Buffer.buffer memory buf, uint8 major, uint value) private pure {
-        if(value <= 23) {
-            buf.append(uint8((major << 5) | value));
-        } else if(value <= 0xFF) {
-            buf.append(uint8((major << 5) | 24));
-            buf.appendInt(value, 1);
-        } else if(value <= 0xFFFF) {
-            buf.append(uint8((major << 5) | 25));
-            buf.appendInt(value, 2);
-        } else if(value <= 0xFFFFFFFF) {
-            buf.append(uint8((major << 5) | 26));
-            buf.appendInt(value, 4);
-        } else if(value <= 0xFFFFFFFFFFFFFFFF) {
-            buf.append(uint8((major << 5) | 27));
-            buf.appendInt(value, 8);
-        }
-    }
-
-    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private pure {
-        buf.append(uint8((major << 5) | 31));
-    }
-
-    function encodeUInt(Buffer.buffer memory buf, uint value) internal pure {
-        encodeType(buf, MAJOR_TYPE_INT, value);
-    }
-
-    function encodeInt(Buffer.buffer memory buf, int value) internal pure {
-        if(value >= 0) {
-            encodeType(buf, MAJOR_TYPE_INT, uint(value));
-        } else {
-            encodeType(buf, MAJOR_TYPE_NEGATIVE_INT, uint(-1 - value));
-        }
-    }
-
-    function encodeBytes(Buffer.buffer memory buf, bytes value) internal pure {
-        encodeType(buf, MAJOR_TYPE_BYTES, value.length);
-        buf.append(value);
-    }
-
-    function encodeString(Buffer.buffer memory buf, string value) internal pure {
-        encodeType(buf, MAJOR_TYPE_STRING, bytes(value).length);
-        buf.append(bytes(value));
-    }
-
-    function startArray(Buffer.buffer memory buf) internal pure {
-        encodeIndefiniteLengthType(buf, MAJOR_TYPE_ARRAY);
-    }
-
-    function startMap(Buffer.buffer memory buf) internal pure {
-        encodeIndefiniteLengthType(buf, MAJOR_TYPE_MAP);
-    }
-
-    function endSequence(Buffer.buffer memory buf) internal pure {
-        encodeIndefiniteLengthType(buf, MAJOR_TYPE_CONTENT_FREE);
-    }
-}
-
-/*
-End solidity-cborutils
- */
-
-contract usingOraclize {
-    uint constant day = 60*60*24;
-    uint constant week = 60*60*24*7;
-    uint constant month = 60*60*24*30;
-    byte constant proofType_NONE = 0x00;
-    byte constant proofType_TLSNotary = 0x10;
-    byte constant proofType_Android = 0x20;
-    byte constant proofType_Ledger = 0x30;
-    byte constant proofType_Native = 0xF0;
-    byte constant proofStorage_IPFS = 0x01;
-    uint8 constant networkID_auto = 0;
-    uint8 constant networkID_mainnet = 1;
-    uint8 constant networkID_testnet = 2;
-    uint8 constant networkID_morden = 2;
-    uint8 constant networkID_consensys = 161;
-
-    OraclizeAddrResolverI OAR;
-
-    OraclizeI oraclize;
-    modifier oraclizeAPI {
-        if((address(OAR)==0)||(getCodeSize(address(OAR))==0))
-            oraclize_setNetwork(networkID_auto);
-
-        if(address(oraclize) != OAR.getAddress())
-            oraclize = OraclizeI(OAR.getAddress());
-
-        _;
-    }
-    modifier coupon(string code){
-        oraclize = OraclizeI(OAR.getAddress());
+    //Modifiers
+    modifier onlyMinters () {
+        require(true == minters[msg.sender]);
         _;
     }
 
-    function oraclize_setNetwork(uint8 networkID) internal returns(bool){
-      return oraclize_setNetwork();
-      networkID; // silence the warning and remain backwards compatible
+    function MintingERC20(
+        uint256 _initialSupply,
+        uint256 _maxSupply,
+        string _tokenName,
+        uint8 _decimals,
+        string _symbol,
+        bool _transferAllSupplyToOwner,
+        bool _locked
+    )
+        public GigERC20(_initialSupply, _tokenName, _decimals, _symbol, _transferAllSupplyToOwner, _locked)
+    {
+        standard = 'MintingERC20 0.1';
+        minters[msg.sender] = true;
+        maxSupply = _maxSupply;
     }
-    function oraclize_setNetwork() internal returns(bool){
-        if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
-            OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
-            oraclize_setNetworkName("eth_mainnet");
-            return true;
+
+    function addMinter(address _newMinter) public onlyOwner {
+        minters[_newMinter] = true;
+    }
+
+    function removeMinter(address _minter) public onlyOwner {
+        minters[_minter] = false;
+    }
+
+    function mint(address _addr, uint256 _amount) public onlyMinters returns (uint256) {
+        if (true == locked) {
+            return uint256(0);
         }
-        if (getCodeSize(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1)>0){ //ropsten testnet
-            OAR = OraclizeAddrResolverI(0xc03A2615D5efaf5F49F60B7BB6583eaec212fdf1);
-            oraclize_setNetworkName("eth_ropsten3");
-            return true;
+
+        if (_amount == uint256(0)) {
+            return uint256(0);
         }
-        if (getCodeSize(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e)>0){ //kovan testnet
-            OAR = OraclizeAddrResolverI(0xB7A07BcF2Ba2f2703b24C0691b5278999C59AC7e);
-            oraclize_setNetworkName("eth_kovan");
-            return true;
+
+        if (totalSupply_.add(_amount) > maxSupply) {
+            return uint256(0);
         }
-        if (getCodeSize(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48)>0){ //rinkeby testnet
-            OAR = OraclizeAddrResolverI(0x146500cfd35B22E4A392Fe0aDc06De1a1368Ed48);
-            oraclize_setNetworkName("eth_rinkeby");
-            return true;
+
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_addr] = balances[_addr].add(_amount);
+        Transfer(address(0), _addr, _amount);
+
+        return _amount;
+    }
+
+}
+
+
+
+/*
+    Tests:
+    - check that created token has correct name, symbol, decimals, locked, maxSupply
+    - check that setPrivateSale updates privateSale, and not affects crowdSaleEndTime
+    - check that setCrowdSale updates crowdSale, and changes crowdSaleEndTime
+    - check that trasnferFrom, approve, increaseApproval, decreaseApproval are forbidden to call before end of ICO
+    - check that burn is not allowed to call before end of CrowdSale
+    - check that increaseLockedBalance only increases investor locked amount
+    - check that isTransferAllowed failed if transferFrozen
+    - check that isTransferAllowed failed if user has not enough unlocked balance
+    - check that isTransferAllowed failed if user has not enough unlocked balance, after transfering enough tokens balance
+    - check that isTransferAllowed succeed if user has enough unlocked balance
+    - check that isTransferAllowed succeed if user has enough unlocked balance, after transfering enough tokens balance
+*/
+
+contract GigToken is MintingERC20 {
+    SellableToken public crowdSale; // Pre ICO & ICO
+    SellableToken public privateSale;
+
+    bool public transferFrozen = false;
+
+    uint256 public crowdSaleEndTime;
+
+    mapping(address => uint256) public lockedBalancesReleasedAfterOneYear;
+
+    modifier onlyCrowdSale() {
+        require(crowdSale != address(0) && msg.sender == address(crowdSale));
+
+        _;
+    }
+
+    modifier onlySales() {
+        require((privateSale != address(0) && msg.sender == address(privateSale)) ||
+            (crowdSale != address(0) && msg.sender == address(crowdSale)));
+
+        _;
+    }
+
+    event MaxSupplyBurned(uint256 burnedTokens);
+
+    function GigToken(bool _locked) public
+        MintingERC20(0, maxSupply, 'GigBit', 18, 'GBTC', false, _locked)
+    {
+        standard = 'GBTC 0.1';
+
+        maxSupply = uint256(1000000000).mul(uint256(10) ** decimals);
+    }
+
+    function setCrowdSale(address _crowdSale) public onlyOwner {
+        require(_crowdSale != address(0));
+
+        crowdSale = SellableToken(_crowdSale);
+
+        crowdSaleEndTime = crowdSale.endTime();
+    }
+
+    function setPrivateSale(address _privateSale) public onlyOwner {
+        require(_privateSale != address(0));
+
+        privateSale = SellableToken(_privateSale);
+    }
+
+    function freezing(bool _transferFrozen) public onlyOwner {
+        transferFrozen = _transferFrozen;
+    }
+
+    function isTransferAllowed(address _from, uint256 _value) public view returns (bool status) {
+        uint256 senderBalance = balanceOf(_from);
+        if (transferFrozen == true || senderBalance < _value) {
+            return false;
         }
-        if (getCodeSize(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475)>0){ //ethereum-bridge
-            OAR = OraclizeAddrResolverI(0x6f485C8BF6fc43eA212E93BBF8ce046C7f1cb475);
-            return true;
-        }
-        if (getCodeSize(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF)>0){ //ether.camp ide
-            OAR = OraclizeAddrResolverI(0x20e12A1F859B3FeaE5Fb2A0A32C18F5a65555bBF);
-            return true;
-        }
-        if (getCodeSize(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA)>0){ //browser-solidity
-            OAR = OraclizeAddrResolverI(0x51efaF4c8B3C9AfBD5aB9F4bbC82784Ab6ef8fAA);
-            return true;
-        }
-        return false;
-    }
 
-    function __callback(bytes32 myid, string result) public {
-        __callback(myid, result, new bytes(0));
-    }
-    function __callback(bytes32 myid, string result, bytes proof) public {
-      return;
-      myid; result; proof; // Silence compiler warnings
-    }
+        uint256 lockedBalance = lockedBalancesReleasedAfterOneYear[_from];
 
-    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource);
-    }
+        // check if holder tries to transfer more than locked tokens
+    if (lockedBalance > 0 && senderBalance.sub(_value) < lockedBalance) {
+            uint256 unlockTime = crowdSaleEndTime + 1 years;
 
-    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
-        return oraclize.getPrice(datasource, gaslimit);
-    }
-
-    function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        return oraclize.query.value(price)(0, datasource, arg);
-    }
-    function oraclize_query(uint timestamp, string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        return oraclize.query.value(price)(timestamp, datasource, arg);
-    }
-    function oraclize_query(uint timestamp, string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        return oraclize.query_withGasLimit.value(price)(timestamp, datasource, arg, gaslimit);
-    }
-    function oraclize_query(string datasource, string arg, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        return oraclize.query_withGasLimit.value(price)(0, datasource, arg, gaslimit);
-    }
-    function oraclize_query(string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        return oraclize.query2.value(price)(0, datasource, arg1, arg2);
-    }
-    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        return oraclize.query2.value(price)(timestamp, datasource, arg1, arg2);
-    }
-    function oraclize_query(uint timestamp, string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        return oraclize.query2_withGasLimit.value(price)(timestamp, datasource, arg1, arg2, gaslimit);
-    }
-    function oraclize_query(string datasource, string arg1, string arg2, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        return oraclize.query2_withGasLimit.value(price)(0, datasource, arg1, arg2, gaslimit);
-    }
-    function oraclize_query(string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        bytes memory args = stra2cbor(argN);
-        return oraclize.queryN.value(price)(0, datasource, args);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[] argN) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        bytes memory args = stra2cbor(argN);
-        return oraclize.queryN.value(price)(timestamp, datasource, args);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        bytes memory args = stra2cbor(argN);
-        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
-    }
-    function oraclize_query(string datasource, string[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        bytes memory args = stra2cbor(argN);
-        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
-    }
-    function oraclize_query(string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[1] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-
-    function oraclize_query(string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[2] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[3] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-
-    function oraclize_query(string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[4] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[5] args) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, string[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        string[] memory dynargs = new string[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        bytes memory args = ba2cbor(argN);
-        return oraclize.queryN.value(price)(0, datasource, args);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[] argN) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource);
-        if (price > 1 ether + tx.gasprice*200000) return 0; // unexpectedly high price
-        bytes memory args = ba2cbor(argN);
-        return oraclize.queryN.value(price)(timestamp, datasource, args);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        bytes memory args = ba2cbor(argN);
-        return oraclize.queryN_withGasLimit.value(price)(timestamp, datasource, args, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[] argN, uint gaslimit) oraclizeAPI internal returns (bytes32 id){
-        uint price = oraclize.getPrice(datasource, gaslimit);
-        if (price > 1 ether + tx.gasprice*gaslimit) return 0; // unexpectedly high price
-        bytes memory args = ba2cbor(argN);
-        return oraclize.queryN_withGasLimit.value(price)(0, datasource, args, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[1] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[1] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](1);
-        dynargs[0] = args[0];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-
-    function oraclize_query(string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[2] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[2] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](2);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[3] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[3] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](3);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-
-    function oraclize_query(string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[4] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[4] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](4);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[5] args) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(timestamp, datasource, dynargs);
-    }
-    function oraclize_query(uint timestamp, string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(timestamp, datasource, dynargs, gaslimit);
-    }
-    function oraclize_query(string datasource, bytes[5] args, uint gaslimit) oraclizeAPI internal returns (bytes32 id) {
-        bytes[] memory dynargs = new bytes[](5);
-        dynargs[0] = args[0];
-        dynargs[1] = args[1];
-        dynargs[2] = args[2];
-        dynargs[3] = args[3];
-        dynargs[4] = args[4];
-        return oraclize_query(datasource, dynargs, gaslimit);
-    }
-
-    function oraclize_cbAddress() oraclizeAPI internal returns (address){
-        return oraclize.cbAddress();
-    }
-    function oraclize_setProof(byte proofP) oraclizeAPI internal {
-        return oraclize.setProofType(proofP);
-    }
-    function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
-        return oraclize.setCustomGasPrice(gasPrice);
-    }
-
-    function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
-        return oraclize.randomDS_getSessionPubKeyHash();
-    }
-
-    function getCodeSize(address _addr) constant internal returns(uint _size) {
-        assembly {
-            _size := extcodesize(_addr)
-        }
-    }
-
-    function parseAddr(string _a) internal pure returns (address){
-        bytes memory tmp = bytes(_a);
-        uint160 iaddr = 0;
-        uint160 b1;
-        uint160 b2;
-        for (uint i=2; i<2+2*20; i+=2){
-            iaddr *= 256;
-            b1 = uint160(tmp[i]);
-            b2 = uint160(tmp[i+1]);
-            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
-            else if ((b1 >= 65)&&(b1 <= 70)) b1 -= 55;
-            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
-            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
-            else if ((b2 >= 65)&&(b2 <= 70)) b2 -= 55;
-            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
-            iaddr += (b1*16+b2);
-        }
-        return address(iaddr);
-    }
-
-    function strCompare(string _a, string _b) internal pure returns (int) {
-        bytes memory a = bytes(_a);
-        bytes memory b = bytes(_b);
-        uint minLength = a.length;
-        if (b.length < minLength) minLength = b.length;
-        for (uint i = 0; i < minLength; i ++)
-            if (a[i] < b[i])
-                return -1;
-            else if (a[i] > b[i])
-                return 1;
-        if (a.length < b.length)
-            return -1;
-        else if (a.length > b.length)
-            return 1;
-        else
-            return 0;
-    }
-
-    function indexOf(string _haystack, string _needle) internal pure returns (int) {
-        bytes memory h = bytes(_haystack);
-        bytes memory n = bytes(_needle);
-        if(h.length < 1 || n.length < 1 || (n.length > h.length))
-            return -1;
-        else if(h.length > (2**128 -1))
-            return -1;
-        else
-        {
-            uint subindex = 0;
-            for (uint i = 0; i < h.length; i ++)
-            {
-                if (h[i] == n[0])
-                {
-                    subindex = 1;
-                    while(subindex < n.length && (i + subindex) < h.length && h[i + subindex] == n[subindex])
-                    {
-                        subindex++;
-                    }
-                    if(subindex == n.length)
-                        return int(i);
-                }
+            // fail if unlock time is not come
+            if (crowdSaleEndTime == 0 || block.timestamp < unlockTime) {
+                return false;
             }
-            return -1;
+
+            uint256 secsFromUnlock = block.timestamp.sub(unlockTime);
+
+            // number of months over from unlock
+            uint256 months = secsFromUnlock / 30 days;
+
+            if (months > 12) {
+                months = 12;
+            }
+
+            uint256 tokensPerMonth = lockedBalance / 12;
+
+            uint256 unlockedBalance = tokensPerMonth.mul(months);
+
+            uint256 actualLockedBalance = lockedBalance.sub(unlockedBalance);
+
+            if (senderBalance.sub(_value) < actualLockedBalance) {
+                return false;
+            }
+        }
+
+        if (block.timestamp < crowdSaleEndTime &&
+            crowdSale != address(0) &&
+            crowdSale.isTransferAllowed(_from, _value) == false
+        ) {
+            return false;
+        }
+
+
+        return true;
+    }
+
+    function transfer(address _to, uint _value) public returns (bool) {
+        require(isTransferAllowed(msg.sender, _value));
+
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        // transferFrom & approve are disabled before end of ICO
+        require((crowdSaleEndTime <= block.timestamp) && isTransferAllowed(_from, _value));
+
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // transferFrom & approve are disabled before end of ICO
+
+        require(crowdSaleEndTime <= block.timestamp);
+
+        return super.approve(_spender, _value);
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
+        // transferFrom & approve are disabled before end of ICO
+
+        require(crowdSaleEndTime <= block.timestamp);
+
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
+        // transferFrom & approve are disabled before end of ICO
+
+        require(crowdSaleEndTime <= block.timestamp);
+
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+
+    function increaseLockedBalance(address _address, uint256 _tokens) public onlySales {
+        lockedBalancesReleasedAfterOneYear[_address] =
+            lockedBalancesReleasedAfterOneYear[_address].add(_tokens);
+    }
+
+    // burn tokens if soft cap is not reached
+    function burnInvestorTokens(
+        address _address,
+        uint256 _amount
+    ) public onlyCrowdSale returns (uint256) {
+        require(block.timestamp > crowdSaleEndTime);
+
+        require(_amount <= balances[_address]);
+
+        balances[_address] = balances[_address].sub(_amount);
+
+        totalSupply_ = totalSupply_.sub(_amount);
+
+        Transfer(_address, address(0), _amount);
+
+        return _amount;
+    }
+
+    // decrease max supply of tokens that are not sold
+    function burnUnsoldTokens(uint256 _amount) public onlyCrowdSale {
+        require(block.timestamp > crowdSaleEndTime);
+
+        maxSupply = maxSupply.sub(_amount);
+
+        MaxSupplyBurned(_amount);
+    }
+}
+
+
+
+
+
+
+
+
+contract Multivest is Ownable {
+
+    using SafeMath for uint256;
+
+    /* public variables */
+    mapping (address => bool) public allowedMultivests;
+
+    /* events */
+    event MultivestSet(address multivest);
+
+    event MultivestUnset(address multivest);
+
+    event Contribution(address holder, uint256 value, uint256 tokens);
+
+    modifier onlyAllowedMultivests(address _addresss) {
+        require(allowedMultivests[_addresss] == true);
+        _;
+    }
+
+    /* constructor */
+    function Multivest() public {}
+
+    function setAllowedMultivest(address _address) public onlyOwner {
+        allowedMultivests[_address] = true;
+        MultivestSet(_address);
+    }
+
+    function unsetAllowedMultivest(address _address) public onlyOwner {
+        allowedMultivests[_address] = false;
+        MultivestUnset(_address);
+    }
+
+    function multivestBuy(address _address, uint256 _value) public onlyAllowedMultivests(msg.sender) {
+        require(buy(_address, _value) == true);
+    }
+
+    function multivestBuy(
+        address _address,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s
+    ) public payable onlyAllowedMultivests(verify(keccak256(msg.sender), _v, _r, _s)) {
+        require(_address == msg.sender && buy(msg.sender, msg.value) == true);
+    }
+
+    function verify(bytes32 _hash, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns (address) {
+        bytes memory prefix = '\x19Ethereum Signed Message:\n32';
+
+        return ecrecover(keccak256(prefix, _hash), _v, _r, _s);
+    }
+
+    function buy(address _address, uint256 _value) internal returns (bool);
+
+}
+
+
+
+contract SellableToken is Multivest {
+    uint256 public constant MONTH_IN_SEC = 2629743;
+    GigToken public token;
+
+    uint256 public minPurchase = 100 * 10 ** 5;
+    uint256 public maxPurchase;
+
+    uint256 public softCap;
+    uint256 public hardCap;
+
+    uint256 public startTime;
+    uint256 public endTime;
+
+    uint256 public maxTokenSupply;
+
+    uint256 public soldTokens;
+
+    uint256 public collectedEthers;
+
+    address public etherHolder;
+
+    uint256 public collectedUSD;
+
+    uint256 public etherPriceInUSD;
+    uint256 public priceUpdateAt;
+
+    mapping(address => uint256) public etherBalances;
+
+    Tier[] public tiers;
+
+    struct Tier {
+        uint256 discount;
+        uint256 startTime;
+        uint256 endTime;
+    }
+
+    event Refund(address _holder, uint256 _ethers, uint256 _tokens);
+    event NewPriceTicker(string _price);
+
+    function SellableToken(
+        address _token,
+        address _etherHolder,
+        uint256 _startTime,
+        uint256 _endTime,
+        uint256 _maxTokenSupply,
+        uint256 _etherPriceInUSD
+    )
+    public Multivest()
+    {
+        require(_token != address(0) && _etherHolder != address(0));
+        token = GigToken(_token);
+
+        require(_startTime < _endTime);
+        etherHolder = _etherHolder;
+        require((_maxTokenSupply == uint256(0)) || (_maxTokenSupply <= token.maxSupply()));
+
+        startTime = _startTime;
+        endTime = _endTime;
+        maxTokenSupply = _maxTokenSupply;
+        etherPriceInUSD = _etherPriceInUSD;
+
+        priceUpdateAt = block.timestamp;
+    }
+
+    function setTokenContract(address _token) public onlyOwner {
+        require(_token != address(0));
+        token = GigToken(_token);
+    }
+
+    function setEtherHolder(address _etherHolder) public onlyOwner {
+        if (_etherHolder != address(0)) {
+            etherHolder = _etherHolder;
         }
     }
 
-    function strConcat(string _a, string _b, string _c, string _d, string _e) internal pure returns (string) {
-        bytes memory _ba = bytes(_a);
-        bytes memory _bb = bytes(_b);
-        bytes memory _bc = bytes(_c);
-        bytes memory _bd = bytes(_d);
-        bytes memory _be = bytes(_e);
-        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
-        bytes memory babcde = bytes(abcde);
-        uint k = 0;
-        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
-        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
-        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
-        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
-        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
-        return string(babcde);
+    function setPurchaseLimits(uint256 _min, uint256 _max) public onlyOwner {
+        if (_min < _max) {
+            minPurchase = _min;
+            maxPurchase = _max;
+        }
     }
 
-    function strConcat(string _a, string _b, string _c, string _d) internal pure returns (string) {
-        return strConcat(_a, _b, _c, _d, "");
+    function mint(address _address, uint256 _tokenAmount) public onlyOwner returns (uint256) {
+        return mintInternal(_address, _tokenAmount);
     }
 
-    function strConcat(string _a, string _b, string _c) internal pure returns (string) {
-        return strConcat(_a, _b, _c, "", "");
+    function isActive() public view returns (bool);
+
+    function isTransferAllowed(address _from, uint256 _value) public view returns (bool);
+
+    function withinPeriod() public view returns (bool);
+
+    function getMinEthersInvestment() public view returns (uint256) {
+        return uint256(1 ether).mul(minPurchase).div(etherPriceInUSD);
     }
 
-    function strConcat(string _a, string _b) internal pure returns (string) {
-        return strConcat(_a, _b, "", "", "");
+    function calculateTokensAmount(uint256 _value) public view returns (uint256 tokenAmount, uint256 usdAmount);
+
+    function calculateEthersAmount(uint256 _tokens) public view returns (uint256 ethers, uint256 bonus);
+
+    function updatePreICOMaxTokenSupply(uint256 _amount) public;
+
+    // set ether price in USD with 5 digits after the decimal point
+    //ex. 308.75000
+    //for updating the price through  multivest
+    function setEtherInUSD(string _price) public onlyAllowedMultivests(msg.sender) {
+        bytes memory bytePrice = bytes(_price);
+        uint256 dot = bytePrice.length.sub(uint256(6));
+
+        // check if dot is in 6 position  from  the last
+        require(0x2e == uint(bytePrice[dot]));
+
+        uint256 newPrice = uint256(10 ** 23).div(parseInt(_price, 5));
+
+        require(newPrice > 0);
+
+        etherPriceInUSD = parseInt(_price, 5);
+
+        priceUpdateAt = block.timestamp;
+
+        NewPriceTicker(_price);
     }
 
-    // parseInt
-    function parseInt(string _a) internal pure returns (uint) {
-        return parseInt(_a, 0);
+    function mintInternal(address _address, uint256 _tokenAmount) internal returns (uint256) {
+        uint256 mintedAmount = token.mint(_address, _tokenAmount);
+
+        require(mintedAmount == _tokenAmount);
+
+        soldTokens = soldTokens.add(_tokenAmount);
+        if (maxTokenSupply > 0) {
+            require(maxTokenSupply >= soldTokens);
+        }
+
+        return _tokenAmount;
     }
 
-    // parseInt(parseFloat*10^_b)
+    function transferEthers() internal;
+
     function parseInt(string _a, uint _b) internal pure returns (uint) {
         bytes memory bresult = bytes(_a);
-        uint mint = 0;
+        uint res = 0;
         bool decimals = false;
-        for (uint i=0; i<bresult.length; i++){
-            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
-                if (decimals){
-                   if (_b == 0) break;
+        for (uint i = 0; i < bresult.length; i++) {
+            if ((bresult[i] >= 48) && (bresult[i] <= 57)) {
+                if (decimals) {
+                    if (_b == 0) break;
                     else _b--;
                 }
-                mint *= 10;
-                mint += uint(bresult[i]) - 48;
+                res *= 10;
+                res += uint(bresult[i]) - 48;
             } else if (bresult[i] == 46) decimals = true;
         }
-        if (_b > 0) mint *= 10**_b;
-        return mint;
+        if (_b > 0) res *= 10 ** _b;
+        return res;
+    }
+}
+
+
+contract CrowdSale is SellableToken {
+    uint256 public constant PRE_ICO_TIER_FIRST = 0;
+    uint256 public constant PRE_ICO_TIER_LAST = 4;
+    uint256 public constant ICO_TIER_FIRST = 5;
+    uint256 public constant ICO_TIER_LAST = 8;
+
+    SellableToken public privateSale;
+
+    uint256 public price;
+
+    Stats public preICOStats;
+    mapping(address => uint256) public icoBalances;
+
+    struct Stats {
+        uint256 soldTokens;
+        uint256 maxTokenSupply;
+        uint256 collectedUSD;
+        uint256 collectedEthers;
+        bool burned;
     }
 
-    function uint2str(uint i) internal pure returns (string){
-        if (i == 0) return "0";
-        uint j = i;
-        uint len;
-        while (j != 0){
-            len++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (i != 0){
-            bstr[k--] = byte(48 + i % 10);
-            i /= 10;
-        }
-        return string(bstr);
+    function CrowdSale(
+        address _token,
+        address _etherHolder,
+        uint256 _maxPreICOTokenSupply,
+    //10000000000000000000000000-527309544043097299200271 + 177500000000000000000000000 = 186972690455956902700799729
+        uint256 _maxICOTokenSupply, //62500000000000000000000000
+        uint256 _price,
+        uint256[2] _preIcoDuration, //1530432000  -1533081599
+        uint256[2] _icoDuration, // 1533110400 - 1538351999
+        uint256 _etherPriceInUSD
+    ) public
+    SellableToken(
+        _token,
+        _etherHolder,
+            _preIcoDuration[0],
+            _icoDuration[1],
+        _maxPreICOTokenSupply.add(_maxICOTokenSupply),
+        _etherPriceInUSD
+    ) {
+        softCap = 250000000000;
+        hardCap = 3578912800000;
+        price = _price;
+        preICOStats.maxTokenSupply = _maxPreICOTokenSupply;
+        //0.2480* 10^5
+        //PreICO
+        tiers.push(
+            Tier(
+                uint256(65),
+                _preIcoDuration[0],
+                _preIcoDuration[0].add(1 hours)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(60),
+                _preIcoDuration[0].add(1 hours),
+                _preIcoDuration[0].add(1 days)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(57),
+                _preIcoDuration[0].add(1 days),
+                _preIcoDuration[0].add(2 days)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(55),
+                _preIcoDuration[0].add(2 days),
+                _preIcoDuration[0].add(3 days)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(50),
+                _preIcoDuration[0].add(3 days),
+                _preIcoDuration[1]
+            )
+        );
+        //ICO
+        tiers.push(
+            Tier(
+                uint256(25),
+                _icoDuration[0],
+                _icoDuration[0].add(1 weeks)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(15),
+                _icoDuration[0].add(1 weeks),
+                _icoDuration[0].add(2 weeks)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(10),
+                _icoDuration[0].add(2 weeks),
+                _icoDuration[0].add(3 weeks)
+            )
+        );
+        tiers.push(
+            Tier(
+                uint256(5),
+                _icoDuration[0].add(3 weeks),
+                _icoDuration[1]
+            )
+        );
+
     }
 
-    using CBOR for Buffer.buffer;
-    function stra2cbor(string[] arr) internal pure returns (bytes) {
-        Buffer.buffer memory buf;
-        Buffer.init(buf, 1024);
-        buf.startArray();
-        for (uint i = 0; i < arr.length; i++) {
-            buf.encodeString(arr[i]);
-        }
-        buf.endSequence();
-        return buf.buf;
-    }
-
-    function ba2cbor(bytes[] arr) internal pure returns (bytes) {
-        Buffer.buffer memory buf;
-        Buffer.init(buf, 1024);
-        buf.startArray();
-        for (uint i = 0; i < arr.length; i++) {
-            buf.encodeBytes(arr[i]);
-        }
-        buf.endSequence();
-        return buf.buf;
-    }
-
-    string oraclize_network_name;
-    function oraclize_setNetworkName(string _network_name) internal {
-        oraclize_network_name = _network_name;
-    }
-
-    function oraclize_getNetworkName() internal view returns (string) {
-        return oraclize_network_name;
-    }
-
-    function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
-        require((_nbytes > 0) && (_nbytes <= 32));
-        // Convert from seconds to ledger timer ticks
-        _delay *= 10;
-        bytes memory nbytes = new bytes(1);
-        nbytes[0] = byte(_nbytes);
-        bytes memory unonce = new bytes(32);
-        bytes memory sessionKeyHash = new bytes(32);
-        bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
-        assembly {
-            mstore(unonce, 0x20)
-            // the following variables can be relaxed
-            // check relaxed random contract under ethereum-examples repo
-            // for an idea on how to override and replace comit hash vars
-            mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
-            mstore(sessionKeyHash, 0x20)
-            mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
-        }
-        bytes memory delay = new bytes(32);
-        assembly {
-            mstore(add(delay, 0x20), _delay)
-        }
-
-        bytes memory delay_bytes8 = new bytes(8);
-        copyBytes(delay, 24, 8, delay_bytes8, 0);
-
-        bytes[4] memory args = [unonce, nbytes, sessionKeyHash, delay];
-        bytes32 queryId = oraclize_query("random", args, _customGasLimit);
-
-        bytes memory delay_bytes8_left = new bytes(8);
-
-        assembly {
-            let x := mload(add(delay_bytes8, 0x20))
-            mstore8(add(delay_bytes8_left, 0x27), div(x, 0x100000000000000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x26), div(x, 0x1000000000000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x25), div(x, 0x10000000000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x24), div(x, 0x100000000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x23), div(x, 0x1000000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x22), div(x, 0x10000000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x21), div(x, 0x100000000000000000000000000000000000000000000000000))
-            mstore8(add(delay_bytes8_left, 0x20), div(x, 0x1000000000000000000000000000000000000000000000000))
-
-        }
-
-        oraclize_randomDS_setCommitment(queryId, keccak256(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
-        return queryId;
-    }
-
-    function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
-        oraclize_randomDS_args[queryId] = commitment;
-    }
-
-    mapping(bytes32=>bytes32) oraclize_randomDS_args;
-    mapping(bytes32=>bool) oraclize_randomDS_sessionKeysHashVerified;
-
-    function verifySig(bytes32 tosignh, bytes dersig, bytes pubkey) internal returns (bool){
-        bool sigok;
-        address signer;
-
-        bytes32 sigr;
-        bytes32 sigs;
-
-        bytes memory sigr_ = new bytes(32);
-        uint offset = 4+(uint(dersig[3]) - 0x20);
-        sigr_ = copyBytes(dersig, offset, 32, sigr_, 0);
-        bytes memory sigs_ = new bytes(32);
-        offset += 32 + 2;
-        sigs_ = copyBytes(dersig, offset+(uint(dersig[offset-1]) - 0x20), 32, sigs_, 0);
-
-        assembly {
-            sigr := mload(add(sigr_, 32))
-            sigs := mload(add(sigs_, 32))
-        }
-
-
-        (sigok, signer) = safer_ecrecover(tosignh, 27, sigr, sigs);
-        if (address(keccak256(pubkey)) == signer) return true;
-        else {
-            (sigok, signer) = safer_ecrecover(tosignh, 28, sigr, sigs);
-            return (address(keccak256(pubkey)) == signer);
+    function changeICODates(uint256 _tierId, uint256 _start, uint256 _end) public onlyOwner {
+        require(_start != 0 && _start < _end && _tierId < tiers.length);
+        Tier storage icoTier = tiers[_tierId];
+        icoTier.startTime = _start;
+        icoTier.endTime = _end;
+        if (_tierId == PRE_ICO_TIER_FIRST) {
+            startTime = _start;
+        } else if (_tierId == ICO_TIER_LAST) {
+            endTime = _end;
         }
     }
 
-    function oraclize_randomDS_proofVerify__sessionKeyValidity(bytes proof, uint sig2offset) internal returns (bool) {
-        bool sigok;
-
-        // Step 6: verify the attestation signature, APPKEY1 must sign the sessionKey from the correct ledger app (CODEHASH)
-        bytes memory sig2 = new bytes(uint(proof[sig2offset+1])+2);
-        copyBytes(proof, sig2offset, sig2.length, sig2, 0);
-
-        bytes memory appkey1_pubkey = new bytes(64);
-        copyBytes(proof, 3+1, 64, appkey1_pubkey, 0);
-
-        bytes memory tosign2 = new bytes(1+65+32);
-        tosign2[0] = byte(1); //role
-        copyBytes(proof, sig2offset-65, 65, tosign2, 1);
-        bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
-        copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
-        sigok = verifySig(sha256(tosign2), sig2, appkey1_pubkey);
-
-        if (sigok == false) return false;
-
-
-        // Step 7: verify the APPKEY1 provenance (must be signed by Ledger)
-        bytes memory LEDGERKEY = hex"7fb956469c5c9b89840d55b43537e66a98dd4811ea0a27224272c2e5622911e8537a2f8e86a46baec82864e98dd01e9ccc2f8bc5dfc9cbe5a91a290498dd96e4";
-
-        bytes memory tosign3 = new bytes(1+65);
-        tosign3[0] = 0xFE;
-        copyBytes(proof, 3, 65, tosign3, 1);
-
-        bytes memory sig3 = new bytes(uint(proof[3+65+1])+2);
-        copyBytes(proof, 3+65, sig3.length, sig3, 0);
-
-        sigok = verifySig(sha256(tosign3), sig3, LEDGERKEY);
-
-        return sigok;
-    }
-
-    modifier oraclize_randomDS_proofVerify(bytes32 _queryId, string _result, bytes _proof) {
-        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
-        require((_proof[0] == "L") && (_proof[1] == "P") && (_proof[2] == 1));
-
-        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
-        require(proofVerified);
-
-        _;
-    }
-
-    function oraclize_randomDS_proofVerify__returnCode(bytes32 _queryId, string _result, bytes _proof) internal returns (uint8){
-        // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
-        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) return 1;
-
-        bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
-        if (proofVerified == false) return 2;
-
-        return 0;
-    }
-
-    function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal pure returns (bool){
-        bool match_ = true;
-
-        require(prefix.length == n_random_bytes);
-
-        for (uint256 i=0; i< n_random_bytes; i++) {
-            if (content[i] != prefix[i]) match_ = false;
+    function isActive() public view returns (bool) {
+        if (hardCap == collectedUSD.add(preICOStats.collectedUSD)) {
+            return false;
+        }
+        if (soldTokens == maxTokenSupply) {
+            return false;
         }
 
-        return match_;
+        return withinPeriod();
     }
 
-    function oraclize_randomDS_proofVerify__main(bytes proof, bytes32 queryId, bytes result, string context_name) internal returns (bool){
+    function withinPeriod() public view returns (bool) {
+        return getActiveTier() != tiers.length;
+    }
 
-        // Step 2: the unique keyhash has to match with the sha256 of (context name + queryId)
-        uint ledgerProofLength = 3+65+(uint(proof[3+65+1])+2)+32;
-        bytes memory keyhash = new bytes(32);
-        copyBytes(proof, ledgerProofLength, 32, keyhash, 0);
-        if (!(keccak256(keyhash) == keccak256(sha256(context_name, queryId)))) return false;
-
-        bytes memory sig1 = new bytes(uint(proof[ledgerProofLength+(32+8+1+32)+1])+2);
-        copyBytes(proof, ledgerProofLength+(32+8+1+32), sig1.length, sig1, 0);
-
-        // Step 3: we assume sig1 is valid (it will be verified during step 5) and we verify if 'result' is the prefix of sha256(sig1)
-        if (!matchBytes32Prefix(sha256(sig1), result, uint(proof[ledgerProofLength+32+8]))) return false;
-
-        // Step 4: commitment match verification, keccak256(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
-        // This is to verify that the computed args match with the ones specified in the query.
-        bytes memory commitmentSlice1 = new bytes(8+1+32);
-        copyBytes(proof, ledgerProofLength+32, 8+1+32, commitmentSlice1, 0);
-
-        bytes memory sessionPubkey = new bytes(64);
-        uint sig2offset = ledgerProofLength+32+(8+1+32)+sig1.length+65;
-        copyBytes(proof, sig2offset-64, 64, sessionPubkey, 0);
-
-        bytes32 sessionPubkeyHash = sha256(sessionPubkey);
-        if (oraclize_randomDS_args[queryId] == keccak256(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
-            delete oraclize_randomDS_args[queryId];
-        } else return false;
-
-
-        // Step 5: validity verification for sig1 (keyhash and args signed with the sessionKey)
-        bytes memory tosign1 = new bytes(32+8+1+32);
-        copyBytes(proof, ledgerProofLength, 32+8+1+32, tosign1, 0);
-        if (!verifySig(sha256(tosign1), sig1, sessionPubkey)) return false;
-
-        // verify if sessionPubkeyHash was verified already, if not.. let's do it!
-        if (oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] == false){
-            oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash] = oraclize_randomDS_proofVerify__sessionKeyValidity(proof, sig2offset);
+    function setPrivateSale(address _privateSale) public onlyOwner {
+        if (_privateSale != address(0)) {
+            privateSale = SellableToken(_privateSale);
         }
-
-        return oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash];
     }
 
-    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
-    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal pure returns (bytes) {
-        uint minLength = length + toOffset;
-
-        // Buffer too small
-        require(to.length >= minLength); // Should be a better way?
-
-        // NOTE: the offset 32 is added to skip the `size` field of both bytes variables
-        uint i = 32 + fromOffset;
-        uint j = 32 + toOffset;
-
-        while (i < (32 + fromOffset + length)) {
-            assembly {
-                let tmp := mload(add(from, i))
-                mstore(add(to, j), tmp)
+    function getActiveTier() public view returns (uint256) {
+        for (uint256 i = 0; i < tiers.length; i++) {
+            if (block.timestamp >= tiers[i].startTime && block.timestamp <= tiers[i].endTime) {
+                return i;
             }
-            i += 32;
-            j += 32;
         }
 
-        return to;
+        return uint256(tiers.length);
     }
 
-    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
-    // Duplicate Solidity's ecrecover, but catching the CALL return value
-    function safer_ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal returns (bool, address) {
-        // We do our own memory management here. Solidity uses memory offset
-        // 0x40 to store the current end of memory. We write past it (as
-        // writes are memory extensions), but don't update the offset so
-        // Solidity will reuse it. The memory used here is only needed for
-        // this context.
+    function calculateTokensAmount(uint256 _value) public view returns (uint256 tokenAmount, uint256 usdAmount) {
+        if (_value == 0) {
+            return (0, 0);
+        }
+        uint256 activeTier = getActiveTier();
 
-        // FIXME: inline assembly can't access return values
-        bool ret;
-        address addr;
+        if (activeTier == tiers.length) {
+            if (endTime < block.timestamp) {
+                return (0, 0);
+            }
+            if (startTime > block.timestamp) {
+                activeTier = PRE_ICO_TIER_FIRST;
+            }
+        }
+        usdAmount = _value.mul(etherPriceInUSD);
 
-        assembly {
-            let size := mload(0x40)
-            mstore(size, hash)
-            mstore(add(size, 32), v)
-            mstore(add(size, 64), r)
-            mstore(add(size, 96), s)
+        tokenAmount = usdAmount.div(price * (100 - tiers[activeTier].discount) / 100);
 
-            // NOTE: we can reuse the request memory because we deal with
-            //       the return code
-            ret := call(3000, 1, 0, size, 128, size, 32)
-            addr := mload(size)
+        usdAmount = usdAmount.div(uint256(10) ** 18);
+
+        if (usdAmount < minPurchase) {
+            return (0, 0);
+        }
+    }
+
+    function calculateEthersAmount(uint256 _tokens) public view returns (uint256 ethers, uint256 usdAmount) {
+        if (_tokens == 0) {
+            return (0, 0);
         }
 
-        return (ret, addr);
-    }
+        uint256 activeTier = getActiveTier();
 
-    // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
-    function ecrecovery(bytes32 hash, bytes sig) internal returns (bool, address) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-
-        if (sig.length != 65)
-          return (false, 0);
-
-        // The signature format is a compact form of:
-        //   {bytes32 r}{bytes32 s}{uint8 v}
-        // Compact means, uint8 is not padded to 32 bytes.
-        assembly {
-            r := mload(add(sig, 32))
-            s := mload(add(sig, 64))
-
-            // Here we are loading the last 32 bytes. We exploit the fact that
-            // 'mload' will pad with zeroes if we overread.
-            // There is no 'mload8' to do this, but that would be nicer.
-            v := byte(0, mload(add(sig, 96)))
-
-            // Alternative solution:
-            // 'byte' is not working due to the Solidity parser, so lets
-            // use the second best option, 'and'
-            // v := and(mload(add(sig, 65)), 255)
+        if (activeTier == tiers.length) {
+            if (endTime < block.timestamp) {
+                return (0, 0);
+            }
+            if (startTime > block.timestamp) {
+                activeTier = PRE_ICO_TIER_FIRST;
+            }
         }
 
-        // albeit non-transactional signatures are not specified by the YP, one would expect it
-        // to match the YP range of [27, 28]
-        //
-        // geth uses [0, 1] and some clients have followed. This might change, see:
-        //  https://github.com/ethereum/go-ethereum/issues/2053
-        if (v < 27)
-          v += 27;
+        usdAmount = _tokens.mul((price * (100 - tiers[activeTier].discount) / 100));
+        ethers = usdAmount.div(etherPriceInUSD);
 
-        if (v != 27 && v != 28)
-            return (false, 0);
+        if (ethers < getMinEthersInvestment()) {
+            return (0, 0);
+        }
 
-        return safer_ecrecover(hash, v, r, s);
+        usdAmount = usdAmount.div(uint256(10) ** 18);
     }
 
-}
-// </ORACLIZE_API>
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract PriceTicker is usingOraclize, Ownable {
-
-    uint256 public ethPrice; // 1 Ether price in USD cents.
-    uint256 constant CUSTOM_GASLIMIT = 150000;
-    uint256 public updateTime = 0;
-
-    event LogConstructorInitiated(string nextStep);
-    event newOraclizeQuery(string description);
-    event newPriceTicker(bytes32 myid, string price, bytes proof);
-
-
-    function PriceTicker() public {
-        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
-        LogConstructorInitiated("Constructor was initiated. Call 'update()' to send the Oraclize Query.");
+    function getStats(uint256 _ethPerBtc) public view returns (
+        uint256 sold,
+        uint256 maxSupply,
+        uint256 min,
+        uint256 soft,
+        uint256 hard,
+        uint256 tokenPrice,
+        uint256 tokensPerEth,
+        uint256 tokensPerBtc,
+        uint256[24] tiersData
+    ) {
+        sold = soldTokens;
+        maxSupply = maxTokenSupply.sub(preICOStats.maxTokenSupply);
+        min = minPurchase;
+        soft = softCap;
+        hard = hardCap;
+        tokenPrice = price;
+        uint256 usd;
+        (tokensPerEth, usd) = calculateTokensAmount(1 ether);
+        (tokensPerBtc, usd) = calculateTokensAmount(_ethPerBtc);
+        uint256 j = 0;
+        for (uint256 i = 0; i < tiers.length; i++) {
+            tiersData[j++] = uint256(tiers[i].discount);
+            tiersData[j++] = uint256(tiers[i].startTime);
+            tiersData[j++] = uint256(tiers[i].endTime);
+        }
     }
 
-    function __callback(bytes32 myid, string result, bytes proof) public {
-        if (msg.sender != oraclize_cbAddress()) revert();
-        ethPrice = parseInt(result, 2);
-        newPriceTicker(myid, result, proof);
-        if (updateTime > 0) updateAfter(updateTime);
+    function burnUnsoldTokens() public onlyOwner {
+        if (block.timestamp >= endTime && maxTokenSupply > soldTokens) {
+            token.burnUnsoldTokens(maxTokenSupply.sub(soldTokens));
+            maxTokenSupply = soldTokens;
+        }
     }
 
-    function update() public onlyOwner {
-        if (updateTime > 0) updateTime = 0;
-        if (oraclize_getPrice("URL", CUSTOM_GASLIMIT) > this.balance) {
-            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+    function isTransferAllowed(address _from, uint256 _value) public view returns (bool status){
+        if (collectedUSD.add(preICOStats.collectedUSD) < softCap) {
+            if (token.balanceOf(_from) >= icoBalances[_from] && token.balanceOf(_from).sub(icoBalances[_from])> _value) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    function isRefundPossible() public view returns (bool) {
+        if (isActive() || block.timestamp < startTime || collectedUSD.add(preICOStats.collectedUSD) >= softCap) {
+            return false;
+        }
+        return true;
+    }
+
+    function refund() public returns (bool) {
+        if (!isRefundPossible() || etherBalances[msg.sender] == 0) {
+            return false;
+        }
+
+        uint256 burnedAmount = token.burnInvestorTokens(msg.sender, icoBalances[msg.sender]);
+        if (burnedAmount == 0) {
+            return false;
+        }
+        uint256 etherBalance = etherBalances[msg.sender];
+        etherBalances[msg.sender] = 0;
+
+        msg.sender.transfer(etherBalance);
+
+        Refund(msg.sender, etherBalance, burnedAmount);
+
+        return true;
+    }
+
+    function updatePreICOMaxTokenSupply(uint256 _amount) public {
+        if (msg.sender == address(privateSale)) {
+            maxTokenSupply = maxTokenSupply.add(_amount);
+            preICOStats.maxTokenSupply = preICOStats.maxTokenSupply.add(_amount);
+        }
+    }
+
+    function moveUnsoldTokensToICO() public onlyOwner {
+        uint256 unsoldTokens = preICOStats.maxTokenSupply - preICOStats.soldTokens;
+        if (unsoldTokens > 0) {
+            preICOStats.maxTokenSupply = preICOStats.soldTokens;
+        }
+    }
+
+    function transferEthers() internal {
+        if (collectedUSD.add(preICOStats.collectedUSD) >= softCap) {
+            etherHolder.transfer(this.balance);
+        }
+    }
+
+    function mintPreICO(
+        address _address,
+        uint256 _tokenAmount,
+        uint256 _ethAmount,
+        uint256 _usdAmount
+    ) internal returns (uint256) {
+        uint256 mintedAmount = token.mint(_address, _tokenAmount);
+
+        require(mintedAmount == _tokenAmount);
+
+        preICOStats.soldTokens = preICOStats.soldTokens.add(_tokenAmount);
+        preICOStats.collectedEthers = preICOStats.collectedEthers.add(_ethAmount);
+        preICOStats.collectedUSD = preICOStats.collectedUSD.add(_usdAmount);
+
+        require(preICOStats.maxTokenSupply >= preICOStats.soldTokens);
+        require(maxTokenSupply >= preICOStats.soldTokens);
+
+        return _tokenAmount;
+    }
+
+    function buy(address _address, uint256 _value) internal returns (bool) {
+        if (_value == 0 || _address == address(0)) {
+            return false;
+        }
+
+        uint256 activeTier = getActiveTier();
+        if (activeTier == tiers.length) {
+            return false;
+        }
+
+        uint256 tokenAmount;
+        uint256 usdAmount;
+        uint256 mintedAmount;
+
+        (tokenAmount, usdAmount) = calculateTokensAmount(_value);
+        require(usdAmount > 0 && tokenAmount > 0);
+
+        if (activeTier >= PRE_ICO_TIER_FIRST && activeTier <= PRE_ICO_TIER_LAST) {
+            mintedAmount = mintPreICO(_address, tokenAmount, _value, usdAmount);
+            etherHolder.transfer(this.balance);
         } else {
-            newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query("URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0", CUSTOM_GASLIMIT);
+            mintedAmount = mintInternal(_address, tokenAmount);
+            require(soldTokens <= maxTokenSupply.sub(preICOStats.maxTokenSupply));
+            collectedUSD = collectedUSD.add(usdAmount);
+            require(hardCap >= collectedUSD.add(preICOStats.collectedUSD) && usdAmount > 0 && mintedAmount > 0);
+
+            collectedEthers = collectedEthers.add(_value);
+            etherBalances[_address] = etherBalances[_address].add(_value);
+            icoBalances[_address] = icoBalances[_address].add(tokenAmount);
+            transferEthers();
         }
+
+        Contribution(_address, _value, tokenAmount);
+
+        return true;
     }
-
-    function updatePeriodically(uint256 _updateTime) public onlyOwner {
-        updateTime = _updateTime;
-        if (oraclize_getPrice("URL", CUSTOM_GASLIMIT) > this.balance) {
-            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
-        } else {
-            newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query("URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0", CUSTOM_GASLIMIT);
-        }
-    }
-
-    function updateAfter(uint256 _updateTime) internal {
-        if (oraclize_getPrice("URL", CUSTOM_GASLIMIT) > this.balance) {
-            newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
-        } else {
-            newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
-            oraclize_query(_updateTime, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0", CUSTOM_GASLIMIT);
-        }
-    }
-}
-
-contract Crowdsale is PriceTicker {
-  using SafeMath for uint256;
-
-  // The token being sold
-  Token public token;
-
-  // Address where funds are collected
-  address public wallet;
-
-  // How many token units a buyer gets per wei
-  uint256 public rate;
-
-  // Amount of wei raised
-  uint256 public weiRaised;
-  enum Stages {Pause, Private, PrivateEnd, PreIco, PreIcoEnd, Ico, IcoEnd}
-  Stages currentStage;
-  uint256 privateCap = uint256(150000000).mul(1 ether);
-  uint256 preIcoCap = uint256(100000000).mul(1 ether);
-  uint256 icoCap = uint256(500000000).mul(1 ether);
-  uint256 privateTokensSold = 0;
-  uint256 preIcoTokensSold = 0;
-  uint256 icoTokensSold = 0;
-  uint32 privateBonuses = 50;
-  uint32 preIcoBonuses = 25;
-  uint256 tokenPrice = 3; // price in USD cents, 1 token = 0.03 USD
-
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-  /**
-   * @param _wallet Address where collected funds will be forwarded to
-   * @param _token Address of the token being sold
-   */
-  function Crowdsale(address _newOwner, address _wallet, Token _token) public {
-    require(_wallet != address(0));
-    require(_token != address(0));
-    update();
-
-    wallet = _wallet;
-    owner = _newOwner;
-    token = _token;
-    currentStage = Stages.Private;
-  }
-
-  function endPrivate() public onlyOwner {
-    require(currentStage == Stages.Private);
-    currentStage = Stages.PrivateEnd;
-  }
-
-  function startPreIco() public onlyOwner {
-    require(currentStage == Stages.PrivateEnd);
-    currentStage = Stages.PreIco;
-    if (privateTokensSold < privateCap) preIcoCap = preIcoCap.add(privateCap).sub(privateTokensSold);
-  }
-
-  function endPreIco() public onlyOwner {
-    require(currentStage == Stages.PreIco);
-    currentStage = Stages.PreIcoEnd;
-  }
-
-  function startIco() public onlyOwner {
-    require(currentStage == Stages.PreIcoEnd);
-    currentStage = Stages.Ico;
-    if (preIcoTokensSold < preIcoCap) icoCap = icoCap.add(preIcoCap).sub(preIcoTokensSold);
-  }
-
-  function endIco() public onlyOwner {
-    require(currentStage == Stages.Ico);
-    currentStage = Stages.IcoEnd;
-    require(token.burnTokensForSale());
-  }
-
-  function getStage() public view returns (string) {
-    if (currentStage == Stages.Private) return 'Private sale';
-    else if (currentStage == Stages.PrivateEnd) return 'Private sale end';
-    else if (currentStage == Stages.PreIco) return 'Pre ICO';
-    else if (currentStage == Stages.PreIcoEnd) return 'Pre ICO end';
-    else if (currentStage == Stages.Ico) return 'ICO';
-    else if (currentStage == Stages.IcoEnd) return 'ICO end';
-  }
-
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
-
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
-    if (msg.sender != owner) buyTokens(msg.sender);
-  }
-
-  /**
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-    uint256 weiAmount = msg.value;
-    require(weiAmount > 0);
-    require(ethPrice > 0);
-    uint256 usdCents = weiAmount.mul(ethPrice).div(1 ether); 
-    _preValidatePurchase(_beneficiary, weiAmount, usdCents);
-
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(usdCents);
-
-    _validateTokensLimits(tokens);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    _processPurchase(_beneficiary, tokens);
-    TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
-    _forwardFunds();
-  }
-
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statemens to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   * @param _usdCents Value in usd cents involved in the purchase
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount, uint256 _usdCents) internal view {
-    require(_beneficiary != address(0));
-    if (currentStage == Stages.Private) {
-      require(_usdCents >= 2500000); // 25,000 USD in cents
-      require(_usdCents <= 25000000); // 250,000 USD in cents
-    } else if(currentStage == Stages.PreIco) {
-      require(_usdCents >= 240000); // 2,500 USD in cents
-    } else if(currentStage == Stages.Ico) {
-      require(_weiAmount > 100 finney); // 0.1 ETH
-    } else {
-      revert();
-    }
-  }
-
-  /**
-   * @dev Validation of the capped restrictions.
-   * @param _tokens tokens amount
-   */
-  function _validateTokensLimits(uint256 _tokens) internal {
-    if (currentStage == Stages.Private) {
-      privateTokensSold = privateTokensSold.add(_tokens);
-      require(privateTokensSold <= privateCap);
-    } else if(currentStage == Stages.PreIco) {
-      preIcoTokensSold = preIcoTokensSold.add(_tokens);
-      require(preIcoTokensSold <= preIcoCap);
-    } else if(currentStage == Stages.Ico) {
-      icoTokensSold = icoTokensSold.add(_tokens);
-      require(icoTokensSold <= icoCap);
-    } else {
-      revert();
-    }
-  }
-
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    require(token.saleTransfer(_beneficiary, _tokenAmount));
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @param _usdCents Value in usd cents to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _usdCents
-   */
-  function _getTokenAmount(uint256 _usdCents) internal view returns (uint256) {
-    uint256 tokens = _usdCents.div(tokenPrice).mul(1 ether);
-    uint256 bonuses = 0;
-    if (currentStage == Stages.Private) bonuses = tokens.mul(privateBonuses).div(100);
-    if (currentStage == Stages.PreIco) bonuses = tokens.mul(preIcoBonuses).div(100);
-    if (bonuses > 0) tokens = tokens.add(bonuses);
-
-    return tokens;
-  }
-
-  function transferSoldTokens(address _beneficiary, uint256 _tokenAmount) public onlyOwner {
-    uint256 tokenAmount = _tokenAmount.mul(1 ether);
-    _validateTokensLimits(tokenAmount);
-    require(token.saleTransfer(_beneficiary, tokenAmount));
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
 }
