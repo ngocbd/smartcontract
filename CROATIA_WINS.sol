@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CROATIA_WINS at 0x4ea46a434a155f12ed532538830919c2a2874169
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CROATIA_WINS at 0x37f0137cb24c315d4f725473697e558d6ccaffaa
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,10 +8,10 @@ contract	CROATIA_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	CROATIA_WINS		"	;
-	string	public		symbol =	"	CROWI		"	;
+	string	public		symbol =	"	CROWII		"	;
 	uint8	public		decimals =		18			;
 									
-	uint256 public totalSupply =		357864945324996000000000000					;	
+	uint256 public totalSupply =		360448278658330000000000000					;	
 									
 	event Transfer(address indexed from, address indexed to, uint256 value);								
 									
