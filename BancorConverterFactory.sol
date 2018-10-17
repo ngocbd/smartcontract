@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0x5ed8c09f98b2b3ed37d07414bb8c3f065bbb802b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0x0a8079ce1fd9b1ae682d9f1b709609a05bf9b236
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 /*
     Owned contract interface
@@ -12,6 +12,31 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function addressOf(bytes32 _contractName) public view returns (address);
+
+    // deprecated, backward compatibility
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
 }
 
 /*
@@ -41,41 +66,10 @@ contract ISmartToken is IOwned, IERC20Token {
 }
 
 /*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function getAddress(bytes32 _contractName) public view returns (address);
-}
-
-/*
-    Contract Features interface
-*/
-contract IContractFeatures {
-    function isSupported(address _contract, uint256 _features) public view returns (bool);
-    function enableFeatures(uint256 _features, bool _enable) public;
-}
-
-/*
-    Whitelist interface
-*/
-contract IWhitelist {
-    function isWhitelisted(address _address) public view returns (bool);
-}
-
-/*
     Token Holder interface
 */
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
-}
-
-/*
-    Bancor Formula interface
-*/
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
-    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
 }
 
 /*
@@ -90,17 +84,12 @@ contract IBancorConverter {
 }
 
 /*
-    Bancor Converter Factory interface
+    Bancor Formula interface
 */
-contract IBancorConverterFactory {
-    function createConverter(
-        ISmartToken _token,
-        IContractRegistry _registry,
-        uint32 _maxConversionFee,
-        IERC20Token _connectorToken,
-        uint32 _connectorWeight
-    )
-    public returns (address);
+contract IBancorFormula {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
+    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
 }
 
 /*
@@ -135,13 +124,27 @@ contract IBancorNetwork {
 }
 
 /*
+    Bancor Converter Factory interface
+*/
+contract IBancorConverterFactory {
+    function createConverter(
+        ISmartToken _token,
+        IContractRegistry _registry,
+        uint32 _maxConversionFee,
+        IERC20Token _connectorToken,
+        uint32 _connectorWeight
+    )
+    public returns (address);
+}
+
+/*
     Utilities & Common Modifiers
 */
 contract Utils {
     /**
         constructor
     */
-    function Utils() public {
+    constructor() public {
     }
 
     // verifies that an amount is greater than zero
@@ -218,7 +221,7 @@ contract Owned is IOwned {
     /**
         @dev constructor
     */
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -264,7 +267,7 @@ contract Managed is Owned {
     /**
         @dev constructor
     */
-    function Managed() public {
+    constructor() public {
         manager = msg.sender;
     }
 
@@ -316,12 +319,7 @@ contract ContractIds {
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     bytes32 public constant BANCOR_FORMULA = "BancorFormula";
     bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
-
     bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
-    bytes32 public constant BANCOR_CONVERTER_UPGRADER = "BancorConverterUpgrader";
-
-    // tokens
-    bytes32 public constant BNT_TOKEN = "BNTToken";
 }
 
 /**
@@ -345,7 +343,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
         @dev constructor
     */
-    function TokenHolder() public {
+    constructor() public {
     }
 
     /**
@@ -389,7 +387,7 @@ contract SmartTokenController is TokenHolder {
     /**
         @dev constructor
     */
-    function SmartTokenController(ISmartToken _token)
+    constructor(ISmartToken _token)
         public
         validAddress(_token)
     {
@@ -458,7 +456,7 @@ contract SmartTokenController is TokenHolder {
 }
 
 /*
-    Bancor Converter v0.9
+    Bancor Converter v0.10
 
     The Bancor version of the token converter, allows conversion between a smart token and other ERC20 tokens and between different ERC20 tokens and themselves.
 
@@ -490,7 +488,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         bool isSet;                     // used to tell if the mapping element is defined
     }
 
-    string public version = '0.9';
+    string public version = '0.10';
     string public converterType = 'bancor';
 
     IContractRegistry public registry;                  // contract registry contract
@@ -533,7 +531,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         @param  _connectorToken     optional, initial connector, allows defining the first connector at deployment time
         @param  _connectorWeight    optional, weight for the initial connector
     */
-    function BancorConverter(
+    constructor(
         ISmartToken _token,
         IContractRegistry _registry,
         uint32 _maxConversionFee,
@@ -546,7 +544,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         validMaxConversionFee(_maxConversionFee)
     {
         registry = _registry;
-        IContractFeatures features = IContractFeatures(registry.getAddress(ContractIds.CONTRACT_FEATURES));
+        IContractFeatures features = IContractFeatures(registry.addressOf(ContractIds.CONTRACT_FEATURES));
 
         // initialize supported features
         if (features != address(0))
@@ -602,7 +600,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
 
     // allows execution by the BancorNetwork contract only
     modifier bancorNetworkOnly {
-        IBancorNetwork bancorNetwork = IBancorNetwork(registry.getAddress(ContractIds.BANCOR_NETWORK));
+        IBancorNetwork bancorNetwork = IBancorNetwork(registry.addressOf(ContractIds.BANCOR_NETWORK));
         require(msg.sender == address(bancorNetwork));
         _;
     }
@@ -617,9 +615,9 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
     }
 
     /*
-        @dev allows the owner to update the registry contract address
+        @dev allows the owner to update the contract registry contract address
 
-        @param _registry    address of a bancor converter registry contract
+        @param _registry   address of a contract registry contract
     */
     function setRegistry(IContractRegistry _registry)
         public
@@ -838,7 +836,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
 
         uint256 tokenSupply = token.totalSupply();
         uint256 connectorBalance = getConnectorBalance(_connectorToken);
-        IBancorFormula formula = IBancorFormula(registry.getAddress(ContractIds.BANCOR_FORMULA));
+        IBancorFormula formula = IBancorFormula(registry.addressOf(ContractIds.BANCOR_FORMULA));
         uint256 amount = formula.calculatePurchaseReturn(tokenSupply, connectorBalance, connector.weight, _depositAmount);
 
         // return the amount minus the conversion fee
@@ -863,7 +861,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         Connector storage connector = connectors[_connectorToken];
         uint256 tokenSupply = token.totalSupply();
         uint256 connectorBalance = getConnectorBalance(_connectorToken);
-        IBancorFormula formula = IBancorFormula(registry.getAddress(ContractIds.BANCOR_FORMULA));
+        IBancorFormula formula = IBancorFormula(registry.addressOf(ContractIds.BANCOR_FORMULA));
         uint256 amount = formula.calculateSaleReturn(tokenSupply, connectorBalance, connector.weight, _sellAmount);
 
         // return the amount minus the conversion fee
@@ -894,7 +892,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         uint256 fromConnectorBalance = getConnectorBalance(_fromConnectorToken);
         uint256 toConnectorBalance = getConnectorBalance(_toConnectorToken);
 
-        IBancorFormula formula = IBancorFormula(registry.getAddress(ContractIds.BANCOR_FORMULA));
+        IBancorFormula formula = IBancorFormula(registry.addressOf(ContractIds.BANCOR_FORMULA));
         uint256 amount = formula.calculateCrossConnectorReturn(fromConnectorBalance, fromConnector.weight, toConnectorBalance, toConnector.weight, _sellAmount);
 
         // return the amount minus the conversion fee
@@ -1092,7 +1090,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         returns (uint256)
     {
         IERC20Token fromToken = _path[0];
-        IBancorNetwork bancorNetwork = IBancorNetwork(registry.getAddress(ContractIds.BANCOR_NETWORK));
+        IBancorNetwork bancorNetwork = IBancorNetwork(registry.addressOf(ContractIds.BANCOR_NETWORK));
 
         // we need to transfer the source tokens from the caller to the BancorNetwork contract,
         // so it can execute the conversion on behalf of the caller
@@ -1154,7 +1152,7 @@ contract BancorConverterFactory is IBancorConverterFactory {
     /**
         @dev constructor
     */
-    function BancorConverterFactory() public {
+    constructor() public {
     }
 
     /**
