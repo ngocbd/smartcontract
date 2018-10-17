@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWallet at 0x4bf9e798cc40b6ccce801dec622af66a653e9f11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedWallet at 0x70eb150c7c9e2ac62588a4f4ea4c2b9fb4bd05d3
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 contract Ownable {
+	address public owner;
+
 	event OwnershipRenounced(address indexed previousOwner); 
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -16,8 +18,6 @@ contract Ownable {
 		require(_addr != owner);
 		_;
 	}
-
-	address public owner;
 
 	constructor() 
 		public 
