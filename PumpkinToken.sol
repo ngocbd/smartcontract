@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PumpkinToken at 0xf666e6541ce9f3384d79ce9f864a87598c5f80e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PumpkinToken at 0x5ac31cea4170b79ca8e966f9a39b1bcf8512a178
 */
 pragma solidity 0.4.24;
 // ----------------------------------------------------------------------------
 // 'Pumpkin' token contract
 //
-// Deployed to : 0x3e18c7E05762054418f4f9FDC8BFb41D8C912578
-// Symbol      : PUM
-// Name        : Pumpkin Token
+// Deployed from : 0x1352f47dc102b39472e87506ffe6260846d9ec5a
+// Symbol      : PMK
+// Name        : Pumpkin Capital
 // Total supply: 6,666,666,666
 // Decimals    : 18
 //
@@ -50,19 +50,18 @@ pragma solidity 0.4.24;
     
     contract owned {
         address public owner;
-    	using SafeMath for uint256;
-    	
-        function Constrctor() public {
-            owner = msg.sender;
+
+        constructor () public {
+         owner = msg.sender;
         }
-    
-        modifier onlyOwner {
-            require(msg.sender == owner);
-            _;
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
         }
-    
-        function transferOwnership(address newOwner) onlyOwner public {
-            owner = newOwner;
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
         }
     }
     
