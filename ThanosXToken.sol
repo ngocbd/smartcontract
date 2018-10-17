@@ -1,7 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThanosXToken at 0x8215c4cd15573f8b396890b2bd123b2c350844f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThanosXToken at 0x1aba1810e01cf3acb76c4da5dcdc7b4f4e412387
 */
 pragma solidity ^0.4.8;
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract Token {
 
     /* This is a slight change to the ERC20 base standard.
@@ -49,26 +76,48 @@ contract Token {
 }
 
 contract StandardToken is Token {
+
+    using SafeMath for uint256;
+
     function transfer(address _to, uint256 _value) returns (bool success) {
        
         //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
+        if (_to == 0x0) return false;
+	    if (balances[msg.sender] >= _value && _value > 0) {
+	    // SafeMath.sub will throw if there is not enough balance.
+	        balances[msg.sender] = balances[msg.sender].sub(_value);
+	        balances[_to] = balances[_to].add(_value);
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
         
     }
 
+    function batchTransfer(address[] _receivers, uint256 _value) public returns (bool) {
+	    uint cnt = _receivers.length;
+	    uint256 amount = _value.mul(uint256(cnt));
+	
+	    require(cnt > 0 && cnt <= 20);
+	    require(_value > 0 && balances[msg.sender] >= amount);
+
+	    balances[msg.sender] = balances[msg.sender].sub(amount);
+	    for (uint i = 0; i < cnt; i++) {
+		    balances[_receivers[i]] = balances[_receivers[i]].add(_value);
+		    Transfer(msg.sender, _receivers[i], _value);
+	    }
+	    return true;
+    }
+
     function transferFrom(address _from, address _to, uint256 _value) returns 
     (bool success) {
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
         // _value && balances[_to] + _value > balances[_to]);
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
+        if (_to == 0x0) return false;
+	    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] = balances[_to].add(_value);
+            balances[_from] = balances[_from].sub(_value);
+            //allowed[_from][msg.sender] -= _value;
+	        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
@@ -94,36 +143,26 @@ contract StandardToken is Token {
 }
 
 contract ThanosXToken is StandardToken { 
-    
-    
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-        /* Public variables of the token */
+      
+    /* Public variables of the token */
     /*
     NOTE:
     The following variables are OPTIONAL vanities. One does not have to include them.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public   name;                   //fancy name: eg ThanosX Token
-    uint8 public    decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 TNSX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public   symbol;                 //An identifier: eg TNSX
-    string public   version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme. 
+    // metadata
+    string public   name		= "ThanosX Token";
+    string public   symbol		= "TNSX";
+    string public   version		= "0.1";
+    uint256 public  decimals	= 8;
+    uint256 public constant	MILLION		= (10**8 * 10**decimals);
 
-    function ThanosXToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
-        totalSupply = _initialAmount * 10 ** uint256(_decimalUnits);
-        balances[msg.sender] = totalSupply;                         // Give the creator all initial tokens
-        name = _tokenName;                                          // Set the name for display purposes
-        decimals = _decimalUnits;                                   // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                                      // Set the symbol for display purposes
+    function ThanosXToken() public{
+
+        totalSupply = 100 * MILLION;
+        balances[msg.sender] = totalSupply;     // Give the creator all initial tokens
+        
     }
 
     /* Approves and then calls the receiving contract */
