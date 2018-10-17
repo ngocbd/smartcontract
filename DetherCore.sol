@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DetherCore at 0x72C1f8e060E269827571011C5aeD4A611b06A593
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DetherCore at 0x876617584678d5B9A6Ef93ebA92b408367D9457C
 */
 contract Certifier {
 	event Confirmed(address indexed who);
@@ -785,6 +785,8 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   */
   // when a Teller is registered
   event RegisterTeller(address indexed tellerAddress);
+  // when a teller add funds for trade
+  event AddFunds(address indexed tellerAddress, uint amount);
   // when a teller is deleted
   event DeleteTeller(address indexed tellerAddress);
   // when teller update
@@ -1131,6 +1133,7 @@ contract DetherCore is DetherSetup, ERC223ReceivingContract, SafeMath {
   function addFunds() external payable {
     require(isTeller(msg.sender));
     require(bank.addEthTeller.value(msg.value)(msg.sender, msg.value));
+    emit AddFunds(msg.sender, msg.value);
   }
 
   // gas used 67841
