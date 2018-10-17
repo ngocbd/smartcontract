@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0xd247544a77b1cffa6e9d7cf2b800488ca12c8234
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0xdc9053b8fcf7086f42399b83210036e4ef8bd923
 */
 pragma solidity ^0.4.18;
 
@@ -291,8 +291,8 @@ contract BurnableToken is BasicToken {
 
 contract Token is MintableToken 
 {
-    string public constant name = 'Uraniumplus';
-    string public constant symbol = 'URP';
+    string public constant name = 'Volks';
+    string public constant symbol = 'VWCC';
     uint8 public constant decimals = 18;
 
     function Token() public {
@@ -308,11 +308,11 @@ contract Crowdfunding
 
     Token public token;
     uint256 public collected;
-    uint256 public date_start = 1530720000;
-    uint256 public date_end = 1532966400;
-    uint256 public hard_cap = 5000 ether;
-    uint256 public rate = 240000;
-    address public funds_address = address(0xF7dB1014A210a89909Fb8EE197B06d7A6ae1ae5B);
+    uint256 public date_start = 1535601600;
+    uint256 public date_end = 1538280000;
+    uint256 public hard_cap = 10000000 ether;
+    uint256 public rate = 5800;
+    address public funds_address = address(0x71a6435F781e50845A1C124db20a384205a1858B);
 
     function Crowdfunding() public payable {
         token = new Token();
