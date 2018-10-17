@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x55e851ecb4a8ee090f7b097ba1804db94d90175e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0xafa1ae00ab5aabe9d3f028c0ead4f8e10114408d
 */
+pragma solidity ^0.4.24;
+
+pragma solidity ^0.4.24;
+
 pragma solidity ^0.4.20;
-
-
 
 contract CutieCoreInterface
 {
@@ -94,10 +96,10 @@ contract CutieCoreInterface
         public;
 }
 
+pragma solidity ^0.4.20;
 
 
-
-
+pragma solidity ^0.4.24;
 
 
 /**
@@ -116,7 +118,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -186,7 +188,7 @@ contract Pausable is Ownable {
   }
 }
 
-
+pragma solidity ^0.4.24;
 
 /// @title Auction Market for Blockchain Cuties.
 /// @author https://BlockChainArchitect.io
@@ -210,20 +212,70 @@ contract MarketInterface
         uint128 endPrice,
         uint40 duration,
         uint40 startedAt,
-        uint128 featuringFee
+        uint128 featuringFee,
+        bool tokensAllowed
     );
+}
+
+pragma solidity ^0.4.24;
+
+// https://etherscan.io/address/0x4118d7f757ad5893b8fa2f95e067994e1f531371#code
+interface ERC20 {
+	
+	 /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` on behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+	function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
+
+	function approveAndCall(address _spender, uint256 _value, bytes _extraData) external
+        returns (bool success);
+
+	/**
+	 * Transfer tokens
+	 *
+	 * Send `_value` tokens to `_to` from your account
+	 *
+	 * @param _to The address of the recipient
+	 * @param _value the amount to send
+	 */
+	function transfer(address _to, uint256 _value) external;
+
+    /// @notice Count all tokens assigned to an owner
+    function balanceOf(address _owner) external view returns (uint256);
+}
+
+pragma solidity ^0.4.24;
+
+// https://etherscan.io/address/0x3127be52acba38beab6b4b3a406dc04e557c037c#code
+contract PriceOracleInterface {
+
+    // How much TOKENs you get for 1 ETH, multiplied by 10^18
+    uint256 public ETHPrice;
+}
+
+pragma solidity ^0.4.24;
+
+interface TokenRecipientInterface
+{
+        function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
 }
 
 
 /// @title Auction Market for Blockchain Cuties.
 /// @author https://BlockChainArchitect.io
-contract Market is MarketInterface, Pausable
+contract Market is MarketInterface, Pausable, TokenRecipientInterface
 {
     // Shows the auction on an Cutie Token
     struct Auction {
-        // Price (in wei) at the beginning of auction
+        // Price (in wei or tokens) at the beginning of auction
         uint128 startPrice;
-        // Price (in wei) at the end of auction
+        // Price (in wei or tokens) at the end of auction
         uint128 endPrice;
         // Current owner of Token
         address seller;
@@ -234,6 +286,8 @@ contract Market is MarketInterface, Pausable
         uint40 startedAt;
         // Featuring fee (in wei, optional)
         uint128 featuringFee;
+        // is it allowed to bid with erc20 tokens
+        bool tokensAllowed;
     }
 
     // Reference to contract that tracks ownership
@@ -245,10 +299,26 @@ contract Market is MarketInterface, Pausable
 
     // Map from token ID to their corresponding auction.
     mapping (uint40 => Auction) public cutieIdToAuction;
+    mapping (address => PriceOracleInterface) public priceOracle;
 
-    event AuctionCreated(uint40 cutieId, uint128 startPrice, uint128 endPrice, uint40 duration, uint128 fee);
-    event AuctionSuccessful(uint40 cutieId, uint128 totalPrice, address winner);
-    event AuctionCancelled(uint40 cutieId);
+
+    address operatorAddress;
+
+    event AuctionCreated(uint40 indexed cutieId, uint128 startPrice, uint128 endPrice, uint40 duration, uint128 fee, bool tokensAllowed);
+    event AuctionSuccessful(uint40 indexed cutieId, uint128 totalPriceWei, address indexed winner);
+    event AuctionSuccessfulForToken(uint40 indexed cutieId, uint128 totalPriceWei, address indexed winner, uint128 priceInTokens, address indexed token);
+    event AuctionCancelled(uint40 indexed cutieId);
+
+    modifier onlyOperator() {
+        require(msg.sender == operatorAddress || msg.sender == owner);
+        _;
+    }
+
+    function setOperator(address _newOperator) public onlyOwner {
+        require(_newOperator != address(0));
+
+        operatorAddress = _newOperator;
+    }
 
     /// @dev disables sending fund to this contract
     function() external {}
@@ -277,7 +347,8 @@ contract Market is MarketInterface, Pausable
             _auction.startPrice,
             _auction.endPrice,
             _auction.duration,
-            _auction.featuringFee
+            _auction.featuringFee,
+            _auction.tokensAllowed
         );
     }
 
@@ -434,13 +505,18 @@ contract Market is MarketInterface, Pausable
     {
         require(_isOwner(msg.sender, _cutieId));
         _escrow(msg.sender, _cutieId);
+
+        bool allowTokens = _duration < 0x8000000000; // first bit of duration is boolean flag (1 to disable tokens)
+        _duration = _duration % 0x8000000000; // clear flag from duration
+
         Auction memory auction = Auction(
             _startPrice,
             _endPrice,
             _seller,
             _duration,
             uint40(now),
-            uint128(msg.value)
+            uint128(msg.value),
+            allowTokens
         );
         _addAuction(_cutieId, auction);
     }
@@ -475,6 +551,70 @@ contract Market is MarketInterface, Pausable
         _transfer(msg.sender, _cutieId);
     }
 
+    function getPriceInToken(ERC20 _tokenContract, uint128 priceWei)
+        public
+        view
+        returns (uint128)
+    {
+        PriceOracleInterface oracle = priceOracle[address(_tokenContract)];
+        require(address(oracle) != address(0));
+
+        uint256 ethPerToken = oracle.ETHPrice();
+        return uint128(uint256(priceWei) * ethPerToken / 1 ether);
+    }
+
+    function getCutieId(bytes _extraData) internal returns (uint40)
+    {
+        return
+            uint40(_extraData[0]) +
+            uint40(_extraData[1]) * 0x100 +
+            uint40(_extraData[2]) * 0x10000 +
+            uint40(_extraData[3]) * 0x100000 +
+            uint40(_extraData[4]) * 0x10000000;
+    }
+
+    // https://github.com/BitGuildPlatform/Documentation/blob/master/README.md#2-required-game-smart-contract-changes
+    // Function that is called when trying to use PLAT for payments from approveAndCall
+    function receiveApproval(address _sender, uint256 _value, address _tokenContract, bytes _extraData)
+        external
+        canBeStoredIn128Bits(_value)
+        whenNotPaused
+    {
+        ERC20 tokenContract = ERC20(_tokenContract);
+
+        require(_extraData.length == 5); // 40 bits
+        uint40 cutieId = getCutieId(_extraData);
+
+        // Get a reference to the auction struct
+        Auction storage auction = cutieIdToAuction[cutieId];
+        require(auction.tokensAllowed); // buy for token is allowed
+
+        require(_isOnAuction(auction));
+
+        uint128 priceWei = _currentPrice(auction);
+
+        uint128 priceInTokens = getPriceInToken(tokenContract, priceWei);
+
+        // Check that bid > current price
+        //require(_value >= priceInTokens);
+
+        // Provide a reference to the seller before the auction struct is deleted.
+        address seller = auction.seller;
+
+        _removeAuction(cutieId);
+
+        // Transfer proceeds to seller (if there are any!)
+        if (priceInTokens > 0) {
+            uint128 fee = _computeFee(priceInTokens);
+            uint128 sellerValue = priceInTokens - fee;
+
+            require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
+            tokenContract.transfer(seller, sellerValue);
+        }
+        emit AuctionSuccessfulForToken(cutieId, priceWei, _sender, priceInTokens, _tokenContract);
+        _transfer(_sender, cutieId);
+    }
+
     // @dev Returns auction info for a token on auction.
     // @param _cutieId - ID of token on auction.
     function getAuctionInfo(uint40 _cutieId)
@@ -487,7 +627,8 @@ contract Market is MarketInterface, Pausable
         uint128 endPrice,
         uint40 duration,
         uint40 startedAt,
-        uint128 featuringFee
+        uint128 featuringFee,
+        bool tokensAllowed
     ) {
         Auction storage auction = cutieIdToAuction[_cutieId];
         require(_isOnAuction(auction));
@@ -497,7 +638,8 @@ contract Market is MarketInterface, Pausable
             auction.endPrice,
             auction.duration,
             auction.startedAt,
-            auction.featuringFee
+            auction.featuringFee,
+            auction.tokensAllowed
         );
     }
 
@@ -575,6 +717,44 @@ contract Market is MarketInterface, Pausable
         require(_isOnAuction(auction));
         _cancelActiveAuction(_cutieId, auction.seller);
     }
+
+        // @dev Cancels unfinished auction and returns token to owner. 
+    // Can be called when contract is paused.
+    function cancelCreatorAuction(uint40 _cutieId) public onlyOperator
+    {
+        Auction storage auction = cutieIdToAuction[_cutieId];
+        require(_isOnAuction(auction));
+        address seller = auction.seller;
+        require(seller == address(coreContract));
+        _cancelActiveAuction(_cutieId, msg.sender);
+    }
+
+    // @dev Transfers to _withdrawToAddress all tokens controlled by
+    // contract _tokenContract.
+    function withdrawTokenFromBalance(ERC20 _tokenContract, address _withdrawToAddress) external
+    {
+        address coreAddress = address(coreContract);
+
+        require(
+            msg.sender == owner ||
+            msg.sender == operatorAddress ||
+            msg.sender == coreAddress
+        );
+        uint256 balance = _tokenContract.balanceOf(address(this));
+        _tokenContract.transfer(_withdrawToAddress, balance);
+    }
+
+    /// @dev Allow buy cuties for token
+    function addToken(ERC20 _tokenContract, PriceOracleInterface _priceOracle) external onlyOwner
+    {
+        priceOracle[address(_tokenContract)] = _priceOracle;
+    }
+
+    /// @dev Disallow buy cuties for token
+    function removeToken(ERC20 _tokenContract) external onlyOwner
+    {
+        delete priceOracle[address(_tokenContract)];
+    }
 }
 
 
@@ -605,13 +785,18 @@ contract SaleMarket is Market
     {
         require(msg.sender == address(coreContract));
         _escrow(_seller, _cutieId);
+
+        bool allowTokens = _duration < 0x8000000000; // first bit of duration is boolean flag (1 to disable tokens)
+        _duration = _duration % 0x8000000000; // clear flag from duration
+
         Auction memory auction = Auction(
             _startPrice,
             _endPrice,
             _seller,
             _duration,
             uint40(now),
-            uint128(msg.value)
+            uint128(msg.value),
+            allowTokens
         );
         _addAuction(_cutieId, auction);
     }
@@ -626,6 +811,5 @@ contract SaleMarket is Market
         // _bid verifies token ID size
         _bid(_cutieId, uint128(msg.value));
         _transfer(msg.sender, _cutieId);
-
     }
 }
