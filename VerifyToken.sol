@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerifyToken at 0x9e38001c3c094df3895f3ddeab5a3af682345bed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerifyToken at 0x96357e75b7ccb1a7cf10ac6432021aea7174c803
 */
 pragma solidity ^0.4.24;
 
@@ -75,7 +75,7 @@ contract VerifyToken is ERC20Interface {
         claimedYesterday=20;
         claimedToday=0;
         dayStartTime=now;
-        _totalSupply=14 * dailyDistribution;
+        _totalSupply=140000000 * 10**uint(decimals);
         balances[msg.sender] = _totalSupply;
         creator=msg.sender;
     }
