@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x962127d59c12af676a616fc979633bc077df5083
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x3113ff324554816ee0ba30603595bff6c548364a
 */
 pragma solidity ^0.4.18;
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -66,7 +66,7 @@ contract Ownable {
 }
 
 contract lockEtherPay is Ownable {
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
   token token_reward;
   address public beneficiary;
@@ -74,13 +74,13 @@ contract lockEtherPay is Ownable {
   bool public isReleased = false;
   uint256 public start_time;
   uint256 public end_time;
-  uint256 public fifty_two_weeks = 29894400;
+  uint256 public fifty_two_weeks = 29116800;
 
   event TokenReleased(address beneficiary, uint256 token_amount);
 
   constructor() public{
     token_reward = token(0xAa1ae5e57dc05981D83eC7FcA0b3c7ee2565B7D6);
-    beneficiary = 0x2CB2FB01E40bDAE0a0e61b895F61e36782100bd4;
+    beneficiary = 0x611d339158672b79F826D4668e0F0470FCb0ea74;
   }
 
   function tokenBalance() constant public returns (uint256){
@@ -88,19 +88,19 @@ contract lockEtherPay is Ownable {
   }
 
   function lock() public onlyOwner returns (bool){
-  	require(!isLocked);
-  	require(tokenBalance() > 0);
-  	start_time = now;
-  	end_time = start_time.add(fifty_two_weeks);
-  	isLocked = true;
+      require(!isLocked);
+      require(tokenBalance() > 0);
+      start_time = now;
+      end_time = start_time.add(fifty_two_weeks);
+      isLocked = true;
   }
 
   function lockOver() constant public returns (bool){
-  	uint256 current_time = now;
-	return current_time > end_time;
+      uint256 current_time = now;
+    return current_time > end_time;
   }
 
-	function release() onlyOwner public{
+    function release() onlyOwner public{
     require(isLocked);
     require(!isReleased);
     require(lockOver());
