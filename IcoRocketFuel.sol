@@ -1,29 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0xdbd6f7ba4cecb4c5ac5b9529d8e09b1aa1e8ca80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoRocketFuel at 0x7bf94bba5f0dcdef4c15e2eebef428db9eba4bfe
 */
-pragma solidity ^0.4.23;
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
+pragma solidity ^0.4.24;
 
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
+contract ERC20 {
+    function totalSupply() public view returns (uint256);
+
+    function balanceOf(address _who) public view returns (uint256);
+
+    function allowance(address _owner, address _spender)
+        public view returns (uint256);
+
+    function transfer(address _to, uint256 _value) public returns (bool);
+
+    function approve(address _spender, uint256 _value)
+        public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _value)
+        public returns (bool);
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 value
+    );
+
     event Approval(
         address indexed owner,
         address indexed spender,
@@ -34,54 +40,73 @@ contract ERC20 is ERC20Basic {
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @dev Math operations with safety checks that revert on error
  */
 library SafeMath {
 
-   /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    /**
+     * @dev Multiplies two numbers, reverts on overflow.
+     */
+    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
         // benefit is lost if 'b' is also tested.
         // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (a == 0) {
+        if (_a == 0) {
             return 0;
         }
 
-        c = a * b;
-        assert(c / a == b);
+        uint256 c = _a * _b;
+        require(c / _a == _b);
+
         return c;
     }
 
     /**
-     * @dev Integer division of two numbers, truncating the quotient.
+     * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
      */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+    function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        require(_b > 0); // Solidity only automatically asserts when dividing by 0
+        uint256 c = _a / _b;
+        // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
 
-   /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-   /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
         return c;
+    }
+
+    /**
+     * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+     */
+    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        require(_b <= _a);
+        uint256 c = _a - _b;
+
+        return c;
+    }
+
+    /**
+     * @dev Adds two numbers, reverts on overflow.
+     */
+    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a + _b;
+        require(c >= _a);
+
+        return c;
+    }
+
+    /**
+     * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+     * reverts when dividing by zero.
+     */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0);
+        return a % b;
     }
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
     address public owner;
 
@@ -93,38 +118,49 @@ contract Ownable {
     );
 
 
-   /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
     constructor() public {
         owner = msg.sender;
     }
 
-   /**
-    * @dev Throws if called by any account other than the owner.
-    */
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-   /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-   /**
-    * @dev Allows the current owner to relinquish control of the contract.
-    */
+    /**
+     * @dev Allows the current owner to relinquish control of the contract.
+     * @notice Renouncing to ownership will leave the contract without an owner.
+     * It will not be possible to call the functions with the `onlyOwner`
+     * modifier anymore.
+     */
     function renounceOwnership() public onlyOwner {
         emit OwnershipRenounced(owner);
         owner = address(0);
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address _newOwner) public onlyOwner {
+        _transferOwnership(_newOwner);
+    }
+
+    /**
+     * @dev Transfers control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function _transferOwnership(address _newOwner) internal {
+        require(_newOwner != address(0));
+        emit OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
     }
 }
 
@@ -217,6 +253,12 @@ contract IcoRocketFuel is Ownable {
         address indexed _token   // Token address
     );
 
+    event SurplusTokensRefunded(
+        address _token,       // ERC20 token for crowdsale
+        address _beneficiary, // Surplus tokens will refund to this wallet
+        uint256 _surplus      // Surplus token units
+    );
+
     event CommissionPaid(
         address indexed _payer,       // Commission payer        
         address indexed _token,       // Paid from this crowdsale
@@ -269,9 +311,9 @@ contract IcoRocketFuel is Ownable {
     function setCommissionWallet(
         address _newWallet
     )
+        external
         onlyOwner
         nonZeroAddress(_newWallet)
-        external
     {
         emit CommissionWalletUpdated(commissionWallet, _newWallet);
         commissionWallet = _newWallet;
@@ -301,9 +343,9 @@ contract IcoRocketFuel is Ownable {
         bool _earlyClosure,
         uint8 _commission
     )
+        external
         nonZeroAddress(_token)
         nonZeroAddress(_refundWallet)
-        external
     {
         require(
             crowdsales[_token].owner == address(0),
@@ -370,9 +412,9 @@ contract IcoRocketFuel is Ownable {
     function buyToken(
         address _token
     )
+        external
         inState(_token, States.Active)
         nonZeroAddress(_token)
-        external
         payable
     {
         require(
@@ -413,8 +455,8 @@ contract IcoRocketFuel is Ownable {
     function _goalReached(
         ERC20 _token
     )
-        nonZeroAddress(_token)
         private
+        nonZeroAddress(_token)
         view
         returns(bool) 
     {
@@ -425,6 +467,31 @@ contract IcoRocketFuel is Ownable {
     }
 
     /**
+     * Refund surplus tokens to refund wallet.
+     *
+     * @param _token Deployed ERC20 token
+     * @param _beneficiary Surplus tokens will refund to this wallet
+     */
+    function _refundSurplusTokens(
+        ERC20 _token,
+        address _beneficiary
+    )
+        private
+        nonZeroAddress(_token)
+        inState(_token, States.Closed)
+    {
+        uint256 _balance = _token.balanceOf(address(this));
+        uint256 _surplus = _balance.sub(
+            crowdsales[_token].raised.mul(crowdsales[_token].rate));
+        emit SurplusTokensRefunded(_token, _beneficiary, _surplus);
+
+        if (_surplus > 0) {
+            // Refund surplus tokens to refund wallet.
+            _token.transfer(_beneficiary, _surplus);
+        }
+    }
+
+    /**
      * Pay commission by raised Wei amount of crowdsale.
      *
      * @param _token Deployed ERC20 token address
@@ -432,10 +499,10 @@ contract IcoRocketFuel is Ownable {
     function _payCommission(
         address _token
     )
+        private
         nonZeroAddress(_token)
         inState(_token, States.Closed)
         onlyCrowdsaleOwner(_token)
-        private
     {
         // Calculate commission, update rest raised Wei, and pay commission.
         uint256 _commission = crowdsales[_token].raised
@@ -455,10 +522,10 @@ contract IcoRocketFuel is Ownable {
     function _refundCrowdsaleTokens(
         ERC20 _token,
         address _beneficiary
-    ) 
+    )
+        private
         nonZeroAddress(_token)
         inState(_token, States.Refunding)
-        private
     {
         // Set raised Wei to 0 to prevent unknown issues 
         // which might take Wei away. 
@@ -483,9 +550,9 @@ contract IcoRocketFuel is Ownable {
     function _enableRefunds(
         address _token
     )
+        private
         nonZeroAddress(_token)
-        inState(_token, States.Active)
-        private        
+        inState(_token, States.Active)      
     {
         // Set state to Refunding while preventing reentry.
         crowdsales[_token].state = States.Refunding;
@@ -503,10 +570,10 @@ contract IcoRocketFuel is Ownable {
     function finalize(
         address _token
     )
+        external
         nonZeroAddress(_token)
         inState(_token, States.Active)        
         onlyCrowdsaleOwner(_token)
-        external
     {
         require(                    
             crowdsales[_token].earlyClosure || (
@@ -519,6 +586,10 @@ contract IcoRocketFuel is Ownable {
             // Set state to Closed whiling preventing reentry.
             crowdsales[_token].state = States.Closed;
             emit CrowdsaleClosed(msg.sender, _token);
+            _refundSurplusTokens(
+                ERC20(_token), 
+                crowdsales[_token].refundWallet
+            );
             _payCommission(_token);                        
         } else {
             _enableRefunds(_token);
@@ -538,11 +609,11 @@ contract IcoRocketFuel is Ownable {
      */
     function pauseCrowdsale(
         address _token
-    )        
+    )  
+        external      
         nonZeroAddress(_token)
         onlyOwner
         inState(_token, States.Active)
-        external
     {
         emit CrowdsalePaused(msg.sender, _token);
         _enableRefunds(_token);
@@ -558,11 +629,11 @@ contract IcoRocketFuel is Ownable {
         address _token,
         address _beneficiary
     )
+        external
         nonZeroAddress(_token)
         nonZeroAddress(_beneficiary)
         inState(_token, States.Closed)
-        onlyCrowdsaleOwner(_token)
-        external
+        onlyCrowdsaleOwner(_token)        
     {
         require(
             crowdsales[_token].raised > 0,
@@ -583,9 +654,9 @@ contract IcoRocketFuel is Ownable {
     function claimToken(
         address _token
     )
-        nonZeroAddress(_token)
-        inState(_token, States.Closed)        
         external 
+        nonZeroAddress(_token)
+        inState(_token, States.Closed)
     {
         require(
             deposits[msg.sender][_token] > 0,
@@ -609,9 +680,9 @@ contract IcoRocketFuel is Ownable {
     function claimRefund(
         address _token
     )
+        public
         nonZeroAddress(_token)
-        inState(_token, States.Refunding)        
-        public 
+        inState(_token, States.Refunding)
     {
         require(
             deposits[msg.sender][_token] > 0,
