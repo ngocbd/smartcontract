@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalSharingEconomyCoin at 0x6e052b290ae72ebf13a53202e387b91ffe35027d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalSharingEconomyCoin at 0x77229681ddfb73a9685b50a2fcb8f15203441434
 */
 pragma solidity ^0.4.18;
 
@@ -35,9 +35,43 @@ contract Ownable {
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
+  event PrivateFundEnabled();
+  event PrivateFundDisabled();
 
   bool public paused = false;
+  bool public privateFundEnabled = true;
 
+  /**
+   * @dev Modifier to make a function callable only when the contract is private fund not end.
+   */
+  modifier whenPrivateFundDisabled() {
+    require(!privateFundEnabled);
+    _;
+  }
+  
+  /**
+   * @dev Modifier to make a function callable only when the contract is private fund end.
+   */
+  modifier whenPrivateFundEnabled() {
+    require(privateFundEnabled);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to end private fund, triggers stopped state
+   */
+  function disablePrivateFund() onlyOwner whenPrivateFundEnabled public {
+    privateFundEnabled = false;
+    emit PrivateFundDisabled();
+  }
+
+  /**
+   * @dev called by the owner to unlock private fund, returns to normal state
+   */
+  function enablePrivateFund() onlyOwner whenPrivateFundDisabled public {
+    privateFundEnabled = true;
+    emit PrivateFundEnabled();
+  }
 
   /**
    * @dev Modifier to make a function callable only when the contract is not paused.
@@ -113,6 +147,7 @@ contract ERC20 {
 
 contract GlobalSharingEconomyCoin is Pausable, ERC20 {
   using SafeMath for uint256;
+  event BatchTransfer(address indexed owner, bool value);
 
   string public name;
   string public symbol;
@@ -120,6 +155,7 @@ contract GlobalSharingEconomyCoin is Pausable, ERC20 {
 
   mapping(address => uint256) balances;
   mapping (address => mapping (address => uint256)) internal allowed;
+  mapping (address => bool) allowedBatchTransfers;
 
   constructor() public {
     name = "GlobalSharingEconomyCoin";
@@ -127,6 +163,7 @@ contract GlobalSharingEconomyCoin is Pausable, ERC20 {
     decimals = 8;
     totalSupply = 10000000000 * 10 ** uint256(decimals);
     balances[msg.sender] = totalSupply;
+    allowedBatchTransfers[msg.sender] = true;
   }
 
   function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
@@ -136,6 +173,36 @@ contract GlobalSharingEconomyCoin is Pausable, ERC20 {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function setBatchTransfer(address _address, bool _value) public onlyOwner returns (bool) {
+    allowedBatchTransfers[_address] = _value;
+    emit BatchTransfer(_address, _value);
+    return true;
+  }
+
+  function getBatchTransfer(address _address) public onlyOwner view returns (bool) {
+    return allowedBatchTransfers[_address];
+  }
+
+  function batchTransfer(address[] _funds, uint256[] _amounts) public whenNotPaused whenPrivateFundEnabled returns (bool) {
+    require(allowedBatchTransfers[msg.sender]);
+    uint256 fundslen = _funds.length;
+    uint256 amountslen = _amounts.length;
+    require(fundslen == amountslen && fundslen > 0 && fundslen < 10000);
+
+    uint256 totalAmount = 0;
+    for (uint i = 0; i < amountslen; ++i){
+      totalAmount = totalAmount.add(_amounts[i]);
+    }
+
+    require(balances[msg.sender] >= totalAmount);
+    for (uint j = 0; j < amountslen; ++j) {
+      balances[_funds[j]] = balances[_funds[j]].add(_amounts[j]);
+      emit Transfer(msg.sender, _funds[j], _amounts[j]);
+    }
+    balances[msg.sender] = balances[msg.sender].sub(totalAmount);
     return true;
   }
 
