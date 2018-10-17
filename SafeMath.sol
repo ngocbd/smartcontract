@@ -1,107 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0xd4b5556dad4a0affc0eef0da56a928712e412180
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x616622527ecb889bd144cdee266126fda1e3d005
 */
-pragma solidity ^0.4.24;
-
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr 
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
- */
 library SafeMath {
-    
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) 
-        internal 
-        pure 
-        returns (uint256 c) 
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256) 
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c) 
-    {
+    function add(uint a, uint b) public pure returns (uint c) {
         c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
+        require(c >= a);
     }
-    
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y) 
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y) 
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
+    function sub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-    
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
+    function mul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-    
-    /**
-     * @dev x to the power of y 
-     */
-    function pwr(uint256 x, uint256 y)
-        internal 
-        pure 
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else 
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
+    function div(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
