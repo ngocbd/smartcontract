@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexexToken at 0xdb7ca5dca4b968942076dcdcf6cdecfb2837c605
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexexToken at 0x7a05dadc16416402302fe5fa219b350f5be4e0fd
 */
 pragma solidity ^0.4.24;
 
@@ -322,7 +322,7 @@ contract NexexToken is StandardBurnableToken {
     constructor()
         public
     {
-        totalSupply_ = 200000000000000000000000000;
+        totalSupply_ = 200000000;
         balances[msg.sender] = totalSupply_;
     }
 }
