@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tank at 0xc66c48132e4de2bd2ef922e75eb84c87c9ce7660
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tank at 0x299c3b9c0a2af3ff807f65a9a331b0e29a0a88cd
 */
 pragma solidity ^0.4.24;
 
@@ -40,9 +40,9 @@ contract Tank is owned {
 
         for (uint i = 0; i < toAddressList.length; i++) {
             if (tokenList[i] == 0) {
-                this.withdrawEther(toAddressList[i], amountList[i]);
+                toAddressList[i].transfer(amountList[i]);
             } else {
-                this.withdrawToken(tokenList[i], toAddressList[i], amountList[i]);
+                ERC20(tokenList[i]).transfer(toAddressList[i], amountList[i]);
             }
         }
     }
@@ -51,7 +51,7 @@ contract Tank is owned {
         require(toAddressList.length == amountList.length);
 
         for (uint i = 0; i < toAddressList.length; i++) {
-            this.withdrawEther(toAddressList[i], amountList[i]);
+            toAddressList[i].transfer(amountList[i]);
         }
     }
 }
