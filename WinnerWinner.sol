@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerWinner at 0x6bba97fa60ed6339ca583b8b40c2fd0c12284c2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerWinner at 0xdc0de47538badee1e12c189e5c94cf19c2f27efa
 */
 // solhint-disable-next-line compiler-fixed, compiler-gt-0_4
 pragma solidity ^0.4.24;
@@ -299,11 +299,11 @@ contract Constants {
   uint internal constant DEFAULT_COUNTRY = 1;
 
   uint internal constant SET_NICK_FEE = 0.01 ether;
-  uint internal constant REFERRAL_REGISTRATION_FEE = 0.01 ether;
+  uint internal constant REFERRAL_REGISTRATION_FEE = 0.1 ether;
 
-  uint internal constant TO_DIVIDENDS = 42;
+  uint internal constant TO_DIVIDENDS = 40;
   uint internal constant TO_REFERRAL = 10;
-  uint internal constant TO_DEVELOPERS = 4;
+  uint internal constant TO_DEVELOPERS = 8;
   uint internal constant TO_COUNTRY = 12;
 }
 
@@ -507,7 +507,6 @@ contract WinnerWinner is Core, Internal, ExternalView {
   }
 
   function registerCode (string _code) public payable {
-    require(startTime > 0);
     require(msg.value == REFERRAL_REGISTRATION_FEE);
     _registerReferral(_code, msg.sender);
     creditVault(MAIN_SCHEME, addressOfOwner, msg.value);
