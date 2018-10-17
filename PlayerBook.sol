@@ -1,40 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x9d937dc68ed3604954d5ea8433563df6526b1687
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xe3a09444bc98686e34fc59e3bc517496e20b146a
 */
 pragma solidity ^0.4.24;
+/*
+ * -PlayerBook - v0.3.14
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *     ______   _                                 ______                 _          
+ *====(_____ \=| |===============================(____  \===============| |=============*
+ *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
+ *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
+ *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
+ *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
+ *                        (____/
+ * ????????????????????????  ???????????? ????????????                       
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?                      
+ * ????????? ? ???? ???? ?   ???????????? ????????????    
+ */
+
 
 interface PlayerBookReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
-interface TeamAnonymousInterface {
-    function requiredSignatures() external view returns(uint256);
-    function requiredDevSignatures() external view returns(uint256);
-    function adminCount() external view returns(uint256);
-    function devCount() external view returns(uint256);
-    function adminName(address _who) external view returns(bytes32);
-    function isAdmin(address _who) external view returns(bool);
-    function isDev(address _who) external view returns(bool);
-}
 
 contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    // TO DO: TEAM ADDRESS
-    TeamAnonymousInterface constant private TeamAnonymous = TeamAnonymousInterface(0x5073Fa31039F19557e085e86fa80CdF40eC7593A);
-    
-    MSFun.Data private msData;
-    function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamAnonymous.requiredDevSignatures(), _whatFunction));}
-    function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
-    function deleteAnyProposal(bytes32 _whatFunction) onlyDevs() public {MSFun.deleteProposal(msData, _whatFunction);}
-    function checkData(bytes32 _whatFunction) onlyDevs() public view returns(bytes32, uint256) {return(MSFun.checkMsgData(msData, _whatFunction), MSFun.checkCount(msData, _whatFunction));}
-    function checkSignersByAddress(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(address, address, address) {return(MSFun.checkSigner(msData, _whatFunction, _signerA), MSFun.checkSigner(msData, _whatFunction, _signerB), MSFun.checkSigner(msData, _whatFunction, _signerC));}
-    function checkSignersByName(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(bytes32, bytes32, bytes32) {return(TeamAnonymous.adminName(MSFun.checkSigner(msData, _whatFunction, _signerA)), TeamAnonymous.adminName(MSFun.checkSigner(msData, _whatFunction, _signerB)), TeamAnonymous.adminName(MSFun.checkSigner(msData, _whatFunction, _signerC)));}
+    address private admin = msg.sender;
 
-    address constant private team = 0xBd01103c36f400344b427Cb51934B765007e16f6;
-    
+    address private reciverbank ;
+//==============================================================================
+//     _| _ _|_ _    _ _ _|_    _   .
+//    (_|(_| | (_|  _\(/_ | |_||_)  .
+//=============================|================================================    
     uint256 public registrationFee_ = 10 finney;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
@@ -44,8 +56,7 @@ contract PlayerBook {
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => Player) public plyr_;               // (pID => data) player data
-    mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; 
-    // (pID => name => bool) list of names a player owns.  (used so you can change your display name amoungst any name you own)
+    mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amoungst any name you own)
     mapping (uint256 => mapping (uint256 => bytes32)) public plyrNameList_; // (pID => nameNum => name) list of names a player owns
     struct Player {
         address addr;
@@ -57,31 +68,23 @@ contract PlayerBook {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================    
-    constructor()
+    constructor(address bankaddr)
         public
     {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        
-        //?????
-        plyr_[1].addr = 0x3C21550C76B9C0Eb32ceA5f7ea71d54f366961a1;
-        plyr_[1].name = "creator";
+        plyr_[1].addr = bankaddr;
+        plyr_[1].name = "play";
         plyr_[1].names = 1;
-        pIDxAddr_[0x3C21550C76B9C0Eb32ceA5f7ea71d54f366961a1] = 1;
-        pIDxName_["creator"] = 1;
-        plyrNames_[1]["creator"] = true;
-        plyrNameList_[1][1] = "creator";
-        
-        plyr_[2].addr = 0x3123AD3e691bC320aaCC8ab91A0E32A7eE4C4b9a;
-        plyr_[2].name = "admin";
-        plyr_[2].names = 1;
-        pIDxAddr_[0x3123AD3e691bC320aaCC8ab91A0E32A7eE4C4b9a] = 2;
-        pIDxName_["admin"] = 2;
-        plyrNames_[2]["admin"] = true;
-        plyrNameList_[2][1] = "admin";
-        
-        pID_ = 2;
+        pIDxAddr_[bankaddr] = 1;
+        pIDxName_["play"] = 1;
+        plyrNames_[1]["play"] = true;
+        plyrNameList_[1][1] = "play";
+            
+        pID_ = 1;
+
+        reciverbank = bankaddr;
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -98,10 +101,10 @@ contract PlayerBook {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
-    
+
     modifier onlyDevs() 
     {
-        require(TeamAnonymous.isDev(msg.sender) == true, "msg sender is not a dev");
+        require(admin == msg.sender, "msg sender is not a dev");
         _;
     }
     
@@ -378,7 +381,7 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        team.transfer(address(this).balance);
+        reciverbank.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -553,6 +556,16 @@ contract PlayerBook {
         return(_isNewPlayer, _affID);
     }
     
+
+    function changeadmin(address _adminAddress) onlyDevs() public
+    {
+        admin = _adminAddress;
+    }
+
+    function changebank(address _bankAddress) onlyDevs() public
+    {
+        reciverbank = _bankAddress;
+    }
 //==============================================================================
 //   _ _ _|_    _   .
 //  _\(/_ | |_||_)  .
@@ -562,28 +575,47 @@ contract PlayerBook {
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
-    
-        gID_++;
-        bytes32 _name = _gameNameStr.nameFilter();
-        gameIDs_[_gameAddress] = gID_;
-        gameNames_[_gameAddress] = _name;
-        games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
-    
-        games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-        games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+            gID_++;
+            bytes32 _name = _gameNameStr.nameFilter();
+            gameIDs_[_gameAddress] = gID_;
+            gameNames_[_gameAddress] = _name;
+            games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
+        
+            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
     }
     
-    // MASK: SET ?????
     function setRegistrationFee(uint256 _fee)
         onlyDevs()
         public
     {
-        registrationFee_ = _fee;
+      registrationFee_ = _fee;
     }
         
 } 
 
-
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 library NameFilter {
     
     /**
@@ -761,174 +793,5 @@ library SafeMath {
                 z = mul(z,x);
             return (z);
         }
-    }
-}
-
-library MSFun {
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // DATA SETS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // contact data setup
-    struct Data 
-    {
-        mapping (bytes32 => ProposalData) proposal_;
-    }
-    struct ProposalData 
-    {
-        // a hash of msg.data 
-        bytes32 msgData;
-        // number of signers
-        uint256 count;
-        // tracking of wither admins have signed
-        mapping (address => bool) admin;
-        // list of admins who have signed
-        mapping (uint256 => address) log;
-    }
-    
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // MULTI SIG FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    function multiSig(Data storage self, uint256 _requiredSignatures, bytes32 _whatFunction)
-        internal
-        returns(bool) 
-    {
-        // our proposal key will be a hash of our function name + our contracts address 
-        // by adding our contracts address to this, we prevent anyone trying to circumvent
-        // the proposal's security via external calls.
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        
-        // this is just done to make the code more readable.  grabs the signature count
-        uint256 _currentCount = self.proposal_[_whatProposal].count;
-        
-        // store the address of the person sending the function call.  we use msg.sender 
-        // here as a layer of security.  in case someone imports our contract and tries to 
-        // circumvent function arguments.  still though, our contract that imports this
-        // library and calls multisig, needs to use onlyAdmin modifiers or anyone who
-        // calls the function will be a signer. 
-        address _whichAdmin = msg.sender;
-        
-        // prepare our msg data.  by storing this we are able to verify that all admins
-        // are approving the same argument input to be executed for the function.  we hash 
-        // it and store in bytes32 so its size is known and comparable
-        bytes32 _msgData = keccak256(msg.data);
-        
-        // check to see if this is a new execution of this proposal or not
-        if (_currentCount == 0)
-        {
-            // if it is, lets record the original signers data
-            self.proposal_[_whatProposal].msgData = _msgData;
-            
-            // record original senders signature
-            self.proposal_[_whatProposal].admin[_whichAdmin] = true;        
-            
-            // update log (used to delete records later, and easy way to view signers)
-            // also useful if the calling function wants to give something to a 
-            // specific signer.  
-            self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;  
-            
-            // track number of signatures
-            self.proposal_[_whatProposal].count += 1;  
-            
-            // if we now have enough signatures to execute the function, lets
-            // return a bool of true.  we put this here in case the required signatures
-            // is set to 1.
-            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
-                return(true);
-            }            
-        // if its not the first execution, lets make sure the msgData matches
-        } else if (self.proposal_[_whatProposal].msgData == _msgData) {
-            // msgData is a match
-            // make sure admin hasnt already signed
-            if (self.proposal_[_whatProposal].admin[_whichAdmin] == false) 
-            {
-                // record their signature
-                self.proposal_[_whatProposal].admin[_whichAdmin] = true;        
-                
-                // update log (used to delete records later, and easy way to view signers)
-                self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;  
-                
-                // track number of signatures
-                self.proposal_[_whatProposal].count += 1;  
-            }
-            
-            // if we now have enough signatures to execute the function, lets
-            // return a bool of true.
-            // we put this here for a few reasons.  (1) in normal operation, if 
-            // that last recorded signature got us to our required signatures.  we 
-            // need to return bool of true.  (2) if we have a situation where the 
-            // required number of signatures was adjusted to at or lower than our current 
-            // signature count, by putting this here, an admin who has already signed,
-            // can call the function again to make it return a true bool.  but only if
-            // they submit the correct msg data
-            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
-                return(true);
-            }
-        }
-    }
-    
-    
-    // deletes proposal signature data after successfully executing a multiSig function
-    function deleteProposal(Data storage self, bytes32 _whatFunction)
-        internal
-    {
-        //done for readability sake
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        address _whichAdmin;
-        
-        //delete the admins votes & log.   i know for loops are terrible.  but we have to do this 
-        //for our data stored in mappings.  simply deleting the proposal itself wouldn't accomplish this.
-        for (uint256 i=0; i < self.proposal_[_whatProposal].count; i++) {
-            _whichAdmin = self.proposal_[_whatProposal].log[i];
-            delete self.proposal_[_whatProposal].admin[_whichAdmin];
-            delete self.proposal_[_whatProposal].log[i];
-        }
-        //delete the rest of the data in the record
-        delete self.proposal_[_whatProposal];
-    }
-    
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // HELPER FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    function whatProposal(bytes32 _whatFunction)
-        private
-        view
-        returns(bytes32)
-    {
-        return(keccak256(abi.encodePacked(_whatFunction,this)));
-    }
-    
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // VANITY FUNCTIONS
-    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // returns a hashed version of msg.data sent by original signer for any given function
-    function checkMsgData (Data storage self, bytes32 _whatFunction)
-        internal
-        view
-        returns (bytes32 msg_data)
-    {
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].msgData);
-    }
-    
-    // returns number of signers for any given function
-    function checkCount (Data storage self, bytes32 _whatFunction)
-        internal
-        view
-        returns (uint256 signature_count)
-    {
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].count);
-    }
-    
-    // returns address of an admin who signed for any given function
-    function checkSigner (Data storage self, bytes32 _whatFunction, uint256 _signer)
-        internal
-        view
-        returns (address signer)
-    {
-        require(_signer > 0, "MSFun checkSigner failed - 0 not allowed");
-        bytes32 _whatProposal = whatProposal(_whatFunction);
-        return (self.proposal_[_whatProposal].log[_signer - 1]);
     }
 }
