@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0x025327923fccb962627d447f1d7d3530f7467f61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherToken at 0x0b1fdd0e5c340d25d669819f0cd937ed3bbef4f9
 */
 pragma solidity ^0.4.11;
 
@@ -41,7 +41,7 @@ contract Utils {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -55,7 +55,7 @@ contract Utils {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -68,7 +68,7 @@ contract Utils {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal constant returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
@@ -80,7 +80,7 @@ contract Utils {
 */
 contract IOwned {
     // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
+    function owner() public constant returns (address owner) { owner; }
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
@@ -174,17 +174,14 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
 /*
     ERC20 Standard Token interface
 */
-/*
-    ERC20 Standard Token interface
-*/
 contract IERC20Token {
     // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
+    function name() public constant returns (string name) { name; }
+    function symbol() public constant returns (string symbol) { symbol; }
+    function decimals() public constant returns (uint8 decimals) { decimals; }
+    function totalSupply() public constant returns (uint256 totalSupply) { totalSupply; }
+    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
 
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
