@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscardToken at 0x01f673e1af7416ff3795ff62393cdf014ce050fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscardToken at 0xb1e4bf1fbfc6a0a1d53cfadddf315869363383ff
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'Discard' CROWDSALE token contract
 //
-// Deployed to : 0x01f673e1af7416ff3795ff62393cdf014ce050fd
+// Deployed to : 0xD0FDf2ECd4CadE671a7EE1063393eC0eB90816FD
 // Symbol      : DIS
 // Name        : Discard Token
 // Total supply: According ICO demand
