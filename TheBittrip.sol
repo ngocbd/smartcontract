@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBittrip at 0x04983b42ea545fc66294f5ab917c55345159b4a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBittrip at 0xad277fdfc6cab2cd63edd46287b13ed7caabccfe
 */
 pragma solidity ^0.4.24;
-
-interface theBittripRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TheBittrip {
     string public name;
@@ -19,10 +17,10 @@ contract TheBittrip {
     event Burn(address indexed from, uint256 value);
     function TheBittrip(
     ) public {
-        totalSupply = 250000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "The Bittrip Token";                                   // Set the name for display purposes
-        symbol = "BT";                               // Set the symbol for display purposes
+        totalSupply = 250000000 * 10 ** uint256(decimals);  
+        balanceOf[msg.sender] = totalSupply;    
+        name = "The Bittrip";                     
+        symbol = "BIT";                     
     }
     function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
@@ -54,17 +52,6 @@ contract TheBittrip {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        theBittripRecipient spender = theBittripRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
  
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value); 
