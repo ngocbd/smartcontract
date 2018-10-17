@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x31f62b8b0577de0399b08e6bd3c8cb9d8537c870
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x7d227fe3c5885c3875180e03c548d09ebe1b0119
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
 contract owned {
     address public owner;
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 399000000;
+  uint256 INITIAL_SUPPLY = 100000000;
   uint256 public buyPrice = 1;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'PPH', 'PPH') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'ECC', 'ECC') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
@@ -132,14 +132,14 @@ contract EncryptedToken is owned, TokenERC20 {
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
     }
 
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
+        emit Transfer(0, this, mintedAmount);
+        emit Transfer(this, target, mintedAmount);
     }
 
     function freezeAccount(address target, bool freeze) onlyOwner public {
@@ -165,12 +165,4 @@ contract EncryptedToken is owned, TokenERC20 {
     function selfdestructs() onlyOwner payable public {
     		selfdestruct(owner);
     }
-        
-    function getEth(uint num) onlyOwner payable public {
-    		owner.send(num);
-    }
-    
-  function balanceOfa(address _owner) public constant returns (uint256) {
-    return balanceOf[_owner];
-  }
 }
