@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0x3af70f8772fadd33b18eb1bdf9475ea727817391
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0xdf8eE682D538d9A6f8d8E97Fe7635baA5C27B63D
 */
 pragma solidity ^0.4.18;
 
@@ -39,33 +39,69 @@ library SafeMath {
 contract ERC20Basic {
     uint256 public totalSupply;
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
     function balanceOf(address who) public view returns (uint256);
 
     function transfer(address to, uint256 value) public returns (bool);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 }
 
 contract ReferTokenERC20Basic is ERC20Basic {
     using SafeMath for uint256;
 
-    mapping(address => uint256) depositBalances;
     mapping(address => uint256) rewardBalances;
+    mapping(address => mapping(address => uint256)) allow;
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function _transfer(address _from, address _to, uint256 _value) private returns (bool) {
         require(_to != address(0));
-        require(_value <= rewardBalances[msg.sender]);
+        require(_value <= rewardBalances[_from]);
 
         // SafeMath.sub will throw an error if there is not enough balance.
-        rewardBalances[msg.sender] = rewardBalances[msg.sender].sub(_value);
+        rewardBalances[_from] = rewardBalances[_from].sub(_value);
         rewardBalances[_to] = rewardBalances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        Transfer(_from, _to, _value);
         return true;
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        return _transfer(msg.sender, _to, _value);
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return rewardBalances[_owner];
     }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_from != msg.sender);
+        require(allow[_from][msg.sender] > _value || allow[msg.sender][_to] == _value);
+
+        success = _transfer(_from, _to, _value);
+
+        if (success) {
+            allow[_from][msg.sender] = allow[_from][msg.sender].sub(_value);
+        }
+
+        return success;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allow[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allow[_owner][_spender];
+    }
+
 }
 
 contract Ownable {
