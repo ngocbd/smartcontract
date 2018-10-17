@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0xeb8260dC101D30B36bCB9d90b6d353E1E50C0BFA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA_PE at 0x060c7b3daed4d41c76d7008c8e668ade817098cf
 */
 pragma solidity ^0.4.24;
 
@@ -79,102 +79,179 @@ contract Ownable {
 
 
 
-//////////////////////////////////////////////////////////////
-//                                                          //
-//                ESSENTIA Public Engagement                //
-//                   https://essentia.one                   //
-//                                                          //
-//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+//:                                                  ://
+//:            ESSENTIA Public Engagement            ://
+//:               https://essentia.one               ://
+//:..................................................://
+////////////////////////////////////////////////////////
+
+
+
+
+contract TokenCHK {
+
+
+  function balanceOf(address _owner) public pure returns (uint256 balance) {}
+
+
+}
+
 
 
 
 contract ESSENTIA_PE is Ownable {
 
-    // Contract variables and constants
     using SafeMath for uint256;
 
-    uint256 public tokenPrice=0;
-    address public addrFWD;
-    address public token;
-    uint256 public decimals=18;
-    string public name="ESSENTIA Public Engagement";
+    string public name = "ESSENTIA Public Engagement";      // Extended name of this contract
+    uint256 public tokenPrice = 0;        // Set the fixed ESS token price
+    uint256 public maxCap = 0;            // Set the target maximum cap in ETH
+    address public FWDaddrETH;            // Set the address to forward the received ETH to
+    address public ESSgenesis;            // Set the ESSENTIA Genesis contract address
+    uint256 public totalSold;             // Keep track of the contributions total
+    uint256 public decimals = 18;         // The decimals to consider
 
-    mapping (address => uint256) public sold;
+    mapping (address => uint256) public sold;       // Map the ESS token allcations
 
-    uint256 public pubEnd=0;
-    // constant to simplify conversion of token amounts into integer form
+    uint256 public pubEnd = 0;                      // Set the unixtime END for the public engagement
+    address contractAddr=this;                      // Better way to point to this from this
+
+    // Constant to simplify the conversion of token amounts into integer form
     uint256 public tokenUnit = uint256(10)**decimals;
 
 
 
-    // destAddr is the address to which the contributions are forwarded
-    // mastTokCon is the address of the main token contract corresponding to the erc20 to be sold
-    // NOTE the contract will sell only its token balance on the erc20 specified in mastTokCon
+    //
+    // "toETHaddr" is the address to which the ETH contributions are forwarded to, aka FWDaddrETH
+    // "addrESSgenesis" is the address of the Essentia ERC20 token contract, aka ESSgenesis
+    //
+    // NOTE: this contract will sell only its token balance on the ERC20 specified in addrESSgenesis
+    //       the maxCap in ETH and the tokenPrice will indirectly set the ESS token amount on sale
+    //
+    // NOTE: this contract should have sufficient ESS token balance to be > maxCap / tokenPrice
+    //
+    // NOTE: this contract will stop REGARDLESS of the above (maxCap) when its token balance is all sold 
+    //
+    // The Owner of this contract can set: Price, End, MaxCap, ESS Genesis and ETH Forward address
+    //
+    // The received ETH are directly forwarded to the external FWDaddrETH address
+    // The ESS tokens are transferred to the contributing addresses once withdrawPUB is executed
+    //
 
 
     constructor
         (
-        address destAddr,
-        address mastTokCon
+        address toETHaddr,
+        address addrESSgenesis
         ) public {
-        addrFWD = destAddr;
-        token = mastTokCon;
+        FWDaddrETH = toETHaddr;
+        ESSgenesis = addrESSgenesis;
+        
     }
 
 
 
     function () public payable {
-        buy();   // Allow to buy tokens sending ether directly to the contract
+        buy();               // Allow to buy tokens sending ETH directly to the contract, fallback
     }
 
+
+
+
+    function setFWDaddrETH(address _value) public onlyOwner{
+      FWDaddrETH=_value;     // Set the forward address default toETHaddr
+
+    }
+
+
+    function setGenesis(address _value) public onlyOwner{
+      ESSgenesis=_value;     // Set the ESS erc20 genesis contract address default ESSgenesis
+
+    }
+
+
+    function setMaxCap(uint256 _value) public onlyOwner{
+      maxCap=_value;         // Set the max cap in ETH default 0
+
+    }
 
 
     function setPrice(uint256 _value) public onlyOwner{
-      tokenPrice=_value;   // Set the price token default 0
+      tokenPrice=_value;     // Set the token price default 0
 
     }
 
-    function setaddrFWD(address _value) public onlyOwner{
-      addrFWD=_value;   // Set the forward address default destAddr
-
-    }
 
     function setPubEnd(uint256 _value) public onlyOwner{
-      pubEnd=_value;   // Set the END of engagement unixtime default 0
+      pubEnd=_value;         // Set the END of the public engagement unixtime default 0
 
     }
 
 
 
-    function buy()  public payable {
-        require(block.timestamp<pubEnd);
-        require(msg.value>0);
-        uint256 tokenAmount = (msg.value * tokenUnit) / tokenPrice;   // Calculate the amount of tokens
 
-        transferBuy(msg.sender, tokenAmount);
-        addrFWD.transfer(msg.value);
+    function buy() public payable {
+
+        require(block.timestamp < pubEnd);          // Require the current unixtime to be lower than the END unixtime
+        require(msg.value > 0);                     // Require the sender to send an ETH tx higher than 0
+        require(msg.value <= msg.sender.balance);   // Require the sender to have sufficient ETH balance for the tx
+
+        // Requiring this to avoid going out of tokens, aka we are getting just true/false from the transfer call
+        require(msg.value + totalSold <= maxCap);
+
+        // Calculate the amount of tokens per contribution
+        uint256 tokenAmount = (msg.value * tokenUnit) / tokenPrice;
+
+        // Requiring sufficient token balance on this contract to accept the tx
+        require(tokenAmount<=TokenCHK(ESSgenesis).balanceOf(contractAddr));
+
+        transferBuy(msg.sender, tokenAmount);       // Instruct the accounting function
+        totalSold = totalSold.add(msg.value);       // Account for the total contributed/sold
+        FWDaddrETH.transfer(msg.value);             // Forward the ETH received to the external address
+
     }
+
 
 
 
     function withdrawPUB() public returns(bool){
-        require(block.timestamp>pubEnd);   // Finalize and transfer
-        require(sold[msg.sender]>0);
 
+        require(block.timestamp > pubEnd);          // Require the PE to be over - actual time higher than end unixtime
+        require(sold[msg.sender] > 0);              // Require the ESS token balance to be sent to be higher than 0
 
-        bool result=token.call(bytes4(keccak256("transfer(address,uint256)")), msg.sender, sold[msg.sender]);
+        // Send ESS tokens to the contributors proportionally to their contribution/s
+        if(!ESSgenesis.call(bytes4(keccak256("transfer(address,uint256)")), msg.sender, sold[msg.sender])){revert();}
+
         delete sold[msg.sender];
-        return result;
+        return true;
+
     }
+
 
 
 
     function transferBuy(address _to, uint256 _value) internal returns (bool) {
-        require(_to != address(0));
 
-        sold[_to]=sold[_to].add(_value);   // Account for multiple txs from the same address
+        require(_to != address(0));                 // Require the destination address being non-zero
+
+        sold[_to]=sold[_to].add(_value);            // Account for multiple txs from the same address
 
         return true;
 
     }
+
+
+
+        //
+        // Probably the sky would fall down first but, in case skynet feels funny..
+        // ..we try to make sure anyway that no ETH would get stuck in this contract
+        //
+    function EMGwithdraw(uint256 weiValue) external onlyOwner {
+        require(block.timestamp > pubEnd);          // Require the public engagement to be over
+        require(weiValue > 0);                      // Require a non-zero value
+
+        FWDaddrETH.transfer(weiValue);              // Transfer to the external ETH forward address
+    }
+
 }
