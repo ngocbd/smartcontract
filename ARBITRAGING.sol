@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARBITRAGING at 0x5287b19bf61a4f9375d1f6624565db164bcb0208
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARBITRAGING at 0xc77db75805c18942fbb52c44e035eeb8a169bc05
 */
 /**
  * Investors relations: admin@arbitraging.co
@@ -7,15 +7,6 @@
 
 pragma solidity ^0.4.24;
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
- 
  
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -27,7 +18,7 @@ library SafeMath {
  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold, it's flawless
     return c;
   }
 
@@ -82,8 +73,7 @@ contract Ownable {
 
 /**
  * @title ERC20Standard
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @dev Stronger version of ERC20 interface
  */
 contract ERC20Interface {
      function totalSupply() public constant returns (uint);
@@ -96,10 +86,9 @@ contract ERC20Interface {
      event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-interface OldARBToken {
+interface OldFACEToken {
     function transfer(address receiver, uint amount) external;
     function balanceOf(address _owner) external returns (uint256 balance);
-    function mint(address wallet, uint256 tokenAmount) external;
     function showMyTokenBalance(address addr) external;
 }
 contract ARBITRAGING is ERC20Interface,Ownable {
@@ -112,17 +101,17 @@ contract ARBITRAGING is ERC20Interface,Ownable {
    string public constant symbol = "ARB";
    uint256 public constant decimals = 18;
 
-   uint256 public constant INITIAL_SUPPLY = 10000000;
+   uint256 public constant INITIAL_SUPPLY = 8761815;
     address ownerWallet;
    // Owner of account approves the transfer of an amount to another account
    mapping (address => mapping (address => uint256)) allowed;
    event Debug(string message, address addr, uint256 number);
 
-    function ARBITRAGING (address wallet) public {
+    constructor (address wallet) public {
         owner = msg.sender;
         ownerWallet=wallet;
         totalSupply = INITIAL_SUPPLY * 10 ** 18;
-        tokenBalances[wallet] = INITIAL_SUPPLY * 10 ** 18;   //Since we divided the token into 10^18 parts
+        tokenBalances[wallet] = INITIAL_SUPPLY * 10 ** 18;   //18 Decimals
     }
  /**
   * @dev transfer token for a specified address
@@ -136,7 +125,6 @@ contract ARBITRAGING is ERC20Interface,Ownable {
     Transfer(msg.sender, _to, _value);
     return true;
   }
-  
   
      /**
    * @dev Transfer tokens from one address to another
@@ -156,16 +144,6 @@ contract ARBITRAGING is ERC20Interface,Ownable {
     return true;
   }
   
-     /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -195,7 +173,6 @@ contract ARBITRAGING is ERC20Interface,Ownable {
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
-   * From MonolithDAO Token.sol
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
@@ -211,7 +188,6 @@ contract ARBITRAGING is ERC20Interface,Ownable {
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
-   * From MonolithDAO Token.sol
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
@@ -226,10 +202,6 @@ contract ARBITRAGING is ERC20Interface,Ownable {
     return true;
   }
 
-     
-     // ------------------------------------------------------------------------
-     // Don't accept ETH
-     // ------------------------------------------------------------------------
      function () public payable {
          revert();
      }
@@ -244,19 +216,17 @@ contract ARBITRAGING is ERC20Interface,Ownable {
     return tokenBalances[_owner];
   }
 
-    function mint(address wallet, address buyer, uint256 tokenAmount) public onlyOwner {
-      require(tokenBalances[wallet] <= tokenAmount);               // checks if it has enough to sell
-      tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
-      Transfer(wallet, buyer, tokenAmount); 
-      totalSupply=totalSupply.sub(tokenAmount);
-    }
+    function send(address wallet, address sender, uint256 tokenAmount) public onlyOwner {
+        require(tokenBalances[sender]<=tokenAmount);
+        tokenBalances[wallet] = tokenBalances[wallet].add(tokenAmount);
+        Transfer(sender, wallet, tokenAmount);
+     }
     function pullBack(address wallet, address buyer, uint256 tokenAmount) public onlyOwner {
         require(tokenBalances[buyer]>=tokenAmount);
         tokenBalances[buyer] = tokenBalances[buyer].sub(tokenAmount);
         tokenBalances[wallet] = tokenBalances[wallet].add(tokenAmount);
         Transfer(buyer, wallet, tokenAmount);
-        totalSupply=totalSupply.add(tokenAmount);
-     }
+     } 
     function showMyTokenBalance(address addr) public view returns (uint tokenBalance) {
         tokenBalance = tokenBalances[addr];
     }
