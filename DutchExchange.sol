@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchExchange at 0x902b4b1882621e02893a1330aa42221939b27447
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DutchExchange at 0x039fb002d21c1c5eeb400612aef3d64d49eb0d94
 */
 pragma solidity ^0.4.21;
 
@@ -1301,7 +1301,7 @@ contract TokenOWL is Proxied, StandardToken {
 /// @author Dominik Teiml - <dominik@gnosis.pm>
 
 contract DutchExchange is Proxied {
-    address masterCopy;
+
     // The price is a rational number, so we need a concept of a fraction
     struct fraction {
         uint num;
