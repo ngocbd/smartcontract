@@ -1,45 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0xd45247c07379d94904e0a87b4481f0a1ddfa0c64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0xc3e4cc9187c43cc217462c8162a9a3e2992f2859
 */
-pragma solidity  0.4.21;
+pragma solidity ^0.4.18;
 
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-
-    function mul(uint a, uint b) internal pure returns(uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function sub(uint a, uint b) internal pure  returns(uint) {
-        assert(b <= a);
-        return a - b;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function add(uint a, uint b) internal  pure returns(uint) {
-        uint c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
-}
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-
-contract ERC20 {
-    uint public totalSupply;
-
-    function balanceOf(address who) public view returns(uint);
-
-    function allowance(address owner, address spender) public view returns(uint);
-
-    function transfer(address to, uint value) public returns(bool ok);
-
-    function transferFrom(address from, address to, uint value) public returns(bool ok);
-
-    function approve(address spender, uint value) public returns(bool ok);
-
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
@@ -49,188 +44,197 @@ contract ERC20 {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-    address public owner;
-    address public newOwner;
+  address public owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Ownable() public {
-        owner = msg.sender;
-        newOwner = address(0);
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
 
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param _newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(address(0) != _newOwner);
-        newOwner = _newOwner;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        emit OwnershipTransferred(owner, msg.sender);
-        owner = msg.sender;
-        newOwner = address(0);
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+contract MultiTokenBasics {
+
+    function totalSupply(uint256 _tokenId) public view returns (uint256);
+
+    function balanceOf(uint256 _tokenId, address _owner) public view returns (uint256);
+
+    function allowance(uint256 _tokenId, address _owner, address _spender) public view returns (uint256);
+
+    function transfer(uint256 _tokenId, address _to, uint256 _value) public returns (bool);
+
+    function transferFrom(uint256 _tokenId, address _from, address _to, uint256 _value) public returns (bool);
+
+    function approve(uint256 _tokenId, address _spender, uint256 _value) public returns (bool);
+
+
+    event Transfer(uint256 indexed tokenId, address indexed from, address indexed to, uint256 value);
+    event Approval(uint256 indexed tokenId, address indexed owner, address indexed spender, uint256 value);
 
 }
 
+contract MultiToken is Ownable, MultiTokenBasics {
+    using SafeMath for uint256;
 
-// The  Exchange token
-contract MultiToken is ERC20, Ownable {
+    mapping(uint256 => mapping(address => mapping(address => uint256))) private allowed;
+    mapping(uint256 => mapping(address => uint256)) private balance;
+    mapping(uint256 => uint256) private totalSupply_;
 
-    using SafeMath for uint;
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint public decimals; // How many decimals to show.
-    string public version;
-    uint public totalSupply;
-    uint public tokenPrice;
-    bool public exchangeEnabled;
-    address public parentContract;
-    bool public codeExportEnabled;
-    address public commissionAddress;           // address to deposit commissions
-    uint public deploymentCost;                 // cost of deployment with exchange feature
-    uint public tokenOnlyDeploymentCost;        // cost of deployment with basic ERC20 feature
-    uint public exchangeEnableCost;             // cost of upgrading existing ERC20 to exchange feature
-    uint public codeExportCost;                 // cost of exporting the code
 
-    mapping(address => uint) public balances;
-    mapping(address => mapping(address => uint)) public allowed;
+    uint8 public decimals = 18;
+    uint256 public mask = 0xffffffff;
 
-    modifier onlyAuthorized() {
-        if (msg.sender != parentContract) 
-            revert();
+
+
+    /**
+    * @dev Throws if _tokenId not exists
+    * @param _tokenId uint256 is subtoken identifier
+    */
+
+    modifier existingToken(uint256 _tokenId) {
+        require(totalSupply_[_tokenId] > 0 && (_tokenId & mask == _tokenId));
         _;
     }
 
-    // The Token constructor     
-    function MultiToken(uint _initialSupply,
-                        string _tokenName,
-                        uint _decimalUnits,
-                        string _tokenSymbol,
-                        string _version,                       
-                        uint _tokenPrice
-                        ) public payable
-    {
+    /**
+    * @dev Throws if  _tokenId exists
+    * @param _tokenId uint256 is subtoken identifier
+    */
 
-        totalSupply = _initialSupply * (10**_decimalUnits);                                             
-        name = _tokenName;          // Set the name for display purposes
-        symbol = _tokenSymbol;      // Set the symbol for display purposes
-        decimals = _decimalUnits;   // Amount of decimals for display purposes
-        version = _version;         // Version of token
-        tokenPrice = _tokenPrice;   // Token price in ETH           
-            
-        balances[0x4aC4E864C19c3261A3f25DA4f60F55147C2aB25b] = totalSupply;    
-        owner = 0x4aC4E864C19c3261A3f25DA4f60F55147C2aB25b;
-        codeExportEnabled = true;
-        exchangeEnabled = true;
-
-    }
-
-    event TransferSold(address indexed to, uint value);
-    event TokenExchangeEnabled(address caller, uint exchangeCost);
-    event TokenExportEnabled(address caller, uint enableCost);
-
-    // @noice To be called by parent contract to enable exchange functionality
-    // @param _tokenPrice {uint} costo of token in ETH
-    // @return true {bool} if successful
-    function enableExchange(uint _tokenPrice) public payable {
-        
-        require(!exchangeEnabled);
-        require(exchangeEnableCost == msg.value);
-        exchangeEnabled = true;
-        tokenPrice = _tokenPrice;
-        commissionAddress.transfer(msg.value);
-        emit TokenExchangeEnabled(msg.sender, _tokenPrice);                          
-    }
-
-        // @notice to enable code export functionality
-    function enableCodeExport() public payable {   
-        
-        require(!codeExportEnabled);
-        require(codeExportCost == msg.value);     
-        codeExportEnabled = true;
-        commissionAddress.transfer(msg.value);  
-        emit TokenExportEnabled(msg.sender, msg.value);        
-    }
-
-    // @notice It will send tokens to sender based on the token price    
-    function swapTokens() public payable {     
-
-        require(exchangeEnabled);   
-        uint tokensToSend;
-        tokensToSend = (msg.value * (10**decimals)) / tokenPrice; 
-        require(balances[owner] >= tokensToSend);
-        balances[msg.sender] += tokensToSend;
-        balances[owner] -= tokensToSend;
-        owner.transfer(msg.value);
-        emit Transfer(owner, msg.sender, tokensToSend);
-        emit TransferSold(msg.sender, tokensToSend);       
+    modifier notExistingToken(uint256 _tokenId) {
+        require(totalSupply_[_tokenId] == 0 && (_tokenId & mask == _tokenId));
+        _;
     }
 
 
-    // @notice will be able to mint tokens in the future
-    // @param _target {address} address to which new tokens will be assigned
-    // @parm _mintedAmount {uint256} amouont of tokens to mint
-    function mintToken(address _target, uint256 _mintedAmount) public onlyOwner() {        
-        
-        balances[_target] += _mintedAmount;
-        totalSupply += _mintedAmount;
-        emit Transfer(0, _target, _mintedAmount);       
-    }
-  
-    // @notice transfer tokens to given address
-    // @param _to {address} address or recipient
-    // @param _value {uint} amount to transfer
-    // @return  {bool} true if successful
-    function transfer(address _to, uint _value) public returns(bool) {
 
+
+
+    /**
+    * @dev create new subtoken with unique tokenId
+    * @param _tokenId uint256 is subtoken identifier
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    * @return uint256 representing the total amount of tokens
+    */
+
+    function createNewSubtoken(uint256 _tokenId, address _to, uint256 _value) notExistingToken(_tokenId) onlyOwner() public returns (bool) {
+        require(_value > 0);
+        balance[_tokenId][_to] = _value;
+        totalSupply_[_tokenId] = _value;
+        Transfer(_tokenId, address(0), _to, _value);
+        return true;
+    }
+
+
+    /**
+    * @dev Gets the total amount of tokens stored by the contract
+    * @param _tokenId uint256 is subtoken identifier
+    * @return uint256 representing the total amount of tokens
+    */
+
+    function totalSupply(uint256 _tokenId) existingToken(_tokenId) public view returns (uint256) {
+        return totalSupply_[_tokenId];
+    }
+
+    /**
+    * @dev Gets the balance of the specified address
+    * @param _tokenId uint256 is subtoken identifier
+    * @param _owner address to query the balance of
+    * @return uint256 representing the amount owned by the passed address
+    */
+
+    function balanceOf(uint256 _tokenId, address _owner) existingToken(_tokenId) public view returns (uint256) {
+        return balance[_tokenId][_owner];
+    }
+
+
+
+    /**
+    * @dev Function to check the amount of tokens that an owner allowed to a spender.
+    * @param _tokenId uint256 is subtoken identifier
+    * @param _owner address The address which owns the funds.
+    * @param _spender address The address which will spend the funds.
+    * @return A uint256 specifying the amount of tokens still available for the spender.
+    */
+
+    function allowance(uint256 _tokenId, address _owner, address _spender) existingToken(_tokenId) public view returns (uint256) {
+        return allowed[_tokenId][_owner][_spender];
+    }
+
+
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _tokenId uint256 is subtoken identifier
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+
+    function transfer(uint256 _tokenId, address _to, uint256 _value) existingToken(_tokenId) public returns (bool) {
         require(_to != address(0));
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
+        var _sender = msg.sender;
+        var balances = balance[_tokenId];
+        require(_to != address(0));
+        require(_value <= balances[_sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[_sender] = balances[_sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
+        Transfer(_tokenId, _sender, _to, _value);
         return true;
     }
 
-    // @notice transfer tokens from given address to another address
-    // @param _from {address} from whom tokens are transferred
-    // @param _to {address} to whom tokens are transferred
-    // @param _value {uint} amount of tokens to transfer
-    // @return  {bool} true if successful
-    function transferFrom(address _from, address _to, uint256 _value) public  returns(bool success) {
+
+    /**
+    * @dev Transfer tokens from one address to another
+    * @param _tokenId uint256 is subtoken identifier
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+
+    function transferFrom(uint256 _tokenId, address _from, address _to, uint256 _value) existingToken(_tokenId) public returns (bool) {
+        address _sender = msg.sender;
+        var balances = balance[_tokenId];
+        var tokenAllowed = allowed[_tokenId];
 
         require(_to != address(0));
-        require(balances[_from] >= _value); // Check if the sender has enough
-        require(_value <= allowed[_from][msg.sender]); // Check if allowed is greater or equal
-        balances[_from] = balances[_from].sub(_value); // Subtract from the sender
-        balances[_to] = balances[_to].add(_value); // Add the same to the recipient
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value); // adjust allowed
-        emit Transfer(_from, _to, _value);
+        require(_value <= balances[_from]);
+        require(_value <= tokenAllowed[_from][_sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        tokenAllowed[_from][_sender] = tokenAllowed[_from][_sender].sub(_value);
+        Transfer(_tokenId, _from, _to, _value);
         return true;
     }
 
-    // @notice to query balance of account
-    // @return _owner {address} address of user to query balance
-    function balanceOf(address _owner) public view returns(uint balance) {
-        return balances[_owner];
-    }
+
 
     /**
     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
@@ -239,44 +243,19 @@ contract MultiToken is ERC20, Ownable {
     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    * @param _tokenId uint256 is subtoken identifier
     * @param _spender The address which will spend the funds.
     * @param _value The amount of tokens to be spent.
     */
-    function approve(address _spender, uint _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+
+
+
+    function approve(uint256 _tokenId, address _spender, uint256 _value) public returns (bool) {
+        var _sender = msg.sender;
+        allowed[_tokenId][_sender][_spender] = _value;
+        Approval(_tokenId, _sender, _spender, _value);
         return true;
     }
 
-    // @notice to query of allowance of one user to the other
-    // @param _owner {address} of the owner of the account
-    // @param _spender {address} of the spender of the account
-    // @return remaining {uint} amount of remaining allowance
-    function allowance(address _owner, address _spender) public view returns(uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-    * approve should be called when allowed[_spender] == 0. To increment
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    */
-    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
 
 }
