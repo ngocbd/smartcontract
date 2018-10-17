@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x4a2cf32723c1572c14ab1bd4893bca71a6f754b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x09722eee3cec40e8d562cb9d290b989e071586b0
 */
 pragma solidity ^0.4.13;
 
@@ -168,7 +168,9 @@ contract Htlc is DSMath {
 
     // EVENTS
 
-    // TODO add events for all public functions
+    event MultisigInitialised(bytes32 msigId);
+    event MultisigReparametrized(bytes32 msigId);
+    event AtomicSwapInitialised(bytes32 swapId);
 
     // MODIFIERS
 
@@ -212,6 +214,7 @@ contract Htlc is DSMath {
             msg.value,
             unlockTime
         );
+        emit MultisigInitialised(msigId);
         // Create multisig
         Multisig storage multisig = multisigs[msigId];
         if (multisig.deposit == 0) { // New or empty multisig
@@ -238,6 +241,7 @@ contract Htlc is DSMath {
         multisig.deposit = add(multisig.deposit, msg.value);
         assert(multisig.unlockTime <= unlockTime); // Can only increase unlockTime
         multisig.unlockTime = unlockTime;
+        emit MultisigReparametrized(msigId);
     }
 
     /**
@@ -259,7 +263,7 @@ contract Htlc is DSMath {
         address otherAuthority = multisigs[msigId].owner == msg.sender ?
             multisigs[msigId].authority :
             multisigs[msigId].owner;
-        require(otherAuthority == msigId.recover(sig));
+        require(otherAuthority == msigId.toEthSignedMessageHash().recover(sig));
         // Return to owner
         spendFromMultisig(msigId, amount, multisigs[msigId].owner);
     }
@@ -314,6 +318,7 @@ contract Htlc is DSMath {
             expirationTime,
             hashedSecret
         );
+        emit AtomicSwapInitialised(swapId);
         // Create swap
         AtomicSwap storage swap = atomicswaps[swapId];
         swap.msigId = msigId;
