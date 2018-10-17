@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0x443899c75543d4ae2221e6665a16a0a40d1cccff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DPLUS at 0x059f3e09a69dad8c4dda8819d6989b98fc70ccd2
 */
 pragma solidity ^0.4.24;
 
@@ -128,20 +128,20 @@ contract F3DPLUS is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x454b6ee7e3847d51456b4146f7ae2664dbc35af4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x4Cc47443f9452b64CC5923EDA771BB7f6E505BB4);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FoMo3DPlus.me";
-    string constant public symbol = "F3D+";
+    string constant public name = "f3dplus";
+    string constant public symbol = "f3dplus";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 2 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 5 minutes;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 2 hours;                // max length a round timer can be
+    uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
