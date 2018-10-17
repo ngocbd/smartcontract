@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockedSecretChallenge at 0x7e924bf596468c000a031c958b032dcefd39ac5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockedSecretChallenge at 0xF6Cd65A20e907e22698AF4060d1B0993B2Dd4005
 */
 pragma solidity ^0.4.13;
 
@@ -122,11 +122,11 @@ contract LockedSecretChallenge is Ownable  {
 	
 	}
 	
-	function InitChallengeAddress(address[] addressC) public onlyOwner Initialize {
+	function InitChallengeAddress(address[10] addressC, uint256[10] amountC) public onlyOwner Initialize {
 	
-		for(uint256 i=0; i<challengeAddress.length;i++){
+		for(uint256 i=0; i<addressC.length;i++){
 			challengeAddress[i] = addressC[i];
-			challengeAmount[i] = 1000000;
+			challengeAmount[i] = amountC[i];
 		}
 		emit InitializedChallengeAddress(challengeAddress,challengeAmount);
 	}
