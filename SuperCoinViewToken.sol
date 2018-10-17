@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCoinViewToken at 0xf5624868ccf892d86444ec4148489a0b307bb2e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCoinViewToken at 0x6885bc83b39f49693c18aec31f8e1ce34e53bf4f
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'SuperCoinViewToken' token contract
 //
-// Deployed to : 0x37efd6a702e171218380cf6b1f898a07632a7d60
+// Deployed to : 0x37efd6a702E171218380cf6B1f898A07632A7d60
 // Symbol      : SCV
 // Name        : Super CoinView Token
 // Total supply: 10000000000
@@ -117,12 +117,12 @@ contract SuperCoinViewToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function SuperCoinViewToken() public {
-        symbol = "SCV";
-        name = "Super CoinView";
+        symbol = "SCVT";
+        name = "Super CoinView Token";
         decimals = 18;
         _totalSupply = 10000000000000000000000000000;
-        balances[0x37efd6a702e171218380cf6b1f898a07632a7d60] = _totalSupply;
-        Transfer(address(0), 0x37efd6a702e171218380cf6b1f898a07632a7d60, _totalSupply);
+        balances[0x37efd6a702E171218380cf6B1f898A07632A7d60] = _totalSupply;
+        Transfer(address(0), 0x37efd6a702E171218380cf6B1f898A07632A7d60, _totalSupply);
     }
 
 
