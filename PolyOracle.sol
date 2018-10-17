@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolyOracle at 0xfc2a00bb5b7e3b0b310ffb6de4fd1ea3835c9b27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolyOracle at 0xac21004618b3c1c07c2f8a1b705b49a4a8f95583
 */
 pragma solidity ^0.4.24;
 
@@ -1364,7 +1364,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     uint256 public latestUpdate;
     uint256 public latestScheduledUpdate;
 
-    mapping (bytes32 => uint256) requestIds;
+    mapping (bytes32 => uint256) public requestIds;
     mapping (bytes32 => bool) public ignoreRequestIds;
 
     mapping (address => bool) public admin;
@@ -1374,6 +1374,7 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
     event LogPriceUpdated(uint256 _price, uint256 _oldPrice, bytes32 _queryId, uint256 _time);
     event LogNewOraclizeQuery(uint256 _time, bytes32 _queryId, string _query);
     event LogAdminSet(address _admin, bool _valid, uint256 _time);
+    event LogStalePriceUpdate(bytes32 _queryId, uint256 _time, string _result);
 
     modifier isAdminOrOwner {
         require(admin[msg.sender] || msg.sender == owner, "Address is not admin or owner");
@@ -1397,6 +1398,11 @@ contract PolyOracle is usingOraclize, IOracle, Ownable {
         require(msg.sender == oraclize_cbAddress(), "Only Oraclize can access this method");
         require(!freezeOracle, "Oracle is frozen");
         require(!ignoreRequestIds[_requestId], "Ignoring requestId");
+        if (requestIds[_requestId] < latestUpdate) {
+            // Result is stale, probably because it was received out of order
+            emit LogStalePriceUpdate(_requestId, requestIds[_requestId], _result);
+            return;
+        }
         require(requestIds[_requestId] >= latestUpdate, "Result is stale");
         require(requestIds[_requestId] <= now + oraclizeTimeTolerance, "Result is early");
         uint256 newPOLYUSD = parseInt(_result, 18);
