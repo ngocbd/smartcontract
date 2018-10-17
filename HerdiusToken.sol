@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HerdiusToken at 0x9ae559ac062de221eb5198d90c27e45e85fcaab2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HerdiusToken at 0xff9a519335eda23b2dd96e0c3fc25b3f7611a689
 */
 pragma solidity ^0.4.4;
 
@@ -109,9 +109,9 @@ contract HerdiusToken is StandardToken {
 
     function HerdiusToken(
         ) {
-        balances[msg.sender] = 60000000000000000000000000;               
-        totalSupply = 60000000000000000000000000;                        
-        name = "Herdius";                                  
+        balances[msg.sender] = 60000000;               
+        totalSupply = 60000000;                        
+        name = "Herdius Token";                                  
         decimals = 18;                            
         symbol = "HER";                               
     }
