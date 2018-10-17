@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AEFTOKEN at 0x26dd9d1a6d223828e0de633a97ef7acd82eccdf5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AEFToken at 0x308285c51b8f113355236ee9f85b8e151503f030
 */
 pragma solidity ^0.4.15;
 
@@ -142,10 +142,10 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract AEFTOKEN is StandardToken {
+contract AEFToken is StandardToken {
 
   string public constant name = "AISI ECO FOF";
-  string public constant symbol = "aef";
+  string public constant symbol = "Aef";
   uint8 public constant decimals = 18;
 
   uint256 public constant INITIAL_SUPPLY = 180000000 * (10 ** uint256(decimals));
@@ -153,7 +153,7 @@ contract AEFTOKEN is StandardToken {
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
-  function AEFTOKEN() public {
+  function AEFToken() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
