@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xC1B2aB0B923D3CbaB4c25eeC7B4F164560Bb1F46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xD1Ae931ed7C74B8109Bc132A5F5330f757F1355f
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// Created using Token  by POA Network Mode Exchangercoin
 pragma solidity ^0.4.11;
 
 
