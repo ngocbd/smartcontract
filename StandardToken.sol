@@ -1,274 +1,186 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x87f6485f0c04895ca1b46fe4d2387e0f8e30e155
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xE3f48dEFb2B684C9c3E103eB5908d875B60aD607
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
 
-contract ERC223Interface {
-    uint public totalSupply;
-    function balanceOf(address who) public constant returns (uint);
-    function transfer(address to, uint value) public;
-    function transfer(address to, uint value, bytes data)public ;
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-}
-/**
- * @title Contract that will work with ERC223 tokens.
- */
- 
-contract ERC223ReceivingContract { 
-/**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
- */
-    function tokenFallback(address _from, uint _value, bytes _data) public;
-}
- 
-
-/**
- * Math operations with safety checks
- */
 library SafeMath {
-  function mul(uint a, uint b) internal pure returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    if (_a == 0) {
+      return 0;
+    }
+
+    uint256 c = _a * _b;
+    require(c / _a == _b);
+
     return c;
   }
 
-  function div(uint a, uint b) internal pure returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    require(_b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+
     return c;
   }
-
-  function sub(uint a, uint b) internal pure returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal pure returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal pure  returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-
   
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    require(_b <= _a);
+    uint256 c = _a - _b;
+
+    return c;
+  }
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    uint256 c = _a + _b;
+    require(c >= _a);
+
+    return c;
+  }
+  
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
 }
 
-contract StandardAuth is ERC223Interface {
-    address      public  owner;
+contract ERC20 {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address _who) public view returns (uint256);
+  function allowance(address _owner, address _spender)
+    public view returns (uint256);
+	
+  function transfer(address _to, uint256 _value) public returns (bool);
+  function approve(address _spender, uint256 _value)
+    public returns (bool);
 
-    constructor() public {
-        owner = msg.sender;
-    }
+  function transferFrom(address _from, address _to, uint256 _value)
+    public returns (bool);
 
-    function setOwner(address _newOwner) public onlyOwner{
-        owner = _newOwner;
-    }
+  event Transfer(
+    address indexed from,
+    address indexed to,
+    uint256 value
+  );
 
-    modifier onlyOwner() {
-      require(msg.sender == owner);
-      _;
-    }
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
-/**
- * @title Reference implementation of the ERC223 standard token.
- */
-contract StandardToken is StandardAuth {
-    using SafeMath for uint;
+contract StandardToken is ERC20 {
+  using SafeMath for uint256;
 
-    mapping(address => uint) balances; // List of user balances.
-    mapping(address => bool) optionPoolMembers; //
-    string public name;
-    string public symbol;
-    uint8 public decimals = 9;
-    uint256 public totalSupply;
-    uint256 public optionPoolMembersUnlockTime = 1534168800;
-    address public optionPool;
-    uint256 public optionPoolTotalMax;
-    uint256 public optionPoolTotal = 0;
-    uint256 public optionPoolMembersAmount = 0;
-    
-    modifier verifyTheLock {
-        if(optionPoolMembers[msg.sender] == true) {
-            if(now < optionPoolMembersUnlockTime) {
-                revert();
-            } else {
-                _;
-            }
-        } else {
-            _;
-        }
-    }
-    
-    // Function to access name of token .
-    function name() public view returns (string _name) {
-        return name;
-    }
-    // Function to access symbol of token .
-    function symbol() public view returns (string _symbol) {
-        return symbol;
-    }
-    // Function to access decimals of token .
-    function decimals() public view returns (uint8 _decimals) {
-        return decimals;
-    }
-    // Function to access total supply of tokens .
-    function totalSupply() public view returns (uint256 _totalSupply) {
-        return totalSupply;
-    }
-    // Function to access option pool of tokens .
-    function optionPool() public view returns (address _optionPool) {
-        return optionPool;
-    }
-    // Function to access option option pool total of tokens .
-    function optionPoolTotal() public view returns (uint256 _optionPoolTotal) {
-        return optionPoolTotal;
-    }
-    // Function to access option option pool total max of tokens .
-    function optionPoolTotalMax() public view returns (uint256 _optionPoolTotalMax) {
-        return optionPoolTotalMax;
-    }
-    
-    function optionPoolBalance() public view returns (uint256 _optionPoolBalance) {
-        return balances[optionPool];
-    }
-    
-    function verifyOptionPoolMembers(address _add) public view returns (bool _verifyResults) {
-        return optionPoolMembers[_add];
-    }
-    
-    function optionPoolMembersAmount() public view returns (uint _optionPoolMembersAmount) {
-        return optionPoolMembersAmount;
-    }
-    
-    function optionPoolMembersUnlockTime() public view returns (uint _optionPoolMembersUnlockTime) {
-        return optionPoolMembersUnlockTime;
-    }
+  mapping (address => uint256) private balances;
+
+  mapping (address => mapping (address => uint256)) private allowed;
+
+  uint256 private totalSupply_;
+
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
+    return allowed[_owner][_spender];
+  }
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_value <= balances[msg.sender]);
+    require(_to != address(0));
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
   
-    constructor(uint256 _initialAmount, string _tokenName, string _tokenSymbol, address _tokenOptionPool, uint256 _tokenOptionPoolTotalMax) public  {
-        balances[msg.sender] = _initialAmount;               //
-        totalSupply = _initialAmount;                        //
-        name = _tokenName;                                   //
-        symbol = _tokenSymbol;                               //
-        optionPool = _tokenOptionPool;
-        optionPoolTotalMax = _tokenOptionPoolTotalMax;
-    }
-   
-    function _verifyOptionPoolIncome(address _to, uint _value) private returns (bool _verifyIncomeResults) {
-        if(msg.sender == optionPool && _to == owner){
-          return false;
-        }
-        if(_to == optionPool) {
-            if(optionPoolTotal + _value <= optionPoolTotalMax){
-                optionPoolTotal = optionPoolTotal.add(_value);
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-    
-    function _verifyOptionPoolDefray(address _to) private returns (bool _verifyDefrayResults) {
-        if(msg.sender == optionPool) {
-            if(optionPoolMembers[_to] != true){
-              optionPoolMembers[_to] = true;
-              optionPoolMembersAmount++;
-            }
-        }
-        
-        return true;
-    }
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *      or the fallback function to receive funds.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
-     */
-    function transfer(address _to, uint _value, bytes _data) public verifyTheLock {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-        
-        if (balanceOf(msg.sender) < _value) revert();
-        require(_verifyOptionPoolIncome(_to, _value));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        _verifyOptionPoolDefray(_to);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-        emit Transfer(msg.sender, _to, _value, _data);
-    }
-    
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    function transfer(address _to, uint _value) public verifyTheLock {
-        uint codeLength;
-        bytes memory empty;
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    require(_to != address(0));
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-        
-        if (balanceOf(msg.sender) < _value) revert();
-        require(_verifyOptionPoolIncome(_to, _value));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        _verifyOptionPoolDefray(_to);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
-        }
-        emit Transfer(msg.sender, _to, _value, empty);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function increaseApproval(
+    address _spender,
+    uint256 _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(
+    address _spender,
+    uint256 _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue >= oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    /**
-     * @dev Returns balance of the `_owner`.
-     *
-     * @param _owner   The address whose balance will be returned.
-     * @return balance Balance of the `_owner`.
-     */
-    function balanceOf(address _owner) public constant returns (uint balance) {
-        return balances[_owner];
-    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function _mint(address _account, uint256 _amount) internal {
+    require(_account != 0);
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_account] = balances[_account].add(_amount);
+    emit Transfer(address(0), _account, _amount);
+  }
+  
+  function _burn(address _account, uint256 _amount) internal {
+    require(_account != 0);
+    require(_amount <= balances[_account]);
+
+    totalSupply_ = totalSupply_.sub(_amount);
+    balances[_account] = balances[_account].sub(_amount);
+    emit Transfer(_account, address(0), _amount);
+  }
+  
+  function _burnFrom(address _account, uint256 _amount) internal {
+    require(_amount <= allowed[_account][msg.sender]);
+    allowed[_account][msg.sender] = allowed[_account][msg.sender].sub(_amount);
+    _burn(_account, _amount);
+  }
 }
