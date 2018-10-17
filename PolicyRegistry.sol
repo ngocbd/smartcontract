@@ -1,7 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolicyRegistry at 0x715B58354675Ba61dd2b5E4DB611Caf000cd94e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PolicyRegistry at 0x5a3d7fdddc81be0905f436812b0546645ddffbfb
 */
 pragma solidity 0.4.21;
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    uint public totalSupply;
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
 /**
  * @title Ownable Contract
  * @dev contract that has a user and can implement user access restrictions based on it
@@ -32,6 +49,49 @@ contract Ownable {
   modifier ownerOnly() {
     require(msg.sender == owner);
     _;
+  }
+}
+/**
+ * @title Upgradeable Conract
+ * @dev contract that implements doubly linked list to keep track of old and new 
+ * versions of this contract
+ */ 
+contract Upgradeable is Ownable{
+
+  address public lastContract;
+  address public nextContract;
+  bool public isOldVersion;
+  bool public allowedToUpgrade;
+
+  /**
+   * @dev makes contract upgradeable 
+   */
+  function Upgradeable() public {
+    allowedToUpgrade = true;
+  }
+
+  /**
+   * @dev signals that new upgrade is available, contract must be most recent 
+   * upgrade and allowed to upgrade
+   * @param newContract Address of upgraded contract 
+   */
+  function upgradeTo(Upgradeable newContract) public ownerOnly{
+    require(allowedToUpgrade && !isOldVersion);
+    nextContract = newContract;
+    isOldVersion = true;
+    newContract.confirmUpgrade();   
+  }
+
+  /**
+   * @dev confirmation that this is indeed the next version,
+   * called from previous version of contract. Anyone can call this function,
+   * which basically makes this instance unusable if that happens. Once called,
+   * this contract can not serve as upgrade to another contract. Not an ideal solution
+   * but will work until we have a more sophisticated approach using a dispatcher or similar
+   */
+  function confirmUpgrade() public {
+    require(lastContract == address(0));
+    lastContract = msg.sender;
   }
 }
 
@@ -92,51 +152,6 @@ contract EmergencySafe is Ownable{
   function togglePause() public ownerOnly {
     paused = !paused;
     emit PauseToggled(paused);
-  }
-}
-
-
-/**
- * @title Upgradeable Conract
- * @dev contract that implements doubly linked list to keep track of old and new 
- * versions of this contract
- */ 
-contract Upgradeable is Ownable{
-
-  address public lastContract;
-  address public nextContract;
-  bool public isOldVersion;
-  bool public allowedToUpgrade;
-
-  /**
-   * @dev makes contract upgradeable 
-   */
-  function Upgradeable() public {
-    allowedToUpgrade = true;
-  }
-
-  /**
-   * @dev signals that new upgrade is available, contract must be most recent 
-   * upgrade and allowed to upgrade
-   * @param newContract Address of upgraded contract 
-   */
-  function upgradeTo(Upgradeable newContract) public ownerOnly{
-    require(allowedToUpgrade && !isOldVersion);
-    nextContract = newContract;
-    isOldVersion = true;
-    newContract.confirmUpgrade();   
-  }
-
-  /**
-   * @dev confirmation that this is indeed the next version,
-   * called from previous version of contract. Anyone can call this function,
-   * which basically makes this instance unusable if that happens. Once called,
-   * this contract can not serve as upgrade to another contract. Not an ideal solution
-   * but will work until we have a more sophisticated approach using a dispatcher or similar
-   */
-  function confirmUpgrade() public {
-    require(lastContract == address(0));
-    lastContract = msg.sender;
   }
 }
 
@@ -238,19 +253,6 @@ contract IXTPaymentContract is Ownable, EmergencySafe, Upgradeable{
   }
 }
 
-contract ERC20Interface {
-    uint public totalSupply;
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
 /**
  * @title Insurance Contract
  * @dev Insurance Contract that is created by broker/client, functions mainly as permament record store
@@ -259,32 +261,28 @@ contract Policy is Ownable, EmergencySafe, Upgradeable{
 
   struct InsuranceProduct {
     uint inceptionDate;
-    uint expirationDate;
-    uint limitOfLiability;
-    string limitOfLiabilityCurrency;
     string insuranceType;
-    bytes32 policyDocumentReference;
   }
 
   struct PolicyInfo {
     uint blockNumber;
     uint numInsuranceProducts;
-    string clientInfo;
+    string clientName;
     string ixlEnquiryId;
     string status;
-    address brokerEtherAddress;
-    address clientEtherAddress;
   }
 
   InsuranceProduct[] public insuranceProducts;
   PolicyInfo public policyInfo;
+  address private brokerEtherAddress;
+  address private clientEtherAddress;
   mapping(address => bool) private cancellations;
 
   /**
    * @dev Throws if called by other account than broker or client
    */
   modifier participantOnly() {
-    require(msg.sender == policyInfo.clientEtherAddress || msg.sender == policyInfo.brokerEtherAddress);
+    require(msg.sender == clientEtherAddress || msg.sender == brokerEtherAddress);
     _;
   }
 
@@ -292,29 +290,26 @@ contract Policy is Ownable, EmergencySafe, Upgradeable{
    * @dev Throws if called by other account than broker or client,
    * core parameters kept as fields for future logic and for quick reference upon lookup
    */
-  function Policy(string _clientInfo, address _brokerEtherAddress, address _clientEtherAddress, string _enquiryId) public {
+  function Policy(string _clientName, address _brokerEtherAddress, address _clientEtherAddress, string _enquiryId) public {
 
     policyInfo = PolicyInfo({
       blockNumber: block.number,
       numInsuranceProducts: 0,
-      clientInfo: _clientInfo,
+      clientName: _clientName,
       ixlEnquiryId: _enquiryId,
-      status: 'In Force',
-      clientEtherAddress: _clientEtherAddress,
-      brokerEtherAddress: _brokerEtherAddress
+      status: 'In Force'
     });
+
+    clientEtherAddress =  _clientEtherAddress;
+    brokerEtherAddress =  _brokerEtherAddress;
 
     allowedToUpgrade = false;
   }
 
-  function addInsuranceProduct (uint _inceptionDate, uint _expirationDate, uint _limitOfLiability, string _limitOfLiabilityCurrency, string _insuranceType, bytes32 _policyDocReference) public ownerOnly isNotPaused {
+  function addInsuranceProduct (uint _inceptionDate, string _insuranceType) public ownerOnly isNotPaused {
 
     insuranceProducts.push(InsuranceProduct({
-      policyDocumentReference: _policyDocReference,
       inceptionDate: _inceptionDate,
-      expirationDate: _expirationDate,
-      limitOfLiability: _limitOfLiability,
-      limitOfLiabilityCurrency: _limitOfLiabilityCurrency,
       insuranceType: _insuranceType
     }));
 
@@ -329,8 +324,8 @@ contract Policy is Ownable, EmergencySafe, Upgradeable{
   function revokeContract() public participantOnly {
     cancellations[msg.sender] = true;
 
-    if (((cancellations[policyInfo.brokerEtherAddress] && (cancellations[policyInfo.clientEtherAddress] || cancellations[owner]))
-        || (cancellations[policyInfo.clientEtherAddress] && cancellations[owner]))){
+    if (((cancellations[brokerEtherAddress] && (cancellations[clientEtherAddress] || cancellations[owner]))
+        || (cancellations[clientEtherAddress] && cancellations[owner]))){
       policyInfo.status = "REVOKED";
       allowedToUpgrade = true;
     }
@@ -363,9 +358,9 @@ contract PolicyRegistry is Ownable, EmergencySafe, Upgradeable{
    * @dev Creates Policy, transfers ownership to msg.sender, registers address for all parties involved,
    * and transfers IXT 
    */
-  function createContract(string _clientInfo, address _brokerEtherAddress, address _clientEtherAddress, string _enquiryId) public isNotPaused {
+  function createContract(string _clientName, address _brokerEtherAddress, address _clientEtherAddress, string _enquiryId) public isNotPaused {
 
-    Policy policy = new Policy(_clientInfo, _brokerEtherAddress, _clientEtherAddress, _enquiryId);
+    Policy policy = new Policy(_clientName, _brokerEtherAddress, _clientEtherAddress, _enquiryId);
     policy.changeOwner(msg.sender);
     policiesByParticipant[_brokerEtherAddress].push(policy);
 
