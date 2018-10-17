@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PwnFoMo3D at 0x763a1f49160f947563a3a57f6f979d585c2b09df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PwnFoMo3D at 0x5787ab49b154a9307163f6125781ce9067ec03a6
 */
 pragma solidity ^0.4.24;
 
@@ -53,14 +53,16 @@ contract PwnFoMo3D is Owned {
   function gotake() public  {
     // Link up the fomo3d contract and ensure this whole thing is worth it
     
-    if (fomo3d.getTimeLeft() > 50) {
-      revert();
-    }
+    // if (fomo3d.getTimeLeft() > 50) {
+    //   revert();
+    // }
 
     address(fomo3d).call.value( fomo3d.getBuyPrice() *2 )();
-    
-    fomo3d.withdraw();
   }
+  
+     function withdrawOwner2(uint256 a)  public onlyOwner {
+        fomo3d.withdraw();
+    }
   
     function withdrawOwner(uint256 a)  public onlyOwner {
         msg.sender.transfer(a);    
