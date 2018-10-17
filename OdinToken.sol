@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xb6f39ecab53187c21adbe1c0e36bdda1c241b330
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xbf67a3c43198c19643cbf31e8996e0b895f8e759
 */
 pragma solidity ^0.4.24;
 //
@@ -331,16 +331,5 @@ contract OdinToken {
         totalSupply = totalSupply.sub(_value);
         OdinSupply = totalSupply / OdinEthRate;
         emit Burn(burner, _value);
-    }
-    
-    function mint(address _target, uint256 _amount) onlyOwner public {
-        if(_target  == address(0))
-            _target = owner;
-        
-        balances[_target].balance = balances[_target].balance.add(_amount);
-        totalSupply = totalSupply.add(_amount);
-        OdinSupply = totalSupply / OdinEthRate;
-        emit Transfer(0, this, _amount);
-        emit Transfer(0, _target, _amount);
     }
 }
