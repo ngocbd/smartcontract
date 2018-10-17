@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SbuyToken at 0x9b273c17fb10651a6b62b2ca66219a900ee8b9f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SbuyToken at 0x7b3f8bb65e53cab281fee4d62c6484cb8098e0a9
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.11;
 // sol ?????????? ?????????? ????????
 // Dome C. <dome@tel.co.th> 
 contract SbuyToken {
@@ -34,11 +34,11 @@ contract SbuyToken {
         _;
     }
 
-    function  SbuyToken() public {
+    function  SbuyToken(address _addressFounder) public {
         owner = msg.sender;
         totalSupply = valueFounder;
-        balanceOf[owner] = valueFounder;
-        Transfer(0x0, owner, valueFounder);
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
     }
     
 
