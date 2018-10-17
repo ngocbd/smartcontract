@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BittechToken at 0xE62042a9CE543970b4CBc80063F550d4f74538C8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BittechToken at 0x6ee2ee1a5a257e6e7ade7fe537617ead9c7bd3d2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -219,7 +219,7 @@ contract StandardToken is ERC20, BurnableToken {
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     
     require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+    require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
 
     balances[_to] = balances[_to].add(_value);
@@ -271,7 +271,7 @@ contract BittechToken is StandardToken {
   uint256 public teamPart = uint256(9000000).mul(10 ** decimals);
 
   uint256 constant public yearSeconds = 31536000; // 60*60*24*365 = 31536000
-  uint256 constant public secsPerBlock = 14; // 1 block per 14 seconds
+  uint256 constant public secsPerBlock = 15; // 1 block per 15 seconds
   uint256 public INITIAL_SUPPLY = uint256(100000000).mul(10 ** decimals); // 100 000 000 tokens
 
   uint256 public withdrawTokens = 0;
