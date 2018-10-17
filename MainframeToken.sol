@@ -1,8 +1,133 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainframeToken at 0x46627f7f7f41197a47528c52cdd2f4575b49cc56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainframeToken at 0xdf2c7238198ad8b389666574f2d8bc411a4b7428
 */
 pragma solidity ^0.4.21;
 
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+// File: openzeppelin-solidity/contracts/ownership/Claimable.sol
+
+/**
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
+ */
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -50,7 +175,7 @@ library SafeMath {
   }
 }
 
-
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -64,7 +189,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -110,7 +235,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -123,7 +248,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -220,299 +345,9 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+// File: contracts/MainframeToken.sol
 
-
-/* solium-disable security/no-low-level-calls */
-
-/**
- * @title ERC827 interface, an extension of ERC20 token standard
- *
- * @dev Interface of a ERC827 token, following the ERC20 standard with extra
- * @dev methods to transfer value and data and execute calls in transfers and
- * @dev approvals.
- */
-contract ERC827 is ERC20 {
-  function approveAndCall( address _spender, uint256 _value, bytes _data) public payable returns (bool);
-  function transferAndCall( address _to, uint256 _value, bytes _data) public payable returns (bool);
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-}
-
-
-
-/**
- * @title ERC827, an extension of ERC20 token standard
- *
- * @dev Implementation the ERC827, following the ERC20 standard with extra
- * @dev methods to transfer value and data and execute calls in transfers and
- * @dev approvals.
- *
- * @dev Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-   * @dev Addition to ERC20 token methods. It allows to
-   * @dev approve the transfer of value and execute a call with the sent data.
-   *
-   * @dev Beware that changing an allowance with this method brings the risk that
-   * @dev someone may use both the old and the new allowance by unfortunate
-   * @dev transaction ordering. One possible solution to mitigate this race condition
-   * @dev is to first reduce the spender's allowance to 0 and set the desired value
-   * @dev afterwards:
-   * @dev https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   *
-   * @param _spender The address that will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function approveAndCall(address _spender, uint256 _value, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens to a specified
-   * @dev address and execute a call with the sent data on the same transaction
-   *
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferAndCall(address _to, uint256 _value, bytes _data) public payable returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to ERC20 token methods. Transfer tokens from one address to
-   * @dev another and make a contract call on the same transaction
-   *
-   * @param _from The address which you want to send tokens from
-   * @param _to The address which you want to transfer to
-   * @param _value The amout of tokens to be transferred
-   * @param _data ABI-encoded contract call to call `_to` address.
-   *
-   * @return true if the call function was executed successfully
-   */
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public payable returns (bool)
-  {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    // solium-disable-next-line security/no-call-value
-    require(_to.call.value(msg.value)(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To increment
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApprovalAndCall(address _spender, uint _addedValue, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * @dev an owner allowed to a spender and execute a call with the sent data.
-   *
-   * @dev approve should be called when allowed[_spender] == 0. To decrement
-   * @dev allowed value is better to use this function to avoid 2 calls (and wait until
-   * @dev the first transaction is mined)
-   * @dev From MonolithDAO Token.sol
-   *
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApprovalAndCall(address _spender, uint _subtractedValue, bytes _data) public payable returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    // solium-disable-next-line security/no-call-value
-    require(_spender.call.value(msg.value)(_data));
-
-    return true;
-  }
-
-}
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-
-
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  }
-}
-
-
-
-/**
- * @title MainframeToken
- */
-
-contract MainframeToken is ERC827Token, Pausable, Claimable {
+contract MainframeToken is StandardToken, Pausable, Claimable {
   string public constant name = "Mainframe Token";
   string public constant symbol = "MFT";
   uint8  public constant decimals = 18;
@@ -558,28 +393,6 @@ contract MainframeToken is ERC827Token, Pausable, Claimable {
 
   function decreaseApproval(address spender, uint subtractedValue) public isTradeable returns (bool) {
     return super.decreaseApproval(spender, subtractedValue);
-  }
-
-  // ERC827 Methods
-
-  function transferAndCall(address to, uint256 value, bytes data) public payable isTradeable returns (bool) {
-    return super.transferAndCall(to, value, data);
-  }
-
-  function transferFromAndCall(address from, address to, uint256 value, bytes data) public payable isTradeable returns (bool) {
-    return super.transferFromAndCall(from, to, value, data);
-  }
-
-  function approveAndCall(address spender, uint256 value, bytes data) public payable isTradeable returns (bool) {
-    return super.approveAndCall(spender, value, data);
-  }
-
-  function increaseApprovalAndCall(address spender, uint addedValue, bytes data) public payable isTradeable returns (bool) {
-    return super.increaseApprovalAndCall(spender, addedValue, data);
-  }
-
-  function decreaseApprovalAndCall(address spender, uint subtractedValue, bytes data) public payable isTradeable returns (bool) {
-    return super.decreaseApprovalAndCall(spender, subtractedValue, data);
   }
 
   // Setters
