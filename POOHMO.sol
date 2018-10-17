@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0xcf5348846a062d0ee82dd53e1763c2d14e0168a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0x1a050d77003caee532df18d04d86b99ca15bf9e8
 */
 pragma solidity ^0.4.24;
 
@@ -176,10 +176,10 @@ contract POOHMO is POOHMOevents {
 
         //no teams... only POOH-heads
         // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = POOHMODatasets.TeamFee(47,10);   //30% to pot, 10% to aff, 2% to com, 1% potSwap
+        fees_[0] = POOHMODatasets.TeamFee(49,10);   //30% to pot, 10% to aff, 1% to dev,
        
 
-        potSplit_[0] = POOHMODatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[0] = POOHMODatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to dev
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -735,7 +735,6 @@ contract POOHMO is POOHMOevents {
      * @return bears eth in for round
      * @return sneks eth in for round
      * @return bulls eth in for round
-     * @return airdrop tracker # & airdrop pot
      */
     function getCurrentRoundInfo()
         public
@@ -1150,9 +1149,9 @@ contract POOHMO is POOHMOevents {
         // p3d share, and amount reserved for next pot
         uint256 _win = (_pot.mul(48)) / 100;   //48%
         uint256 _dev = (_pot / 50);            //2%
-        uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
-        uint256 _POOH = (_pot.mul(potSplit_[_winTID].pooh)) / 100;
-        uint256 _res = (((_pot.sub(_win)).sub(_dev)).sub(_gen)).sub(_POOH);
+        uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100; //15
+        uint256 _POOH = (_pot.mul(potSplit_[_winTID].pooh)) / 100; // 10
+        uint256 _res = (((_pot.sub(_win)).sub(_dev)).sub(_gen)).sub(_POOH); //25
 
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1170,9 +1169,7 @@ contract POOHMO is POOHMOevents {
 
         admin.transfer(_dev);
 
-        flushDivs.transfer((_POOH.sub(_POOH / 3)).mul(2));  // 2/3
-
-        round_[_rID].pot = _pot.add(_POOH / 3);  // 1/3
+        flushDivs.call.value(_POOH)(bytes4(keccak256("donate()")));  
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1255,7 +1252,7 @@ contract POOHMO is POOHMOevents {
         // pay 1% out to dev
         uint256 _dev = _eth / 100;  // 1%
 
-        uint256 _POOH;
+        uint256 _POOH = 0;
         if (!address(admin).call.value(_dev)())
         {
             _POOH = _dev;
@@ -1272,7 +1269,7 @@ contract POOHMO is POOHMOevents {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit POOHMOevents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            _POOH = _aff;
+            _POOH = _POOH.add(_aff);
         }
 
         // pay out POOH
@@ -1280,11 +1277,11 @@ contract POOHMO is POOHMOevents {
         if (_POOH > 0)
         {
             // deposit to divies contract
-            uint256 _potAmount = _POOH / 2;
+            //uint256 _potAmount = _POOH / 2;
 
-            flushDivs.transfer(_POOH.sub(_potAmount));
+            flushDivs.call.value(_POOH)(bytes4(keccak256("donate()")));
 
-            round_[_rID].pot = round_[_rID].pot.add(_potAmount);
+            //round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
             // set up event data
             _eventData_.POOHAmount = _POOH.add(_eventData_.POOHAmount);
@@ -1297,11 +1294,8 @@ contract POOHMO is POOHMOevents {
         external
         payable
     {
-        // setup local rID
-        uint256 _rID = rID_ + 1;
-
-        round_[_rID].pot = round_[_rID].pot.add(msg.value);
-        emit POOHMOevents.onPotSwapDeposit(_rID, msg.value);
+       //you shouldn't be using this method
+       admin.transfer(msg.value);
     }
 
     /**
