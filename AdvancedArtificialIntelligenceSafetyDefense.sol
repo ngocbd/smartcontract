@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedArtificialIntelligenceSafetyDefense at 0xa4047e495a7319c270b610da36a5ac44fbc108a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedArtificialIntelligenceSafetyDefense at 0x5b18bf749d3015640d0301325415c8f95ea087ac
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -27,7 +27,7 @@ contract AdvancedArtificialIntelligenceSafetyDefense{
         balanceOf[msg.sender] =  960000000 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  960000000 * 1000000000000000000;                        // Update total supply
         name = "AdvancedArtificialIntelligenceSafetyDefense";                                   // Set the name for display purposes
-        symbol = "AIS";                               // Set the symbol for display purposes
+        symbol = "AISD";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
