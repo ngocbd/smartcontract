@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalSharingEconomyCoin at 0x77229681ddfb73a9685b50a2fcb8f15203441434
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalSharingEconomyCoin at 0xa3867762f068fdbe410e7bbbfda5bbc0162f0e92
 */
 pragma solidity ^0.4.18;
 
@@ -186,11 +186,38 @@ contract GlobalSharingEconomyCoin is Pausable, ERC20 {
     return allowedBatchTransfers[_address];
   }
 
+  /**
+   * ????????????????????????????
+   */
+  function airdrop(address[] _funds, uint256 _amount) public whenNotPaused whenPrivateFundEnabled returns (bool) {
+    require(allowedBatchTransfers[msg.sender]);
+    uint256 fundslen = _funds.length;
+    // ??gaslimit??????300????????????????
+    require(fundslen > 0 && fundslen < 300);
+    
+    uint256 totalAmount = 0;
+    for (uint i = 0; i < fundslen; ++i){
+      balances[_funds[i]] = balances[_funds[i]].add(_amount);
+      totalAmount = totalAmount.add(_amount);
+      emit Transfer(msg.sender, _funds[i], _amount);
+    }
+
+    // ???????????????
+    require(balances[msg.sender] >= totalAmount);
+    balances[msg.sender] = balances[msg.sender].sub(totalAmount);
+    return true;
+  }
+
+  /**
+   * ??????????????
+   * _funds: ??????
+   * _amounts: ???????????????_funds?????
+   */
   function batchTransfer(address[] _funds, uint256[] _amounts) public whenNotPaused whenPrivateFundEnabled returns (bool) {
     require(allowedBatchTransfers[msg.sender]);
     uint256 fundslen = _funds.length;
     uint256 amountslen = _amounts.length;
-    require(fundslen == amountslen && fundslen > 0 && fundslen < 10000);
+    require(fundslen == amountslen && fundslen > 0 && fundslen < 300);
 
     uint256 totalAmount = 0;
     for (uint i = 0; i < amountslen; ++i){
