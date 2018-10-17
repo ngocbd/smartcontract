@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JAPAN_WINS at 0xeb9ab0dcb24774721d4d22317f869eed143989a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JAPAN_WINS at 0x1caecd601911d84941fddc74f94a871e15d24299
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,10 +8,10 @@ contract	JAPAN_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	JAPAN_WINS		"	;
-	string	public		symbol =	"	JAPWI		"	;
+	string	public		symbol =	"	JAPWII		"	;
 	uint8	public		decimals =		18			;
 									
-	uint256 public totalSupply =		3474753178800770000000000000					;	
+	uint256 public totalSupply =		3499836512134110000000000000					;	
 									
 	event Transfer(address indexed from, address indexed to, uint256 value);								
 									
