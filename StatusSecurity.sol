@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusSecurity at 0xcd0e26d289d5f08d74c4feff4192cb394f82a738
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusSecurity at 0x8fc1acd0189155f4e600505673dd3a938b1c4a6a
 */
 pragma solidity ^0.4.4;
 
@@ -110,10 +110,10 @@ contract StatusSecurity is StandardToken { // CHANGE THIS. Update the contract n
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function StatusSecurity() {
-        balances[msg.sender] = 10000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 10000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 1000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Status Security";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "STS";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 30000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
