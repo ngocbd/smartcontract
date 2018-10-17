@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0x10c1a22866e51166e3398274ccd736211018b660
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0xc7fe58719b3db1e276559a14cb72a488f1413bdb
 */
 pragma solidity ^0.4.24;
 
@@ -135,8 +135,8 @@ contract FomoSuper is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FomoSuper";
-    string constant public symbol = "FomoSuper";
+    string constant public name = "f3dplus";
+    string constant public symbol = "f3dplus";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
@@ -194,13 +194,6 @@ contract FomoSuper is modularShort {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-
-        activated_ = true;
-
-        // lets start first round
-        rID_ = 1;
-        round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
