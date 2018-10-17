@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LittlePhilCrowdsale at 0xc96553cdb596c9224b4b594c4eaf4b999597e7f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LittlePhilCrowdsale at 0x792984099259ff1744d2fa979976d8b448bf1556
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 
 /**
@@ -14,9 +14,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -51,11 +55,10 @@ library SafeMath {
 }
 
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * See https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
@@ -63,10 +66,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-
-
-
 
 
 /**
@@ -77,7 +76,7 @@ contract ERC20Basic {
  */
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
+    require(token.transfer(to, value));
   }
 
   function safeTransferFrom(
@@ -88,11 +87,11 @@ library SafeERC20 {
   )
     internal
   {
-    assert(token.transferFrom(from, to, value));
+    require(token.transferFrom(from, to, value));
   }
 
   function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
+    require(token.approve(spender, value));
   }
 }
 
@@ -107,14 +106,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -127,29 +130,34 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /**
@@ -164,14 +172,14 @@ contract BasicToken is ERC20Basic {
   uint256 totalSupply_;
 
   /**
-  * @dev total number of tokens in existence
+  * @dev Total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
   /**
-  * @dev transfer token for a specified address
+  * @dev Transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
@@ -197,28 +205,32 @@ contract BasicToken is ERC20Basic {
 }
 
 
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
-
-
-
 
 
 /**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -231,7 +243,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -245,7 +264,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -265,13 +283,19 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -279,15 +303,21 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+  function increaseApproval(
+    address _spender,
+    uint256 _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -295,8 +325,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
+  function decreaseApproval(
+    address _spender,
+    uint256 _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint256 oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
@@ -309,12 +345,9 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-
-
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/openzeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 contract MintableToken is StandardToken, Ownable {
@@ -329,13 +362,26 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
+  modifier hasMintPermission() {
+    require(msg.sender == owner);
+    _;
+  }
+
   /**
    * @dev Function to mint tokens
    * @param _to The address that will receive the minted tokens.
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    hasMintPermission
+    canMint
+    public
+    returns (bool)
+  {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     emit Mint(_to, _amount);
@@ -353,14 +399,6 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 }
-
-
-
-
-
-
-
-
 
 
 /**
@@ -415,23 +453,59 @@ contract Pausable is Ownable {
  **/
 contract PausableToken is StandardToken, Pausable {
 
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+  function transfer(
+    address _to,
+    uint256 _value
+  )
+    public
+    whenNotPaused
+    returns (bool)
+  {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    whenNotPaused
+    returns (bool)
+  {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+  function approve(
+    address _spender,
+    uint256 _value
+  )
+    public
+    whenNotPaused
+    returns (bool)
+  {
     return super.approve(_spender, _value);
   }
 
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    whenNotPaused
+    returns (bool success)
+  {
     return super.increaseApproval(_spender, _addedValue);
   }
 
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    whenNotPaused
+    returns (bool success)
+  {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
 }
@@ -450,15 +524,6 @@ contract LittlePhilCoin is MintableToken, PausableToken {
 }
 
 
-
-
-
-
-
-
-
-
-
 /**
  * @title Crowdsale
  * @dev Crowdsale is a base contract for managing a token crowdsale,
@@ -473,6 +538,7 @@ contract LittlePhilCoin is MintableToken, PausableToken {
  */
 contract Crowdsale {
   using SafeMath for uint256;
+  using SafeERC20 for ERC20;
 
   // The token being sold
   ERC20 public token;
@@ -480,7 +546,10 @@ contract Crowdsale {
   // Address where funds are collected
   address public wallet;
 
-  // How many token units a buyer gets per wei
+  // How many token units a buyer gets per wei.
+  // The rate is the conversion between wei and the smallest and indivisible token unit.
+  // So, if you are using a rate of 1 with a DetailedERC20 token with 3 decimals called TOK
+  // 1 wei will give you 1 unit, or 0.001 TOK.
   uint256 public rate;
 
   // Amount of wei raised
@@ -493,14 +562,19 @@ contract Crowdsale {
    * @param value weis paid for purchase
    * @param amount amount of tokens purchased
    */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  event TokenPurchase(
+    address indexed purchaser,
+    address indexed beneficiary,
+    uint256 value,
+    uint256 amount
+  );
 
   /**
    * @param _rate Number of token units a buyer gets per wei
    * @param _wallet Address where collected funds will be forwarded to
    * @param _token Address of the token being sold
    */
-  function Crowdsale(uint256 _rate, address _wallet, ERC20 _token) public {
+  constructor(uint256 _rate, address _wallet, ERC20 _token) public {
     require(_rate > 0);
     require(_wallet != address(0));
     require(_token != address(0));
@@ -559,7 +633,12 @@ contract Crowdsale {
    * @param _beneficiary Address performing the token purchase
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     require(_beneficiary != address(0));
     require(_weiAmount != 0);
   }
@@ -569,7 +648,12 @@ contract Crowdsale {
    * @param _beneficiary Address performing the token purchase
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _postValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     // optional override
   }
 
@@ -578,8 +662,13 @@ contract Crowdsale {
    * @param _beneficiary Address performing the token purchase
    * @param _tokenAmount Number of tokens to be emitted
    */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.transfer(_beneficiary, _tokenAmount);
+  function _deliverTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    token.safeTransfer(_beneficiary, _tokenAmount);
   }
 
   /**
@@ -587,7 +676,12 @@ contract Crowdsale {
    * @param _beneficiary Address receiving the tokens
    * @param _tokenAmount Number of tokens to be purchased
    */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+  function _processPurchase(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
     _deliverTokens(_beneficiary, _tokenAmount);
   }
 
@@ -596,7 +690,12 @@ contract Crowdsale {
    * @param _beneficiary Address receiving the tokens
    * @param _weiAmount Value in wei involved in the purchase
    */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+  function _updatePurchasingState(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
     // optional override
   }
 
@@ -605,7 +704,9 @@ contract Crowdsale {
    * @param _weiAmount Value in wei to be converted into tokens
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+  function _getTokenAmount(uint256 _weiAmount)
+    internal view returns (uint256)
+  {
     return _weiAmount.mul(rate);
   }
 
@@ -618,9 +719,335 @@ contract Crowdsale {
 }
 
 
+/**
+ * @title MintedCrowdsale
+ * @dev Extension of Crowdsale contract whose tokens are minted in each purchase.
+ * Token ownership should be transferred to MintedCrowdsale for minting.
+ */
+contract MintedCrowdsale is Crowdsale {
+
+  /**
+   * @dev Overrides delivery by minting tokens upon purchase.
+   * @param _beneficiary Token purchaser
+   * @param _tokenAmount Number of tokens to be minted
+   */
+  function _deliverTokens(
+    address _beneficiary,
+    uint256 _tokenAmount
+  )
+    internal
+  {
+    require(MintableToken(token).mint(_beneficiary, _tokenAmount));
+  }
+}
 
 
+/**
+ * @title CappedCrowdsale
+ * @dev Crowdsale with a limit for total contributions.
+ */
+contract CappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
 
+  uint256 public cap;
+
+  /**
+   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
+   * @param _cap Max amount of wei to be contributed
+   */
+  constructor(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Checks whether the cap has been reached.
+   * @return Whether the cap was reached
+   */
+  function capReached() public view returns (bool) {
+    return weiRaised >= cap;
+  }
+
+  /**
+   * @dev Extend parent behavior requiring purchase to respect the funding cap.
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+    require(weiRaised.add(_weiAmount) <= cap);
+  }
+
+}
+
+
+/**
+ * @title TokenCappedCrowdsale
+ * @dev Crowdsale with a limit for total minted tokens.
+ */
+contract TokenCappedCrowdsale is Crowdsale {
+    using SafeMath for uint256;
+
+    uint256 public tokenCap = 0;
+
+    // Amount of LPC raised
+    uint256 public tokensRaised = 0;
+
+    // Event for manual refund of cap overflow
+    event CapOverflow(address sender, uint256 weiAmount, uint256 receivedTokens);
+
+    /**
+     * @notice Checks whether the tokenCap has been reached.
+     * @return Whether the tokenCap was reached
+     */
+    function capReached() public view returns (bool) {
+        return tokensRaised >= tokenCap;
+    }
+
+    /**
+     * @notice Update the amount of tokens raised & emit cap overflow events.
+     */
+    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+        super._updatePurchasingState(_beneficiary, _weiAmount);
+        uint256 purchasedTokens = _getTokenAmount(_weiAmount);
+        tokensRaised = tokensRaised.add(purchasedTokens);
+
+        if (capReached()) {
+            // manual process unused eth amount to sender
+            emit CapOverflow(_beneficiary, _weiAmount, purchasedTokens);
+        }
+    }
+
+}
+
+
+/**
+ * @title Tiered Crowdsale
+ * @dev Extension of Crowdsale contract that decreases the number of LPC tokens purchases dependent on the current number of tokens sold.
+ */
+contract TieredCrowdsale is TokenCappedCrowdsale, Ownable {
+
+    using SafeMath for uint256;
+
+    /**
+    SalesState enum for use in state machine to manage sales rates
+    */
+    enum SaleState { 
+        Initial,              // All contract initialization calls
+        PrivateSale,          // Private sale for industy and closed group investors
+        FinalisedPrivateSale, // Close private sale
+        PreSale,              // Pre sale ICO (40% bonus LPC hard-capped at 180 million tokens)
+        FinalisedPreSale,     // Close presale
+        PublicSaleTier1,      // Tier 1 ICO public sale (30% bonus LPC capped at 85 million tokens)
+        PublicSaleTier2,      // Tier 2 ICO public sale (20% bonus LPC capped at 65 million tokens)
+        PublicSaleTier3,      // Tier 3 ICO public sale (10% bonus LPC capped at 45 million tokens)
+        PublicSaleTier4,      // Tier 4 ICO public sale (standard rate capped at 25 million tokens)
+        FinalisedPublicSale,  // Close public sale
+        Closed                // ICO has finished, all tokens must have been claimed
+    }
+    SaleState public state = SaleState.Initial;
+
+    struct TierConfig {
+        string stateName;
+        uint256 tierRatePercentage;
+        uint256 hardCap;
+    }
+
+    mapping(bytes32 => TierConfig) private tierConfigs;
+
+    // Event for manual refund of cap overflow
+    event IncrementTieredState(string stateName);
+
+    /**
+     * @notice Checks the state when validating a purchase
+     */
+    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+        super._preValidatePurchase(_beneficiary, _weiAmount);
+        require(
+            state == SaleState.PrivateSale ||
+            state == SaleState.PreSale ||
+            state == SaleState.PublicSaleTier1 ||
+            state == SaleState.PublicSaleTier2 ||
+            state == SaleState.PublicSaleTier3 ||
+            state == SaleState.PublicSaleTier4
+        );
+    }
+
+    /**
+     * @notice Constructor
+     * @dev Caveat emptor: this base contract is intended for inheritance by the Little Phil crowdsale only
+     */
+    constructor() public {
+        // setup the map of bonus-rates for each SaleState tier
+        createSalesTierConfigMap();
+    }
+
+    /**
+     * @dev Overrides parent method taking into account variable rate (as a percentage).
+     * @param _weiAmount The value in wei to be converted into tokens
+     * @return The number of tokens _weiAmount wei will buy at present time.
+     */
+    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+        uint256 currentTierRate = getCurrentTierRatePercentage();
+
+        uint256 requestedTokenAmount = _weiAmount.mul(rate).mul(currentTierRate).div(100);
+
+        uint256 remainingTokens = tokenCap.sub(tokensRaised);
+
+        // Return number of LPC to provide
+        if (requestedTokenAmount > remainingTokens) {
+            return remainingTokens;
+        }
+
+        return requestedTokenAmount;
+    }
+
+    /**
+     * @dev Setup the map of bonus-rates (as a percentage) and total hardCap for each SaleState tier
+     * to be called by the constructor.
+     */
+    function createSalesTierConfigMap() private {
+
+        tierConfigs [keccak256(SaleState.Initial)] = TierConfig({
+            stateName: "Initial",
+            tierRatePercentage: 0,
+            hardCap: 0
+        });
+        tierConfigs [keccak256(SaleState.PrivateSale)] = TierConfig({
+            stateName: "PrivateSale",
+            tierRatePercentage: 100,
+            hardCap: SafeMath.mul(400000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.FinalisedPrivateSale)] = TierConfig({
+            stateName: "FinalisedPrivateSale",
+            tierRatePercentage: 0,
+            hardCap: 0
+        });
+        tierConfigs [keccak256(SaleState.PreSale)] = TierConfig({
+            stateName: "PreSale",
+            tierRatePercentage: 140,
+            hardCap: SafeMath.mul(180000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.FinalisedPreSale)] = TierConfig({
+            stateName: "FinalisedPreSale",
+            tierRatePercentage: 0,
+            hardCap: 0
+        });
+        tierConfigs [keccak256(SaleState.PublicSaleTier1)] = TierConfig({
+            stateName: "PublicSaleTier1",
+            tierRatePercentage: 130,
+            hardCap: SafeMath.mul(265000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.PublicSaleTier2)] = TierConfig({
+            stateName: "PublicSaleTier2",
+            tierRatePercentage: 120,
+            hardCap: SafeMath.mul(330000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.PublicSaleTier3)] = TierConfig({
+            stateName: "PublicSaleTier3",
+            tierRatePercentage: 110,
+            hardCap: SafeMath.mul(375000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.PublicSaleTier4)] = TierConfig({
+            stateName: "PublicSaleTier4",
+            tierRatePercentage: 100,
+            hardCap: SafeMath.mul(400000000, (10 ** 18))
+        });
+        tierConfigs [keccak256(SaleState.FinalisedPublicSale)] = TierConfig({
+            stateName: "FinalisedPublicSale",
+            tierRatePercentage: 0,
+            hardCap: 0
+        });
+        tierConfigs [keccak256(SaleState.Closed)] = TierConfig({
+            stateName: "Closed",
+            tierRatePercentage: 0,
+            hardCap: SafeMath.mul(400000000, (10 ** 18))
+        });
+        
+
+    }
+
+    /**
+     * @dev get the current bonus-rate for the current SaleState
+     * @return the current rate as a percentage (e.g. 140 = 140% bonus)
+     */
+    function getCurrentTierRatePercentage() public view returns (uint256) {
+        return tierConfigs[keccak256(state)].tierRatePercentage;
+    }
+
+    /**
+     * @dev Get the current hardCap for the current SaleState
+     * @return The current hardCap
+     */
+    function getCurrentTierHardcap() public view returns (uint256) {
+        return tierConfigs[keccak256(state)].hardCap;
+    }
+
+    /**
+     * @dev Only allow the owner to set the state.
+     */
+    function setState(uint256 _state) onlyOwner public {
+        state = SaleState(_state);
+
+        // Update cap when state changes
+        tokenCap = getCurrentTierHardcap();
+
+        if (state == SaleState.Closed) {
+            crowdsaleClosed();
+        }
+    }
+
+    function getState() public view returns (string) {
+        return tierConfigs[keccak256(state)].stateName;
+    }
+
+    /**
+     * @dev Change the bonus tier after a purchase.
+     */
+    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+        super._updatePurchasingState(_beneficiary, _weiAmount);
+
+        if (capReached()) {
+            if (state == SaleState.PrivateSale) {
+                state = SaleState.FinalisedPrivateSale;
+            }
+            else if (state == SaleState.PreSale) {
+                state = SaleState.FinalisedPreSale;
+            }
+            else if (state == SaleState.PublicSaleTier1) {
+                state = SaleState.PublicSaleTier2;
+            }
+            else if (state == SaleState.PublicSaleTier2) {
+                state = SaleState.PublicSaleTier3;
+            }
+            else if (state == SaleState.PublicSaleTier3) {
+                state = SaleState.PublicSaleTier4;
+            }
+            else if (state == SaleState.PublicSaleTier4) {
+                state = SaleState.FinalisedPublicSale;
+            } else {
+                return;
+            }
+
+            tokenCap = getCurrentTierHardcap();
+            emit IncrementTieredState(getState());
+        }
+
+    }
+
+    /**
+     * Override for extensions that require an internal notification when the crowdsale has closed
+     */
+    function crowdsaleClosed() internal {
+        // optional override
+    }
+
+}
 
 /**
  * @title TokenTimelock
@@ -639,7 +1066,13 @@ contract TokenTimelock {
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
+  constructor(
+    ERC20Basic _token,
+    address _beneficiary,
+    uint256 _releaseTime
+  )
+    public
+  {
     // solium-disable-next-line security/no-block-members
     require(_releaseTime > block.timestamp);
     token = _token;
@@ -660,8 +1093,6 @@ contract TokenTimelock {
     token.safeTransfer(beneficiary, amount);
   }
 }
-
-
 
 contract InitialSupplyCrowdsale is Crowdsale, Ownable {
 
@@ -742,427 +1173,6 @@ contract InitialSupplyCrowdsale is Crowdsale, Ownable {
 
 }
 
-
-
-
-
-
-/**
- * @title WhitelistedCrowdsale
- * @dev Crowdsale in which only whitelisted users can contribute.
- */
-contract WhitelistedCrowdsale is Crowdsale, Ownable {
-
-  mapping(address => bool) public whitelist;
-
-  /**
-   * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
-   */
-  modifier isWhitelisted(address _beneficiary) {
-    require(whitelist[_beneficiary]);
-    _;
-  }
-
-  /**
-   * @dev Adds single address to whitelist.
-   * @param _beneficiary Address to be added to the whitelist
-   */
-  function addToWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = true;
-  }
-
-  /**
-   * @dev Adds list of addresses to whitelist. Not overloaded due to limitations with truffle testing.
-   * @param _beneficiaries Addresses to be added to the whitelist
-   */
-  function addManyToWhitelist(address[] _beneficiaries) external onlyOwner {
-    for (uint256 i = 0; i < _beneficiaries.length; i++) {
-      whitelist[_beneficiaries[i]] = true;
-    }
-  }
-
-  /**
-   * @dev Removes single address from whitelist.
-   * @param _beneficiary Address to be removed to the whitelist
-   */
-  function removeFromWhitelist(address _beneficiary) external onlyOwner {
-    whitelist[_beneficiary] = false;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring beneficiary to be in whitelist.
-   * @param _beneficiary Token beneficiary
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal isWhitelisted(_beneficiary) {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-  }
-
-}
-
-
-
-
-
-
-
-/**
- * @title MintedCrowdsale
- * @dev Extension of Crowdsale contract whose tokens are minted in each purchase.
- * Token ownership should be transferred to MintedCrowdsale for minting.
- */
-contract MintedCrowdsale is Crowdsale {
-
-  /**
-   * @dev Overrides delivery by minting tokens upon purchase.
-   * @param _beneficiary Token purchaser
-   * @param _tokenAmount Number of tokens to be minted
-   */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    require(MintableToken(token).mint(_beneficiary, _tokenAmount));
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * @title CappedCrowdsale
- * @dev Crowdsale with a limit for total contributions.
- */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  /**
-   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
-   * @param _cap Max amount of wei to be contributed
-   */
-  function CappedCrowdsale(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  /**
-   * @dev Checks whether the cap has been reached.
-   * @return Whether the cap was reached
-   */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(weiRaised.add(_weiAmount) <= cap);
-  }
-
-}
-
-
-
-/**
- * @title TokenCappedCrowdsale
- * @dev Crowdsale with a limit for total minted tokens.
- */
-contract TokenCappedCrowdsale is Crowdsale {
-    using SafeMath for uint256;
-
-    uint256 public tokenCap = 0;
-
-    // Amount of LPC raised
-    uint256 public tokensRaised = 0;
-
-    // event for manual refund of cap overflow
-    event CapOverflow(address indexed sender, uint256 weiAmount, uint256 receivedTokens, uint256 date);
-
-    /**
-     * Checks whether the tokenCap has been reached.
-     * @return Whether the tokenCap was reached
-     */
-    function capReached() public view returns (bool) {
-        return tokensRaised >= tokenCap;
-    }
-
-    /**
-     * Accumulate the purchased tokens to the total raised
-     */
-    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-        require(_beneficiary != address(0));
-        super._updatePurchasingState(_beneficiary, _weiAmount);
-        uint256 purchasedTokens = _getTokenAmount(_weiAmount);
-        tokensRaised = tokensRaised.add(purchasedTokens);
-
-        if(capReached()) {
-            // manual process unused eth amount to sender
-            emit CapOverflow(_beneficiary, _weiAmount, purchasedTokens, now);
-        }
-    }
-
-}
-
-
-
-
-/**
- * @title TieredCrowdsale
- * @dev Extension of Crowdsale contract that decreases the number of LPC tokens purchases dependent on the current number of tokens sold.
- */
-contract TieredCrowdsale is TokenCappedCrowdsale, Ownable {
-
-    using SafeMath for uint256;
-
-    /**
-    SalesState enum for use in state machine to manage sales rates
-    */
-    enum SaleState {
-        Initial,              // All contract initialization calls
-        PrivateSale,          // Private sale for industy and closed group investors
-        FinalisedPrivateSale, // Close private sale
-        PreSale,              // Pre sale ICO (40% bonus LPC hard-capped at 180 million tokens)
-        FinalisedPreSale,     // Close presale
-        PublicSaleTier1,      // Tier 1 ICO public sale (30% bonus LPC capped at 85 million tokens)
-        PublicSaleTier2,      // Tier 2 ICO public sale (20% bonus LPC capped at 65 million tokens)
-        PublicSaleTier3,      // Tier 3 ICO public sale (10% bonus LPC capped at 45 million tokens)
-        PublicSaleTier4,      // Tier 4 ICO public sale (standard rate capped at 25 million tokens)
-        FinalisedPublicSale,  // Close public sale
-        Closed                // ICO has finished, all tokens must have been claimed
-    }
-    SaleState public state = SaleState.Initial;
-
-    struct TierConfig {
-        string stateName;
-        uint256 tierRatePercentage;
-        uint256 hardCap;
-    }
-
-    mapping(bytes32 => TierConfig) private tierConfigs;
-
-    // event for manual refund of cap overflow
-    event IncrementTieredState(string stateName);
-
-    /**
-    * checks the state when validating a purchase
-    */
-    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-        require(_beneficiary != address(0));
-        super._preValidatePurchase(_beneficiary, _weiAmount);
-        require(
-            state == SaleState.PrivateSale ||
-            state == SaleState.PreSale ||
-            state == SaleState.PublicSaleTier1 ||
-            state == SaleState.PublicSaleTier2 ||
-            state == SaleState.PublicSaleTier3 ||
-            state == SaleState.PublicSaleTier4
-        );
-    }
-
-    /**
-    * @dev Constructor
-    * Caveat emptor: this base contract is intended for inheritance by the Little Phil crowdsale only
-    */
-    constructor() public {
-        // setup the map of bonus-rates for each SaleState tier
-        createSalesTierConfigMap();
-    }
-
-    /**
-    * @dev Overrides parent method taking into account variable rate (as a percentage).
-    * @param _weiAmount The value in wei to be converted into tokens
-    * @return The number of tokens _weiAmount wei will buy at present time.
-    */
-    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-        uint256 currentTierRate = getCurrentTierRatePercentage();
-
-        uint256 requestedTokenAmount = _weiAmount.mul(rate).mul(currentTierRate).div(100);
-
-        uint256 remainingTokens = tokenCap.sub(tokensRaised);
-
-        // return number of LPC to provide
-        if(requestedTokenAmount > remainingTokens ) {
-            return remainingTokens;
-        }
-
-        return requestedTokenAmount;
-    }
-
-    /**
-    * @dev setup the map of bonus-rates (as a percentage) and total hardCap for each SaleState tier
-    * to be called by the constructor.
-    */
-    function createSalesTierConfigMap() private {
-
-        tierConfigs [keccak256(SaleState.Initial)] = TierConfig({
-            stateName: "Initial",
-            tierRatePercentage:0,
-            hardCap: 0
-        });
-        tierConfigs [keccak256(SaleState.PrivateSale)] = TierConfig({
-            stateName: "PrivateSale",
-            tierRatePercentage:100,
-            hardCap: SafeMath.mul(400000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.FinalisedPrivateSale)] = TierConfig({
-            stateName: "FinalisedPrivateSale",
-            tierRatePercentage:0,
-            hardCap: 0
-        });
-        tierConfigs [keccak256(SaleState.PreSale)] = TierConfig({
-            stateName: "PreSale",
-            tierRatePercentage:140,
-            hardCap: SafeMath.mul(180000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.FinalisedPreSale)] = TierConfig({
-            stateName: "FinalisedPreSale",
-            tierRatePercentage:0,
-            hardCap: 0
-        });
-        tierConfigs [keccak256(SaleState.PublicSaleTier1)] = TierConfig({
-            stateName: "PublicSaleTier1",
-            tierRatePercentage:130,
-            hardCap: SafeMath.mul(265000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.PublicSaleTier2)] = TierConfig({
-            stateName: "PublicSaleTier2",
-            tierRatePercentage:120,
-            hardCap: SafeMath.mul(330000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.PublicSaleTier3)] = TierConfig({
-            stateName: "PublicSaleTier3",
-            tierRatePercentage:110,
-            hardCap: SafeMath.mul(375000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.PublicSaleTier4)] = TierConfig({
-            stateName: "PublicSaleTier4",
-            tierRatePercentage:100,
-            hardCap: SafeMath.mul(400000000, (10 ** 18))
-        });
-        tierConfigs [keccak256(SaleState.FinalisedPublicSale)] = TierConfig({
-            stateName: "FinalisedPublicSale",
-            tierRatePercentage:0,
-            hardCap: 0
-        });
-        tierConfigs [keccak256(SaleState.Closed)] = TierConfig({
-            stateName: "Closed",
-            tierRatePercentage:0,
-            hardCap: SafeMath.mul(400000000, (10 ** 18))
-        });
-
-    }
-
-    /**
-    * @dev get the current bonus-rate for the current SaleState
-    * @return the current rate as a percentage (e.g. 140 = 140% bonus)
-    */
-    function getCurrentTierRatePercentage() public view returns (uint256) {
-        return tierConfigs[keccak256(state)].tierRatePercentage;
-    }
-
-    /**
-    * @dev get the current hardCap for the current SaleState
-    * @return the current hardCap
-    */
-    function getCurrentTierHardcap() public view returns (uint256) {
-        return tierConfigs[keccak256(state)].hardCap;
-    }
-
-    /**
-    * @dev only allow the owner to modify the current SaleState
-    */
-    function setState(uint256 _state) onlyOwner public {
-        state = SaleState(_state);
-
-        // update cap when state changes
-        tokenCap = getCurrentTierHardcap();
-
-        if(state == SaleState.Closed) {
-            crowdsaleClosed();
-        }
-    }
-
-    function getState() public view returns (string) {
-        return tierConfigs[keccak256(state)].stateName;
-    }
-
-    /**
-    * @dev only allow onwer to modify the current SaleState
-    */
-    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-        require(_beneficiary != address(0));
-        super._updatePurchasingState(_beneficiary, _weiAmount);
-
-        if(capReached()) {
-            if(state == SaleState.PrivateSale) {
-                state = SaleState.FinalisedPrivateSale;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-            else if(state == SaleState.PreSale) {
-                state = SaleState.FinalisedPreSale;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-            else if(state == SaleState.PublicSaleTier1) {
-                state = SaleState.PublicSaleTier2;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-            else if(state == SaleState.PublicSaleTier2) {
-                state = SaleState.PublicSaleTier3;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-            else if(state == SaleState.PublicSaleTier3) {
-                state = SaleState.PublicSaleTier4;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-            else if(state == SaleState.PublicSaleTier4) {
-                state = SaleState.FinalisedPublicSale;
-                tokenCap = getCurrentTierHardcap();
-                emit IncrementTieredState(getState());
-            }
-
-        }
-
-    }
-
-    /**
-     * Override for extensions that require an internal notification when the crowdsale has closed
-     */
-    function crowdsaleClosed () internal {
-        // optional override
-    }
-
-}
-
-
-
-
-
-/* solium-disable security/no-block-members */
-
-
-
-
-
-
-
-
-
 /**
  * @title TokenVesting
  * @dev A token holder contract that can release its token balance gradually like a
@@ -1194,10 +1204,11 @@ contract TokenVesting is Ownable {
    * of the balance will have vested.
    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
    * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _start the time (as Unix time) at which point vesting starts 
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  function TokenVesting(
+  constructor(
     address _beneficiary,
     uint256 _start,
     uint256 _cliff,
@@ -1284,17 +1295,17 @@ contract TokenVesting is Ownable {
 contract TokenVestingCrowdsale is Crowdsale, Ownable {
 
     function addBeneficiaryVestor(
-            address beneficiaryWallet,
-            uint256 tokenAmount,
-            uint256 vestingEpocStart,
-            uint256 cliffInSeconds,
+            address beneficiaryWallet, 
+            uint256 tokenAmount, 
+            uint256 vestingEpocStart, 
+            uint256 cliffInSeconds, 
             uint256 vestingEpocEnd
         ) external onlyOwner {
         TokenVesting newVault = new TokenVesting(
-            beneficiaryWallet,
-            vestingEpocStart,
-            cliffInSeconds,
-            vestingEpocEnd,
+            beneficiaryWallet, 
+            vestingEpocStart, 
+            cliffInSeconds, 
+            vestingEpocEnd, 
             false
         );
         LittlePhilCoin(token).mint(address(newVault), tokenAmount);
@@ -1306,70 +1317,125 @@ contract TokenVestingCrowdsale is Crowdsale, Ownable {
 
 }
 
-contract LittlePhilCrowdsale is MintedCrowdsale, TieredCrowdsale, InitialSupplyCrowdsale, WhitelistedCrowdsale, TokenVestingCrowdsale {
+
+ 
+ 
+
+contract WhitelistedCrowdsale is Crowdsale, Ownable {
+
+    address public whitelister;
+    mapping(address => bool) public whitelist;
+
+    constructor(address _whitelister) public {
+        require(_whitelister != address(0));
+        whitelister = _whitelister;
+    }
+
+    modifier isWhitelisted(address _beneficiary) {
+        require(whitelist[_beneficiary]);
+        _;
+    }
+
+    function addToWhitelist(address _beneficiary) public onlyOwnerOrWhitelister {
+        whitelist[_beneficiary] = true;
+    }
+
+    function addManyToWhitelist(address[] _beneficiaries) public onlyOwnerOrWhitelister {
+        for (uint256 i = 0; i < _beneficiaries.length; i++) {
+            whitelist[_beneficiaries[i]] = true;
+        }
+    }
+
+    function removeFromWhitelist(address _beneficiary) public onlyOwnerOrWhitelister {
+        whitelist[_beneficiary] = false;
+    }
+
+    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal isWhitelisted(_beneficiary) {
+        super._preValidatePurchase(_beneficiary, _weiAmount);
+    }
+
+    modifier onlyOwnerOrWhitelister() {
+        require(msg.sender == owner || msg.sender == whitelister);
+        _;
+    }
+}
+
+/**
+ * @title Little Phil Crowdsale
+ */
+contract LittlePhilCrowdsale is MintedCrowdsale, TieredCrowdsale, InitialSupplyCrowdsale, TokenVestingCrowdsale, WhitelistedCrowdsale {
 
     /**
-    * Event for rate-change logging
-    * @param rate the new ETH-to_LPC exchange rate
-    */
+     * @notice Event for rate-change logging
+     * @param rate the new ETH-to_LPC exchange rate
+     */
     event NewRate(uint256 rate);
 
-    // Constructor
+    /**
+     * @notice Constructor
+     */
     constructor(
         uint256 _rate,
         address _fundsWallet,
         address[6] _wallets,
-        LittlePhilCoin _token
+        LittlePhilCoin _token,
+        address _whitelister
     ) public
     Crowdsale(_rate, _fundsWallet, _token)
-    InitialSupplyCrowdsale(_wallets) {}
+    InitialSupplyCrowdsale(_wallets) 
+    WhitelistedCrowdsale(_whitelister){}
 
-    // Sets up the initial balances
-    // This must be called after ownership of the token is transferred to the crowdsale
+    /**
+     * @notice Sets up the initial balances
+     * @dev This must be called after ownership of the token is transferred to the crowdsale
+     */
     function setupInitialState() external onlyOwner {
         setupInitialSupply();
     }
 
-    // Ownership management
+    /**
+     * @notice Ownership management
+     */
     function transferTokenOwnership(address _newOwner) external onlyOwner {
         require(_newOwner != address(0));
         // I assume the crowdsale contract holds a reference to the token contract.
         LittlePhilCoin(token).transferOwnership(_newOwner);
     }
 
-    // Called at the end of the crowdsale when it is eneded
-    function crowdsaleClosed () internal {
+    /**
+     * @notice Crowdsale Closed
+     * @dev Called at the end of the crowdsale when it is ended
+     */
+    function crowdsaleClosed() internal {
         uint256 remainingTokens = tokenCap.sub(tokensRaised);
         _deliverTokens(airdropWallet, remainingTokens);
         LittlePhilCoin(token).finishMinting();
     }
 
     /**
-    * checks the state when validating a purchase
-    */
+     * @notice Checks the state when validating a purchase
+     */
     function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-        require(_beneficiary != address(0));
         super._preValidatePurchase(_beneficiary, _weiAmount);
         require(_weiAmount >= 500000000000000000);
     }
 
     /**
-     * @dev sets (updates) the ETH-to-LPC exchange rate
-     * @param _rate ate that will applied to ETH to derive how many LPC to mint
+     * @notice Update the ETH-to-LPC exchange rate
+     * @param _rate The Rate that will applied to ETH to derive how many LPC to mint
      * does not affect, nor influenced by the bonus rates based on the current tier.
      */
-    function setRate(int _rate) public onlyOwner {
+    function setRate(uint256 _rate) public onlyOwner {
         require(_rate > 0);
-        rate = uint256(_rate);
+        rate = _rate;
         emit NewRate(rate);
     }
 
      /**
-      * @dev allows for minting from owner account
+      * @notice Mint for Private Fiat Transactions
+      * @dev Allows for minting from owner account
       */
     function mintForPrivateFiat(address _beneficiary, uint256 _weiAmount) public onlyOwner {
-        require(_beneficiary != address(0));
-        // require(_weiAmount > 0);
         _preValidatePurchase(_beneficiary, _weiAmount);
 
         // calculate token amount to be created
@@ -1377,13 +1443,6 @@ contract LittlePhilCrowdsale is MintedCrowdsale, TieredCrowdsale, InitialSupplyC
 
         // update state
         weiRaised = weiRaised.add(_weiAmount);
-        tokensRaised = tokensRaised.add(tokens);
-
-        if(capReached()) {
-            // manual process unused eth amount to sender
-            emit CapOverflow(_beneficiary, _weiAmount, tokens, now);
-            emit IncrementTieredState(getState());
-        }
 
         _processPurchase(_beneficiary, tokens);
         emit TokenPurchase(
@@ -1396,6 +1455,7 @@ contract LittlePhilCrowdsale is MintedCrowdsale, TieredCrowdsale, InitialSupplyC
         _updatePurchasingState(_beneficiary, _weiAmount);
 
         _forwardFunds();
+        _postValidatePurchase(_beneficiary, _weiAmount);
     }
 
 }
