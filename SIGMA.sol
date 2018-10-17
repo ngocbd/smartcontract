@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIGMA at 0x9194853bd7deef9731f60a0e8924a97cc4b77ca1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIGMA at 0x780fCF1decba1C92DeE8965fAD12cc1d906F7086
 */
 pragma solidity ^0.4.16;
 
@@ -35,7 +35,7 @@ contract Token {
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
+   
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
@@ -50,24 +50,23 @@ contract StandardToken is Token {
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+        require(balances[_from] >= _value);
+        require(allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -111,6 +110,7 @@ contract SIGMA is StandardToken {
         name = "SIGMA";
         decimals = 18;
         symbol = "SIG";
+        Transfer(address(0), msg.sender, balances[msg.sender]);
     }
 
     /* Approves and then calls the receiving contract */
@@ -122,6 +122,23 @@ contract SIGMA is StandardToken {
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
+    }
+
+    function increaseApproval(address _spender, uint256 _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] += _addedValue;
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint256 _subtractedValue) public returns (bool) {
+        uint256 oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue >= oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] -= _subtractedValue;
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 }
