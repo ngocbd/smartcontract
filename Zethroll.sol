@@ -1,18 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xfd115c04952afee689cfd6759226e4feb457987b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x287a3596cADdA829Acee72437e326b8cCc1F03De
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 /*
-* Zethroll.
+* XYZethroll.
 *
 * Adapted from PHXRoll, written in March 2018 by TechnicalRise:
 *   https://www.reddit.com/user/TechnicalRise/
 *
-* Adapted for Zethr by Norsefire and oguzhanox.
-*
-* Gas golfed by Etherguy
-* Audited & commented by Klob
 */
 
 contract ZTHReceivingContract {
@@ -186,7 +182,7 @@ contract Zethroll is ZTHReceivingContract {
     }
 
     // Set struct block number, token value, and rollUnder values
-    roll.blockn = uint40(block.number);
+    roll.blockn = uint48(block.number);
     roll.tokenValue = uint200(_tkn.value);
     roll.rollUnder = uint8(_rollUnder);
 
@@ -236,6 +232,10 @@ contract Zethroll is ZTHReceivingContract {
 
       // Safely map player profit
       uint profit = calculateProfit(roll.tokenValue, rollUnder);
+      
+        if (profit > maxProfit){
+            profit = maxProfit;
+        }
 
       // Safely reduce contract balance by player profit
       contractBalance = contractBalance.sub(profit);
@@ -245,10 +245,10 @@ contract Zethroll is ZTHReceivingContract {
       // Update maximum profit
       setMaxProfit();
 
-      if (delete_it){
+
         // Prevent re-entracy memes
-        delete playerRolls[target];
-      }
+        playerRolls[target] = playerRoll(uint200(0), uint48(0), uint8(0));
+
 
       // Transfer profit plus original bet
       ZTHTKN.transfer(target, profit + roll.tokenValue);
@@ -268,6 +268,7 @@ contract Zethroll is ZTHReceivingContract {
       */
       contractBalance = contractBalance.add(roll.tokenValue);
 
+        playerRolls[target] = playerRoll(uint200(0), uint48(0), uint8(0));
       // No need to actually delete player roll here since player ALWAYS loses 
       // Saves gas on next buy 
 
@@ -283,6 +284,7 @@ contract Zethroll is ZTHReceivingContract {
 
   // Token fallback to bet or deposit from bankroll
   function tokenFallback(address _from, uint _value, bytes _data) public returns (bool) {
+    require(msg.sender == ZTHTKNADDR);
     if (_from == ZethrBankroll) {
       // Update the contract balance
       contractBalance = contractBalance.add(_value);
