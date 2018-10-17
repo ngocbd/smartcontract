@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AidEvaCoin at 0x111877926446bc92ceea9edac12854e2aaa25eb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AidEvaCoin at 0xcf083512f5152b2ba4293cafe78466596b253782
 */
 pragma solidity ^0.4.18;
 
@@ -153,7 +153,7 @@ contract AidEvaCoin is ERC223, Ownable {
 
     string public name = "AidEvaCoin";
     string public symbol = "AIVA";
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
     uint256 public totalSupply = 30e9 * 1e18;
     uint256 public distributeAmount = 0;
     bool public mintingFinished = false;
@@ -521,3 +521,10 @@ contract AidEvaCoin is ERC223, Ownable {
      }
 
 }
+
+
+/*
+ *???????????´?????´?
+ *     Created by Tsuchinoko
+ *?´?????´???????????
+ */
