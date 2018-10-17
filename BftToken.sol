@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFTToken at 0x0dba7ca3d25f8c2f46d9b06ba7b1b3144e206f38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFTToken at 0xa21551510d28bc0bc40fa725aa980f64419d8eb1
 */
 pragma solidity ^0.4.18;
-
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -29,7 +28,7 @@ library SafeMath {
 }
 
 contract ForeignToken {
-    function balanceOf(address _0x395d5881be6ca42d96ba01a2de69416f10cebe29) constant public returns (uint256);
+    function balanceOf(address _owner) constant public returns (uint256);
     function transfer(address _to, uint256 _value) public returns (bool);
 }
 
@@ -61,6 +60,7 @@ contract BFTToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     mapping (address => bool) public blacklist;
+
     string public constant name = "Burma first token";
     string public constant symbol = "BFT";
     uint public constant decimals = 8;
@@ -86,7 +86,7 @@ contract BFTToken is ERC20 {
     }
     
     modifier onlyOwner() {
-        require(msg.sender == 0x395d5881be6ca42d96ba01a2de69416f10cebe29);
+        require(msg.sender == owner);
         _;
     }
     
@@ -95,10 +95,10 @@ contract BFTToken is ERC20 {
         _;
     }
     
-    function BFTcoin () public {
+    function QMQCoin () public {
         owner = msg.sender;
         value = 5000e8;
-        distr(0x395d5881be6ca42d96ba01a2de69416f10cebe29, totalDistributed);
+        distr(owner, totalDistributed);
     }
     
     function transferOwnership(address newOwner) onlyOwner public {
