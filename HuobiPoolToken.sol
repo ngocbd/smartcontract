@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuobiPoolToken at 0xeddc46821f6a6329fde08d9ac2612c8e324b8c65
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuobiPoolToken at 0x4198f7c7390db297c696ec234495787f09dfa85e
 */
 pragma solidity ^0.4.10;
 
@@ -104,7 +104,7 @@ contract HuobiPoolToken is StandardToken {
     }
     function HuobiPoolToken() {
         require(init==true);
-        totalSupply = 100000000000;
+        totalSupply = 10000000000;
         balances[0x3567cafb8bf2a83bbea4e79f3591142fb4ebe86d] = totalSupply;
         init = false;
     }
