@@ -1,179 +1,107 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6d5eb8a12eb8cc38001c5fcbf877f70313c57251
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd981d905b266723b82de6b2a3dfa27038ab6f0e1
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 
-library SafeMath {
+contract BasicToken {
+    uint256 public totalSupply;
+    bool public allowTransfer;
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract StandardToken is BasicToken {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract AbstractERC20 {
 
-  uint256 public totalSupply;
+contract Token is StandardToken {
 
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    string public name = "MED X";
+    uint8 public decimals = 18;
+    string public symbol = "MED";
+    string public version = 'MED 1.0';
+    address public mintableAddress;
 
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) public returns (bool success);
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-  function approve(address _spender, uint256 _value) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-}
+    function Token(address sale_address) {
+        balances[msg.sender] = 0;
+        totalSupply = 0;
+        name = name;
+        decimals = decimals;
+        symbol = symbol;
+        mintableAddress = sale_address;
+        allowTransfer = true;
+        createTokens();
+    }
 
-/*
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
-contract StandardToken is AbstractERC20 {
-    
-  using SafeMath for uint256;
+    function createTokens() internal {
+        uint256 total = 200000000000000000000000000;
+        balances[this] = total;
+        totalSupply = total;
+    }
 
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
+    function changeTransfer(bool allowed) external {
+        require(msg.sender == mintableAddress);
+        allowTransfer = allowed;
+    }
 
-  function transfer(address _to, uint256 _value) public returns (bool success) {
+    function mintToken(address to, uint256 amount) external returns (bool success) {
+        require(msg.sender == mintableAddress);
+        require(balances[this] >= amount);
+        balances[this] -= amount;
+        balances[to] += amount;
+        Transfer(this, to, amount);
+        return true;
+    }
 
-    require(balances[msg.sender] >= _value);
-    require(_to != 0x0);
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
 
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-
-    require(balances[_from] >= _value);
-    require(allowed[_from][msg.sender] >= _value);
-    require(_to != 0x0);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint256 _value) public returns (bool success) {
-
-    require(_spender != 0x0);
-    require(_value == 0 || allowed[msg.sender][_spender] == 0);
-
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-
-contract Owned {
-
-  address public owner;
-  address public newOwner;
-
-  event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
-
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  modifier ownerOnly {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address _newOwner) public ownerOnly {
-    require(_newOwner != owner);
-    newOwner = _newOwner;
-  }
-
-  function acceptOwnership() public {
-    require(msg.sender == newOwner);
-    emit OwnerUpdate(owner, newOwner);
-    owner = newOwner;
-    newOwner = address(0);
-  }
-}
-
-contract Destroyable is StandardToken {
-
-  event Destruction(uint256 _amount);
-
-  function _destroy(address _from, uint256 _amount) internal {
-
-    require(balances[_from] >= _amount);
-    balances[_from] = balances[_from].sub(_amount);
-    totalSupply = totalSupply.sub(_amount);
-    emit Destruction(_amount);
-    emit Transfer(_from, this, _amount);
-  }
-}
-
-contract Token is StandardToken, Owned, Destroyable {
-
-  address owner;
-  string constant public name = "TYDO";
-  string constant public symbol = "TYD";
-  uint8 constant public decimals = 18;
-  
-  event Burn(address indexed _burner, uint256 _value);
-  
-  constructor(uint256 _initialSupply) public {
-  
-    owner = msg.sender;
-    balances[owner] = _initialSupply;
-    totalSupply = _initialSupply;
-  }
-  
-  function burn(uint256 _amount) external {
-
-    _destroy(msg.sender, _amount);
-    emit Burn(msg.sender, _amount);
-  }
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        return true;
+    }
 }
