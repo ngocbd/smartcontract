@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x2974aa2c025aeac44bb8d284e33b9e7d527f0025
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0xacc4f39866cf8e9fd5f011378f64e566d7933522
 */
 pragma solidity ^0.4.24;
 
@@ -215,9 +215,9 @@ contract Zlots is ZethrShell {
     // ---------------------- Modifiers
 
     // Makes sure that player porfit can't exceed a maximum amount
-    // We use the max win here - 50x
+    // We use the max win here - 100x
     modifier betIsValid(uint _betSize, uint divRate) {
-      require(_betSize.mul(50) <= getMaxProfit(divRate));
+      require(_betSize.mul(100) <= getMaxProfit(divRate));
       _;
     }
 
@@ -320,7 +320,7 @@ contract Zlots is ZethrShell {
     {
 
         require(gameActive);
-        require(block.number <= ((2 ** 48) - 1));  // Current block number smaller than storage of 1 uint56
+        require(block.number < ((2 ** 56) - 1));  // Current block number smaller than storage of 1 uint56
 
         address _customerAddress = _tkn.sender;
         uint    _wagered         = _tkn.value;
