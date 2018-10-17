@@ -1,16 +1,65 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x417bdc58ef9a3d7de04a66ab84ed13048d9a82bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x6ab16482010915d89c6a9e2fdd60176eb4c01f1d
 */
 pragma solidity ^0.4.24;
 /**
- * AirDrop.me : a... borrowing, of F3D's code which drops 10% of all buy-ins to the Zethr.io bankroll.
- *
- * You know the rules.
- *
+ * @title -FoMo-3D v0.7.1
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/   .--,-``-.
+ *========,---,.======================____==========================/   /     '.=======,---,====*
+ *      ,'  .' |                    ,'  , `.                       / ../        ;    .'  .' `\
+ *    ,---.'   |    ,---.        ,-+-,.' _ |    ,---.              \ ``\  .`-    ' ,---.'     \
+ *    |   |   .'   '   ,'\    ,-+-. ;   , ||   '   ,'\      ,---,.  \___\/   \   : |   |  .`\  |
+ *    :   :  :    /   /   |  ,--.'|'   |  ||  /   /   |   ,'  .' |       \   :   | :   : |  '  |
+ *    :   |  |-, .   ; ,. : |   |  ,', |  |, .   ; ,. : ,---.'   |       /  /   /  |   ' '  ;  :
+ *    |   :  ;/| '   | |: : |   | /  | |--'  '   | |: : |   |  .'        \  \   \  '   | ;  .  |
+ *    |   |   .' '   | .; : |   : |  | ,     '   | .; : :   |.'      ___ /   :   | |   | :  |  '
+ *    '   :  '   |   :    | |   : |  |/      |   :    | `---'       /   /\   /   : '   : | /  ;
+ *    |   |  |    \   \  /  |   | |`-'        \   \  /             / ,,/  ',-    . |   | '` ,/
+ *    |   :  \     `----'   |   ;/             `----'              \ ''\        ;  ;   :  .'
+ *====|   | ,'=============='---'==========(long version)===========\   \     .'===|   ,.'======*
+ *    `----'                                                         `--`-,,-'     '---'
+ *             ??????????????????   ??????????????????????????? ? ?????? ?????????? 
+ *             ? ??? ?? ??  ?????   ?   https://exitscam.me   ? ????? ??????? ? ??  
+ *             ????  ?  ?????? ???? ??????????????????????????? ????????????? ? ??? 
+ *   ??????????????????????????????????                     ????????????????????????????????
+ *   ????????  ????????? ?   ????????????????   ?????????????????????????   ????????????????
+ *   ????? ??  ? ??? ? ??? ?  ???? ????? ???? ? ???? ? ?? ????? ????  ??  ? ??? ? ????  ????
+ *   ??????????????? ?  ?    ????????????????   ???? ? ???????  ? ???????   ??? ? ? ????? ??
+ *   ?    ????????????           ?????????            ???????????              ??????????  ?
+ *   ?????? Inventor ????????????? Justo ?????????????? Sumpunk ???????????????? Mantso ????
+ *        ????????????           ?????????            ???????????              ??????????
+ *   ??????????????????????????????????????????????????????????? ???? ?????????????  ??????
+ *   ? Ambius, Aritz Cracker, Cryptoknight, Crypto McPump,     ?  ? ???????????????   ? ? ?
+ *   ? Capex, JogFera, The Shocker, Daok, Randazzz, PumpRabbi, ?  ? ? ?? ????? ????   ? ???
+ *   ? Kadaz, Incognito Jo, Lil Stronghands, Ninja Turtle,     ?????????????????????????????
+ *   ? Psaints, Satoshi, Vitalik, Nano 2nd, Bogdanoffs         Isaac Newton, Nikola Tesla, ? 
+ *   ? Le Comte De Saint Germain, Albert Einstein, Socrates, & all the volunteer moderator ?
+ *   ? & support staff, content, creators, autonomous agents, and indie devs for P3D.      ?
+ *   ?              Without your help, we wouldn't have the time to code this.             ?
+ *   ???????????????????????????????????????????????????????????????????????????????????????
+ * 
+ * This product is protected under license.  Any unauthorized copy, modification, or use without 
+ * express written consent from the creators is prohibited.
+ * 
+ * WARNING:  THIS PRODUCT IS HIGHLY ADDICTIVE.  IF YOU HAVE AN ADDICTIVE NATURE.  DO NOT PLAY.
  */
 
-// Events 
-
+//==============================================================================
+//     _    _  _ _|_ _  .
+//    (/_\/(/_| | | _\  .
+//==============================================================================
 contract F3Devents {
     // fired whenever a player registers a name
     event onNewName
@@ -124,64 +173,60 @@ contract F3Devents {
     );
 }
 
-
-// Contract Setup
+//==============================================================================
+//   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
+//  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
+//====================================|=========================================
 
 contract modularLong is F3Devents {}
-
-contract DiviesCTR {
-    function deposit() public payable;
-}
 
 contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
 	
-	otherFoMo3D private otherF3D_;
-    DiviesCTR constant private Divies = DiviesCTR(0x95CD217Da207e35E3Ac4cade6e766D5FB6fDAf8d);
-    address constant private FeeAddr = 0xb51d0DF324c513Cf07efD075Cc5bccA1D0F211Ab;
-    //address constant private Jekyll_Island_Inc = Divies;//(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x77abd49884c36193e7d1fccc6898fcdbd9d23ecc);
-    //F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
-
-    
-// Game Settings
-
-    string constant public name = "Zethr AirdropMe";
-    string constant public symbol = "ZTHA";
-	uint256 private rndExtra_ = 30;//extSettings.getLongExtra();     // length of the very first ICO 
-    uint256 private rndGap_ = 1 hours; //extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
+  // TOBEFIXED: change contract address
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x2Ddad27212769D5C87cba9112c6C232628F545bc);
+//==============================================================================
+//     _ _  _  |`. _     _ _ |_ | _  _  .
+//    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
+//=================_|===========================================================
+    string constant public name = "FoMo3D Long Gold";
+    string constant public symbol = "F3DLG";
+	uint256 private rndExtra_ = 0;     // length of the very first ICO , set to 0
+    uint256 private rndGap_ = 0;     // length of ICO phase, set to 0
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 60 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 8 hours;                // max length a round timer can be
-
-// Data Settings
-
+    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
+//==============================================================================
+//     _| _ _|_ _    _ _ _|_    _   .
+//    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
+//=============================|================================================
 	uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
-    
-
-// Player Data
-
+//****************
+// PLAYER DATA 
+//****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
     mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
-
-// Round Data
-
+//****************
+// ROUND DATA 
+//****************
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-
-// Team Fee Data
+//****************
+// TEAM FEE DATA 
+//****************
     mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
     mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
-
-// Constructor
-
+//==============================================================================
+//     _ _  _  __|_ _    __|_ _  _  .
+//    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
+//==============================================================================
     constructor()
         public
     {
@@ -194,21 +239,22 @@ contract FoMo3Dlong is modularLong {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(56,10);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(56,10);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(56,10);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(60,0);   //20% to pot, 20% to aff, 0% to com, 0% to pot swap, 0% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(60,0);   //20% to pot, 20% to aff, 0% to com, 0% to pot swap, 0% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(60,0);   //20% to pot, 20% to aff, 0% to com, 0% to pot swap, 0% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(60,0);   //20% to pot, 20% to aff, 0% to com, 0% to pot swap, 0% to air drop pot
         
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(20,20);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(20,0);  //80% to winner, 0% to next round, 0% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(20,0);  //80% to winner, 0% to next round, 0% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,0);  //80% to winner, 0% to next round, 0% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(20,0);  //80% to winner, 0% to next round, 0% to com
 	}
-
-// Modules
-
+//==============================================================================
+//     _ _  _  _|. |`. _  _ _  .
+//    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
+//==============================================================================
     /**
      * @dev used to make sure no one can interact with contract until it has 
      * been activated. 
@@ -222,14 +268,11 @@ contract FoMo3Dlong is modularLong {
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
-        // *breathes in*
-        // HAHAHAHA
-        //address _addr = msg.sender;
-        //uint256 _codeLength;
+        address _addr = msg.sender;
+        uint256 _codeLength;
         
-        //assembly {_codeLength := extcodesize(_addr)}
-        //require(_codeLength == 0, "sorry humans only");
-        require(msg.sender == tx.origin, "sorry humans only - FOR REAL THIS TIME");
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "sorry humans only");
         _;
     }
 
@@ -242,8 +285,10 @@ contract FoMo3Dlong is modularLong {
         _;    
     }
     
-// Public Functions
-
+//==============================================================================
+//     _    |_ |. _   |`    _  __|_. _  _  _  .
+//    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
+//====|=========================================================================
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
@@ -545,7 +590,8 @@ contract FoMo3Dlong is modularLong {
             
             // gib moni
             if (_eth > 0)
-                plyr_[_pID].addr.transfer(_eth);    
+                // IF anything goes wrong, prevent eth being stuck in the contract
+                plyr_[_pID].addr.transfer(_eth < address(this).balance ? _eth : address(this).balance);    
             
             // build event data
             _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
@@ -652,9 +698,10 @@ contract FoMo3Dlong is modularLong {
         // fire event
         emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
-
-// Getters    
-
+//==============================================================================
+//     _  _ _|__|_ _  _ _  .
+//    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
+//=====_|=======================================================================
     /**
      * @dev return the price buyer will pay for next 1 individual key.
      * -functionhash- 0x018a25e8
@@ -847,8 +894,10 @@ contract FoMo3Dlong is modularLong {
         );
     }
 
-// Core Logic
-
+//==============================================================================
+//     _ _  _ _   | _  _ . _  .
+//    (_(_)| (/_  |(_)(_||(_  . (this + tools + calcs + modules = our softwares engine)
+//=====================_|=======================================================
     /**
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
@@ -977,7 +1026,6 @@ contract FoMo3Dlong is modularLong {
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000) 
         {
-            
             // mint the new keys
             uint256 _keys = (round_[_rID].eth).keysRec(_eth);
             
@@ -996,56 +1044,6 @@ contract FoMo3Dlong is modularLong {
             _eventData_.compressedData = _eventData_.compressedData + 100;
         }
             
-            // manage airdrops
-            if (_eth >= 100000000000000000)
-            {
-            airDropTracker_++;
-            if (airdrop() == true)
-            {
-                // gib muni
-                uint256 _prize;
-                if (_eth >= 10000000000000000000)
-                {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(75)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
-                    
-                    // let event know a tier 3 prize was won 
-                    _eventData_.compressedData += 300000000000000000000000000000000;
-                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(50)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
-                    
-                    // let event know a tier 2 prize was won 
-                    _eventData_.compressedData += 200000000000000000000000000000000;
-                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(25)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
-                    
-                    // let event know a tier 3 prize was won 
-                    _eventData_.compressedData += 300000000000000000000000000000000;
-                }
-                // set airdrop happened bool to true
-                _eventData_.compressedData += 10000000000000000000000000000000;
-                // let event know how much was won 
-                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
-                
-                // reset air drop tracker
-                airDropTracker_ = 0;
-            }
-        }
-    
             // store the air drop tracker number (number of buys since last airdrop)
             _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
             
@@ -1059,16 +1057,16 @@ contract FoMo3Dlong is modularLong {
             rndTmEth_[_rID][_team] = _eth.add(rndTmEth_[_rID][_team]);
     
             // distribute eth
-            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _team, _eventData_);
-            _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
+            _eventData_ = distributeInternal(_rID, _pID, _eth, _affID, _team, _keys, _eventData_);
             
             // call end tx function to fire end tx event.
 		    endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
-
-// Calculators
-    
+//==============================================================================
+//     _ _ | _   | _ _|_ _  _ _  .
+//    (_(_||(_|_||(_| | (_)| _\  .
+//==============================================================================
     /**
      * @dev calculates unmasked earnings (just calculates, does not update mask)
      * @return earnings in wei format
@@ -1126,9 +1124,10 @@ contract FoMo3Dlong is modularLong {
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
     }
-    
-// Tools
-    
+//==============================================================================
+//    _|_ _  _ | _  .
+//     | (_)(_)|_\  .
+//==============================================================================
     /**
 	 * @dev receives name/player info from names contract 
      */
@@ -1254,10 +1253,10 @@ contract FoMo3Dlong is modularLong {
         
         // calculate our winner share, community rewards, gen share, 
         // p3d share, and amount reserved for next pot 
-        uint256 _win = (_pot.mul(48)) / 100;
-        uint256 _com = (_pot / 50);
+        uint256 _win = (_pot.mul(80)) / 100;
+        uint256 _com = 0;
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
-        uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
+        uint256 _p3d = 0;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
         
         // calculate ppt for round mask
@@ -1272,15 +1271,9 @@ contract FoMo3Dlong is modularLong {
         // pay our winner
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
         
-        FeeAddr.transfer(_com);
-        
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
         
-        // send share for p3d to divies
-        if (_p3d > 0)
-            Divies.deposit.value(_p3d)();
-            
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + (_winPID * 100000000000000000000000000) + (_winTID * 100000000000000000);
@@ -1366,65 +1359,6 @@ contract FoMo3Dlong is modularLong {
             return(false);
     }
 
-    /**
-     * @dev distributes eth based on fees to com, aff, and p3d
-     */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
-        private
-        returns(F3Ddatasets.EventReturns)
-    {
-        // pay 2% out to community rewards
-        uint256 _com = _eth / 50;
-
-        FeeAddr.transfer(_com);
-
-        uint256 _p3d;
-        //address(Jekyll_Island_Inc).deposit.value(_com)(); // always returns true or reverts;
-        /*
-        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
-        {
-            // This ensures Team Just cannot influence the outcome of FoMo3D with
-            // bank migrations by breaking outgoing transactions.
-            // Something we would never do. But that's not the point.
-            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
-            // highest belief that everything we create should be trustless.
-            // Team JUST, The name you shouldn't have to trust.
-            _p3d = _com;
-            _com = 0;
-        }*/
-        
-        // pay 1% out to FoMo3D short
-        //uint256 _long = _eth / 100;
-        //otherF3D_.potSwap.value(_long)();
-        
-        // distribute share to affiliate
-        uint256 _aff = _eth / 10; //
-        
-        // decide what to do with affiliate share of fees
-        // affiliate must not be self, and must have a name registered
-        if (_affID != _pID && plyr_[_affID].name != '') {
-            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
-        } else {
-            _p3d = _aff;
-        }
-        
-        // pay out p3d
-        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
-
-        if (_p3d > 0)
-        {
-            // deposit to divies contract
-            //Divies.deposit.value(_p3d.add(_com))();
-            Divies.deposit.value(_p3d)();
-            
-            // set up event data
-            _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
-        }
-        
-        return(_eventData_);
-    }
-    
     function potSwap()
         external
         payable
@@ -1439,19 +1373,21 @@ contract FoMo3Dlong is modularLong {
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
         private
         returns(F3Ddatasets.EventReturns)
     {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
         
-        // toss 2% into airdrop pot [this 1% comes from removing the f3d potsplit to the short f3d]
-        uint256 _air = (_eth.mul(2) / 100);
-        airDropPot_ = airDropPot_.add(_air);
+        uint256 _aff = _eth / 5;
         
-        // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        // if the _affID is invalid, the portion goes into the pot
+        if (_affID != _pID && plyr_[_affID].name != '') {
+            _eth = _eth.sub(_aff);
+            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+        }
         
         // calculate pot 
         uint256 _pot = _eth.sub(_gen);
@@ -1468,7 +1404,7 @@ contract FoMo3Dlong is modularLong {
         // set up event data
         _eventData_.genAmount = _gen.add(_eventData_.genAmount);
         _eventData_.potAmount = _pot;
-        
+
         return(_eventData_);
     }
 
@@ -1554,41 +1490,20 @@ contract FoMo3Dlong is modularLong {
             airDropPot_
         );
     }
-
-// Security
-    
+//==============================================================================
+//    (~ _  _    _._|_    .
+//    _)(/_(_|_|| | | \/  .
+//====================/=========================================================
     /** upon contract deploy, it will be deactivated.  this is a one time
      * use function that will activate the contract.  we do this so devs 
      * have time to set things up on the web end                            **/
-    bool public activated_ = false;
-    function activate()
-        public
-    {
-        // only team just can activate 
-        require(
-            msg.sender == 0x11e52c75998fe2E7928B191bfc5B25937Ca16741,
-            "only team zethr can activate"
-        );
-
-		// make sure that its been linked.
-        //require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
-        
-        // can only be ran once
-        require(activated_ == false, "fomo3d already activated");
-        
-        // activate the contract 
-        activated_ = true;
-        
-        // lets start first round
-		rID_ = 1;
-        round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
-    }
-
+    bool public activated_ = true;
 }
 
-// Structs
-
+//==============================================================================
+//   __|_ _    __|_ _  .
+//  _\ | | |_|(_ | _\  .
+//==============================================================================
 library F3Ddatasets {
     //compressedData key
     // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
@@ -1659,8 +1574,10 @@ library F3Ddatasets {
     }
 }
 
-// Key Calculations
-
+//==============================================================================
+//  |  _      _ _ | _  .
+//  |<(/_\/  (_(_||(_  .
+//=======/======================================================================
 library F3DKeysCalcLong {
     using SafeMath for *;
     /**
@@ -1696,50 +1613,32 @@ library F3DKeysCalcLong {
      * @param _eth eth "in contract"
      * @return number of keys that would exist
      */
-    function keys(uint256 _eth)
+    function keys(uint256 _eth) 
         internal
         pure
         returns(uint256)
     {
-        return (((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000)) / 50;
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
     }
-
+    
     /**
      * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract"
+     * @param _keys number of keys "in contract" 
      * @return eth that would exists
      */
-    function eth(uint256 _keys)
+    function eth(uint256 _keys) 
         internal
         pure
-        returns(uint256)
+        returns(uint256)  
     {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq()) * 50;
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
     }
 }
 
-// Interfaces
-
-interface otherFoMo3D {
-    function potSwap() external payable;
-}
-
-interface F3DexternalSettingsInterface {
-    function getFastGap() external returns(uint256);
-    function getLongGap() external returns(uint256);
-    function getFastExtra() external returns(uint256);
-    function getLongExtra() external returns(uint256);
-}
-
-interface JIincForwarderInterface {
-    function deposit() external payable;
-    function status() external view returns(address, address, bool);
-    function startMigration(address _newCorpBank) external returns(bool);
-    function cancelMigration() external returns(bool);
-    function finishMigration() external returns(bool);
-    function setup(address _firstCorpBank) external;
-}
-
+//==============================================================================
+//  . _ _|_ _  _ |` _  _ _  _  .
+//  || | | (/_| ~|~(_|(_(/__\  .
+//==============================================================================
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerName(uint256 _pID) external view returns (bytes32);
@@ -1750,6 +1649,30 @@ interface PlayerBookInterface {
     function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all) external payable returns(bool, uint256);
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
 }
+
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 
 library NameFilter {
     /**
