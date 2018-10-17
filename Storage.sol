@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0xa1506902f8ca82dace3176575e740c78aa29fc02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x7f6e0d152df1a237450eeffa4f10623ba21a4df0
 */
 pragma solidity ^0.4.24;
 
@@ -7,19 +7,15 @@ contract Storage {
 
     bytes32[] public data;
     bool readOnly;
-    function uploadData(bytes _data) public {
+    function uploadData(bytes32[100] _data) public {
         require(readOnly != true);
         uint index = data.length;
-        for(uint i = 0; i < _data.length / 32; i++) {
-            bytes32 word;
-            assembly {
-                word:= mload(add(_data, add(32, mul(i, 32))))
-            }
+        for(uint i = 0; i < _data.length; i++) {
             data.length++;
-            data[index + i] = word;
+            data[index + i] = _data[i];
         }
     }
-    function uploadFinish() public {
+    function uploadFinish() {
         readOnly = true;
     }
     function getData() public view returns (bytes){
