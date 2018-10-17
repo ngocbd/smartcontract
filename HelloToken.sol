@@ -1,242 +1,160 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloToken at 0x1fa2091397997788cbc04e11e73d6a30ac2adf54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloToken at 0xdfe36fefdf20a6cffd0a42ee789c93f446b3df95
 */
-pragma solidity 0.4.20;
-
-
+pragma solidity ^0.4.16;
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+    return c;
   }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-}
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
+  function toUINT112(uint256 a) internal constant returns(uint112) {
+    assert(uint112(a) == a);
+    return uint112(a);
   }
 
+  function toUINT120(uint256 a) internal constant returns(uint120) {
+    assert(uint120(a) == a);
+    return uint120(a);
+  }
 
-/**
+  function toUINT128(uint256 a) internal constant returns(uint128) {
+    assert(uint128(a) == a);
+    return uint128(a);
+  }
+}
+
+contract HelloToken {
+    using SafeMath for uint256;
+    // Public variables of the token
+    string public constant name    = "Hello Token";  //The Token's name
+    uint8 public constant decimals = 18;               //Number of decimals of the smallest unit
+    string public constant symbol  = "HelloT";            //An identifier    
+    // 18 decimals is the strongly suggested default, avoid changing it
+    
+    // packed to 256bit to save gas usage.
+    struct Supplies {
+        // uint128's max value is about 3e38.
+        // it's enough to present amount of tokens
+        uint128 totalSupply;
+    }
+    
+    Supplies supplies;
+    
+    // Packed to 256bit to save gas usage.    
+    struct Account {
+        // uint112's max value is about 5e33.
+        // it's enough to present amount of tokens
+        uint112 balance;
+    }
+    
+
+    // This creates an array with all balances
+    mapping (address => Account) public balanceOf;
+
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
+
+    /**
+     * Constructor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    function HelloToken() public {
+        supplies.totalSupply = 1*(10**10) * (10 ** 18);  // Update total supply with the decimal amount
+        balanceOf[msg.sender].balance = uint112(supplies.totalSupply);                // Give the creator all initial tokens
+    }
+    
+    // Send back ether sent to me
+    function () {
+        revert();
+    }
+
+    /**
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
-        require(balances[_from] >= _value);
+        require(balanceOf[_from].balance >= _value);
         // Check for overflows
-        require(balances[_to] + _value > balances[_to]);
+        require(balanceOf[_to].balance + _value >= balanceOf[_to].balance);
         // Save this for an assertion in the future
-        uint previousBalances = balances[_from] + balances[_to];
+        uint previousBalances = balanceOf[_from].balance + balanceOf[_to].balance;
         // Subtract from the sender
-        balances[_from] = balances[_from].sub(_value);
+        balanceOf[_from].balance -= uint112(_value);
         // Add the same to the recipient
-        balances[_to] = balances[_to].add(_value);
-        Transfer(_from, _to, _value);
+        balanceOf[_to].balance = _value.add(balanceOf[_to].balance).toUINT112();
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balances[_from] + balances[_to] == previousBalances);
+        assert(balanceOf[_from].balance + balanceOf[_to].balance == previousBalances);
     }
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-      _transfer(msg.sender, _to, _value);
-      return true;
-   /** require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-    **/
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract HelloToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  
-     string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show.
-    string public symbol;                 //An identifier: eg SBX
-     uint256 public sellPrice;
-    uint256 public buyPrice;
-
-   function HelloToken(uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
-        balances[msg.sender] = _initialAmount * 10 ** uint256(_decimalUnits);               // Give the creator all initial tokens
-        totalSupply_ = _initialAmount * 10 ** uint256(_decimalUnits);                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-   }
-   /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-  
-  function setPrices(uint256 newSellPrice, uint256 newBuyPrice) public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
     }
-  
- /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        uint amount = uint(msg.value) / uint(buyPrice);               // calculates the amount
-        _transfer(this, msg.sender, amount * 10 ** uint256(decimals));              // makes the transfers
+
+    
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender].balance >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender].balance -= uint112(_value);            // Subtract from the sender
+        supplies.totalSupply -= uint128(_value);                      // Updates totalSupply
+        emit Burn(msg.sender, _value);
+        return true;
     }
     
-    function() payable public{
-        buy();
+    /**
+     * Total Supply
+     *
+     * View Total Supply
+     *
+     * Return Total Supply
+     * 
+     */
+    function totalSupply() public constant returns (uint256 supply){
+        return supplies.totalSupply;
     }
-
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount * 10 ** uint256(decimals));              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    }
-  
-
-
 }
