@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INVEToken at 0xdac4ae188ace3c8985765edc6c9b4739d4845ddc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INVEToken at 0x2fae88f1f066deba33065d44353aeb7ac9e68134
 */
 pragma solidity ^0.4.24;
+
 /*
 
   Copyright 2018 InterValue Foundation.
@@ -81,7 +82,13 @@ contract ERC20Basic {
   function balanceOf(address who) constant returns (uint);
   function transfer(address to, uint value);
   event Transfer(address indexed from, address indexed to, uint value);
-  
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
   function transferFrom(address from, address to, uint value);
   function approve(address spender, uint value);
@@ -223,7 +230,7 @@ contract BasicToken is ERC20Basic {
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is BasicToken {
+contract StandardToken is BasicToken, ERC20 {
 
   mapping (address => mapping (address => uint)) allowed;
 
@@ -281,9 +288,9 @@ contract StandardToken is BasicToken {
 /// @title InterValue Protocol Token.
 /// For more information about this token, please visit http://inve.one
 contract INVEToken is StandardToken {
-    string public name = "InterValue";
-    string public symbol = "INVE";
-    uint public decimals = 18;
+    string public constant NAME = "InterValue";
+    string public constant SYMBOL = "INVE";
+    uint public constant DECIMALS = 18;
 
     /**
      * CONSTRUCTOR 
