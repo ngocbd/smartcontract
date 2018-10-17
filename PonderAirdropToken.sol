@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0x940741ad6e3c25df5cd5ec7550b23a889e8ee57a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0xc3541f0c65d54088519999a09f40884282d5e374
 */
 pragma solidity ^0.4.21;
 /*
@@ -158,7 +158,7 @@ contract AbstractToken is Token, SafeMath {
   /**
    * Create new Abstract Token contract.
    */
-  function AbstractToken () public {
+  constructor () public {
     // Do nothing
   }
 
@@ -198,6 +198,7 @@ contract AbstractToken is Token, SafeMath {
   function transfer (address _to, uint256 _value) public returns (bool success) {
     require (transferrableBalanceOf(msg.sender) >= _value);
     if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
       accounts [_to] = safeAdd (accounts [_to], _value);
     }
     emit Transfer (msg.sender, _to, _value);
@@ -303,7 +304,7 @@ contract PonderAirdropToken is AbstractToken {
    * and given to msg.sender, and make msg.sender the owner of this smart
    * contract.
    */
-  function PonderAirdropToken () public {
+  constructor () public {
     supplyOwner = msg.sender;
     owners[supplyOwner] = true;
     accounts [supplyOwner] = totalSupply();
@@ -333,7 +334,7 @@ contract PonderAirdropToken is AbstractToken {
    * @return symbol of this token
    */
   function symbol () public pure returns (string result) {
-    return "PONA";
+    return "PONAIR";
   }
 
   /**
@@ -441,7 +442,7 @@ contract PonderAirdropToken is AbstractToken {
    * @param _value number of tokens to be allocated
    * @param _holds number of tokens to hold from transferring
    */  
-  function initAccounts (address [] _to, uint256 [] _value, uint256 [] _holds) public {
+  function initAccountsWithHolds (address [] _to, uint256 [] _value, uint256 [] _holds) public {
     setHolds(_to, _holds);
     initAccounts(_to, _value);
   }
@@ -502,6 +503,7 @@ contract PonderAirdropToken is AbstractToken {
    * Kill the token.
    */
   function kill() public { 
-    if (owners[msg.sender]) selfdestruct(msg.sender);
+    require (owners[msg.sender]);
+    selfdestruct(msg.sender);
   }
 }
