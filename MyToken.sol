@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xaf9419772a83b3ecedc71fe9dc8b1f355d6f7229
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x9a9279fb5fa0c1af258244c0d6417deaa741cdf2
 */
 pragma solidity 0.4.24;
 
@@ -7,7 +7,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract MyToken {
     // Public variables of the token
-    string public name = "DTIlite";
+    string public name = "DTIpro";
     string public symbol = "DTI";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
@@ -166,7 +166,7 @@ contract MyToken {
          require(balanceOf[msg.sender] >= beneficiaries.length);  // Check balance
          for (uint8 i = 0; i< beneficiaries.length; i++) {
              address beneficiary = beneficiaries[i];
-             transfer(beneficiary, 1 * 10 ** uint256(decimals));
+             transfer(beneficiary, 1);
          } return true;
      }
 }
