@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WgdToken at 0x9787b163be24472ce7fc65462320d7dc318193c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WgdToken at 0x2c6fc5bb896707254b8d4786532c456a1b534fc2
 */
 pragma solidity ^0.4.24;
 
-/*
- * Part of Daonomic platform (daonomic.io)
+/**
+ * Powered by Daonomic (https://daonomic.io)
  */
 
 /**
@@ -304,9 +304,11 @@ contract WgdToken is StandardBurnableToken {
   string public constant symbol = "WGD";
   uint8 public constant decimals = 18;
 
-  constructor(uint _total) public {
-    balances[msg.sender] = _total;
-    totalSupply_ = _total;
-    emit Transfer(address(0), msg.sender, _total);
+  uint256 constant TOTAL = 387500000000000000000000000;
+
+  constructor() public {
+    balances[msg.sender] = TOTAL;
+    totalSupply_ = TOTAL;
+    emit Transfer(address(0), msg.sender, TOTAL);
   }
 }
