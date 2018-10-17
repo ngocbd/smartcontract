@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIMI_DAO_31_a at 0x2761266ecb115a6d0b7cd77908d26a3a35418b28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIMI_DAO_31_a at 0x736f3a2e63627f2592825164c33064c4a1cd59a3
 */
 pragma solidity 		^0.4.8	;							
 										
