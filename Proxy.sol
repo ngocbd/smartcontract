@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x57ab1e02fee23774580c119740129eac7081e9d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0xc011a72400e58ecd99ee497cf89e3775d4bd732f
 */
 /* 
- * Nomin Token Contract Proxy
+ * Havven Token Contract Proxy
  * ========================
  * 
  * This contract points to an underlying target which implements its
