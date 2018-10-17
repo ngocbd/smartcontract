@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherealTarot at 0xdf0f6005f469daad805b82d11e65a6654540391d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherealTarot at 0x48af47bfeb129c82689d77a419e02ed8329a518f
 */
 pragma solidity ^ 0.4.23;
 // tarot.etherealbazaar.com
@@ -8,7 +8,7 @@ contract EtherealTarot {
     struct reading { // Struct
         uint8[] cards;
         bool[] upright;
-        uint8 card_count;
+        uint8 count;
     }
 
   mapping(address => reading) readings;
@@ -73,19 +73,16 @@ contract EtherealTarot {
 
 
   function has_reading() view public returns(bool) {
-    return readings[msg.sender].card_count!=0;
+    return readings[msg.sender].count!=0;
   }
   function reading_card_at(uint8 index) view public returns(uint8) {
     return readings[msg.sender].cards[index];
   }
-  // returning variable length arrays proved quite tricky...
   function reading_card_upright_at(uint8 index) view public returns(bool) {
     return readings[msg.sender].upright[index];
   }
-  function reading_card_count() view public returns(uint8){
-    return readings[msg.sender].card_count;
-  }
-  // Tarot by donation
+
+  // Tarot by donation + gas costs
   function withdraw() public {
     require(msg.sender == creator);
     creator.transfer(address(this).balance);
@@ -115,7 +112,6 @@ contract EtherealTarot {
   function single_card() payable public {
     spread(1);
   }
-  
   function situation_challenge() payable public {
     spread(2);
   }
