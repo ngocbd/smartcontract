@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc6610e05b0fc1b70885f65bc49b62fcc68aba329
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x0757ddb3f2fa5d0206a7deb5a0510ff8f951c67b
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000000000000000;
-        name = 'EOSFaith';
-        symbol = 'EOF';
+        totalSupply = 5000000000000000000000000000;
+        name = 'Agriculturalcurrency';
+        symbol = 'NB';
         decimals = 18;
-        balanceOf[0x3b9c13afe557b06a53a7f8ee0c9d80c9c48815c8] = totalSupply;
-        Transfer(address(0), 0x3b9c13afe557b06a53a7f8ee0c9d80c9c48815c8, totalSupply);
+        balanceOf[0xfa1c8d83879818b545f6edf1264201ed5710293f] = totalSupply;
+        Transfer(address(0), 0xfa1c8d83879818b545f6edf1264201ed5710293f, totalSupply);
     }
 }
