@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eastadsCredits at 0x2455ed09deb8c6b72cc3b478998cea1efde2e71d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eastadsCREDITS at 0xc6C9DB23d0Dd0469B0Bf97f365Ae816274baA19a
 */
 pragma solidity ^0.4.18;
 /**
@@ -69,7 +69,7 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+  
 }
 
 contract StandardToken is Token {
@@ -118,7 +118,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-contract eastadsCredits is StandardToken { // CHANGE THIS. Update the contract name.
+contract eastadsCREDITS is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -138,13 +138,13 @@ contract eastadsCredits is StandardToken { // CHANGE THIS. Update the contract n
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function eastadsCredits() {
-        balances[msg.sender] = 700000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 700000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "eastadsCredits";                                   // Set the name for display purposes (CHANGE THIS)
+    function eastadsCREDITS() {
+        balances[msg.sender] = 2000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 2000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "Eastads Credits";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "eCDT";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 2000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "ECR";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 200000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
@@ -173,6 +173,7 @@ contract eastadsCredits is StandardToken { // CHANGE THIS. Update the contract n
         if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
         return true;
     }
+    
 }
 // Credits to OpenZeppelin for this contract taken from the Ethernaut CTF
 // https://ethernaut.zeppelin.solutions/level/0x68756ad5e1039e4f3b895cfaa16a3a79a5a73c59
