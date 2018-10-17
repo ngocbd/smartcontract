@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0xf01a853233f869150834d6db88df694db9bba100
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x65c3f232177c8c73e81db28c957d8704ea39eb93
 */
 pragma solidity ^0.4.18;
 
@@ -1411,7 +1411,6 @@ contract CryptoSagaCorrectedHeroStats {
 }
 
 
-
 /**
  * @title CryptoSagaArenaRecord
  * @dev The record of battles in the Arena.
@@ -1507,8 +1506,12 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
     for (uint256 i = _previous.recentPlayersFront(); i < _previous.recentPlayersBack(); i++) {
       var _player = _previous.recentPlayers(i);
+      // The initial player pushed into the recent players queue. 
+      pushPlayer(_player);
       // The initial player's Elo.
       addressToElo[_player] = _previous.getEloRating(_player);
+      // The initial player gets into leaderboard.
+      updateLeaderboard(_player);
     }
   }
 
