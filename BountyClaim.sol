@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyClaim at 0x612229235c223a8ab209f3fd73af8607858c6636
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyClaim at 0xdf56130421afc85431af6b3451a9336377e5fb0c
 */
 pragma solidity ^0.4.24;
 
@@ -76,13 +76,8 @@ contract ERC20 {
 
 
 contract BountyClaim is Ownable {
-    mapping (address => uint256) allowance;
+    mapping (address => uint256) public allowance;
     address _tokenAddress = 0x2A22e5cCA00a3D63308fa39f29202eB1b39eEf52;
-
-    constructor() public {
-        allowance[0xF4eb8c7473CFC2EED0F448DCdBA7C8f7357E57A9] = 5000000000000000000;
-        allowance[0xfcA406118f56912A042D9898Bf0a12241C720c9b] = 10000000000000000000;
-    }
 
     function() public payable {
         require(allowance[msg.sender] > 0);
@@ -90,7 +85,16 @@ contract BountyClaim is Ownable {
         allowance[msg.sender] = 0;
     }
 
-    function withdraw(uint256 amount) onlyOwner {
+    function withdraw(uint256 amount) external onlyOwner {
         ERC20(_tokenAddress).transfer(msg.sender, amount);
+    }
+
+    function changeAllowances(address[] addresses, uint256[] values) external onlyOwner returns (uint256) {
+        uint256 i = 0;
+        while (i < addresses.length) {
+            allowance[addresses[i]] = values[i];
+            i += 1;
+        }
+        return(i);
     }
 }
