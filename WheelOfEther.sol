@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x6e4382f198979a598dc5cbef188486ce9510ecb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WheelOfEther at 0x36649d5c33dff01abe05f769e5f2a1e8de178695
 */
 pragma solidity ^0.4.23;
 
@@ -96,6 +96,7 @@ contract WheelOfEther {
         address indexed customerAddress,
         uint256 ethereumIn,
         uint256 contractBal,
+        uint256 devFee,
         uint timestamp
     );
 
@@ -112,7 +113,7 @@ contract WheelOfEther {
         uint256 outcome,
         uint256 ethSpent,
         uint256 ethReturned,
-        uint256 devFee,
+        uint256 userBalance,
         uint timestamp
     );
 
@@ -120,12 +121,13 @@ contract WheelOfEther {
     address admin;
     bool public gamePaused = false;
     uint256 minBet = 0.01 ether;
+    uint256 maxBet = 5 ether;
     uint256 devFeeBalance = 0;
 
     uint8[10] brackets = [1,3,6,12,24,40,56,68,76,80];
 
-    uint256 internal globalFactor = 1000000000000000000000;
-    uint256 constant internal constantFactor = globalFactor * globalFactor;
+    uint256 internal globalFactor = 10e21;
+    uint256 constant internal constantFactor = 10e21 * 10e21;
     mapping(address => uint256) internal personalFactorLedger_;
     mapping(address => uint256) internal balanceLedger_;
 
@@ -153,13 +155,18 @@ contract WheelOfEther {
         gameActive
     {
         address _customerAddress = msg.sender;
-        // User must buy at least 0.01 eth
-        require(msg.value >= minBet);
-        // Adjust ledgers
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value);
+        // User must buy at least 0.02 eth
+        require(msg.value >= (minBet * 2));
+
+        // Add 2% fee of the buy to devFeeBalance
+        uint256 devFee = msg.value / 50;
+        devFeeBalance = devFeeBalance.add(devFee);
+
+        // Adjust ledgers while taking the dev fee into account
+        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value).sub(devFee);
         personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
 
-        onTokenPurchase(_customerAddress, msg.value, this.balance, now);
+        onTokenPurchase(_customerAddress, msg.value, this.balance, devFee, now);
     }
 
 
@@ -174,6 +181,23 @@ contract WheelOfEther {
         // Transfer balance and update user ledgers
         _customerAddress.transfer(sellEth);
         balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).sub(sellEth);
+		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
+
+        onTokenSell(_customerAddress, sellEth, this.balance, now);
+    }
+
+
+    function sellAll()
+        public
+        nonContract
+    {
+        address _customerAddress = msg.sender;
+        // Set the sell amount to the user's full balance, don't sell if empty
+        uint256 sellEth = ethBalanceOf(_customerAddress);
+        require(sellEth > 0);
+        // Transfer balance and update user ledgers
+        _customerAddress.transfer(sellEth);
+        balanceLedger_[_customerAddress] = 0;
 		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
 
         onTokenSell(_customerAddress, sellEth, this.balance, now);
@@ -199,12 +223,40 @@ contract WheelOfEther {
         address _customerAddress = msg.sender;
         // User must have enough eth
         require(ethBalanceOf(_customerAddress) >= betEth);
-        // If user bets more than available bet pool, bet only as much as the pool
-        if (betEth > betPool(_customerAddress)) {
-            betEth = betPool(_customerAddress);
+        // User must bet at least the minimum
+        require(betEth >= minBet);
+        // If the user bets more than maximum...they just bet the maximum
+        if (betEth > maxBet){
+            betEth = maxBet;
+        }
+        // User cannot bet more than 10% of available pool
+        if (betEth > betPool(_customerAddress)/10) {
+            betEth = betPool(_customerAddress)/10;
+        }
+        // Execute the bet and return the outcome
+        resultNum = bet(betEth, _customerAddress);
+    }
+
+
+    function spinAllTokens()
+        public
+        nonContract
+        gameActive
+        returns (uint256 resultNum)
+    {
+        address _customerAddress = msg.sender;
+        // set the bet amount to the user's full balance
+        uint256 betEth = ethBalanceOf(_customerAddress);
+        // User cannot bet more than 10% of available pool
+        if (betEth > betPool(_customerAddress)/10) {
+            betEth = betPool(_customerAddress)/10;
         }
         // User must bet more than the minimum
         require(betEth >= minBet);
+        // If the user bets more than maximum...they just bet the maximum
+        if (betEth >= maxBet){
+            betEth = maxBet;
+        }
         // Execute the bet and return the outcome
         resultNum = bet(betEth, _customerAddress);
     }
@@ -219,17 +271,31 @@ contract WheelOfEther {
     {
         address _customerAddress = msg.sender;
         uint256 betEth = msg.value;
+
         // All eth is converted into tokens before the bet
-        // If user bets more than available bet pool, bet only as much as the pool
-        if (betEth > betPool(_customerAddress)) {
-            betEth = betPool(_customerAddress);
+        // User must buy at least 0.02 eth
+        require(betEth >= (minBet * 2));
+
+        // Add 2% fee of the buy to devFeeBalance
+        uint256 devFee = betEth / 50;
+        devFeeBalance = devFeeBalance.add(devFee);
+        betEth = betEth.sub(devFee);
+
+        // If the user bets more than maximum...they just bet the maximum
+        if (betEth >= maxBet){
+            betEth = maxBet;
         }
-        // User must bet more than the minimum
-        require(betEth >= minBet);
-        // Adjust ledgers
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value);
+
+        // Adjust ledgers while taking the dev fee into account
+        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).add(msg.value).sub(devFee);
 		personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-        // Execute the bet and return the outcome
+
+        // User cannot bet more than 10% of available pool
+        if (betEth > betPool(_customerAddress)/10) {
+            betEth = betPool(_customerAddress)/10;
+        }
+
+        // Execute the bet while taking the dev fee into account, and return the outcome
         resultNum = bet(betEth, _customerAddress);
     }
 
@@ -288,7 +354,7 @@ contract WheelOfEther {
     // Internal Functions
 
 
-    function bet(uint256 initEth, address _customerAddress)
+    function bet(uint256 betEth, address _customerAddress)
         internal
         returns (uint256 resultNum)
     {
@@ -297,31 +363,21 @@ contract WheelOfEther {
         // Determine the outcome
         uint result = determinePrize(resultNum);
 
-        // Add 2% fee to devFeeBalance and remove from user's balance
-        uint256 devFee = initEth / 50;
-        devFeeBalance = devFeeBalance.add(devFee);
-        balanceLedger_[_customerAddress] = ethBalanceOf(_customerAddress).sub(devFee);
-        personalFactorLedger_[_customerAddress] = constantFactor / globalFactor;
-
-        // Remove the dev fee from the bet amount
-        uint256 betEth = initEth - devFee;
-
         uint256 returnedEth;
-        uint256 prizePool = betPool(_customerAddress);
 
 		if (result < 5)                                             // < 5 = WIN
 		{
 			uint256 wonEth;
 			if (result == 0){                                       // Grand Jackpot
-				wonEth = grandJackpot(betEth, prizePool);
+				wonEth = betEth.mul(9) / 10;                        // +90% of original bet
 			} else if (result == 1){                                // Jackpot
-				wonEth = jackpot(betEth, prizePool);
+				wonEth = betEth.mul(8) / 10;                        // +80% of original bet
 			} else if (result == 2){                                // Grand Prize
-				wonEth = betEth / 2;                                // +50% of original bet
+				wonEth = betEth.mul(7) / 10;                        // +70% of original bet
 			} else if (result == 3){                                // Major Prize
-				wonEth = betEth / 4;                                // +25% of original bet
+				wonEth = betEth.mul(6) / 10;                        // +60% of original bet
 			} else if (result == 4){                                // Minor Prize
-				wonEth = betEth / 10;                               // +10% of original bet
+				wonEth = betEth.mul(3) / 10;                        // +30% of original bet
 			}
 			winEth(_customerAddress, wonEth);                       // Award the user their prize
             returnedEth = betEth.add(wonEth);
@@ -331,41 +387,20 @@ contract WheelOfEther {
 		else {                                                      // > 5 = LOSE
 			uint256 lostEth;
 			if (result == 6){                                		// Minor Loss
-				lostEth = betEth / 4;                    		    // -25% of original bet
+				lostEth = betEth / 10;                    		    // -10% of original bet
 			} else if (result == 7){                                // Major Loss
-				lostEth = betEth / 2;                     			// -50% of original bet
+				lostEth = betEth / 4;                     			// -25% of original bet
 			} else if (result == 8){                                // Grand Loss
-				lostEth = betEth.mul(3) / 4;                     	// -75% of original bet
+				lostEth = betEth / 2;                     	        // -50% of original bet
 			} else if (result == 9){                                // Total Loss
 				lostEth = betEth;                                   // -100% of original bet
 			}
 			loseEth(_customerAddress, lostEth);                     // "Award" the user their loss
             returnedEth = betEth.sub(lostEth);
 		}
-        spinResult(_customerAddress, resultNum, result, betEth, returnedEth, devFee, now);
+        uint256 newBal = ethBalanceOf(_customerAddress);
+        spinResult(_customerAddress, resultNum, result, betEth, returnedEth, newBal, now);
         return resultNum;
-    }
-
-    function grandJackpot(uint256 betEth, uint256 prizePool)
-        internal
-        returns (uint256 wonEth)
-    {
-        wonEth = betEth / 2;                                        // +50% of original bet
-        uint256 max = minBet * 100 * betEth / prizePool;            // Fire the loop a maximum of 100 times
-		for (uint256 i=0;i<max; i+= minBet) {			  	        // Add a % of the remaining Token Pool
-            wonEth = wonEth.add((prizePool.sub(wonEth)) / 50);      // +2% of remaining pool
-		}
-    }
-
-    function jackpot(uint256 betEth, uint256 prizePool)
-        internal
-        returns (uint256 wonEth)
-    {
-        wonEth = betEth / 2;                                        // +50% of original bet
-        uint256 max = minBet * 100 * betEth / prizePool;            // Fire the loop a maximum of 100 times
-		for (uint256 i=0;i<max; i+= minBet) {                       // Add a % of the remaining Token Pool
-            wonEth = wonEth.add((prizePool.sub(wonEth)) / 100);     // +1% of remaining pool
-		}
     }
 
     function maxRandom()
@@ -376,7 +411,8 @@ contract WheelOfEther {
             abi.encodePacked(_seed,
                 blockhash(block.number - 1),
                 block.coinbase,
-                block.difficulty)
+                block.difficulty,
+                now)
         ));
         return _seed;
     }
