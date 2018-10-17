@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaCardSwapMerculet at 0xaa543201f04c3184cfbe716e44425cacac206afc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaCardSwapMerculet at 0x246fb400aa06bb8014584fdaa8a6783730a93b0d
 */
 pragma solidity ^0.4.18;
 
@@ -1390,7 +1390,7 @@ contract CryptoSagaCardSwapMerculet is Pausable{
     require(_walletAddress2 != address(0));
     
     wallet1 = _walletAddress1;
-    wallet2 = _walletAddress1;
+    wallet2 = _walletAddress2;
 
     heroContract = CryptoSagaHero(_heroAddress);
     merculetContract = ERC20(_tokenAddress);
