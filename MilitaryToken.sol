@@ -1,9 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryToken at 0xdc2a1aD032a4507C44696b3DC4aD3a10885f66a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryToken at 0x9eb60f455f6e075b2fb50d25ac22ebd827a48908
 */
 /*
-    Implements MilitaryToken.
-    Copyright 2017, 2018 by MilitaryToken, LLC.
+    Implements MilitaryToken™. The true cryptocurrency token for 
+    www.MilitaryToken.io "Blockchain for a better world".
+    
+    All of the following might at times be used to refer to this coin: "MILS", 
+    "MILs", "MIL$", "$MILS", "$MILs", "$MIL$", "MilitaryToken". In social 
+    settings we prefer the text "MILs" but in formal listings "MILS" and "$MILS" 
+    are the best symbols. In the Solidity code, the official symbol can be found 
+    below which is "MILS". 
+  
+    Portions of this code fall under the following license where noted as from
+    "OpenZepplin":
+
+    The MIT License (MIT)
+
+    Copyright (c) 2016 Smart Contract Solutions, Inc.
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 */
 
 pragma solidity 0.4.24;
@@ -44,9 +77,6 @@ library SafeMath {
     * @dev Integer division of two numbers, truncating the quotient.
     */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return a / b;
     }
 
@@ -221,6 +251,60 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
+ * @dev From https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
+ */
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  
+  address public owner;
+
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+
+/**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
  * @dev From https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/token/ERC20/BurnableToken.sol
@@ -249,9 +333,9 @@ contract BurnableToken is BasicToken {
     }
 }
 
-contract MilitaryToken is BurnableToken, StandardToken {
+contract MilitaryToken is Ownable, BurnableToken, StandardToken {
     string public name = "MilitaryToken";
-    string public symbol = "MILs";
+    string public symbol = "MILS";
     uint public decimals = 18;
     uint public INITIAL_SUPPLY = 400000000 * 1 ether;
 
