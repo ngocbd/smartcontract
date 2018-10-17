@@ -1,24 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xe6bee8b2d49e623dbad414d9d3fa2fad35d9a6e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x6a6a507549a51e4b5124f3e78e2adc5fb777db62
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.16;
 
-/**
- * SmartEth.co
- * ERC20 Token and ICO smart contracts development, smart contracts audit, ICO websites.
- * contact@smarteth.co
- */
-
-/**
- * @title Ownable
- */
 contract Ownable {
+
   address public owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  constructor() public {
-    owner = 0x05C40Def8a40771aA5fd362BCd96e1bb64Ec9044;
+  function Ownable() {
+    owner = msg.sender;
   }
 
   modifier onlyOwner() {
@@ -26,52 +16,79 @@ contract Ownable {
     _;
   }
 
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 }
 
-/**
- * @title ERC20Basic
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
-/**
- * @title ERC20 interface
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract AirDrop is Ownable {
 
-contract Airdrop is Ownable {
+  Token token;
 
-  ERC20 public token = ERC20(0x259059f137CB9B8F60AE27Bd199d97aBb69E539B);
+  event TransferredToken(address indexed to , uint256 value);
+  event FailedTransfer(address indexed to, uint256 value);
 
-  function airdrop(address[] recipient, uint256[] amount) public onlyOwner returns (uint256) {
-    uint256 i = 0;
-      while (i < recipient.length) {
-        token.transfer(recipient[i], amount[i]);
-        i += 1;
-      }
-    return(i);
+  modifier whenDropIsActive() {
+    assert(isActive());
+
+    _;
   }
-  
-  function airdropSameAmount(address[] recipient, uint256 amount) public onlyOwner returns (uint256) {
+
+  function AirDrop () {
+      address _tokenAddr = 0x382117315856a533549eA621542Ccce13E54aE82; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
+
+  function isActive() constant returns (bool) {
+    return (
+        tokensAvailable() > 0 // Tokens must be available to send
+    );
+  }
+  //below function can be used when you want to send every recipeint with different number of tokens
+  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
     uint256 i = 0;
-      while (i < recipient.length) {
-        token.transfer(recipient[i], amount);
-        i += 1;
-      }
-    return(i);
+    while (i < dests.length) {
+        uint256 toSend = values[i] * 10**18;
+        sendInternally(dests[i] , toSend, values[i]);
+        i++;
+    }
+  }
+
+  // this function can be used when you want to send same number of tokens to all the recipients
+  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    uint256 toSend = value * 10**18;
+    while (i < dests.length) {
+        sendInternally(dests[i] , toSend, value);
+        i++;
+    }
+  }  
+
+  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
+    if(recipient == address(0)) return;
+    if(tokensAvailable() >= tokensToSend) {
+      token.transfer(recipient, tokensToSend);
+      TransferredToken(recipient, valueToPresent);
+    } else {
+      FailedTransfer(recipient, valueToPresent); 
+    }
+  }   
+
+
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  function destroy() onlyOwner {
+    uint256 balance = tokensAvailable();
+    require (balance > 0);
+    token.transfer(owner, balance);
+    selfdestruct(owner);
   }
 }
