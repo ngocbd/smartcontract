@@ -1,10 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract realestate at 0x21ef3d6663a7468200a9c671526986f7e12682a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract realestate at 0x89b1e9f46d0f1d1a59c7611fc50d6a1498e63159
 */
 /**
  * @title smart real estate platform implementation
  * @author Maxim Akimov - <devstylesoftware@gmail.com>
  */
+ 
+ // ver  from 23/06/2018  v0.3
 
 pragma solidity ^0.4.24;
 
@@ -77,11 +79,6 @@ contract Ownable {
 
 }
 
-/*
-  ???? ?? ????? -  ????????? "?????????" ????? ??????? ????????? ??????????
-  ??? ? ????? ???? ???????? ???????? ? ?????? ??????? ????? ????????? 
-  (???????? ? ?????? ??? ???? ?????????? ??????)
-*/
 contract realestate is Ownable{
     
    using SafeMath for uint;
@@ -90,18 +87,15 @@ contract realestate is Ownable{
         created,canceled,signed,finished
     }
     
-    struct _sdeal{
+    struct _dealData{
     
     address buyer;
     address seller;
     address signer;
-   // address agency;
+  
     uint sum; 
     uint fee;
     
-    address signBuyer;
-    address signSeller;
-   // address signAgency;
     uint atCreated;
     uint atClosed;
     
@@ -112,13 +106,20 @@ contract realestate is Ownable{
     
     string comment;
     uint objectType; // 0 - old 1 - new
+    
+    uint date;
+    bool isProlong;
 }
 
-struct _sSigns{
+struct _dealSigns{
+   
+    address signBuyer;
+    address signSeller;
     
-   address finishSignBuyer;
-   address finishSignSeller;
-   address finishSignSigner;
+    address finishSignBuyer;
+    address finishSignSeller;
+    address finishSignSigner;
+   
 }
 
    event MoneyTransfer(
@@ -127,15 +128,14 @@ struct _sSigns{
         uint _value
     );
  
-   //Need to change to private
-   
- //uint public feePercent; // ???? ?? ?????? ? ????????? 
+
  address public agencyOwner;
  address public agencyReceiver;
 
- _sdeal[] public deals;
-_sSigns[] public signs;
- 
+ _dealData[] private deals;
+_dealSigns[] private signs;
+
+ mapping (uint=>uint) private dealNumbers;
    
    // **************** modifiers **************** //
    
@@ -144,64 +144,82 @@ _sSigns[] public signs;
         _;
     }
     
-   /* modifier onlyDealMembers(uint _dealNumber){
-        
-        uint deal = dealNumbers[_dealNumber];
-          require(msg.sender == deals[deal].buyer|| msg.sender == deals[deal].seller 
-        || msg.sender == deals[deal].agency || msg.sender == deals[deal].signer);
-        
-        _;
-    }*/
-    
     modifier onlySigner(uint _dealNumber){
         
         uint deal = dealNumbers[_dealNumber];
         require(msg.sender == deals[deal].signer);
         _;
     }
-    /*
-    TODO
-    ??????? ??????????? ??? ???? ????????????? ? ??????
-    */
     
     constructor() public{
         
-        //feePercent = 3;// need??
         agencyOwner = msg.sender;
         agencyReceiver = msg.sender;
     }
-     
-    function changeAgencyOwner(address newAgency) public {
-            require(msg.sender == agencyOwner || msg.sender == owner);
-         agencyOwner = newAgency;
+    
+     /**
+     * @dev Change eth address of agency for create deal 
+     * @param _newAgency - new agency eth address
+     */  
+    function changeAgencyOwner(address _newAgency) public {
+        require(msg.sender == agencyOwner || msg.sender == owner);
+        agencyOwner = _newAgency;
          
      }
+     
+     /**
+     * @dev Change eth address of agency for recieve fee
+     * @param _agencyReceiver - new agency eth address
+     */ 
      function changeAgencyReceiver (address _agencyReceiver) public{
          
-         require(msg.sender == agencyOwner || msg.sender == owner);
-         agencyReceiver = _agencyReceiver;
+        require(msg.sender == agencyOwner || msg.sender == owner);
+        agencyReceiver = _agencyReceiver;
      }
      
-     //??? ????? ??? ????? ??????? ??
-   /* function changeDealDate(uint _deal, uint _date) onlyAgency public{
-         require(deals[_deal].isProlong);
-         deals[_deal].date = _date;
-    }*/
+     /**
+     * @dev to prolongate a deal for some days
+     * @param _dealNumber - uniq number of deal
+     * @param _days - count of days from current time
+     */ 
+    function changeDealDate(uint _dealNumber, uint _days) onlyAgency public{
+        
+        uint deal = dealNumbers[_dealNumber];
+        require(deals[deal].isProlong);
+         
+        deals[deal].date = now + _days * 1 days;
+    }
 
-    function getSigns(uint _dealNumber) constant public returns (address signBuyer, 
-    address signSeller){
+    /**
+     * @dev Get all signs of deal by _dealNumber
+     * @param _dealNumber - uniq number of deal 
+     */ 
+    function getSigns(uint _dealNumber) constant public returns (
+    address signBuyer, 
+    address signSeller,
+    address finishSignBuyer,
+    address finishSignSeller,
+    address finishSignSigner){
         
         uint deal = dealNumbers[_dealNumber];
         
         return (
-               deals[deal].signBuyer,
-               deals[deal].signSeller
-              // deals[deal].signAgency
+                signs[deal].signBuyer,
+                signs[deal].signSeller,
+               
+                signs[deal].finishSignBuyer,
+                signs[deal].finishSignSeller,
+                signs[deal].finishSignSigner
             );
         
     }
     
-    function getDealByNumber(uint _dealNumber) constant public returns (address buyer, 
+     /**
+     * @dev Get main data of deal by _dealNumber
+     * @param _dealNumber - uniq number of deal 
+     */ 
+    function getDealByNumber(uint _dealNumber) constant public returns (
+    address buyer, 
     address sender, 
     address agency,
     uint sum, 
@@ -222,11 +240,19 @@ _sSigns[] public signs;
             );
     }
     
+    /**
+     * @dev Get lenght of priviate array deals (for agency only)
+     */ 
     function getDealsLength() onlyAgency  constant public returns (uint len){
         return deals.length;
     }
     
-    function getDealById(uint deal) onlyAgency constant public returns (address buyer, 
+     /**
+     * @dev Get main data of deal
+     * @param deal - uniq id from priviate array deals 
+     */ 
+    function getDealById(uint deal) onlyAgency constant public returns (
+    address buyer, 
     address sender, 
     address agency,
     uint sum, 
@@ -248,73 +274,81 @@ _sSigns[] public signs;
             );
     }
     
-     function getDealDataByNumber(uint _dealNumber)  constant public returns 
-     (string comment, 
+    /**
+     * @dev Get comment, fee, atCloced, date, is prolong of deal
+     * @param _dealNumber - uniq number of deal 
+     */ 
+    function getDealDataByNumber(uint _dealNumber)  constant public returns (
+    string comment, 
     uint fee, 
-    uint atClosed) {
+    uint atClosed,
+    uint date,
+    bool isProlong) {
        
          uint deal = dealNumbers[_dealNumber];
         
         return (
             deals[deal].comment,
             deals[deal].fee,
-            deals[deal].atClosed
+            deals[deal].atClosed,
+            deals[deal].date,
+            deals[deal].isProlong
             );
     }
 
-    mapping (uint=>uint) public dealNumbers;
+   
     
-   function addDeal(address buyer, address seller, address signer, uint sum, uint fee, uint objectType, uint _dealNumber, string comment, uint whoPay) onlyAgency public{
+     /**
+    * @dev function for create deal by agency owner only
+    * @param _buyer -  eth address of buyer
+    * @param _seller -  eth address of seller
+    * @param _signer -  eth address of signer (how cah canceled deal)
+    * @param _sum -  sum of the deal (in wei)
+    * @param _fee -  fee of the deal (in wei)
+    * @param _objectType -  type of property (0 - old, 1 - new)
+    * @param _dealNumber - uniq number of deal
+    * @param _comment -  any text coment of the deal
+    * @param whoPay -  point out who pay fee of the deal (0 - buyer, 1 - seller)
+    * @param _countDays - Hoe many days allow for deal processing
+    * @param _isProlong - Allow to prolongate deal, if true
+    */
+   function addDeal(
+   address _buyer, 
+   address _seller, 
+   address _signer,
+   uint _sum,
+   uint _fee,
+   uint _objectType, 
+   uint _dealNumber, 
+   string _comment,
+   uint whoPay,
+   uint _countDays,
+   bool _isProlong) onlyAgency public{
       
-      /*
-      objecType = 0 //  old
-      objecType = 1 // new
-       */ 
-     //  feePercent = _feePercent;
-      // sum = sum.mul(1 ether);
-       //uint fee = sum.mul(feePercent).div(100);
-      // fee = fee.mul(1 ether);
-      
-      //??? ???????????? objectType or WhoPay
-      /*
-      whopay = 0  // pay fee buyer
-      whopay = 1  // pay fee seller
-      */
       if(whoPay ==0){
-        sum = sum.add(fee);  
+        _sum = _sum.add(_fee);  
       }
      
-     /*  if(objectType == 0){
-           //buyer pay fee. increase sum to  feePercent
-            sum = sum.add(fee);
-       }
-      */
+      uint  newIndex = deals.length++; signs.length ++;
       
-      uint  newIndex = deals.length++;
-      signs.length ++;
-      deals[newIndex].buyer = buyer;
-      deals[newIndex].seller = seller;
-       deals[newIndex].signer = signer;
-     // deals[newIndex].agency = agencyOwner;
-      deals[newIndex].sum = sum;
-      deals[newIndex].fee = fee;
-      //deals[newIndex].date = date;
-     // deals[newIndex].isProlong = isProlong;
-     
+      deals[newIndex].buyer = _buyer;
+      deals[newIndex].seller = _seller;
+      deals[newIndex].signer = _signer;
+      deals[newIndex].sum = _sum;
+      deals[newIndex].fee = _fee;
+      deals[newIndex].date = now + _countDays * 1 days;
+      deals[newIndex].isProlong = _isProlong;
       deals[newIndex].atCreated = now;
-      
-      deals[newIndex].signBuyer = 0x0;
-      deals[newIndex].signSeller = 0x0;
-      deals[newIndex].comment = comment;
+      deals[newIndex].comment = _comment;
       deals[newIndex].status = statuses.created;
-      //deals[newIndex].signAgency = 0x0;
-      
       deals[newIndex].balance = 0;
-      deals[newIndex].objectType = objectType;
-     deals[newIndex].dealNumber = _dealNumber;
+      deals[newIndex].objectType = _objectType;
+      deals[newIndex].dealNumber = _dealNumber;
      
      dealNumbers[_dealNumber] = newIndex;
      
+     signs[newIndex].signBuyer = 0x0;
+     signs[newIndex].signSeller = 0x0;
      signs[newIndex].finishSignSeller = 0x0;
      signs[newIndex].finishSignBuyer = 0x0;
      signs[newIndex].finishSignSigner = 0x0;
@@ -322,33 +356,39 @@ _sSigns[] public signs;
      
    }
    
-   // Buyer sign
+     /**
+    * @dev function for sign deal by buyer and for transfer money  (call after sign seller only)
+    * @param _dealNumber (deal number)
+    */
    function signBuyer(uint _dealNumber) public payable{
        
        uint deal = dealNumbers[_dealNumber];
        
        //If sign of buyer is mpty and sender it is buyer for this deal
-       require(deals[deal].signBuyer == 0x0 && msg.sender == deals[deal].buyer);
-       require(deals[deal].signSeller == deals[deal].seller);
+       require(signs[deal].signBuyer == 0x0 && msg.sender == deals[deal].buyer);
+       require(signs[deal].signSeller == deals[deal].seller);
        
        //Check, value of tx need >= summ of deal
        //TODO: need change maker!!!!
        require(deals[deal].sum == msg.value);
        
-       deals[deal].signBuyer = msg.sender;
+       signs[deal].signBuyer = msg.sender;
         deals[deal].balance =  msg.value;
        deals[deal].status = statuses.signed;
      
    }
    
-    // Seller sign
+    /**
+    * @dev function for sign deal by seller (in start and before buyer)
+    * @param _dealNumber (deal number)
+    */
    function signSeller(uint _dealNumber) public {
        
        uint deal = dealNumbers[_dealNumber];
        
        //If sign of seller is empty and sender it is seller for this deal
-       require(deals[deal].signSeller == 0x0 && msg.sender == deals[deal].seller);
-       deals[deal].signSeller = msg.sender;
+       require(signs[deal].signSeller == 0x0 && msg.sender == deals[deal].seller);
+       signs[deal].signSeller = msg.sender;
    }
    
    // Agency sign
@@ -363,39 +403,25 @@ _sSigns[] public signs;
    }*/
    
    
-   //?????? ????? ????????? ?????
- /*  function refound(uint deal) public{
+   /**
+    * @dev function for buyer (for mmoney refund after time of the deal)
+    * @param _dealNumber (deal number)
+    */
+   function refund(uint _dealNumber) public{
        
-       require(now > deals[deal].date && deals[deal].isProlong == false && deals[deal].balance > 0);
+       uint deal = dealNumbers[_dealNumber];
+       require(now > deals[deal].date && deals[deal].balance > 0 && msg.sender == deals[deal].buyer);
        
-       //??? ??? ???? ??????? ?????? ??????????!!???
-       deals[deal].agency.transfer(deals[deal].balance);
-       balances[deals[deal].buyer] = 0;
+       deals[deal].buyer.transfer(deals[deal].balance);
+       
        deals[deal].balance = 0;
        
-   }*/
+   }
    
-   /*
-   
-   function finishSign(uint _dealNumber) public{
-       
-        uint deal = dealNumbers[_dealNumber];
-        
-          require(deals[deal].balance > 0 &&  deals[deal].status == statuses.signed );
-       
-       if(msg.sender == deals[deal].buyer){
-           signs[deal].finishSignBuyer = msg.sender;
-       }
-        
-      if(msg.sender == deals[deal].seller){
-           signs[deal].finishSignSeller = msg.sender;
-       }
-       if(msg.sender ==deals[deal].signer){
-            signs[deal].finishSignSigner = msg.sender;
-       }
-       
-   }*/
-   
+   /**
+    * @dev function for sign in end of the deal (for finis need 2 sign from 3)
+    * @param _dealNumber (deal number)
+    */
    function finishDeal(uint _dealNumber)  public{
        
        uint deal = dealNumbers[_dealNumber];
@@ -448,7 +474,11 @@ _sSigns[] public signs;
    }
    
    
-   // ????? ?? ??? ?????????? ???????????
+   
+   /**
+    * @dev function for cancel deal (accessable ony for signer of current deal)
+    * @param _dealNumber (deal number)
+    */
     function cancelDeal(uint _dealNumber) onlySigner(_dealNumber) public{
        
         uint deal = dealNumbers[_dealNumber];
@@ -457,7 +487,7 @@ _sSigns[] public signs;
        
        deals[deal].buyer.transfer(deals[deal].balance);
        
-       //emit MoneyTransfer(this,deals[deal].buyer,deals[deal].balance);
+       emit MoneyTransfer(this,deals[deal].buyer,deals[deal].balance);
        
        deals[deal].balance = 0;
        deals[deal].status = statuses.canceled;
