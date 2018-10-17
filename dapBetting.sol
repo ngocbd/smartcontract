@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dapBetting at 0x6d6a99e9e94923a9992a0593ea0298bf7542be67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dapBetting at 0x6C6b3FD123D575cBeB1670A1fcc9c8fD603357a3
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.21;
 
 contract dapBetting {
     
@@ -23,9 +23,6 @@ contract dapBetting {
         address arbitrator;
         bytes32 winner;
         uint arbitratorFee;
-        uint256 endBlock;
-        uint256 minBid;
-        uint256 maxBid;
         bid[] bids;
         bet[] bets;
         eventStatus status;
@@ -44,14 +41,14 @@ contract dapBetting {
     
     /* Events */
     
-    event eventCreated(uint id, address creator);
+    event EventCreated(uint id, address creator);
     event betMade(uint value, uint id);
     event eventStatusChanged(uint status);
     event withdrawalDone(uint amount);
     
     /* Modifiers */
     modifier onlyFinished(address creator, uint eventId){
-        if (betEvents[creator][eventId].status == eventStatus.finished || betEvents[creator][eventId].endBlock < block.number){
+        if (betEvents[creator][eventId].status == eventStatus.finished){
             _;
         }
     }
@@ -62,7 +59,7 @@ contract dapBetting {
     }
     /* Methods */
     
-    function createEvent(bytes32 name, bytes32[] names, address arbitrator, uint fee, uint256 endBlock, uint256 minBid, uint256 maxBid) external{
+    function createEvent(bytes32 name, bytes32[] names, address arbitrator, uint fee) external{
         
         require(fee < 100);
         /* check whether event with such name already exist */
@@ -85,9 +82,6 @@ contract dapBetting {
         betEvents[msg.sender][newId].arbitrator = arbitrator;
         betEvents[msg.sender][newId].status = eventStatus.open;
         betEvents[msg.sender][newId].creator = msg.sender;
-        betEvents[msg.sender][newId].endBlock = endBlock;
-        betEvents[msg.sender][newId].minBid = minBid;
-        betEvents[msg.sender][newId].maxBid = maxBid;
         betEvents[msg.sender][newId].arbitratorFee = fee;
         
         for (uint8 i = 0;i < names.length; i++){
@@ -96,14 +90,11 @@ contract dapBetting {
             betEvents[msg.sender][newId].bids[newBidId].id = newBidId;
         }
         
-        emit eventCreated(newId, msg.sender);
+        emit EventCreated(newId, msg.sender);
     }
     
     function makeBet(address creator, uint eventId, bytes32 bidName) payable external{
         require(betEvents[creator][eventId].status == eventStatus.open);
-        if (betEvents[creator][eventId].endBlock > 0){
-        	require(block.number > betEvents[creator][eventId].endBlock);
-        }
         /* check whether bid with given name actually exists */
         bool found;
         for (uint8 i=0;i<betEvents[creator][eventId].bids.length;i++){
@@ -113,18 +104,6 @@ contract dapBetting {
             }
         }
         require(found);
-        //check for block
-        if (betEvents[creator][eventId].endBlock > 0){
-        	require(betEvents[creator][eventId].endBlock < block.number);
-        }
-        //check for minimal amount
-        if (betEvents[creator][eventId].minBid > 0){
-        	require(msg.value > betEvents[creator][eventId].minBid);
-        }
-        //check for maximal amount
-        if (betEvents[creator][eventId].maxBid > 0){
-        	require(msg.value < betEvents[creator][eventId].maxBid);
-        }
         foundBid.whoBet.push(msg.sender);
         foundBid.amountReceived += msg.value;
         uint newBetId = betEvents[creator][eventId].bets.length++;
@@ -136,7 +115,7 @@ contract dapBetting {
     }
     
     function finishEvent(address creator, uint eventId) external{
-        require(betEvents[creator][eventId].status == eventStatus.open && betEvents[creator][eventId].endBlock == 0);
+        require(betEvents[creator][eventId].status == eventStatus.open);
         require(msg.sender == betEvents[creator][eventId].arbitrator);
         betEvents[creator][eventId].status = eventStatus.finished;
         emit eventStatusChanged(1);
