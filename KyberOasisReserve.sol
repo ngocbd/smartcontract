@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x8bf5C569ECFD167f96FaE6d9610e17571568A6A1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x8f34B9Fe1Cf02ED09d7bbc9af8f6D04317584661
 */
 pragma solidity 0.4.18;
 
@@ -459,8 +459,8 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils2 {
         ERC20 wrappedSrc;
         ERC20 wrappedDest;
         uint  bestOfferId;
-        uint  offerPayAmt;
-        uint  offerBuyAmt;
+        uint  bestOfferSrcQty;
+        uint  bestOfferDestQty;
 
         blockNumber;
 
@@ -485,14 +485,13 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils2 {
             return 0;
         }
 
-        // getBestOffer's terminology is of offer maker, so their sellGem is our (the taker's) dest token.
-        bestOfferId = otc.getBestOffer(wrappedDest, wrappedSrc);
-        (offerPayAmt, , offerBuyAmt,) = otc.getOffer(bestOfferId);
+        bestOfferId = otc.getBestOffer(wrappedSrc, wrappedDest);
+        (bestOfferSrcQty, , bestOfferDestQty,) = otc.getOffer(bestOfferId);
 
         // make sure to take only first level of order book to avoid gas inflation.
-        if (actualSrcQty > offerBuyAmt) return 0;
+        if (actualSrcQty > bestOfferSrcQty) return 0;
 
-        rate = calcRateFromQty(offerBuyAmt, offerPayAmt, COMMON_DECIMALS, COMMON_DECIMALS);
+        rate = calcRateFromQty(bestOfferSrcQty, bestOfferDestQty, COMMON_DECIMALS, COMMON_DECIMALS);
         return valueAfterReducingFee(rate);
     }
 
