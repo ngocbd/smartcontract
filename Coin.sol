@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0xb9a944dec5cf3be2a0aa392fc3318258c7c54d47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x20e3f40009206779a791c55929b4988231261500
 */
 pragma solidity ^0.4.4;
 
@@ -402,7 +402,7 @@ contract Coin is CMBUpgradeableToken, ReleasableToken {
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   /* name of the token */
-  string public name = "Creatium";
+  string public name = "Creatanium";
 
   /* symbol of the token */
   string public symbol = "CMB";
