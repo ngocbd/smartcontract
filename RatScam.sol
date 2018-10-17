@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x19dc296f704b3119c2f8aab01123d8ff842c6c80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x125365069020439b830c9eac9dd402f8aa762569
 */
 pragma solidity ^0.4.24;
 
@@ -172,11 +172,7 @@ contract RatScam is modularRatScam {
      * @dev prevents contracts from interacting with ratscam 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "non smart contract address only");
+        require(msg.sender == tx.origin);
         _;
     }
 
@@ -1238,8 +1234,8 @@ contract RatScam is modularRatScam {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit RSEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _pID, _aff, now);
         } else {
-            // no affiliates, add to community
-            _com += _aff;
+            // no affiliates, add to your vault 
+            plyr_[_pID].aff = _aff.add(plyr_[_pID].aff);
         }
 
         if (!address(RatKingCorp).call.value(_com)(bytes4(keccak256("deposit()"))))
