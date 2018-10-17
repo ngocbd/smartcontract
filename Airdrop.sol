@@ -1,71 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x20e2bf0fc47e65a3caa5e8e17c5cd730cc556db9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract airDrop at 0x906ccfcf474b20eb638c94da957a1016cc7974d0
 */
-pragma solidity ^0.4.24;
-
-interface Token {
-  function transfer(address _to, uint256 _value) external returns (bool);
+contract BitSTDView{
+    function symbol()constant  public returns(string) {}
+    function migration(address add) public{}
+    function transfer(address _to, uint256 _value) public {}
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
 }
+contract airDrop{
+    /**
+     *
+     *This is a fixed airdrop
+     *
+     * @param contractaddress this is Address of airdrop token contract
+     * @param dsts this is Batch acceptance address
+     * @param value this is Issuing number
+     */
+    function airDrop_(address contractaddress,address[] dsts,uint256 value) public {
 
-contract onlyOwner {
-  address public owner;
-    bool private stopped = false;
-  /** 
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
-  constructor() public {
-    owner = msg.sender;
-
-  }
-    
-    modifier isRunning {
-        require(!stopped);
-        _;
+        uint count= dsts.length;
+        require(value>0);
+        BitSTDView View= BitSTDView(contractaddress);
+        for(uint i = 0; i < count; i++){
+           View.transfer(dsts[i],value);
+        }
     }
-    
-    function stop() isOwner public {
-        stopped = true;
+    /**
+     *
+     * This is a multi-value airdrop
+     *
+     * @param contractaddress this is Address of airdrop token contract
+     * @param dsts this is Batch acceptance address
+     * @param values This is the distribution number array
+     */
+    function airDropValues(address contractaddress,address[] dsts,uint256[] values) public {
+
+        uint count= dsts.length;
+        BitSTDView View= BitSTDView(contractaddress);
+        for(uint i = 0; i < count; i++){
+           View.transfer(dsts[i],values[i]);
+        }
+    }
+    /**
+     *
+     * This is a multi-value airdrop
+     *
+     * @param contractaddress this is Address of airdrop token contract
+     * @param dsts This is the address where the data needs to be migrated
+     */
+    function dataMigration(address contractaddress,address[] dsts)public{
+        uint count= dsts.length;
+        BitSTDView View= BitSTDView(contractaddress);
+        for(uint i = 0; i < count; i++){
+           View.migration(dsts[i]);
+        }
+    }
+    /**
+     *
+     *This is Authorization drop
+     * @param _from Assigned address
+     * @param contractaddress this is Address of airdrop token contract
+     * @param dsts this is Batch acceptance address
+     * @param value this is Issuing number
+     */
+    function transferFrom(address contractaddress,address _from, address[] dsts, uint256 value) public returns (bool success) {
+        uint count= dsts.length;
+        BitSTDView View= BitSTDView(contractaddress);
+        for(uint i = 0; i < count; i++){
+           View.transferFrom(_from,dsts[i],value);
+        }
     }
 
-    function start() isOwner public {
-        stopped = false;
-    }
-  /**
-  * @dev Throws if called by any account other than the owner. 
-  */
-  modifier isOwner {
-    require(msg.sender == owner);
-    _;
-  }
-}
-
-contract AirDrop is onlyOwner{
-
-  Token token;
-
-  event TransferredToken(address indexed to, uint256 value);
-
-
-  constructor() public{
-      address _tokenAddr = 0x99092a458b405fb8c06c5a3aa01cffd826019568; //here pass address of your token
-      token = Token(_tokenAddr);
-  }
-
-    function() external payable{
-        withdraw();
-    }
-    
-    
-  function sendInternally(uint256 tokensToSend, uint256 valueToPresent) internal {
-    require(msg.sender != address(0));
-    token.transfer(msg.sender, tokensToSend);
-    emit TransferredToken(msg.sender, valueToPresent);
-    
-  }
-
-  function withdraw() isRunning private returns(bool) {
-    sendInternally(400*10**18,400);
-    return true;   
-  }
 }
