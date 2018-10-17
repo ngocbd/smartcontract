@@ -1,33 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xac205677160a31d6db2c6b55c709c86e8138469b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xb37209Be4eE3A356515A0CE898b07D22db787E95
 */
 pragma solidity ^0.4.24;
-/*
- * -PlayerBook - v0.3.14
- * ????????????   ?? ???????  ????????????????????????
- *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
- *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
- *                                  _____                      _____
- *                                 (, /     /)       /) /)    (, /      /)          /)
- *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
- *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
- *          ? ?                /   /          .-/ _____   (__ /
- *                            (__ /          (_/ (, /                                      /)™
- *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
- * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
- * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
- * ?  ??????????????? ?                                        (_/
- *     ______   _                                 ______                 _          
- *====(_____ \=| |===============================(____  \===============| |=============*
- *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
- *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
- *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
- *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
- *                        (____/
- * ????????????????????????  ???????????? ????????????                       
- * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?                      
- * ????????? ? ???? ???? ?   ???????????? ????????????    
- */
 
 
 interface PlayerBookReceiverInterface {
@@ -41,8 +15,6 @@ contract PlayerBook {
     using SafeMath for uint256;
     
     address private admin = msg.sender;
-    address private mgt;
-    address private dev;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -68,42 +40,40 @@ contract PlayerBook {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================    
-    constructor(address _mgt, address _dev)
+    constructor()
         public
     {
-        mgt = _mgt;
-        dev = _dev;
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
+        plyr_[1].addr = 0xa89D0Ad62E13d90797DB138c50B198A140Da67e1;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
+        pIDxAddr_[0xa89D0Ad62E13d90797DB138c50B198A140Da67e1] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
         
-        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
+        plyr_[2].addr = 0xD10da91df3f30cc1A39276584D5A1016de0CC98B;
         plyr_[2].name = "mantso";
         plyr_[2].names = 1;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
+        pIDxAddr_[0xD10da91df3f30cc1A39276584D5A1016de0CC98B] = 2;
         pIDxName_["mantso"] = 2;
         plyrNames_[2]["mantso"] = true;
         plyrNameList_[2][1] = "mantso";
         
-        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
+        plyr_[3].addr = 0x4f4f7DFbDdd13491BBAB5520EC2Bd08789c36939;
         plyr_[3].name = "sumpunk";
         plyr_[3].names = 1;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
+        pIDxAddr_[0x4f4f7DFbDdd13491BBAB5520EC2Bd08789c36939] = 3;
         pIDxName_["sumpunk"] = 3;
         plyrNames_[3]["sumpunk"] = true;
         plyrNameList_[3][1] = "sumpunk";
         
-        plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        plyr_[4].addr = 0xD32a9448a6c3aeC0a45cd75B1A619BacF370d960;
         plyr_[4].name = "inventor";
         plyr_[4].names = 1;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
+        pIDxAddr_[0xD32a9448a6c3aeC0a45cd75B1A619BacF370d960] = 4;
         pIDxName_["inventor"] = 4;
         plyrNames_[4]["inventor"] = true;
         plyrNameList_[4][1] = "inventor";
@@ -125,12 +95,7 @@ contract PlayerBook {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
-
-    modifier onlyDevs() 
-    {
-        require(admin == msg.sender, "msg sender is not a dev");
-        _;
-    }
+   
     
     modifier isRegisteredGame()
     {
@@ -405,8 +370,7 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        dev.transfer(address(this).balance / 5);
-        mgt.transfer(address(this).balance);
+        admin.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -586,7 +550,6 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
@@ -603,7 +566,6 @@ contract PlayerBook {
     }
     
     function setRegistrationFee(uint256 _fee)
-        onlyDevs()
         public
     {
       registrationFee_ = _fee;
@@ -613,22 +575,6 @@ contract PlayerBook {
 
 /**
 * @title -Name Filter- v0.1.9
-* ????????????   ?? ???????  ????????????????????????
-*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
-*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ?  ??????????????? ?                                        (_/
-*              _       __    _      ____      ____  _   _    _____  ____  ___  
-*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
-*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
 *
 * ????????????????????????  ???????????? ????????????
 * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
