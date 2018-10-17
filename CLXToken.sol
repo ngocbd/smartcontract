@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLXToken at 0x41e0a71090ea7faa0b7be3f186ee8fc27d1f516b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLXToken at 0x4e2f7de090ed3a32a3ba1940e5c01f8e24ddf512
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 /**
  * @title SafeMath
@@ -52,7 +52,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -225,7 +225,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param tokenName The name of the token
      * @param tokenSymbol The symbol of the token
      */
-     function CLXToken(
+     constructor (
             uint256 initialSupply,
             string tokenName,
             string tokenSymbol
