@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leimen at 0xb7b00a6b4cd2e0592bf0b264973d6ff51c7fb0dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leimen at 0x2693fec782aaa59e9604f4fd3bbba3cef8146061
 */
 pragma solidity ^0.4.24;
 
@@ -7,17 +7,24 @@ pragma solidity ^0.4.24;
 
 contract owned {
     address public owner;
+    address public owner2;
 
     function owned() {
         owner = msg.sender;
     }
+    function change_owned(address new_owner2) onlyOwner {
+        owner2 =  new_owner2;
+    }
+    
     modifier onlyOwner {
-        require(msg.sender == owner);
+        require(msg.sender == owner || msg.sender == owner2);
         _;
     }
 }    
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
+    function tokenFallback(address _sender, uint256 _value, bytes _extraData) returns (bool);
+}
 
 contract Leimen is owned{
     
@@ -41,7 +48,7 @@ contract Leimen is owned{
 	    totalSupply = 1000000000 * 100 ;
     	balanceOf[msg.sender] = totalSupply ;
         name = "Leimen coin";
-        symbol = "Leim";         
+        symbol = "XLEM";         
     }
     
 //????//
@@ -49,12 +56,12 @@ contract Leimen is owned{
     mapping (address => bool) public frozenAccount;
     uint256 public eth_amount ;
     bool public stoptransfer ;
-    bool public stopsell;
+    bool public stopsell ;
     
 
     function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+        emit FrozenFunds(target, freeze);
     }
 
     function set_prices(uint256 _eth_amount) onlyOwner {
@@ -92,12 +99,13 @@ contract Leimen is owned{
         require(balanceOf[msg.sender] >= _value);   
         balanceOf[msg.sender] -= _value;            
         totalSupply -= _value;                      
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
     }    
 
 //??//
 
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint _value) 
+        internal returns(bool success){
 	    require(!frozenAccount[_from]);
 	    require(!stoptransfer);
         require(_to != 0x0);
@@ -110,19 +118,28 @@ contract Leimen is owned{
 
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
 
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        return true;
     }
 
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-	    }
+    function transfer(address _to, uint256 _value) public returns (bool success){
+        if(compare(_to) == true){
+            transferAndCall(_to, _value , "");
+        }
+        else{
+            require(_transfer(msg.sender, _to, _value));
+        }
+        return true;
+	}
+
+// ????
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]); 
         allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
+        require(_transfer(_from, _to, _value));
         return true;
     }
 
@@ -141,8 +158,31 @@ contract Leimen is owned{
             return true;
         }
     }
+    function transferAndCall(address _recipient, uint256 _value, bytes _extraData) {
+        require(_transfer(msg.sender, _recipient, _value));
+        require(tokenRecipient(_recipient).tokenFallback(msg.sender, _value, _extraData));
+    }
 
-//??
+    address[]  public contract_address;
+    
+    function add_address(address _address){
+        contract_address.push(_address);
+    }
+
+    function change_address(uint256 _index, address _address){
+        contract_address[_index] = _address;
+    }
+
+    function compare(address _address) view public returns(bool){
+        uint i = 0;
+        for (i;i<contract_address.length;i++){
+            if (contract_address[i] == _address){
+                return true;
+            }
+        }
+    }
+
+//???
 
     function () payable {
         buy();
@@ -150,7 +190,8 @@ contract Leimen is owned{
 
     function buy() payable returns (uint amount){
 	    require(!stopsell);
-        amount = msg.value * eth_amount  / (10 ** 16) ;
+        amount = msg.value * eth_amount  / (10**16) ;
+        assert(amount*(10**16)/eth_amount == msg.value);
         require(balanceOf[this] >= amount);           
         balanceOf[msg.sender] += amount;           
         balanceOf[this] -= amount; 
