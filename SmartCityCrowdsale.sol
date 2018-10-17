@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityCrowdsale at 0x774d2537c7efed39b21c8232cc2f2ad489d2580b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityCrowdsale at 0xa5b1685b23db36859611cac03e0c68daf0e3c0a1
 */
 pragma solidity ^0.4.18;
 
 /**
- *  @title Smart City Crowdsale contract http://www.smartcitycoin.io
+ *  @title Smart City Crowdsale contract https://www.smartcitycoin.io
  */
+
 
 contract SmartCityToken {
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool success) {}
@@ -18,605 +19,241 @@ contract SmartCityToken {
 contract SmartCityCrowdsale {
     using SafeMath for uint256;
 
-    // State
+	/// state
+    SmartCityToken public token; // Token Contract
+	
+	address public owner; // Owner address
 
-    struct Account {
-        uint256 accounted;   // received amount and bonus
-        uint256 received;    // received amount
-    }
+	mapping (address => bool) whitelist; // useers whithelist
 
-    /// Crowdsale participants
-    mapping (address => Account) public buyins;
+    mapping(address => uint256) public balances; // the array of users along with amounts invested
+	
+	mapping(address => uint256) public purchases; // the array of users and tokens purchased
 
-    /// Balances of Fixed Price sale participants.
-    mapping(address => uint256) public purchases;
+    uint256 public raisedEth; // Amount of Ether raised
 
-    /// Total amount of ether received.
-    uint256 public totalReceived = 0;
+    uint256 public startTime; // Crowdale start time
 
-    /// Total amount of ether accounted.
-    uint256 public totalAccounted = 0;
+    uint256 public tokensSoldTotal = 0; // Sold Tolkens counter
 
-    /// Total tokens purchased during Phase 2.
-    uint256 public tokensPurchased = 0;
+    bool public crowdsaleEnded = false; // if the Campaign is over
+	
+	bool public paused = false; // if the Campaign is paused
 
-    /// Total amount of ether which has been finalised.
-    uint256 public totalFinalised = 0;
-    
-    /// Phase 1 end time.
-    uint256 public firstPhaseEndTime;
-    
-    /// Phase 2 start time.
-    uint256 public secondPhaseStartTime;
-    
-    /// Campaign end time.
-    uint256 public endTime;
+    uint256 public positionPrice = 5730 finney; // Initially 1 investement position costs 5.73 ETH, might be changed by owner afterwards
+	
+	uint256 public usedPositions = 0; // Initial number of used investment positions
+	
+	uint256 public availablePositions = 100; // Initial number of open investment positions
 
-    /// The price per token aftre Phase 1. Works also as an effective price in Phase 2 for Phase 1 participants.
-    uint256 public auctionEndPrice;
-    
-    /// The price for token within Phase 2 which is effective for those who did not participate in Phase 1
-    uint256 public fixedPrice;
+    address walletAddress; // address of the wallet contract storing the funds
 
-    /// The current percentage of bonus.
-    uint256 public currentBonus = 15;
+	/// constants
+    uint256 constant public tokensForSale = 164360928100000; // Total amount of tokens allocated for the Crowdsale
 
-    /// Bonus that will be applied to purchases if Target is reached in Phase 1. Initially zero.
-    uint256 public auctionSuccessBonus = 0;
-    
-    /// Must be false for any public function to be called.
-    bool public paused = false;
-    
-    /// Campaign is ended
-    bool public campaignEnded = false;
+	uint256 constant public weiToTokenFactor = 10000000000000;
 
-    // Constants after constructor:
+	uint256 constant public investmentPositions = 4370; // Total number of investment positions
 
-    /// CITY token contract.
-    SmartCityToken public tokenContract;
+    uint256 constant public investmentLimit = 18262325344444; // the maximum amount of Ether an address is allowed to invest - limited to 1/9 of tokens allocated for sale
 
-    /// The owner address.
-    address public owner;
+	/// events
+    event FundTransfer(address indexed _investorAddr, uint256 _amount, uint256 _amountRaised); // fired on transfering funds from investors
+	
+	event Granted(address indexed party); // user is added to the whitelist
+	
+	event Revoked(address indexed party); // user is removed from the whitelist
+	
+	event Ended(uint256 raisedAmount); // Crowdsale is ended
 
-    /// The wallet address.
-    address public wallet;
+	/// modifiers
+	modifier onlyWhenActive() {
+		require(now >= startTime && !crowdsaleEnded && !paused);
+		_;
+	}
+	
+	modifier whenPositionsAvailable() {
+		require(availablePositions > 0);
+		_;
+	}
 
-    /// Sale start time.
-    uint256 public startTime;
+	modifier onlyWhitelisted(address party) {
+		require(whitelist[party]);
+		_; 
+	}
+	
+	modifier onlyNotOnList(address party) {
+		require(!whitelist[party]);
+		_;
+	}
 
-    /// Amount of tokens allocated for Phase 1.
-    /// Once totalAccounted / currentPrice is greater than this value, Phase 1 ends.
-    uint256 public tokenCapPhaseOne;
-    
-    /// Amount of tokens allocated for Phase 2
-    uint256 public tokenCapPhaseTwo;
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
 
+    /**
+     *  @dev Crowdsale Contract initialization
+     *  @param _owner address Token owner address
+     *  @param _tokenAddress address Crowdsale end time
+     *  @param _walletAddress address Beneficiary address where the funds are collected
+     *  @param _start uint256 Crowdsale Start Time
+     */
+    function SmartCityCrowdsale (
+            address _tokenAddress,
+            address _owner,
+            address _walletAddress,
+            uint256 _start) public {
 
-    // Static constants:
-
-    /// Target
-    uint256 constant public FUNDING_GOAL = 109573 ether;
-    
-    /// Minimum token price after Phase 1 for Phase 2 to be started.
-    uint256 constant public TOKEN_MIN_PRICE_THRESHOLD = 100000000; // 0,00001 ETH per 1 CITY
-    
-    /// Maximum duration of Phase 1
-    uint256 constant public FIRST_PHASE_MAX_SPAN = 21 days;
-    
-    /// Maximum duration of Phase 2
-    uint256 constant public SECOND_PHASE_MAX_SPAN = 33 days;
-    
-    /// Minimum investment amount
-    uint256 constant public DUST_LIMIT = 5 finney;
-
-    /// Number of days from Phase 1 beginning when bonus is available. Bonus percentage drops by 1 percent a day.
-    uint256 constant public BONUS_DURATION = 15;
-    
-    /// Percentage of bonus that will be applied to all purchases if Target is reached in Phase 1
-    uint256 constant public SUCCESS_BONUS = 15;
-    
-    /// token price in Phase 2 is by 20 % higher when resulting auction price
-    /// for those who did not participate in auction
-    uint256 constant public SECOND_PHASE_PRICE_FACTOR = 20;
-
-    /// 1e15
-    uint256 constant public FACTOR = 1 finney;
-
-    /// Divisor of the token.
-    uint256 constant public DIVISOR = 100000;
-
-    // Events
-
-    /// Buyin event.
-    event Buyin(address indexed receiver, uint256 accounted, uint256 received, uint256 price);
-
-    /// Phase 1 just ended.
-    event PhaseOneEnded(uint256 price);
-    
-    /// Phase 2 is engagaed.
-    event PhaseTwoStared(uint256 fixedPrice);
-
-    /// Investement event.
-    event Invested(address indexed receiver, uint256 received, uint256 tokens);
-
-    /// The campaign just ended.
-    event Ended(bool goalReached);
-
-    /// Finalised the purchase for receiver.
-    event Finalised(address indexed receiver, uint256 tokens);
-
-    /// Campaign is over. All accounts finalised.
-    event Retired();
-    
-    // Modifiers
-    
-    /// Ensure the sale is ended.
-    modifier when_ended { require (now >= endTime); _; }
-
-    /// Ensure sale is not paused.
-    modifier when_not_halted { require (!paused); _; }
-
-    /// Ensure `_receiver` is a participant.
-    modifier only_investors(address _receiver) { require (buyins[_receiver].accounted != 0 || purchases[_receiver] != 0); _; }
-
-    /// Ensure sender is owner.
-    modifier only_owner { require (msg.sender == owner); _; }
-    
-    /// Ensure sale is in progress.
-    modifier when_active { require (!campaignEnded); _;}
-
-    /// Ensure phase 1 is in progress
-    modifier only_in_phase_1 { require (now >= startTime && now < firstPhaseEndTime); _; }
-    
-    /// Ensure phase 1 is over
-    modifier after_phase_1 { require (now >= firstPhaseEndTime); _; }
-
-    /// Ensure phase 2 is in progress
-    modifier only_in_phase_2 { require (now >= secondPhaseStartTime && now < endTime); _; }
-
-    /// Ensure the value sent is above threshold.
-    modifier reject_dust { require ( msg.value >= DUST_LIMIT ); _; }
-
-    // Constructor
-
-    function SmartCityCrowdsale(
-        address _tokenAddress,
-        address _owner,
-        address _walletAddress,
-        uint256 _startTime,
-        uint256 _tokenCapPhaseOne,
-        uint256 _tokenCapPhaseTwo
-    )
-        public
-    {
-        tokenContract = SmartCityToken(_tokenAddress);
-        wallet = _walletAddress;
         owner = _owner;
-        startTime = _startTime;
-        firstPhaseEndTime = startTime.add(FIRST_PHASE_MAX_SPAN);
-        secondPhaseStartTime = 253402300799; // initialise by setting to 9999/12/31
-        endTime = secondPhaseStartTime.add(SECOND_PHASE_MAX_SPAN);
-        tokenCapPhaseOne = _tokenCapPhaseOne;
-        tokenCapPhaseTwo = _tokenCapPhaseTwo;
+        token = SmartCityToken(_tokenAddress);
+        walletAddress = _walletAddress;
+
+        startTime = _start; // Crowdsale Start Time
     }
 
-    /// The default fallback function
-    /// Calls buyin or invest function depending on current campaign phase
-    /// Throws if campaign has already ended
-    function()
-        public
-        payable
-        when_not_halted
-        when_active
-    {
-        if (now >= startTime && now < firstPhaseEndTime) { // phase 1 is ongoing
-            _buyin(msg.sender, msg.value);
-        }
-        else {
-            _invest(msg.sender, msg.value);
-        }
+    /**
+     *  @dev Investment can be done just by sending Ether to Crowdsale Contract
+     */
+    function() public payable {
+        invest();
     }
 
-    // Phase 1 functions
+    /**
+     *  @dev Make an investment
+     */
+    function invest() public payable
+				onlyWhitelisted(msg.sender)
+				whenPositionsAvailable
+				onlyWhenActive
+	{
+		address _receiver = msg.sender;
+        uint256 amount = msg.value; // Transaction value in Wei
 
-    /// buyin function.
-    function buyin()
-        public
-        payable
-        when_not_halted
-        when_active
-        only_in_phase_1
-        reject_dust
-    {
-        _buyin(msg.sender, msg.value);
-    }
-    
-    ///  buyinAs function. takes the receiver address as an argument
-    function buyinAs(address _receiver)
-        public
-        payable
-        when_not_halted
-        when_active
-        only_in_phase_1
-        reject_dust
-    {
-        require (_receiver != address(0));
-        _buyin(_receiver, msg.value);
-    }
-    
-    /// internal buyin functionality
-    function _buyin(address _receiver, uint256 _value)
-        internal
-    {
-        if (currentBonus > 0) {
-            uint256 daysSinceStart = (now.sub(startTime)).div(86400); // # of days
+        var (positionsCnt, tokensCnt) = getPositionsAndTokensCnt(amount); 
 
-            if (daysSinceStart < BONUS_DURATION &&
-                BONUS_DURATION.sub(daysSinceStart) != currentBonus) {
-                currentBonus = BONUS_DURATION.sub(daysSinceStart);
-            }
-            if (daysSinceStart >= BONUS_DURATION) {
-                currentBonus = 0;
-            }
-        }
+        require(positionsCnt > 0 && positionsCnt <= availablePositions && tokensCnt > 0);
 
-        uint256 accounted;
-        bool refund;
-        uint256 price;
+		require(purchases[_receiver].add(tokensCnt) <= investmentLimit); // Check the investment limit is not exceeded
 
-        (accounted, refund, price) = theDeal(_value);
+        require(tokensSoldTotal.add(tokensCnt) <= tokensForSale);
 
-        // effective cap should not be exceeded, throw
-        require (!refund);
+        walletAddress.transfer(amount); // Send funds to the Wallet
+		
+        balances[_receiver] = balances[_receiver].add(amount); // Add the amount invested to Investor's ballance
+		purchases[_receiver] = purchases[_receiver].add(tokensCnt); // Add tokens to Investor's purchases
+        raisedEth = raisedEth.add(amount); // Increase raised funds counter
+		availablePositions = availablePositions.sub(positionsCnt);
+		usedPositions = usedPositions.add(positionsCnt);
+        tokensSoldTotal = tokensSoldTotal.add(tokensCnt); // Increase sold CITY counter
 
-        // change state
-        buyins[_receiver].accounted = buyins[_receiver].accounted.add(accounted);
-        buyins[_receiver].received = buyins[_receiver].received.add(_value);
-        totalAccounted = totalAccounted.add(accounted);
-        totalReceived = totalReceived.add(_value);
-        firstPhaseEndTime = calculateEndTime();
+        require(token.transferFrom(owner, _receiver, tokensCnt)); // Transfer CITY purchased to Investor
 
-        Buyin(_receiver, accounted, _value, price);
-
-        // send to wallet
-        wallet.transfer(_value);
-    }
-
-    /// The current end time of the sale assuming that nobody else buys in.
-    function calculateEndTime()
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256)
-    {
-        uint256 res = (FACTOR.mul(240000).div(DIVISOR.mul(totalAccounted.div(tokenCapPhaseOne)).add(FACTOR.mul(4).div(100)))).add(startTime).sub(4848);
-
-        if (res >= firstPhaseEndTime) {
-            return firstPhaseEndTime;
-        }
-        else {
-            return res;
-        }
+        FundTransfer(_receiver, amount, raisedEth);
+		
+		if (usedPositions == investmentPositions) { // Sold Out
+			token.burn();
+			crowdsaleEnded = true; // mark Crowdsale ended
+			
+			Ended(raisedEth);
+		}
     }
     
-
-    /// The current price for a token
-    function currentPrice()
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256 weiPerIndivisibleTokenPart)
-    {
-        return ((FACTOR.mul(240000).div(now.sub(startTime).add(4848))).sub(FACTOR.mul(4).div(100))).div(DIVISOR);
+    /**
+     *  @dev Calculate the amount of Tokens purchased based on the value sent and current Token price
+     *  @param _value uint256 Amount invested
+     */
+    function getPositionsAndTokensCnt(uint256 _value) public constant onlyWhenActive returns(uint256 positionsCnt, uint256 tokensCnt) {
+			if (_value % positionPrice != 0 || usedPositions >= investmentPositions) {
+				return(0, 0);
+			}
+			else {
+				uint256 purchasedPositions = _value.div(positionPrice);
+				uint256 purchasedTokens = ((tokensForSale.sub(tokensSoldTotal)).mul(purchasedPositions)).div(investmentPositions.sub(usedPositions));
+				return(purchasedPositions, purchasedTokens);
+			}
     }
 
-    /// Returns the total tokens which can be purchased right now.
-    function tokensAvailable()
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256 tokens)
-    {
-        uint256 _currentCap = totalAccounted.div(currentPrice());
-        if (_currentCap >= tokenCapPhaseOne) {
-            return 0;
-        }
-        return tokenCapPhaseOne.sub(_currentCap);
+	function getMinPurchase() public constant onlyWhenActive returns(uint256 minPurchase) {
+		return positionPrice;
+	}
+	
+	/// Owner functions
+	
+    /**
+     *  @dev To increace/reduce number of Investment Positions released for sale
+     */
+    function setAvailablePositions(uint256 newAvailablePositions) public onlyOwner {
+        require(newAvailablePositions <= investmentPositions.sub(usedPositions));
+		availablePositions = newAvailablePositions;
     }
-
-    /// The largest purchase than can be done right now. For informational puproses only
-    function maxPurchase()
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256 spend)
-    {
-        return tokenCapPhaseOne.mul(currentPrice()).sub(totalAccounted);
+	
+	/**
+     *  @dev Allows Investment Position price changes
+     */
+    function setPositionPrice(uint256 newPositionPrice) public onlyOwner {
+        require(newPositionPrice > 0);
+		positionPrice = newPositionPrice;
     }
+	
+	 /**
+     *  @dev Emergency function to pause Crowdsale.
+     */
+    function setPaused(bool _paused) public onlyOwner { paused = _paused; }
 
-    /// Returns the number of tokens available per given price.
-    /// If this number exceeds tokens being currently available, returns refund = true
-    function theDeal(uint256 _value)
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256 accounted, bool refund, uint256 price)
-    {
-        uint256 _bonus = auctionBonus(_value);
+	/**
+    *   @dev Emergency function to drain the contract of any funds.
+    */
+	function drain() public onlyOwner { walletAddress.transfer(this.balance); }
+	
+	/**
+    *   @dev Function to manually finalize Crowdsale.
+    */
+	function endCrowdsale() public onlyOwner {
+		usedPositions = investmentPositions;
+		availablePositions = 0;
+		token.burn(); // burn all unsold tokens
+		crowdsaleEnded = true; // mark Crowdsale ended
+		
+		Ended(raisedEth);
+	}
 
-        price = currentPrice();
-        accounted = _value.add(_bonus);
+	/// Whitelist functions
+	function grant(address _party) public onlyOwner onlyNotOnList(_party)
+	{
+		whitelist[_party] = true;
+		Granted(_party);
+	}
 
-        uint256 available = tokensAvailable();
-        uint256 tokens = accounted.div(price);
-        refund = (tokens > available);
-    }
+	function revoke(address _party) public onlyOwner onlyWhitelisted(_party)
+	{
+		whitelist[_party] = false;
+		Revoked(_party);
+	}
+	
+	function massGrant(address[] _parties) public onlyOwner
+	{
+		uint len = _parties.length;
+		
+		for (uint i = 0; i < len; i++) {
+			whitelist[_parties[i]] = true;
+			Granted(_parties[i]);
+		}
+	}
 
-    /// Returns bonus for given amount
-    function auctionBonus(uint256 _value)
-        public
-        constant
-        when_active
-        only_in_phase_1
-        returns (uint256 extra)
-    {
-        return _value.mul(currentBonus).div(100);
-    }
+	function massRevoke(address[] _parties) public onlyOwner
+	{
+		uint len = _parties.length;
+		
+		for (uint i = 0; i < len; i++) {
+			whitelist[_parties[i]] = false;
+			Revoked(_parties[i]);
+		}
+	}
 
-    // After Phase 1
-    
-    /// Checks the results of the first phase
-    /// Changes state only once
-    function finaliseFirstPhase()
-        public
-        when_not_halted
-        when_active
-        after_phase_1
-        returns(uint256)
-    {
-        if (auctionEndPrice == 0) {
-            auctionEndPrice = totalAccounted.div(tokenCapPhaseOne);
-            PhaseOneEnded(auctionEndPrice);
-
-            // check if second phase should be engaged
-            if (totalAccounted >= FUNDING_GOAL ) {
-                // funding goal is reached: phase 2 is not engaged, all auction participants receive additional bonus, campaign is ended
-                auctionSuccessBonus = SUCCESS_BONUS;
-                endTime = firstPhaseEndTime;
-                campaignEnded = true;
-                
-                tokenContract.setTokenStart(endTime);
-
-                Ended(true);
-            }
-            
-            else if (auctionEndPrice >= TOKEN_MIN_PRICE_THRESHOLD) {
-                // funding goal is not reached, auctionEndPrice is above or equal to threshold value: engage phase 2
-                fixedPrice = auctionEndPrice.add(auctionEndPrice.mul(SECOND_PHASE_PRICE_FACTOR).div(100));
-                secondPhaseStartTime = now;
-                endTime = secondPhaseStartTime.add(SECOND_PHASE_MAX_SPAN);
-
-                PhaseTwoStared(fixedPrice);
-            }
-            else if (auctionEndPrice < TOKEN_MIN_PRICE_THRESHOLD && auctionEndPrice > 0){
-                // funding goal is not reached, auctionEndPrice is below threshold value: phase 2 is not engaged, campaign is ended
-                endTime = firstPhaseEndTime;
-                campaignEnded = true;
-
-                tokenContract.setTokenStart(endTime);
-
-                Ended(false);
-            }
-            else { // no one came, we are all alone in this world :(
-                auctionEndPrice = 1 wei;
-                endTime = firstPhaseEndTime;
-                campaignEnded = true;
-
-                tokenContract.setTokenStart(endTime);
-
-                Ended(false);
-
-                Retired();
-            }
-        }
-        
-        return auctionEndPrice;
-    }
-
-    // Phase 2 functions
-
-    /// Make an investment during second phase
-    function invest()
-        public
-        payable
-        when_not_halted
-        when_active
-        only_in_phase_2
-        reject_dust
-    {
-        _invest(msg.sender, msg.value);
-    }
-    
-    ///
-    function investAs(address _receiver)
-        public
-        payable
-        when_not_halted
-        when_active
-        only_in_phase_2
-        reject_dust
-    {
-        require (_receiver != address(0));
-        _invest(_receiver, msg.value);
-    }
-    
-    /// internal invest functionality
-    function _invest(address _receiver, uint256 _value)
-        internal
-    {
-        uint256 tokensCnt = getTokens(_receiver, _value); 
-
-        require(tokensCnt > 0);
-        require(tokensPurchased.add(tokensCnt) <= tokenCapPhaseTwo); // should not exceed available tokens
-        require(_value <= maxTokenPurchase(_receiver)); // should not go above target
-
-        purchases[_receiver] = purchases[_receiver].add(_value);
-        totalReceived = totalReceived.add(_value);
-        totalAccounted = totalAccounted.add(_value);
-        tokensPurchased = tokensPurchased.add(tokensCnt);
-
-        Invested(_receiver, _value, tokensCnt);
-        
-        // send to wallet
-        wallet.transfer(_value);
-
-        // check if we've reached the target
-        if (totalAccounted >= FUNDING_GOAL) {
-            endTime = now;
-            campaignEnded = true;
-            
-            tokenContract.setTokenStart(endTime);
-            
-            Ended(true);
-        }
-    }
-    
-    /// Tokens currently available for purchase in Phase 2
-    function getTokens(address _receiver, uint256 _value)
-        public
-        constant
-        when_active
-        only_in_phase_2
-        returns(uint256 tokensCnt)
-    {
-        // auction participants have better price in second phase
-        if (buyins[_receiver].received > 0) {
-            tokensCnt = _value.div(auctionEndPrice);
-        }
-        else {
-            tokensCnt = _value.div(fixedPrice);
-        }
-
-    }
-    
-    /// Maximum current purchase amount in Phase 2
-    function maxTokenPurchase(address _receiver)
-        public
-        constant
-        when_active
-        only_in_phase_2
-        returns(uint256 spend)
-    {
-        uint256 availableTokens = tokenCapPhaseTwo.sub(tokensPurchased);
-        uint256 fundingGoalOffset = FUNDING_GOAL.sub(totalReceived);
-        uint256 maxInvestment;
-        
-        if (buyins[_receiver].received > 0) {
-            maxInvestment = availableTokens.mul(auctionEndPrice);
-        }
-        else {
-            maxInvestment = availableTokens.mul(fixedPrice);
-        }
-
-        if (maxInvestment > fundingGoalOffset) {
-            return fundingGoalOffset;
-        }
-        else {
-            return maxInvestment;
-        }
-    }
-
-    // After sale end
-    
-    /// Finalise purchase: transfers the tokens to caller address
-    function finalise()
-        public
-        when_not_halted
-        when_ended
-        only_investors(msg.sender)
-    {
-        finaliseAs(msg.sender);
-    }
-
-    /// Finalise purchase for address provided: transfers the tokens purchased by given participant to their address
-    function finaliseAs(address _receiver)
-        public
-        when_not_halted
-        when_ended
-        only_investors(_receiver)
-    {
-        bool auctionParticipant;
-        uint256 total;
-        uint256 tokens;
-        uint256 bonus;
-        uint256 totalFixed;
-        uint256 tokensFixed;
-
-        // first time calling finalise after phase 2 has ended but target was not reached
-        if (!campaignEnded) {
-            campaignEnded = true;
-            
-            tokenContract.setTokenStart(endTime);
-            
-            Ended(false);
-        }
-
-        if (buyins[_receiver].accounted != 0) {
-            auctionParticipant = true;
-
-            total = buyins[_receiver].accounted;
-            tokens = total.div(auctionEndPrice);
-            
-            if (auctionSuccessBonus > 0) {
-                bonus = tokens.mul(auctionSuccessBonus).div(100);
-            }
-            totalFinalised = totalFinalised.add(total);
-            delete buyins[_receiver];
-        }
-        
-        if (purchases[_receiver] != 0) {
-            totalFixed = purchases[_receiver];
-            
-            if (auctionParticipant) {
-                tokensFixed = totalFixed.div(auctionEndPrice);
-            }
-            else {
-                tokensFixed = totalFixed.div(fixedPrice);
-            }
-            totalFinalised = totalFinalised.add(totalFixed);
-            delete purchases[_receiver];
-        }
-
-        tokens = tokens.add(bonus).add(tokensFixed);
-
-        require (tokenContract.transferFrom(owner, _receiver, tokens));
-
-        Finalised(_receiver, tokens);
-
-        if (totalFinalised == totalAccounted) {
-            tokenContract.burn(); // burn all unsold tokens
-            Retired();
-        }
-    }
-
-    // Owner functions
-
-    /// Emergency function to pause buy-in and finalisation.
-    function setPaused(bool _paused) public only_owner { paused = _paused; }
-
-    /// Emergency function to drain the contract of any funds.
-    function drain() public only_owner { wallet.transfer(this.balance); }
-    
-    /// Returns true if the campaign is in progress.
-    function isActive() public constant returns (bool) { return now >= startTime && now < endTime; }
-
-    /// Returns true if all purchases are finished.
-    function allFinalised() public constant returns (bool) { return now >= endTime && totalAccounted == totalFinalised; }
+	function isWhitelisted(address _party) public constant returns (bool) {
+		return whitelist[_party];
+	}
 }
 
 /**
@@ -662,9 +299,9 @@ library SafeMath {
     return c;
   }
 }
-
+	
     /**
-    *            CITY token by www.SmartCityCoin.io
+    *            CITY 2.0 token by www.SmartCityCoin.io
     * 
     *          .ossssss:                      `+sssss`      
     *         ` +ssssss+` `.://++++++//:.`  .osssss+       
