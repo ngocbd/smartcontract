@@ -1,81 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0x282EE54f8ecDa53d6bB77DF4A4134738375a0664
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0xfe8b40a35ff222c8475385f74e77d33954531b41
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-// ----------------------------------------------------------------------------
-// XT token contract
-//
-// Symbol      : XT
-// Name        : X Token
-// Total supply: 1000000000
-// Decimals    : 18
-//
-// Inspired by BokkyPooBah.
-//
-// This is the official X Token ERC20 contract. XT is WCX's native crypto token.
-// wcex.com (c) WCX 2018.
-// ----------------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////////////////////////////////
+//                     ___           ___           ___                    __      
+//       ___          /  /\         /  /\         /  /\                  |  |\    
+//      /__/\        /  /::\       /  /::\       /  /::|                 |  |:|   
+//      \  \:\      /  /:/\:\     /  /:/\:\     /  /:|:|                 |  |:|   
+//       \__\:\    /  /::\ \:\   /  /::\ \:\   /  /:/|:|__               |__|:|__ 
+//       /  /::\  /__/:/\:\ \:\ /__/:/\:\_\:\ /__/:/_|::::\          ____/__/::::\
+//      /  /:/\:\ \  \:\ \:\_\/ \__\/  \:\/:/ \__\/  /~~/:/          \__\::::/~~~~
+//     /  /:/__\/  \  \:\ \:\        \__\::/        /  /:/              |~~|:|    
+//    /__/:/        \  \:\_\/        /  /:/        /  /:/               |  |:|    
+//    \__\/          \  \:\         /__/:/        /__/:/                |__|:|    
+//                    \__\/         \__\/         \__\/                  \__\|    
+//  ______   ______   ______   _____    _    _   ______  ______  _____ 
+// | |  | \ | |  | \ / |  | \ | | \ \  | |  | | | |     | |     | | \ \ 
+// | |__|_/ | |__| | | |  | | | |  | | | |  | | | |     | |---- | |  | |
+// |_|      |_|  \_\ \_|__|_/ |_|_/_/  \_|__|_| |_|____ |_|____ |_|_/_/ 
+// 
+// TEAM X All Rights Received. http://teamx.club 
+// This product is protected under license.  Any unauthorized copy, modification, or use without 
+// express written consent from the creators is prohibited.
+// Any cooperation Please email: service@teamx.club
+// ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-}
-
-
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// ----------------------------------------------------------------------------
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-    event Burn(address indexed burner, uint tokens);
-}
-
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
 contract Owned {
     address public owner;
     address public newOwner;
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -89,148 +46,209 @@ contract Owned {
     }
     function acceptOwnership() public {
         require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
         newOwner = address(0);
     }
 }
 
+//=========================================================...
+// |\/| _ . _   /~` _  _ _|_ _ _  __|_  .
+// |  |(_||| |  \_,(_)| | | | (_|(_ |   . Main Contract
+//=========================================================    
+contract XToken is Owned {
+    using SafeMath for uint256;
 
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract XToken is ERC20Interface, Owned, SafeMath {
-    string public symbol;
-    string public name;
-    uint8 public decimals;
-    uint public _totalSupply;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
+    mapping(address => uint256) balances;
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
+    string public name = "XToken";
+    string public symbol = "XT";
+    uint8 public decimals = 18;
+    uint256 private fee_ = 5; // 5% fee to buy and sell
+
+    uint256 public totalSupply = 100000000 * (1 ether);
+    uint256 public tokenMarketPool = 0; // no shares
+    uint256 public poolPrice = 1 finney;
 
 
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function XToken() public {
-        symbol = "XT";
-        name = "X Token";
-        decimals = 18;
-        _totalSupply = 1000000000 * 10**uint(decimals);
-        balances[owner] = _totalSupply;
-        Transfer(address(0), owner, _totalSupply);
+    //=========================================================...
+    //  _ _  _  __|_ _   __|_ _  _
+    // (_(_)| |_\ | ||_|(_ | (_)| 
+    //=========================================================
+    constructor () public {
+        balances[msg.sender] = 30000000 * (1 ether); // keeps 30%
+        tokenMarketPool = totalSupply.sub(balances[msg.sender]);
     }
 
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Don't accept ETH
-    // ------------------------------------------------------------------------
+    //=========================================================...
+    //  _    |_ |. _   |`    _  __|_. _  _  _  .
+    // |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  . public functions
+    //=|=======================================================
     function () public payable {
-        revert();
+        if (!isContract(msg.sender)) {
+            revert("Can not Send Eth directly to this token");
+        }
     }
 
-    // ------------------------------------------------------------------------
-    // Burn function
-    // Owner can burn tokens = send tokens to address(0) 
-    // and decrease total supply
-    // ------------------------------------------------------------------------
-    function burn(uint tokens) public onlyOwner returns (bool success) {
-        require(balances[msg.sender] >= tokens);
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        _totalSupply = safeSub(_totalSupply, tokens);
-        Burn(msg.sender, tokens);
-        Transfer(msg.sender, address(0), tokens);
-        return true;
+    function buy() public payable {
+        uint256 ethAmount = msg.value;
+        uint256 taxed = ethAmount.sub(ethAmount.mul(fee_).div(100));
+        uint256 tokenAmount = taxed.mul(1 ether).div(poolPrice);
+
+        require(tokenMarketPool >= tokenAmount, "No enough token in market pool");
+        tokenMarketPool = tokenMarketPool.sub(tokenAmount);
+        balances[msg.sender] = balanceOf(msg.sender).add(tokenAmount);
     }
 
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
+    function sell(uint256 tokenAmount) public {
+        require(balanceOf(msg.sender) >= tokenAmount, "No enough token");
+        uint256 sellPrice = getSellPrice();
+        uint256 soldEth = tokenAmount.mul(sellPrice).div(1 ether);
+
+        balances[msg.sender] = balanceOf(msg.sender).sub(tokenAmount);
+        tokenMarketPool = tokenMarketPool.add(tokenAmount);
+        uint256 gotEth = soldEth.sub(soldEth.mul(fee_).div(100));
+        msg.sender.transfer(gotEth);
+    }
+
+    function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) public returns (bool success) {
+        if (isContract(_to)) {
+            require(balanceOf(msg.sender) >= _value, "no enough token");
+            balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+            balances[_to] = balanceOf(_to).add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            emit Transfer(msg.sender, _to, _value, _data);
+            return true;
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        bytes memory empty;
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        } else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    //=========================================================...
+    //   . _      |`    _  __|_. _  _  _  .
+    // \/|(/_VV  ~|~|_|| |(_ | |(_)| |_\  . view functions
+    //=========================================================
+    function getShareToken() public view returns (uint256) {
+        return totalSupply.sub(tokenMarketPool);
+    }
+
+    function getSellPrice() public view returns (uint256) {
+        return address(this).balance.mul(1 ether).div(getShareToken());
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    //=========================================================...
+    //  _  _.   _ _|_ _    |`    _  __|_. _  _  _  .
+    // |_)| |\/(_| | (/_  ~|~|_|| |(_ | |(_)| |_\  . private functions
+    //=|=======================================================
+    function isContract(address addr) internal view returns (bool) {
+        uint256 size;
+        assembly { size := extcodesize(addr) }
+        return size > 0;
+    }
+
+    function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
+        require (balanceOf(msg.sender) >= _value, "No Enough Token");
+        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+        balances[_to] = balanceOf(_to).add(_value);
+        emit Transfer(msg.sender, _to, _value, _data);
+        return true;
+    }
+
+    function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
+        require (balanceOf(msg.sender) >= _value, "No Enough Token");
+        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+        balances[_to] = balanceOf(_to).add(_value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        emit Transfer(msg.sender, _to, _value, _data);
+        return true;
+    }
+}
+
+//=========================================================...
+// . _ _|_ _  _|` _  _ _ 
+// || | | (/_|~|~(_|(_(/_
+//=========================================================
+interface ContractReceiver {
+    function tokenFallback(address _from, uint256 _value, bytes _data) external;
+}
+
+interface ERC20Interface {
+    function transfer(address _to, uint256 _value) external returns (bool);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
