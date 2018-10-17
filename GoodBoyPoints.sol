@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodBoyPoints at 0x161daf1be6860aff2c1de005c1494d501ce484bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodBoyPoints at 0x3a6aee23b8f2fc528f29040f51e7737edf9fce27
 */
 pragma solidity ^0.4.18;
 
@@ -119,7 +119,7 @@ contract GoodBoyPoints is ERC20Interface, Owned, SafeMath {
         symbol = "GBP";
         name = "GoodBoyPoints";
         decimals = 18;
-        _totalSupply = 10000000;
+        _totalSupply = 10000000000000000000000000;
         balances[0x065B31b52d899c7DA58B6196fBA8Ae47B9A5f952] = _totalSupply;
         Transfer(address(0), 0x065B31b52d899c7DA58B6196fBA8Ae47B9A5f952, _totalSupply);
     }
