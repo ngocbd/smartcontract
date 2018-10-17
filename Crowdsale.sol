@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x76ce74f01b46693f3aa73085ddc9aad397197e01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x12c3fd59b13d1735bdd96d1a1b7a8bc4d7802d54
 */
 pragma solidity ^0.4.18;
 
@@ -21,7 +21,7 @@ contract Crowdsale {
     
     constructor(address addressOfTokenUsedAsReward) public {
         owner = msg.sender;
-        price = 0.00028 ether;
+        price = 0.0001 ether;
         tokenReward = token(addressOfTokenUsedAsReward);
     }
     
