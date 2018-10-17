@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoLib at 0x79d59505Fb63556e0c06035dE9AD1B18491d37C7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoLib at 0xed045abcd09fa8223d06bca4b0ad562a1c467f10
 */
 pragma solidity 0.4.24;
 contract Owned {
@@ -441,19 +441,19 @@ contract IcoLib is Ico {
                 _reward = 0;
             }
         } else if ( currentPhase == phaseType.sales1 ) {
-            if        ( _amount >=   1e13 ) {
+            if        ( _amount >=   1e12 ) {
                 _reward = _amount.mul(117).div(100);
             }
         } else if ( currentPhase == phaseType.sales2 ) {
-            if        ( _amount >=   1e13 ) {
+            if        ( _amount >=   1e12 ) {
                 _reward = _amount.mul(112).div(100);
             }
         } else if ( currentPhase == phaseType.sales3 ) {
-            if        ( _amount >=   1e13 ) {
+            if        ( _amount >=   1e12 ) {
                 _reward = _amount.mul(109).div(100);
             }
         } else if ( currentPhase == phaseType.sales4 ) {
-            if        ( _amount >=   1e13 ) {
+            if        ( _amount >=   1e12 ) {
                 _reward = _amount.mul(102).div(100);
             }
         } else if ( currentPhase == phaseType.preFinish ) {
