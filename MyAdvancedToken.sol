@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x97a8956bc9e74b13e3e153f890699dae3dfae772
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xc2bc886b5d61f8ae9a916de9e31199e86ad1f007
 */
 pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
 
-    function owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -36,6 +36,9 @@ contract TokenERC20 {
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
+    
+    // This generates a public event on the blockchain that will notify clients
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
@@ -45,7 +48,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -117,6 +120,7 @@ contract TokenERC20 {
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -181,14 +185,14 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
-    mapping (address => uint) public lockAmount;
+
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -232,36 +236,12 @@ contract MyAdvancedToken is owned, TokenERC20 {
         buyPrice = newBuyPrice;
     }
 
-    function lock(address ownerAddress,uint Amount) public onlyOwner
-    {
-    	require(Amount>0);
-    	require(balanceOf[ownerAddress]>=Amount);
-    	balanceOf[ownerAddress]-=Amount;
-    	lockAmount[ownerAddress]+=Amount;
-    }
-
-     function unlock(address ownerAddress,uint unlockAmount) public onlyOwner
-    {
-    	require(unlockAmount>0);
-    	require(lockAmount[ownerAddress]>=unlockAmount);
-    	balanceOf[ownerAddress]+=unlockAmount;
-    	lockAmount[ownerAddress]-=unlockAmount;
-    }
-
-    function rename(string newtokenName,string newtokenSymbol) onlyOwner public
-    {
-      name=newtokenName;
-      symbol=newtokenSymbol;
-    }
-    
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-       uint amount = msg.value *(10**18)/ buyPrice;               // calculates the amount
-       _transfer(this, msg.sender, amount);              // makes the transfers
-       if(!owner.send(msg.value)){
-           revert();
-       }
-   }
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
