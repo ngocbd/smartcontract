@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonumToken at 0x9150ac61dc65730d5307f9c9e1a6c7482a452f44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonumToken at 0x2c256a9e1ed6eb0c88ef2509f65c611d5f865af8
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.24;
 
 /**
  * @title SafeMath
@@ -416,10 +416,27 @@ contract BonumToken is StandardToken, Ownable {
 		teamTimelock = new TokenTimelock(this, _team, releaseTime);
 
 		uint factor = (10 ** uint256(decimals));
-		balances[bounty] = 1300000 * factor;
-		balances[reserveTimelock] = 13000000 * factor;
-		balances[teamTimelock] = 9750000 * factor;
-		balances[msg.sender] = 34450000 * factor;
+
+    uint bountyBalance = 1300000 * factor;
+		balances[_bounty] = bountyBalance;
+    emit Transfer(address(0), _bounty, bountyBalance);
+
+    uint advisorsBalance = 6500000 * factor;
+    balances[_advisors] = advisorsBalance;
+    emit Transfer(address(0), _advisors, advisorsBalance);
+
+    uint reserveBalance = 13000000 * factor;
+		balances[reserveTimelock] = reserveBalance;
+    emit Transfer(address(0), reserveTimelock, reserveBalance);
+
+    uint teamBalance = 9750000 * factor;
+		balances[teamTimelock] = teamBalance;
+    emit Transfer(address(0), teamTimelock, teamBalance);
+
+    uint ownerBalance = 34450000 * factor;
+		balances[msg.sender] = ownerBalance;
+    emit Transfer(address(0), msg.sender, ownerBalance);
+
 	}
 	
 	/**
@@ -430,7 +447,7 @@ contract BonumToken is StandardToken, Ownable {
 		require(!burnt);
 		require(_value > 0);
 		require(_value <= balances[msg.sender]);
-		require(block.timestamp < 1688169600); //tokens are available to be burnt only for 5 years
+		require(block.timestamp < 1690848000); //tokens are available to be burnt only for 5 years
 
 		balances[msg.sender] = balances[msg.sender].sub(_value);
 		totalSupply_ = totalSupply_.sub(_value);
