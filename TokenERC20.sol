@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x5524ca80362bf4e145ab19306e37bacf9e13db63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x773718db0af10ac80094ad2627d950abd488b835
 */
 pragma solidity ^0.4.16;
 
@@ -39,6 +39,7 @@ contract TokenERC20 {
         symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
+    
     /**
      * Internal transfer, only can be called by this contract
      */
