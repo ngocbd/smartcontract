@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReadyPlayerONE at 0x6db943251e4126f913e9733821031791e75df713
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReadyPlayerONE at 0xe65060b5b855e2625cfc5038f013929a5a7170d1
 */
 pragma solidity ^0.4.24;
 /**
@@ -1396,6 +1396,16 @@ contract ReadyPlayerONE is modularLong {
             emit RP1events.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
             _rp1 = _aff;
+        }
+        
+        // pay out rp1
+        _rp1 = _rp1.add((_eth.mul(fees_[_team].rp1)) / (100));
+        if (_rp1 > 0)
+        {
+            community_addr.transfer(_rp1);
+            
+            // set up event data
+            _eventData_.rp1Amount = _rp1.add(_eventData_.rp1Amount);
         }
         
         return(_eventData_);
