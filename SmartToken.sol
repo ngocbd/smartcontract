@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0xe245aa7191fa523a7f109d3503808f37c1c2ce3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x65832facdc1eefbcfaf50f570228ba886f745681
 */
 pragma solidity ^0.4.18;
 
@@ -116,7 +116,7 @@ contract SmartToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function SmartToken() public {
-        symbol = "SMT";
+        symbol = "SMARTTOKENS";
         name = "Smart Token";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
