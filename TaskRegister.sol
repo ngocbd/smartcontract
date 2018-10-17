@@ -1,7 +1,235 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x0a61e886822f46b4ca9c765c9b984a25a5dc4b9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0xdb6f847849765ca3ecd34e4d90f8c58b80bf5443
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.24;
+
+// File: libs/EC.sol
+
+contract EC {
+
+    uint256 constant public gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+    uint256 constant public gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+    uint256 constant public n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
+    uint256 constant public a = 0;
+    uint256 constant public b = 7;
+
+    function _jAdd(
+        uint256 x1, uint256 z1,
+        uint256 x2, uint256 z2)
+        public 
+        pure
+        returns(uint256 x3, uint256 z3)
+    {
+        (x3, z3) = (
+            addmod(
+                mulmod(z2, x1, n),
+                mulmod(x2, z1, n),
+                n
+            ),
+            mulmod(z1, z2, n)
+        );
+    }
+
+    function _jSub(
+        uint256 x1, uint256 z1,
+        uint256 x2, uint256 z2)
+        public 
+        pure
+        returns(uint256 x3, uint256 z3)
+    {
+        (x3, z3) = (
+            addmod(
+                mulmod(z2, x1, n),
+                mulmod(n - x2, z1, n),
+                n
+            ),
+            mulmod(z1, z2, n)
+        );
+    }
+
+    function _jMul(
+        uint256 x1, uint256 z1,
+        uint256 x2, uint256 z2)
+        public 
+        pure
+        returns(uint256 x3, uint256 z3)
+    {
+        (x3, z3) = (
+            mulmod(x1, x2, n),
+            mulmod(z1, z2, n)
+        );
+    }
+
+    function _jDiv(
+        uint256 x1, uint256 z1,
+        uint256 x2, uint256 z2) 
+        public 
+        pure
+        returns(uint256 x3, uint256 z3)
+    {
+        (x3, z3) = (
+            mulmod(x1, z2, n),
+            mulmod(z1, x2, n)
+        );
+    }
+
+    function _inverse(uint256 val) public pure
+        returns(uint256 invVal)
+    {
+        uint256 t = 0;
+        uint256 newT = 1;
+        uint256 r = n;
+        uint256 newR = val;
+        uint256 q;
+        while (newR != 0) {
+            q = r / newR;
+
+            (t, newT) = (newT, addmod(t, (n - mulmod(q, newT, n)), n));
+            (r, newR) = (newR, r - q * newR );
+        }
+
+        return t;
+    }
+
+    function _ecAdd(
+        uint256 x1, uint256 y1, uint256 z1,
+        uint256 x2, uint256 y2, uint256 z2) 
+        public 
+        pure
+        returns(uint256 x3, uint256 y3, uint256 z3)
+    {
+        uint256 lx;
+        uint256 lz;
+        uint256 da;
+        uint256 db;
+
+        if (x1 == 0 && y1 == 0) {
+            return (x2, y2, z2);
+        }
+
+        if (x2 == 0 && y2 == 0) {
+            return (x1, y1, z1);
+        }
+
+        if (x1 == x2 && y1 == y2) {
+            (lx, lz) = _jMul(x1, z1, x1, z1);
+            (lx, lz) = _jMul(lx, lz, 3, 1);
+            (lx, lz) = _jAdd(lx, lz, a, 1);
+
+            (da,db) = _jMul(y1, z1, 2, 1);
+        } else {
+            (lx, lz) = _jSub(y2, z2, y1, z1);
+            (da, db) = _jSub(x2, z2, x1, z1);
+        }
+
+        (lx, lz) = _jDiv(lx, lz, da, db);
+
+        (x3, da) = _jMul(lx, lz, lx, lz);
+        (x3, da) = _jSub(x3, da, x1, z1);
+        (x3, da) = _jSub(x3, da, x2, z2);
+
+        (y3, db) = _jSub(x1, z1, x3, da);
+        (y3, db) = _jMul(y3, db, lx, lz);
+        (y3, db) = _jSub(y3, db, y1, z1);
+
+        if (da != db) {
+            x3 = mulmod(x3, db, n);
+            y3 = mulmod(y3, da, n);
+            z3 = mulmod(da, db, n);
+        } else {
+            z3 = da;
+        }
+    }
+
+    function _ecDouble(uint256 x1, uint256 y1, uint256 z1) public pure
+        returns(uint256 x3, uint256 y3, uint256 z3)
+    {
+        (x3, y3, z3) = _ecAdd(x1, y1, z1, x1, y1, z1);
+    }
+
+    function _ecMul(uint256 d, uint256 x1, uint256 y1, uint256 z1) public pure
+        returns(uint256 x3, uint256 y3, uint256 z3)
+    {
+        uint256 remaining = d;
+        uint256 px = x1;
+        uint256 py = y1;
+        uint256 pz = z1;
+        uint256 acx = 0;
+        uint256 acy = 0;
+        uint256 acz = 1;
+
+        if (d == 0) {
+            return (0, 0, 1);
+        }
+
+        while (remaining != 0) {
+            if ((remaining & 1) != 0) {
+                (acx,acy,acz) = _ecAdd(acx, acy, acz, px, py, pz);
+            }
+            remaining = remaining / 2;
+            (px, py, pz) = _ecDouble(px, py, pz);
+        }
+
+        (x3, y3, z3) = (acx, acy, acz);
+    }
+
+    function ecadd(
+        uint256 x1, uint256 y1,
+        uint256 x2, uint256 y2)
+        public
+        pure
+        returns(uint256 x3, uint256 y3)
+    {
+        uint256 z;
+        (x3, y3, z) = _ecAdd(x1, y1, 1, x2, y2, 1);
+        z = _inverse(z);
+        x3 = mulmod(x3, z, n);
+        y3 = mulmod(y3, z, n);
+    }
+
+    function ecmul(uint256 x1, uint256 y1, uint256 scalar) public pure
+        returns(uint256 x2, uint256 y2)
+    {
+        uint256 z;
+        (x2, y2, z) = _ecMul(scalar, x1, y1, 1);
+        z = _inverse(z);
+        x2 = mulmod(x2, z, n);
+        y2 = mulmod(y2, z, n);
+    }
+
+    function ecmulVerify(uint256 x1, uint256 y1, uint256 scalar, uint256 qx, uint256 qy) public pure
+        returns(bool)
+    {
+        uint256 m = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+        address signer = ecrecover(0, y1 % 2 != 0 ? 28 : 27, bytes32(x1), bytes32(mulmod(scalar, x1, m)));
+        address xyAddress = address(uint256(keccak256(abi.encodePacked(qx, qy))) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+        return xyAddress == signer;
+    }
+
+    function publicKey(uint256 privKey) public pure
+        returns(uint256 qx, uint256 qy)
+    {
+        return ecmul(gx, gy, privKey);
+    }
+
+    function publicKeyVerify(uint256 privKey, uint256 x, uint256 y) public pure
+        returns(bool)
+    {
+        return ecmulVerify(gx, gy, privKey, x, y);
+    }
+
+    function deriveKey(uint256 privKey, uint256 pubX, uint256 pubY) public pure
+        returns(uint256 qx, uint256 qy)
+    {
+        uint256 z;
+        (qx, qy, z) = _ecMul(privKey, pubX, pubY, 1);
+        z = _inverse(z);
+        qx = mulmod(qx, z, n);
+        qy = mulmod(qy, z, n);
+    }
+}
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -12,14 +240,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -32,39 +264,105 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+// File: contracts/Upgradable.sol
+
+contract IUpgradable {
+    function startUpgrade() public;
+    function endUpgrade() public;
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+contract Upgradable is Ownable {
+    struct UpgradableState {
+        bool isUpgrading;
+        address prevVersion;
+        address nextVersion;
+    }
+
+    UpgradableState public upgradableState;
+
+    event Initialized(address indexed prevVersion);
+    event Upgrading(address indexed nextVersion);
+    event Upgraded(address indexed nextVersion);
+
+    modifier isLastestVersion {
+        require(!upgradableState.isUpgrading);
+        require(upgradableState.nextVersion == address(0));
+        _;
+    }
+
+    modifier onlyOwnerOrigin {
+        require(tx.origin == owner);
+        _;
+    }
+
+    constructor(address _prevVersion) public {
+        if (_prevVersion != address(0)) {
+            require(msg.sender == Ownable(_prevVersion).owner());
+            upgradableState.isUpgrading = true;
+            upgradableState.prevVersion = _prevVersion;
+            IUpgradable(_prevVersion).startUpgrade();
+        } else {
+            emit Initialized(_prevVersion);
+        }
+    }
+
+    function startUpgrade() public onlyOwnerOrigin {
+        require(msg.sender != owner);
+        require(!upgradableState.isUpgrading);
+        require(upgradableState.nextVersion == 0);
+        upgradableState.isUpgrading = true;
+        upgradableState.nextVersion = msg.sender;
+        emit Upgrading(msg.sender);
+    }
+
+    //function upgrade(uint index, uint size) public onlyOwner {}
+
+    function endUpgrade() public onlyOwnerOrigin {
+        require(upgradableState.isUpgrading);
+        upgradableState.isUpgrading = false;
+        if (msg.sender != owner) {
+            require(upgradableState.nextVersion == msg.sender);
+            emit Upgraded(upgradableState.nextVersion);
+        } 
+        else  {
+            if (upgradableState.prevVersion != address(0)) {
+                Upgradable(upgradableState.prevVersion).endUpgrade();
+            }
+            emit Initialized(upgradableState.prevVersion);
+        }
+    }
 }
+
+// File: contracts/VanityLib.sol
 
 contract VanityLib {
     uint constant m = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
@@ -125,8 +423,8 @@ contract VanityLib {
 
     // Create BTC Address: https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses#How_to_create_Bitcoin_Address
     function createBtcAddressHex(uint256 publicXPoint, uint256 publicYPoint) public pure returns(uint256) {
-        bytes20 publicKeyPart = ripemd160(sha256(byte(0x04), publicXPoint, publicYPoint));
-        bytes32 publicKeyCheckCode = sha256(sha256(byte(0x00), publicKeyPart));
+        bytes20 publicKeyPart = ripemd160(abi.encodePacked(sha256(abi.encodePacked(byte(0x04), publicXPoint, publicYPoint))));
+        bytes32 publicKeyCheckCode = sha256(abi.encodePacked(sha256(abi.encodePacked(byte(0x00), publicKeyPart))));
         
         bytes memory publicKey = new bytes(32);
         for (uint i = 0; i < 7; i++) {
@@ -242,101 +540,97 @@ contract VanityLib {
 
 }
 
-contract IUpgradable {
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
-    function startUpgrade() public;
-    function endUpgrade() public;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Upgradable is Ownable {
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-    struct UpgradableState {
-        bool isUpgrading;
-        address prevVersion;
-        address nextVersion;
-    }
-
-    UpgradableState public upgradableState;
-
-    event Initialized(address indexed prevVersion);
-    event Upgrading(address indexed nextVersion);
-    event Upgraded(address indexed nextVersion);
-
-    modifier isLastestVersion {
-        require(!upgradableState.isUpgrading);
-        require(upgradableState.nextVersion == address(0));
-        _;
-    }
-
-    modifier onlyOwnerOrigin {
-        require(tx.origin == owner);
-        _;
-    }
-
-    function Upgradable(address _prevVersion) public {
-        if (_prevVersion != address(0)) {
-            require(msg.sender == Ownable(_prevVersion).owner());
-            upgradableState.isUpgrading = true;
-            upgradableState.prevVersion = _prevVersion;
-            IUpgradable(_prevVersion).startUpgrade();
-        } else {
-            Initialized(_prevVersion);
-        }
-    }
-
-    function startUpgrade() public onlyOwnerOrigin {
-        require(msg.sender != owner);
-        require(!upgradableState.isUpgrading);
-        require(upgradableState.nextVersion == 0);
-        upgradableState.isUpgrading = true;
-        upgradableState.nextVersion = msg.sender;
-        Upgrading(msg.sender);
-    }
-
-    //function upgrade(uint index, uint size) public onlyOwner {}
-
-    function endUpgrade() public onlyOwnerOrigin {
-        require(upgradableState.isUpgrading);
-        upgradableState.isUpgrading = false;
-        if (msg.sender != owner) {
-            require(upgradableState.nextVersion == msg.sender);
-            Upgraded(upgradableState.nextVersion);
-        } 
-        else  {
-            if (upgradableState.prevVersion != address(0)) {
-                Upgradable(upgradableState.prevVersion).endUpgrade();
-            }
-            Initialized(upgradableState.prevVersion);
-        }
-    }
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract IEC {
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
-    function _inverse(uint256 a) public constant 
-        returns(uint256 invA);
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
 
-    function _ecAdd(uint256 x1,uint256 y1,uint256 z1,
-                    uint256 x2,uint256 y2,uint256 z2) public constant
-        returns(uint256 x3,uint256 y3,uint256 z3);
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
 
-    function _ecDouble(uint256 x1,uint256 y1,uint256 z1) public constant
-        returns(uint256 x3,uint256 y3,uint256 z3);
-
-    function _ecMul(uint256 d, uint256 x1,uint256 y1,uint256 z1) public constant
-        returns(uint256 x3,uint256 y3,uint256 z3);
-
-    function publicKey(uint256 privKey) public constant
-        returns(uint256 qx, uint256 qy);
-
-    function deriveKey(uint256 privKey, uint256 pubX, uint256 pubY) public constant
-        returns(uint256 qx, uint256 qy);
-
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
+
+// File: contracts/TaskRegister.sol
 
 contract TaskRegister is Upgradable, VanityLib {
+    using SafeMath for uint256;
 
     enum TaskType {
         BITCOIN_ADDRESS_PREFIX
@@ -346,6 +640,7 @@ contract TaskRegister is Upgradable, VanityLib {
         TaskType taskType;
         uint256 taskId;
         address creator;
+        address referrer;
         uint256 reward;
         bytes32 data;
         uint256 dataLength;
@@ -354,47 +649,62 @@ contract TaskRegister is Upgradable, VanityLib {
         uint256 answerPrivateKey;
     }
 
-    IEC public ec;
-    ERC20 public token;
+    EC public ec;
     uint256 public nextTaskId = 1;
     uint256 public totalReward;
+    uint256 constant public MAX_PERCENT = 1000000;
+    uint256 public serviceFee; // 1% == 10000, 100% == 1000000
+    uint256 public referrerFee; // Calculated from service fee, 50% == 500000
     
     Task[] public tasks;
     Task[] public completedTasks;
     mapping(uint256 => uint) public indexOfTaskId; // Starting from 1
-    event TaskCreated(uint256 indexed taskId);
-    event TaskSolved(uint256 indexed taskId);
-    event TaskPayed(uint256 indexed taskId);
 
-    function TaskRegister(address _ec, address _token, address _prevVersion) public Upgradable(_prevVersion) {
-        ec = IEC(_ec);
-        token = ERC20(_token);
+    event TaskCreated(uint256 indexed taskId);
+    event TaskSolved(uint256 indexed taskId, uint256 reward);
+    event TaskPayed(uint256 indexed taskId, uint256 value);
+
+    constructor(address _ec, address _prevVersion) public Upgradable(_prevVersion) {
+        ec = EC(_ec);
     }
 
-    function upgrade(uint size) public onlyOwner {
+    function setServiceFee(uint256 _serviceFee) public onlyOwner {
+        require(_serviceFee <= 20000); // 2% of reward
+        serviceFee = _serviceFee;
+    }
+
+    function setReferrerFee(uint256 _referrerFee) public onlyOwner {
+        require(_referrerFee <= 500000); // 50% of serviceFee
+        referrerFee = _referrerFee;
+    }
+
+    function upgrade(uint _size) public onlyOwner {
         require(upgradableState.isUpgrading);
         require(upgradableState.prevVersion != 0);
 
         // Migrate some vars
         nextTaskId = TaskRegister(upgradableState.prevVersion).nextTaskId();
-        totalReward = token.balanceOf(upgradableState.prevVersion);//TODO: TaskRegister(upgradableState.prevVersion).totalReward();
-
+        totalReward = TaskRegister(upgradableState.prevVersion).totalReward();
+        serviceFee = TaskRegister(upgradableState.prevVersion).serviceFee();
+        referrerFee = TaskRegister(upgradableState.prevVersion).referrerFee();
+        
         uint index = tasks.length;
         uint tasksCount = TaskRegister(upgradableState.prevVersion).tasksCount();
 
         // Migrate tasks
 
-        for (uint i = index; i < index + size && i < tasksCount; i++) {
-            tasks.push(Task(TaskType.BITCOIN_ADDRESS_PREFIX,0,0,0,bytes32(0),0,0,0,0));
+        for (uint i = index; i < index + _size && i < tasksCount; i++) {
+            tasks.push(Task(TaskType.BITCOIN_ADDRESS_PREFIX,0,0,0,0,bytes32(0),0,0,0,0));
         }
 
-        for (uint j = index; j < index + size && j < tasksCount; j++) {
+        for (uint j = index; j < index + _size && j < tasksCount; j++) {
             (
                 tasks[j].taskType,
                 tasks[j].taskId,
                 tasks[j].creator,
-                tasks[j].reward,
-                tasks[j].data,
+                tasks[j].referrer,
+                ,//tasks[j].reward,
+                ,//tasks[j].data,
                 ,//tasks[j].dataLength, 
                 ,//tasks[j].requestPublicXPoint, 
                 ,//tasks[j].requestPublicYPoint,
@@ -403,68 +713,81 @@ contract TaskRegister is Upgradable, VanityLib {
             indexOfTaskId[tasks[j].taskId] = j + 1;
         }
 
-        for (uint k = index; k < index + size && k < tasksCount; k++) {
+        for (j = index; j < index + _size && j < tasksCount; j++) {
             (
-                ,//tasks[k].taskType,
-                ,//tasks[k].taskId,
-                ,//tasks[k].creator,
-                ,//tasks[k].reward,
-                ,//tasks[k].data,
-                tasks[k].dataLength, 
-                tasks[k].requestPublicXPoint, 
-                tasks[k].requestPublicYPoint,
-                tasks[k].answerPrivateKey
-            ) = TaskRegister(upgradableState.prevVersion).tasks(k);
+                ,//tasks[j].taskType,
+                ,//tasks[j].taskId,
+                ,//tasks[j].creator,
+                ,//tasks[j].referrer,
+                tasks[j].reward,
+                tasks[j].data,
+                tasks[j].dataLength, 
+                tasks[j].requestPublicXPoint, 
+                ,//tasks[j].requestPublicYPoint,
+                 //tasks[j].answerPrivateKey
+            ) = TaskRegister(upgradableState.prevVersion).tasks(j);
+        }
+
+        for (j = index; j < index + _size && j < tasksCount; j++) {
+            (
+                ,//tasks[j].taskType,
+                ,//tasks[j].taskId,
+                ,//tasks[j].creator,
+                ,//tasks[j].referrer,
+                ,//tasks[j].reward,
+                ,//tasks[j].data,
+                ,//tasks[j].dataLength, 
+                ,//tasks[j].requestPublicXPoint, 
+                tasks[j].requestPublicYPoint,
+                tasks[j].answerPrivateKey
+            ) = TaskRegister(upgradableState.prevVersion).tasks(j);
         }
     }
     
     function endUpgrade() public {
         super.endUpgrade();
-        
+
         if (upgradableState.nextVersion != 0) {
-            token.transfer(upgradableState.nextVersion, token.balanceOf(this));
+            upgradableState.nextVersion.transfer(address(this).balance);
         }
     }
 
-    function tasksCount() public constant returns(uint) {
+    function tasksCount() public view returns(uint) {
         return tasks.length;
     }
 
-    function completedTasksCount() public constant returns(uint) {
+    function completedTasksCount() public view returns(uint) {
         return completedTasks.length;
     }
 
-    function payForTask(uint256 taskId, uint256 reward) public isLastestVersion {
-        uint index = safeIndexOfTaskId(taskId);
-        if (reward > 0) {
-            token.transferFrom(tx.origin, this, reward);
-        } else {
-            reward = token.balanceOf(this) - totalReward;
+    function payForTask(uint256 _taskId) payable public isLastestVersion {
+        if (msg.value > 0) {
+            Task storage task = tasks[safeIndexOfTaskId(_taskId)];
+            task.reward = task.reward.add(msg.value);
+            totalReward = totalReward.add(msg.value);
+            emit TaskPayed(_taskId, msg.value);
         }
-        tasks[index].reward += reward;
-        totalReward += reward;
-        TaskPayed(taskId);
     }
 
-    function safeIndexOfTaskId(uint taskId) public constant returns(uint) {
-        uint index = indexOfTaskId[taskId];
-        require(index > 0);
-        return index - 1;
+    function safeIndexOfTaskId(uint _taskId) public view returns(uint) {
+        return indexOfTaskId[_taskId].sub(1);
     }
-
-    // Pass reward == 0 for automatically determine already transferred value
-    function createBitcoinAddressPrefixTask(bytes prefix, uint256 reward, uint256 requestPublicXPoint, uint256 requestPublicYPoint) public isLastestVersion {
+    
+    function createBitcoinAddressPrefixTask(
+        bytes prefix,
+        uint256 requestPublicXPoint,
+        uint256 requestPublicYPoint,
+        address referrer
+    )
+        payable
+        public
+        isLastestVersion
+    {
         require(prefix.length > 5);
         require(prefix[0] == "1");
         require(prefix[1] != "1"); // Do not support multiple 1s yet
         require(isValidBicoinAddressPrefix(prefix));
         require(isValidPublicKey(requestPublicXPoint, requestPublicYPoint));
-        if (reward > 0) {
-            token.transferFrom(tx.origin, this, reward);
-        } else {
-            reward = token.balanceOf(this) - totalReward;
-        }
-        totalReward += reward;
 
         bytes32 data;
         assembly {
@@ -473,84 +796,81 @@ contract TaskRegister is Upgradable, VanityLib {
         
         Task memory task = Task({
             taskType: TaskType.BITCOIN_ADDRESS_PREFIX,
-            taskId: nextTaskId,
-            creator: tx.origin,
-            reward: reward,
+            taskId: nextTaskId++,
+            creator: msg.sender,
+            referrer: referrer,
+            reward: 0,
             data: data,
             dataLength: prefix.length,
             requestPublicXPoint: requestPublicXPoint,
             requestPublicYPoint: requestPublicYPoint,
             answerPrivateKey: 0
         });
-        tasks.push(task);
-        indexOfTaskId[nextTaskId] = tasks.length; // incremented to avoid 0 index
-        TaskCreated(nextTaskId);
-        nextTaskId++;
+
+        indexOfTaskId[task.taskId] = tasks.push(task); // incremented to avoid 0 index
+        emit TaskCreated(task.taskId);
+        payForTask(task.taskId);
     }
     
-    function solveTask(uint taskId, uint256 answerPrivateKey) public isLastestVersion {
-        uint taskIndex = safeIndexOfTaskId(taskId);
+    function solveTask(uint _taskId, uint256 _answerPrivateKey, uint256 publicXPoint, uint256 publicYPoint) public isLastestVersion {
+        uint taskIndex = safeIndexOfTaskId(_taskId);
         Task storage task = tasks[taskIndex];
+        require(task.answerPrivateKey == 0, "solveTask: task is already solved");
 
         // Require private key to be part of address to prevent front-running attack
-        bytes32 answerPrivateKeyBytes = bytes32(answerPrivateKey);
-        bytes32 senderAddressBytes = bytes32(uint256(msg.sender) << 96);
-        for (uint i = 0; i < 16; i++) {
-            require(answerPrivateKeyBytes[i] == senderAddressBytes[i]);
-        }
+        require(_answerPrivateKey >> 128 == uint256(msg.sender) >> 32, "solveTask: this solution does not match miner address");
 
         if (task.taskType == TaskType.BITCOIN_ADDRESS_PREFIX) {
-            uint256 answerPublicXPoint;
-            uint256 answerPublicYPoint;
-            uint256 publicXPoint;
-            uint256 publicYPoint;
-            uint256 z;
-            (answerPublicXPoint, answerPublicYPoint) = ec.publicKey(answerPrivateKey);
-            (publicXPoint, publicYPoint, z) = ec._ecAdd(
+            ///(publicXPoint, publicYPoint) = ec.publicKey(_answerPrivateKey);
+            require(ec.publicKeyVerify(_answerPrivateKey, publicXPoint, publicYPoint));
+            (publicXPoint, publicYPoint) = ec.ecadd(
                 task.requestPublicXPoint,
                 task.requestPublicYPoint,
-                1,
-                answerPublicXPoint,
-                answerPublicYPoint,
-                1
+                publicXPoint,
+                publicYPoint
             );
 
-            uint256 m = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
-            z = ec._inverse(z);
-            publicXPoint = mulmod(publicXPoint, z, m);
-            publicYPoint = mulmod(publicYPoint, z, m);
             require(isValidPublicKey(publicXPoint, publicYPoint));
             
             bytes32 btcAddress = createBtcAddress(publicXPoint, publicYPoint);
             uint prefixLength = lengthOfCommonPrefix(btcAddress, task.data);
             require(prefixLength == task.dataLength);
             
-            task.answerPrivateKey = answerPrivateKey;
+            task.answerPrivateKey = _answerPrivateKey;
+        } else {
+            revert();
         }
 
-        token.transfer(msg.sender, task.reward);
-        totalReward -= task.reward;
+        uint256 minerReward = task.reward.mul(MAX_PERCENT - serviceFee).div(MAX_PERCENT); // 1% fee
+        msg.sender.transfer(minerReward);
+        totalReward = totalReward.sub(minerReward);
 
-        completeTask(taskId, taskIndex);
-        TaskSolved(taskId);
+        if (task.referrer != 0) {
+            uint256 referrerReward = task.reward.mul(serviceFee).mul(referrerFee).div(MAX_PERCENT).div(MAX_PERCENT); // 50% of service fee
+            task.referrer.transfer(referrerReward);
+            totalReward = totalReward.sub(referrerReward);
+        }
+
+        _completeTask(_taskId, taskIndex);
+        emit TaskSolved(_taskId, minerReward);
     }
 
-    function completeTask(uint taskId, uint index) internal {
-        completedTasks.push(tasks[index]);
-        if (index < tasks.length - 1) { // if not latest
-            tasks[index] = tasks[tasks.length - 1];
-            indexOfTaskId[tasks[index].taskId] = index + 1;
+    function _completeTask(uint _taskId, uint _index) internal {
+        completedTasks.push(tasks[_index]);
+        if (_index < tasks.length - 1) { // if not latest
+            tasks[_index] = tasks[tasks.length - 1];
+            indexOfTaskId[tasks[_index].taskId] = _index + 1;
         }
         tasks.length -= 1;
-        delete indexOfTaskId[taskId];
+        delete indexOfTaskId[_taskId];
     }
 
-    function recoverLost(ERC20Basic _token, address loser) public onlyOwner {
-        uint256 amount = _token.balanceOf(this);
-        if (_token == token) {
-            amount -= totalReward;
+    function claim(ERC20Basic _token, address _to) public onlyOwner {
+        if (_token == address(0)) {
+            _to.transfer(address(this).balance - totalReward);
+        } else {
+            _token.transfer(_to, _token.balanceOf(this));
         }
-        _token.transfer(loser, _token.balanceOf(this));
     }
 
 }
