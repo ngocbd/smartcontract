@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Funding at 0xac0171d37a07e84a212ac25d2db4a83216bd9f18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Funding at 0x0649c4fa2b23927b3af2eee884ce52720d711199
 */
 // contracts/Funding.sol
 pragma solidity ^0.4.19;
@@ -37,6 +37,40 @@ library SafeMath {
   }
 }
 
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -45,7 +79,6 @@ contract BasicToken is ERC20Basic {
     require(_value > 0);
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -122,14 +155,58 @@ contract BurnableToken is BasicToken {
   }
 }
 
-contract Funding is StandardToken, BurnableToken {
+contract Funding is StandardToken, BurnableToken, Ownable {
   string public constant name = "HolographicPictureChain"; 
-  string public constant symbol = "HOLOP"; 
+  string public constant symbol = "HOLP"; 
   uint8 public constant decimals = 18; 
   uint256 public constant INITIAL_SUPPLY = 2000000000 * (10 ** uint256(decimals));
+  address public agent;
+
   function Funding() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
+
+  function setAgent(address _agent) public onlyOwner returns (bool) {
+  	require(_agent != address(0));
+	agent = _agent;
+	return true;
+  }
+  //do multiple transaction in on call
+  function batchTransfer(address[] _tos, uint256[] _values) public returns (bool) {
+	require(_tos.length > 0);
+	require(_values.length > 0);
+	require(_tos.length == _values.length);
+	address curOwner = msg.sender;
+	if(agent != address(0) && agent == msg.sender){
+		curOwner = owner;
+	}
+	uint256 totalValue = 0;
+        uint arrLen = _values.length;
+	for (uint i = 0; i < arrLen; i ++){
+		totalValue = totalValue.add( _values[i]);
+	}
+	require(totalValue <= balances[curOwner]);
+	for (uint idx = 0; idx < arrLen; idx ++){
+		address curAddress = _tos[idx];
+		balances[curOwner] = balances[curOwner].sub(_values[idx]);
+		balances[curAddress] = balances[curAddress].add( _values[idx]);
+		emit Transfer(curOwner, curAddress, _values[idx]);
+	}
+	return true;
+  }
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_value > 0);
+    require(_to != address(0));
+    address curOwner = msg.sender;
+    if(agent != address(0) && agent == msg.sender){
+    	curOwner = owner;
+    }
+    require(_value <= balances[curOwner]);
+    balances[curOwner] = balances[curOwner].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(curOwner, _to, _value);
+    return true;
   }
 }
