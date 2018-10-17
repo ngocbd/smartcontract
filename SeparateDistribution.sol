@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeparateDistribution at 0x3dc9f0de31389740496a3aac9a63b401813efb06
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeparateDistribution at 0xd1d4bf7c9ecf98a80974ab5bc099ec60a1c3a121
 */
 pragma solidity ^0.4.23;
 
@@ -23,7 +23,7 @@ contract SeparateDistribution {
 
   constructor() public
    {
-    token = ERC20(0x67275AE079D653a17FD18Fed5D6f90A2e070c9EE);
+    token = ERC20(0xF3336E5DC23b01758CF03F6d4709D46AbA35a6Bd);
     tokenWallet =  address(0xc45e9c64eee1F987F9a5B7A8E0Ad1f760dEFa7d8);  
     
   }
@@ -35,5 +35,10 @@ contract SeparateDistribution {
                 revert();
             }
         }
+    }
+    
+    function updateTokenAddress(address _address) external {
+        require(_address != 0x00);
+        token = ERC20(_address);
     }
 }
