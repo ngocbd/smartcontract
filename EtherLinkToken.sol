@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0x0c9dbc3442f73c92c43bb7805358673839edd631
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0xfcc353686c8c6893f29e4208c472ed4fe8cf0844
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -18,22 +18,22 @@ contract ERC20Basic {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -56,7 +56,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
   /**
@@ -101,7 +101,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
   /**
@@ -116,7 +116,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
   /**
@@ -134,13 +134,13 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue)
+  function increaseApproval (address _spender, uint _addedValue) public
     returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
-  function decreaseApproval (address _spender, uint _subtractedValue)
+  function decreaseApproval (address _spender, uint _subtractedValue) public
     returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -148,20 +148,60 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 }
-contract EtherLinkToken is StandardToken {
-	string public name = "EtherLink Token";
-  string public symbol = "ETL";
+
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public{
+    owner = msg.sender;
+  }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+contract EtherLinkToken is StandardToken, Ownable {
+  string public name = "EtherLink";
+  string public symbol = "ETRL";
   uint256 public decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 5000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 7500000 * (10 ** uint256(18));
+
+  event Burn(address indexed owner, uint256 value);
+
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
-  function EtherLinkToken() {
+  constructor() public{
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
+  }
+
+  function burn(uint256 _value) public onlyOwner returns (bool) {
+    require(balances[msg.sender] >= _value);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    emit Burn(msg.sender, _value);
+    return true;
   }
 }
