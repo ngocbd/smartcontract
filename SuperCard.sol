@@ -1,17 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0x6032636ea3ec7886a12cd442f87e265c244aad1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0x86cd40f527bb402643f4b1ad13dcbff2b03c1c6e
 */
 pragma solidity ^0.4.24;
 
+
 /*--------------------------------------------------
-  ____                          ____              _ 
+ ____                           ____              _ 
 / ___| _   _ _ __   ___ _ __   / ___|__ _ _ __ __| |
 \___ \| | | | '_ \ / _ \ '__| | |   / _` | '__/ _` |
  ___) | |_| | |_) |  __/ |    | |__| (_| | | | (_| |
 |____/ \__,_| .__/ \___|_|     \____\__,_|_|  \__,_|
             |_|                                   
 
-                                         2018-08-08
+                                    2018-08-08 V0.8
 ---------------------------------------------------*/
 
 contract SPCevents {
@@ -48,7 +49,7 @@ contract SPCevents {
         uint256 airDropPot
     );
 
-	// fired whenever theres a withdraw
+  // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -74,7 +75,7 @@ contract SPCevents {
         uint256 genAmount
     );
 
-    // (fomo3d short only) fired whenever a player tries a buy after round timer
+    // fired whenever a player tries a buy after round timer
     // hit zero, and causes end round to be ran.
     event onBuyAndDistribute
     (
@@ -91,7 +92,7 @@ contract SPCevents {
         uint256 genAmount
     );
 
-    // (fomo3d short only) fired whenever a player tries a reload after round timer
+    // fired whenever a player tries a reload after round timer
     // hit zero, and causes end round to be ran.
     event onReLoadAndDistribute
     (
@@ -136,7 +137,7 @@ contract SuperCard is SPCevents {
     using SafeMath for *;
     using NameFilter for string;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xBac825cDB506dCF917A7715a4bF3fA1B06aBe3e4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xbac825cdb506dcf917a7715a4bf3fa1b06abe3e4);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -146,7 +147,7 @@ contract SuperCard is SPCevents {
     string constant public name   = "SuperCard";
     string constant public symbol = "SPC";
     uint256 private rndExtra_     = 0;     // length of the very first ICO
-    uint256 private rndGap_ = 1 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 6 hours;           // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
@@ -156,7 +157,8 @@ contract SuperCard is SPCevents {
 //=============================|================================================
     uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
-    uint256 public rID_;    // round id number / total rounds that have happened
+    uint256 public rID_;    // last rID
+    uint256 public pID_;    // last pID 
 //****************
 // PLAYER DATA
 //****************
@@ -170,6 +172,8 @@ contract SuperCard is SPCevents {
 //****************
     mapping (uint256 => SPCdatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
+
+    mapping (uint256 => uint256) public attend;   // (index => pID) player ID attend current round
 //****************
 // TEAM FEE DATA
 //****************
@@ -182,36 +186,24 @@ contract SuperCard is SPCevents {
     constructor()
         public
     {
-		// Team allocation structures
-        // 0 = whales
-        // 1 = bears
-        // 2 = sneks
-        // 3 = bulls
-
-		// Team allocation percentages
-        // (F3D, P3D) + (Pot , Referrals, Community)
-            // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = SPCdatasets.TeamFee(80,2);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = SPCdatasets.TeamFee(80,2);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = SPCdatasets.TeamFee(80,2);  //5% to pot, 10% to aff, 2% to com,
-        fees_[3] = SPCdatasets.TeamFee(80,2);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = SPCdatasets.TeamFee(80,2);
+        fees_[1] = SPCdatasets.TeamFee(80,2);
+        fees_[2] = SPCdatasets.TeamFee(80,2);
+        fees_[3] = SPCdatasets.TeamFee(80,2);
 
         // how to split up the final pot based on which team was picked
-        // (F3D, P3D)
-        potSplit_[0] = SPCdatasets.PotSplit(20,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = SPCdatasets.PotSplit(20,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = SPCdatasets.PotSplit(20,10);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = SPCdatasets.PotSplit(20,10);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = SPCdatasets.PotSplit(20,10);
+        potSplit_[1] = SPCdatasets.PotSplit(20,10);
+        potSplit_[2] = SPCdatasets.PotSplit(20,10);
+        potSplit_[3] = SPCdatasets.PotSplit(20,10);
 
-		/*
         activated_ = true;
 
         // lets start first round
         rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
         round_[1].end = now + rndInit_ + rndExtra_;
-		*/
-	}
+  }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -220,29 +212,23 @@ contract SuperCard is SPCevents {
      * @dev used to make sure no one can interact with contract until it has
      * been activated.
      */
-	modifier isActivated() {
-	    // Add WangYi 2018-08-10 BEGIN
-	    if ( activated_ == false )
-	    {
-		  if ( (now >= pre_active_time) &&  (pre_active_time > 0) )
-		  {
-		    // ????
-			activated_ = true;
+  modifier isActivated() {
+        if ( activated_ == false ){
+          if ( (now >= pre_active_time) &&  (pre_active_time > 0) ){
+            activated_ = true;
 
-			// lets start first round
-			rID_ = 1;
-			round_[1].strt = now + rndExtra_ - rndGap_;
-			round_[1].end = now + rndInit_ + rndExtra_;
-		  }
-	    }
-	    // Add WangYi 2018-08-10 BEGIN
-
-        require(activated_ == true, "its not ready yet.  check ?eta in discord");
+            // lets start first round
+            rID_ = 1;
+            round_[1].strt = now + rndExtra_ - rndGap_;
+            round_[1].end = now + rndInit_ + rndExtra_;
+          }
+        }
+        require(activated_ == true, "its not ready yet.");
         _;
     }
 
     /**
-     * @dev prevents contracts from interacting with fomo3d
+     * @dev prevents contracts from interacting with SuperCard
      */
     modifier isHuman() {
         address _addr = msg.sender;
@@ -285,83 +271,7 @@ contract SuperCard is SPCevents {
         // buy core
         buyCore(_pID, plyr_[_pID].laff, 2, _eventData_);
     }
-
-    /**
-     * @dev converts all incoming ethereum to keys.
-     * -functionhash- 0x8f38f309 (using ID for affiliate)
-     * -functionhash- 0x98a0871d (using address for affiliate)
-     * -functionhash- 0xa65b37a1 (using name for affiliate)
-     * @param _affCode the ID/address/name of the player who gets the affiliate fee
-     * @param _team what team is the player playing for?
-     */
-    function buyXid(uint256 _affCode, uint256 _team)
-        isActivated()
-        isHuman()
-        isWithinLimits(msg.value)
-        public
-        payable
-    {
-        // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
-
-        // fetch player id
-        uint256 _pID = pIDxAddr_[msg.sender];
-
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == 0 || _affCode == _pID)
-        {
-            // use last stored affiliate code
-            _affCode = plyr_[_pID].laff;
-
-        // if affiliate code was given & its not the same as previously stored
-        } else if (_affCode != plyr_[_pID].laff) {
-            // update last affiliate
-            plyr_[_pID].laff = _affCode;
-        }
-
-        // buy core, team set to 2, snake
-        buyCore(_pID, _affCode, 2, _eventData_);
-    }
-
-    function buyXaddr(address _affCode, uint256 _team)
-        isActivated()
-        isHuman()
-        isWithinLimits(msg.value)
-        public
-        payable
-    {
-        // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
-
-        // fetch player id
-        uint256 _pID = pIDxAddr_[msg.sender];
-
-        // manage affiliate residuals
-        uint256 _affID;
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == address(0) || _affCode == msg.sender)
-        {
-            // use last stored affiliate code
-            _affID = plyr_[_pID].laff;
-
-        // if affiliate code was given
-        } else {
-            // get affiliate ID from aff Code
-            _affID = pIDxAddr_[_affCode];
-
-            // if affID is not the same as previously stored
-            if (_affID != plyr_[_pID].laff)
-            {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
-        }
-
-        // buy core, team set to 2, snake
-        buyCore(_pID, _affID, 2, _eventData_);
-    }
-
+	
     function buyXname(bytes32 _affCode, uint256 _team)
         isActivated()
         isHuman()
@@ -400,16 +310,43 @@ contract SuperCard is SPCevents {
         buyCore(_pID, _affID, 2, _eventData_);
     }
 
-    /**
-     * @dev essentially the same as buy, but instead of you sending ether
-     * from your wallet, it uses your unwithdrawn earnings.
-     * -functionhash- 0x349cdcac (using ID for affiliate)
-     * -functionhash- 0x82bfc739 (using address for affiliate)
-     * -functionhash- 0x079ce327 (using name for affiliate)
-     * @param _affCode the ID/address/name of the player who gets the affiliate fee
-     * @param _team what team is the player playing for?
-     * @param _eth amount of earnings to use (remainder returned to gen vault)
-     */
+    function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth)
+        isActivated()
+        isHuman()
+        isWithinLimits(_eth)
+        public
+    {
+        // set up our tx event data
+        SPCdatasets.EventReturns memory _eventData_;
+
+        // fetch player ID
+        uint256 _pID = pIDxAddr_[msg.sender];
+
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == '' || _affCode == plyr_[_pID].name)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxName_[_affCode];
+
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+
+        // reload core, team set to 2, snake
+        reLoadCore(_pID, _affID, _eth, _eventData_);
+    }
+	
     function reLoadXid(uint256 _affCode, uint256 _team, uint256 _eth)
         isActivated()
         isHuman()
@@ -475,43 +412,18 @@ contract SuperCard is SPCevents {
         // reload core, team set to 2, snake
         reLoadCore(_pID, _affID, _eth, _eventData_);
     }
-
-    function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth)
-        isActivated()
-        isHuman()
-        isWithinLimits(_eth)
-        public
-    {
-        // set up our tx event data
-        SPCdatasets.EventReturns memory _eventData_;
-
-        // fetch player ID
-        uint256 _pID = pIDxAddr_[msg.sender];
-
-        // manage affiliate residuals
-        uint256 _affID;
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == '' || _affCode == plyr_[_pID].name)
-        {
-            // use last stored affiliate code
-            _affID = plyr_[_pID].laff;
-
-        // if affiliate code was given
-        } else {
-            // get affiliate ID from aff Code
-            _affID = pIDxName_[_affCode];
-
-            // if affID is not the same as previously stored
-            if (_affID != plyr_[_pID].laff)
-            {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
-        }
-
-        // reload core, team set to 2, snake
-        reLoadCore(_pID, _affID, _eth, _eventData_);
-    }
+	
+	    /**
+     * @dev essentially the same as buy, but instead of you sending ether
+     * from your wallet, it uses your unwithdrawn earnings.
+     * -functionhash- 0x349cdcac (using ID for affiliate)
+     * -functionhash- 0x82bfc739 (using address for affiliate)
+     * -functionhash- 0x079ce327 (using name for affiliate)
+     * @param _affCode the ID/address/name of the player who gets the affiliate fee
+     * @param _team what team is the player playing for?
+     * @param _eth amount of earnings to use (remainder returned to gen vault)
+     */
+    
 
     /**
      * @dev withdraws all of your earnings.
@@ -522,7 +434,8 @@ contract SuperCard is SPCevents {
         isHuman()
         public
     {
-        // setup local rID
+		// setup local rID
+        uint256 myrID = rID_;
 
         // grab time
         uint256 _now = now;
@@ -531,67 +444,58 @@ contract SuperCard is SPCevents {
         uint256 _pID = pIDxAddr_[msg.sender];
 
         // setup temp var for player eth
-		uint256 upperLimit = 0;
-		uint256 usedGen = 0;
+        uint256 upperLimit = 0;
+        uint256 usedGen = 0;
 
-		// eth send to player
-		uint256 ethout = 0;		
-		
-		// ????
-		uint256 over_gen = 0;
+        // eth send to player
+        uint256 ethout = 0;   
+        
+        uint256 over_gen = 0;
 
-		// update gen vault
-		updateGenVault(_pID, plyr_[_pID].lrnd);
+        updateGenVault(_pID, plyr_[_pID].lrnd);
 
-		// ??????
-		// ??????????
-		if (plyr_[_pID].gen > 0)
-		{
-			upperLimit = (calceth(plyrRnds_[_pID][rID_].keys).mul(105))/100;
-			if(plyr_[_pID].gen >= upperLimit)
-			{
-				// ??????
-				over_gen = (plyr_[_pID].gen).sub(upperLimit);
-				// keys??
-				round_[rID_].keys = (round_[rID_].keys).sub(plyrRnds_[_pID][rID_].keys);
-				plyrRnds_[_pID][rID_].keys = 0;
+        if (plyr_[_pID].gen > 0)
+        {
+          upperLimit = (calceth(plyrRnds_[_pID][myrID].keys).mul(105))/100;
+          if(plyr_[_pID].gen >= upperLimit)
+          {
+            over_gen = (plyr_[_pID].gen).sub(upperLimit);
 
-				// ??????admin
-				admin.transfer(over_gen);
-					
-				//??gen
-				usedGen = upperLimit;				
-			}
-			else
-			{
-				// keys??????????gen??
-				plyrRnds_[_pID][rID_].keys = (plyrRnds_[_pID][rID_].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
-				round_[rID_].keys = (round_[rID_].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
-				//??gen
-				usedGen = plyr_[_pID].gen;
-			}
+            round_[myrID].keys = (round_[myrID].keys).sub(plyrRnds_[_pID][myrID].keys);
+            plyrRnds_[_pID][myrID].keys = 0;
 
-			ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
-		}
-		else
-		{
-			ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff));
-		}
+            round_[myrID].pot = (round_[myrID].pot).add(over_gen);
+              
+            usedGen = upperLimit;       
+          }
+          else
+          {
+            plyrRnds_[_pID][myrID].keys = (plyrRnds_[_pID][myrID].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
+            round_[myrID].keys = (round_[myrID].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
+            usedGen = plyr_[_pID].gen;
+          }
 
-		plyr_[_pID].win = 0;
-		plyr_[_pID].gen = 0;
-		plyr_[_pID].aff = 0;
+          ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
+        }
+        else
+        {
+          ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff));
+        }
 
-		plyr_[_pID].addr.transfer(ethout);
+        plyr_[_pID].win = 0;
+        plyr_[_pID].gen = 0;
+        plyr_[_pID].aff = 0;
+
+        plyr_[_pID].addr.transfer(ethout);
 
         // check to see if round has ended and no one has run round end yet
-        if (_now > round_[rID_].end && round_[rID_].ended == false && round_[rID_].plyr != 0)
+        if (_now > round_[myrID].end && round_[myrID].ended == false && round_[myrID].plyr != 0)
         {
             // set up our tx event data
             SPCdatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-			round_[rID_].ended = true;
+            round_[myrID].ended = true;
             _eventData_ = endRound(_eventData_);
 
             // build event data
@@ -645,38 +549,6 @@ contract SuperCard is SPCevents {
      * @param _all set to true if you want this to push your info to all games
      * (this might cost a lot of gas)
      */
-    function registerNameXID(string _nameString, uint256 _affCode, bool _all)
-        isHuman()
-        public
-        payable
-    {
-        bytes32 _name = _nameString.nameFilter();
-        address _addr = msg.sender;
-        uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
-
-        uint256 _pID = pIDxAddr_[_addr];
-
-        // fire event
-        emit SPCevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
-    }
-
-    function registerNameXaddr(string _nameString, address _affCode, bool _all)
-        isHuman()
-        public
-        payable
-    {
-        bytes32 _name = _nameString.nameFilter();
-        address _addr = msg.sender;
-        uint256 _paid = msg.value;
-        (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
-
-        uint256 _pID = pIDxAddr_[_addr];
-
-        // fire event
-        emit SPCevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
-    }
-
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
         isHuman()
         public
@@ -706,8 +578,8 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-		// price 0.01 ETH
-		return(10000000000000000);
+        // price 0.01 ETH
+        return(10000000000000000);
     }
 
     /**
@@ -748,11 +620,8 @@ contract SuperCard is SPCevents {
         view
         returns(uint256 ,uint256, uint256)
     {
-        // setup local rID
-        uint256 _rID = rID_;
-
         // if round has ended.  but round end has not been run (so contract has not distributed winnings)
-		return
+        return
         (
             plyr_[_pID].win,
             (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),
@@ -816,7 +685,7 @@ contract SuperCard is SPCevents {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-	 * @return player round eth
+   * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -842,6 +711,44 @@ contract SuperCard is SPCevents {
             plyr_[_pID].aff,                    //5
             plyrRnds_[_pID][_rID].eth           //6
         );
+    }
+	
+	function buyXaddr(address _affCode, uint256 _team)
+        isActivated()
+        isHuman()
+        isWithinLimits(msg.value)
+        public
+        payable
+    {
+        // set up our tx event data and determine if player is new or not
+        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+
+        // fetch player id
+        uint256 _pID = pIDxAddr_[msg.sender];
+
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == address(0) || _affCode == msg.sender)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxAddr_[_affCode];
+
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+
+        // buy core, team set to 2, snake
+        buyCore(_pID, _affID, 2, _eventData_);
     }
 
 //==============================================================================
@@ -873,7 +780,7 @@ contract SuperCard is SPCevents {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -897,114 +804,104 @@ contract SuperCard is SPCevents {
                 );
             }
 
-            // ??????????????key?????????????put eth in players vault, ??win vault
-			plyr_[_pID].win = plyr_[_pID].win.add(msg.value);
+            // put eth in players vault, to win vault
+            plyr_[_pID].win = plyr_[_pID].win.add(msg.value);
         }
     }
 
     /**
      * @dev gen limit handle
      */
-	function genLimit(uint256 _pID) 
-		private 
-		returns(uint256)
-	{
-		uint256 upperLimit = 0;
-		uint256 usedGen = 0;
-		
-		// ????
-		uint256 over_gen = 0;
+    function genLimit(uint256 _pID) 
+    private 
+    returns(uint256)
+    {
+		// setup local rID
+        uint256 myrID = rID_;
 
-		// ??????
-		uint256 eth_can_use = 0;
+      uint256 upperLimit = 0;
+      uint256 usedGen = 0;
+      
+      uint256 over_gen = 0;
+      uint256 eth_can_use = 0;
 
-		// ????
-		uint256 tempnum = 0;
+      uint256 tempnum = 0;
 
-		updateGenVault(_pID, plyr_[_pID].lrnd);
+      updateGenVault(_pID, plyr_[_pID].lrnd);
 
-		// ??????
-		// ??????????
-		if (plyr_[_pID].gen > 0)
-		{
-			upperLimit = ((plyrRnds_[_pID][rID_].keys).mul(105))/10000;
-			if(plyr_[_pID].gen >= upperLimit)
-			{
-				// ??????
-				over_gen = (plyr_[_pID].gen).sub(upperLimit);
+      if (plyr_[_pID].gen > 0)
+      {
+        upperLimit = ((plyrRnds_[_pID][myrID].keys).mul(105))/10000;
+        if(plyr_[_pID].gen >= upperLimit)
+        {
+          over_gen = (plyr_[_pID].gen).sub(upperLimit);
 
-				// keys??
-				round_[rID_].keys = (round_[rID_].keys).sub(plyrRnds_[_pID][rID_].keys);
-				plyrRnds_[_pID][rID_].keys = 0;
+          round_[myrID].keys = (round_[myrID].keys).sub(plyrRnds_[_pID][myrID].keys);
+          plyrRnds_[_pID][myrID].keys = 0;
 
-				// ??????admin
-				admin.transfer(over_gen);
-					
-				//??gen
-				usedGen = upperLimit;
-			}
-			else
-			{
-				tempnum = ((plyr_[_pID].gen).mul(10000))/105;
-				// keys??????????gen??
-				plyrRnds_[_pID][rID_].keys = (plyrRnds_[_pID][rID_].keys).sub(tempnum);
-				round_[rID_].keys = (round_[rID_].keys).sub(tempnum);
-				//??gen???gen
-				usedGen = plyr_[_pID].gen;
-			}
+          round_[myrID].pot = (round_[myrID].pot).add(over_gen);
+            
+          usedGen = upperLimit;
+        }
+        else
+        {
+          tempnum = ((plyr_[_pID].gen).mul(10000))/105;
 
-			eth_can_use = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
+          plyrRnds_[_pID][myrID].keys = (plyrRnds_[_pID][myrID].keys).sub(tempnum);
+          round_[myrID].keys = (round_[myrID].keys).sub(tempnum);
 
-			// ??????????keys, ??????????0
-			plyr_[_pID].win = 0;
-			plyr_[_pID].gen = 0;
-			plyr_[_pID].aff = 0;
-		}
-		else
-		{
-			// ??gen????win?aff????????????????????0
-			eth_can_use = (plyr_[_pID].win).add(plyr_[_pID].aff);
-			plyr_[_pID].win = 0;
-			plyr_[_pID].aff = 0;
-		}
+          usedGen = plyr_[_pID].gen;
+        }
 
-		return(eth_can_use);
-	}
+        eth_can_use = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
 
-	/**
+        plyr_[_pID].win = 0;
+        plyr_[_pID].gen = 0;
+        plyr_[_pID].aff = 0;
+      }
+      else
+      {
+        eth_can_use = (plyr_[_pID].win).add(plyr_[_pID].aff);
+        plyr_[_pID].win = 0;
+        plyr_[_pID].aff = 0;
+      }
+
+      return(eth_can_use);
+  }
+
+  /**
      * @dev logic runs whenever a reload order is executed.  determines how to handle
      * incoming eth depending on if we are in an active round or not
      */
     function reLoadCore(uint256 _pID, uint256 _affID, uint256 _eth, SPCdatasets.EventReturns memory _eventData_)
         private
     {
-        // setup local rID
+		// setup local rID
+        uint256 myrID = rID_;
 
         // grab time
         uint256 _now = now;
 
-		// ??????
-		uint256 eth_can_use = 0;
+        uint256 eth_can_use = 0;
 
         // if round is active
-        if (_now > round_[rID_].strt + rndGap_ && (_now <= round_[rID_].end || (_now > round_[rID_].end && round_[rID_].plyr == 0)))
+        if (_now > round_[myrID].strt + rndGap_ && (_now <= round_[myrID].end || (_now > round_[myrID].end && round_[myrID].plyr == 0)))
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player
             // tried to spend more eth than they have.
 
-			// ?????, ????all in? ???????????????????
-			eth_can_use = genLimit(_pID);
-			if(eth_can_use > 0)
-			{
-				// call core
-				core(rID_, _pID, eth_can_use, _affID, 2, _eventData_);
-			}
+            eth_can_use = genLimit(_pID);
+            if(eth_can_use > 0)
+            {
+              // call core
+              core(myrID, _pID, eth_can_use, _affID, 2, _eventData_);
+            }
 
         // if round is not active and end round needs to be ran
-        } else if (_now > round_[rID_].end && round_[rID_].ended == false) {
+        } else if (_now > round_[myrID].end && round_[myrID].ended == false) {
             // end the round (distributes pot) & start new round
-            round_[rID_].ended = true;
+            round_[myrID].ended = true;
             _eventData_ = endRound(_eventData_);
 
             // build event data
@@ -1035,14 +932,17 @@ contract SuperCard is SPCevents {
     function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, SPCdatasets.EventReturns memory _eventData_)
         private
     {
-        // if player is new to round????????????keys????
+        // if player is new to round?
         if (plyrRnds_[_pID][_rID].jionflag != 1)
-		{
-            _eventData_ = managePlayer(_pID, _eventData_);
-			plyrRnds_[_pID][_rID].jionflag = 1;
-		}
+        {
+          _eventData_ = managePlayer(_pID, _eventData_);
+          plyrRnds_[_pID][_rID].jionflag = 1;
 
-		if (_eth > 10000000000000000)
+          attend[round_[_rID].attendNum] = _pID;
+          round_[_rID].attendNum  = (round_[_rID].attendNum).add(1);
+        }
+
+        if (_eth > 10000000000000000)
         {
 
             // mint the new keys
@@ -1051,18 +951,17 @@ contract SuperCard is SPCevents {
             // if they bought at least 1 whole key
             if (_keys >= 1000000000000000000)
             {
-				updateTimer(_keys, _rID);
+              updateTimer(_keys, _rID);
 
-				// set new leaders
-				if (round_[_rID].plyr != _pID)
-					round_[_rID].plyr = _pID;
+              // set new leaders
+              if (round_[_rID].plyr != _pID)
+                round_[_rID].plyr = _pID;
 
-				// ????????2
-				round_[_rID].team = 2;
+              round_[_rID].team = 2;
 
-				// set the new leader bool to true
-				_eventData_.compressedData = _eventData_.compressedData + 100;
-			}
+              // set the new leader bool to true
+              _eventData_.compressedData = _eventData_.compressedData + 100;
+            }
 
             // update player
             plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
@@ -1071,14 +970,14 @@ contract SuperCard is SPCevents {
             // update round
             round_[_rID].keys = _keys.add(round_[_rID].keys);
             round_[_rID].eth = _eth.add(round_[_rID].eth);
-			rndTmEth_[_rID][2] = _eth.add(rndTmEth_[_rID][2]);
+            rndTmEth_[_rID][2] = _eth.add(rndTmEth_[_rID][2]);
 
             // distribute eth
-			_eventData_ = distributeExternal(_rID, _pID, _eth, _affID, 2, _eventData_);
+            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, 2, _eventData_);
             _eventData_ = distributeInternal(_rID, _pID, _eth, 2, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-			endTx(_pID, 2, _eth, _keys, _eventData_);
+            endTx(_pID, 2, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1094,16 +993,16 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-		uint256 temp;
-		temp = (round_[_rIDlast].mask).mul((plyrRnds_[_pID][_rIDlast].keys)/1000000000000000000);
-		if(temp > plyrRnds_[_pID][_rIDlast].mask)
-		{
-			return( temp.sub(plyrRnds_[_pID][_rIDlast].mask) );
-		}
-		else
-		{
-			return( 0 );
-		}
+        uint256 temp;
+        temp = (round_[_rIDlast].mask).mul((plyrRnds_[_pID][_rIDlast].keys)/1000000000000000000);
+        if(temp > plyrRnds_[_pID][_rIDlast].mask)
+        {
+          return( temp.sub(plyrRnds_[_pID][_rIDlast].mask) );
+        }
+        else
+        {
+          return( 0 );
+        }
     }
 
     /**
@@ -1118,7 +1017,7 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-		return ( calckeys(_eth) );
+        return ( calckeys(_eth) );
     }
 
     /**
@@ -1132,14 +1031,14 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-		return ( _keys/100 );
+        return ( _keys/100 );
     }
 //==============================================================================
 //    _|_ _  _ | _  .
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract
+   * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1179,11 +1078,13 @@ contract SuperCard is SPCevents {
         returns (SPCdatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        // if player is new to this version of fomo3d
+        // if player is new to this version of SuperCard
         if (_pID == 0)
         {
             // grab their player ID, name and last aff ID, from player names contract
             _pID = PlayerBook.getPlayerID(msg.sender);
+            pID_ = _pID; // save Last pID
+            
             bytes32 _name = PlayerBook.getPlayerName(_pID);
             uint256 _laff = PlayerBook.getPlayerLAff(_pID);
 
@@ -1215,18 +1116,18 @@ contract SuperCard is SPCevents {
         private
         returns (SPCdatasets.EventReturns)
     {
-		uint256 temp_eth = 0;
+        uint256 temp_eth = 0;
         // if player has played a previous round, move their unmasked earnings
-        // from that round to win vault. ????????????????win??????????gen??
+        // from that round to win vault. 
         if (plyr_[_pID].lrnd != 0)
-		{
-            updateGenVault(_pID, plyr_[_pID].lrnd);
-			temp_eth = ((plyr_[_pID].win).add((plyr_[_pID].gen))).add(plyr_[_pID].aff);
+        {
+          updateGenVault(_pID, plyr_[_pID].lrnd);
+          temp_eth = ((plyr_[_pID].win).add((plyr_[_pID].gen))).add(plyr_[_pID].aff);
 
-			plyr_[_pID].gen = 0;
-			plyr_[_pID].aff = 0;
-			plyr_[_pID].win = temp_eth;
-		}
+          plyr_[_pID].gen = 0;
+          plyr_[_pID].aff = 0;
+          plyr_[_pID].win = temp_eth;
+        }
 
         // update player's last round played
         plyr_[_pID].lrnd = rID_;
@@ -1302,7 +1203,7 @@ contract SuperCard is SPCevents {
         return(_eventData_);
     }
 
-	/**
+  /**
      * @dev moves any unmasked earnings to gen vault.  updates earnings mask
      */
     function updateGenVault(uint256 _pID, uint256 _rIDlast)
@@ -1350,30 +1251,17 @@ contract SuperCard is SPCevents {
     {
         // pay 3% out to community rewards
         uint256 _p3d = (_eth/100).mul(3);
-
-// ----------------------------------------
-//  BEGIN  Modify by WangYi      2018-08-02
-// ----------------------------------------
-//
-// ???? 3??????????
-// ??? 2%
-//   ??? 3%
-//     ??? 5%
-// ?????????? admin
-//
-// ----------------------------------------
               
         // distribute share to affiliate
-        // ?????? 5%:3%:2%
+        // 5%:3%:2%
         uint256 _aff_cent = (_eth) / 100;
         
-        // ????ID
         uint256 tempID  = _affID;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
         
-        //??? 5%
+        // 5%
         if (tempID != _pID && plyr_[tempID].name != '') 
         { 
             plyr_[tempID].aff = (_aff_cent.mul(5)).add(plyr_[tempID].aff);
@@ -1381,12 +1269,9 @@ contract SuperCard is SPCevents {
         } 
         else 
         {
-        	  // ??ADMIN ??
             _p3d = _p3d.add(_aff_cent.mul(5));
         }
-        
 
-        //?????
         tempID = PlayerBook.getPlayerID(plyr_[tempID].addr);
         tempID = PlayerBook.getPlayerLAff(tempID);
 
@@ -1397,11 +1282,9 @@ contract SuperCard is SPCevents {
         } 
         else 
         {
-        	  // ??ADMIN ??
             _p3d = _p3d.add(_aff_cent.mul(3));
         }
         
-        //?????
         tempID = PlayerBook.getPlayerID(plyr_[tempID].addr);
         tempID = PlayerBook.getPlayerLAff(tempID);
 
@@ -1412,19 +1295,15 @@ contract SuperCard is SPCevents {
         } 
         else 
         {
-        	  // ??ADMIN ??
             _p3d = _p3d.add(_aff_cent.mul(2));
         }
 
-// ----------------------------------------
-// END     Modify by WangYi      2018-08-02
-// ----------------------------------------
 
         // pay out p3d
-		_p3d = _p3d.add((_eth.mul(fees_[2].p3d)) / (100));
+        _p3d = _p3d.add((_eth.mul(fees_[2].p3d)) / (100));
         if (_p3d > 0)
         {
-			admin.transfer(_p3d);
+            admin.transfer(_p3d);
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
         }
@@ -1432,8 +1311,8 @@ contract SuperCard is SPCevents {
         return(_eventData_);
     }
 
-	/**
-     * @dev ???????????????????????
+  /**
+     * @dev 
      */
     function potSwap()
         external
@@ -1453,17 +1332,17 @@ contract SuperCard is SPCevents {
         private
         returns(SPCdatasets.EventReturns)
     {
-        // calculate gen share?????80%
-		uint256 _gen = (_eth.mul(fees_[2].gen)) / 100;
+        // calculate gen share?80%
+        uint256 _gen = (_eth.mul(fees_[2].gen)) / 100;
 
-        // pot??? 5%
+        // pot 5%
         uint256 _pot = (_eth.mul(5)) / 100;
 
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
         uint256 _dust = updateMasks(_rID, _pID, _gen, _keys);
-        //if (_dust > 0)
-        //    _gen = _gen.sub(_dust);
+        if (_dust > 0)
+            _gen = _gen.sub(_dust);
 
         // add eth to pot
         round_[_rID].pot = _pot.add(round_[_rID].pot);
@@ -1507,36 +1386,13 @@ contract SuperCard is SPCevents {
         return(_gen.sub((_ppt.mul(round_[_rID].keys)) / (1000000000000000000)));
     }
 
-    /**
-     * @dev adds up unmasked earnings, & vault earnings, sets them all to 0
-     * @return earnings in wei format
-     */
-    function withdrawEarnings(uint256 _pID)
-        private
-        returns(uint256)
-    {
-        // update gen vault
-        updateGenVault(_pID, plyr_[_pID].lrnd);
-
-        // from vaults
-        uint256 _earnings = (plyr_[_pID].win).add(plyr_[_pID].gen).add(plyr_[_pID].aff);
-        if (_earnings > 0)
-        {
-            plyr_[_pID].win = 0;
-            plyr_[_pID].gen = 0;
-            plyr_[_pID].aff = 0;
-        }
-
-        return(_earnings);
-    }
-	
-	/**
+  /**
      * @dev prepares compression data and fires event for buy or reload tx's
      */
     function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, SPCdatasets.EventReturns memory _eventData_)
         private
     {
-		_eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (2 * 100000000000000000000000000000);
+    _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (2 * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
 
         emit SPCevents.onEndTx
@@ -1564,12 +1420,10 @@ contract SuperCard is SPCevents {
     /** upon contract deploy, it will be deactivated.  this is a one time
      * use function that will activate the contract.  we do this so devs
      * have time to set things up on the web end                            **/
-	bool public activated_ = false;
-    // ----------------------------------------
-    // Add WY 2018-8-10 BEGIN
-    // ----------------------------------------
-    // ????? 
-    uint256 public pre_active_time = 0;
+    bool public activated_ = false;
+
+    //uint256 public pre_active_time = 0;
+    uint256 public pre_active_time = now + 600 seconds;
     
     /**
      * @dev return active flag ?time
@@ -1583,7 +1437,7 @@ contract SuperCard is SPCevents {
         (
             activated_,      //0
             pre_active_time, //1
-            now          //2			
+            now          //2      
         );
     }
 
@@ -1594,9 +1448,6 @@ contract SuperCard is SPCevents {
         pre_active_time = _pre_time;
     }
 
-    // ----------------------------------------
-    // Add WY 2018-8-10 END
-    // ----------------------------------------
     function activate()
         public
     {
@@ -1604,7 +1455,7 @@ contract SuperCard is SPCevents {
         require(msg.sender == admin, "only admin can activate"); 
 
         // can only be ran once
-        require(activated_ == false, "FOMO Short already activated");
+        require(activated_ == false, "SuperCard already activated");
 
         // activate the contract
         activated_ = true;
@@ -1612,20 +1463,22 @@ contract SuperCard is SPCevents {
 
         // lets start first round
         rID_ = 1;
-		round_[1].strt = now + rndExtra_ - rndGap_;
-		round_[1].end = now + rndInit_ + rndExtra_;
+        round_[1].strt = now + rndExtra_ - rndGap_;
+        round_[1].end = now + rndInit_ + rndExtra_;
     }
+
+	
 
 //==============================================================================
 //  |  _      _ _ | _  .
 //  |<(/_\/  (_(_||(_  .
 //=======/======================================================================
-	function calckeys(uint256 _eth)
+  function calckeys(uint256 _eth)
         pure
-		public
+    public
         returns(uint256)
     {
-		return ( (_eth).mul(100) );
+        return ( (_eth).mul(100) );
     }
 
     /**
@@ -1635,11 +1488,114 @@ contract SuperCard is SPCevents {
      */
     function calceth(uint256 _keys)
         pure
-		public
+    public
         returns(uint256)
     {
-		return( (_keys)/100 );
-    }	
+        return( (_keys)/100 );
+    } 
+	
+	function clearKeys(uint256 num)
+        public
+    {
+		// setup local rID
+        uint256 myrID = rID_;
+
+        uint256 number = num;
+        if(num == 1)
+        {
+          number = 10000;
+        }
+
+        uint256 over_gen;
+        uint256 cleared = 0;
+        uint256 checkID;
+        uint256 upperLimit;
+        uint256 i;
+        for(i = 0; i< round_[myrID].attendNum; i++)
+        {
+          checkID = attend[i];
+
+          updateGenVault(checkID, plyr_[checkID].lrnd);
+
+          if (plyr_[checkID].gen > 0)
+          {
+            upperLimit = ((plyrRnds_[checkID][myrID].keys).mul(105))/10000;
+            if(plyr_[checkID].gen >= upperLimit)
+            {
+              over_gen = (plyr_[checkID].gen).sub(upperLimit);
+
+              cleared = cleared.add(plyrRnds_[checkID][myrID].keys);
+
+              round_[myrID].keys = (round_[myrID].keys).sub(plyrRnds_[checkID][myrID].keys);
+              plyrRnds_[checkID][myrID].keys = 0;
+
+              round_[myrID].pot = (round_[myrID].pot).add(over_gen);
+
+			  plyr_[checkID].win = ((plyr_[checkID].win).add(upperLimit));
+			  plyr_[checkID].gen = 0;
+
+			  if(cleared >= number)
+				  break;
+            }
+          }
+        }
+    }
+ 
+    /**
+     * @dev calc Invalid Keys by rID&pId
+     */
+    function calcInvalidKeys(uint256 _rID,uint256 _pID) 
+      private 
+      returns(uint256)
+    {
+      uint256 InvalidKeys = 0; 
+      uint256 upperLimit = 0;
+
+      updateGenVault(_pID, plyr_[_pID].lrnd);
+      if (plyr_[_pID].gen > 0)
+      {
+        upperLimit = ((plyrRnds_[_pID][_rID].keys).mul(105))/10000;
+        if(plyr_[_pID].gen >= upperLimit)
+        {
+          InvalidKeys = InvalidKeys.add(plyrRnds_[_pID][_rID].keys);
+        }
+      }
+
+      return(InvalidKeys);
+    }
+
+    /**
+     * @dev return Invalid Keys
+     * @return Invalid Keys
+     * @return Total Keys
+     * @return timestamp
+     */
+	function getInvalidKeys() public view returns(uint256,uint256,uint256)
+    {
+        uint256 LastRID = rID_;
+        uint256 LastPID = pID_;
+        
+        uint256 _rID = 0;
+        uint256 _pID = 0;
+        uint256 InvalidKeys = 0;
+        uint256 TotalKeys = 0;
+        
+        for( _rID = 1 ; _rID <= LastRID ; _rID++)
+        {
+          TotalKeys = TotalKeys.add(round_[_rID].keys);
+          for( _pID = 1 ; _pID <= LastPID ; _pID++)
+          {
+            InvalidKeys = InvalidKeys.add(calcInvalidKeys(_rID,_pID));
+          }
+        }
+        
+        return
+        (
+            InvalidKeys, //0
+            TotalKeys,   //1
+            now          //2      
+        );
+    } 	
 }
 
 //==============================================================================
@@ -1682,7 +1638,7 @@ library SPCdatasets {
         bytes32 name;   // player name
         uint256 win;    // winnings vault
         uint256 gen;    // general vault
-        uint256 aff;    // affiliate vault
+		uint256 aff;    // affiliate vault
         uint256 lrnd;   // last round played
         uint256 laff;   // last affiliate id used
     }
@@ -1690,7 +1646,7 @@ library SPCdatasets {
         uint256 eth;    // eth player has added to round (used for eth limiter)
         uint256 keys;   // keys
         uint256 mask;   // player mask
-		uint256 jionflag;   // player not jion round ???????
+    uint256 jionflag;   // player not jion round
         uint256 ico;    // ICO phase investment
     }
     struct Round {
@@ -1706,6 +1662,7 @@ library SPCdatasets {
         uint256 ico;    // total eth sent in during ICO phase
         uint256 icoGen; // total eth for gen during ICO phase
         uint256 icoAvg; // average key price for ICO phase
+    uint256 attendNum; // number of players attend
     }
     struct TeamFee {
         uint256 gen;    // % of buy in thats paid to key holders of current round
