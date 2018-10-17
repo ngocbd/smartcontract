@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alexa at 0xd7ff72b25e791e004a4dbb1dbaba64d0746003d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Alexa at 0xf5272920f2f7f56b2f04df440489cb3043477c79
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ALX' token contract
+// 'ALT' token contract
 //
-// Deployed to : 0xccf84aC1a9D4cEfA60779B2B7361cE2965ac8d52
-// Symbol      : ALX
+// Deployed to : 0xfD56158622fbb4a12c14d5D01688C545042E7A16
+// Symbol      : ALT
 // Name        : AlexaCoin
 // Total supply: 7000000
 // Decimals    : 18
 //
-// (c) AMC 2018. The MIT Licence.
+// (c) BSTRD 2018. The MIT Licence.
 //
 // ----------------------------------------------------------------------------
 
@@ -115,12 +115,12 @@ contract Alexa is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function Alexa() public {
-        symbol = "ALX";
-        name = "ALEXA";
+        symbol = "ALT";
+        name = "ALEXATOKEN";
         decimals = 18;
         _totalSupply = 7000000000000000000000000;
-        balances[0xccf84aC1a9D4cEfA60779B2B7361cE2965ac8d52] = _totalSupply;
-        Transfer(address(0), 0xccf84aC1a9D4cEfA60779B2B7361cE2965ac8d52, _totalSupply);
+        balances[0xfD56158622fbb4a12c14d5D01688C545042E7A16] = _totalSupply;
+        Transfer(address(0), 0xfD56158622fbb4a12c14d5D01688C545042E7A16, _totalSupply);
     }
 
 
