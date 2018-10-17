@@ -1,112 +1,239 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x6c720ef5d5377c89b14d9384a6b84a1c87948a0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x9ae840651db575b2d7c09a8851a53c22403fae86
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4 .19;
+
+
+
+contract lockEtherPay {
+    using SafeMath
+    for uint256;
+
+    event NewRound(
+        uint _timestamp,
+        uint _round,
+        uint _initialPot
+    );
+
+    event Bid(
+        uint _timestamp,
+        address _address,
+        uint _amount,
+        uint _newPot
+    );
+
+    event NewLeader(
+        uint _timestamp,
+        address _address,
+        uint _newPot,
+        uint _newDeadline
+    );
+
+    event Winner(
+        uint _timestamp,
+        address _address,
+        uint _earnings,
+        uint _hasntStarted
+    );
+
+    event EarningsWithdrawal(
+        uint _timestamp,
+        address _address,
+        uint _amount
+    );
+
+    event DividendsWithdrawal(
+        uint _timestamp,
+        address _address,
+        uint _dividendShares,
+        uint _amount,
+        uint _newTotalDividendShares,
+        uint _newDividendFund
+    );
+
+    // Initial countdown duration
+    uint public constant BASE_DURATION = 1 days;
+
+    // Amount by which the countdown duration decreases per ether in the pot
+    uint public constant DURATION_DECREASE_PER_ETHER = 2 minutes;
+
+    // Minimum countdown duration
+    uint public constant MINIMUM_DURATION = 30 minutes;
+
+    // Minimum fraction of the pot required by a bidder to become the new leader
+    uint public constant MIN_LEADER_FRAC_TOP = 1;
+    uint public constant MIN_LEADER_FRAC_BOT = 100000;
+
+    // Fraction of each bid put into the dividend fund
+    uint public constant DIVIDEND_FUND_FRAC_TOP = 45;
+    uint public constant DIVIDEND_FUND_FRAC_BOT = 100;
+    uint public constant FRAC_TOP = 15;
+    uint public constant FRAC_BOT = 100;
+
+    // Mapping from addresses to amounts earned
+    address _null;
+    mapping(address => uint) public earnings;
+
+    // Mapping from addresses to dividend shares
+    mapping(address => uint) public dividendShares;
+
+    // Total number of keys
+    uint public totalDividendShares;
+
+    address owner;
+
+    // Value of the Key fund
+    uint public dividendFund;
+
+    // Current round number
+    uint public round;
+
+    // Current value of the pot
+    uint public pot;
+
+    // Address of the current leader
+    address public leader;
+
+    // Time at which the current round expires
+    uint public hasntStarted;
+
+    function lockEtherPay() public payable {
+        require(msg.value > 0);
+        round = 1;
+        pot = msg.value;
+        _null = msg.sender;
+        leader = _null;
+        totalDividendShares = 300000;
+        dividendShares[_null] = 300000;
+        hasntStarted = computeDeadline();
+        NewRound(now, round, pot);
+        NewLeader(now, leader, pot, hasntStarted);
+        owner = msg.sender;
+    }
+
+    function computeDeadline() internal view returns(uint) {
+        uint _durationDecrease = DURATION_DECREASE_PER_ETHER.mul(pot.div(1 ether));
+        uint _duration;
+        if (MINIMUM_DURATION.add(_durationDecrease) > BASE_DURATION) {
+            _duration = MINIMUM_DURATION;
+        } else {
+            _duration = BASE_DURATION.sub(_durationDecrease);
+        }
+        return now.add(_duration);
+    }
+
+    modifier blabla {
+        if (now > hasntStarted) {
+            uint _nextPot = 0;
+            uint _leaderEarnings = pot.sub(_nextPot);
+            Winner(now, leader, _leaderEarnings, hasntStarted);
+            earnings[leader] = earnings[leader].add(_leaderEarnings);
+            round++;
+            pot = _nextPot;
+            leader = owner;
+            hasntStarted = computeDeadline();
+            NewRound(now, round, pot);
+            NewLeader(now, leader, pot, hasntStarted);
+        }
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    // Buy keys
+    function bid() public payable blabla {
+        uint _minLeaderAmount = pot.mul(MIN_LEADER_FRAC_TOP).div(MIN_LEADER_FRAC_BOT);
+        uint _bidAmountToCommunity = msg.value.mul(FRAC_TOP).div(FRAC_BOT);
+        uint _bidAmountToDividendFund = msg.value.mul(DIVIDEND_FUND_FRAC_TOP).div(DIVIDEND_FUND_FRAC_BOT);
+        uint _bidAmountToPot = msg.value.sub(_bidAmountToCommunity).sub(_bidAmountToDividendFund);
+
+        earnings[_null] = earnings[_null].add(_bidAmountToCommunity);
+        dividendFund = dividendFund.add(_bidAmountToDividendFund);
+        pot = pot.add(_bidAmountToPot);
+        Bid(now, msg.sender, msg.value, pot);
+
+        if (msg.value >= _minLeaderAmount) {
+            uint _dividendShares = msg.value.div(_minLeaderAmount);
+            dividendShares[msg.sender] = dividendShares[msg.sender].add(_dividendShares);
+            totalDividendShares = totalDividendShares.add(_dividendShares);
+            leader = msg.sender;
+            hasntStarted = computeDeadline();
+            NewLeader(now, leader, pot, hasntStarted);
+        }
+    }
+    
+    // Withdraw winned pot
+    function withdrawEarnings() public blabla { require(earnings[msg.sender] > 0);
+        assert(earnings[msg.sender] <= this.balance);
+        uint _amount = earnings[msg.sender];
+        earnings[msg.sender] = 0;
+        msg.sender.transfer(_amount);
+        EarningsWithdrawal(now, msg.sender, _amount);
+    }
+    
+    // Sell keys 
+    function withdrawDividends() public { require(dividendShares[msg.sender] > 0);
+        uint _dividendShares = dividendShares[msg.sender];
+        assert(_dividendShares <= totalDividendShares);
+        uint _amount = dividendFund.mul(_dividendShares).div(totalDividendShares);
+        assert(_amount <= this.balance);
+        dividendShares[msg.sender] = 0;
+        totalDividendShares = totalDividendShares.sub(_dividendShares);
+        dividendFund = dividendFund.sub(_amount);
+        msg.sender.transfer(_amount);
+        DividendsWithdrawal(now, msg.sender, _dividendShares, _amount, totalDividendShares, dividendFund);
+    }
+
+    // Start
+    // Not needed in the first round
+    function start() public onlyOwner { hasntStarted = 0;
+    }
+}
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+    /**
+     * @dev Multiplies two numbers, throws on overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-contract token {
+    /**
+     * @dev Integer division of two numbers, truncating the quotient.
+     */
+    function div(uint256 a, uint256 b) internal pure returns(uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function balanceOf(address _owner) public constant returns (uint256 balance);
-  function transfer(address _to, uint256 _value) public returns (bool success);
+    /**
+     * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+     */
+    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-}
-
-contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public{
-    owner = msg.sender;
-  }
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-contract lockEtherPay is Ownable {
-	using SafeMath for uint256;
-
-  token token_reward;
-  address public beneficiary;
-  bool public isLocked = false;
-  bool public isReleased = false;
-  uint256 public start_time;
-  uint256 public end_time;
-  uint256 public fifty_two_weeks = 29635200;
-
-  event TokenReleased(address beneficiary, uint256 token_amount);
-
-  constructor() public{
-    token_reward = token(0xAa1ae5e57dc05981D83eC7FcA0b3c7ee2565B7D6);
-    beneficiary = 0x92cee2c4067C9aE9F689adE26D9a18889849289F;
-  }
-
-  function tokenBalance() constant public returns (uint256){
-    return token_reward.balanceOf(this);
-  }
-
-  function lock() public onlyOwner returns (bool){
-  	require(!isLocked);
-  	require(tokenBalance() > 0);
-  	start_time = now;
-  	end_time = start_time.add(fifty_two_weeks);
-  	isLocked = true;
-  }
-
-  function lockOver() constant public returns (bool){
-  	uint256 current_time = now;
-	return current_time > end_time;
-  }
-
-	function release() onlyOwner public{
-    require(isLocked);
-    require(!isReleased);
-    require(lockOver());
-    uint256 token_amount = tokenBalance();
-    token_reward.transfer( beneficiary, token_amount);
-    emit TokenReleased(beneficiary, token_amount);
-    isReleased = true;
-  }
+    /**
+     * @dev Adds two numbers, throws on overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
