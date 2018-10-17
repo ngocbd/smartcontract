@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0xe22F93205f20c40F6a0C68b110e1EDfEBC152011
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0x444a1a0f323be758146129cb7e7796ce44d2bb71
 */
 pragma solidity 0.4.18;
 
@@ -150,25 +150,6 @@ contract Utils2 is Utils {
         }
 
         return decimals[token];
-    }
-
-    /// @dev notice, overrides previous implementation.
-    function setDecimals(ERC20 token) internal {
-        uint decimal;
-
-        if (token == ETH_TOKEN_ADDRESS) {
-            decimal = ETH_DECIMALS;
-        } else {
-            if (!address(token).call(bytes4(keccak256("decimals()")))) {/* solhint-disable-line avoid-low-level-calls */
-                //above code can only be performed with low level call. otherwise all operation will revert.
-                // call failed
-                decimal = 18;
-            } else {
-                decimal = token.decimals();
-            }
-        }
-
-        decimals[token] = decimal;
     }
 
     function calcDestAmount(ERC20 src, ERC20 dest, uint srcAmount, uint rate) internal view returns(uint) {
