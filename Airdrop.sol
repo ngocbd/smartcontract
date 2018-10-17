@@ -1,50 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x042fa80fb83f133f1529385277e748848a4b1bb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xf1afe1dfcf10bb720c7c5c38c80c0624afba32f9
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-interface ERC20 {
-  function transfer(address to, uint256 value) public returns (bool);
+
+contract ERC20 {
+  function transfer(address _recipient, uint256 _value) public returns (bool success);
 }
 
-/**
- * @title Airdrop contract used to perform bulk transfers within a single transaction.
- */
 contract Airdrop {
-  address _owner;
-
-  modifier ownerOnly {
-    if (_owner == msg.sender) _;
-  }
-
-  function Airdrop() public {
-    _owner = msg.sender;
-  }
-
-  function transferOwnership(address newOwner) public ownerOnly {
-    _owner = newOwner;
-  }
-
-  /**
-   * @dev Perform the airdrop. Restricted to no more than 300 accounts in a single transactions
-   * @notice More than 300 accounts will exceed gas block limit. It is recommended to perform
-   * batches using no more than 250 accounts as the actual gas cost is dependent on the
-   * tokenContractAddress's implementation of transfer())
-   *
-   * @param tokenContractAddress The address of the token contract being transfered.
-   * @param recipients Array of accounts receiving tokens.
-   * @param amounts Array of amount of tokens to be transferred. Index of amounts lines up with
-   *                the index of recipients.
-   */
-  function drop(address tokenContractAddress, address[] recipients, uint256[] amounts) public ownerOnly {
-    require(tokenContractAddress != 0x0);
-    require(recipients.length == amounts.length);
-    require(recipients.length <= 300);
-
-    ERC20 tokenContract = ERC20(tokenContractAddress);
-
-    for (uint8 i = 0; i < recipients.length; i++) {
-      tokenContract.transfer(recipients[i], amounts[i]);
+  function drop(ERC20 token, address[] recipients, uint256[] values) public {
+    for (uint256 i = 0; i < recipients.length; i++) {
+      token.transfer(recipients[i], values[i]);
     }
   }
 }
