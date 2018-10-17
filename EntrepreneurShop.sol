@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EntrepreneurShop at 0x05dc0b144a5ab9c9125e6ee64fbb6f9d7d17324c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EntrepreneurShop at 0xc9ff1ff1bfbfdc416ba2299d4b97dc58fa10eedf
 */
 pragma solidity ^0.4.4;
 
@@ -103,11 +103,11 @@ contract EntrepreneurShop is StandardToken {
 
     function EntrepreneurShop(
         ) {
-        balances[msg.sender] = 3000000000000000;               
-        totalSupply = 3000000000000000;                        
-        name = "ETER SHIP";                                   
+        balances[msg.sender] = 30000000000000000;               
+        totalSupply = 30000000000000000;                        
+        name = "Entrepreneur Shop";                                   
         decimals = 8;                            
-        symbol = "ETS";                               
+        symbol = "ESO";                               
     }
 
     
