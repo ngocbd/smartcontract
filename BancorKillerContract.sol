@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0x2797b0fa64cd56e45fb589fc3743177348397817
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorKillerContract at 0x72e3fbb4c770870898a9bab58e4fb9c969182b37
 */
 pragma solidity ^0.4.23;
 
@@ -179,7 +179,7 @@ contract BancorKillerContract {
 
   }
 
-  function seed_additional_token(uint256 _amount) public onlyAdmin {
+  function seed_additional_token(uint _amount) public onlyAdmin {
 
     require(market_is_open());
     
