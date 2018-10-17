@@ -1,18 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GerritCoin at 0x81250f81aeba148ceb25e016bc4ed378133cbbe0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gerritcoin at 0xeacfcd969710a4bb9d75162b43a92ba7e267254f
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Gerrit Coin' token contract
+// 'Gerritcoin' token contract
 //
-// Deployed to : 0x14d45c2fB482a78Ce0AF9D8F1C7a0c18af9357D5
-// Symbol      : GeCo
-// Name        : Gerrit Coin
-// Total supply: 100000000
-// Decimals    : 1
+// Deployed to : 0x174Ee0AD709A552C5Ea77541C3d7fb31917c043f
+// Symbol      : Gerrit
+// Name        : Gerritcoin
+// Total supply: 1000001
+// Decimals    : 2
 //
-// The MIT Licence.
+// Enjoy.
+//
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -100,7 +102,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract GerritCoin is ERC20Interface, Owned, SafeMath {
+contract Gerritcoin is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -113,13 +115,13 @@ contract GerritCoin is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function GerritCoin() public {
-        symbol = "G¢";
-        name = "Gerrit Coin";
-        decimals = 1;
-        _totalSupply = 1000000000;
-        balances[0x14d45c2fB482a78Ce0AF9D8F1C7a0c18af9357D5] = _totalSupply;
-        Transfer(address(0), 0x14d45c2fB482a78Ce0AF9D8F1C7a0c18af9357D5, _totalSupply);
+    function Gerritcoin() public {
+        symbol = "Gerrit";
+        name = "Gerritcoin";
+        decimals = 2;
+        _totalSupply = 100000100;
+        balances[0x174Ee0AD709A552C5Ea77541C3d7fb31917c043f] = _totalSupply;
+        Transfer(address(0), 0x174Ee0AD709A552C5Ea77541C3d7fb31917c043f, _totalSupply);
     }
 
 
@@ -158,7 +160,7 @@ contract GerritCoin is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -169,7 +171,7 @@ contract GerritCoin is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    // 
+    //
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
