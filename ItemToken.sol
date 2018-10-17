@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x7e0f4a1d28228cdc3079bca1e1668fb18ddbc995
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x9224ca23168a20bc1b5e2a1627edf783e193d39c
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.13;
 
 library SafeMath {
 
@@ -46,42 +46,34 @@ library SafeMath {
 }
 
 contract ItemToken {
-  using SafeMath for uint256; // Loading the SafeMath library
+  using SafeMath for uint256;
 
-  // Events of the contract
   event Bought (uint256 indexed _itemId, address indexed _owner, uint256 _price);
   event Sold (uint256 indexed _itemId, address indexed _owner, uint256 _price);
   event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
   event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 
-
-  address private owner; // owner of the contract
-  address private charityAddress; // address of the charity
-  mapping (address => bool) private admins; // admins of the contract
-  IItemRegistry private itemRegistry; // Item registry
+  address private owner;
+  mapping (address => bool) private admins;
   bool private erc721Enabled = false;
 
-  // limits for devcut
   uint256 private increaseLimit1 = 0.02 ether;
   uint256 private increaseLimit2 = 0.5 ether;
   uint256 private increaseLimit3 = 2.0 ether;
   uint256 private increaseLimit4 = 5.0 ether;
 
-  uint256[] private listedItems; // array of items
-  mapping (uint256 => address) private ownerOfItem; // owner of the item
-  mapping (uint256 => uint256) private startingPriceOfItem; // starting price of the item
-  mapping (uint256 => uint256) private previousPriceOfItem; // previous price of the item
-  mapping (uint256 => uint256) private priceOfItem; // actual price of the item
-  mapping (uint256 => uint256) private charityCutOfItem; // charity cut of the item
-  mapping (uint256 => address) private approvedOfItem; // item is approved for this address
+  uint256[] private listedItems;
+  mapping (uint256 => address) private ownerOfItem;
+  mapping (uint256 => uint256) private startingPriceOfItem;
+  mapping (uint256 => uint256) private priceOfItem;
+  mapping (uint256 => address) private approvedOfItem;
 
-  // constructor
-  constructor() public {
+  function ItemToken () public {
     owner = msg.sender;
     admins[owner] = true;
   }
 
-  // modifiers
+  /* Modifiers */
   modifier onlyOwner() {
     require(owner == msg.sender);
     _;
@@ -97,27 +89,15 @@ contract ItemToken {
     _;
   }
 
-  // contract owner
+  /* Owner */
   function setOwner (address _owner) onlyOwner() public {
     owner = _owner;
   }
 
-  // Set charity address
-  function setCharity (address _charityAddress) onlyOwner() public {
-    charityAddress = _charityAddress;
-  }
-
-  // Set item registry
-  function setItemRegistry (address _itemRegistry) onlyOwner() public {
-    itemRegistry = IItemRegistry(_itemRegistry);
-  }
-
-  // Add admin
   function addAdmin (address _admin) onlyOwner() public {
     admins[_admin] = true;
   }
 
-  // Remove admin
   function removeAdmin (address _admin) onlyOwner() public {
     delete admins[_admin];
   }
@@ -127,61 +107,39 @@ contract ItemToken {
     erc721Enabled = true;
   }
 
-  // Withdraw
+  /* Withdraw */
+  /*
+    NOTICE: These functions withdraw the developer's cut which is left
+    in the contract by `buy`. User funds are immediately sent to the old
+    owner in `buy`, no user funds are left in the contract.
+  */
   function withdrawAll () onlyOwner() public {
-    owner.transfer(address(this).balance);
+    owner.transfer(this.balance);
   }
 
   function withdrawAmount (uint256 _amount) onlyOwner() public {
     owner.transfer(_amount);
   }
 
-  // Listing
-  function populateFromItemRegistry (uint256[] _itemIds) onlyOwner() public {
+  /* Listing */
+  function listMultipleItems (uint256[] _itemIds, uint256 _price, address _owner) onlyAdmins() external {
     for (uint256 i = 0; i < _itemIds.length; i++) {
-      if (charityCutOfItem[_itemIds[i]] > 0 || priceOfItem[_itemIds[i]] > 0 || itemRegistry.priceOf(_itemIds[i]) == 0) {
-        continue;
-      }
-
-      listItemFromRegistry(_itemIds[i]);
+      listItem(_itemIds[i], _price, _owner);
     }
   }
 
-  function listItemFromRegistry (uint256 _itemId) onlyOwner() public {
-    require(itemRegistry != address(0));
-    require(itemRegistry.ownerOf(_itemId) != address(0));
-    require(itemRegistry.priceOf(_itemId) > 0);
-    require(itemRegistry.charityCutOf(_itemId) > 0);
-
-    uint256 price = itemRegistry.priceOf(_itemId);
-    uint256 charityCut = itemRegistry.charityCutOf(_itemId);
-    address itemOwner = itemRegistry.ownerOf(_itemId);
-    listItem(_itemId, price, itemOwner, charityCut);
-  }
-
-  function listMultipleItems (uint256[] _itemIds, uint256 _price, address _owner, uint256 _charityCut) onlyAdmins() external {
-    for (uint256 i = 0; i < _itemIds.length; i++) {
-      listItem(_itemIds[i], _price, _owner, _charityCut);
-    }
-  }
-
-  function listItem (uint256 _itemId, uint256 _price, address _owner, uint256 _charityCut) onlyAdmins() public {
+  function listItem (uint256 _itemId, uint256 _price, address _owner) onlyAdmins() public {
     require(_price > 0);
-    require(_charityCut >= 10);
-    require(_charityCut <= 100);
     require(priceOfItem[_itemId] == 0);
     require(ownerOfItem[_itemId] == address(0));
-    require(charityCutOfItem[_itemId] == 0);
 
     ownerOfItem[_itemId] = _owner;
     priceOfItem[_itemId] = _price;
     startingPriceOfItem[_itemId] = _price;
-    charityCutOfItem[_itemId] = _charityCut;
-    previousPriceOfItem[_itemId] = 0;
     listedItems.push(_itemId);
   }
 
-  // Buy
+  /* Buying */
   function calculateNextPrice (uint256 _price) public view returns (uint256 _nextPrice) {
     if (_price < increaseLimit1) {
       return _price.mul(200).div(95);
@@ -196,7 +154,6 @@ contract ItemToken {
     }
   }
 
-  // Dev cut
   function calculateDevCut (uint256 _price) public view returns (uint256 _devCut) {
     if (_price < increaseLimit1) {
       return _price.mul(5).div(100); // 5%
@@ -211,67 +168,60 @@ contract ItemToken {
     }
   }
 
-  // Buy function
-  function buy (uint256 _itemId, uint256 _charityCutNew) payable public {
-    require(priceOf(_itemId) > 0); // price of the token has to be greater than zero
-    require(_charityCutNew >= 10); // minimum charity cut is 10%
-    require(_charityCutNew <= 100); // maximum charity cut is 100%
-    require(charityCutOf(_itemId) >= 10); // minimum charity cut is 10%
-    require(charityCutOf(_itemId) <= 100); // maximum charity cut is 100%
-    require(ownerOf(_itemId) != address(0)); // owner is not 0x0
-    require(msg.value >= priceOf(_itemId)); // msg.value has to be greater than the price of the token
-    require(ownerOf(_itemId) != msg.sender); // the owner cannot buy her own token
-    require(!isContract(msg.sender)); // message sender is not a contract
-    require(msg.sender != address(0)); // message sender is not 0x0
+  /*
+     Buy a country directly from the contract for the calculated price
+     which ensures that the owner gets a profit.  All countries that
+     have been listed can be bought by this method. User funds are sent
+     directly to the previous owner and are never stored in the contract.
+  */
+  function buy (uint256 _itemId) payable public {
+    require(priceOf(_itemId) > 0);
+    require(ownerOf(_itemId) != address(0));
+    require(msg.value >= priceOf(_itemId));
+    require(ownerOf(_itemId) != msg.sender);
+    require(!isContract(msg.sender));
+    require(msg.sender != address(0));
 
-    address oldOwner = ownerOf(_itemId); // old owner of the token
-    address newOwner = msg.sender; // new owner of the token
-    uint256 price = priceOf(_itemId); // price of the token
-    uint256 previousPrice = previousPriceOf(_itemId); // previous price of the token (oldOwner bought it for this price)
-    uint256 charityCut = charityCutOf(_itemId); // actual charity cut of the token (oldOwner set this value)
-    uint256 excess = msg.value.sub(price); // excess
-    
-    charityCutOfItem[_itemId] = _charityCutNew; // update the charity cut array
-    previousPriceOfItem[_itemId] = priceOf(_itemId); // update the previous price array
-    priceOfItem[_itemId] = nextPriceOf(_itemId); // update price of item
+    address oldOwner = ownerOf(_itemId);
+    address newOwner = msg.sender;
+    uint256 price = priceOf(_itemId);
+    uint256 excess = msg.value.sub(price);
 
-    _transfer(oldOwner, newOwner, _itemId); // transfer token from oldOwner to newOwner
+    _transfer(oldOwner, newOwner, _itemId);
+    priceOfItem[_itemId] = nextPriceOf(_itemId);
 
-    emit Bought(_itemId, newOwner, price); // bought event
-    emit Sold(_itemId, oldOwner, price); // sold event
+    Bought(_itemId, newOwner, price);
+    Sold(_itemId, oldOwner, price);
 
     // Devevloper's cut which is left in contract and accesed by
     // `withdrawAll` and `withdrawAmountTo` methods.
-    uint256 devCut = calculateDevCut(price); // calculate dev cut
-    // Charity contribution
-    uint256 charityAmount = ((price.sub(devCut)).sub(previousPrice)).mul(charityCut).div(100); // calculate the charity cut
-    
-    charityAddress.transfer(charityAmount); // transfer payment to the address of the charity
-    oldOwner.transfer((price.sub(devCut)).sub(charityAmount)); // transfer payment to old owner minus the dev cut and the charity cut
+    uint256 devCut = calculateDevCut(price);
 
-    
+    // Transfer payment to old owner minus the developer's cut.
+    oldOwner.transfer(price.sub(devCut));
+
     if (excess > 0) {
-      newOwner.transfer(excess); // transfer the excess
+      newOwner.transfer(excess);
     }
   }
 
+  /* ERC721 */
   function implementsERC721() public view returns (bool _implements) {
     return erc721Enabled;
   }
 
   function name() public pure returns (string _name) {
-    return "Tokenimals";
+    return "CryptoLeaders.app";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "TKS";
+    return "CLS";
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
     return listedItems.length;
   }
 
-  // balance of an address
   function balanceOf (address _owner) public view returns (uint256 _balance) {
     uint256 counter = 0;
 
@@ -284,12 +234,10 @@ contract ItemToken {
     return counter;
   }
 
-  // owner of token
   function ownerOf (uint256 _itemId) public view returns (address _owner) {
     return ownerOfItem[_itemId];
   }
 
-  // tokens of an address
   function tokensOf (address _owner) public view returns (uint256[] _tokenIds) {
     uint256[] memory items = new uint256[](balanceOf(_owner));
 
@@ -304,17 +252,14 @@ contract ItemToken {
     return items;
   }
 
-  // token exists
   function tokenExists (uint256 _itemId) public view returns (bool _exists) {
     return priceOf(_itemId) > 0;
   }
 
-  // approved for
   function approvedFor(uint256 _itemId) public view returns (address _approved) {
     return approvedOfItem[_itemId];
   }
 
-  // approve
   function approve(address _to, uint256 _itemId) onlyERC721() public {
     require(msg.sender != _to);
     require(tokenExists(_itemId));
@@ -323,14 +268,15 @@ contract ItemToken {
     if (_to == 0) {
       if (approvedOfItem[_itemId] != 0) {
         delete approvedOfItem[_itemId];
-        emit Approval(msg.sender, 0, _itemId);
+        Approval(msg.sender, 0, _itemId);
       }
     } else {
       approvedOfItem[_itemId] = _to;
-      emit Approval(msg.sender, _to, _itemId);
+      Approval(msg.sender, _to, _itemId);
     }
   }
 
+  /* Transferring a country to another owner will entitle the new owner the profits from `buy` */
   function transfer(address _to, uint256 _itemId) onlyERC721() public {
     require(msg.sender == ownerOf(_itemId));
     _transfer(msg.sender, _to, _itemId);
@@ -350,10 +296,10 @@ contract ItemToken {
     ownerOfItem[_itemId] = _to;
     approvedOfItem[_itemId] = 0;
 
-    emit Transfer(_from, _to, _itemId);
+    Transfer(_from, _to, _itemId);
   }
 
-  // read
+  /* Read */
   function isAdmin (address _admin) public view returns (bool _isAdmin) {
     return admins[_admin];
   }
@@ -366,29 +312,12 @@ contract ItemToken {
     return priceOfItem[_itemId];
   }
 
-  function previousPriceOf (uint256 _itemId) public view returns (uint256 _previousPrice) {
-    return previousPriceOfItem[_itemId];
-  }
-
-  function charityCutOf (uint256 _itemId) public view returns (uint256 _charityCut) {
-    return charityCutOfItem[_itemId];
-  }
-
   function nextPriceOf (uint256 _itemId) public view returns (uint256 _nextPrice) {
     return calculateNextPrice(priceOf(_itemId));
   }
 
-  function readCharityAddress () public view returns (address _charityAddress) {
-    return charityAddress;
-  }
-
-  function allOf (uint256 _itemId) external view returns (address _owner, uint256 _startingPrice, uint256 _price, uint256 _nextPrice, uint256 _charityCut) {
-    return (ownerOf(_itemId), startingPriceOf(_itemId), priceOf(_itemId), nextPriceOf(_itemId), charityCutOf(_itemId));
-  }
-
-  // selfdestruct
-  function ownerkill() public onlyOwner {
-        selfdestruct(owner);
+  function allOf (uint256 _itemId) external view returns (address _owner, uint256 _startingPrice, uint256 _price, uint256 _nextPrice) {
+    return (ownerOf(_itemId), startingPriceOf(_itemId), priceOf(_itemId), nextPriceOf(_itemId));
   }
 
   function itemsForSaleLimit (uint256 _from, uint256 _take) public view returns (uint256[] _items) {
@@ -401,18 +330,10 @@ contract ItemToken {
     return items;
   }
 
-  // util
+  /* Util */
   function isContract(address addr) internal view returns (bool) {
     uint size;
     assembly { size := extcodesize(addr) } // solium-disable-line
     return size > 0;
   }
-
-}
-
-interface IItemRegistry {
-  function itemsForSaleLimit (uint256 _from, uint256 _take) external view returns (uint256[] _items);
-  function ownerOf (uint256 _itemId) external view returns (address _owner);
-  function priceOf (uint256 _itemId) external view returns (uint256 _price);
-  function charityCutOf (uint256 _itemId) external view returns (uint256 _charityCut);
 }
