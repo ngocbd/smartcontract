@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinLordToken at 0x57bf0ef675243af2230c69495234f7785c3f12b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinLordToken at 0xbab7f3e42f629c7be02d28ac617fad4a3e0b745f
 */
 pragma solidity 0.4.24;
 
@@ -46,7 +46,7 @@ contract CoinLordToken {
     uint8 public constant decimals = 18;
 
     /// The ERC20 total fixed supply of tokens.
-    uint256 public constant totalSupply = (10 ** 9) * (10 ** uint256(decimals));
+    uint256 public constant totalSupply = (10 ** 8) * (10 ** uint256(decimals));
 
     /// Account balances.
     mapping(address => uint256) balances;
