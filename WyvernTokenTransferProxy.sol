@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WyvernTokenTransferProxy at 0xe5c783ee536cf5e63e792988335c4255169be4e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WyvernTokenTransferProxy at 0x14d504db739cab1cd0ee0d6795b76d806cc02720
 */
 pragma solidity ^0.4.13;
 
