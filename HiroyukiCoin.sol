@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiroyukiCoin at 0x56517acbe66379c3f3e07ef6e4880f9717d4be11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiroyukiCoin at 0x295b13831dc5c5df5e0ed3df874d9be83c79ac15
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'HiroyukiCoin' token contract
 //
-// Deployed to : 0x56517aCbE66379C3f3e07EF6e4880F9717d4be11
+// Deployed to : 0x295B13831dC5C5dF5E0eD3dF874D9BE83C79aC15
 // Symbol      : HRYK
 // Name        : HiroyukiCoin
-// Total supply: 20000000000000
+// Total supply: 100000000000
 // Decimals    : 18
 // ----------------------------------------------------------------------------
 
@@ -124,11 +124,11 @@ contract HiroyukiCoin is ERC20Interface, Owned {
         name = "HiroyukiCoin";
         decimals = 18;
 
-        _totalSupply = 20000000000000000000000000000000;
+        _totalSupply = 100000000000000000000000000000;
         _currentSupply = 0;
 
         startDate = now;
-        endDate = now + 8 weeks;
+        endDate = now + 4 weeks;
 
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
@@ -229,6 +229,24 @@ contract HiroyukiCoin is ERC20Interface, Owned {
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
+
+
+    // ------------------------------------------------------------------------
+    // 80000000 HRYK Tokens per 1 ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        require(msg.value > 0);
+        require(startDate <= now && now <= endDate);
+        address _to = msg.sender;
+        uint256 tokens = SafeMath.mul(msg.value, 80000000);
+        require(SafeMath.add(_currentSupply, tokens) <= _totalSupply); 
+        balances[_to] = SafeMath.add(balances[_to], tokens);
+        balances[owner] = SafeMath.sub(balances[owner], tokens);
+        Transfer(owner, _to, tokens);
+        owner.transfer(msg.value);
+        _currentSupply = SafeMath.add(_currentSupply, tokens);
+    }
+
 
 
     // ------------------------------------------------------------------------
