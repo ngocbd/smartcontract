@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x1c27d58250cd9cf2015c51c7cc4cff2b38d95cd1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x87b1d03dbcbb9f1fe117e03738d618d32beb6248
 */
 pragma solidity 0.4.19;
 
@@ -221,8 +221,8 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
     string public constant symbol = "GPX";
     uint8 public constant decimals = 18;
 
-    //  South Korea - 20000 ETH * int(1 / 0.000268) = 74620000
-    uint256 public constant TOTAL_SUPPLY = uint256(74620000) * (uint256(10) ** decimals);
+    // Japan - 25000 ETH * int(1 / 0.000268) = 93275000
+    uint256 public constant TOTAL_SUPPLY = uint256(93275000) * (uint256(10) ** decimals);
     
     address internal tokenPool = address(0);      // Use a token pool holding all GPX. Avoid using sender address.
     mapping(address => uint256) internal balances;
