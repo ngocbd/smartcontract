@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureClaim at 0xf38250497b624fddaa9acda93abafa0a704a08e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureClaim at 0x47c788e683b60781602531ebe6e70104438b43af
 */
 pragma solidity ^0.4.23;
 
@@ -88,11 +88,6 @@ contract EtheremonAdventureClaim is BasicAccessControl {
     modifier requireAdventurePresale {
         require(adventurePresale != address(0));
         _;        
-    }
-    
-    constructor(address _adventureItem, address _adventurePresale) public {
-        adventureItem = _adventureItem;
-        adventurePresale = _adventurePresale;
     }
     
     function setContract(address _adventureItem, address _adventurePresale) onlyOwner public {
