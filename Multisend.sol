@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSend at 0x0CE087c4bd3C0bd59B08a658834c5DeC394BdB47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSend at 0x4d6993c02e6bbcbf6d6183c9b599b1d8c18c32d8
 */
 pragma solidity ^0.4.18;
 
@@ -28,16 +28,13 @@ contract ERC20 is ERC20Basic {
 }
 
 contract MultiSend {
-  function multiSend(address _token, address[] addresses, uint amount) public {
-    ERC20 token = ERC20(_token);
-    for(uint i = 0; i < addresses.length; i++) {
-      require(token.transferFrom(msg.sender, addresses[i], amount));
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+            ERC20(_tokenAddr).transfer(dests[i], values[i]);
+            i += 1;
+        }
+        return(i);
     }
-  }
-  function multiSendEth(address[] addresses) public payable {
-    for(uint i = 0; i < addresses.length; i++) {
-      addresses[i].transfer(msg.value / addresses.length);
-    }
-    msg.sender.transfer(this.balance);
-  }
 }
