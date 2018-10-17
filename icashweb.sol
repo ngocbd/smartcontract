@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCashweb at 0x6ebe55e8c9165d6d1bb3239a31dbba0c2f47fe56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCashweb at 0xde31e0ef14c2348f85d95f3dffef632e1215e070
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 ///////////////////////////////////////////////////
 //  
 //  `iCashweb` ICW Token Contract
@@ -15,12 +15,7 @@ pragma solidity ^0.4.23;
 ///////////////////////////////////////////////////
 
 library iMath {
-    function mul(
-        uint256 a, uint256 b
-    ) 
-    internal 
-    pure 
-    returns(uint256) {
+    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
         if (a == 0) {
             return 0;
         }
@@ -28,426 +23,211 @@ library iMath {
         assert(c / a == b);
         return c;
     }
-
-    function div(
-        uint256 a, uint256 b
-    ) 
-    internal 
-    pure 
-    returns(uint256) {
+    function div(uint256 a, uint256 b) internal pure returns(uint256) {
         uint256 c = a / b;
         return c;
     }
-
-    function sub(
-        uint256 a, uint256 b
-    ) 
-    internal 
-    pure 
-    returns(uint256) {
+    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
         assert(b <= a);
         return a - b;
     }
-
-    function add(
-        uint256 a, uint256 b
-    ) 
-    internal 
-    pure 
-    returns(uint256) {
+    function add(uint256 a, uint256 b) internal pure returns(uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
 }
-contract iSimpleContract {
-    function changeRate(
-        uint256 value
-    ) 
-    public 
-    returns(bool);
 
-    function startMinting(
-        bool status
-    ) 
-    public 
-    returns(bool);  
+contract iCashwebToken {
+    
+    address public iOwner;
+    mapping(address => bool) iOperable;
+    bool _mintingStarted;
+    bool _minted;
 
-    function changeOwnerShip(
-        address toWhom
-    ) 
-    public 
-    returns(bool);
-
-    function releaseMintTokens() 
-    public 
-    returns(bool);
-
-    function transferMintTokens(
-        address to, uint256 value
-    ) 
-    public 
-    returns(bool);
-
-    function moveMintTokens(
-        address from, address to, uint256 value
-    ) 
-    public 
-    returns(bool);
-
-    function manageOperable(
-        address _from, bool _value
-    ) 
-    public 
-    returns(bool);
-
-    function isOperable(
-        address _from
-    ) 
-    public 
-    view 
-    returns(bool);
-
-    event Release(
-        address indexed from, uint256 value
-    );
-
-    event Operable(
-        address indexed from, address indexed to, bool value
-    );
-}
-contract iERC01Basic is iSimpleContract {
-    function totalSupply() 
-    public 
-    view 
-    returns(uint256);
-
-    function balanceOf(
-        address who
-    ) 
-    public 
-    view 
-    returns(uint256);
-
-    function transfer(
-        address to, uint256 value
-    ) 
-    public 
-    returns(bool);
-
-    function transferTokens()
-    public 
-    payable;
-
-    event Transfer(
-        address indexed from, address indexed to, uint256 value
-    );
-}
-contract iERC20 is iERC01Basic {
-    function allowance(
-        address owner, address spender
-    ) 
-    public 
-    view 
-    returns(uint256);
-
-    function transferFrom(
-        address from, address to, uint256 value
-    ) 
-    public 
-    returns(bool);
-
-    function approve(
-        address spender, uint256 value
-    ) 
-    public 
-    returns(bool);
-    event Approval(
-        address indexed owner, address indexed spender, uint256 value
-    );
-}
-contract ICWToken is iERC01Basic {
-    using iMath for uint256;
-    mapping(address => uint256)     balances;
-    mapping(address => bool)        operable;
-    address public                  contractModifierAddress;
-    uint256                         _totalSupply;
-    uint256                         _totalMintSupply;
-    uint256                         _maxMintable;
-    uint256                         _rate = 100;
-    bool                            _mintingStarted;
-    bool                            _minted;
-
-    uint8 public constant           decimals = 18;
-    uint256 public constant         INITIAL_SUPPLY = 150000000 * (10 ** uint256(decimals));
-
-    modifier onlyByOwned() 
-    {
-        require(msg.sender == contractModifierAddress || operable[msg.sender] == true);
+    modifier notMinted() {
+        require(_minted == false);
         _;
     }
 
-    function getMinted() 
-    public 
-    view 
-    returns(bool) {
+    modifier mintingStarted() {
+        require(_mintingStarted == true);
+        _;
+    }
+    
+    modifier iOnlyOwner() {
+        require(msg.sender == iOwner || iOperable[msg.sender] == true);
+        _;
+    }
+    
+    function manageOperable(address _from, bool _value) public returns(bool) {
+        require(msg.sender == iOwner);
+        iOperable[_from] = _value;
+        emit Operable(msg.sender, _from, _value);
+        return true;
+    }
+
+    function isOperable(address _addr) public view returns(bool) {
+        return iOperable[_addr];
+    }
+
+    function manageMinting(bool _val) public {
+        require(msg.sender == iOwner);
+        _mintingStarted = _val;
+        emit Minting(_val);
+    }
+
+    function destroyContract() public {
+        require(msg.sender == iOwner);
+        selfdestruct(iOwner);
+    }
+    
+    event Operable(address _owner, address _from, bool _value);
+    event Minting(bool _value);
+    event OwnerTransferred(address _from, address _to);
+}
+
+contract iCashweb is iCashwebToken {
+    using iMath for uint256;
+    
+    string public constant name = "iCashweb";
+    string public constant symbol = "ICWs";
+    uint8 public constant decimals = 18;
+    uint256 _totalSupply;
+    uint256 _rate;
+    uint256 _totalMintSupply;
+    uint256 _maxMintable;
+    mapping (address => uint256) _balances;
+    mapping (address => mapping (address => uint256)) _approvals;
+    
+    constructor (uint256 _price, uint256 _val) public {
+        iOwner = msg.sender;
+        _mintingStarted = true;
+        _minted = false;
+        _rate = _price;
+        uint256 tokenVal = _val.mul(10 ** uint256(decimals));
+        _totalSupply = tokenVal.mul(2);
+        _maxMintable = tokenVal;
+        _balances[msg.sender] = tokenVal;
+        emit Transfer(0x0, msg.sender, tokenVal);
+    }
+
+    function getMinted() public view returns(bool) {
         return _minted;
     }
 
-    function getOwner() 
-    public 
-    view 
-    returns(address) {
-        return contractModifierAddress;
+    function isOwner(address _addr) public view returns(bool) {
+        return _addr == iOwner;
     }
-    
-    function getMintingStatus() 
-    public 
-    view 
-    returns(bool) {
+
+    function getMintingStatus() public view returns(bool) {
         return _mintingStarted;
     }
 
-    function getRate() 
-    public 
-    view 
-    returns(uint256) {
+    function getRate() public view returns(uint256) {
         return _rate;
     }
 
-    function totalSupply() 
-    public 
-    view 
-    returns(uint256) {
-        return _totalSupply;
-    }
-
-    function totalMintSupply() 
-    public 
-    view 
-    returns(uint256) {
+    function totalMintSupply() public view returns(uint256) {
         return _totalMintSupply;
     }
-
-    function balanceOf(
-        address _owner
-    ) 
-    public 
-    view 
-    returns(uint256 balance) {
-        return balances[_owner];
+    
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
     }
-
-    function destroyContract() 
-    public {
-        require(msg.sender == contractModifierAddress);
-        selfdestruct(contractModifierAddress);
+    
+    function balanceOf(address _addr) public view returns (uint256) {
+        return _balances[_addr];
     }
-
-    function changeRate(
-        uint256 _value
-    ) 
-    public 
-    onlyByOwned 
-    returns(bool) {
-        require(_value > 0);
-        _rate = _value;
+    
+    function allowance(address _from, address _to) public view returns (uint256) {
+        return _approvals[_from][_to];
+    }
+    
+    function transfer(address _to, uint _val) public returns (bool) {
+        assert(_balances[msg.sender] >= _val && msg.sender != _to);
+        _balances[msg.sender] = _balances[msg.sender].sub(_val);
+        _balances[_to] = _balances[_to].add(_val);
+        emit Transfer(msg.sender, _to, _val);
         return true;
     }
-
-    function startMinting(
-        bool status_
-    ) 
-    public 
-    onlyByOwned 
-    returns(bool) {
-        _mintingStarted = status_;
+    
+    function transferFrom(address _from, address _to, uint _val) public returns (bool) {
+        assert(_balances[_from] >= _val);
+        assert(_approvals[_from][msg.sender] >= _val);
+        _approvals[_from][msg.sender] = _approvals[_from][msg.sender].sub(_val);
+        _balances[_from] = _balances[_from].sub(_val);
+        _balances[_to] = _balances[_to].add(_val);
+        emit Transfer(_from, _to, _val);
         return true;
     }
-
-    function changeOwnerShip(
-        address _to
-    ) 
-    public 
-    onlyByOwned 
-    returns(bool) {
-        address oldOwner = contractModifierAddress;
-        uint256 balAmount = balances[oldOwner];
-        balances[_to] = balances[_to].add(balAmount);
-        balances[oldOwner] = 0;
-        contractModifierAddress = _to;
-        emit Transfer(oldOwner, contractModifierAddress, balAmount);
+    
+    function approve(address _to, uint256 _val) public returns (bool) {
+        _approvals[msg.sender][_to] = _val;
+        emit Approval(msg.sender, _to, _val);
         return true;
     }
-
-    function releaseMintTokens() 
-    public 
-    onlyByOwned 
-    returns(bool) {
-        require(_minted == false);
-        uint256 releaseAmount = _maxMintable.sub(_totalMintSupply);
-        uint256 totalReleased = _totalMintSupply.add(releaseAmount);
-        require(_maxMintable >= totalReleased);
-        _totalMintSupply = _totalMintSupply.add(releaseAmount);
-        balances[contractModifierAddress] = balances[contractModifierAddress].add(releaseAmount);
-        emit Transfer(0x0, contractModifierAddress, releaseAmount);
-        emit Release(contractModifierAddress, releaseAmount);
+    
+    function () public mintingStarted payable {
+        assert(msg.value > 0);
+        uint tokens = msg.value.mul(_rate);
+        uint totalToken = _totalMintSupply.add(tokens);
+        assert(_maxMintable >= totalToken);
+        _balances[msg.sender] = _balances[msg.sender].add(tokens);
+        _totalMintSupply = _totalMintSupply.add(tokens);
+        iOwner.transfer(msg.value);
+        emit Transfer(0x0, msg.sender, tokens);
+    }
+    
+    function moveMintTokens(address _from, address _to, uint256 _value) public iOnlyOwner returns(bool) {
+        require(_to != _from);
+        require(_balances[_from] >= _value);
+        _balances[_from] = _balances[_from].sub(_value);
+        _balances[_to] = _balances[_to].add(_value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
-
-    function transferMintTokens(
-        address _to, uint256 _value
-    ) 
-    public 
-    onlyByOwned
-    returns(bool) {
+    
+    function transferMintTokens(address _to, uint256 _value) public iOnlyOwner returns(bool) {
         uint totalToken = _totalMintSupply.add(_value);
         require(_maxMintable >= totalToken);
-        balances[_to] = balances[_to].add(_value);
+        _balances[_to] = _balances[_to].add(_value);
         _totalMintSupply = _totalMintSupply.add(_value);
         emit Transfer(0x0, _to, _value);
         return true;
     }
 
-    function moveMintTokens(
-        address _from, address _to, uint256 _value
-    ) 
-    public 
-    onlyByOwned 
-    returns(bool) {
-        require(_to != _from);
-        require(_value <= balances[_from]);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(_from, _to, _value);
+    function releaseMintTokens() public notMinted returns(bool) {
+        require(msg.sender == iOwner);
+        uint256 releaseAmount = _maxMintable.sub(_totalMintSupply);
+        uint256 totalReleased = _totalMintSupply.add(releaseAmount);
+        require(_maxMintable >= totalReleased);
+        _totalMintSupply = _totalMintSupply.add(releaseAmount);
+        _balances[msg.sender] = _balances[msg.sender].add(releaseAmount);
+        _minted = true;
+        emit Transfer(0x0, msg.sender, releaseAmount);
+        emit Release(msg.sender, releaseAmount);
         return true;
     }
 
-    function manageOperable(
-        address _from, bool _value
-    ) 
-    public returns(bool) {
-        require(msg.sender == contractModifierAddress);
-        operable[_from] = _value;
-        emit Operable(msg.sender, _from, _value);
+    function changeRate(uint256 _value) public returns (bool) {
+        require(msg.sender == iOwner && _value > 0);
+        _rate = _value;
         return true;
     }
 
-    function isOperable(
-        address _from
-    ) 
-    public 
-    view 
-    returns(bool) {
-        return operable[_from];
+    function transferOwnership(address _to) public {
+        require(msg.sender == iOwner && _to != msg.sender);  
+        address oldOwner = iOwner;
+        uint256 balAmount = _balances[oldOwner];
+        _balances[_to] = _balances[_to].add(balAmount);
+        _balances[oldOwner] = 0;
+        iOwner = _to;
+        emit Transfer(oldOwner, _to, balAmount);
+        emit OwnerTransferred(oldOwner, _to);
     }
-
-    function transferTokens()
-    public 
-    payable {
-        require(_mintingStarted == true && msg.value > 0);
-        uint tokens = msg.value.mul(_rate);
-        uint totalToken = _totalMintSupply.add(tokens);
-        require(_maxMintable >= totalToken);
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-        _totalMintSupply = _totalMintSupply.add(tokens);
-        contractModifierAddress.transfer(msg.value);
-        emit Transfer(0x0, msg.sender, tokens);
-    }
-
-    function transfer(
-        address _to, uint256 _value
-    ) 
-    public 
-    returns(bool) {
-        require(_to != msg.sender);
-        require(_value <= balances[msg.sender]);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-}
-contract iCashwebToken is iERC20, ICWToken {
-    mapping(
-        address => mapping(address => uint256)
-    ) internal _allowed;
-
-    function transferFrom(
-        address _from, address _to, uint256 _value
-    ) 
-    public 
-    returns(bool) {
-        require(_to != msg.sender);
-        require(_value <= balances[_from]);
-        require(_value <= _allowed[_from][msg.sender]);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        _allowed[_from][msg.sender] = _allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(
-        address _spender, uint256 _value
-    ) 
-    public 
-    returns(bool) {
-        _allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(
-        address _owner, address _spender
-    ) 
-    public 
-    view 
-    returns(uint256) {
-        return _allowed[_owner][_spender];
-    }
-
-    function increaseApproval(
-        address _spender, uint _addedValue
-    ) 
-    public 
-    returns(bool) {
-        _allowed[msg.sender][_spender] = _allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, _allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(
-        address _spender, uint _subtractedValue
-    ) 
-    public 
-    returns(bool) {
-        uint oldValue = _allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            _allowed[msg.sender][_spender] = 0;
-        } else {
-            _allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, _allowed[msg.sender][_spender]);
-        return true;
-    }
-}
-
-contract iCashweb is iCashwebToken {
-    string public constant name = "iCashweb";
-    string public constant symbol = "ICWeb";
-    constructor() 
-    public {
-        _mintingStarted = false;
-        _minted = false;
-        contractModifierAddress = msg.sender;
-        _totalSupply = INITIAL_SUPPLY * 2;
-        _maxMintable = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-    }
-    function () 
-    public 
-    payable {
-        transferTokens();
-    }
+    
+    event Release(address _addr, uint256 _val);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _from, address indexed _to, uint256 _value);
 }
