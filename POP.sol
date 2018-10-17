@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoP at 0x74245e15e63a847077c6b852a776b1d6f607f4b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoP at 0x5c8b75429089bcc36fc71988d53ba7da05364206
 */
 pragma solidity ^0.4.18;
 
@@ -44,24 +44,43 @@ contract PoP{
     	gameHasStarted = false;
     	currentMiningDifficulty = FixedPoint.fromInt256(kStartingGameMiningDifficulty);
 		unPromisedSupplyAtStartOfCurrentGame_ = totalSupply_;
+		currentPotSplit = 1000;
+
 		nextGameMaxBlock = kUpperBoundBlocksTillGameEnd;
 		nextGameMinBlock = kLowerBoundBlocksTillGameEnd;
     	currentGameInitialMinBetSize = kBaseMinBetSize;
+    	nextGameInitialMinBetSize = currentGameInitialMinBetSize;
+
+    	nextFrontWindowAdjustmentRatio = frontWindowAdjustmentRatio;
+    	nextBackWindowAdjustmentRatio = backWindowAdjustmentRatio;
+    	nextGameSeedPercent = percentToTakeAsSeed;
+    	nextGameRakePercent = percentToTakeAsRake;
+    	nextGameDeveloperMiningPower = developerMiningPower;
+    	nextGamePotSplit = currentPotSplit;
+
+    	// Initialize Dev Permissions
+    	canUpdateNextGameInitalMinBetSize = true;
+		canUpdateFrontWindowAdjustmentRatio = true;
+		canUpdateBackWindowAdjustmentRatio = true;
+		canUpdateNextGamePotSplit = true;
+		canUpdatePercentToTakeAsSeed = true;
+		canUpdateNextGameMinAndMaxBlockUntilGameEnd = true;
+		canUpdateAmountToTakeAsRake = true;
+		canUpdateDeveloperMiningPower = true;
 	}
 
 
 	// Constants
 	FixedPoint.Data _2pi = FixedPoint.Data({val: 26986075409});
 	FixedPoint.Data _pi = FixedPoint.Data({val: 13493037704});
-	FixedPoint.Data frontWindowAdjustmentRatio = FixedPoint.fromFraction(14, 10); // MC: 
-	FixedPoint.Data backWindowAdjustmentRatio = FixedPoint.fromFraction(175, 100); // MC: 
 	FixedPoint.Data kBackPayoutEndPointInitial = FixedPoint.fromFraction(1, 2);
 	FixedPoint.Data kFrontPayoutStartPointInitial = FixedPoint.fromFraction(1, 2);
-	uint256 constant kPercentToTakeAsRake = 3; // MC
-	uint256 constant kPercentToTakeAsSeed = 9; // MC
-	uint256 constant kDeveloperMiningPower = 30; // MC
-	uint256 constant kTotalPercent = 100; 
+	uint256 public percentToTakeAsRake = 500; // MC
+	uint256 public percentToTakeAsSeed = 900; // MC
+	uint256 public developerMiningPower = 3000; // MC
+	uint256 constant kTotalPercent = 10000; 
 	uint8 constant kStartingGameMiningDifficulty = 1;
+	uint256 potSplitMax = 2000;
 	uint8 constant kDifficultyWindow = 10; // MC
 	FixedPoint.Data kDifficultyDropOffFactor = FixedPoint.fromFraction(8, 10); // MC
 	uint256 constant kWeiConstant = 10 ** 18;
@@ -69,7 +88,7 @@ contract PoP{
 	FixedPoint.Data kExpectedPopCoinToBePromisedPercent = FixedPoint.fromFraction(1, 1000); // MC
 	FixedPoint.Data kLowerBoundBlocksTillGameEnd = FixedPoint.fromInt256(6); // MC
 	FixedPoint.Data kUpperBoundBlocksTillGameEnd = FixedPoint.fromInt256(80); // MC
-	FixedPoint.Data kBaseMinBetSize = FixedPoint.fromInt256(Int256(kWeiConstant/1000)); //MC
+	FixedPoint.Data kBaseMinBetSize = FixedPoint.fromInt256(Int256(kWeiConstant/1000)); 
 	FixedPoint.Data kMaxPopMiningPotMultiple = FixedPoint.fromFraction(118709955, 1000000); // MC
 
 
@@ -80,7 +99,14 @@ contract PoP{
 	uint256 public currentGameNumber;
 	FixedPoint.Data currentMiningDifficulty;
 	uint256 public initialSeed;
-
+	uint256 public bonusSeed;
+	uint256 public minimumWager;
+	uint256 public currentBetNumber;
+	uint256 public nextGameSeedPercent;
+	uint256 public nextGameRakePercent;
+	uint256 public nextGameDeveloperMiningPower;
+	uint256 public currentPotSplit;
+	uint256 public nextGamePotSplit;
 
 	// Game Private Variables
 	mapping (address => Player.Data) playerCollection;
@@ -88,13 +114,15 @@ contract PoP{
 	WrappedArray.Data gameMetaData;
 	mapping (address => uint256) playerInternalWallet;
 	FixedPoint.Data public initialBankrollGrowthAmount; // This is what the current pot will be compared to
-	FixedPoint.Data nextGameInitialMinBetSize;
+	FixedPoint.Data public nextGameInitialMinBetSize;
 	FixedPoint.Data currentGameInitialMinBetSize;
-	FixedPoint.Data nextGameMaxBlock;
-	FixedPoint.Data nextGameMinBlock;
-	uint256 bonusSeed;
-	uint256 minimumWager;
-	uint256 currentBetNumber;
+	FixedPoint.Data public nextGameMaxBlock;
+	FixedPoint.Data public nextGameMinBlock;
+
+	FixedPoint.Data public frontWindowAdjustmentRatio = FixedPoint.fromFraction(13, 10); // MC: 
+	FixedPoint.Data public backWindowAdjustmentRatio = FixedPoint.fromFraction(175, 100); // MC: 
+	FixedPoint.Data public nextFrontWindowAdjustmentRatio;
+	FixedPoint.Data public nextBackWindowAdjustmentRatio;
 
 	// Coin Private Variables
 	mapping(address => uint256) popBalances;
@@ -105,6 +133,75 @@ contract PoP{
 	uint256 unPromisedSupplyAtStartOfCurrentGame_;
 	bool gameHasStarted;
 
+
+	// Dev Permission Control over Game Variables
+	bool public canUpdateNextGameInitalMinBetSize;
+	bool public canUpdateFrontWindowAdjustmentRatio;
+	bool public canUpdateBackWindowAdjustmentRatio;
+	bool public canUpdateNextGamePotSplit;
+	bool public canUpdatePercentToTakeAsSeed;
+	bool public canUpdateNextGameMinAndMaxBlockUntilGameEnd;
+	bool public canUpdateAmountToTakeAsRake;
+	bool public canUpdateDeveloperMiningPower;
+
+	function turnOffCanUpdateNextGameInitalMinBetSize () public {
+		require (msg.sender == author);
+		require (canUpdateNextGameInitalMinBetSize == true);
+		canUpdateNextGameInitalMinBetSize = false;
+	}
+
+	function turnOffCanUpdateFrontWindowAdjustmentRatio () public {
+		require (msg.sender == author);
+		require (canUpdateFrontWindowAdjustmentRatio == true);
+		canUpdateFrontWindowAdjustmentRatio = false;
+	}
+
+	function turnOffCanUpdateBackWindowAdjustmentRatio () public {
+		require (msg.sender == author);
+		require (canUpdateBackWindowAdjustmentRatio == true);
+		canUpdateBackWindowAdjustmentRatio = false;
+	}
+
+	function turnOffCanUpdateNextGamePotSplit () public {
+		require (msg.sender == author);
+		require (canUpdateNextGamePotSplit == true);
+		canUpdateNextGamePotSplit = false;
+	}
+
+	function turnOffCanUpdatePercentToTakeAsSeed () public {
+		require (msg.sender == author);
+		require (canUpdatePercentToTakeAsSeed == true);
+		canUpdatePercentToTakeAsSeed = false;
+	}
+
+	function turnOffCanUpdateNextGameMinAndMaxBlockUntilGameEnd () public {
+		require (msg.sender == author);
+		require (canUpdateNextGameMinAndMaxBlockUntilGameEnd == true);
+		canUpdateNextGameMinAndMaxBlockUntilGameEnd = false;
+	}
+
+	function turnOffCanUpdateAmountToTakeAsRake () public {
+		require (msg.sender == author);
+		require (canUpdateAmountToTakeAsRake == true);
+		canUpdateAmountToTakeAsRake = false;
+	}
+
+	function turnOffCanUpdateDeveloperMiningPower () public {
+		require (msg.sender == author);
+		require (canUpdateDeveloperMiningPower == true);
+		canUpdateDeveloperMiningPower = false;
+	}
+	
+	
+	function balanceOfContract () public constant returns(uint256 res)   {
+		return address(this).balance;
+	}
+
+	function getCurrentGameInitialMinBetSize () public view returns(uint256 res)  {
+		return currentGameInitialMinBetSize.toUInt256Raw();
+	}
+	
+
 	function startGame () payable public {
 		require (msg.sender == author);
 		require (msg.value > 0);
@@ -114,9 +211,56 @@ contract PoP{
 		currentPot = initialSeed;
 		gameHasStarted = true;
 	}
+	
+	function updateNextGameInitalMinBetSize (uint256 nextGameMinBetSize) public {
+		require (msg.sender == author);
+		require (canUpdateNextGameInitalMinBetSize == true);
+		require (nextGameMinBetSize > 0);
+		FixedPoint.Data memory nextMinBet = FixedPoint.fromInt256(Int256(nextGameMinBetSize));
+
+		// Cant change the min bet too much in between games
+		require(nextMinBet.cmp(currentGameInitialMinBetSize.mul(FixedPoint.fromInt256(2))) != 1);
+		require(nextMinBet.cmp(currentGameInitialMinBetSize.div(FixedPoint.fromInt256(2))) != -1);
+		
+		nextGameInitialMinBetSize = FixedPoint.fromInt256(Int256(nextGameMinBetSize));
+	}
+
+	function updateNextWindowAdjustmentRatio (int256 numerator, bool updateFront) public {
+		require (msg.sender == author);
+		require (numerator >= 1000);
+		require (numerator <= 2718);
+		require ((updateFront && canUpdateFrontWindowAdjustmentRatio) || (!updateFront && canUpdateBackWindowAdjustmentRatio));
+
+		if(updateFront == true) {
+			nextFrontWindowAdjustmentRatio = FixedPoint.fromFraction(numerator, 1000);
+		} else {
+			nextBackWindowAdjustmentRatio = FixedPoint.fromFraction(numerator, 1000);
+		}
+	}
+
+	function updateNextGamePotSplit (uint256 potSplit ) public {
+		require (msg.sender == author);
+		require (canUpdateNextGamePotSplit);
+		require (potSplit <= 2000);
+		nextGamePotSplit = potSplit;
+	}
+
+	function updatePercentToTakeAsSeed (uint256 value) public {
+		require (msg.sender == author);
+		require (canUpdatePercentToTakeAsSeed);
+		require (value < 10000);
+		if (value > percentToTakeAsSeed){
+			require (value / percentToTakeAsSeed == 1);
+		} else {
+			require (percentToTakeAsSeed / value == 1);
+		}
+
+		nextGameSeedPercent = value;
+	}
 
 	function updateNextGameMinAndMaxBlockUntilGameEnd (uint256 maxBlocks, uint256 minBlocks) public {
 		require (msg.sender == author);
+		require (canUpdateNextGameMinAndMaxBlockUntilGameEnd);
 		require (maxBlocks > 0);
 		require (minBlocks > 0);
 		FixedPoint.Data memory nextMaxBlock = FixedPoint.fromInt256(Int256(maxBlocks));
@@ -128,6 +272,15 @@ contract PoP{
 
 		nextGameMaxBlock = FixedPoint.fromInt256(Int256(maxBlocks));
 		nextGameMinBlock = FixedPoint.fromInt256(Int256(minBlocks));
+	}
+
+	function getUpperBoundBlocksTillGameEnd() public view returns(uint256) {
+		return kUpperBoundBlocksTillGameEnd.toUInt256Raw();
+
+	}
+
+	function getLowerBoundBlocksTillGameEnd() public view returns(uint256) {
+		return kLowerBoundBlocksTillGameEnd.toUInt256Raw();
 	}
 
 	function addToRakePool () public payable{
@@ -181,11 +334,20 @@ contract PoP{
 		Player.Data storage currentPlayer = playerCollection[msg.sender];
 		return currentPlayer.unprocessedBettingRecordCount();
 	}
-	
-	
+
+	function getDeveloperMiningPowerForGameId (uint256 gameId) private view returns(uint256 res) {
+		if(gameId == currentGameNumber) {
+			return developerMiningPower;
+		} else {
+			WrappedArray.GameMetaDataElement memory elem = gameMetaData.itemAtIndex(gameId);
+			return elem.developerMiningPower;
+		}
+	}
+
 	function playerPopMining(uint256 recordIndex, bool onlyCurrentGame) public view returns(uint256) {
 		Player.Data storage currentPlayer = playerCollection[msg.sender];
-		return computeAmountToMineForBettingRecord(currentPlayer.getBettingRecordAtIndex(recordIndex), onlyCurrentGame).mul(kTotalPercent - kDeveloperMiningPower).div(kTotalPercent);
+		Player.BettingRecord memory playerBettingRecord = currentPlayer.getBettingRecordAtIndex(recordIndex);
+		return computeAmountToMineForBettingRecord(playerBettingRecord, onlyCurrentGame).mul(kTotalPercent - getDeveloperMiningPowerForGameId(playerBettingRecord.gameId)).div(kTotalPercent);
 	}
 
 	function getBetRecord(uint256 recordIndex) public view returns(uint256, uint256, uint256) {
@@ -199,9 +361,7 @@ contract PoP{
 
 		uint256 playerBettingRecordCount = currentPlayer.unprocessedBettingRecordCount();
 		uint256 numberOfIterations = withdrawCount < playerBettingRecordCount ? withdrawCount : playerBettingRecordCount;
-		if(numberOfIterations == 0) {return;}
-
-		numberOfIterations = numberOfIterations.add(1);
+		numberOfIterations = numberOfIterations == 0 ? 0 : numberOfIterations.add(1);
 
 		for (uint256 i = 0 ; i < numberOfIterations; i = i.add(1)) {
 			Player.BettingRecord memory unprocessedRecord = currentPlayer.getNextRecord();
@@ -210,7 +370,6 @@ contract PoP{
 
 		uint256 playerBalance = playerInternalWallet[msg.sender];
 
-		
 		playerInternalWallet[msg.sender] = 0;
 
 		if(playerBalance == 0) {
@@ -252,7 +411,8 @@ contract PoP{
 		}
 
 		uint256 payout = getPayoutForPlayer(record).toUInt256Raw();
-		payout = payout.sub(amountToSeedNextRound(payout));
+		uint256 seedPercentForGame = getSeedPercentageForGameId(record.gameId);
+		payout = payout.sub(amountToSeedNextRound(payout, seedPercentForGame));
 		return payout.sub(record.withdrawnAmount);
 
 	}
@@ -266,42 +426,73 @@ contract PoP{
 		playerInternalWallet[this] = playerInternalWallet[this].add(amountToRake);
 		return betAmount.sub(amountToRake);
 	}
-	
-	function amountToSeedNextRound (uint256 value) private pure returns(uint256 res) {
-		return value.mul(kPercentToTakeAsSeed).div(kTotalPercent);
+
+	function getSeedPercentageForGameId (uint256 gameId) private view returns(uint256 res) {
+		if(gameId == currentGameNumber) {
+			return percentToTakeAsSeed;
+		} else {
+			WrappedArray.GameMetaDataElement memory elem = gameMetaData.itemAtIndex(gameId);
+			return elem.percentToTakeAsSeed;
+		}
+	}
+
+	function amountToSeedNextRound (uint256 value, uint256 seedPercent) private pure returns(uint256 res) {
+		return value.mul(seedPercent).div(kTotalPercent);
 	}
 
 	function addToBonusSeed () public payable {
 		require (msg.value > 0);
 		bonusSeed = bonusSeed.add(msg.value);
 	}
+
+	function updateAmountToTakeAsRake(uint256 value) public {
+		require (msg.sender == author);
+		require (canUpdateAmountToTakeAsRake);
+		require (value < 10000);
+		if(percentToTakeAsRake > value) {
+			require(percentToTakeAsRake - value <= 100);
+		} else {
+			require(value - percentToTakeAsRake <= 100);
+		}
+
+		nextGameRakePercent = value;
+	}
+
+	function updateDeveloperMiningPower(uint256 value) public {
+		require (msg.sender == author);
+		require (canUpdateDeveloperMiningPower);
+		require (value <= 3000);
+		nextGameDeveloperMiningPower = value;
+	}
+
+	function amountToTakeAsRake (uint256 value) private view returns(uint256 res) {
+		return value.mul(percentToTakeAsRake).div(kTotalPercent);
+	}
 	
-
-	function amountToTakeAsRake (uint256 value) private pure returns(uint256 res) {
-		return value.mul(kPercentToTakeAsRake).div(kTotalPercent);
-	}
-
-	function amountOfPopDeveloperShouldMine (uint256 value) private pure returns(uint256 res) {
-		return value.mul(kDeveloperMiningPower).div(kTotalPercent);
-	}
-
 	function processEndGame (uint256 lastBetAmount) private {
 		// The order of these function calls are dependent on each other
 		// Beware when changing order or modifying code 
 		emit EndGame(currentGameNumber);
 		// Store game meta Data
-		gameMetaData.push(WrappedArray.GameMetaDataElement(currentPot, initialSeed, initialBankrollGrowthAmount.toUInt256Raw(), unPromisedSupplyAtStartOfCurrentGame_, currentMiningDifficulty, true));
+		gameMetaData.push(WrappedArray.GameMetaDataElement(currentPot, initialSeed, initialBankrollGrowthAmount.toUInt256Raw(), unPromisedSupplyAtStartOfCurrentGame_, developerMiningPower, percentToTakeAsSeed, percentToTakeAsRake, currentPotSplit, currentMiningDifficulty, frontWindowAdjustmentRatio, backWindowAdjustmentRatio, true)); // totalPotAmount, seedAmount, initialBet, popremaining, miningDifficulty, isActive
 
+		frontWindowAdjustmentRatio = nextFrontWindowAdjustmentRatio;
+		backWindowAdjustmentRatio = nextBackWindowAdjustmentRatio;
+
+		currentGameInitialMinBetSize = nextGameInitialMinBetSize;
 		kUpperBoundBlocksTillGameEnd = nextGameMaxBlock;
 		kLowerBoundBlocksTillGameEnd = nextGameMinBlock;
 
 		unPromisedSupplyAtStartOfCurrentGame_ = unPromisedPop();
 
-		initialSeed = amountToSeedNextRound(currentPot).add(bonusSeed);
+		initialSeed = amountToSeedNextRound(currentPot, percentToTakeAsSeed).add(bonusSeed);
 		bonusSeed = 0;
 		currentPot = initialSeed;
 		currentMiningDifficulty = calcDifficulty();
-
+		percentToTakeAsSeed = nextGameSeedPercent;
+		percentToTakeAsRake = nextGameRakePercent;
+		developerMiningPower = nextGameDeveloperMiningPower;
+		currentPotSplit = nextGamePotSplit;
 		// Set initial bet which will calculate the growth factor 
 		initialBankrollGrowthAmount = FixedPoint.fromInt256(Int256(lastBetAmount.add(initialSeed)));
 
@@ -332,28 +523,15 @@ contract PoP{
 			bettingRecord.withdrawnPopAmount = bettingRecord.withdrawnPopAmount.add(amountToMineForBettingRecord);
 			currentPlayer.insertBettingRecord(bettingRecord);
 		}
-		minePoP(bettingRecord.playerAddress, amountToMineForBettingRecord);
+		minePoP(bettingRecord.playerAddress, amountToMineForBettingRecord, bettingRecord.gameId);
 		playerInternalWallet[bettingRecord.playerAddress] = playerInternalWallet[bettingRecord.playerAddress].add(bettingRecordValue);
 	}
 
-	function potAmountForRecord (Player.BettingRecord record) private view returns(uint256 potAmount) {
-		require(record.gameId <= currentGameNumber);
-		if(record.gameId < currentGameNumber) {
-			return gameMetaData.itemAtIndex(record.gameId).totalPotAmount; 
-		} else {
-			return currentPot;
-		} 
-	}
-
-	// This means it is in the front of payout (i.e. one of the last bets)
+	
 	function recordIsTooNewToProcess (Player.BettingRecord record) private view returns(bool res) {
-		uint256 potAtBet = record.gamePotBeforeBet.add(record.wagerAmount);
 
 		if(record.gameId == currentGameNumber) {
-			uint256 halfPot = currentPot.sub(initialSeed).div(2);
-			if(potAtBet >= halfPot) {
-				return true; // You are in the front of the array and we won't process your record until you are in the back
-			}
+			return true;
 		}
 		return false;
 	}
@@ -386,33 +564,61 @@ contract PoP{
 		}
 	}
 
+	function getWindowAdjRatioForGameId (uint256 gameId, bool isFront) internal view returns(FixedPoint.Data) {
+		if(gameId == currentGameNumber) {
+			return isFront == true ? frontWindowAdjustmentRatio : backWindowAdjustmentRatio;
+		} else {
+			WrappedArray.GameMetaDataElement memory elem = gameMetaData.itemAtIndex(gameId);
+			return isFront == true ? elem.frontWindowAdjustmentRatio : elem.backWindowAdjustmentRatio;
+		}
+	}
+
+	function getSplitPotAsFixedPointForGameId (uint256 gameId, bool isFront) internal view returns (FixedPoint.Data) {
+		if(gameId == currentGameNumber) {
+			if(isFront){
+				return FixedPoint.fromFraction(Int256(currentPotSplit), 1000);
+			} else {
+				return FixedPoint.fromFraction(Int256(potSplitMax.sub(currentPotSplit)), 1000);
+			}
+		} else {
+			WrappedArray.GameMetaDataElement memory elem = gameMetaData.itemAtIndex(gameId);
+			if(isFront){
+				return FixedPoint.fromFraction(Int256(elem.potSplit), 1000);
+			} else {
+				return FixedPoint.fromFraction(Int256(potSplitMax.sub(elem.potSplit)), 1000);
+			}
+		}
+	}
+
+	function getAdjustedPotAsFixedPointForGameId (uint256 gameId, bool isFront) internal view returns (FixedPoint.Data) {
+		return getPotAsFixedPointForGameId(gameId).mul(getSplitPotAsFixedPointForGameId(gameId, isFront));
+	}
+
 	function getPayoutForPlayer(Player.BettingRecord playerRecord) internal view returns (FixedPoint.Data) {
 
-		FixedPoint.Data memory frontWindowAdjustment = getWindowAdjustmentForGameIdAndRatio(playerRecord.gameId, frontWindowAdjustmentRatio);
-		FixedPoint.Data memory backWindowAdjustment = getWindowAdjustmentForGameIdAndRatio(playerRecord.gameId, backWindowAdjustmentRatio);
+		FixedPoint.Data memory frontWindowAdjustment = getWindowAdjustmentForGameIdAndRatio(playerRecord.gameId, getWindowAdjRatioForGameId(playerRecord.gameId, true));
+		FixedPoint.Data memory backWindowAdjustment = getWindowAdjustmentForGameIdAndRatio(playerRecord.gameId, getWindowAdjRatioForGameId(playerRecord.gameId, false));
 		FixedPoint.Data memory backPayoutEndPoint = kBackPayoutEndPointInitial.div(backWindowAdjustment);
 		FixedPoint.Data memory frontPayoutSizePercent = kFrontPayoutStartPointInitial.div(frontWindowAdjustment);
         FixedPoint.Data memory frontPayoutStartPoint = FixedPoint.fromInt256(1).sub(frontPayoutSizePercent);
 
-        FixedPoint.Data memory potAmountData = FixedPoint.fromInt256(Int256(potAmountForRecord(playerRecord)));
-
 		FixedPoint.Data memory frontPercent = FixedPoint.fromInt256(0);
 		if(playerRecord.gamePotBeforeBet != 0) {
-			frontPercent = FixedPoint.fromInt256(Int256(playerRecord.gamePotBeforeBet)).div(potAmountData.sub(getSeedAmountForGameId(playerRecord.gameId)));
+			frontPercent = FixedPoint.fromInt256(Int256(playerRecord.gamePotBeforeBet)).div(getPotAsFixedPointForGameId(playerRecord.gameId).sub(getSeedAmountForGameId(playerRecord.gameId)));
 		}
 
-		FixedPoint.Data memory backPercent = FixedPoint.fromInt256(Int256(playerRecord.gamePotBeforeBet)).add(FixedPoint.fromInt256(Int256(playerRecord.wagerAmount))).div(potAmountData.sub(getSeedAmountForGameId(playerRecord.gameId)));
+		FixedPoint.Data memory backPercent = FixedPoint.fromInt256(Int256(playerRecord.gamePotBeforeBet)).add(FixedPoint.fromInt256(Int256(playerRecord.wagerAmount))).div(getPotAsFixedPointForGameId(playerRecord.gameId).sub(getSeedAmountForGameId(playerRecord.gameId)));
 
 		if(frontPercent.val < backPayoutEndPoint.val) {
 		    if(backPercent.val <= backPayoutEndPoint.val) {
 		    	// Bet started in left half of curve and ended left half of curve 
-		        return calcWinnings(frontPercent, backPercent, backPayoutEndPoint, _pi.div(backWindowAdjustment), backWindowAdjustment, FixedPoint.fromInt256(0), potAmountData);
+		        return calcWinnings(frontPercent.div(backPayoutEndPoint), backPercent.div(backPayoutEndPoint), backWindowAdjustment, FixedPoint.fromInt256(0), playerRecord.gameId, false);
 		    } else if (backPercent.val <= frontPayoutStartPoint.val) {
 		    	// Bet started in left half of curve and ended in deadzone between curves
-		        return calcWinnings(frontPercent, backPayoutEndPoint, backPayoutEndPoint, _pi.div(backWindowAdjustment), backWindowAdjustment, FixedPoint.fromInt256(0), potAmountData);
+		        return calcWinnings(frontPercent.div(backPayoutEndPoint), backPayoutEndPoint.div(backPayoutEndPoint), backWindowAdjustment, FixedPoint.fromInt256(0), playerRecord.gameId, false);
 		    } else {
 		    	// Bet started in left half of curve and ended right half of curve 
-		        return calcWinnings(frontPercent, backPayoutEndPoint, backPayoutEndPoint, _pi.div(backWindowAdjustment), backWindowAdjustment, FixedPoint.fromInt256(0), potAmountData).add(calcWinnings(FixedPoint.fromInt256(0), backPercent.sub(frontPayoutStartPoint), frontPayoutSizePercent, _pi.div(frontWindowAdjustment), frontWindowAdjustment, _pi.div(frontWindowAdjustment), potAmountData));
+		        return calcWinnings(frontPercent.div(backPayoutEndPoint), backPayoutEndPoint.div(backPayoutEndPoint), backWindowAdjustment, FixedPoint.fromInt256(0), playerRecord.gameId, false).add(calcWinnings(FixedPoint.fromInt256(0), backPercent.sub(frontPayoutStartPoint).div(frontPayoutSizePercent), frontWindowAdjustment, _pi.div(frontWindowAdjustment), playerRecord.gameId, true));
 		    }
 		} else if (frontPercent.val < frontPayoutStartPoint.val) {
 		    if (backPercent.val <= frontPayoutStartPoint.val) {
@@ -420,28 +626,29 @@ contract PoP{
 		        return FixedPoint.fromInt256(0);
 		    } else {
 		    	// Bet started in deadzone and ended in right hand of curve
-		        return calcWinnings(FixedPoint.fromInt256(0), backPercent.sub(frontPayoutStartPoint), frontPayoutSizePercent, _pi.div(frontWindowAdjustment), frontWindowAdjustment, _pi.div(frontWindowAdjustment), potAmountData);
+		        return calcWinnings(FixedPoint.fromInt256(0), backPercent.sub(frontPayoutStartPoint).div(frontPayoutSizePercent), frontWindowAdjustment, _pi.div(frontWindowAdjustment), playerRecord.gameId, true);
 		    }
 		} else {
 			// Bet started in right hand of curve and of course ended in right hand of curve
-		    return calcWinnings(frontPercent.sub(frontPayoutStartPoint), backPercent.sub(frontPayoutStartPoint), frontPayoutSizePercent, _pi.div(frontWindowAdjustment), frontWindowAdjustment, _pi.div(frontWindowAdjustment), potAmountData);
+		    return calcWinnings(frontPercent.sub(frontPayoutStartPoint).div(frontPayoutSizePercent), backPercent.sub(frontPayoutStartPoint).div(frontPayoutSizePercent), frontWindowAdjustment, _pi.div(frontWindowAdjustment), playerRecord.gameId, true);
 		}
 	}
 
 	function getWindowAdjustmentForGameIdAndRatio(uint256 gameId, FixedPoint.Data adjustmentRatio) internal view returns (FixedPoint.Data) {
-		FixedPoint.Data memory growth = getBankRollGrowthForGameId(gameId);
+		FixedPoint.Data memory growth = getBankRollGrowthForGameId(gameId);//FixedPoint.Data({val: brGrowth});
 		FixedPoint.Data memory logGrowthRate = growth.ln();
 		return growth.div(adjustmentRatio.pow(logGrowthRate));
 	}
 
-	function integrate(FixedPoint.Data x, FixedPoint.Data a) internal pure returns (FixedPoint.Data) {
-		return a.mul(x).sin().div(a).add(x);
+	function integrate(FixedPoint.Data x, FixedPoint.Data a, FixedPoint.Data y) internal pure returns (FixedPoint.Data) {
+		return a.mul(x).sin().div(a).add(x).sub(a.mul(y).sin().div(a).add(y));
 	}
 
-	function calcWinnings(FixedPoint.Data playerFrontPercent, FixedPoint.Data playerBackPercent, FixedPoint.Data sectionPercentSize, FixedPoint.Data sectionRadiansSize, FixedPoint.Data windowAdjustment, FixedPoint.Data sectionOffset, FixedPoint.Data potSize) internal view returns (FixedPoint.Data) {
-		FixedPoint.Data memory startIntegrationPoint = sectionOffset.add(playerFrontPercent.div(sectionPercentSize).mul(sectionRadiansSize));
-		FixedPoint.Data memory endIntegrationPoint = sectionOffset.add(playerBackPercent.div(sectionPercentSize).mul(sectionRadiansSize));
-		return integrate(endIntegrationPoint, windowAdjustment).sub(integrate(startIntegrationPoint, windowAdjustment)).mul(potSize).mul(windowAdjustment).div(_2pi);
+	function calcWinnings(FixedPoint.Data playerFrontPercent, FixedPoint.Data playerBackPercent, FixedPoint.Data windowAdjustment, FixedPoint.Data sectionOffset, uint256 gameId, bool isFront) internal view returns (FixedPoint.Data) {
+		FixedPoint.Data memory potSize = getAdjustedPotAsFixedPointForGameId(gameId, isFront);
+		FixedPoint.Data memory startIntegrationPoint = sectionOffset.add(playerFrontPercent.mul(_pi.div(windowAdjustment)));
+		FixedPoint.Data memory endIntegrationPoint = sectionOffset.add(playerBackPercent.mul(_pi.div(windowAdjustment)));
+		return integrate(endIntegrationPoint, windowAdjustment, startIntegrationPoint).mul(potSize).mul(windowAdjustment).div(_2pi);
 	}
 
     function computeAmountToMineForBettingRecord (Player.BettingRecord record, bool onlyCurrentGame) internal view returns(uint256 value) {
@@ -459,9 +666,9 @@ contract PoP{
     		return FixedPoint.fromInt256(0);
     	}
 
-    	return totalTokenPayout(getPotAsFixedPointForGameId(record.gameId).sub(getInitialSeedAsFixedPointForGameId(record.gameId)), getDifficultyAsFixedPointForGameId(record.gameId), getPopRemainingAsFixedPointForGameId(record.gameId), record.wagerAmount, record.gamePotBeforeBet); 
+    	return totalTokenPayout(getPotAsFixedPointForGameId(record.gameId).sub(getInitialSeedAsFixedPointForGameId(record.gameId)), getDifficultyAsFixedPointForGameId(record.gameId), getPopRemainingAsFixedPointForGameId(record.gameId), record.wagerAmount, record.gamePotBeforeBet); //uint256 gameId, uint256 wagerAmount, uint256 previousPotSize
     }
-    
+
     function unMinedPop () private view returns(uint256 res) {
     	return totalSupply_.sub(supplyMined_);
     }
@@ -484,7 +691,7 @@ contract PoP{
     	return promisedPop().sub(supplyBurned_);
     }
     
-    function minePoP(address target, uint256 amountToMine) private {
+    function minePoP(address target, uint256 amountToMine, uint256 gameId) private {
     	if(supplyMined_ >= totalSupply_) { 
     		return;
     	}
@@ -497,8 +704,7 @@ contract PoP{
     	if(remainingPop < amountToMine) {
     		amountToMine = remainingPop;
     	}
-
-    	uint256 developerMined = amountOfPopDeveloperShouldMine(amountToMine);
+    	uint256 developerMined = amountToMine.mul(getDeveloperMiningPowerForGameId(gameId)).div(kTotalPercent);
     	uint256 playerMined = amountToMine.sub(developerMined);
 
     	supplyMined_ = supplyMined_.add(amountToMine);
@@ -517,9 +723,8 @@ contract PoP{
     	require(popToRedeem != 0);
 
     	uint256 potentiallyAllocatedPop = potentiallyCirculatingPop();
-    	require(popToRedeem <= potentiallyAllocatedPop);
 
-    	FixedPoint.Data memory redeemRatio = FixedPoint.fromFraction(Int256(popToRedeem), Int256(potentiallyAllocatedPop));
+    	FixedPoint.Data memory redeemRatio = popToRedeem < potentiallyAllocatedPop ? FixedPoint.fromFraction(Int256(popToRedeem), Int256(potentiallyAllocatedPop)) :  FixedPoint.fromInt256(1);
     	FixedPoint.Data memory ethPayoutAmount = redeemRatio.mul(FixedPoint.fromInt256(Int256(totalAmountRaked())));
     	uint256 payout = ethPayoutAmount.toUInt256Raw();
     	require(payout<=totalAmountRaked());
@@ -708,6 +913,10 @@ contract PoP{
 	}
 }
 
+
+
+
+
 library SafeMath {
 
   /**
@@ -799,7 +1008,6 @@ library SafeInt {
   }
 }
 
-
 library WrappedArray {
 	using SafeMath for uint256;
 	using FixedPoint for FixedPoint.Data;
@@ -809,7 +1017,13 @@ library WrappedArray {
 		uint256 seedAmount;
 		uint256 initialBet;
 		uint256 coinsRemaining;
+		uint256 developerMiningPower;
+		uint256 percentToTakeAsSeed;
+		uint256 percentToTakeAsRake;
+		uint256 potSplit;
 		FixedPoint.Data miningDifficulty;
+		FixedPoint.Data frontWindowAdjustmentRatio;
+		FixedPoint.Data backWindowAdjustmentRatio;
 		bool isActive;
 	}
 
@@ -1003,8 +1217,6 @@ library UIntSet {
 	
 }
 
-
-
 library Player {
 	using UIntSet for UIntSet.Data;
 	using CompactArray for CompactArray.Data;
@@ -1034,7 +1246,7 @@ library Player {
 	/* Function that returns a betting record for a betting record id */
 	function getBettingRecordForId (Data storage self, uint256 bettingRecordId) internal view returns(BettingRecord record) {
 		if(containsBettingRecordFromId(self, bettingRecordId) == false) {
-			return ;
+			return ;//BettingRecord(0x0,0,0,0,0,0,false);
 		}
 		return self.bettingRecordMapping[bettingRecordId];
 	}
@@ -1042,7 +1254,7 @@ library Player {
 
 	/* Insert Betting Record into storage */
 	function insertBettingRecord (Data storage self, BettingRecord record) internal {
-		// Inserting a record with the same id will override old record
+		// If inserting a record with the same id will override old record
 		self.bettingRecordMapping[record.bettingRecordId] = record;
 		self.bettingRecordIds.insert(record.bettingRecordId);
 	}
@@ -1050,7 +1262,7 @@ library Player {
 	/* Retrieve the next betting record */
 	function getNextRecord (Data storage self) internal returns(BettingRecord record) {
 		if(self.bettingRecordIds.size() == 0) {
-			return ;
+			return ;//BettingRecord(0x0,0,0,0,0,0,false);
 		}
 		CompactArray.Element memory bettingRecordIdEntry = self.bettingRecordIds.getNext();
 		return self.bettingRecordMapping[bettingRecordIdEntry.elem];
@@ -1100,6 +1312,7 @@ library BettingRecordArray {
 		return self.array[self.len];
 	}	
 }
+
 
 library FixedPoint {
 	using SafeMath for uint256;
