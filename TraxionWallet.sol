@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x8095ae09bb41c48c49304c42024c16ba322d395b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x03c2f70569ad424d8db18ad5092a7e4b563cacc8
 */
 pragma solidity ^0.4.21;
 
@@ -94,33 +94,39 @@ library SafeMath {
 
 
 contract TraxionWallet is Ownable {
-    using SafeMath for uint256;
-
+    using SafeMath for uint;
 
     constructor(){
         transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
     }
 
-    // Address where funds are collectedt
+    // Address where funds are collected
     address public wallet = 0xbee44A7b93509270dbe90000f7ff31268D8F075e;
-  
-    // How many token units a buyer gets per wei
-    uint256 public rate = 2857;
 
-    // Minimum investment in wei (0.20 ETH)
-    uint256 public minInvestment = 2E17;
+    // how much one token is worth
+    uint public weiPerToken = 0.0007 ether;
 
-    // Maximum investment in wei (2,000 ETH)
-    uint256 public investmentUpperBounds = 2E21;        
+    // should be the same as in the TraxionToken contract
+    uint public decimals = 18;
 
-    // Hard cap in wei (100,000 ETH)
-    uint256 public hardcap = 45E21;
+    // Minimum investment in wei
+    uint public minInvestment = 0.4 ether;
+
+    // Maximum investment in wei
+    uint public investmentUpperBounds = 2000 ether;
+
+    // Hard cap in wei
+    uint public hardcap = 45000 ether;
 
     // Amount of wei raised
-    uint256 public weiRaised;
+    uint public weiRaised = 0;
 
-    event TokenPurchase(address indexed beneficiary, uint256 value, uint256 amount);
-  
+    event TokenPurchase(address indexed beneficiary, uint value, uint amount);
+
+    /** Whitelist an address and set max investment **/
+    mapping (address => bool) public whitelistedAddr;
+    mapping (address => uint) public totalInvestment;
+
     // -----------------------------------------
     // Crowdsale external interface
     // -----------------------------------------
@@ -132,23 +138,19 @@ contract TraxionWallet is Ownable {
         buyTokens(msg.sender);
     }
 
-    /** Whitelist an address and set max investment **/
-    mapping (address => bool) public whitelistedAddr;
-    mapping (address => uint256) public totalInvestment;
-  
     /** @dev whitelist an Address */
     function whitelistAddress(address[] buyer) external onlyOwner {
         for (uint i = 0; i < buyer.length; i++) {
             whitelistedAddr[buyer[i]] = true;
         }
     }
-  
+
     /** @dev black list an address **/
     function blacklistAddr(address[] buyer) external onlyOwner {
         for (uint i = 0; i < buyer.length; i++) {
             whitelistedAddr[buyer[i]] = false;
         }
-    }    
+    }
 
     /**
      * @dev low level token purchase ***DO NOT OVERRIDE***
@@ -156,11 +158,13 @@ contract TraxionWallet is Ownable {
      */
     function buyTokens(address _beneficiary) public payable {
 
-        uint256 weiAmount = msg.value;
+        uint weiAmount = msg.value;
         _preValidatePurchase(_beneficiary, weiAmount);
 
         // calculate token amount to be created
-        uint256 tokens = _getTokenAmount(weiAmount);
+        uint tokens = _getTokenAmount(weiAmount);
+
+        assert(tokens != 0);
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
@@ -173,7 +177,7 @@ contract TraxionWallet is Ownable {
     }
 
     // -----------------------------------------
-    // Internal interface (extensible)
+    // Internal interface
     // -----------------------------------------
 
     /**
@@ -181,14 +185,14 @@ contract TraxionWallet is Ownable {
      * @param _beneficiary Address performing the token purchase
      * @param _weiAmount Value in wei involved in the purchase
      */
-    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal view {
-        require(_beneficiary != address(0)); 
+    function _preValidatePurchase(address _beneficiary, uint _weiAmount) internal view {
+        require(_beneficiary != address(0));
         require(_weiAmount != 0);
-    
-        require(_weiAmount > minInvestment); // Revert if payment is less than 0.40 ETH
-        require(whitelistedAddr[_beneficiary]); // Revert if investor is not whitelisted
-        require(totalInvestment[_beneficiary].add(_weiAmount) <= investmentUpperBounds); // Revert if the investor already spent over 2k ETH investment or payment is greater than 2k ETH
-        require(weiRaised.add(_weiAmount) <= hardcap); // Revert if ICO campaign reached Hard Cap
+
+        require(_weiAmount >= minInvestment);
+        require(whitelistedAddr[_beneficiary]);
+        require(totalInvestment[_beneficiary].add(_weiAmount) <= investmentUpperBounds);
+        require(weiRaised.add(_weiAmount) <= hardcap);
     }
 
 
@@ -197,7 +201,7 @@ contract TraxionWallet is Ownable {
      * @param _beneficiary Address receiving the tokens
      * @param _weiAmount Value in wei involved in the purchase
      */
-    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+    function _updatePurchasingState(address _beneficiary, uint _weiAmount) internal {
         totalInvestment[_beneficiary] = totalInvestment[_beneficiary].add(_weiAmount);
     }
 
@@ -206,8 +210,8 @@ contract TraxionWallet is Ownable {
      * @param _weiAmount Value in wei to be converted into tokens
      * @return Number of tokens that can be purchased with the specified _weiAmount
      */
-    function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-        return _weiAmount.mul(rate);
+    function _getTokenAmount(uint _weiAmount) internal view returns (uint) {
+        return _weiAmount.mul(10 ** decimals).div(weiPerToken);
     }
 
     /**
