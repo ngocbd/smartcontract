@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZIGICOIN at 0xeae78d7e36665ddb1616c27dcab11f3413933f09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZIGICOIN at 0x46dfa187005ffca98105b8fe93532ac0d03a6692
 */
 pragma solidity ^0.4.4;
 
@@ -109,10 +109,10 @@ contract ZIGICOIN is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function EarthMedz() {
-        balances[msg.sender] = 1000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000000000000;                        // Update total supply (1000 for example) (ZIGICOIN )
+        balances[msg.sender] =  10000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 10000000000000000000;                        // Update total supply (1000 for example) (ZIGICOIN )
         name = "ZIGICOIN";                                   // Set the name for display purposes (ZIGICOIN  )
-        decimals = 8;                                               // Amount of decimals for display purposes (ZIGICOIN )
+        decimals = 9;                                               // Amount of decimals for display purposes (ZIGICOIN )
         symbol = "ZIGI";                                             // Set the symbol for display purposes (ZIGICOIN  )
                                               // Set the price of your token for the ICO (ZIGICOIN  )
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
