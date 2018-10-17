@@ -1,13 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medianizer at 0xa57f4b94e99db8ffca4206cc819bcdab7381935e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Medianizer at 0xf5f94b7f9de14d43112e713835bcef2d55b76c1c
 */
-// Copyright 2018 Dapphub
-// medianizer.sol
-
 // hevm: flattened sources of src/medianizer.sol
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
-////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-auth/src/auth.sol
+////// lib/ds-value/lib/ds-thing/lib/ds-auth/src/auth.sol
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +18,7 @@ pragma solidity ^0.4.19;
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 contract DSAuthority {
     function canCall(
@@ -38,9 +35,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -48,7 +45,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -56,7 +53,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -77,7 +74,7 @@ contract DSAuth is DSAuthEvents {
     }
 }
 
-////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-math/src/math.sol
+////// lib/ds-value/lib/ds-thing/lib/ds-math/src/math.sol
 /// math.sol -- mixin for inline numerical wizardry
 
 // This program is free software: you can redistribute it and/or modify
@@ -163,7 +160,7 @@ contract DSMath {
     }
 }
 
-////// lib/medianizer/lib/ds-value/lib/ds-thing/lib/ds-note/src/note.sol
+////// lib/ds-value/lib/ds-thing/lib/ds-note/src/note.sol
 /// note.sol -- the `note' modifier, for logging calls as events
 
 // This program is free software: you can redistribute it and/or modify
@@ -179,7 +176,7 @@ contract DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 contract DSNote {
     event LogNote(
@@ -200,13 +197,13 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
 }
 
-////// lib/medianizer/lib/ds-value/lib/ds-thing/src/thing.sol
+////// lib/ds-value/lib/ds-thing/src/thing.sol
 // thing.sol - `auth` with handy mixins. your things should be DSThings
 
 // Copyright (C) 2017  DappHub, LLC
@@ -224,16 +221,21 @@ contract DSNote {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import 'ds-auth/auth.sol'; */
 /* import 'ds-note/note.sol'; */
 /* import 'ds-math/math.sol'; */
 
 contract DSThing is DSAuth, DSNote, DSMath {
+
+    function S(string s) internal pure returns (bytes4) {
+        return bytes4(keccak256(abi.encodePacked(s)));
+    }
+
 }
 
-////// lib/medianizer/lib/ds-value/src/value.sol
+////// lib/ds-value/src/value.sol
 /// value.sol - a value is a simple thing, it can be get and set
 
 // Copyright (C) 2017  DappHub, LLC
@@ -251,7 +253,7 @@ contract DSThing is DSAuth, DSNote, DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import 'ds-thing/thing.sol'; */
 
@@ -262,7 +264,8 @@ contract DSValue is DSThing {
         return (val,has);
     }
     function read() public view returns (bytes32) {
-        var (wut, haz) = peek();
+        bytes32 wut; bool haz;
+        (wut, haz) = peek();
         assert(haz);
         return wut;
     }
@@ -275,25 +278,42 @@ contract DSValue is DSThing {
     }
 }
 
-////// lib/medianizer/src/medianizer.sol
-/* pragma solidity ^0.4.18; */
+////// src/medianizer.sol
+/// medianizer.sol - read ds-values and output median
 
-/* import 'ds-value/value.sol'; */
+// Copyright (C) 2017, 2018  DappHub, LLC
 
-contract MedianizerEvents {
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+/* pragma solidity ^0.4.23; */
+
+/* import "ds-value/value.sol"; */
+
+contract Medianizer is DSThing {
     event LogValue(bytes32 val);
-}
-
-contract Medianizer is DSValue, MedianizerEvents {
     mapping (bytes12 => address) public values;
     mapping (address => bytes12) public indexes;
     bytes12 public next = 0x1;
 
     uint96 public min = 0x1;
 
+    bytes32 val;
+    bool public has;
+
     function set(address wat) public auth {
         bytes12 nextId = bytes12(uint96(next) + 1);
-        assert(nextId != 0x0);
+        require(nextId != 0x0);
         this.set(next, wat);
         next = nextId;
     }
@@ -329,21 +349,33 @@ contract Medianizer is DSValue, MedianizerEvents {
         this.set(indexes[wat], 0);
     }
 
-    function poke() public {
-        poke(0);
+    function void() external auth {
+        has = false;
+        // TODO: don't allow poke
     }
 
-    function poke(bytes32) public note {
+    function poke() external {
         (val, has) = compute();
-        LogValue(val);
+        emit LogValue(val);
     }
 
-    function compute() public constant returns (bytes32, bool) {
+    function peek() external view returns (bytes32, bool) {
+        return (val, has);
+    }
+
+    function read() external view returns (bytes32) {
+        require(has);
+        return val;
+    }
+
+    function compute() public view returns (bytes32, bool) {
         bytes32[] memory wuts = new bytes32[](uint96(next) - 1);
         uint96 ctr = 0;
         for (uint96 i = 1; i < uint96(next); i++) {
             if (values[bytes12(i)] != 0) {
-                var (wut, wuz) = DSValue(values[bytes12(i)]).peek();
+                bytes32 wut;
+                bool wuz;
+                (wut, wuz) = DSValue(values[bytes12(i)]).peek();
                 if (wuz) {
                     if (ctr == 0 || wut >= wuts[ctr - 1]) {
                         wuts[ctr] = wut;
