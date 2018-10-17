@@ -1,26 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x0e54b1b8ff833b5f2b0d17453d97d340cb7576e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x93876e49507c4b3d8d5e33f7abbc854c98aacf22
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.19;
 
-contract IERC223 {
-  uint public totalSupply;
-  function balanceOf(address who) public view returns (uint);
-  
-  function name() public view returns (string _name);
-  function symbol() public view returns (string _symbol);
-  function decimals() public view returns (uint8 _decimals);
-  function totalSupply() public view returns (uint256 _supply);
-
-  function transfer(address to, uint value) public returns (bool ok);
-  function transfer(address to, uint value, bytes data) public returns (bool ok);
-  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
-  
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-}
-
-
- /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 contract SafeMath {
     uint256 constant public MAX_UINT256 =
     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
@@ -42,33 +28,99 @@ contract SafeMath {
     }
 }
 
- /**
- * @title Contract that will work with ERC223 tokens.
- */
- 
-contract ContractReceiver { 
 /**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization
+ *      control functions, this simplifies the implementation of "user permissions".
  */
-    function tokenFallback(address _from, uint _value, bytes _data);
+contract Ownable {
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the
+     *      sender account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
-contract ERC223Token is IERC223, SafeMath {
+contract ERC223 {
+  uint public totalSupply;
+  function balanceOf(address who) public view returns (uint);
+  
+  function name() public view returns (string _name);
+  function symbol() public view returns (string _symbol);
+  function decimals() public view returns (uint8 _decimals);
+  function totalSupply() public view returns (uint256 _supply);
+
+  function transfer(address to, uint value) public returns (bool ok);
+  function transfer(address to, uint value, bytes data) public returns (bool ok);
+  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
+  
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+}
+
+/*
+ * Contract that is working with ERC223 tokens
+ */
+contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+    
+    
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+      
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
+    }
+}
+
+contract ERC223Token is ERC223, SafeMath {
 
   mapping(address => uint) balances;
   
-  string public name = "Tradetex";
-  string public symbol = "TDX";
+  string public name = "NIJIGEN";
+  string public symbol = "NIJ";
   uint8 public decimals = 8;
-  uint256 public totalSupply = 35000000 * 10**8;
+  uint256 public totalSupply = 24e9 * 1e8;
   
-  function ERC223Token() {
-      balances[msg.sender] = totalSupply;
-  }
   
   // Function to access name of token .
   function name() public view returns (string _name) {
