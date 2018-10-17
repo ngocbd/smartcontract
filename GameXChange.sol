@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameXChange at 0x4b80964e1e376df598694c62fa15cff193de2f14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameXChange at 0x495654582f417261a50fbb95d7369d12027c9fce
 */
 pragma solidity ^0.4.21;
 
@@ -21,9 +21,9 @@ contract GameXChange {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function GameXChange() {
 
-         initialSupply = 100000000000;
+         initialSupply = 1000000000;
          name ="Game X Change";
-        decimals = 2;
+        decimals = 4;
          symbol = "GAMEX";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
