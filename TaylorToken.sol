@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaylorToken at 0xc4d557d795ce16c49624e48045b380f169e4113f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaylorToken at 0x320e2cbd104d276b37f012465cc6bc7408be8bb5
 */
 /**
     Copyright (c) 2018 Taylor OÜ
@@ -134,7 +134,7 @@ contract TaylorToken is Ownable{
     mapping (address => bool) public whitelistedBurn;
 
     string public name = "Taylor";
-    string public symbol = "TAY";
+    string public symbol = "TAYLR";
     uint8 public decimals = 18;
     uint256 constant internal DECIMAL_CASES = 10**18;
     uint256 public totalSupply = 10**7 * DECIMAL_CASES;
