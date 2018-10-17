@@ -1,8 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x6563189c039f793372642f2a795e851da1091da5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xd5d34576043fc8ed355efded7460845fd7d71017
 */
-pragma solidity 0.4.4;
+pragma solidity 0.4.24;
 
+// ----------------------------------------------------------------------------
+// ConsenSys/Gnosis MultiSig for 'UCOT' from:
+// https://github.com/ConsenSys/MultiSigWallet/commit/359c4efb482d97f6a0c0dbea8cd4b95add13bcc4
+//
+// Deployed by Radek Ostrowski / http://startonchain.com
+// Third-Party Software Disclaimer: Contract is deployed “as is”, without warranty of any kind, 
+// either expressed or implied and such software is to be used at your own risk.
+// ----------------------------------------------------------------------------
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -365,97 +373,5 @@ contract MultiSigWallet {
         _transactionIds = new uint[](to - from);
         for (i=from; i<to; i++)
             _transactionIds[i - from] = transactionIdsTemp[i];
-    }
-}
-
-/// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletWithDailyLimit is MultiSigWallet {
-
-    event DailyLimitChange(uint dailyLimit);
-
-    uint public dailyLimit;
-    uint public lastDay;
-    uint public spentToday;
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners, required number of confirmations and daily withdraw limit.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        MultiSigWallet(_owners, _required)
-    {
-        dailyLimit = _dailyLimit;
-    }
-
-    /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
-    /// @param _dailyLimit Amount in wei.
-    function changeDailyLimit(uint _dailyLimit)
-        public
-        onlyWallet
-    {
-        dailyLimit = _dailyLimit;
-        DailyLimitChange(_dailyLimit);
-    }
-
-    /// @dev Allows anyone to execute a confirmed transaction or ether withdraws until daily limit is reached.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        notExecuted(transactionId)
-    {
-        Transaction tx = transactions[transactionId];
-        bool confirmed = isConfirmed(transactionId);
-        if (confirmed || tx.data.length == 0 && isUnderLimit(tx.value)) {
-            tx.executed = true;
-            if (!confirmed)
-                spentToday += tx.value;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
-            else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
-                if (!confirmed)
-                    spentToday -= tx.value;
-            }
-        }
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Returns if amount is within daily limit and resets spentToday after one day.
-    /// @param amount Amount to withdraw.
-    /// @return Returns if amount is under daily limit.
-    function isUnderLimit(uint amount)
-        internal
-        returns (bool)
-    {
-        if (now > lastDay + 24 hours) {
-            lastDay = now;
-            spentToday = 0;
-        }
-        if (spentToday + amount > dailyLimit || spentToday + amount < spentToday)
-            return false;
-        return true;
-    }
-
-    /*
-     * Web3 call functions
-     */
-    /// @dev Returns maximum withdraw amount.
-    /// @return Returns amount.
-    function calcMaxWithdraw()
-        public
-        constant
-        returns (uint)
-    {
-        if (now > lastDay + 24 hours)
-            return dailyLimit;
-        return dailyLimit - spentToday;
     }
 }
