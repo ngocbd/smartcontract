@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x56BBe9e9d360E94E6Bd14C55E5713dA7576049d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xa62142888aba8370742be823c1782d17a0389da1
 */
 pragma solidity ^0.4.24;
 /**
- * @title -FoMo-3D v0.7.0
+ * @title -FoMo-3D v0.7.1
  * ????????????   ?? ???????  ????????????????????????
  *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
  *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
@@ -44,7 +44,7 @@ pragma solidity ^0.4.24;
  *   ? Ambius, Aritz Cracker, Cryptoknight, Crypto McPump,     ?  ? ???????????????   ? ? ?
  *   ? Capex, JogFera, The Shocker, Daok, Randazzz, PumpRabbi, ?  ? ? ?? ????? ????   ? ???
  *   ? Kadaz, Incognito Jo, Lil Stronghands, Ninja Turtle,     ?????????????????????????????
- *   ? Psaints, Satoshi, Vitalik, Nano 2nd, Bogdanoffs         Isacc Newton, Nikola Tesla, ? 
+ *   ? Psaints, Satoshi, Vitalik, Nano 2nd, Bogdanoffs         Isaac Newton, Nikola Tesla, ? 
  *   ? Le Comte De Saint Germain, Albert Einstein, Socrates, & all the volunteer moderator ?
  *   ? & support staff, content, creators, autonomous agents, and indie devs for P3D.      ?
  *   ?              Without your help, we wouldn't have the time to code this.             ?
@@ -173,6 +173,11 @@ contract F3Devents {
     );
 }
 
+//==============================================================================
+//   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
+//  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
+//====================================|=========================================
+
 contract modularLong is F3Devents {}
 
 contract FoMo3Dlong is modularLong {
@@ -181,10 +186,10 @@ contract FoMo3Dlong is modularLong {
     using F3DKeysCalcLong for uint256;
 	
 	otherFoMo3D private otherF3D_;
-    DiviesInterface constant private Divies = DiviesInterface(0x1a294b212BB37f790AeF81b91321A1111A177f45);
+    DiviesInterface constant private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
     JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
 	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
-    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x27AFcbe78bA41543c8e6eDe1ec0560cD128ADCCb);
+    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
@@ -574,7 +579,7 @@ contract FoMo3Dlong is modularLong {
         uint256 _eth;
         
         // check to see if round has ended and no one has run round end yet
-        if (_now > round_[_rID].end && round_[_rID].ended == false)
+        if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // set up our tx event data
             F3Ddatasets.EventReturns memory _eventData_;
@@ -644,7 +649,7 @@ contract FoMo3Dlong is modularLong {
      * -functionhash- 0x3ddd4698 (using address for affiliate)
      * -functionhash- 0x685ffd83 (using name for affiliate)
      * @param _nameString players desired name
-     * @param _affCode affiliate ID, address, or name of who refered you
+     * @param _affCode affiliate ID, address, or name of who referred you
      * @param _all set to true if you want this to push your info to all games 
      * (this might cost a lot of gas)
      */
@@ -740,10 +745,10 @@ contract FoMo3Dlong is modularLong {
         uint256 _now = now;
         
         if (_now < round_[_rID].end)
-            if (_now < round_[_rID].strt + rndGap_)
-                return( (round_[_rID].strt + rndGap_).sub(_now));
-            else 
+            if (_now > round_[_rID].strt + rndGap_)
                 return( (round_[_rID].end).sub(_now) );
+            else
+                return( (round_[_rID].strt + rndGap_).sub(_now) );
         else
             return(0);
     }
@@ -1144,7 +1149,7 @@ contract FoMo3Dlong is modularLong {
         uint256 _now = now;
         
         // are we in a round?
-        if (_now > round_[_rID].strt + rndGap_ && _now <= round_[_rID].end)
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].eth).keysRec(_eth) );
         else // rounds over.  need keys for new round
             return ( (_eth).keys() );
@@ -1321,7 +1326,17 @@ contract FoMo3Dlong is modularLong {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
         
         // community rewards
-        Jekyll_Island_Inc.deposit.value(_com)();
+        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _p3d.add(_com);
+            _com = 0;
+        }
         
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1424,7 +1439,18 @@ contract FoMo3Dlong is modularLong {
     {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
-        Jekyll_Island_Inc.deposit.value(_com)();
+        uint256 _p3d;
+        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _com;
+            _com = 0;
+        }
         
         // pay 1% out to FoMo3D short
         uint256 _long = _eth / 100;
@@ -1432,7 +1458,6 @@ contract FoMo3Dlong is modularLong {
         
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
-        uint256 _p3d;
         
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
@@ -1458,21 +1483,14 @@ contract FoMo3Dlong is modularLong {
     }
     
     function potSwap()
-        isActivated()
         external
         payable
     {
         // setup local rID
-        uint256 _rID = rID_;
+        uint256 _rID = rID_ + 1;
         
-        if (now > round_[_rID].end && round_[_rID].ended == true)
-        {
-            round_[_rID + 1].pot = round_[_rID + 1].pot.add(msg.value);
-            emit F3Devents.onPotSwapDeposit(_rID + 1, msg.value);
-        } else {
-            round_[_rID].pot = round_[_rID].pot.add(msg.value);
-            emit F3Devents.onPotSwapDeposit(_rID, msg.value);
-        }
+        round_[_rID].pot = round_[_rID].pot.add(msg.value);
+        emit F3Devents.onPotSwapDeposit(_rID, msg.value);
     }
     
     /**
@@ -1729,7 +1747,6 @@ library F3Ddatasets {
 //=======/======================================================================
 library F3DKeysCalcLong {
     using SafeMath for *;
-    
     /**
      * @dev calculates number of keys received given X eth 
      * @param _curEth current amount of eth in contract 
@@ -1849,7 +1866,6 @@ interface PlayerBookInterface {
 */
 
 library NameFilter {
-    
     /**
      * @dev filters name strings
      * -converts uppercase to lower case.  
