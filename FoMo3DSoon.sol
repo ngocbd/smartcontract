@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DSoon at 0x4e8ecF79AdE5e2C49B9e30D795517A81e0Bf00B8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DSoon at 0x7D1f42AdED5895aF8e1618eB614879c49E5Cfba8
 */
 pragma solidity ^0.4.24;
 /**
@@ -179,9 +179,9 @@ contract FoMo3DSoon is F3Devents{
     using NameFilter for string;
     using F3DKeysCalcFast for uint256;
     
-	DiviesInterface constant private Divies = DiviesInterface(0xC0c001140319C5f114F8467295b1F22F86929Ad0);
-    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
+	DiviesInterface constant private Divies = DiviesInterface(0xa5697bc0725c664a89a8178e81fbc187aca33d8b);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x42503c3dcca420adf53dff5bb1fb176b8773aaa0);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x962e2c933fd7bb3FCD9aFf882e1af4414ada6335);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
