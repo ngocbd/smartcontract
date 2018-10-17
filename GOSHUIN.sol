@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOSHUIN at 0xcec8a8521d49080e5b7a04ae5ff022c70b1efd0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOSHUIN at 0x2f61082fe531d41975b435abc65826d869ef9424
 */
 pragma solidity ^0.4.24;
 
@@ -145,17 +145,17 @@ contract ERC223 {
 
 /**
  * @title GOSHUIN
- * @author BLACK DIA COIN TEAM
+ * @author GOSHUIN TEAM
  * @dev GOSHUIN is an ERC223 Token with ERC20 functions and events
  *      Fully backward compatible with ERC20
  */
 contract GOSHUIN is ERC223, Ownable {
     using SafeMath for uint256;
 
-    string public name = "GOSHUIN Token";
+    string public name = "GOSHUIN";
     string public symbol = "GOSHUIN";
     uint8 public decimals = 8;
-    uint256 public totalSupply = 1e10 * 1e8;
+    uint256 public totalSupply = 1e10 * 2e8;
     uint256 public distributeAmount = 0;
     bool public mintingFinished = false;
     
