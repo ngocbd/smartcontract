@@ -1,23 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRaised at 0xdcecf412c14b50dc033a37c14728bb7bbb152159
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthRaised at 0x9f73d808807c71af185fea0c1ce205002c74123c
 */
 // Ethertote - Eth Raised from Token Sale
 //
 // The following contract automatically distributes the Eth raised from the
 // token sale.
 
-// 1. 40% of the Eth raised will go into a "development" ethereum wallet, immediately
+// 1. 50% of the Eth raised will go into a "development" ethereum wallet, immediately
 // accessible to the team, to be used for marketing, promotion, development, 
 // running costs, exchange listing fees, bug bounties and other aspects of 
 // running the company.
 //
-// 2. 30% of the Eth will go into a "Tote Liquidator" ethereum wallet, which will be
+// 2. 25% of the Eth will go into a "Tote Liquidator" ethereum wallet, which will be
 // used by the team purely to to liquidate the ethertote over the the opening
 // 12 weeks. It will be very easy to see the transactions on Etherscan as 
 // they will match the CryptoPot smart contracts that make up the Ethertote
 // ecosystem.
 //
-// 3. 30% of the Eth will go into a time-locked smart contract called "Team Eth"
+// 3. 25% of the Eth will go into a time-locked smart contract called "Team Eth"
 // which will be available to claim by the Ethertote team over a 12-month period
 //
 //
@@ -89,41 +89,57 @@ contract EthRaised {
     // time contract was deployed
     uint public createdAt;
     
-    // address of the time-locked contract
-    address public teamEthContract = 0x9c229Dd7546eb8f5A12896e03e977b644a96B961;
+    // address of the Ethertote Development wallet
+    address public ethertoteDevelopmentWallet = 
+    0x1a3c1ca46c58e9b140485A9B0B740d42aB3B4a26;
     
     // address of the ToteLiquidator wallet
-    address public toteLiquidatorWallet = 0x8AF2dA3182a3dae379d51367a34480Bd5d04F4e2;
+    address public toteLiquidatorWallet = 
+    0x8AF2dA3182a3dae379d51367a34480Bd5d04F4e2;
     
-    // address of the Ethertote Development wallet
-    address public ethertoteDevelopmentWallet = 0x1a3c1ca46c58e9b140485A9B0B740d42aB3B4a26;
+    // address of the TeamEth time-locked contract
+    address public teamEthContract = 
+    0x67ed24A0dB2Ae01C4841Cd8aef1DA519B588E2B2;
     
+
     // ensure call to each function is only made once
-    bool public teamEthTransferComplete;
-    bool public toteLiquidatorTranserComplete;
     bool public ethertoteDevelopmentTransferComplete;
+    bool public toteLiquidatorTransferComplete;
+    bool public teamEthTransferComplete;
+
+
     
     // amount of eth that will be distributed
     uint public ethToBeDistributed;
+    
+    // ensure the function is called once
+    bool public ethToBeDistributedSet;
 
-    // percentages to be sent 
-    uint public percentageToEthertoteDevelopmentWallet = 40;
-    uint public percentageToTeamEthContract = 30;
-    uint public percentageToToteLiquidatorWallet = 30;
+///////////////////////////////////////////////////////////////////////////////    
+// percentages to be sent
+//////////////////////////////////////////////////////////////////////////////
+
+    // 50% to the development wallet
+    // 100/50 = 2
+    uint public divForEthertoteDevelopmentWallet = 2;
     
-    // used as helper to calculate amounts to be transferred
-    uint public oneHundred = 100;
+    // 25% to the liquidator wallet
+    // 100/25 = 4
+    uint public divForEthertoteLiquidatorWallet = 4;
     
-    // value to be used as dividers
-    uint public toEthertoteDevelopmentWallet = oneHundred.div(percentageToEthertoteDevelopmentWallet);
-    uint public toTeamEthContract = oneHundred.div(percentageToTeamEthContract);
-    uint public toToteLiquidatorWallet = oneHundred.div(percentageToToteLiquidatorWallet);
+    // 25% to the TeamEth Smart Contract
+    // 100/25 = 4
+    uint public divForTeamEthContract = 4;
+
+/////////////////////////////////////////////////////////////////////////////
     
-    event Received(address from, uint256 amount);
-    event SentToTeamEth(address to, uint256 amount);
-    event SentToLiquidator(address to, uint256 amount);
-    event SentToDev(address to, uint256 amount);
+    // EVENTS
+    event Received(uint256);
+    event SentToTeamEth(uint256);
+    event SentToLiquidator(uint256);
+    event SentToDev(uint256);
     
+    // MODIFIER
     modifier onlyAdmin {
         require(msg.sender == admin);
         _;
@@ -137,51 +153,72 @@ contract EthRaised {
 
     // fallback to store all the ether sent to this address
     function() payable public { 
-        emit Received(msg.sender, msg.value);
     }
     
     function thisContractBalance() public view returns(uint) {
         return address(this).balance;
     }
-
-    // move Eth to team eth time-locked contract
-    function sendToTeamEthContract() onlyAdmin public {
-       require(teamEthTransferComplete == false);
-       require(ethToBeDistributed > 0);
-       // now allow a percentage of the balance
-       address(teamEthContract).transfer(ethToBeDistributed.div(toTeamEthContract));
-       emit SentToTeamEth(msg.sender, ethToBeDistributed.div(toTeamEthContract)); 
-       //ensure function can only ever be called once
-       teamEthTransferComplete = true;
-    }
     
-    // move Eth to tote liquidator wallet
-    function sendToToteLiquidatorWallet() onlyAdmin public {
-       require(toteLiquidatorTranserComplete == false);
-       require(ethToBeDistributed > 0);
-       // now allow a percentage of the balance
-       address(toteLiquidatorWallet).transfer(ethToBeDistributed.div(toToteLiquidatorWallet));
-       emit SentToLiquidator(msg.sender, ethToBeDistributed.div(toToteLiquidatorWallet)); 
-       //ensure function can only ever be called once
-       toteLiquidatorTranserComplete = true;
-    }
+    
+    // declare the token sale is complete, reference the balance, and make
+    // the necessary transfers
+    function _A_tokenSaleCompleted() onlyAdmin public {
+        require(ethToBeDistributedSet == false);
+        ethToBeDistributed = address(this).balance;
+        ethToBeDistributedSet = true;
+        emit Received(now);
+    }   
+    
     
     // move Eth to Ethertote development wallet
-    function sendToEthertoteDevelopmentWallet() onlyAdmin public {
+    function _B_sendToEthertoteDevelopmentWallet() onlyAdmin public {
        require(ethertoteDevelopmentTransferComplete == false);
        require(ethToBeDistributed > 0);
        // now allow a percentage of the balance
-       address(ethertoteDevelopmentWallet).transfer(ethToBeDistributed.div(toEthertoteDevelopmentWallet));
-       emit SentToDev(msg.sender, ethToBeDistributed.div(toEthertoteDevelopmentWallet)); 
+       // total balance divided by 5 = 50% of balance
+       address(ethertoteDevelopmentWallet).transfer(ethToBeDistributed.div(divForEthertoteDevelopmentWallet));
+       emit SentToDev(ethToBeDistributed.div(divForEthertoteDevelopmentWallet)); 
        //ensure function can only ever be called once
        ethertoteDevelopmentTransferComplete = true;
     }
     
-    // declare the token sale is complete, and reference the balance
-    function tokenSaleCompleted() onlyAdmin public {
-        ethToBeDistributed = address(this).balance;
+    // move Eth to tote liquidator wallet
+    function _C_sendToToteLiquidatorWallet() onlyAdmin public {
+       require(toteLiquidatorTransferComplete == false);
+       require(ethToBeDistributed > 0);
+       // now allow a percentage of the balance
+       // total balance divided by 4 = 25% of balance
+       address(toteLiquidatorWallet).transfer(ethToBeDistributed.div(divForEthertoteLiquidatorWallet));
+       emit SentToLiquidator(ethToBeDistributed.div(divForEthertoteLiquidatorWallet)); 
+       //ensure function can only ever be called once
+       toteLiquidatorTransferComplete = true;
     }
 
+    // move Eth to team eth time-locked contract
+    function _D_sendToTeamEthContract() onlyAdmin public {
+       require(teamEthTransferComplete == false);
+       require(ethToBeDistributed > 0);
+       // now allow a percentage of the balance
+       // total balance divided by 4 = 25% of balance
+       address(teamEthContract).transfer(ethToBeDistributed.div(divForTeamEthContract));
+       emit SentToTeamEth(ethToBeDistributed.div(divForTeamEthContract)); 
+       //ensure function can only ever be called once
+       teamEthTransferComplete = true;
+    }
+    
+// ----------------------------------------------------------------------------
+// This method can be used by admin to extract Eth accidentally 
+// sent to this smart contract after all previous transfers have been made
+// to the correct addresses
+// ----------------------------------------------------------------------------
+    function ClaimEth() onlyAdmin public {
+        require(ethertoteDevelopmentTransferComplete == true);
+        require(toteLiquidatorTransferComplete == true);
+        require(teamEthTransferComplete == true);
+        
+        // now withdraw any accidental Eth sent to this contract
+        require(address(this).balance > 0);
+        address(admin).transfer(address(this).balance);
 
-
+    }
 }
