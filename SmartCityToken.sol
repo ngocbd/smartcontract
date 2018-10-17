@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityToken at 0x815eecb926095fe3613418f1e2dbbd3c29e70a8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityToken at 0xed66d63dd5b63874a5d4dc6a753236991e67324e
 */
 pragma solidity ^0.4.18;
 
@@ -72,7 +72,7 @@ contract SmartCityToken {
         balances[msg.sender] = balances[msg.sender].sub(_value); // subtract requested amount from the sender address
         balances[_to] = balances[_to].add(_value); // send requested amount to the target address
 
-        //Transfer(msg.sender, _to, _value); // trigger Transfer event
+        Transfer(msg.sender, _to, _value); // trigger Transfer event
         return true;
     }
 
@@ -98,7 +98,7 @@ contract SmartCityToken {
         balances[_to] = balances[_to].add(_value); // send requested amount to the target address
         allowances[_from][msg.sender] = _allowance.sub(_value); // reduce sender allowance by transferred amount
 
-        //Transfer(_from, _to, _value); // trigger Transfer event
+        Transfer(_from, _to, _value); // trigger Transfer event
         return true;
     }
 
