@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc96f0b7508a35bea00a9edfc6ecf11ee31693a67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf8d0a48ce98bbee75e7568b3ada3efa1b6324c9c
 */
 pragma solidity ^0.4.23;
 
@@ -843,7 +843,7 @@ library Transfer {
   function canTransfer() internal view {
     if (
       Contract.read(Token.transferAgents(Contract.sender())) == 0 &&
-      Contract.read(Token.tokensUnlocked()) == 0
+      Contract.read(Token.isFinished()) == 0
     ) revert('transfers are locked');
   }
 
@@ -882,7 +882,7 @@ library Transfer {
     // Owner must be able to transfer tokens -
     if (
       Contract.read(Token.transferAgents(_owner)) == 0 &&
-      Contract.read(Token.tokensUnlocked()) == 0
+      Contract.read(Token.isFinished()) == 0
     ) revert('transfers are locked');
 
     // Begin updating balances -
@@ -961,6 +961,12 @@ library Token {
 
   using Contract for *;
 
+  /// SALE ///
+
+  // Whether or not the crowdsale is post-purchase
+  function isFinished() internal pure returns (bytes32)
+    { return keccak256("sale_is_completed"); }
+
   /// TOKEN ///
 
   // Storage location for token name
@@ -986,22 +992,18 @@ library Token {
   function transferAgents(address _agent) internal pure returns (bytes32)
     { return keccak256(_agent, TOKEN_TRANSFER_AGENTS); }
 
-  // Whether or not the token is unlocked for transfers
-  function tokensUnlocked() internal pure returns (bytes32)
-    { return keccak256('sale_tokens_unlocked'); }
-
   /// CHECKS ///
-
-  // Ensures both storage and events have been pushed to the buffer
-  function emitAndStore() internal pure {
-    if (Contract.emitted() == 0 || Contract.stored() == 0)
-      revert('invalid state change');
-  }
 
   // Ensures the sale's token has been initialized
   function tokenInit() internal view {
     if (Contract.read(tokenName()) == 0)
       revert('token not initialized');
+  }
+
+  // Ensures both storage and events have been pushed to the buffer
+  function emitAndStore() internal pure {
+    if (Contract.emitted() == 0 || Contract.stored() == 0)
+      revert('invalid state change');
   }
 
   /// FUNCTIONS ///
@@ -1019,7 +1021,7 @@ library Token {
     Contract.checks(tokenInit);
     // Execute transfer function -
     Transfer.transfer(_to, _amount);
-    // Ensures state change will only affect storage and events -
+    // Ensures state change will affect storage and events -
     Contract.checks(emitAndStore);
     // Commit state changes to storage -
     Contract.commit();
@@ -1039,7 +1041,7 @@ library Token {
     Contract.checks(tokenInit);
     // Execute transfer function -
     Transfer.transferFrom(_owner, _recipient, _amount);
-    // Ensures state change will only affect storage and events -
+    // Ensures state change will affect storage and events -
     Contract.checks(emitAndStore);
     // Commit state changes to storage -
     Contract.commit();
@@ -1058,7 +1060,7 @@ library Token {
     Contract.checks(tokenInit);
     // Execute approval function -
     Approve.approve(_spender, _amount);
-    // Ensures state change will only affect storage and events -
+    // Ensures state change will affect storage and events -
     Contract.checks(emitAndStore);
     // Commit state changes to storage -
     Contract.commit();
@@ -1077,7 +1079,7 @@ library Token {
     Contract.checks(tokenInit);
     // Execute approval function -
     Approve.increaseApproval(_spender, _amount);
-    // Ensures state change will only affect storage and events -
+    // Ensures state change will affect storage and events -
     Contract.checks(emitAndStore);
     // Commit state changes to storage -
     Contract.commit();
@@ -1096,7 +1098,7 @@ library Token {
     Contract.checks(tokenInit);
     // Execute approval function -
     Approve.decreaseApproval(_spender, _amount);
-    // Ensures state change will only affect storage and events -
+    // Ensures state change will affect storage and events -
     Contract.checks(emitAndStore);
     // Commit state changes to storage -
     Contract.commit();
