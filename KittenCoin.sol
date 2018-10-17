@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittenCoin at 0xac2bd14654bbf22f9d8f20c7b3a70e376d3436b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KittenCoin at 0x5e07bec700d82ea4dd46b6e0527f536e79d61ec6
 */
 pragma solidity ^0.4.13;
 
@@ -187,9 +187,9 @@ contract Ownable {
 
 contract KittenCoin is StandardToken, Ownable {
 
-  string public constant name = "Kitten Coin";
-  string public constant symbol = "KITTEN";
-  uint8 public constant decimals = 8;
+  string public constant name = "ITube Bounus";
+  string public constant symbol = "TUBE";
+  uint8 public constant decimals = 18;
   
   uint256 public kittensIssued;
   string public kittenTalk;
@@ -223,7 +223,7 @@ contract KittenCoin is StandardToken, Ownable {
 
   /* Constructor function - initialize Kitten Coins */
   function KittenCoin() {
-    totalSupply = 400000000 * (10 ** uint256(decimals)); // So many kittens on earth
+    totalSupply = 6200000000 * (10 ** uint256(decimals)); // So many kittens on earth
     balances[msg.sender] = totalSupply / 10; // To help kittens grow safely
     kittensIssued = totalSupply / 10;
     kittenTalk = "Meow";
