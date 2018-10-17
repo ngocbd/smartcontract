@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0x2c3f2451143e8cec0341b064fcb8fe137ce5d6dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0x8167e5effc9eb82b5d1b5e384eebc2f01c45d749
 */
 pragma solidity ^0.4.21;
 
@@ -378,8 +378,7 @@ contract Mythereum is Manageable {
     uint256 costOfUpgrade = 32 * (cardDamageUpgradeLevel[_cardId] + 1);
 
     MythereumERC20Token mythexContract = MythereumERC20Token(mythexTokenAddress);
-    require(mythexContract.balanceOf(msg.sender).isAtLeast(costOfUpgrade));
-    burnMythexTokens(msg.sender, costOfUpgrade);
+    require(mythexContract.burn(msg.sender, costOfUpgrade));
 
     cardDamageUpgradeLevel[_cardId]++;
     _improveCard(_cardId, 1, 0);
@@ -390,8 +389,7 @@ contract Mythereum is Manageable {
     uint256 costOfUpgrade = 32 * (cardShieldUpgradeLevel[_cardId] + 1);
 
     MythereumERC20Token mythexContract = MythereumERC20Token(mythexTokenAddress);
-    require(mythexContract.balanceOf(msg.sender).isAtLeast(costOfUpgrade));
-    burnMythexTokens(msg.sender, costOfUpgrade);
+    require(mythexContract.burn(msg.sender, costOfUpgrade));
 
     cardShieldUpgradeLevel[_cardId]++;
     _improveCard(_cardId, 0, 1);
@@ -568,6 +566,10 @@ contract Mythereum is Manageable {
 
   function claim() public {
     _claim(msg.sender);
+  }
+
+  function deposit() public payable {
+    // this is for crediting funds to the contract - only meant for internal use
   }
 
   function addShareholder(address _payee, uint256 _shares) public onlyOwner {
