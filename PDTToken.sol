@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PDTToken at 0x974826b32512d892199c321e98d08f16b84084c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PDTToken at 0xf15bd6a380a0619f99b199ca9e954ce0c3e09af7
 */
 pragma solidity ^0.4.16;
 
@@ -461,12 +461,12 @@ contract PDTToken is BaseERC20, BaseSafeMath, LockUtils {
         symbol = "PDT";
         decimals = 18;
         totalSupply = 2100000000 * 10 ** uint256(decimals);
-        // balanceOf[msg.sender] = totalSupply;
-        balanceOf[0x5EDBe36c4c4a816f150959B445d5Ae1F33054a82] = 735000000 * 10 ** uint256(decimals);
-        balanceOf[0xacF2e917E296547C0C476fDACf957111ca0307ce] = 110250000 * 10 ** uint256(decimals);
-        balanceOf[0x9746079BEbcFfFf177818e23AedeC834ad0fb5f9] = 225750000 * 10 ** uint256(decimals);
-        balanceOf[0xBB7d6f428E77f98069AE1E01964A9Ed6db3c5Fe5] = 840000000 * 10 ** uint256(decimals);
-        balanceOf[0x0aE269Ae5F511786Fce5938c141DbF42e8A71E12] = 189000000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        // balanceOf[0x5EDBe36c4c4a816f150959B445d5Ae1F33054a82] = 735000000 * 10 ** uint256(decimals);
+        // balanceOf[0xacF2e917E296547C0C476fDACf957111ca0307ce] = 110250000 * 10 ** uint256(decimals);
+        // balanceOf[0x9746079BEbcFfFf177818e23AedeC834ad0fb5f9] = 225750000 * 10 ** uint256(decimals);
+        // balanceOf[0xBB7d6f428E77f98069AE1E01964A9Ed6db3c5Fe5] = 840000000 * 10 ** uint256(decimals);
+        // balanceOf[0x0aE269Ae5F511786Fce5938c141DbF42e8A71E12] = 189000000 * 10 ** uint256(decimals);
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
