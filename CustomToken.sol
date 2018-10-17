@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf6c4db2c604053f3d81b2408a435c9910706f5fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2f0cf5e2396aff6ea91d90e7b6b866365d5aadc1
 */
 pragma solidity ^0.4.19;
 
@@ -45,35 +45,13 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
-contract CustomToken is BaseToken, BurnToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 2100000000000000;
-        name = 'NBTworld';
-        symbol = 'NBT';
-        decimals = 8;
-        balanceOf[0xae3d6f1346d4567fa3a84a371f934844059c683a] = totalSupply;
-        Transfer(address(0), 0xae3d6f1346d4567fa3a84a371f934844059c683a, totalSupply);
+        totalSupply = 1000000000000000000000000000;
+        name = 'InfluenceConstantCoin';
+        symbol = 'ICC';
+        decimals = 18;
+        balanceOf[0x3e5a7109e0a1362baf285bc6e39b2ad0995c00dd] = totalSupply;
+        Transfer(address(0), 0x3e5a7109e0a1362baf285bc6e39b2ad0995c00dd, totalSupply);
     }
 }
