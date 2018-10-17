@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract intervalueToken at 0xBac0bD8366b0E1AdC1735927A72912bF42C395Cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract intervalueToken at 0xA4f3b1081a8B3faF250DC70bf55d2ACef38580f1
 */
 pragma solidity ^0.4.16;
 
