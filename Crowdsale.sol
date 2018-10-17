@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x8427eb8cc2f86a778bc9554e808bf02fffc32f6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1cdc6b8fe34d313ee45fcd98d7391b6f564069a4
 */
 pragma solidity ^0.4.11;
 
@@ -302,8 +302,8 @@ contract Crowdsale is Ownable {
 
   // send ether to the fund collection wallet
   // override to create custom fund forwarding mechanisms
-  function forwardFunds() onlyOwner internal {
-    wallet.transfer(msg.value);
+  function forwardFunds() onlyOwner public {
+    wallet.transfer(address(this).balance);
   }
 
   function transferBackTo(uint256 tokens, address beneficiary) onlyOwner public returns (bool){
