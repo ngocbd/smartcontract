@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vBitcoin at 0xe4dfbff7d2cc10b8b03adf0b1f97144443c9313c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract vBitcoin at 0x8a538bec312d6d2d864e1672f7cae6a6de1a73dd
 */
 pragma solidity ^0.4.24;
 
@@ -133,7 +133,7 @@ contract MintableToken is StandardToken, Ownable {
 		
 	event Mint(address indexed to, uint256 amount);
     
-    uint256 public totalMined;
+    uint public totalMined;
 
 	function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
 		require(totalMined.sub(totalSupply) >= _amount);
@@ -173,6 +173,6 @@ contract vBitcoin is MintableToken {
         }
         
         totalMined = _totalMined;
-        totalMined = totalMined.mul(1000000000000000000);
+        totalMined.mul(1000000000000000000);
     }
 }
