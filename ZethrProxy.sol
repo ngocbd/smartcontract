@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrProxy at 0x5986d909b2fd4e8a613160ffa58e1cf067763133
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrProxy at 0xA63c2427E3d77d207027bE63DAA21EFB7112bc34
 */
 pragma solidity ^0.4.24;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.24;
  *  can properly track and display Zethr token buys.
 **/
 contract ZethrProxy {
-    ZethrInterface zethr = ZethrInterface(address(0xD48B633045af65fF636F3c6edd744748351E020D));
+    ZethrInterface zethr = ZethrInterface(address(0x145bf25DC666239030934b28D34fD0dB7Cf1b583));
     address owner = msg.sender;
     
     event onTokenPurchase(
@@ -18,6 +18,7 @@ contract ZethrProxy {
         uint tokensMinted,
         address indexed referredBy
     );
+
     
     function buyTokensWithProperEvent(address _referredBy, uint8 divChoice) public payable {
         // Query token balance before & after to see how much we bought
