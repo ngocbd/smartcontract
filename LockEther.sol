@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockEther at 0xee735ce6b54893322648a232cfd754fa10cf1627
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockEther at 0x19d865a06ee4d67f12cc7852bdd8b2965947aa92
 */
 pragma solidity ^0.4.24;
 
@@ -140,8 +140,6 @@ THE SOFTWARE.
 */
 
 // This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
-
-pragma solidity >=0.4.18;// Incompatible compiler version... please select one stated within pragma solidity or use different oraclizeAPI version
 
 contract OraclizeI {
     address public cbAddress;
@@ -1359,6 +1357,7 @@ contract LockEther is Ownable, usingOraclize {
     }
 
     uint256 amountConverted;
+    uint256 gasPrice;
 
     Fiat eUSD;
 
@@ -1377,8 +1376,7 @@ contract LockEther is Ownable, usingOraclize {
     * @dev constructor function - set gas price to 8 Gwei
     **/
     constructor() public {
-        oraclize_setCustomGasPrice(8000000000);
-
+        gasPrice = 71000000000;
     }
 
     /**
@@ -1389,7 +1387,8 @@ contract LockEther is Ownable, usingOraclize {
     function __callback(bytes32 myid, string result) public {
         require(msg.sender == oraclize_cbAddress());
         require (pendingQueries[myid].amount > 0);
-
+        
+        oraclize_setCustomGasPrice(gasPrice);
         bytes32 queryId;
         uint256 amountOfTokens;
 
@@ -1470,6 +1469,7 @@ contract LockEther is Ownable, usingOraclize {
             emit NewOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
         } else {
             emit NewOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+            oraclize_setCustomGasPrice(gasPrice);
             Sender memory sender = Sender({senderAddress: _src, amount: _amount, previousPrice: 0, prepreviousPrice: 0, currentUrl: 0});
             bytes32 queryId = oraclize_query("URL", urlRank[0], 400000);
             pendingQueries[queryId] = sender;
@@ -1513,6 +1513,14 @@ contract LockEther is Ownable, usingOraclize {
     }
 
     /**
+    * @dev change current gas price
+    * @param _price New gas price
+    **/
+    function changeGasPrice(uint256 _price) public onlyOwner {
+        gasPrice = _price;        
+    }
+
+    /**
     * @dev fallback function which only receives ether from eUSD contract
     **/
     function () payable public {
@@ -1524,5 +1532,12 @@ contract LockEther is Ownable, usingOraclize {
     **/
     function getAmountConverted() constant public returns(uint256) {
         return amountConverted;
+    }
+
+    /**
+    * @dev returns current gas price
+    **/
+    function getCurrentGasPrice() constant public returns(uint256) {
+        return gasPrice;
     }
 }
