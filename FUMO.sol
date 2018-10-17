@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fumo at 0xc57d591db46d01d8fb53169af11c3a265f4f470f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fumo at 0x8d93d6bdbf2f798a730ea0dbb2d83cf2dcf93546
 */
 pragma solidity ^0.4.24;
 
-contract Suohaevents {
+contract FumoEvents {
     // fired whenever a player registers a name
     event onNewName
     (
@@ -116,26 +116,21 @@ contract Suohaevents {
     );
 }
 
-//==============================================================================
-//   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
-//  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
-//====================================|=========================================
-
-contract modularShort is Suohaevents {}
+contract modularShort is FumoEvents {}
 
 contract Fumo is modularShort {
     using SafeMath for *;
     using NameFilter for string;
-    using SuohaKeysCalcLong for uint256;
+    using FumoKeysCalcLong for uint256;
 	
-    address community_addr = 0x82B0721A8c142C6203F4cF58f80629E15b02a504;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xA80aFF4455a89667de2b892aa2B0AF60aA5d2532  );
+    address community_addr = 0x3705B81d42199138E53FB0Ad57613ce309576077;
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xd085AcFC0FDaA418E03E8570EF9A4E25a0E14eCf);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    string constant public name = "Fumo";
-    string constant public symbol = "Fumo";
+    string constant public name = "Fumo token";
+    string constant public symbol = "FuMo";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
@@ -153,23 +148,20 @@ contract Fumo is modularShort {
 //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
-    mapping (uint256 => Suohadatasets.Player) public plyr_;   // (pID => data) player data
-    mapping (uint256 => mapping (uint256 => Suohadatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => Fumodatasets.Player) public plyr_;   // (pID => data) player data
+    mapping (uint256 => mapping (uint256 => Fumodatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
 //****************
 // ROUND DATA 
 //****************
-    mapping (uint256 => Suohadatasets.Round) public round_;   // (rID => data) round data
+    mapping (uint256 => Fumodatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
 //****************
 // TEAM FEE DATA 
 //****************
-    mapping (uint256 => Suohadatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
-    mapping (uint256 => Suohadatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
-//==============================================================================
-//     _ _  _  __|_ _    __|_ _  _  .
-//    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
-//==============================================================================
+    mapping (uint256 => Fumodatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
+    mapping (uint256 => Fumodatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+	//???
     constructor()
         public
     {
@@ -180,24 +172,21 @@ contract Fumo is modularShort {
         // 3 = bulls
 
 		// Team allocation percentages
-        // (Suoha, 0) + (Pot , Referrals, Community)
+        // (Fumo, 0) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = Suohadatasets.TeamFee(30,0);   //46% to pot, 20% to aff, 2% to com, 2% to air drop pot
-        fees_[1] = Suohadatasets.TeamFee(43,0);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
-        fees_[2] = Suohadatasets.TeamFee(56,0);  //20% to pot, 20% to aff, 2% to com, 2% to air drop pot
-        fees_[3] = Suohadatasets.TeamFee(43,8);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[0] = Fumodatasets.TeamFee(30,0);   //46% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[1] = Fumodatasets.TeamFee(43,0);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[2] = Fumodatasets.TeamFee(56,0);  //20% to pot, 20% to aff, 2% to com, 2% to air drop pot
+        fees_[3] = Fumodatasets.TeamFee(43,8);   //33% to pot, 20% to aff, 2% to com, 2% to air drop pot
         
         // how to split up the final pot based on which team was picked
-        // (Suoha, 0)
-        potSplit_[0] = Suohadatasets.PotSplit(15,0);  //48% to winner, 25% to next round, 12% to com
-        potSplit_[1] = Suohadatasets.PotSplit(20,0);   //48% to winner, 20% to next round, 12% to com
-        potSplit_[2] = Suohadatasets.PotSplit(25,0);  //48% to winner, 15% to next round, 12% to com
-        potSplit_[3] = Suohadatasets.PotSplit(30,0);  //48% to winner, 10% to next round, 12% to com
+        // (Fumo, 0)
+        potSplit_[0] = Fumodatasets.PotSplit(15,0);  //48% to winner, 25% to next round, 12% to com
+        potSplit_[1] = Fumodatasets.PotSplit(20,0);   //48% to winner, 20% to next round, 12% to com
+        potSplit_[2] = Fumodatasets.PotSplit(25,0);  //48% to winner, 15% to next round, 12% to com
+        potSplit_[3] = Fumodatasets.PotSplit(30,0);  //48% to winner, 10% to next round, 12% to com
 	}
-//==============================================================================
-//     _ _  _  _|. |`. _  _ _  .
-//    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
-//==============================================================================
+
     /**
      * @dev used to make sure no one can interact with contract until it has 
      * been activated. 
@@ -208,6 +197,7 @@ contract Fumo is modularShort {
     }
     
     /**
+     * ????????
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
@@ -220,6 +210,7 @@ contract Fumo is modularShort {
     }
 
     /**
+     * 
      * @dev sets boundaries for incoming tx 
      */
     modifier isWithinLimits(uint256 _eth) {
@@ -243,7 +234,7 @@ contract Fumo is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        Suohadatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        Fumodatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
             
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -268,7 +259,7 @@ contract Fumo is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        Suohadatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        Fumodatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -301,7 +292,7 @@ contract Fumo is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        Suohadatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        Fumodatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -342,7 +333,7 @@ contract Fumo is modularShort {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        Suohadatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        Fumodatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -392,7 +383,7 @@ contract Fumo is modularShort {
         public
     {
         // set up our tx event data
-        Suohadatasets.EventReturns memory _eventData_;
+        Fumodatasets.EventReturns memory _eventData_;
         
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -424,7 +415,7 @@ contract Fumo is modularShort {
         public
     {
         // set up our tx event data
-        Suohadatasets.EventReturns memory _eventData_;
+        Fumodatasets.EventReturns memory _eventData_;
         
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -464,7 +455,7 @@ contract Fumo is modularShort {
         public
     {
         // set up our tx event data
-        Suohadatasets.EventReturns memory _eventData_;
+        Fumodatasets.EventReturns memory _eventData_;
         
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -498,6 +489,7 @@ contract Fumo is modularShort {
     }
 
     /**
+     * ??
      * @dev withdraws all of your earnings.
      * -functionhash- 0x3ccfd60b
      */
@@ -522,7 +514,7 @@ contract Fumo is modularShort {
         if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // set up our tx event data
-            Suohadatasets.EventReturns memory _eventData_;
+            Fumodatasets.EventReturns memory _eventData_;
             
             // end the round (distributes pot)
 			round_[_rID].ended = true;
@@ -540,7 +532,7 @@ contract Fumo is modularShort {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
             
             // fire withdraw and distribute event
-            emit Suohaevents.onWithdrawAndDistribute
+            emit FumoEvents.onWithdrawAndDistribute
             (
                 msg.sender, 
                 plyr_[_pID].name, 
@@ -565,7 +557,7 @@ contract Fumo is modularShort {
                 plyr_[_pID].addr.transfer(_eth);
             
             // fire withdraw event
-            emit Suohaevents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
+            emit FumoEvents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
         }
     }
     
@@ -606,7 +598,7 @@ contract Fumo is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
         
         // fire event
-        emit Suohaevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FumoEvents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
     
     function registerNameXaddr(string _nameString, address _affCode, bool _all)
@@ -622,7 +614,7 @@ contract Fumo is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
         
         // fire event
-        emit Suohaevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FumoEvents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
     
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
@@ -638,13 +630,11 @@ contract Fumo is modularShort {
         uint256 _pID = pIDxAddr_[_addr];
         
         // fire event
-        emit Suohaevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit FumoEvents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
-//==============================================================================
-//     _  _ _|__|_ _  _ _  .
-//    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
-//=====_|=======================================================================
+
     /**
+     * ??????
      * @dev return the price buyer will pay for next 1 individual key.
      * -functionhash- 0x018a25e8
      * @return price for next key bought (in wei format)
@@ -668,7 +658,7 @@ contract Fumo is modularShort {
     }
     
     /**
-     * @dev returns time left.  dont spam this, you'll ddos yourself from your node 
+     * ??????
      * provider
      * -functionhash- 0xc7e284b8
      * @return time left in seconds
@@ -798,7 +788,7 @@ contract Fumo is modularShort {
     }
 
     /**
-     * @dev returns player info based on address.  if no address is given, it will 
+     * ??????????
      * use msg.sender 
      * -functionhash- 0xee0b5d8b
      * @param _addr address of the player you want to lookup 
@@ -836,15 +826,11 @@ contract Fumo is modularShort {
         );
     }
 
-//==============================================================================
-//     _ _  _ _   | _  _ . _  .
-//    (_(_)| (/_  |(_)(_||(_  . (this + tools + calcs + modules = our softwares engine)
-//=====================_|=======================================================
+
     /**
-     * @dev logic runs whenever a buy order is executed.  determines how to handle 
-     * incoming eth depending on if we are in an active round or not
+     * ????????
      */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, Suohadatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, Fumodatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -873,7 +859,7 @@ contract Fumo is modularShort {
                 _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
                 
                 // fire buy and distribute event 
-                emit Suohaevents.onBuyAndDistribute
+                emit FumoEvents.onBuyAndDistribute
                 (
                     msg.sender, 
                     plyr_[_pID].name, 
@@ -898,7 +884,7 @@ contract Fumo is modularShort {
      * @dev logic runs whenever a reload order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not 
      */
-    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, Suohadatasets.EventReturns memory _eventData_)
+    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, Fumodatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -929,7 +915,7 @@ contract Fumo is modularShort {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
                 
             // fire buy and distribute event 
-            emit Suohaevents.onReLoadAndDistribute
+            emit FumoEvents.onReLoadAndDistribute
             (
                 msg.sender, 
                 plyr_[_pID].name, 
@@ -949,7 +935,7 @@ contract Fumo is modularShort {
      * @dev this is the core logic for any buy/reload that happens while a round 
      * is live.
      */
-    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, Suohadatasets.EventReturns memory _eventData_)
+    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, Fumodatasets.EventReturns memory _eventData_)
         private
     {
         // if player is new to round
@@ -1149,9 +1135,9 @@ contract Fumo is modularShort {
      * @dev gets existing or registers new pID.  use this when a player may be new
      * @return pID 
      */
-    function determinePID(Suohadatasets.EventReturns memory _eventData_)
+    function determinePID(Fumodatasets.EventReturns memory _eventData_)
         private
-        returns (Suohadatasets.EventReturns)
+        returns (Fumodatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         // if player is new to this version of fomo3d
@@ -1201,9 +1187,9 @@ contract Fumo is modularShort {
      * @dev decides if round end needs to be run & new round started.  and if 
      * player unmasked earnings from previously played rounds need to be moved.
      */
-    function managePlayer(uint256 _pID, Suohadatasets.EventReturns memory _eventData_)
+    function managePlayer(uint256 _pID, Fumodatasets.EventReturns memory _eventData_)
         private
-        returns (Suohadatasets.EventReturns)
+        returns (Fumodatasets.EventReturns)
     {
         // if player has played a previous round, move their unmasked earnings
         // from that round to gen vault.
@@ -1222,9 +1208,9 @@ contract Fumo is modularShort {
     /**
      * @dev ends the round. manages paying out winner/splitting up pot
      */
-    function endRound(Suohadatasets.EventReturns memory _eventData_)
+    function endRound(Fumodatasets.EventReturns memory _eventData_)
         private
-        returns (Suohadatasets.EventReturns)
+        returns (Fumodatasets.EventReturns)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -1350,9 +1336,9 @@ contract Fumo is modularShort {
     /**
      * @dev distributes eth based on fees to com, aff, and p3d
      */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, Suohadatasets.EventReturns memory _eventData_)
+    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, Fumodatasets.EventReturns memory _eventData_)
         private
-        returns(Suohadatasets.EventReturns)
+        returns(Fumodatasets.EventReturns)
     {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
@@ -1366,7 +1352,7 @@ contract Fumo is modularShort {
         // affiliate must not be self, and must have a name registered
         if (_affID != _pID && plyr_[_affID].name != '') {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit Suohaevents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+            emit FumoEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
             _com = _com.add(_aff);
         }
@@ -1378,9 +1364,9 @@ contract Fumo is modularShort {
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, Suohadatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, Fumodatasets.EventReturns memory _eventData_)
         private
-        returns(Suohadatasets.EventReturns)
+        returns(Fumodatasets.EventReturns)
     {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
@@ -1469,13 +1455,13 @@ contract Fumo is modularShort {
     /**
      * @dev prepares compression data and fires event for buy or reload tx's
      */
-    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, Suohadatasets.EventReturns memory _eventData_)
+    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, Fumodatasets.EventReturns memory _eventData_)
         private
     {
         _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
         
-        emit Suohaevents.onEndTx
+        emit FumoEvents.onEndTx
         (
             _eventData_.compressedData,
             _eventData_.compressedIDs,
@@ -1493,13 +1479,7 @@ contract Fumo is modularShort {
             airDropPot_
         );
     }
-//==============================================================================
-//    (~ _  _    _._|_    .
-//    _)(/_(_|_|| | | \/  .
-//====================/=========================================================
-    /** upon contract deploy, it will be deactivated.  this is a one time
-     * use function that will activate the contract.  we do this so devs 
-     * have time to set things up on the web end                            **/
+	//????
     bool public activated_ = false;
     function activate()
         public
@@ -1511,7 +1491,7 @@ contract Fumo is modularShort {
 
         
         // can only be ran once
-        require(activated_ == false, "shuoha already activated");
+        require(activated_ == false, "fumo already activated");
         
         // activate the contract 
         activated_ = true;
@@ -1527,7 +1507,7 @@ contract Fumo is modularShort {
 //   __|_ _    __|_ _  .
 //  _\ | | |_|(_ | _\  .
 //==============================================================================
-library Suohadatasets {
+library Fumodatasets {
     //compressedData key
     // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
         // 0 - new player (bool)
@@ -1601,7 +1581,7 @@ library Suohadatasets {
 //  |  _      _ _ | _  .
 //  |<(/_\/  (_(_||(_  .
 //=======/======================================================================
-library SuohaKeysCalcLong {
+library FumoKeysCalcLong {
     using SafeMath for *;
     /**
      * @dev calculates number of keys received given X eth 
