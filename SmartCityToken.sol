@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityToken at 0x8528f649a00ab9afc53b14787ea35705172c244e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartCityToken at 0x815eecb926095fe3613418f1e2dbbd3c29e70a8b
 */
 pragma solidity ^0.4.18;
 
 /**
- *  @title Smart City Token http://www.smartcitycoin.io
+ *  @title Smart City Token https://www.smartcitycoin.io
  *  @dev ERC20 standard compliant / https://github.com/ethereum/EIPs/issues/20 /
- *  @dev Amount not sold during Crowdsale can be burned by anyone
+ *  @dev Amount not sold during Crowdsale is burned
  */
 
 contract SmartCityToken {
@@ -20,13 +20,13 @@ contract SmartCityToken {
     string constant public symbol = "CITY"; // token symbol
 
     uint256 constant public decimals = 5; // 1 CITY = 100000 tokens
-    uint256 public totalSupply = 252862966307692; // total token provision; 1 CITY = 0,0001 ETH
+    uint256 public totalSupply = 252862966307692; // total token provision
 
-    uint256 constant public amountForSale = 164360928100000; // amount that might be sold during ICO - 65% of total token supply; 164361 ETH equivalent
+    uint256 constant public amountForSale = 164360928100000; // amount that might be sold during ICO - 65% of total token supply
     uint256 constant public amountReserved = 88502038207692; // amount reserved for founders / loyalty / bounties / etc. - 35% of total token supply
     uint256 constant public amountLocked = 61951426745384; // the amount of tokens Owner cannot spend within first 2 years after Crowdsale - 70% of the reserved amount
 
-    uint256 public startTime; // Crowdsale end time: from this time on transfer and transferFrom functions are available to anyone except of token Owner
+    uint256 public startTime; // from this time on transfer and transferFrom functions are available to anyone except of token Owner
     uint256 public unlockOwnerDate; // from this time on transfer and transferFrom functions are available to token Owner
 
     mapping(address => uint256) public balances; // balances array
@@ -72,7 +72,7 @@ contract SmartCityToken {
         balances[msg.sender] = balances[msg.sender].sub(_value); // subtract requested amount from the sender address
         balances[_to] = balances[_to].add(_value); // send requested amount to the target address
 
-        Transfer(msg.sender, _to, _value); // trigger Transfer event
+        //Transfer(msg.sender, _to, _value); // trigger Transfer event
         return true;
     }
 
@@ -98,7 +98,7 @@ contract SmartCityToken {
         balances[_to] = balances[_to].add(_value); // send requested amount to the target address
         allowances[_from][msg.sender] = _allowance.sub(_value); // reduce sender allowance by transferred amount
 
-        Transfer(_from, _to, _value); // trigger Transfer event
+        //Transfer(_from, _to, _value); // trigger Transfer event
         return true;
     }
 
@@ -158,17 +158,7 @@ contract SmartCityToken {
         crowdsale = _crowdsaleAddress;
         assert(_approve(crowdsale, amountForSale));
     }
-
-    /**
-     *  @dev Crowdsale contract is allowed to shift token start time to earlier than initially defined date
-     *  @param _newStartTime uint256 New Start Date
-     */
-    function setTokenStart(uint256 _newStartTime) public {
-        require(msg.sender == crowdsale && _newStartTime < startTime);
-        startTime = _newStartTime;
-    }
 }
-
 
 /**
  * @title SafeMath
@@ -216,7 +206,7 @@ library SafeMath {
 
 
     /**
-    *            CITY token by www.SmartCityCoin.io
+    *            CITY 2.0 token by www.SmartCityCoin.io
     * 
     *          .ossssss:                      `+sssss`      
     *         ` +ssssss+` `.://++++++//:.`  .osssss+       
