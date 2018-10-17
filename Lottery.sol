@@ -1,79 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xadb606c42446e7af0ef5562e0d905ab52c4f9c4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x258e30f1ff095f738545ac72d3009d94cef2e8b3
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
-contract Lottery {
+library SafeMath {
 
-  address owner;
-  address public beneficiary;
-  mapping(address => bool) public playersMap;
-  address[] public players;
-  uint public playerEther = 0.01 ether;
-  uint playerCountGoal;
-  bool public isLotteryClosed = false;
-  uint public rewards;
-
-  event GoalReached(address recipient, uint totalAmountRaised);
-  event FundTransfer(address backer, uint amount, bool isContribution);
-
-  constructor() public {
-    // playerCountGoal will be in [1000, 1100]
-    playerCountGoal = 1000 + randomGen(block.number - 1, 101);
-    owner = msg.sender;
-  }
-
-  /**
-    * Fallback function
-    *
-    * The function without name is the default function that is called whenever anyone sends funds to a contract
-    */
-  function () public payable {
-    require(!isLotteryClosed && msg.value == playerEther, "Lottery should not be closed and player should send exact ethers");
-    require(!playersMap[msg.sender], "player should not attend twice");
-    players.push(msg.sender);
-    playersMap[msg.sender] = true;
-    
-    emit FundTransfer(msg.sender, msg.value, true);
-
-    checkGoalReached();
-  }
-
-  modifier afterGoalReached() { 
-    if (players.length >= playerCountGoal) _; 
-  }
-
-  function checkGoalReached() internal afterGoalReached {
-    require(!isLotteryClosed, "lottery must be opened");
-    isLotteryClosed = true;
-    uint playerCount = players.length;
-
-    // calculate the rewards
-    uint winnerIndex = randomGen(block.number - 2, playerCount);
-    beneficiary = players[winnerIndex];
-    rewards = playerEther * playerCount * 4 / 5;
-
-    emit GoalReached(beneficiary, rewards);
-  }
-
-  /* Generates a random number from 0 to 100 based on the last block hash */
-  function randomGen(uint seed, uint count) private view returns (uint randomNumber) {
-    return uint(keccak256(abi.encodePacked(block.number-3, seed))) % count;
-  }
-
-  function safeWithdrawal() public afterGoalReached {
-    require(isLotteryClosed, "lottery must be closed");
-    
-    if (beneficiary == msg.sender) {
-      beneficiary.transfer(rewards);
-      emit FundTransfer(beneficiary, rewards, false);
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    if (_a == 0) {
+      return 0;
     }
 
-    if (owner == msg.sender) {
-      uint fee = playerEther * players.length / 5;
-      owner.transfer(fee);
-      emit FundTransfer(owner, fee, false);
-    }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
   }
+
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    return _a / _b;
+  }
+
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
+}
+
+
+contract Lottery{
+    using SafeMath for uint256;
+
+    address public lastWinner;
+    address public owner;
+    uint256 public jackpot;
+    uint256 public MaxPlayers;
+    uint256 public completedGames;
+    address[] public players;
+    
+    constructor() public {
+         owner = msg.sender;
+         MaxPlayers = 10;
+    }
+
+    function UpdateNumPlayers (uint256 num) public {
+        if (owner != msg.sender || num < 3 || num >= 1000) revert();
+        MaxPlayers = num;
+    }
+    
+     function () payable public  {
+        if(msg.value < .01 ether) revert();
+        players.push(msg.sender);
+        jackpot += msg.value;
+        if (players.length >= MaxPlayers) RandomWinner();
+    }
+
+    function getPlayers() public view returns(address[]) {
+        return players;
+    }
+    
+    function random() private view returns (uint){
+        return uint(keccak256(abi.encodePacked(block.difficulty, now, msg.sender, players)));
+    }
+
+    function RandomWinner()  private {
+        if (players.length < MaxPlayers) revert();
+        uint256 fee = SafeMath.div(address(this).balance, 100);
+        lastWinner = players[random() % players.length];
+        
+        lastWinner.transfer(address(this).balance - fee);
+        owner.transfer(fee);
+        delete players;
+        jackpot = 0;
+        
+        completedGames++;
+    }
 
 }
