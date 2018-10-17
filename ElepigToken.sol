@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElepigToken at 0x38d14eb90d0be64f9bd3b34a199b0d961599340e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElepigToken at 0xafbe321aa28ab653dd6d507acc38e71ee7b0c7c0
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -80,7 +80,7 @@ contract BasicToken is ERC20Basic {
     * @param _owner The address to query the the balance of.
     * @return An uint256 representing the amount owned by the passed address.
     */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256) {
         return balances[_owner];
     }
 
@@ -192,7 +192,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract BurnableToken is BasicToken {
+contract BurnableToken is StandardToken {
 
     event Burn(address indexed burner, uint256 value);
 
@@ -268,7 +268,7 @@ contract Ownable {
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 
-contract MintableToken is StandardToken, Ownable, BurnableToken {
+contract MintableToken is BurnableToken, Ownable  {
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
     bool public mintingFinished = false;
@@ -428,26 +428,6 @@ contract ElepigToken is MintableToken {
 
         require(checkPermissions(_from));
         super.transferFrom(_from, _to, _value);
-    }
-
-    function freeze(uint256 _value) public returns (bool success) {     
-        require(balances[msg.sender] < _value); // Check if the sender has enough
-        require(_value <= 0);
-
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);          // Subtract from the sender
-        freezeOf[msg.sender] = SafeMath.add(freezeOf[msg.sender], _value);          // Updates freezeOf
-        emit Freeze(msg.sender, _value);
-        return true;
-    }
-
-    function unfreeze(uint256 _value) public returns (bool success) {
-        require(freezeOf[msg.sender] < _value); // Check if the sender has enough
-        require(_value <= 0);
-        
-        freezeOf[msg.sender] = SafeMath.sub(freezeOf[msg.sender], _value);           // Subtract from the sender
-        balances[msg.sender] = SafeMath.add(balances[msg.sender], _value);
-        emit Unfreeze(msg.sender, _value);
-        return true;
     }
 
     function () public payable {
