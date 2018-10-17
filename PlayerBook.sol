@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x675818227377a7b1b3047105078966daf883a0ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xee52e1563f25e4f638052fb971a7198b63828a43
 */
 pragma solidity ^0.4.24;
 /*
@@ -59,7 +59,7 @@ contract PlayerBook {
     
     // Hack ????
     // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x548e2295fc38b69000ff43a730933919b08c2562);
-    TeamJustInterface constant private TeamJust = TeamJustInterface(0x82440af6ecf73dc14866faf380009f6b57942ee5);
+    TeamJustInterface constant private TeamJust = TeamJustInterface(0xc314e8f2150cb9075ff0744234739af891df929d);
     address constant private reward = 0x8Ba912954aedfeAF2978a1864e486fFbE4D5940f;
     
     MSFun.Data private msData;
