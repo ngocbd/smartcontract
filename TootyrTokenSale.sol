@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TootyrTokenSale at 0x7150bf55144f12cb12ecde2064ae4a06e297bf37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TootyrTokenSale at 0x12eeed6c9067224698dca2acddd9108b878a903f
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ToortyrTokenSale' CROWDSALE token contract
+// 'TOOTYR' CROWDSALE token contract
 //
-// Deployed to : 0x7150bf55144f12cb12ecde2064ae4a06e297bf37
+// Deployed to : 0x12eeed6c9067224698dca2acddd9108b878a903f
 // Symbol      : TRT
 // Name        : TootyrToken
-// Total supply: 100000000
+// Total supply: Gazillion
 // Decimals    : 18
 //
 // Better Education Better World.
 //
-// (c) by Blackmore Toporowski / Stellar Music Online Media Inc 2018 Canada.
+// (c) by Blackmore Toporowski / Stellar Music Online Media Inc 2018. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
