@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x8096e16b4b28446d6d78355cfd1af4edc665382e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x258e2c26337cc8a95bd6d5225a4e0ffdb00a96a6
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
@@ -134,12 +134,6 @@ library SafeMath {
     }
 }
 
-/**
- * @title WiredToken
- * @author Tsuchinoko & NanJ people
- * @dev WiredToken is an ERC223 Token with ERC20 functions and events
- *      Fully backward compatible with ERC20
- */
 contract WiredToken is ERC20Interface, Ownable {
     using SafeMath for uint256;
 
@@ -158,9 +152,6 @@ contract WiredToken is ERC20Interface, Ownable {
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
 
-    /**
-     * @dev Constructor is called only once and can not be called again
-     */
     constructor() public {
         balanceOf[owner] = totalSupply;
         emit Transfer(address(0), owner, totalSupply);
@@ -174,11 +165,6 @@ contract WiredToken is ERC20Interface, Ownable {
         return balanceOf[_owner];
     }
 
-    /**
-     * @dev Prevent targets from sending or receiving tokens by setting Unix times
-     * @param targets Addresses to be locked funds
-     * @param unixTimes Unix times when locking up will be finished
-     */
     function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
         require(targets.length > 0
                 && targets.length == unixTimes.length);
@@ -190,10 +176,6 @@ contract WiredToken is ERC20Interface, Ownable {
         }
     }
 
-    /**
-     * @dev Standard function transfer similar to ERC20 transfer with no _data
-     *      Added due to backwards compatibility reasons
-     */
     function transfer(address _to, uint _value) public returns (bool success) {
         require(_value > 0
                 && now > unlockUnixTime[msg.sender]
@@ -207,13 +189,6 @@ contract WiredToken is ERC20Interface, Ownable {
         return true;
     }
 
-    /**
-     * @dev Transfer tokens from one address to another
-     *      Added due to backwards compatibility with ERC20
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_to != address(0)
                 && _value > 0
@@ -229,33 +204,16 @@ contract WiredToken is ERC20Interface, Ownable {
         return true;
     }
 
-    /**
-     * @dev Allows _spender to spend no more than _value tokens in your behalf
-     *      Added due to backwards compatibility with ERC20
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender
-     *      Added due to backwards compatibility with ERC20
-     * @param _owner address The address which owns the funds
-     * @param _spender address The address which will spend the funds
-     */
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowance[_owner][_spender];
     }
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _from The address that will burn the tokens.
-     * @param _unitAmount The amount of token to be burned.
-     */
     function burn(address _from, uint256 _unitAmount) onlyOwner public {
         require(_unitAmount > 0
                 && balanceOf[_from] >= _unitAmount);
@@ -265,17 +223,11 @@ contract WiredToken is ERC20Interface, Ownable {
         emit Burn(_from, _unitAmount);
     }
 
-
     modifier canMint() {
         require(!mintingFinished);
         _;
     }
 
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _unitAmount The amount of tokens to mint.
-     */
     function mint(address _to, uint256 _unitAmount) onlyOwner canMint public returns (bool) {
         require(_unitAmount > 0);
 
@@ -286,18 +238,12 @@ contract WiredToken is ERC20Interface, Ownable {
         return true;
     }
 
-    /**
-     * @dev Function to stop minting new tokens.
-     */
     function finishMinting() onlyOwner canMint public returns (bool) {
         mintingFinished = true;
         emit MintFinished();
         return true;
     }
 
-    /**
-     * @dev Function to distribute tokens to the list of addresses by the provided amount
-     */
     function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
         require(amount > 0
                 && addresses.length > 0
@@ -342,5 +288,4 @@ contract WiredToken is ERC20Interface, Ownable {
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
         return true;
     }
-
 }
