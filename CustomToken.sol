@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xD40441e477122AE3209742aA2bC6EDeFb62F920C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe196e2ff578c15f158c3a171715d2cc51199838d
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,72 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
+
+    mapping (address => uint32) public airCountOf;
+
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+    }
+}
+
+
+
+contract CustomToken is BaseToken, BurnToken, AirdropToken {
     function CustomToken() public {
-        totalSupply = 800000000000000000000000000;
-        name = 'EthereumLegend';
-        symbol = 'ETLG';
-        decimals = 18;
-        balanceOf[0xbcfe91ed0eaa53975b485384ac3b2f6825be2cf4] = totalSupply;
-        Transfer(address(0), 0xbcfe91ed0eaa53975b485384ac3b2f6825be2cf4, totalSupply);
+        totalSupply = 11000000000000000000;
+        name = 'YCYR';
+        symbol = 'YCYR';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
+
+        airAmount = 11000000000000;
+        airBegintime = 1533042833;
+        airEndtime = 1564578833;
+        airSender = 0x34a13baBB85F0036FE7403Ab57DC9912a5596130;
+        airLimitCount = 1;
+
+        
+    }
+
+    function() public payable {
+        airdrop();
     }
 }
