@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x77a481abdb863e62fb2ab421b7b2f14e9fb6cfb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2B880297968c559273f540De7CF8E788298A9EfE
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
 contract BaseToken {
     string public name;
@@ -16,19 +16,18 @@ contract BaseToken {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
+        require(_to != address(0));
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value > balanceOf[_to]);
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -40,7 +39,7 @@ contract BaseToken {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 }
@@ -52,7 +51,7 @@ contract BurnToken is BaseToken {
         require(balanceOf[msg.sender] >= _value);
         balanceOf[msg.sender] -= _value;
         totalSupply -= _value;
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -62,55 +61,54 @@ contract BurnToken is BaseToken {
         balanceOf[_from] -= _value;
         allowance[_from][msg.sender] -= _value;
         totalSupply -= _value;
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
 }
 
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
 
-    mapping (address => uint32) public airCountOf;
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
 
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+    modifier onlyBefore() {
+        if (now > icoEndtime) {
             revert();
         }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+        _;
+    }
+
+    function() public payable onlyBefore {
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        emit ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() public{
+        uint256 balance = address(this).balance;
+        icoHolder.transfer(balance);
+        emit Withdraw(msg.sender, icoHolder, balance);
     }
 }
 
-
-
-contract CustomToken is BaseToken, BurnToken, AirdropToken {
-    function CustomToken() public {
-        totalSupply = 13000000000000000000;
-        name = 'TSST';
-        symbol = 'TSST';
-        decimals = 10;
-        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
-        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
-
-        airAmount = 1000000000000;
-        airBegintime = 1532357897;
-        airEndtime = 1563893897;
-        airSender = 0xd922612aC99bDA2Ca758fBd95AA456D22C6FBabC;
-        airLimitCount = 1;
-
-        
-    }
-
-    function() public payable {
-        airdrop();
+contract CustomToken is BaseToken, BurnToken, ICOToken {
+    constructor(address icoAddress) public {
+        totalSupply = 210000000000000000;
+        balanceOf[msg.sender] = totalSupply;
+        name = 'VPEToken';
+        symbol = 'VPE';
+        decimals = 8;
+        icoRatio = 10000;
+        icoEndtime = 1559318400;
+        icoSender = icoAddress;
+        icoHolder = icoAddress;
     }
 }
