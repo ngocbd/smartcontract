@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x2153026c7f9059d4eb80060ac21cc1e0a544157d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x29500e03568ed3e770d4ca88be539c5057e36967
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
 
 
@@ -14,12 +14,9 @@ pragma solidity ^0.4.16;
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
+  function transfer(address to, uint256 value) public ;
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-
-
 
 
 
@@ -35,10 +32,6 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
-
-
 
 /**
  * @title Ownable
@@ -83,28 +76,19 @@ contract Ownable {
 }
 
 
-
-
-
-
-
 contract MultiTransfer is Ownable {
-    ERC20 public tkcAddress;
 
     function MultiTransfer() public {
 
     }
 
-    function setTKC(address tkc) public onlyOwner {
-        require(tkcAddress == address(0));
-        tkcAddress = ERC20(tkc);
-    }
-
-    function transfer(address[] to, uint[] value) public onlyOwner {
+    function transfer(address token,address[] to, uint[] value) public onlyOwner {
         require(to.length == value.length);
+        require(token != address(0));
 
+        ERC20 t = ERC20(token);
         for (uint i = 0; i < to.length; i++) {
-            tkcAddress.transferFrom(owner, to[i], value[i]);
+            t.transfer(to[i], value[i]);
         }
     }
 }
