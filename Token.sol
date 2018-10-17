@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2922e6c5b030a32ee9d7e08c0b6704f1eabc73b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x59eae09060bdf47f37c9549eded250c55ee31e1a
 */
 pragma solidity 0.4.24;
 
@@ -444,6 +444,7 @@ contract Token is AdditionalToken, PausableToken {
         totalSupply = totalSupply.add(_initSupply * (10 ** decimals));
         balances[msg.sender] = totalSupply.div(2);
         balances[address(this)] = totalSupply - balances[msg.sender];
+        emit Transfer(address(0), msg.sender, totalSupply.div(2));
     }
 
     /**
