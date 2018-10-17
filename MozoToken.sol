@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MozoToken at 0x44bf22949F9cc84b61B9328a9d885d1b5C806b41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MozoToken at 0xd16D41294f5429B2A01C787BA129bf5aa0dB7542
 */
 pragma solidity 0.4.23;
 
@@ -272,10 +272,10 @@ contract OwnerERC20 is ERC20Basic, Owner {
 
 contract MozoToken is StandardToken, OwnerERC20 {
     //token name
-    string public constant name = "Mozo Token";
+    string public constant name = "Test mainnet token Jul 9";
 
     //token symbol
-    string public constant symbol = "MOZO";
+    string public constant symbol = "ABCXYZ";
 
     //token symbol
     uint8 public constant decimals = 2;
