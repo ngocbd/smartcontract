@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirSwapHandler at 0x706b36a1f11457b31652149b77a3fef16575b808
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirSwapHandler at 0x340146f0e3f332a26ffe45aa5ab26d8dfde55895
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 // File: contracts/ExchangeHandler.sol
 
@@ -251,12 +251,12 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     uint256 constant MAX_UINT = 2**256 - 1;
 
     modifier onlyTotle() {
-        require(msg.sender == totle);
+        require(msg.sender == totle, "AirSwapHandler - Only TotlePrimary allowed to call this function");
         _;
     }
 
     /// @dev Constructor
-    function AirSwapHandler(
+    constructor(
         address _airSwap,
         address _wethAddress,
         address _totle
@@ -334,7 +334,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     function setTotle(address _totle)
     external
     onlyOwner {
-        require(_totle != address(0));
+        require(_totle != address(0), "Invalid address for totlePrimary");
         totle = _totle;
     }
 
@@ -357,7 +357,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     }
 
     function approveToken(address _token, uint amount) external onlyOwner {
-        require(ERC20(_token).approve(address(airSwap), amount));
+        require(ERC20(_token).approve(address(airSwap), amount), "Approve failed");
     }
 
     function() public payable {
@@ -404,9 +404,9 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
 
         require(validateOrder(orderAddresses[0], orderValues[0], orderAddresses[1],
                               address(this), orderValues[1], orderAddresses[3],
-                              orderValues[2], orderValues[3]));
+                              orderValues[2], orderValues[3]), "AirSwapHandler - Buy order validation failed.");
 
-        require(ERC20(orderAddresses[1]).transfer(orderAddresses[2], orderValues[0]));
+        require(ERC20(orderAddresses[1]).transfer(orderAddresses[2], orderValues[0]), "AirSwapHandler - Failed to transfer token to taker");
 
         return orderValues[0];
     }
@@ -428,14 +428,12 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
     ) private
     returns (uint)
     {
-        assert(msg.sender == totle);
-
-        require(orderAddresses[1] == address(weth));
+        require(orderAddresses[1] == address(weth), "AirSwapHandler - makerToken is not WETH for sell order");
 
         uint takerAmount = orderValues[1];
 
         if(ERC20(orderAddresses[3]).allowance(address(this), address(airSwap)) == 0) {
-            require(ERC20(orderAddresses[3]).approve(address(airSwap), MAX_UINT));
+            require(ERC20(orderAddresses[3]).approve(address(airSwap), MAX_UINT), "AirSwapHandler - unable to set token approval for sell order");
         }
 
         airSwap.fill(orderAddresses[0], orderValues[0], orderAddresses[1],
@@ -444,7 +442,7 @@ contract AirSwapHandler is ExchangeHandler, Ownable {
 
         require(validateOrder(orderAddresses[0], orderValues[0], orderAddresses[1],
                               address(this), takerAmount, orderAddresses[3],
-                              orderValues[2], orderValues[3]));
+                              orderValues[2], orderValues[3]), "AirSwapHandler - sell order validation failed.");
 
         weth.withdraw(orderValues[0]);
         msg.sender.transfer(orderValues[0]);
