@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USACoin at 0xbacfdb133c72f248ea5f70438c9356433c68778e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USACoin at 0x59241bd0b78cd46982986457ddd91acbb6e0a0de
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ISB' token contract
+// 'USACoin' token contract
 //
-// Deployed to : 0x116312c3471C2e7C34C52782D0399eBE601f3F30
+// Deployed to : 0xdb94ea3f744Ef5f4b385938ec0c118A4b65d5EbF
 // Symbol      : USA
-// Name        : United States of America Coin
-// Total supply: 1000000000000000000000000000
+// Name        : USACoin
+// Total supply: 10000000
 // Decimals    : 18
 //
 // Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by BUNCHUBETS
 // ----------------------------------------------------------------------------
 
 
@@ -117,11 +117,11 @@ contract USACoin is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function USACoin() public {
         symbol = "USA";
-        name = "United States of America Coin";
+        name = "USACoin";
         decimals = 18;
-        _totalSupply = 1000000000000000000000000000;
-        balances[0x116312c3471C2e7C34C52782D0399eBE601f3F30] = _totalSupply;
-        Transfer(address(0), 0x116312c3471C2e7C34C52782D0399eBE601f3F30, _totalSupply);
+        _totalSupply = 10000000000000000000000000;
+        balances[0xdb94ea3f744Ef5f4b385938ec0c118A4b65d5EbF] = _totalSupply;
+        Transfer(address(0), 0xdb94ea3f744Ef5f4b385938ec0c118A4b65d5EbF, _totalSupply);
     }
 
 
