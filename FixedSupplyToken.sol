@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xd5a50e57d5704c1bf0f7ec04d86e10c4ebd12f50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x4d9e23a3842fe7eb7682b9725cf6c507c424a41b
 */
 pragma solidity 0.4.24;
 
@@ -87,8 +87,8 @@ contract FixedSupplyToken is ERC20Interface {
     }
 
     constructor() public {
-        symbol = "CARPWOV2";
-        name = "CarblockPWOTokenV2";
+        symbol = "CAR";
+        name = "CarBlock.io";
         decimals = 18;
         totalSupply = 1800000000 * 10**uint(decimals);
         balances[msg.sender] = totalSupply;
