@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0x9de9563e27c6aafcf907bacee733f83d50168959
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0xbd047bfd52545b946264f00ebfbb01091412c033
 */
 pragma solidity ^0.4.21;
 
@@ -109,6 +109,9 @@ contract Bidding is Pausable
         uint40 timeStart;
     }
 
+    uint40 public minTime = 60*10;
+    uint public minBid = 50 finney;
+
     address public operatorAddress;
 
     Auction[] public auctions;
@@ -185,10 +188,11 @@ contract Bidding is Pausable
         return auctions[auction].timeStart <= now && now <= auctions[auction].timeEnd;
     }
 
-    function bid(uint16 auction, uint256 useFromPendingReturn) public payable whenNotPaused
+    function bid(uint16 auctionIndex, uint256 useFromPendingReturn) public payable whenNotPaused
     {
-        address prevBidder = auctions[auction].highestBidder;
-        uint256 returnValue = auctions[auction].highestBid;
+        Auction storage auction = auctions[auctionIndex];
+        address prevBidder = auction.highestBidder;
+        uint256 returnValue = auction.highestBid;
 
         require (useFromPendingReturn <= pendingReturns[msg.sender]);
 
@@ -198,15 +202,23 @@ contract Bidding is Pausable
 
         uint256 currentBid = bank + msg.value;
 
-        require(currentBid > auctions[auction].highestBid ||
-                currentBid == auctions[auction].highestBid && prevBidder == address(0));
-        require(isActive(auction));
+        require(currentBid >= auction.highestBid + minBid ||
+                currentBid >= auction.highestBid && prevBidder == address(0));
+        require(isActive(auctionIndex));
 
-        auctions[auction].highestBid = uint128(currentBid);
-        auctions[auction].highestBidder = msg.sender;
-        auctions[auction].lastBidTime = uint40(now);
+        auction.highestBid = uint128(currentBid);
+        auction.highestBidder = msg.sender;
+        auction.lastBidTime = uint40(now);
 
-        emit Bid(msg.sender, prevBidder, currentBid, currentBid - returnValue, auction);
+        for (uint16 i = 0; i < auctions.length; i++)
+        {
+            if (isActive(i) &&  auctions[i].timeEnd < now + minTime)
+            {
+                auctions[i].timeEnd = uint40(now) + minTime;
+            }
+        }
+
+        emit Bid(msg.sender, prevBidder, currentBid, currentBid - returnValue, auctionIndex);
 
         if (prevBidder != address(0))
         {
@@ -221,11 +233,10 @@ contract Bidding is Pausable
             pendingReturns[prevBidder] += returnValue;
             totalReturns += returnValue;
         }
-
     }
 
     function destroyContract() public onlyOwner {
-        require(address(this).balance == 0);
+//        require(address(this).balance == 0);
         selfdestruct(msg.sender);
     }
 
@@ -237,6 +248,16 @@ contract Bidding is Pausable
     function setOperator(address _operator) public onlyOwner
     {
         operatorAddress = _operator;
+    }
+
+    function setMinBid(uint _minBid) public onlyOwner
+    {
+        minBid = _minBid;
+    }
+
+    function setMinTime(uint40 _minTime) public onlyOwner
+    {
+        minTime = _minTime;
     }
 
     modifier onlyOperator() {
