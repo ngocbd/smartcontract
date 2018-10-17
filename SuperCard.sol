@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0x86cd40f527bb402643f4b1ad13dcbff2b03c1c6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0xf243fb3c8e90935f77f96ba3bbbd324cf070948e
 */
 pragma solidity ^0.4.24;
 
@@ -197,12 +197,14 @@ contract SuperCard is SPCevents {
         potSplit_[2] = SPCdatasets.PotSplit(20,10);
         potSplit_[3] = SPCdatasets.PotSplit(20,10);
 
+    /*
         activated_ = true;
 
         // lets start first round
         rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
         round_[1].end = now + rndInit_ + rndExtra_;
+    */
   }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
