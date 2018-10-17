@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x18a5c3c789c0c923c61a36ca4124b12c699242b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x7846ec1ea708131d46e9da39e93834498c4f4a3d
 */
 pragma solidity ^0.4.20;
 
@@ -58,9 +58,9 @@ contract ERC20 is ERC20Interface,SafeMath {
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "CONG";
+       symbol = "TUCC";
        decimals = 4;
-       totalSupply = 100000000000000;
+       totalSupply = 1000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
@@ -127,30 +127,8 @@ contract owned {
 
 }
 
-contract SelfDesctructionContract {
-   address public owner;
-   string  public someValue;
-   modifier ownerRestricted {
-      require(owner == msg.sender);
-      _;
-   } 
-   // constructor
-   function SelfDesctructionContract() {
-      owner = msg.sender;
-   }
-   // a simple setter function
-   function setSomeValue(string value){
-      someValue = value;
-   } 
-   // you can call it anything you want
-   function destroyContract() ownerRestricted {
-     selfdestruct(owner);
-   }
-}
 
-
-
-contract AdvanceToken is ERC20, owned,SelfDesctructionContract{
+contract AdvanceToken is ERC20, owned{
 
     mapping (address => bool) public frozenAccount;
 
