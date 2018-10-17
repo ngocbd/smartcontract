@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ISCToken at 0xbbb3c5f4c739f268c5ee18807be3c28f8bb5a64f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ISCToken at 0xaf474bb656bcdaf29fad5bdaa59ffdcb34c0687d
 */
 /**
   * SafeMath Libary
@@ -286,10 +286,7 @@ contract ISCToken is EIP20Interface,Ownable,SafeMath,Pausable{
 
         uint256 index;
         uint256 locked;
-        balances[_to] = safeAdd(balances[_to], _value);
-        jail[_to] = safeAdd(jail[_to], _value);
-        balances[walletOwnerAddress] = safeSub(balances[walletOwnerAddress],_value);
-        
+       
         if(updateTime[_to] == 0){
             locked = safeSub(_value,_value/5);
             LockedToken[_to] = safeAdd(LockedToken[_to],locked);
@@ -305,6 +302,11 @@ contract ISCToken is EIP20Interface,Ownable,SafeMath,Pausable{
             locked = safeSub(_value,_value/5);
             LockedToken[_to] = safeAdd(LockedToken[_to],locked);
         }
+
+        balances[_to] = safeAdd(balances[_to], _value);
+        jail[_to] = safeAdd(jail[_to], _value);
+        balances[walletOwnerAddress] = safeSub(balances[walletOwnerAddress],_value);
+        
         updateTime[_to] = now;
         withdraw(walletOwnerAddress);
         emit BuyToken(msg.sender, _to, _value);
