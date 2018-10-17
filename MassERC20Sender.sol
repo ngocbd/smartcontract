@@ -1,40 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MassERC20Sender at 0x9ca884a37a87eb14cfc0dbe4bc47c119b9272fe0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MassERC20Sender at 0xe023af71226120cb41c60db055cf6660469539be
 */
 pragma solidity ^0.4.21;
 
-contract ERC20 {
-  function transfer(address to, uint256 value) public returns (bool);
+contract ERC20Interface {
+    // function totalSupply() public constant returns (uint);
+    // function balanceOf(address tokenOwner) public constant returns (uint balance);
+    // function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    // function transfer(address to, uint tokens) public returns (bool success);
+    // function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    // event Transfer(address indexed from, address indexed to, uint tokens);
+    // event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 contract MassERC20Sender   {
-    address public backupOwner;
     address public owner;
 
-    function MassERC20Sender(address backupOwner_) public{
+    function MassERC20Sender() public{
         owner = msg.sender;
-        backupOwner = backupOwner_;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner || msg.sender == backupOwner);
-        _;
-    }
-
-    function multisend(ERC20 _tokenAddr, address[] dests, uint256[] values) onlyOwner public returns (uint256) {
+    function multisend(ERC20Interface _tokenAddr, address[] dests, uint256[] values) public returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
-            _tokenAddr.transfer(dests[i], values[i]);
+            _tokenAddr.transferFrom(msg.sender, dests[i], values[i]);
             i += 1;
         }
         return(i);
     }
 
-    function withdraw() onlyOwner public{
+    function withdraw() public{
+        require(msg.sender == owner);
         owner.transfer(this.balance);
-    }
-
-    function setBackupOwner(address backupOwner_) onlyOwner public{
-        backupOwner = backupOwner_;
     }
 }
