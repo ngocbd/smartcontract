@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x53Dc2d4c1908fA96d8cEEF7c8E23A74DA0A9BBA1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x7bb3edadd00684cd48cc53b64ee87fb4767158eb
 */
 pragma solidity ^0.4.24;
 
@@ -1691,25 +1691,25 @@ library F3DKeysCalcLong {
      * @param _eth eth "in contract"
      * @return number of keys that would exist
      */
-    function keys(uint256 _eth) 
+    function keys(uint256 _eth)
         internal
         pure
         returns(uint256)
     {
-        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+        return (((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000)) / 50;
     }
-    
+
     /**
      * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract" 
+     * @param _keys number of keys "in contract"
      * @return eth that would exists
      */
-    function eth(uint256 _keys) 
+    function eth(uint256 _keys)
         internal
         pure
-        returns(uint256)  
+        returns(uint256)
     {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq()) * 50;
     }
 }
 
