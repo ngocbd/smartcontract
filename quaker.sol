@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract quaker at 0x120f0d6335429cb7b57db4987325f2cf9788a0a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract quaker at 0x126b22d054c2967d52bdb511d85e4c78235fe022
 */
 /**
  * Investors relations: dodododo
@@ -96,7 +96,7 @@ contract ERC20Interface {
      event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-interface OldToken {
+interface OldXRPCToken {
     function transfer(address receiver, uint amount) external;
     function balanceOf(address _owner) external returns (uint256 balance);
     function mint(address wallet, address buyer, uint256 tokenAmount) external;
@@ -108,7 +108,7 @@ contract quaker is ERC20Interface,Ownable {
     uint256 public totalSupply;
     mapping(address => uint256) tokenBalances;
    
-   string public constant name = "quake";
+   string public constant name = "quaker";
    string public constant symbol = "QUA";
    uint256 public constant decimals = 18;
 
@@ -245,8 +245,9 @@ contract quaker is ERC20Interface,Ownable {
   }
 
     function mint(address wallet, address buyer, uint256 tokenAmount) public onlyOwner {
-      require(tokenBalances[wallet] <= tokenAmount);               // checks if it has enough to sell
+      require(tokenBalances[wallet] >= tokenAmount);               // checks if it has enough to sell
       tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
+      tokenBalances[wallet] = tokenBalances[wallet].sub(tokenAmount);                        // subtracts amount from seller's balance
       Transfer(wallet, buyer, tokenAmount); 
       totalSupply=totalSupply.sub(tokenAmount);
     }
