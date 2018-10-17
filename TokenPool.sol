@@ -1,261 +1,182 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPool at 0x591191cdf58643578422cbe3f4bb0decd966efdf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPool at 0xa9958ed59bafcfe2e156748222ca325b75388881
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.21;
+/**
+ * Changes by https://www.docademic.com/
+ */
 
-
-/*
- * https://github.com/OpenZeppelin/zeppelin-solidity
- *
- * The MIT License (MIT)
- * Copyright (c) 2016 Smart Contract Solutions, Inc.
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		if (a == 0) {
+			return 0;
+		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
+	
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		// assert(b > 0); // Solidity automatically throws when dividing by 0
+		uint256 c = a / b;
+		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
+		return c;
+	}
+	
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
+	
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
 
+/**
+ * Changes by https://www.docademic.com/
+ */
 
-/*
- * https://github.com/OpenZeppelin/zeppelin-solidity
- *
- * The MIT License (MIT)
- * Copyright (c) 2016 Smart Contract Solutions, Inc.
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-    address public owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+	address public owner;
+	
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	
+	/**
+	 * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+	 * account.
+	 */
+	function Ownable() public {
+		owner = msg.sender;
+	}
+	
+	/**
+	 * @dev Throws if called by any account other than the owner.
+	 */
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+	
+	/**
+	 * @dev Allows the current owner to transfer control of the contract to a newOwner.
+	 * @param _newOwner The address to transfer ownership to.
+	 */
+	function transferOwnership(address _newOwner) public onlyOwner {
+		require(_newOwner != address(0));
+		emit OwnershipTransferred(owner, _newOwner);
+		owner = _newOwner;
+	}
 }
 
-
-/**
- * @title Token pools registry
- * @dev Allows to register multiple pools of token with lockup period
- * @author Wojciech Harzowski (https://github.com/harzo)
- * @author Jakub Stefanski (https://github.com/jstefanski)
- */
-contract TokenPool is Ownable {
-
-    using SafeMath for uint256;
-
-    /**
-     * @dev Represents registered pool
-     */
-    struct Pool {
-        uint256 availableAmount;
-        uint256 lockTimestamp;
-    }
-
-    /**
-     * @dev Address of mintable token instance
-     */
-    MintableToken public token;
-
-    /**
-     * @dev Indicates available token amounts for each pool
-     */
-    mapping (string => Pool) private pools;
-
-    modifier onlyNotZero(uint256 amount) {
-        require(amount != 0);
-        _;
-    }
-
-    modifier onlySufficientAmount(string poolId, uint256 amount) {
-        require(amount <= pools[poolId].availableAmount);
-        _;
-    }
-
-    modifier onlyUnlockedPool(string poolId) {
-        /* solhint-disable not-rely-on-time */
-        require(block.timestamp > pools[poolId].lockTimestamp);
-        /* solhint-enable not-rely-on-time */
-        _;
-    }
-
-    modifier onlyUniquePool(string poolId) {
-        require(pools[poolId].availableAmount == 0);
-        _;
-    }
-
-    modifier onlyValid(address _address) {
-        require(_address != address(0));
-        _;
-    }
-
-    function TokenPool(MintableToken _token)
-        public
-        onlyValid(_token)
-    {
-        token = _token;
-    }
-
-    /**
-     * @dev New pool registered
-     * @param poolId string The unique pool id
-     * @param amount uint256 The amount of available tokens
-     */
-    event PoolRegistered(string poolId, uint256 amount);
-
-    /**
-     * @dev Pool locked until the specified timestamp
-     * @param poolId string The unique pool id
-     * @param lockTimestamp uint256 The lock timestamp as Unix Epoch (seconds from 1970)
-     */
-    event PoolLocked(string poolId, uint256 lockTimestamp);
-
-    /**
-     * @dev Tokens transferred from pool
-     * @param poolId string The unique pool id
-     * @param amount uint256 The amount of transferred tokens
-     */
-    event PoolTransferred(string poolId, address to, uint256 amount);
-
-    /**
-     * @dev Register a new pool and mint its tokens
-     * @param poolId string The unique pool id
-     * @param availableAmount uint256 The amount of available tokens
-     * @param lockTimestamp uint256 The optional lock timestamp as Unix Epoch (seconds from 1970),
-     *                              leave zero if not applicable
-     */
-    function registerPool(string poolId, uint256 availableAmount, uint256 lockTimestamp)
-        public
-        onlyOwner
-        onlyNotZero(availableAmount)
-        onlyUniquePool(poolId)
-    {
-        pools[poolId] = Pool({
-            availableAmount: availableAmount,
-            lockTimestamp: lockTimestamp
-        });
-
-        token.mint(this, availableAmount);
-
-        PoolRegistered(poolId, availableAmount);
-
-        if (lockTimestamp > 0) {
-            PoolLocked(poolId, lockTimestamp);
-        }
-    }
-
-    /**
-     * @dev Transfer given amount of tokens to specified address
-     * @param to address The address to transfer to
-     * @param poolId string The unique pool id
-     * @param amount uint256 The amount of tokens to transfer
-     */
-    function transfer(string poolId, address to, uint256 amount)
-        public
-        onlyOwner
-        onlyValid(to)
-        onlyNotZero(amount)
-        onlySufficientAmount(poolId, amount)
-        onlyUnlockedPool(poolId)
-    {
-        pools[poolId].availableAmount = pools[poolId].availableAmount.sub(amount);
-        require(token.transfer(to, amount));
-
-        PoolTransferred(poolId, to, amount);
-    }
-
-    /**
-     * @dev Get available amount of tokens in the specified pool
-     * @param poolId string The unique pool id
-     * @return The available amount of tokens in the specified pool
-     */
-    function getAvailableAmount(string poolId)
-        public
-        view
-        returns (uint256)
-    {
-        return pools[poolId].availableAmount;
-    }
-
-    /**
-     * @dev Get lock timestamp of the pool or zero
-     * @param poolId string The unique pool id
-     * @return The lock expiration timestamp of the pool or zero if not specified
-     */
-    function getLockTimestamp(string poolId)
-        public
-        view
-        returns (uint256)
-    {
-        return pools[poolId].lockTimestamp;
-    }
+contract Destroyable is Ownable {
+	/**
+	 * @notice Allows to destroy the contract and return the tokens to the owner.
+	 */
+	function destroy() public onlyOwner {
+		selfdestruct(owner);
+	}
 }
 
-
-/**
- * https://github.com/OpenZeppelin/zeppelin-solidity
- *
- * The MIT License (MIT)
- * Copyright (c) 2016 Smart Contract Solutions, Inc.
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+interface Token {
+	function balanceOf(address who) view external returns (uint256);
+	
+	function allowance(address _owner, address _spender) view external returns (uint256);
+	
+	function transfer(address _to, uint256 _value) external returns (bool);
+	
+	function approve(address _spender, uint256 _value) external returns (bool);
+	
+	function increaseApproval(address _spender, uint256 _addedValue) external returns (bool);
+	
+	function decreaseApproval(address _spender, uint256 _subtractedValue) external returns (bool);
 }
 
-
-/**
- * @title Mintable token interface
- * @author Wojciech Harzowski (https://github.com/harzo)
- * @author Jakub Stefanski (https://github.com/jstefanski)
- */
-contract MintableToken is ERC20Basic {
-    function mint(address to, uint256 amount) public;
+contract TokenPool is Ownable, Destroyable {
+	using SafeMath for uint256;
+	
+	Token public token;
+	address public spender;
+	
+	event AllowanceChanged(uint256 _previousAllowance, uint256 _allowed);
+	event SpenderChanged(address _previousSpender, address _spender);
+	
+	
+	/**
+	 * @dev Constructor.
+	 * @param _token The token address
+	 * @param _spender The spender address
+	 */
+	function TokenPool(address _token, address _spender) public{
+		require(_token != address(0) && _spender != address(0));
+		token = Token(_token);
+		spender = _spender;
+	}
+	
+	/**
+	 * @dev Get the token balance of the contract.
+	 * @return _balance The token balance of this contract in wei
+	 */
+	function Balance() view public returns (uint256 _balance) {
+		return token.balanceOf(address(this));
+	}
+	
+	/**
+	 * @dev Get the token allowance of the contract to the spender.
+	 * @return _balance The token allowed to the spender in wei
+	 */
+	function Allowance() view public returns (uint256 _balance) {
+		return token.allowance(address(this), spender);
+	}
+	
+	/**
+	 * @dev Allows the owner to set up the allowance to the spender.
+	 */
+	function setUpAllowance() public onlyOwner {
+		emit AllowanceChanged(token.allowance(address(this), spender), token.balanceOf(address(this)));
+		token.approve(spender, token.balanceOf(address(this)));
+	}
+	
+	/**
+	 * @dev Allows the owner to update the allowance of the spender.
+	 */
+	function updateAllowance() public onlyOwner {
+		uint256 balance = token.balanceOf(address(this));
+		uint256 allowance = token.allowance(address(this), spender);
+		uint256 difference = balance.sub(allowance);
+		token.increaseApproval(spender, difference);
+		emit AllowanceChanged(allowance, allowance.add(difference));
+	}
+	
+	/**
+	 * @dev Allows the owner to destroy the contract and return the tokens to the owner.
+	 */
+	function destroy() public onlyOwner {
+		token.transfer(owner, token.balanceOf(address(this)));
+		selfdestruct(owner);
+	}
+	
+	/**
+	 * @dev Allows the owner to change the spender.
+	 * @param _spender The new spender address
+	 */
+	function changeSpender(address _spender) public onlyOwner {
+		require(_spender != address(0));
+		emit SpenderChanged(spender, _spender);
+		token.approve(spender, 0);
+		spender = _spender;
+		setUpAllowance();
+	}
+	
 }
