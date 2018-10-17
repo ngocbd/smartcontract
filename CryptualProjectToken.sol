@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0x9aa7fde6c6ffb6c3104c508250aae71af506647e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0x9b3579b22f1bd4ffe9f3c8f2c58da696fd9d45ab
 */
 pragma solidity ^0.4.23;
 
-// File: node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -55,7 +54,6 @@ library SafeMath {
   }
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -116,7 +114,6 @@ contract Ownable {
   }
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -130,7 +127,26 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
 
 /**
  * @title Basic token
@@ -176,28 +192,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -321,7 +315,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: contracts/CryptualProjectToken.sol
 
 /**
  * @title CryptualProjectToken
@@ -333,31 +326,29 @@ contract CryptualProjectToken is StandardToken, Ownable {
 
   // ERC20 optional details
   string public constant name = "Cryptual Project Token"; // solium-disable-line uppercase
-  string public constant symbol = "CPT"; // solium-disable-line uppercase
+  string public constant symbol = "CTL"; // solium-disable-line uppercase
   uint8 public constant decimals = 0; // solium-disable-line uppercase
 
   // Token constants, variables
-  uint256 public constant INITIAL_SUPPLY = 283000000;
+  uint256 public constant INITIAL_SUPPLY = 2480000000;
   address public wallet;
 
   // Private presale constants
-  uint256 public constant PRESALE_OPENING_TIME = 1533726000; // Wed, 08 Aug 2018 11:00:00 +0000
-  uint256 public constant PRESALE_CLOSING_TIME = 1534291200; // Wed, 15 Aug 2018 00:00:00 +0000
-  uint256 public constant PRESALE_RATE = 150000;
-  uint256 public constant PRESALE_WEI_CAP = 500 ether;
-  uint256 public constant PRESALE_WEI_GOAL = 50 ether;
+  uint256 public constant PRESALE_OPENING_TIME = 1535382000; // Mon, 27 Aug 2018 15:00:00 +0000
+  uint256 public constant PRESALE_CLOSING_TIME = 1536289200; // Fri, 07 Sep 2018 03:00:00 +0000
+  uint256 public constant PRESALE_RATE = 500000;
+  uint256 public constant PRESALE_WEI_CAP = 2500 ether;
+  uint256 public constant PRESALE_WEI_GOAL = 100 ether;
 
   // Public crowdsale constants
-  uint256 public constant CROWDSALE_OPENING_TIME = 1534935600; // Wed, 22 Aug 2018 11:00:00 +0000
-  uint256 public constant CROWDSALE_CLOSING_TIME = 1540166400; // Mon, 22 Oct 2018 00:00:00 +0000
-  uint256 public constant CROWDSALE_WEI_CAP = 5000 ether;
-
-  // Combined wei goal for both token sale stages
-  uint256 public constant COMBINED_WEI_GOAL = 750 ether;
+  uint256 public constant CROWDSALE_OPENING_TIME = 1537542000; // Fri, 21 Sep 2018 15:00:00 +0000
+  uint256 public constant CROWDSALE_CLOSING_TIME = 1545361200; // Fri, 21 Dec 2018 03:00:00 +0000
+  uint256 public constant CROWDSALE_WEI_CAP = 20000 ether;
+  uint256 public constant CROWDSALE_WEI_GOAL = 800 ether;
 
   // Public crowdsale parameters
-  uint256[] public crowdsaleWeiAvailableLevels = [1000 ether, 1500 ether, 2000 ether];
-  uint256[] public crowdsaleRates = [135000, 120000, 100000];
+  uint256[] public crowdsaleWeiAvailableLevels = [2500 ether, 5000 ether, 12500 ether];
+  uint256[] public crowdsaleRates = [400000, 300000, 200000];
   uint256[] public crowdsaleMinElapsedTimeLevels = [0, 12 * 3600, 18 * 3600, 21 * 3600, 22 * 3600];
   uint256[] public crowdsaleUserCaps = [1 ether, 2 ether, 4 ether, 8 ether, CROWDSALE_WEI_CAP];
   mapping(address => uint256) public crowdsaleContributions;
@@ -580,7 +571,7 @@ contract CryptualProjectToken is StandardToken, Ownable {
     require(!isCrowdsaleFinalized);
     require(block.timestamp > CROWDSALE_CLOSING_TIME);
 
-    if (combinedGoalReached()) {
+    if (crowdsaleGoalReached()) {
       wallet.transfer(address(this).balance);
     } else {
       emit RefundsEnabled();
@@ -596,7 +587,7 @@ contract CryptualProjectToken is StandardToken, Ownable {
   function claimRefund() external {
     uint256 depositedValue = 0;
 
-    if (isCrowdsaleFinalized && !combinedGoalReached()) {
+    if (isCrowdsaleFinalized && !crowdsaleGoalReached()) {
       require(crowdsaleDeposited[msg.sender] > 0);
       depositedValue = crowdsaleDeposited[msg.sender];
       crowdsaleDeposited[msg.sender] = 0;
@@ -620,11 +611,11 @@ contract CryptualProjectToken is StandardToken, Ownable {
   }
 
   /**
-   * @dev Checks whether total funding goal was reached.
-   * @return Whether total funding goal was reached
+   * @dev Checks whether crowdsale funding goal was reached.
+   * @return Whether crowdsale funding goal was reached
    */
-  function combinedGoalReached() public view returns (bool) {
-    return presaleWeiRaised.add(crowdsaleWeiRaised) >= COMBINED_WEI_GOAL;
+  function crowdsaleGoalReached() public view returns (bool) {
+    return crowdsaleWeiRaised >= CROWDSALE_WEI_GOAL;
   }
 
 }
