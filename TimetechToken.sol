@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimetechToken at 0x95f2518f1f890451a0694b12734ff5e952e1d33b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimetechToken at 0xfcfc2e71566c44a8b63c46567e43c81f78a0310c
 */
 pragma solidity ^0.4.21;
 
@@ -14,6 +14,8 @@ contract TimetechToken {
   uint public cap = 8290000000 * decimalsFactor;
 
   address public owner;
+  mapping (address => bool) public companions;
+  address[] public companionsList;
   bool public paused = false;
   mapping(address => uint256) balances;
   uint256 totalSupply_;
@@ -21,7 +23,7 @@ contract TimetechToken {
   bool public mintingFinished = false;
 
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require((msg.sender == owner) || (companions[msg.sender]));
     _;
   }
 
@@ -41,6 +43,8 @@ contract TimetechToken {
   }
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event CompanionAdded(address indexed _companion);
+  event CompanionRemoved(address indexed _companion);
   event Pause();
   event Unpause();
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -57,7 +61,7 @@ contract TimetechToken {
   }
 
 
-  function setName(string _name) public {
+  function setName(string _name) onlyOwner public {
     require(bytes(_name).length != 0);
     name = _name;
     emit NameChanged();
@@ -143,6 +147,24 @@ contract TimetechToken {
     require(newOwner != address(0));
     owner = newOwner;
     emit OwnershipTransferred(owner, newOwner);
+  }
+
+  function addCompanion(address _companion) onlyOwner public {
+    require(_companion != address(0));
+    companions[_companion] = true;
+    companionsList.push(_companion);
+    emit CompanionAdded(_companion);
+  }
+
+  function removeCompanion(address _companion) onlyOwner public {
+    require(_companion != address(0));
+    companions[_companion] = false;
+    // -- companionsList element remains, for record purposes.
+    emit CompanionRemoved(_companion);
+  }
+
+  function companionsListCount() onlyOwner public view returns (uint256) {
+    return companionsList.length;
   }
 
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
