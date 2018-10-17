@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WagerGames at 0xba3bcad13b7162f3136e4f2099078c3a805dc88a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WagerGames at 0x63fa9536077e7aabe8e9b1f5cc49af30ac948ede
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.23;
 
 contract Token {
 
@@ -51,7 +51,7 @@ contract StandardToken is Token {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+            emit Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
@@ -63,7 +63,7 @@ contract StandardToken is Token {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+            emit Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -74,7 +74,7 @@ contract StandardToken is Token {
 
     function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -109,10 +109,10 @@ contract WagerGames is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function WagerGames() {
-        balances[msg.sender] = 1000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 1000000000;                        // Update total supply (1000 for example) (WagerGames)
+        balances[msg.sender] = 1000000000 * (10**18);               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 1000000000 * (10**18);                        // Update total supply (1000 for example) (WagerGames)
         name = "WagerGames";                                   // Set the name for display purposes (WagerGames)
-        decimals = 0;                                               // Amount of decimals for display purposes (WagerGames)
+        decimals = 18;                                               // Amount of decimals for display purposes (WagerGames)
         symbol = "WGT";                                             // Set the symbol for display purposes (WagerGames)
                                               // Set the price of your token for the ICO (WagerGames)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
@@ -122,7 +122,7 @@ contract WagerGames is StandardToken { // CHANGE THIS. Update the contract name.
 /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
