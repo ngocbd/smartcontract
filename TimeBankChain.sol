@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeBankChain at 0x2aa215697a6f2a87a200fb8a34b24de69d9debcb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeBankChain at 0x920f451c39d65287a831ba442cccc6795c83817b
 */
 pragma solidity ^0.4.15;
 
@@ -144,7 +144,7 @@ contract StandardToken is ERC20, BasicToken {
 contract TimeBankChain is StandardToken {
 
   string public constant name = "TimeBank Chain";
-  string public constant symbol = "TBKC";
+  string public constant symbol = "TBK";
   uint8 public constant decimals = 18;
 
 
