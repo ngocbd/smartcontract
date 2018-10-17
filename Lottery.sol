@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x59bdc32135ce4e566a5b6d752b9b0fc683c6f631
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xadb606c42446e7af0ef5562e0d905ab52c4f9c4a
 */
 pragma solidity ^0.4.22;
 
@@ -18,8 +18,8 @@ contract Lottery {
   event FundTransfer(address backer, uint amount, bool isContribution);
 
   constructor() public {
-    // playerCountGoal will be in [10000, 10100]
-    playerCountGoal = 10000 + randomGen(block.number - 1, 101);
+    // playerCountGoal will be in [1000, 1100]
+    playerCountGoal = 1000 + randomGen(block.number - 1, 101);
     owner = msg.sender;
   }
 
