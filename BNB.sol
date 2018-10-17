@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNB at 0x1b9c8bdab3799c68682aac68089af32d1e7dcdd0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNB at 0x2f0dcccbe7628905bd287e2a28069986e8699717
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.18;
 
 /**
  * Math operations with safety checks
