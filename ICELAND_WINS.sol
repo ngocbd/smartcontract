@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICELAND_WINS at 0x7e22c5d10cdd8b1cc8132c09248fbfd194a801b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICELAND_WINS at 0xfe139fe4e9ce9bbb280dd3c62c9db9a2fab0cfd1
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,10 +8,10 @@ contract	ICELAND_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	ICELAND_WINS		"	;
-	string	public		symbol =	"	ICEWI		"	;
+	string	public		symbol =	"	ICEWII		"	;
 	uint8	public		decimals =		18			;
 									
-	uint256 public totalSupply =		2320350129365300000000000000					;	
+	uint256 public totalSupply =		2337100129365300000000000000					;	
 									
 	event Transfer(address indexed from, address indexed to, uint256 value);								
 									
