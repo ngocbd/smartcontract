@@ -1,185 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x808da7691b7e952ce9cddb3cbb792d4a982dd872
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x88b30117e7eafcda49542d5530d383146ca9af70
 */
 pragma solidity ^0.4.24;
-
-// import "./interface/DiviesInterface.sol";
-
-interface DiviesInterface {
-    function deposit() external payable;
-}
-
-
-// import "./library/SafeMath.sol";
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr 
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
+/** title -Divies- v0.7.1
+ 
+ *         ????????????????????????????????????????????????????????????????????????
+ *         ? Divies!, is a contract that adds an external dividend system to BTB. ?
+ *         ? All eth sent to this contract, can be distributed to BTB holders.    ?
+ *         ? Uses msg.sender as masternode for initial buy order.                 ?
+ *         ????????????????????????????????????????????????????????????????????????
+ *                                ??????????????????????
+ *                                ? Setup Instructions ?
+ *                                ??????????????????????
+ * (Step 1) import this contracts interface into your contract
+ * 
+ *    import "./DiviesInterface.sol";
+ * 
+ * (Step 2) set up the interface and point it to this contract
+ * 
+ *    DiviesInterface private Divies = DiviesInterface(0xEDEaB579e57a7D66297D0a67302647bB109db7A8);
+ *                                ??????????????????????
+ *                                ? Usage Instructions ?
+ *                                ??????????????????????
+ * call as follows anywhere in your code:
+ *   
+ *    Divies.deposit.value(amount)();
+ *          ex:  Divies.deposit.value(232000000000000000000)();
  */
-library SafeMath {
-    
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) 
-        internal 
-        pure 
-        returns (uint256 c) 
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256) 
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c) 
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-    
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y) 
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y) 
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-    
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
-    }
-    
-    /**
-     * @dev x to the power of y 
-     */
-    function pwr(uint256 x, uint256 y)
-        internal 
-        pure 
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else 
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
-    }
-}
-
-
-//import "./library/UintCompressor.sol";
-library UintCompressor {
-    using SafeMath for *;
-    
-    function insert(uint256 _var, uint256 _include, uint256 _start, uint256 _end)
-        internal
-        pure
-        returns(uint256)
-    {
-        // check conditions 
-        require(_end < 77 && _start < 77, "start/end must be less than 77");
-        require(_end >= _start, "end must be >= start");
-        
-        // format our start/end points
-        _end = exponent(_end).mul(10);
-        _start = exponent(_start);
-        
-        // check that the include data fits into its segment 
-        require(_include < (_end / _start));
-        
-        // build middle
-        if (_include > 0)
-            _include = _include.mul(_start);
-        
-        return((_var.sub((_var / _start).mul(_start))).add(_include).add((_var / _end).mul(_end)));
-    }
-    
-    function extract(uint256 _input, uint256 _start, uint256 _end)
-	    internal
-	    pure
-	    returns(uint256)
-    {
-        // check conditions
-        require(_end < 77 && _start < 77, "start/end must be less than 77");
-        require(_end >= _start, "end must be >= start");
-        
-        // format our start/end points
-        _end = exponent(_end).mul(10);
-        _start = exponent(_start);
-        
-        // return requested section
-        return((((_input / _start).mul(_start)).sub((_input / _end).mul(_end))) / _start);
-    }
-    
-    function exponent(uint256 _position)
-        private
-        pure
-        returns(uint256)
-    {
-        return((10).pwr(_position));
-    }
-}
-
-
-//import "./interface/HourglassInterface.sol";
 interface HourglassInterface {
     function() payable external;
     function buy(address _playerAddress) payable external returns(uint256);
@@ -193,15 +41,11 @@ interface HourglassInterface {
     function stakingRequirement() external view returns(uint256);
 }
 
-
-//
-
-
 contract Divies {
     using SafeMath for uint256;
     using UintCompressor for uint256;
 
-    HourglassInterface constant P3Dcontract_ = HourglassInterface(0x7fc8eb833aebf2b52155c386801a374e90b0c95e);     
+    HourglassInterface constant BTBcontract_ = HourglassInterface(0xEDEaB579e57a7D66297D0a67302647bB109db7A8);
     
     uint256 public pusherTracker_ = 100;
     mapping (address => Pusher) public pushers_;
@@ -216,11 +60,7 @@ contract Divies {
     // MODIFIERS
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "sorry humans only");
+        require(tx.origin == msg.sender);
         _;
     }
     
@@ -296,32 +136,32 @@ contract Divies {
             pusherTracker_++;
             
             // setup mn payout for event
-            if (P3Dcontract_.balanceOf(_pusher) >= P3Dcontract_.stakingRequirement())
+            if (BTBcontract_.balanceOf(_pusher) >= BTBcontract_.stakingRequirement())
                 _mnPayout = (_bal / 10) / 3;
             
             // setup _stop.  this will be used to tell the loop to stop
             uint256 _stop = (_bal.mul(100 - _percent)) / 100;
             
             // buy & sell    
-            P3Dcontract_.buy.value(_bal)(_pusher);
-            P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
+            BTBcontract_.buy.value(_bal)(_pusher);
+            BTBcontract_.sell(BTBcontract_.balanceOf(address(this)));
             
             // setup tracker.  this will be used to tell the loop to stop
-            uint256 _tracker = P3Dcontract_.dividendsOf(address(this));
+            uint256 _tracker = BTBcontract_.dividendsOf(address(this));
     
             // reinvest/sell loop
             while (_tracker >= _stop) 
             {
                 // lets burn some tokens to distribute dividends to p3d holders
-                P3Dcontract_.reinvest();
-                P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
+                BTBcontract_.reinvest();
+                BTBcontract_.sell(BTBcontract_.balanceOf(address(this)));
                 
                 // update our tracker with estimates (yea. not perfect, but cheaper on gas)
                 _tracker = (_tracker.mul(81)) / 100;
             }
             
             // withdraw
-            P3Dcontract_.withdraw();
+            BTBcontract_.withdraw();
         } else {
             _compressedData = _compressedData.insert(1, 47, 47);
         }
@@ -337,5 +177,165 @@ contract Divies {
             
         // fire event
         emit onDistribute(_pusher, _bal, _mnPayout, address(this).balance, _compressedData);
+    }
+}
+
+/**
+* @title -UintCompressor- v0.1.9
+
+*/
+
+library UintCompressor {
+    using SafeMath for *;
+    
+    function insert(uint256 _var, uint256 _include, uint256 _start, uint256 _end)
+        internal
+        pure
+        returns(uint256)
+    {
+        // check conditions 
+        require(_end < 77 && _start < 77, "start/end must be less than 77");
+        require(_end >= _start, "end must be >= start");
+        
+        // format our start/end points
+        _end = exponent(_end).mul(10);
+        _start = exponent(_start);
+        
+        // check that the include data fits into its segment 
+        require(_include < (_end / _start));
+        
+        // build middle
+        if (_include > 0)
+            _include = _include.mul(_start);
+        
+        return((_var.sub((_var / _start).mul(_start))).add(_include).add((_var / _end).mul(_end)));
+    }
+    
+    function extract(uint256 _input, uint256 _start, uint256 _end)
+	    internal
+	    pure
+	    returns(uint256)
+    {
+        // check conditions
+        require(_end < 77 && _start < 77, "start/end must be less than 77");
+        require(_end >= _start, "end must be >= start");
+        
+        // format our start/end points
+        _end = exponent(_end).mul(10);
+        _start = exponent(_start);
+        
+        // return requested section
+        return((((_input / _start).mul(_start)).sub((_input / _end).mul(_end))) / _start);
+    }
+    
+    function exponent(uint256 _position)
+        private
+        pure
+        returns(uint256)
+    {
+        return((10).pwr(_position));
+    }
+}
+
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * - added sqrt
+ * - added sq
+ * - added pwr 
+ * - changed asserts to requires with error log outputs
+ * - removed div, its useless
+ */
+library SafeMath {
+    
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) 
+        internal 
+        pure 
+        returns (uint256 c) 
+    {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256) 
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c) 
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+    
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y) 
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y) 
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+    
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+    
+    /**
+     * @dev x to the power of y 
+     */
+    function pwr(uint256 x, uint256 y)
+        internal 
+        pure 
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else 
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
     }
 }
