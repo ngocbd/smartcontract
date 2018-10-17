@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xab08a47cd05b5a07272b7e54a6756b3237da3b1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x78367b03722c8008917d047ce848ed1a869d3d68
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
 /**
  * title ERC20 interface
@@ -42,7 +42,7 @@ contract StandardToken is ERC20Token{
   }
 
   function transfer(address _to, uint256 _value) transable public returns (bool) {
-    require(_to != address(0));
+    require(_to != address(0)&&_value>0);
     require(balanceOf[msg.sender]>_value);
     balanceOf[msg.sender] -= _value;
     balanceOf[_to] += _value;
@@ -57,7 +57,7 @@ contract StandardToken is ERC20Token{
    * param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) transable public returns (bool) {
-    require(_to != address(0));
+    require(_to != address(0)&&_value>0);
 
     uint256 _allowance = allowance[_from][msg.sender];
 
@@ -190,22 +190,6 @@ contract Token is StandardToken{
         emit TransferMulti(len, amount);
     }
     
-
-    function transferMultiSameVaule(address[] _to, uint256 _value) transable public returns (bool success){
-        uint256 len = _to.length;
-        uint256 amount = _value*len;
-        require(amount <= balanceOf[msg.sender]);
-        balanceOf[msg.sender] -= amount; //this will check enough automatically
-        for(uint256 i; i<len; i++){
-            address _toI = _to[i];
-            balanceOf[_toI] += _value;
-            emit Transfer(msg.sender, _toI, _value);
-        }
-        emit TransferMulti(len, amount);
-        return true;
-    }
-
-
     //????
     function freeze(address _user, uint256 _value, uint _step) internal returns (bool success) {
         require(balanceOf[_user] >= _value);
