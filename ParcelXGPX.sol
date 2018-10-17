@@ -1,7 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x87b1d03dbcbb9f1fe117e03738d618d32beb6248
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXGPX at 0x7f7cfed87ab8c05ee6cc63c1aa4fec8067baff1b
 */
 pragma solidity 0.4.19;
+
+// File: contracts\Convertible.sol
+
+/**
+ * Exchange all my ParcelX token to mainchain GPX
+ */
+contract Convertible {
+
+    function convertMainchainGPX(string destinationAccount, string extra) external returns (bool);
+  
+    // ParcelX deamon program is monitoring this event. 
+    // Once it triggered, ParcelX will transfer corresponding GPX to destination account
+    event Converted(address indexed who, string destinationAccount, uint256 amount, string extra);
+}
 
 // File: contracts\ERC20.sol
 
@@ -194,20 +208,6 @@ library SafeMath {
     }
 }
 
-// File: contracts\Convertible.sol
-
-/**
- * Exchange all my ParcelX token to mainchain GPX
- */
-contract Convertible {
-
-    function convertMainchainGPX(string destinationAccount, string extra) external returns (bool);
-  
-    // ParcelX deamon program is monitoring this event. 
-    // Once it triggered, ParcelX will transfer corresponding GPX to destination account
-    event Converted(address indexed who, string destinationAccount, uint256 amount, string extra);
-}
-
 // File: contracts\ParcelXGPX.sol
 
 /**
@@ -218,12 +218,10 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
     using SafeMath for uint256;
   
     string public constant name = "ParcelX";
-    string public constant symbol = "GPX";
+    string public constant symbol = "GPX-shadow";
     uint8 public constant decimals = 18;
+    uint256 public constant TOTAL_SUPPLY = uint256(10000) * (uint256(10) ** decimals);
 
-    // Japan - 25000 ETH * int(1 / 0.000268) = 93275000
-    uint256 public constant TOTAL_SUPPLY = uint256(93275000) * (uint256(10) ** decimals);
-    
     address internal tokenPool = address(0);      // Use a token pool holding all GPX. Avoid using sender address.
     mapping(address => uint256) internal balances;
     mapping (address => mapping (address => uint256)) internal allowed;
@@ -364,7 +362,6 @@ contract ParcelXGPX is ERC20, MultiOwnable, Pausable, Convertible {
     /**
      * FEATURE 5): 'Convertible' implements
      * Below actions would be performed after token being converted into mainchain:
-     * - KYC / AML
      * - Unsold tokens are discarded.
      * - Tokens sold with bonus will be locked for a period (see Whitepaper).
      * - Token distribution for team will be locked for a period (see Whitepaper).
