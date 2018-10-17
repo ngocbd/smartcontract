@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0x9b23ca391c3306df30489290249464a4bfc6a4d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0x3fe5ffd58bba7265ba8dacfe8a88696670f3abae
 */
 pragma solidity ^0.4.11;
 
+// Token abstract definitioin
 contract Token {
     function transfer(address to, uint256 value) returns (bool success);
     function transferFrom(address from, address to, uint256 value) returns (bool success);
@@ -21,48 +22,52 @@ contract WaltonTokenLocker {
 
     address public beneficiary;
     uint256 public releaseTime;
+    string constant public name = "refund locker V2";
 
-    Token  public token   = Token('0xb7cB1C96dB6B22b0D3d9536E0108d062BD488F74');
+    Token public token = Token('0xb7cB1C96dB6B22b0D3d9536E0108d062BD488F74');
 
     function WaltonTokenLocker() public {
-        // team
-        // beneficiary = address('0x732f589BA0b134DC35454716c4C87A06C890445b');
-        // test
-        beneficiary = address('0xa43e4646ee8ebd9AD01BFe87995802D984902e25');
-        releaseTime = 1563379200;     // 2019-07-18 00:00
+        // refund account
+        beneficiary = address('0x38A9e09E14397Fe3A5Fe59dfc1d98D8B8897D610');
+        releaseTime = 1538236800;     // 2018-09-30 00:00
     }
 
+    // when releaseTime reached, and release() has been called
+    // WaltonTokenLocker release all eth and wtc to beneficiary
     function release() public {
-        uint256 totalTokenBalance;
-        uint256 totalEthBalance;
-        // when releaseTime reached, and release() has been called
-        // WaltonTokenLocker release all eth and wtc to beneficiary
         if (block.timestamp < releaseTime)
             throw;
 
-        totalTokenBalance = token.balanceOf(this);
-        totalEthBalance = this.balance;
+        uint256 totalTokenBalance = token.balanceOf(this);
         if (totalTokenBalance > 0)
             if (!token.transfer(beneficiary, totalTokenBalance))
                 throw;
-        if (totalEthBalance > 0)
-            if (!beneficiary.send(totalEthBalance))
-                throw;
     }
 
+
+    // help functions
     function releaseTimestamp() public constant returns (uint timestamp) {
         return releaseTime;
     }
+
     function currentTimestamp() public constant returns (uint timestamp) {
         return block.timestamp;
     }
+
     function secondsRemaining() public constant returns (uint timestamp) {
-        return releaseTime - block.timestamp;
+        if (block.timestamp < releaseTime)
+            return releaseTime - block.timestamp;
+        else
+            return 0;
     }
 
-    // for debug
-    function setReleaseTime(uint256 _releaseTime) public {
-        releaseTime = _releaseTime;
+    function tokenLocked() public constant returns (uint amount) {
+        return token.balanceOf(this);
     }
+
+    // functions for debug
+    // function setReleaseTime(uint256 _releaseTime) public {
+    //     releaseTime = _releaseTime;
+    // }
 
 }
