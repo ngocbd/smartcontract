@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDAXToken at 0x25b720dc42d7527ec396d473ed4e337d5afed0f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDAXToken at 0x1a976f416b003d8cfae8b027e573be3547639e5a
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -118,7 +118,7 @@ contract SDAXToken is StandardToken {
     string public symbol;                 //An identifier: eg SDAX
     string public version = 'V0.1';       // 0.1 standard. Just an arbitrary versioning scheme.
 
-    uint8 public constant decimals = 8;                              // Amount of decimals for display purposes
+    uint8 public constant decimals = 18;                              // Amount of decimals for display purposes
     uint256 public constant PRECISION = (10 ** uint256(decimals));  // token's precision
 
     constructor(
