@@ -1,26 +1,347 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xe757d4d3bd100445b17ffbd37bc2735e745d4f1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x86dae30c437872fe12151a2b0542eb3fb696bba2
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
-interface UNetworkToken {
-    function transfer (address receiver, uint amount) public;
+// File: openzeppelin-solidity/contracts/ECRecovery.sol
+
+/**
+ * @title Eliptic curve signature operations
+ *
+ * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
+ *
+ * TODO Remove this library once solidity supports passing a signature to ecrecover.
+ * See https://github.com/ethereum/solidity/issues/864
+ *
+ */
+
+library ECRecovery {
+
+  /**
+   * @dev Recover signer address from a message by using their signature
+   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
+   * @param sig bytes signature, the signature is generated using web3.eth.sign()
+   */
+  function recover(bytes32 hash, bytes sig)
+    internal
+    pure
+    returns (address)
+  {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+
+    // Check the signature length
+    if (sig.length != 65) {
+      return (address(0));
+    }
+
+    // Divide the signature in r, s and v variables
+    // ecrecover takes the signature parameters, and the only way to get them
+    // currently is to use assembly.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly {
+      r := mload(add(sig, 32))
+      s := mload(add(sig, 64))
+      v := byte(0, mload(add(sig, 96)))
+    }
+
+    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+    if (v < 27) {
+      v += 27;
+    }
+
+    // If the version is correct return the signer address
+    if (v != 27 && v != 28) {
+      return (address(0));
+    } else {
+      // solium-disable-next-line arg-overflow
+      return ecrecover(hash, v, r, s);
+    }
+  }
+
+  /**
+   * toEthSignedMessageHash
+   * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
+   * @dev and hash the result
+   */
+  function toEthSignedMessageHash(bytes32 hash)
+    internal
+    pure
+    returns (bytes32)
+  {
+    // 32 is the length in bytes of hash,
+    // enforced by the type signature above
+    return keccak256(
+      "\x19Ethereum Signed Message:\n32",
+      hash
+    );
+  }
 }
 
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
-contract AirDrop {
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-	UNetworkToken UUU;
-	uint256 value = 2000;
-	address[] recipients = [0x6d7Bdb6fb859cd78f679DE8F6dca720736Fb3AF0, 0x010E3A3a9AAF3d8eE76B26d154F8C16c970f477E, 0x9F39B4158255C2D654a10aA0540EC325D62770bE, 0x7107a5c5482b8ff88bb08e86d8b1557e6b6c601f, 0x7107a5c5482b8ff88bb08e86d8b1557e6b6c601f, 0x7107a5c5482b8ff88bb08e86d8b1557e6b6c601f, 0xe8B46a9dD631D41618598E92E04Dc4ddF3CA0Fd5, 0x9c218aDEC066746e50480b16511E6fACA27887Ec, 0x6d5076e4c85575f5963a5126ec1570e3c9f4bbee, 0xAca3eD76Dc39d81D0965f2f345E1fd81A0aD5EA8, 0xFc31EC7eed90793FADeC3a322376E01682D94A31, 0x43e58a0bE3380A7FcD8d38963dE7D4F2a6AEDc95, 0x8933ed8b234365428efcb65da932e7fe60c51ac9, 0x497cb9601e4db9ee34e29b757160b4ea1c741a90, 0x7a8bc0c7fa9b6ac6636e0215cb0ae58766e670aa, 0xde46c752df66f60226d81b967024de4221ed0a55, 0xF29e2B524Fd1F5BE1A41DcAb9333Ed27567904c1, 0x6d5076e4c85575f5963a5126ec1570e3c9f4bbee, 0x8400480eDe77a3eF12602c80bE8995e202Fa5135, 0x61e5FEE7116054b3C3596Cc488daC18CD6DF4bC7, 0x4b1c7d17e235fa075e432653c9acbc2b2b4c2948, 0xb9de7F205C8735E2bcdAf897639CC01e5Ed9fe31, 0x80959c4bb51C6C58B1dBF882a8aCc87e4650e697, 0xeBad2B56cA71ECB535dA836c69Ef8C902A15183f, 0xdce73fe9e4906fd8549a2978eac327d5a7d92643, 0x5ebE6914e5457AB8e16457CdB4277254ba6fC122, 0x5a00367cf552ea744ffde2d685fa06f4417c50a7, 0x399C25e7eE10e52f8e653a6DC7D86CE1913ABF52, 0x5B1F86F52E7933EFbd7453A75E965A46BFd0f9E3, 0x6d15061a61E3d0E984410b9e6442422bb4Af237c, 0x256E14111324C466e3c4083e2e0c15f2A4160564, 0x8eFd17552B5E5246Fa940eB2297902471FEd2Cc6, 0x62C37B7a88a09b4f9dc270c60855E83d235e20fa, 0x1B1844Af2d1A25ac0Fe66C82161f505fCA26FDD1, 0xac6Ec0E10e4924c9F4067aFf77B98f7Eed2f7266, 0xB62204E21F716E92C58aa89824fB776a43E86EF0, 0x5e39CdEdB4AFE732EC89760187bf3Bfe3679Fb7F, 0x97ab1CBF75C4868cb021b933EaA287fd0A68F38D, 0x82EDC5a564eB0270381e7f0a5b5e49Eeb8E7408d, 0x6b98a60ed1f2e993ede84e577a495b44e1168fb9, 0x685d9638f22b552E1f9fe4e1325970Fc07E52993, 0xe5Fe2342e553407f51eecc3D220cfB5640B39CeA, 0xa9690a2eb5247f6b6d4a368941c61a673c7c2f83, 0xf4bf47bfb25937c5bacd84d60791e105bdf1863a, 0xFF6e05C50916347384552EE5423E5646b0FB8Ca3, 0xb90d24d3b18920c233da7ab989710f2393fe0c19, 0xA795C1a04BeAE7ac69B31D664304dF3fDB82482C, 0xc28d11C2b89285370366753AfFbDc5F713472445, 0x745C4Ae1365dae4D2EA781Aaf1592d1BeFeba9E4, 0xC07D566c576C7644bd2605989D50BF8e45D9033D, 0x5a00EA85fC3d21B2813FB78DA57B29090D3A25c8, 0xba96f1cB2DA79bF9D2a1BED01D0657fC35B53bA5, 0x132470D38095400690a369a146311674000d572a, 0xD723835B363F7ebfEc380b3b28961aDFEcB40087, 0x1965B5AA812535F8A272D8BaeE6B289c11E9ac73, 0xA1e6119beC0FCBc16ac36d68D8FB82bb2aB86dD7, 0xDf6B3912a8D10DAfa13187C0D594002cB0f38a0e, 0x197e11a56a5f4ed97216ead917d5d0b6682ad9dd, 0x54B478834E0420A638e80a1227B5eE6Fc0eBD826, 0xc72a630eAA53f6E02fa98C6Ec0196192af8567c1, 0x935a2e422f78c01b0e0443be350368dfa07c9eb5, 0x9838ace01ef36e90d3ceb475558b0fbf917d7882, 0x70936b69e7a90c23a1dea8cd4c4a1d15617b9fa9, 0x63ff70df08f2e772fcbb5827d0032ab68e0b0355, 0x2c982aAB9D144C42E5376F0Dd4Bc0C8EDC7Bae9E, 0xF2faAf764a1242f9A3aEF4B16c51a94866e72736, 0x3036406a73a2c2e7744320502900e3647a373797, 0x6d7ade0c7c89717798672643dabaf6593d6f4c00, 0x6d5076e4c85575f5963a5126ec1570e3c9f4bbee, 0x5e58137637B355282414D90798e4d2b2d3b4C81f, 0x5e38dfb1e9d82ee4c53c73f9418fcda97be27af5, 0xBe42c652cf7d1247d8045A8e0B25dB49C6c0afEa, 0x0DfDEFf38CBE6f299755Fb351547F4431e51b942, 0xd6A884870456aE7d67dc886468c5C689abCDd1C1, 0x0A9ef5aA73b8FFd6B8Ba559Aea91dc36c90F1426, 0xbFaaf37Cf26fdD8f5D0Af25783023eF65271C541, 0x51Da710522d19a644018db4f101824E91970B9c9, 0x6d5076e4c85575f5963a5126ec1570e3c9f4bbee, 0x626548C25298ff5b92be72AbF8FF8F749CD5918c, 0xbC7c7D45dAf59d32b52BD5026b278764C21601F7];
 
-	function AirDrop() public {
-		UUU = UNetworkToken(0x3543638ed4a9006e4840b105944271bcea15605d);
-	}
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
-	function drop() public {
-	    for (uint256 i = 0; i < recipients.length; i++) {
-	    	UUU.transfer(recipients[i], value * 10 ** 18);
-	    }
-	}
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: contracts/Airdrop.sol
+
+contract KMHTokenInterface {
+  function checkRole(address addr, string roleName) public view;
+
+  function mint(address _to, uint256 _amount) public returns (bool);
+}
+
+contract NameRegistryInterface {
+  function registerName(address addr, string name) public;
+  function finalizeName(address addr, string name) public;
+}
+
+// Pausable is Ownable
+contract Airdrop is Pausable {
+  using SafeMath for uint;
+  using ECRecovery for bytes32;
+
+  event Distribution(address indexed to, uint256 amount);
+
+  mapping(bytes32 => address) public users;
+  mapping(bytes32 => uint) public unclaimedRewards;
+
+  address public signer;
+
+  KMHTokenInterface public token;
+  NameRegistryInterface public nameRegistry;
+
+  constructor(address _token, address _nameRegistry, address _signer) public {
+    require(_token != address(0));
+    require(_nameRegistry != address(0));
+    require(_signer != address(0));
+
+    token = KMHTokenInterface(_token);
+    nameRegistry = NameRegistryInterface(_nameRegistry);
+    signer = _signer;
+  }
+
+  function setSigner(address newSigner) public onlyOwner {
+    require(newSigner != address(0));
+
+    signer = newSigner;
+  }
+
+  function claim(
+    address receiver,
+    bytes32 id,
+    string username,
+    bool verified,
+    uint256 amount,
+    bytes32 inviterId,
+    uint256 inviteReward,
+    bytes sig
+  ) public whenNotPaused {
+    require(users[id] == address(0));
+
+    bytes32 proveHash = getProveHash(receiver, id, username, verified, amount, inviterId, inviteReward);
+    address proveSigner = getMsgSigner(proveHash, sig);
+    require(proveSigner == signer);
+
+    users[id] = receiver;
+
+    uint256 unclaimedReward = unclaimedRewards[id];
+    if (unclaimedReward > 0) {
+      unclaimedRewards[id] = 0;
+      _distribute(receiver, unclaimedReward.add(amount));
+    } else {
+      _distribute(receiver, amount);
+    }
+
+    if (verified) {
+      nameRegistry.finalizeName(receiver, username);
+    } else {
+      nameRegistry.registerName(receiver, username);
+    }
+
+    if (inviterId == 0) {
+      return;
+    }
+
+    if (users[inviterId] == address(0)) {
+      unclaimedRewards[inviterId] = unclaimedRewards[inviterId].add(inviteReward);
+    } else {
+      _distribute(users[inviterId], inviteReward);
+    }
+  }
+
+  function getAccountState(bytes32 id) public view returns (address addr, uint256 unclaimedReward) {
+    addr = users[id];
+    unclaimedReward = unclaimedRewards[id];
+  }
+
+  function getProveHash(
+    address receiver, bytes32 id, string username, bool verified, uint256 amount, bytes32 inviterId, uint256 inviteReward
+  ) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked(receiver, id, username, verified, amount, inviterId, inviteReward));
+  }
+
+  function getMsgSigner(bytes32 proveHash, bytes sig) public pure returns (address) {
+    return proveHash.recover(sig);
+  }
+
+  function _distribute(address to, uint256 amount) internal {
+    token.mint(to, amount);
+    emit Distribution(to, amount);
+  }
 }
