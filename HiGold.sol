@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiGold at 0x8ae00fedaf768bb88ce028e5e6dea6fa356d2d97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiGold at 0xcc87b74164c7ee60e2c859f907c6813e9c5e5e0c
 */
 pragma solidity ^0.4.24;
 
@@ -211,9 +211,9 @@ contract HiGold is StandardToken, Ownable {
 
     /*** FUNCTIONS ***/
     // Constructor function
-    constructor(address _cold) public {
+    constructor() public {
         totalSupply = 105 * (10 ** 26);
-        balances[_cold] = totalSupply;
+        balances[msg.sender] = totalSupply;
     }
 
     // Public functions
@@ -283,10 +283,15 @@ contract HiGold is StandardToken, Ownable {
         miner = _minerContract;
         inVault[miner][miner] = 105 * (10 ** 26);
     }
-    //// Update contract overview infomations when new token mined.
-    function update(uint _value) public onlyMiner returns(bool) {
+    //// Update contract overview infomations when new token is mined.
+    function updateInfo(uint _value) public onlyMiner returns(bool) {
         totalSupply = totalSupply.add(_value);
         inVaults = inVaults.add(_value);
+        return true;
+    }
+    //// Change miner contract if needed.
+    function setNewMiner(address _newMiner) public onlyMiner returns(bool) {
+        miner = _newMiner;
         return true;
     }
 
