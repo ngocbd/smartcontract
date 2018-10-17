@@ -1,391 +1,327 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReserveToken at 0x88b4cb056467cdd50e1760d309b18139ce31b3c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReserveToken at 0x62b0a97d1453b4be622a6d3149c9c3f04c5af002
 */
-// Welcome to Reserve Token.
+pragma solidity ^0.4.9;
+
+// ----------------------------------------------------------------------------
+// 'Datodex.com' DEX contract
 //
+// Admin       : 0x50b16167821eFAbdbC991eDd2d166BbA4BCA63B2
+// fees        : 0.08%
+//
+//
+// 
+// In God we Trust
+// ----------------------------------------------------------------------------
 
 
-pragma solidity ^0.4.0;
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-contract ReserveToken {
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
 
-    address public tank; //SBC - The tank of the contract
-    uint256 public tankAllowance = 0;
-    uint256 public tankOut = 0;
-    uint256 public valueOfContract = 0;
-    string public name;         //Name of the contract
-    string public symbol;       //Symbol of the contract
-    uint8 public decimals = 18;      //The amount of decimals
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
+}
 
-    uint256 public totalSupply; //The current total supply.
-    uint256 public maxSupply = uint256(0) - 10; //We let the max amount be the most the variable can handle. well... basically.
-    uint256 public tankImposedMax = 100000000000000000000000; //SBC - 10 million maximum tokens at first
-    uint256 public priceOfToken;    //The current price of a token
-    uint256 public divForSellBack = 2; //SBC - The split for when a sell back occurs
-    uint256 public divForTank = 200; //SBC - 20=5%. 100=1% 1000=.1% The amount given to the Abby.
-    uint256 public divForPrice = 200; //SBC - The rate in which we grow. 2x this is our possible spread.
-    uint256 public divForTransfer = 2; //SBC - The rate in which we grow. 2x this is our possible spread.
-    uint256 public firstTTax = 10000; //SBC - The amount added to cost of transfer if firstTTaxAmount
-    uint256 public firstTTaxAmount = 10000; //SBC - The sender amount must be greater than this amount.
-    uint256 public secondTTax = 20000; //SBC -
-    uint256 public secondTTaxAmount = 20000; //SBC
-    uint256 public minTokens = 100;     //SBC  - minimum amount of tickets a person may mixssxnt at once
-    uint256 public maxTokens = 1000;    //SBC -max amount of tickets a person may mint at once
-    uint256 public coinprice; //This is calculated on the fly in the sellprice. This is the last buy price. not the current.
+contract Token {
+  /// @return total amount of tokens
+  function totalSupply() constant returns (uint256 supply) {}
 
-    //Standard Token
-    mapping(address => uint256) public balances;
-    mapping(address => mapping(address => uint256)) public allowed;
+  /// @param _owner The address from which the balance will be retrieved
+  /// @return The balance
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
 
+  /// @notice send `_value` token to `_to` from `msg.sender`
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transfer(address _to, uint256 _value) returns (bool success) {}
 
+  /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+  /// @param _from The address of the sender
+  /// @param _to The address of the recipient
+  /// @param _value The amount of token to be transferred
+  /// @return Whether the transfer was successful or not
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @param _value The amount of wei to be approved for transfer
+  /// @return Whether the approval was successful or not
+  function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  /// @param _owner The address of the account owning tokens
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @return Amount of remaining tokens allowed to spent
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function ReserveToken() payable public {
-        name = "Reserve Token";
-        //Setting the name of the contract
-        symbol = "RSRV";
-        //Setting the symbol
-        tank = msg.sender;
-        //setting the tank
-        priceOfToken = 1 szabo;
+  uint public decimals;
+  string public name;
+}
+
+contract StandardToken is Token {
+
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    //Default assumes totalSupply can't be over max (2^256 - 1).
+    //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+    //Replace the if with this one instead.
+    if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+    //if (balances[msg.sender] >= _value && _value > 0) {
+      balances[msg.sender] -= _value;
+      balances[_to] += _value;
+      Transfer(msg.sender, _to, _value);
+      return true;
+    } else { return false; }
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+    //same as above. Replace this line with the following if you want to protect against wrapping uints.
+    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+    //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+      balances[_to] += _value;
+      balances[_from] -= _value;
+      allowed[_from][msg.sender] -= _value;
+      Transfer(_from, _to, _value);
+      return true;
+    } else { return false; }
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  mapping(address => uint256) balances;
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  uint256 public totalSupply;
+}
+
+contract ReserveToken is StandardToken, SafeMath {
+  address public minter;
+  function ReserveToken() {
+    minter = msg.sender;
+  }
+  function create(address account, uint amount) {
+    if (msg.sender != minter) throw;
+    balances[account] = safeAdd(balances[account], amount);
+    totalSupply = safeAdd(totalSupply, amount);
+  }
+  function destroy(address account, uint amount) {
+    if (msg.sender != minter) throw;
+    if (balances[account] < amount) throw;
+    balances[account] = safeSub(balances[account], amount);
+    totalSupply = safeSub(totalSupply, amount);
+  }
+}
+
+contract AccountLevels {
+  //given a user, returns an account level
+  //0 = regular user (pays take fee and make fee)
+  //1 = market maker silver (pays take fee, no make fee, gets rebate)
+  //2 = market maker gold (pays take fee, no make fee, gets entire counterparty's take fee as rebate)
+  function accountLevel(address user) constant returns(uint) {}
+}
+
+contract AccountLevelsTest is AccountLevels {
+  mapping (address => uint) public accountLevels;
+
+  function setAccountLevel(address user, uint level) {
+    accountLevels[user] = level;
+  }
+
+  function accountLevel(address user) constant returns(uint) {
+    return accountLevels[user];
+  }
+}
+
+contract DatoDEX is SafeMath {
+  address public admin; //the admin address
+  address public feeAccount; //the account that will receive fees
+  address public accountLevelsAddr; //the address of the AccountLevels contract
+  uint public feeMake; //percentage times (1 ether)
+  uint public feeTake; //percentage times (1 ether)
+  uint public feeRebate; //percentage times (1 ether)
+  mapping (address => mapping (address => uint)) public tokens; //mapping of token addresses to mapping of account balances (token=0 means Ether)
+  mapping (address => mapping (bytes32 => bool)) public orders; //mapping of user accounts to mapping of order hashes to booleans (true = submitted by user, equivalent to offchain signature)
+  mapping (address => mapping (bytes32 => uint)) public orderFills; //mapping of user accounts to mapping of order hashes to uints (amount of order that has been filled)
+
+  event Order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user);
+  event Cancel(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s);
+  event Trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address get, address give);
+  event Deposit(address token, address user, uint amount, uint balance);
+  event Withdraw(address token, address user, uint amount, uint balance);
+
+  function DatoDEX(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+    admin = admin_;
+    feeAccount = feeAccount_;
+    accountLevelsAddr = accountLevelsAddr_;
+    feeMake = feeMake_;
+    feeTake = feeTake_;
+    feeRebate = feeRebate_;
+  }
+
+  function() {
+    throw;
+  }
+
+  function changeAdmin(address admin_) {
+    if (msg.sender != admin) throw;
+    admin = admin_;
+  }
+
+  function changeAccountLevelsAddr(address accountLevelsAddr_) {
+    if (msg.sender != admin) throw;
+    accountLevelsAddr = accountLevelsAddr_;
+  }
+
+  function changeFeeAccount(address feeAccount_) {
+    if (msg.sender != admin) throw;
+    feeAccount = feeAccount_;
+  }
+
+  function changeFeeMake(uint feeMake_) {
+    if (msg.sender != admin) throw;
+    if (feeMake_ > feeMake) throw;
+    feeMake = feeMake_;
+  }
+
+  function changeFeeTake(uint feeTake_) {
+    if (msg.sender != admin) throw;
+    if (feeTake_ > feeTake || feeTake_ < feeRebate) throw;
+    feeTake = feeTake_;
+  }
+
+  function changeFeeRebate(uint feeRebate_) {
+    if (msg.sender != admin) throw;
+    if (feeRebate_ < feeRebate || feeRebate_ > feeTake) throw;
+    feeRebate = feeRebate_;
+  }
+
+  function deposit() payable {
+    tokens[0][msg.sender] = safeAdd(tokens[0][msg.sender], msg.value);
+    Deposit(0, msg.sender, msg.value, tokens[0][msg.sender]);
+  }
+
+  function withdraw(uint amount) {
+    if (tokens[0][msg.sender] < amount) throw;
+    tokens[0][msg.sender] = safeSub(tokens[0][msg.sender], amount);
+    if (!msg.sender.call.value(amount)()) throw;
+    Withdraw(0, msg.sender, amount, tokens[0][msg.sender]);
+  }
+
+  function depositToken(address token, uint amount) {
+    //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
+    if (token==0) throw;
+    if (!Token(token).transferFrom(msg.sender, this, amount)) throw;
+    tokens[token][msg.sender] = safeAdd(tokens[token][msg.sender], amount);
+    Deposit(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
+
+  function withdrawToken(address token, uint amount) {
+    if (token==0) throw;
+    if (tokens[token][msg.sender] < amount) throw;
+    tokens[token][msg.sender] = safeSub(tokens[token][msg.sender], amount);
+    if (!Token(token).transfer(msg.sender, amount)) throw;
+    Withdraw(token, msg.sender, amount, tokens[token][msg.sender]);
+  }
+
+  function balanceOf(address token, address user) constant returns (uint) {
+    return tokens[token][user];
+  }
+
+  function order(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    orders[msg.sender][hash] = true;
+    Order(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender);
+  }
+
+  function trade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount) {
+    //amount is in amountGet terms
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires &&
+      safeAdd(orderFills[user][hash], amount) <= amountGet
+    )) throw;
+    tradeBalances(tokenGet, amountGet, tokenGive, amountGive, user, amount);
+    orderFills[user][hash] = safeAdd(orderFills[user][hash], amount);
+    Trade(tokenGet, amount, tokenGive, amountGive * amount / amountGet, user, msg.sender);
+  }
+
+  function tradeBalances(address tokenGet, uint amountGet, address tokenGive, uint amountGive, address user, uint amount) private {
+    uint feeMakeXfer = safeMul(amount, feeMake) / (1 ether);
+    uint feeTakeXfer = safeMul(amount, feeTake) / (1 ether);
+    uint feeRebateXfer = 0;
+    if (accountLevelsAddr != 0x0) {
+      uint accountLevel = AccountLevels(accountLevelsAddr).accountLevel(user);
+      if (accountLevel==1) feeRebateXfer = safeMul(amount, feeRebate) / (1 ether);
+      if (accountLevel==2) feeRebateXfer = feeTakeXfer;
     }
-
-    function MintTokens() public payable {
-        //Just some requirements for BuyTokens -- The Tank needs no requirements. (Tank is still subjected to fees)
-        address inAddress = msg.sender;
-        uint256 inMsgValue = msg.value;
-
-        if (inAddress != tank) {
-            require(inMsgValue > 1000); //The minimum money supplied
-            require(inMsgValue > priceOfToken * minTokens); //The minimum amount of tokens you can buy
-            require(inMsgValue < priceOfToken * maxTokens); //The maximum amount of tokens.
-        }
-
-
-        //Add the incoming tank allowance to tankAllowance
-        tankAllowance += (inMsgValue / divForTank);
-        //add to the value of contact the incoming value - what the tank got.
-        valueOfContract += (inMsgValue - (inMsgValue / divForTank));
-        //new coins are equalal to teh new value of contract divided by the current price of token
-        uint256 newcoins = ((inMsgValue - (inMsgValue / divForTank)) * 1 ether) / (priceOfToken);
-
-
-
-         //Ensure that we dont go over the max the tank has set.
-        require(totalSupply + newcoins < maxSupply);
-        //Ensure that we don't go oever the maximum amount of coins.
-        require(totalSupply + newcoins < tankImposedMax);
-
-        
-
-        //Update use balance, total supply, price of token.
-        totalSupply += newcoins;
-        priceOfToken += valueOfContract / (totalSupply / 1 ether) / divForPrice;
-        balances[inAddress] += newcoins;
-    }
-
-    function BurnAllTokens() public {
-        address inAddress = msg.sender;
-        uint256 theirBalance = balances[inAddress];
-        //Get their balance without any crap code
-        require(theirBalance > 0);
-        //Make sure that they have enough money to cover this.
-        balances[inAddress] = 0;
-        //Remove the amount now, for re entry prevention
-        coinprice = valueOfContract / (totalSupply / 1 ether);
-        //Updating the coin price (buy back price)
-        uint256 amountGoingOut = coinprice * (theirBalance / 1 ether); //amount going out in etheruem
-        //We convert amount going out to amount without divforTank
-        uint256 tankAmount = (amountGoingOut / divForTank); //The amount going to the tank
-        amountGoingOut = amountGoingOut - tankAmount; //the new amount for our going out without the tank
-        //Amount going out minus theW
-        tankAllowance += (tankAmount - (tankAmount / divForSellBack)); //Give
-        //Add the the tank allowance, here we are functionally making the coin worth more.
-        valueOfContract -= amountGoingOut + (tankAmount / divForSellBack); //VOC = ago - (tankAmount left after tankAllowance)
-        //Updating the new value of our contract. what we will have after the transfer
-        msg.sender.transfer(amountGoingOut);
-        //Transfer the money
-        totalSupply -= theirBalance;
-
-    }
-
-    function BurnTokens(uint256 _amount) public {
-        address inAddress = msg.sender;
-        uint256 theirBalance = balances[inAddress];
-        //Get their balance without any crap code
-        require(_amount <= theirBalance);
-        //Make sure that they have enough money to cover this.
-        balances[inAddress] -= _amount;
-        //Remove the amount now, for re entry prevention
-        coinprice = valueOfContract / (totalSupply / 1 ether);
-        //Updating the coin price (buy back price)
-        uint256 amountGoingOut = coinprice * (_amount / 1 ether); //amount going out in etheruem
-        //We convert amount going out to amount without divforTank
-        uint256 tankAmount = (amountGoingOut / divForTank); //The amount going to the tank
-        amountGoingOut = amountGoingOut - tankAmount; //the new amount for our going out without the tank
-        //Amount going out minus theW
-        tankAllowance += (tankAmount - (tankAmount / divForSellBack)); //Give
-        //Add the the tank allowance, here we are functionally making the coin worth more.
-        valueOfContract -= amountGoingOut + (tankAmount / divForSellBack); //VOC = ago - (tankAmount left after tankAllowance)
-        //Updating the new value of our contract. what we will have after the transfer
-        msg.sender.transfer(amountGoingOut);
-        //Transfer the money
-        totalSupply -= _amount;
-
-    }
-
-    function CurrentCoinPrice() view public returns (uint256) {
-        uint256 amountGoingOut = valueOfContract / (totalSupply / 1 ether);
-        //We convert amount going out to amount without divforTank
-        uint256 tankAmount = (amountGoingOut / divForTank); //The amount going to the tank
-        return amountGoingOut - tankAmount; //the new amount for our going out without the tank
-    }
-
-
-    function TankWithdrawSome(uint256 _amount) public {
-        address inAddress = msg.sender;
-        require(inAddress == tank);
-        //Require person to be the tank
-
-        //if our allowance is greater than the value of the contract then the contract must be empty.
-        if (tankAllowance < valueOfContract) {
-            require(_amount <= tankAllowance - tankOut);
-        }
-
-        //Require the amount to be less than the amount for tank0.
-
-        tankOut += _amount;
-        //Adding in new tank withdraw.
-        tank.transfer(_amount);
-        //transfering amount to tank's balance.
-    }
-
-    //This is an ethereum withdraw for the tank.
-    function TankWithdrawAll() public {
-        address inAddress = msg.sender;
-        require(inAddress == tank);
-        //Require person to be the tank
-
-        //if our allowance is greater than the value of the contract then the contract must be empty.
-        if (tankAllowance < valueOfContract) {
-            require(tankAllowance - tankOut > 0); //Tank allowance - tankout = whats left for tank. and it must be over zero
-        }
-
-        //Require the amount to be less than the amount for tank0.
-
-        tankOut += tankAllowance - tankOut; //We give whats left to our tankout makeing whats left zero. so tank cant double withdraw.
-        //Adding in new tank withdraw.
-        tank.transfer(tankAllowance - tankOut);
-        //transfering amount to tank's balance.
-    }
-
-
-
-
-
-    function TankDeposit() payable public {
-        address inAddress = msg.sender;
-        uint256 inValue = msg.value;
-
-        require(inAddress == tank);
-        //require the person to be a the tank
-
-        if (inValue < tankOut) {
-            tankOut -= inValue;
-            // We cant underflow here because it has to be less.
-        }
-        else
-        {
-            //Add the excess to the contract value
-            valueOfContract += (inValue - tankOut) * 1 ether;
-            //We DO NOT INCREASE ALLOWANCE, we only allow the tank to go to zero.
-            tankOut = 0;
-
-        }
-    }
-
-
-    // What is the balance of a particular account?
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function transferFee(uint256 _amount) view internal returns (uint256){
-        //If Amount is above the tax amount return the tax
-        if (_amount > secondTTaxAmount)
-            return secondTTax;
-
-        if (_amount > firstTTaxAmount)
-            return firstTTax;
-    }
-
-    // Transfer the balance from tank's account to another account
-    function transfer(address _to, uint256 _amount) public returns (bool success) {
-        //variables we are working with.
-        uint256 fromBalance = balances[msg.sender];
-        uint256 toBalance = balances[_to];
-        uint256 tFee = transferFee(_amount);
-
-
-        //Require the balance be greater than the amount + fee
-        require(fromBalance >= _amount + tFee);
-        //Require the amount ot be greater than 0.
-        require(_amount > 0);
-        //Require the toBalance to be greater than the current amount. w
-        require(toBalance + _amount > toBalance);
-
-        balances[msg.sender] -= _amount + tFee;
-        balances[_to] += _amount;
-        balances[tank] += tFee / divForTransfer;
-        totalSupply -= tFee - (tFee / divForTransfer);
-
-        emit Transfer(msg.sender, _to, _amount);
-        //Create Event
-
-        return true;
-    }
-
-
-
-
-    // Send _value amount of tokens from address _from to address _to
-    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-    // fees in sub-currencies; the command should fail unless the _from account has
-    // deliberately authorized the sender of the message via some mechanism; we propose
-    // these standardized APIs for approval:
-    function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
-        uint256 fromBalance = balances[_from];  //The current balance of from
-        uint256 toBalance = balances[_to];      //The current blance for to
-        uint256 tFee = transferFee(_amount);    //The transaction fee that will be accociated with this transaction
-
-        //Require the from balance to have more than the amount they want to send + the current fee
-        require(fromBalance >= _amount + tFee);
-        //Require the allowed balance to be greater than that amount as well.
-        require(allowed[_from][msg.sender] >= _amount + tFee);
-        //Require the current amount to be greater than 0.
-        require(_amount > 0);
-        //Require the to balance to gain an amount. protect against under and over flows
-        require(toBalance + _amount > toBalance);
-
-        //Update from balance, allowed balance, to balance, tank balance, total supply. create Transfer event.
-        balances[_from] -= _amount + tFee;
-        allowed[_from][msg.sender] -= _amount + tFee;
-        balances[_to] += _amount;
-        balances[tank] += tFee / divForTransfer;
-        totalSupply -= tFee - (tFee / divForTransfer);
-        emit Transfer(_from, _to, _amount);
-
-        return true;
-    }
-
-
-
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _amount) public returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        emit Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-
-
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-     function GrabUnallocatedValue() public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         //Sometimes someone sends money straight to the contract but that isn't recorded in the value of teh contract.
-         //So here we allow tank to withdraw those extra funds
-         address walletaddress = this;
-         if (walletaddress.balance * 1 ether > valueOfContract) {
-            tank.transfer(walletaddress.balance - (valueOfContract / 1 ether));
-         }
-    }
-
-
-    function TankTransfer(address _NewTank) public {
-        address inAddress = msg.sender;
-        require(inAddress == tank);
-        tank = _NewTank;
-    }
-
-    function SettankImposedMax(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         tankImposedMax = _input;
-    }
-
-    function SetdivForSellBack(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         divForSellBack = _input;
-    }
-
-    function SetdivForTank(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         divForTank = _input;
-    }
-
-    function SetdivForPrice(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         divForPrice = _input;
-    }
-
-    function SetfirstTTax(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         firstTTax = _input;
-    }
-
-    function SetfirstTTaxAmount(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         firstTTaxAmount = _input;
-    }
-
-    function SetsecondTTax(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         secondTTax = _input;
-    }
-
-    function SetsecondTTaxAmount(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         secondTTaxAmount = _input;
-    }
-
-    function SetminTokens(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         minTokens = _input;
-    }
-
-    function SetmaxTokens(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         maxTokens = _input;
-    }
-
-    function SetdivForTransfer(uint256 _input) public {
-         address inAddress = msg.sender;
-         require(inAddress == tank);
-         divForTransfer = _input;
-    }
-
-
-
+    tokens[tokenGet][msg.sender] = safeSub(tokens[tokenGet][msg.sender], safeAdd(amount, feeTakeXfer));
+    tokens[tokenGet][user] = safeAdd(tokens[tokenGet][user], safeSub(safeAdd(amount, feeRebateXfer), feeMakeXfer));
+    tokens[tokenGet][feeAccount] = safeAdd(tokens[tokenGet][feeAccount], safeSub(safeAdd(feeMakeXfer, feeTakeXfer), feeRebateXfer));
+    tokens[tokenGive][user] = safeSub(tokens[tokenGive][user], safeMul(amountGive, amount) / amountGet);
+    tokens[tokenGive][msg.sender] = safeAdd(tokens[tokenGive][msg.sender], safeMul(amountGive, amount) / amountGet);
+  }
+
+  function testTrade(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s, uint amount, address sender) constant returns(bool) {
+    if (!(
+      tokens[tokenGet][sender] >= amount &&
+      availableVolume(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, user, v, r, s) >= amount
+    )) return false;
+    return true;
+  }
+
+  function availableVolume(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(
+      (orders[user][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == user) &&
+      block.number <= expires
+    )) return 0;
+    uint available1 = safeSub(amountGet, orderFills[user][hash]);
+    uint available2 = safeMul(tokens[tokenGive][user], amountGet) / amountGive;
+    if (available1<available2) return available1;
+    return available2;
+  }
+
+  function amountFilled(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, address user, uint8 v, bytes32 r, bytes32 s) constant returns(uint) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    return orderFills[user][hash];
+  }
+
+  function cancelOrder(address tokenGet, uint amountGet, address tokenGive, uint amountGive, uint expires, uint nonce, uint8 v, bytes32 r, bytes32 s) {
+    bytes32 hash = sha256(this, tokenGet, amountGet, tokenGive, amountGive, expires, nonce);
+    if (!(orders[msg.sender][hash] || ecrecover(sha3("\x19Ethereum Signed Message:\n32", hash),v,r,s) == msg.sender)) throw;
+    orderFills[msg.sender][hash] = amountGet;
+    Cancel(tokenGet, amountGet, tokenGive, amountGive, expires, nonce, msg.sender, v, r, s);
+  }
 }
