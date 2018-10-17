@@ -1,154 +1,142 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tablow at 0x55dd6348b0f97ba5417cc3c3d9d98c36e14b7d44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tablow at 0x24c9045c59f6ddfbe145cc6cb618c13ed83727e6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint a, uint b) internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-contract ERC223ReceivingContract { 
-/**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
- */
-    function tokenFallback(address _from, uint _value, bytes _data);
-}
-contract ERC223Interface {
+contract ERC223 {
+  
+  function balanceOf(address who) constant returns (uint);
+  
+  function name() constant returns (string _name);
+  function symbol() constant returns (string _symbol);
+  function decimals() constant returns (uint8 _decimals);
    
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function transfer(address to, uint value, bytes data);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+  function transfer(address to, uint value) returns (bool ok);
+  function transfer(address to, uint value, bytes data) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
-contract ERC223Token is ERC223Interface {
-    using SafeMath for uint;
+contract ForeignToken {
+    function balanceOf(address _owner) constant public returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
 
-    mapping(address => uint) balances; // List of user balances.
-    
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
-     *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
-     *      or the fallback function to receive funds.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     * @param _data  Transaction metadata.
-     */
-    function transfer(address _to, uint _value, bytes _data) {
-        // Standard function transfer similar to ERC20 transfer with no _data .
-        // Added due to backwards compatibility reasons .
-        uint codeLength;
 
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
-        }
-       Transfer(msg.sender, _to, _value, _data);
+contract ContractReceiver {
+     
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
     }
     
-    /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      This function works the same with the previous one
-     *      but doesn't contain `_data` param.
-     *      Added due to backwards compatibility reasons.
-     *
-     * @param _to    Receiver address.
-     * @param _value Amount of tokens that will be transferred.
-     */
-    function transfer(address _to, uint _value) {
-        uint codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly .
-            codeLength := extcodesize(_to)
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(codeLength>0) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
-        }
-         Transfer(msg.sender, _to, _value, empty);
-    }
-
     
-    /**
-     * @dev Returns balance of the `_owner`.
-     *
-     * @param _owner   The address whose balance will be returned.
-     * @return balance Balance of the `_owner`.
-     */
-    function balanceOf(address _owner) constant returns (uint balance) {
-        return balances[_owner];
+    function tokenFallback(address _from, uint _value, bytes _data){
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+      
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
     }
 }
-contract Tablow is ERC223Token {
-    string public symbol = "TC";
+ /**
+ * ERC23 token by Dexaran
+ *
+ * https://github.com/Dexaran/ERC23-tokens
+ */
+ 
+ 
+ /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
+contract SafeMath {
+    uint256 constant public MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        assert(x <= MAX_UINT256 - y);
+        return x + y;
+    }
+
+    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        assert(x >= y);
+        return x - y;
+    }
+
+    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
+        if (y == 0) return 0;
+        assert(x <= MAX_UINT256 / y);
+        return x * y;
+    }
+}
+ 
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ */
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    assert(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
+
+contract Haltable is Ownable {
+  bool public halted;
+
+  modifier stopInEmergency {
+    assert(!halted);
+    _;
+  }
+
+  modifier onlyInEmergency {
+    assert(halted);
+    _;
+  }
+
+  // called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner {
+    halted = true;
+  }
+
+  // called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner onlyInEmergency {
+    halted = false;
+  }
+
+}
+
+contract Tablow is ERC223, SafeMath, Haltable {
+
+  mapping(address => uint) balances;
+  
+  string public symbol = "TC";
     string public name = "Tablow Club";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
+    uint8 public decimals = 18;
+    uint256  _totalSupply = 0;
     uint256 _MaxDistribPublicSupply = 0;
     uint256 _OwnerDistribSupply = 0;
     uint256 _CurrentDistribPublicSupply = 0;
@@ -165,12 +153,28 @@ contract Tablow is ERC223Token {
     bool setupDone = false;
     bool IsDistribRunning = false;
     bool DistribStarted = false;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  
+  
+  // Function to access name of token .
+  function name() constant returns (string _name) {
+      return name;
+  }
+  // Function to access symbol of token .
+  function symbol() constant returns (string _symbol) {
+      return symbol;
+  }
+  // Function to access decimals of token .
+  function decimals() constant returns (uint8 _decimals) {
+      return decimals;
+  }
+  // Function to access total supply of tokens .
+   
+  
+   event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     event Burn(address indexed _owner, uint256 _value);
 
-    mapping(address => uint256) balances;
+   
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => bool) public Claimed;
 
@@ -338,7 +342,7 @@ contract Tablow is ERC223Token {
         }
     }
 
-    function BurnTokens(uint256 amount) public returns(bool success) {
+ function BurnTokens(uint256 amount) public returns(bool success) {
         uint256 _amount = amount * 1e18;
         if (balances[msg.sender] >= _amount) {
             balances[msg.sender] -= _amount;
@@ -351,9 +355,7 @@ contract Tablow is ERC223Token {
         return true;
     }
 
-    function totalSupply() public constant returns(uint256 totalSupplyValue) {
-        return _totalSupply;
-    }
+     
 
     function MaxDistribPublicSupply_() public constant returns(uint256 MaxDistribPublicSupply) {
         return _MaxDistribPublicSupply;
@@ -386,43 +388,95 @@ contract Tablow is ERC223Token {
     function IsDistribRunningFalg_() public constant returns(bool IsDistribRunningFalg) {
         return IsDistribRunning;
     }
+     function totalSupply() public constant returns(uint256 totalSupplyValue) {
+        return _totalSupply;
+    }
 
     function IsDistribStarted() public constant returns(bool IsDistribStartedFlag) {
         return DistribStarted;
     }
-
-    function balanceOf(address _owner) public constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-    
-
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) public returns(bool success) {
-        if (balances[_from] >= _amount &&
-            allowed[_from][msg.sender] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function approve(address _spender, uint256 _amount) public returns(bool success) {
+ function approve(address _spender, uint256 _amount) public returns(bool success) {
         allowed[msg.sender][_spender] = _amount;
         Approval(msg.sender, _spender, _amount);
         return true;
     }
 
+function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+    
     function allowance(address _owner, address _spender) public constant returns(uint256 remaining) {
         return allowed[_owner][_spender];
     }
+    
+  // Function that is called when a user or another contract wants to transfer funds .
+  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
+      
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, _data);
+    }
+    else {
+        return transferToAddress(_to, _value, _data);
+    }
+}
+  
+  // Standard function transfer similar to ERC20 transfer with no _data .
+  // Added due to backwards compatibility reasons .
+  function transfer(address _to, uint _value) returns (bool success) {
+      
+    //standard function transfer similar to ERC20 transfer with no _data
+    //added due to backwards compatibility reasons
+    bytes memory empty;
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return transferToAddress(_to, _value, empty);
+    }
+}
+
+//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+  function isContract(address _addr) private returns (bool is_contract) {
+      uint length;
+      assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+        }
+        if(length>0) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+  //function that is called when transaction target is an address
+  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+    assert(balanceOf(msg.sender) >= _value);
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  
+  //function that is called when transaction target is a contract
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    assert(balanceOf(msg.sender) >= _value);
+    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
+    balances[_to] = safeAdd(balanceOf(_to), _value);
+    ContractReceiver reciever = ContractReceiver(_to);
+    reciever.tokenFallback(msg.sender, _value, _data);
+    Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
+    return true;
+}
+
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+  
 }
