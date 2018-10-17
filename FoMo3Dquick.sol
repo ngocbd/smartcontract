@@ -1,8 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dquick at 0xba77472071578e7fa408bb00f9098b2f635ef62b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DQuick at 0xe159f75e375218e1ecc089835a804cb4a1581f4b
 */
 pragma solidity ^0.4.24;
-
+/**
+ * @title -FoMo-3D v0.7.1
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/   .--,-``-.
+ *========,---,.======================____==========================/   /     '.=======,---,====*
+ *      ,'  .' |                    ,'  , `.                       / ../        ;    .'  .' `\
+ *    ,---.'   |    ,---.        ,-+-,.' _ |    ,---.              \ ``\  .`-    ' ,---.'     \
+ *    |   |   .'   '   ,'\    ,-+-. ;   , ||   '   ,'\      ,---,.  \___\/   \   : |   |  .`\  |
+ *    :   :  :    /   /   |  ,--.'|'   |  ||  /   /   |   ,'  .' |       \   :   | :   : |  '  |
+ *    :   |  |-, .   ; ,. : |   |  ,', |  |, .   ; ,. : ,---.'   |       /  /   /  |   ' '  ;  :
+ *    |   :  ;/| '   | |: : |   | /  | |--'  '   | |: : |   |  .'        \  \   \  '   | ;  .  |
+ *    |   |   .' '   | .; : |   : |  | ,     '   | .; : :   |.'      ___ /   :   | |   | :  |  '
+ *    '   :  '   |   :    | |   : |  |/      |   :    | `---'       /   /\   /   : '   : | /  ;
+ *    |   |  |    \   \  /  |   | |`-'        \   \  /             / ,,/  ',-    . |   | '` ,/
+ *    |   :  \     `----'   |   ;/             `----'              \ ''\        ;  ;   :  .'
+ *====|   | ,'=============='---'==========(Quick version)===========\   \     .'===|   ,.'======*
+ *    `----'  
+ */
+ 
+ 
 contract F3Devents {
     // fired whenever a player registers a name
     event onNewName
@@ -63,7 +93,7 @@ contract F3Devents {
         uint256 genAmount
     );
 
-    // (fomo3d quick only) fired whenever a player tries a buy after round timer
+    // (fomo3d short only) fired whenever a player tries a buy after round timer
     // hit zero, and causes end round to be ran.
     event onBuyAndDistribute
     (
@@ -80,7 +110,7 @@ contract F3Devents {
         uint256 genAmount
     );
 
-    // (fomo3d quick only) fired whenever a player tries a reload after round timer
+    // (fomo3d short only) fired whenever a player tries a reload after round timer
     // hit zero, and causes end round to be ran.
     event onReLoadAndDistribute
     (
@@ -116,34 +146,24 @@ contract F3Devents {
     );
 }
 
-//==============================================================================
-//   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
-//  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
-//====================================|=========================================
 
-contract modularQuick is F3Devents {}
+contract modularShort is F3Devents {}
 
-contract FoMo3Dquick is modularQuick {
+contract FoMo3DQuick is modularShort {
     using SafeMath for *;
     using NameFilter for string;
-    using F3DKeysCalcQuick for uint256;
+    using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x68f6199D97bbA1F18777FE69D1F354292C3d498C);
-    DiviesInterface constant private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x9576A5C917CAf5cc79D8124292D35AB131f514EF);
 
-//==============================================================================
-//     _ _  _  |`. _     _ _ |_ | _  _  .
-//    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
-//=================_|===========================================================
-    address private admin = msg.sender; // todo: added an admin
-    string constant public name = "FOMO Quick";
-    string constant public symbol = "QUICK";
-    // TODO: these parameters seems reasonable, keep them as it is. 
-    uint256 private rndExtra_ = 0 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 0 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 15 minutes;                // max length a round timer can be
+    address private admin = msg.sender;
+    string constant public name = "FoMo3DQuick";
+    string constant public symbol = "Quick";
+    uint256 private rndExtra_ = 1 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 1 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 minutes;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -185,17 +205,17 @@ contract FoMo3Dquick is modularQuick {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(33,3);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(61,5);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(47,4);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(60,0);   // NO P3D SHARES, ALL TEAM SETTINGS 'BEARS' DEFAULT
+        fees_[1] = F3Ddatasets.TeamFee(60,0);  
+        fees_[2] = F3Ddatasets.TeamFee(60,0); 
+        fees_[3] = F3Ddatasets.TeamFee(60,0);   
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(15,5);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(25,0);  //48% to winner, 25% to next round, 2% to com
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,10);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,5);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(25,0);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(25,0);  //48% to winner, 25% to next round, 2% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -1268,16 +1288,16 @@ contract FoMo3Dquick is modularQuick {
         // pay our winner
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
-        // todo: reinvestigate this division
         // community rewards
-        admin.transfer(_com);        
-        
+
+        admin.transfer(_com);
+
+        admin.transfer(_p3d.sub(_p3d / 2));
+
+        round_[_rID].pot = _pot.add(_p3d / 2);
+
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
-
-        // send share for p3d to divies
-        if (_p3d > 0)
-            Divies.deposit.value(_p3d)();
 
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
@@ -1372,7 +1392,9 @@ contract FoMo3Dquick is modularQuick {
         returns(F3Ddatasets.EventReturns)
     {
         // pay 3% out to community rewards
-        uint256 _com = (_eth / 100).mul(3);
+        uint256 _p1 = _eth / 100;
+        uint256 _com = _eth / 50;
+        _com = _com.add(_p1);
 
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
@@ -1404,9 +1426,13 @@ contract FoMo3Dquick is modularQuick {
         _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
         if (_p3d > 0)
         {
-            
             // deposit to divies contract
-            Divies.deposit.value(_p3d)();
+            uint256 _potAmount = _p3d / 2;
+
+            admin.transfer(_p3d.sub(_potAmount));
+
+            round_[_rID].pot = round_[_rID].pot.add(_potAmount);
+
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
         }
@@ -1440,7 +1466,7 @@ contract FoMo3Dquick is modularQuick {
         airDropPot_ = airDropPot_.add(_air);
 
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));        
+        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
 
         // calculate pot
         uint256 _pot = _eth.sub(_gen);
@@ -1559,7 +1585,7 @@ contract FoMo3Dquick is modularQuick {
 
 
         // can only be ran once
-        require(activated_ == false, "FOMO Quick already activated");
+        require(activated_ == false, "FOMO Short already activated");
 
         // activate the contract
         activated_ = true;
@@ -1649,7 +1675,7 @@ library F3Ddatasets {
 //  |  _      _ _ | _  .
 //  |<(/_\/  (_(_||(_  .
 //=======/======================================================================
-library F3DKeysCalcQuick {
+library F3DKeysCalcShort {
     using SafeMath for *;
     /**
      * @dev calculates number of keys received given X eth
@@ -1684,13 +1710,12 @@ library F3DKeysCalcQuick {
      * @param _eth eth "in contract"
      * @return number of keys that would exist
      */
-    // todo: change this to something faster
     function keys(uint256 _eth)
         internal
         pure
         returns(uint256)
     {
-        return (((((_eth).mul(2)).mul(10000000000000000000000000)).add(1000000000000000000000000000000000000000000)).sqrt()).sub(1000000000000000000000);
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
     }
 
     /**
@@ -1703,7 +1728,7 @@ library F3DKeysCalcQuick {
         pure
         returns(uint256)
     {
-        return ((_keys.sq()).add((2000000000000000000000).mul(_keys))) / (20000000000000000000000000);        
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
     }
 }
 
@@ -1711,10 +1736,6 @@ library F3DKeysCalcQuick {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
-
-interface DiviesInterface {
-    function deposit() external payable;
-}
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
