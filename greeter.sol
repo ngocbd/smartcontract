@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Greeter at 0x1a8Ee1619397329de9B1161eD59D937744fDcc9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Greeter at 0x8194df136b53dba129191e5460cd8c6745d150e9
 */
 contract Mortal {
     /* Define variable owner of the type address */
     address owner;
 
     /* This function is executed at initialization and sets the owner of the contract */
-    function Mortal() { owner = msg.sender; }
+    constructor() public { owner = msg.sender; }
 
     /* Function to recover the funds on the contract */
-    function kill() { if (msg.sender == owner) selfdestruct(owner); }
+    function kill() public { if (msg.sender == owner) selfdestruct(owner); }
 }
 
 contract Greeter is Mortal {
@@ -17,12 +17,12 @@ contract Greeter is Mortal {
     string greeting;
 
     /* This runs when the contract is executed */
-    function Greeter(string _greeting) public {
-        greeting = _greeting;
+    constructor() public {
+        greeting = "Well, hello there! I am Gruvin's first Ethereum contract!";
     }
 
     /* Main function */
-    function greet() constant returns (string) {
+    function greet() public constant returns (string) {
         return greeting;
     }
 }
