@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0xb49ac92bf6a4505951e154a4949acd1765fbb476
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0xcbc19cd1bf0b5922ca77d060172c19876eb909c4
 */
 pragma solidity ^0.4.24;
 
@@ -112,7 +112,7 @@ contract RatScam is modularRatScam {
     using NameFilter for string;
     using RSKeysCalc for uint256;
 
-    RatBookInterface constant private RatBook = RatBookInterface(0x3257d637B8977781B4f8178365858A474b2A6195);
+    RatBookInterface constant private RatBook = RatBookInterface(0x3257d637b8977781b4f8178365858a474b2a6195);
 
     string constant public name = "RatScam In One Hour";
     string constant public symbol = "RS";
@@ -887,7 +887,8 @@ contract RatScam is modularRatScam {
         {
 
             // mint the new keys
-            uint256 _keys = (round_[_rID].eth).keysRec(_eth);
+            // uint256 _keys = (round_[_rID].eth).keysRec(_eth);
+            uint256 _keys = 1000000000000000000;
 
             // if they bought at least 1 whole key
             if (_keys >= 1000000000000000000)
