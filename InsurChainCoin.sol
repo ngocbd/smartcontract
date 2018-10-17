@@ -1,78 +1,93 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsurChainCoin at 0x6ea6531b603f270d23d9edd2d8279135dc5d6773
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsurChainCoin at 0x51fb3da8a67861361281ac56fe2ad8c3b4539ffa
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
-contract InsurChainCoin {
-    address public owner;
-    string  public name;
-    string  public symbol;
-    uint8   public decimals;
-    uint256 public totalSupply;
+library SafeMath {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function InsurChainCoin() {
-      owner = 0xf1A67c1a35737fb93fBC6F5e7d175cFBfCe3aD09;
-      name = 'InsurChain Coin';
-      symbol = 'INSUR';
-      decimals = 18;
-      totalSupply = 20000000000000000000000000000;  // 2 billion
-      balanceOf[owner] = 20000000000000000000000000000;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
     }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+}
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      require(balanceOf[msg.sender] >= _value);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function batchTransfer(address[] receivers, uint256[] values) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-      balanceOf[msg.sender] -= _value;
-      balanceOf[_to] += _value;
-      Transfer(msg.sender, _to, _value);
-      return true;
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) internal balances;
+  uint256 internal totalSupply_;
+
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
+  }
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function batchTransfer(address[] _receivers, uint256[] _values) public returns (bool) {
+    require(_receivers.length > 0);
+    require(_receivers.length < 100000);
+    require(_receivers.length == _values.length);
+
+    uint256 sum;
+    for(uint i = 0; i < _values.length; i++) {
+      sum = sum.add(_values[i]);
     }
+    require(sum <= balances[msg.sender]);
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) returns (bool success) {
-      allowance[msg.sender][_spender] = _value;
-      return true;
+    balances[msg.sender] = balances[msg.sender].sub(sum);
+    for(uint j = 0; j < _receivers.length; j++) {
+      balances[_receivers[j]] = balances[_receivers[j]].add(_values[j]);
+      emit Transfer(msg.sender, _receivers[j], _values[j]);
     }
+    return true;
+  }
+}
 
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      require(balanceOf[_from] >= _value);
-      require(allowance[_from][msg.sender] >= _value);
+contract InsurChainCoin is BasicToken {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
 
-      balanceOf[_from] -= _value;
-      balanceOf[_to] += _value;
-      allowance[_from][msg.sender] -= _value;
-      Transfer(_from, _to, _value);
-      return true;
-    }
-
-    function burn(uint256 _value) returns (bool success) {
-      require(balanceOf[msg.sender] >= _value);
-
-      balanceOf[msg.sender] -= _value;
-      totalSupply -= _value;
-      Burn(msg.sender, _value);
-      return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-      require(balanceOf[_from] >= _value);
-      require(msg.sender == owner);
-
-      balanceOf[_from] -= _value;
-      totalSupply -= _value;
-      Burn(_from, _value);
-      return true;
-    }
+  constructor() public {
+    name = "InsurChain2.0";
+    symbol = "INSUR";
+    decimals = 18;
+    totalSupply_ = 2e28;
+    balances[msg.sender]=totalSupply_;
+    emit Transfer(address(0), msg.sender, totalSupply_);
+  }
 }
