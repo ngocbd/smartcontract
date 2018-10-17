@@ -1,253 +1,346 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0x12fa6cc43227ad0f1256804dbc24480404799080
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xb6f39ecab53187c21adbe1c0e36bdda1c241b330
 */
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// ODIN token contract 
-// ----------------------------------------------------------------------------
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
+//
+// OdinToken Token
+//
+library SafeMath{
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a * b;
+		assert(a == 0 || c / a == b);
+		return c;
+	}
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a / b;
+		return c;
+	}
 
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
 
-contract ERC20Interface {
-//    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+contract OdinToken {
+	using SafeMath for uint256;
+    string public constant name         = "OdinChain";
+    string public constant symbol       = "OdinB";
+    uint public constant decimals       = 18;
+    
+    uint256 OdinEthRate                  = 10 ** decimals;
+    uint256 OdinSupply                   = 15000000000;
+    uint256 public totalSupply          = OdinSupply * OdinEthRate;
+    uint256 public minInvEth            = 0.1 ether;
+    uint256 public maxInvEth            = 1000.0 ether;
+    uint256 public sellStartTime        = 1533052800;           // 2018/8/1
+    uint256 public sellDeadline1        = sellStartTime + 30 days;
+    uint256 public sellDeadline2        = sellDeadline1 + 30 days;
+    uint256 public freezeDuration       = 30 days;
+    uint256 public ethOdinRate1          = 3600;
+    uint256 public ethOdinRate2          = 3600;
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-    event Burn(uint tokens);
+    bool public running                 = true;
+    bool public buyable                 = true;
+    
+    address owner;
+    mapping (address => mapping (address => uint256)) allowed;
+    mapping (address => bool) public whitelist;
+    mapping (address =>  uint256) whitelistLimit;
 
+    struct BalanceInfo {
+        uint256 balance;
+        uint256[] freezeAmount;
+        uint256[] releaseTime;
+    }
+    mapping (address => BalanceInfo) balances;
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event BeginRunning();
+    event Pause();
+    event BeginSell();
+    event PauseSell();
+    event Burn(address indexed burner, uint256 val);
+    event Freeze(address indexed from, uint256 value);
+    
+    constructor () public{
+        owner = msg.sender;
+        balances[owner].balance = totalSupply;
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyWhitelist() {
+        require(whitelist[msg.sender] == true);
+        _;
+    }
+    
+    modifier isRunning(){
+        require(running);
+        _;
+    }
+    modifier isNotRunning(){
+        require(!running);
+        _;
+    }
+    modifier isBuyable(){
+        require(buyable && now >= sellStartTime && now <= sellDeadline2);
+        _;
+    }
+    modifier isNotBuyable(){
+        require(!buyable || now < sellStartTime || now > sellDeadline2);
+        _;
+    }
     // mitigates the ERC20 short address attack
     modifier onlyPayloadSize(uint size) {
         assert(msg.data.length >= size + 4);
         _;
     }
+
+    // 1eth = newRate tokens
+    function setPublicOfferPrice(uint256 _rate1, uint256 _rate2) onlyOwner public {
+        ethOdinRate1 = _rate1;
+        ethOdinRate2 = _rate2;       
+    }
+
+    //
+    function setPublicOfferLimit(uint256 _minVal, uint256 _maxVal) onlyOwner public {
+        minInvEth   = _minVal;
+        maxInvEth   = _maxVal;
+    }
     
-}
-
-contract Owned {
-    address public owner;
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
+    function setPublicOfferDate(uint256 _startTime, uint256 _deadLine1, uint256 _deadLine2) onlyOwner public {
+        sellStartTime = _startTime;
+        sellDeadline1   = _deadLine1;
+        sellDeadline2   = _deadLine2;
     }
-
-}
-
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract OdinToken is ERC20Interface, Owned {
-
-  using SafeMath for uint256;
-
-    string public symbol;
-    string public name;
-    uint8 public decimals;
-//    uint private totalSupply;
-    bool private _whitelistAll;
-
-    struct balanceData {  
-       bool locked;
-       uint balance;
-       uint airDropQty;
-    }
-
-    mapping(address => balanceData) balances;
-    mapping(address => mapping(address => uint)) allowed;
-
-
-  /**
-  * @dev Constructor for Odin creation
-  * @dev Initially assigns the totalSupply to the contract creator
-  */
-    function OdinToken() public {
         
-        // owner of this contract
-        owner = msg.sender;
-        symbol = "ODIN";
-        name = "ODIN Token";
-        decimals = 18;
-        _whitelistAll=false;
-        totalSupply = 100000000000000000000000;
-        balances[owner].balance = totalSupply;
-
-        emit Transfer(address(0), msg.sender, totalSupply);
-    }
-
-    // function totalSupply() constant public returns (uint256 totalSupply) {
-    //     return totalSupply;
-    // }
-    uint256 public totalSupply;
-
-
-    // ------------------------------------------------------------------------
-    // whitelist an address
-    // ------------------------------------------------------------------------
-    function whitelistAddress(address tokenOwner) onlyOwner public returns (bool)    {
-		balances[tokenOwner].airDropQty = 0;
-		return true;
-    }
-
-
-    /**
-  * @dev Whitelist all addresses early
-  * @return An bool showing if the function succeeded.
-  */
-    function whitelistAllAddresses() onlyOwner public returns (bool) {
-        _whitelistAll = true;
-        return true;
-    }
-
-
-    /**
-  * @dev Gets the balance of the specified address.
-  * @param tokenOwner The address to query the the balance of.
-  * @return An uint representing the amount owned by the passed address.
-  */
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner].balance;
-    }
-
-    function airdrop(address[] recipients, uint[] values) onlyOwner public {
-
-    require(recipients.length <= 255);
-    require (msg.sender==owner);
-    require(recipients.length == values.length);
-    for (uint i = 0; i < recipients.length; i++) {
-        if (balances[recipients[i]].balance==0) {
-          OdinToken.transfer(recipients[i], values[i]);
-    }
-    }
-  }
-  
-    function canSpend(address tokenOwner, uint _value) public constant returns (bool success) {
-
-        if (_value > balances[tokenOwner].balance) {return false;}     // do they have enough to spend?
-        if (tokenOwner==address(0)) {return false;}                               // cannot send to address[0]
-
-        if (tokenOwner==owner) {return true;}                                       // owner can always spend
-        if (_whitelistAll) {return true;}                                   // we pulled the rip cord
-        if (balances[tokenOwner].airDropQty==0) {return true;}                      // these are not airdrop tokens
-        if (block.timestamp>1569974400) {return true;}                      // no restrictions after june 30, 2019
-
-        // do not allow transfering air dropped tokens prior to Sep 1 2018
-         if (block.timestamp < 1535760000) {return false;}
-
-        // after Sep 1 2018 and before Dec 31, 2018, do not allow transfering more than 10% of air dropped tokens
-        if (block.timestamp < 1546214400 && (balances[tokenOwner].balance - _value) < (balances[tokenOwner].airDropQty / 10 * 9)) {
-            return false;
+    function transferOwnership(address _newOwner) onlyOwner public {
+        if (_newOwner !=    address(0)) {
+            owner = _newOwner;
         }
+    }
+    
+    function pause() onlyOwner isRunning    public   {
+        running = false;
+        emit Pause();
+    }
+    
+    function start() onlyOwner isNotRunning public   {
+        running = true;
+        emit BeginRunning();
+    }
 
-        // after Dec 31 2018 and before March 31, 2019, do not allow transfering more than 25% of air dropped tokens
-        if (block.timestamp < 1553990400 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 4 * 3) {
-            return false;
-        }
+    function pauseSell() onlyOwner  isBuyable isRunning public{
+        buyable = false;
+        emit PauseSell();
+    }
+    
+    function beginSell() onlyOwner  isNotBuyable isRunning  public{
+        buyable = true;
+        emit BeginSell();
+    }
 
-        // after March 31, 2019 and before Jun 30, 2019, do not allow transfering more than 50% of air dropped tokens
-        if (block.timestamp < 1561852800 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 2) {
-            return false;
-        }
-
-        // after Jun 30, 2019 and before Oct 2, 2019, do not allow transfering more than 75% of air dropped tokens
-        if (block.timestamp < 1569974400 && (balances[tokenOwner].balance - _value) < balances[tokenOwner].airDropQty / 4) {
-            return false;
-        }
+    //
+    // _amount in Odin, 
+    //
+    function airDeliver(address _to,    uint256 _amount)  onlyOwner public {
+        require(owner != _to);
+        require(_amount > 0);
+        require(balances[owner].balance >= _amount);
         
-        return true;
-
-    }
-
-    function transfer(address to, uint _value) onlyPayloadSize(2 * 32) public returns (bool success) {
-
-        require (canSpend(msg.sender, _value));
-        balances[msg.sender].balance = balances[msg.sender].balance.sub( _value);
-        balances[to].balance = balances[to].balance.add( _value);
-        if (msg.sender == owner) {
-            balances[to].airDropQty = balances[to].airDropQty.add( _value);
+        // take big number as wei
+        if(_amount < OdinSupply){
+            _amount = _amount * OdinEthRate;
         }
-        emit Transfer(msg.sender, to,  _value);
-        return true;
+        balances[owner].balance = balances[owner].balance.sub(_amount);
+        balances[_to].balance = balances[_to].balance.add(_amount);
+        emit Transfer(owner, _to, _amount);
     }
-
-    function approve(address spender, uint  _value) public returns (bool success) {
-
-        require (canSpend(msg.sender, _value));
-
-        // // mitigates the ERC20 spend/approval race condition
-        // if ( _value != 0 && allowed[msg.sender][spender] != 0) { return false; }
-
-        allowed[msg.sender][spender] =  _value;
-        emit Approval(msg.sender, spender,  _value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint  _value) onlyPayloadSize(3 * 32) public returns (bool success) {
-
-        if (balances[from].balance >=  _value && allowed[from][msg.sender] >=  _value &&  _value > 0) {
-
-            allowed[from][msg.sender].sub( _value);
-            balances[from].balance = balances[from].balance.sub( _value);
-            balances[to].balance = balances[to].balance.add( _value);
-            emit Transfer(from, to,  _value);
-          return true;
-        } else {
-          require(false);
+    
+    
+    function airDeliverMulti(address[]  _addrs, uint256 _amount) onlyOwner public {
+        require(_addrs.length <=  255);
+        
+        for (uint8 i = 0; i < _addrs.length; i++)   {
+            airDeliver(_addrs[i],   _amount);
         }
-      }
+    }
     
-
-    // ------------------------------------------------------------------------
-    // not implemented
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
+    function airDeliverStandalone(address[] _addrs, uint256[] _amounts) onlyOwner public {
+        require(_addrs.length <=  255);
+        require(_addrs.length ==     _amounts.length);
+        
+        for (uint8 i = 0; i < _addrs.length;    i++) {
+            airDeliver(_addrs[i],   _amounts[i]);
+        }
     }
 
+    //
+    // _amount, _freezeAmount in Odin
+    //
+    function  freezeDeliver(address _to, uint _amount, uint _freezeAmount, uint _freezeMonth, uint _unfreezeBeginTime ) onlyOwner public {
+        require(owner != _to);
+        require(_freezeMonth > 0);
+        
+        uint average = _freezeAmount / _freezeMonth;
+        BalanceInfo storage bi = balances[_to];
+        uint[] memory fa = new uint[](_freezeMonth);
+        uint[] memory rt = new uint[](_freezeMonth);
+
+        if(_amount < OdinSupply){
+            _amount = _amount * OdinEthRate;
+            average = average * OdinEthRate;
+            _freezeAmount = _freezeAmount * OdinEthRate;
+        }
+        require(balances[owner].balance > _amount);
+        uint remainAmount = _freezeAmount;
+        
+        if(_unfreezeBeginTime == 0)
+            _unfreezeBeginTime = now + freezeDuration;
+        for(uint i=0;i<_freezeMonth-1;i++){
+            fa[i] = average;
+            rt[i] = _unfreezeBeginTime;
+            _unfreezeBeginTime += freezeDuration;
+            remainAmount = remainAmount.sub(average);
+        }
+        fa[i] = remainAmount;
+        rt[i] = _unfreezeBeginTime;
+        
+        bi.balance = bi.balance.add(_amount);
+        bi.freezeAmount = fa;
+        bi.releaseTime = rt;
+        balances[owner].balance = balances[owner].balance.sub(_amount);
+        emit Transfer(owner, _to, _amount);
+        emit Freeze(_to, _freezeAmount);
+    }
     
-    // ------------------------------------------------------------------------
-    // Used to burn unspent tokens in the contract
-    // ------------------------------------------------------------------------
-    function burn(uint  _value) onlyOwner public returns (bool) {
-        require((balances[owner].balance -  _value) >= 0);
-        balances[owner].balance = balances[owner].balance.sub( _value);
-        totalSupply = totalSupply.sub( _value);
-        emit Burn( _value);
+    
+    // buy tokens directly
+    function () external payable {
+        buyTokens();
+    }
+
+    //
+    function buyTokens() payable isRunning isBuyable onlyWhitelist  public {
+        uint256 weiVal = msg.value;
+        address investor = msg.sender;
+        require(investor != address(0) && weiVal >= minInvEth && weiVal <= maxInvEth);
+        require(weiVal.add(whitelistLimit[investor]) <= maxInvEth);
+        
+        uint256 amount = 0;
+        if(now > sellDeadline1)
+            amount = msg.value.mul(ethOdinRate2);
+        else
+            amount = msg.value.mul(ethOdinRate1);   
+
+        whitelistLimit[investor] = weiVal.add(whitelistLimit[investor]);
+        
+        balances[owner].balance = balances[owner].balance.sub(amount);
+        balances[investor].balance = balances[investor].balance.add(amount);
+        emit Transfer(owner, investor, amount);
+    }
+
+    function addWhitelist(address[] _addrs) public onlyOwner {
+        require(_addrs.length <=  255);
+
+        for (uint8 i = 0; i < _addrs.length; i++) {
+            if (!whitelist[_addrs[i]]){
+                whitelist[_addrs[i]] = true;
+            }
+        }
+    }
+
+    function balanceOf(address _owner) constant public returns (uint256) {
+        return balances[_owner].balance;
+    }
+    
+    function freezeOf(address _owner) constant  public returns (uint256) {
+        BalanceInfo storage bi = balances[_owner];
+        uint freezeAmount = 0;
+        uint t = now;
+        
+        for(uint i=0;i< bi.freezeAmount.length;i++){
+            if(t < bi.releaseTime[i])
+                freezeAmount += bi.freezeAmount[i];
+        }
+        return freezeAmount;
+    }
+    
+    function transfer(address _to, uint256 _amount)  isRunning onlyPayloadSize(2 *  32) public returns (bool success) {
+        require(_to != address(0));
+        uint freezeAmount = freezeOf(msg.sender);
+        uint256 _balance = balances[msg.sender].balance.sub(freezeAmount);
+        require(_amount <= _balance);
+        
+        balances[msg.sender].balance = balances[msg.sender].balance.sub(_amount);
+        balances[_to].balance = balances[_to].balance.add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
         return true;
     }
 
+    function transferFrom(address _from, address _to, uint256 _amount) isRunning onlyPayloadSize(3 * 32) public returns (bool   success) {
+        require(_from   != address(0) && _to != address(0));
+        require(_amount <= allowed[_from][msg.sender]);
+        uint freezeAmount = freezeOf(_from);
+        uint256 _balance = balances[_from].balance.sub(freezeAmount);
+        require(_amount <= _balance);
+        
+        balances[_from].balance = balances[_from].balance.sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to].balance = balances[_to].balance.add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) isRunning public returns (bool   success) {
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { 
+            return  false; 
+        }
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+    
+    function withdraw() onlyOwner public {
+        address myAddress = this;
+        require(myAddress.balance > 0);
+        owner.transfer(myAddress.balance);
+        emit Transfer(this, owner, myAddress.balance);    
+    }
+    
+    function burn(address burner, uint256 _value) onlyOwner public {
+        require(_value <= balances[msg.sender].balance);
+
+        balances[burner].balance = balances[burner].balance.sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        OdinSupply = totalSupply / OdinEthRate;
+        emit Burn(burner, _value);
+    }
+    
+    function mint(address _target, uint256 _amount) onlyOwner public {
+        if(_target  == address(0))
+            _target = owner;
+        
+        balances[_target].balance = balances[_target].balance.add(_amount);
+        totalSupply = totalSupply.add(_amount);
+        OdinSupply = totalSupply / OdinEthRate;
+        emit Transfer(0, this, _amount);
+        emit Transfer(0, _target, _amount);
+    }
 }
