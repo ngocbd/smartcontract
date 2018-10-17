@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x16df01874b07933f1ce8beaf42418a86b72a2dee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x3feab40ae0ff64c8cdfaba8a3a805c78cbdf4109
 */
 pragma solidity ^0.4.21;
 
@@ -177,8 +177,7 @@ contract TokenLiquidityMarket {
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
-    return (_amount.mul(uint256(1 ether).sub(commission_ratio))).div(1 ether);  
-
+    return ((_amount.mul(1 ether)).sub(commission_ratio)).div(1 ether);  
   }
 
   function activate_admin_commission() public only_admin() {
