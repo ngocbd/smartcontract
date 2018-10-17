@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParaTransfer at 0xc1d2d28cdfba332c9654b4b400d84e5a301e0208
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParaTransfer at 0xe14aafda8e71c75ac7200b50f8599d3497daeed8
 */
 pragma solidity ^0.4.4;
 
@@ -18,11 +18,11 @@ contract ParaTransfer {
         parachute = msg.sender;
     }    
         
-    function multiTransfer(ERC20 token, address[] Airdrop, uint256 amount) public {
+    function multiTransfer(ERC20 token, address[] Airdrop, uint256[] amount) public {
         require(msg.sender == parachute);
         
         for (uint256 i = 0; i < Airdrop.length; i++) {
-            token.transfer( Airdrop[i], amount * 10 ** 18);
+            token.transfer( Airdrop[i], amount[i] * 10 ** 18);
         }
     }
 }
