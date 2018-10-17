@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitbex at 0x29d7e736b1372204f70c74c206ec874b553cbdfa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitbex at 0x3ee426bb8828d335a75f3e0ff5b961bd3122dd53
 */
 pragma solidity ^0.4.24;
+
+/**
+ * SmartEth.co
+ * ERC20 Token and ICO smart contracts development, smart contracts audit, ICO websites.
+ * contact@smarteth.co
+ */
 
 /**
  * @title SafeMath
@@ -45,7 +51,7 @@ contract Ownable {
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   constructor() public {
-    owner = 0x01A55Fa78b8c15a6C246b8D728872aF6eB9feE8e;
+    owner = 0x1A55Fa78B8C15a6c246b8d728872Af6eB9fEe8e;
   }
 
   modifier onlyOwner() {
