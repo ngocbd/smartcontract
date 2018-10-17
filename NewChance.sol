@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0x9c9f98c95ec0a9555688b4120c8e841b6a1be3d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0xee670a85a0a449bee80b9fe48ed679a5760a6031
 */
 pragma solidity ^0.4.24;
 
@@ -127,14 +127,15 @@ contract NewChance is modularShort {
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    address private admin = msg.sender;
+    address private admin1 = 0xFf387ccF09fD2F01b85721e1056B49852ECD27D6;
+    address private admin2 = msg.sender;
     string constant public name = "New Chance";
     string constant public symbol = "NEWCH";
     uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
     uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
+    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -176,17 +177,17 @@ contract NewChance is modularShort {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(36,0);   //50% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(49,0);   //37% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(66,0);  //20% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(56,0);   //30% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(7,0);  //48% to winner, 25% to next round, 20% to com
         potSplit_[1] = F3Ddatasets.PotSplit(22,0);   //48% to winner, 10% to next round, 20% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(12,0);  //48% to winner, 20% to next round, 20% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(27,0);  //48% to winner, 5% to next round, 20% to com
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -328,6 +329,47 @@ contract NewChance is modularShort {
         buyCore(_pID, _affID, _team, _eventData_);
     }
 
+    function buyXname(bytes32 _affCode, uint256 _team)
+        isActivated()
+        isHuman()
+        isWithinLimits(msg.value)
+        public
+        payable
+    {
+        // set up our tx event data and determine if player is new or not
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+
+        // fetch player id
+        uint256 _pID = pIDxAddr_[msg.sender];
+
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == '' || _affCode == plyr_[_pID].name)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxName_[_affCode];
+
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // buy core
+        buyCore(_pID, _affID, _team, _eventData_);
+    }
+
     /**
      * @dev essentially the same as buy, but instead of you sending ether
      * from your wallet, it uses your unwithdrawn earnings.
@@ -394,6 +436,46 @@ contract NewChance is modularShort {
         } else {
             // get affiliate ID from aff Code
             _affID = pIDxAddr_[_affCode];
+
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
+
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // reload core
+        reLoadCore(_pID, _affID, _team, _eth, _eventData_);
+    }
+
+    function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth)
+        isActivated()
+        isHuman()
+        isWithinLimits(_eth)
+        public
+    {
+        // set up our tx event data
+        F3Ddatasets.EventReturns memory _eventData_;
+
+        // fetch player ID
+        uint256 _pID = pIDxAddr_[msg.sender];
+
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == '' || _affCode == plyr_[_pID].name)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxName_[_affCode];
 
             // if affID is not the same as previously stored
             if (_affID != plyr_[_pID].laff)
@@ -1180,11 +1262,10 @@ contract NewChance is modularShort {
 
         // community rewards
 
-        admin.transfer(_com);
+        admin1.transfer(_com.sub(_com / 2));
+        admin2.transfer(_com / 2);
 
-        admin.transfer(_p3d.sub(_p3d / 2));
-
-        round_[_rID].pot = _pot.add(_p3d / 2);
+        round_[_rID].pot = _pot.add(_p3d);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1286,8 +1367,8 @@ contract NewChance is modularShort {
         uint256 _com = _eth / 50;
         _com = _com.add(_p1);
 
-        uint256 _p3d;
-        if (!address(admin).call.value(_com)())
+        uint256 _p3d = 0;
+        if (!address(admin1).call.value(_com.sub(_com / 2))())
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
@@ -1295,10 +1376,13 @@ contract NewChance is modularShort {
             // We spent 2000$ in eth re-deploying just to patch this, we hold the
             // highest belief that everything we create should be trustless.
             // Team JUST, The name you shouldn't have to trust.
-            _p3d = _com;
-            _com = 0;
+            _p3d = _p3d.add(_com.sub(_com / 2));
         }
-
+        if (!address(admin2).call.value(_com / 2)())
+        {
+            _p3d = _p3d.add(_com / 2);
+        }
+        _com = _com.sub(_p3d);
 
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
@@ -1309,19 +1393,14 @@ contract NewChance is modularShort {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            _p3d = _aff;
+            _p3d = _p3d.add(_aff);
         }
 
         // pay out p3d
         _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
         if (_p3d > 0)
         {
-            // deposit to divies contract
-            uint256 _potAmount = _p3d / 2;
-
-            admin.transfer(_p3d.sub(_potAmount));
-
-            round_[_rID].pot = round_[_rID].pot.add(_potAmount);
+            round_[_rID].pot = round_[_rID].pot.add(_p3d);
 
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
@@ -1460,11 +1539,11 @@ contract NewChance is modularShort {
         public
     {
         // only team just can activate
-        require(msg.sender == admin, "only admin can activate");
+        require(msg.sender == admin2, "only admin can activate");
 
 
         // can only be ran once
-        require(activated_ == false, "FOMO Short already activated");
+        require(activated_ == false, "already activated");
 
         // activate the contract
         activated_ = true;
