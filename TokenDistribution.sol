@@ -1,322 +1,147 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0xf4ac7eccd66a282920c131f96e716e3457120e03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0x0b529c6c842cd1d0454f9dc4d4ed21a696561213
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.18;
 
- 
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
-//Buffer overflow implementation
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-contract Math {
-
- 
-
-    function safeMul(uint a, uint b) internal returns (uint) {
-
-        uint c = a * b;
-
-        assert(a != 0 && b != 0 );
-
-        return c;
-
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
- 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function safeSub(uint a, uint b) internal returns (uint) {
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-        assert(b <= a);
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
-        return a - b;
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
-    }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
- 
 
-    function safeAdd(uint a, uint b) internal returns (uint) {
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-        uint c = a + b;
 
-        assert(b <= c && c >= a);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-        return c;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-   }
-
- 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
 }
 
- 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-contract ERC20 {
-
- 
-
-    function transfer(address to, uint value) returns (bool success) {
-
-        if (tokenOwned[msg.sender] >= value && tokenOwned[to] + value > tokenOwned[to]) {
-
-            tokenOwned[msg.sender] -= value;
-
-            tokenOwned[to] += value;
-
-            Transfer(msg.sender, to, value);
-
-            return true;
-
-        } else { return false; }
-
-    }
-
- 
-
-    function transferFrom(address from, address to, uint value) returns (bool success) {
-
-        if (tokenOwned[from] >= value && allowed[from][msg.sender] >= value && tokenOwned[to] + value > tokenOwned[to]) {
-
-            tokenOwned[to] += value;
-
-            tokenOwned[from] -= value;
-
-            allowed[from][msg.sender] -= value;
-
-            Transfer(from, to, value);
-
-            return true;
-
-        } else { return false; }
-
-    }
-
- 
-
-    function balanceOf(address owner) constant returns (uint balance) {
-
-        return tokenOwned[owner];
-
-    }
-
- 
-
-    function approve(address spender, uint value) returns (bool success) {
-
-        allowed[msg.sender][spender] = value;
-
-        Approval(msg.sender, spender, value);
-
-        return true;
-
-    }
-
- 
-
-    function allowance(address owner, address spender) constant returns (uint remaining) {
-
-        return allowed[owner][spender];
-
-    }
-
- 
-
-    event Transfer(address indexed from, address indexed to, uint value);
-
-    event Approval(address indexed owner, address indexed spender, uint value);
-
- 
-
-    mapping(address => uint) internal tokenOwned; // Contract field for storing token balance owned by certain address
-
- 
-
-    mapping (address => mapping (address => uint)) allowed;
-
- 
-
-    uint public totalSupply;
-
- 
-
-    string public name = "BitMohar";
-
- 
-
-    string public symbol = "MOH";
-
- 
-
-    uint public decimals = 10;
-
- 
-
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
- 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
-//TokenDistibution contract inherits Math, ERC20 contracts, this class instatiates the token distribution process
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-//This contract implements time windowed distribution of tokens, during each time window a slice of total token is distributed based emission curve
+// File: contracts/TokenDistribution.sol
 
-//Once the uppercap of the slice of total tokens is reached, the contract no longer distributes the token.
+contract TokenDistribution is Ownable {
+  using SafeMath for uint256;
 
-contract TokenDistribution is Math, ERC20 {
+  ERC20 public token;
 
- 
+  address public wallet;
 
-    //assigns owner to the contract & initilizes the number of tranches
+  function TokenDistribution(
+    ERC20 _token,
+    address _wallet) public
+  {
+    require(_token != address(0));
+    require(_wallet != address(0));
+    token = _token;
+    wallet = _wallet;
+  }
 
-    function TokenDistribution() {
-
-        owner = msg.sender;
-
- 
-
-        totalSupply = 15000000000000000000; // Total supply of tokens with 10 decimal places
-
-        startBlock = 4267514;
-
-        emissionPerblock = 80; //considering 25 secs a block generation with 10 decimal places
-
-        blocksPerYear = 10000000; //considering 25 secs a block
-
-        preMined = 9000000000000000000;
-
-        tokensMinted = 0;
-
-        preMineDone = false;
-
- 
-
+  function sendToken(address[] _beneficiaries, uint256 _amount) external onlyOwner {
+    for (uint256 i = 0; i < _beneficiaries.length; i++) {
+      require(token.transferFrom(wallet, _beneficiaries[i], _amount));
     }
-
- 
-
-    function preMine() returns (bool z) {
-
-        if(msg.sender == owner && !preMineDone) {
-
-            tokenOwned[0x60212b87C6e106d3852890FE6e8d00db3D99d002] = 9000000000000000000;
-
-            preMineDone = true;
-
-            return true;
-
-        } else {
-
-            return false;
-
-        }
-
-    }
-
- 
-
-    function mine() returns (bool z) {
-
-        uint blockTime = (((block.number - startBlock) / blocksPerYear) + 1);
-
-        uint currentEmission = emissionPerblock / blockTime;
-
-        uint emittedBlocks = startBlock;
-
-        if(currentEmission != emissionPerblock) { //in case of halving and later time
-
-            emittedBlocks = startBlock + (blocksPerYear * blockTime);
-
-        }
-
-        uint mined = 0;
-
-        if(blockTime > 1) { //after halving
-
-            uint prevMinted = 0;
-
-            for (uint i = 1; i <= blockTime; i++) {
-
-                prevMinted += (blocksPerYear * (emissionPerblock / i));
-
-            }
-
-            prevMinted += (block.number - emittedBlocks) * currentEmission;
-
-            mined = safeSub(prevMinted, tokensMinted);
-
-        } else {
-
-            mined = safeSub((block.number - emittedBlocks) * currentEmission, tokensMinted);
-
-        }
-
- 
-
-        if(safeAdd(preMined, safeAdd(mined, tokensMinted)) > totalSupply) {
-
-            return false;
-
-        } else {
-
-            tokenOwned[msg.sender] = safeAdd(tokenOwned[msg.sender], mined);
-
-            tokensMinted = safeAdd(tokensMinted, mined);
-
-            return true;
-
-        }
-
-    }
-
- 
-
-    function changeTotalSupply(uint _totalSupply) returns (bool x){
-
-        if(msg.sender == owner){
-
-            totalSupply = _totalSupply;
-
-            return true;
-
-        }else{
-
-            return false;
-
-        }
-
-    }
-
- 
-
-    function additionalPreMine(uint _supply) returns (bool x){
-
-        if(msg.sender == owner){
-
-            tokenOwned[msg.sender] = safeAdd(tokenOwned[msg.sender], _supply);
-
-            return true;
-
-        }else{
-
-            return false;
-
-        }
-
-    }
-
- 
-
-    address owner;
-
-    mapping (address => uint) internal etherSent; // Contract field for storing how much Ether was sent from certain address
-
-    uint startBlock;
-
-    uint emissionPerblock; //considering 25 secs a block generation with 10 decimal places
-
-    uint blocksPerYear; //considering 25 secs a block
-
-    uint preMined;
-
-    uint tokensMinted;
-
-    bool preMineDone;
-
+  }
 }
