@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetabaseToken at 0x6834bdaafc44fe694fdee72bc480a0cc60858d70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetabaseToken at 0x599c49b932f08707888791a9b55949e385a00aeb
 */
 pragma solidity ^0.4.18;
 
@@ -392,6 +392,11 @@ contract StageVestingToken is ReleasableToken {
 
     mapping(uint => mapping(address => uint256)) internal stageVesting;
 
+    modifier isValidmint() {
+      require(totalSupply_ <= 4e27 );
+      _;
+    }
+
     function StageVestingToken () public{
         stageCount = 4;
         stage = 0;
@@ -464,7 +469,7 @@ contract StageVestingToken is ReleasableToken {
         return true;
     }
 
-    function mint(address _to, uint256 _amount, uint256 _stage) onlyOwner canMint public returns (bool) {
+    function mint(address _to, uint256 _amount, uint256 _stage) onlyOwner canMint isValidmint public {
         super.mint(_to, _amount);
         addOnStage(_to, _amount, _stage);
     }
@@ -493,52 +498,8 @@ contract StageVestingToken is ReleasableToken {
 
 contract MetabaseToken is StageVestingToken {
 
-    string public constant name = "META-Test";
-    string public constant symbol = "MT";
+    string public constant name = "METABASE";
+    string public constant symbol = "MBT";
     uint256 public constant decimals = 18;
 
-}
-
-// File: src/Store/MetabaseCrowdSale.sol
-
-contract MetabaseCrowdSale is OracleOwnable {
-    using SafeMath for uint;
-
-    MetabaseToken token;
-
-    event Transaction(address indexed beneficiary, string currency, uint currencyAmount, uint rate, uint tokenAmount, uint stage, bool isNegative);
-
-
-    address[] currencyInvestors;
-    mapping(address => bool) currencyInvestorsAddresses;
-
-    function setToken(address _token) public onlyOracleOrOwner {
-        token = MetabaseToken(_token);
-    }
-
-    function addInvestorIfNotExists(address _beneficiary) internal {
-        if (!currencyInvestorsAddresses[_beneficiary]) {
-            currencyInvestors.push(_beneficiary);
-        }
-    }
-
-    function buy(address _beneficiary, string _currency, uint _currencyAmount, uint _rate, uint _tokenAmount, uint _stage) public onlyOracleOrOwner {
-        addInvestorIfNotExists(_beneficiary);
-
-        token.mint(_beneficiary, _tokenAmount, _stage);
-
-        Transaction(_beneficiary, _currency, _currencyAmount, _rate, _tokenAmount, _stage, false);
-    }
-
-    function refund(address _beneficiary, string _currency, uint _currencyAmount, uint _tokenAmount, uint _stage) public onlyOracleOrOwner {
-        addInvestorIfNotExists(_beneficiary);
-
-        token.burn(_beneficiary, _tokenAmount, _stage);
-
-        Transaction(_beneficiary, _currency, _currencyAmount, 0, _tokenAmount, _stage, true);
-    }
-
-    function tokenTransferOwnership(address _owner) onlyOracleOrOwner public {
-        token.transferOwnership(_owner);
-    }
 }
