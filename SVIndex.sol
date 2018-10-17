@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SVIndex at 0x04b710d1fc77c8e7002f539bb48feb560cb2892c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SVIndex at 0x4cbc8488a70212a2b63b6bffedc5dde911850f26
 */
 pragma solidity 0.4.24;
-
-/* (c) 2018 SecureVote (Exo One Pty Ltd) */
 
 contract BBFarmEvents {
     event BallotCreatedWithID(uint ballotId);
