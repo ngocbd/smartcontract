@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TotlePrimary at 0xd94c60e2793ad587400d86e4d6fd9c874f0f79ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TotlePrimary at 0xdc596c680aa1ed68ea26ab9c19d6e9acc68c06c2
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 
 // File: contracts/ExchangeHandler.sol
 
@@ -303,8 +303,6 @@ library SafeMath {
   }
 }
 
-// File: contracts/TotlePrimary.sol
-
 /// @title The primary contract for Totle Inc
 contract TotlePrimary is Ownable {
     // Constants
@@ -337,7 +335,7 @@ contract TotlePrimary is Ownable {
 
     /// @dev Constructor
     /// @param proxy Address of the TokenTransferProxy
-    function TotlePrimary(address proxy) public {
+    constructor(address proxy) public {
         tokenTransferProxy = proxy;
     }
 
@@ -381,13 +379,16 @@ contract TotlePrimary is Ownable {
         uint256[] exchangeFees,
         uint8[] v,
         bytes32[] r,
-        bytes32[] s
+        bytes32[] s,
+        // Unique ID
+        uint256 uniqueID
     ) public payable {
 
         require(
             tokenAddresses.length == buyOrSell.length &&
             buyOrSell.length      == amountToObtain.length &&
-            amountToObtain.length == amountToGive.length
+            amountToObtain.length == amountToGive.length,
+            "TotlePrimary - trade length check failed"
         );
 
         require(
@@ -397,7 +398,8 @@ contract TotlePrimary is Ownable {
             orderValues.length    == exchangeFees.length &&
             exchangeFees.length   == v.length &&
             v.length              == r.length &&
-            r.length              == s.length
+            r.length              == s.length,
+            "TotlePrimary - order length check failed"
         );
 
         // Wrapping order in structs to reduce local variable count
@@ -444,12 +446,21 @@ contract TotlePrimary is Ownable {
             uint256 amountObtained = 0;
 
             while(orderIndex < ordersLength) {
-                require(tokens.tokenAddresses[tokenIndex] == orders.tokenForOrder[orderIndex]);
-                require(handlerWhitelist[orders.exchanges[orderIndex]]);
+                require(
+                    tokens.tokenAddresses[tokenIndex] == orders.tokenForOrder[orderIndex],
+                    "TotlePrimary - tokenAddress != tokenForOrder"
+                );
+                require(
+                    handlerWhitelist[orders.exchanges[orderIndex]],
+                    "TotlePrimary - handler not in whitelist"
+                );
 
                 if(amountRemaining > 0) {
                     if(tokens.buyOrSell[tokenIndex] == BUY) {
-                        require(etherBalance >= amountRemaining);
+                        require(
+                            etherBalance >= amountRemaining,
+                            "TotlePrimary - not enough ether left to fill next order"
+                        );
                     }
                     (amountRemaining, amountObtained) = performTrade(
                         tokens.buyOrSell[tokenIndex],
@@ -462,28 +473,37 @@ contract TotlePrimary is Ownable {
 
                 orderIndex = SafeMath.add(orderIndex, 1);
                 // If this is the last order for this token
-                if(orderIndex == ordersLength || orders.tokenForOrder[SafeMath.sub(orderIndex, 1)] != orders.tokenForOrder[orderIndex]){
+                if(orderIndex == ordersLength || orders.tokenForOrder[SafeMath.sub(orderIndex, 1)] != orders.tokenForOrder[orderIndex]) {
                     break;
                 }
             }
 
             uint256 amountGiven = SafeMath.sub(tokens.amountToGive[tokenIndex], amountRemaining);
 
-            require(orderWasValid(amountObtained, amountGiven, tokens.amountToObtain[tokenIndex], tokens.amountToGive[tokenIndex]));
+            require(
+                orderWasValid(amountObtained, amountGiven, tokens.amountToObtain[tokenIndex], tokens.amountToGive[tokenIndex]),
+                "TotlePrimary - amount obtained for was not high enough"
+            );
 
             if(tokens.buyOrSell[tokenIndex] == BUY) {
                 // Take away spent ether from refund balance
                 etherBalance = SafeMath.sub(etherBalance, amountGiven);
                 // Transfer back tokens acquired
                 if(amountObtained > 0) {
-                    require(Token(tokens.tokenAddresses[tokenIndex]).transfer(msg.sender, amountObtained));
+                    require(
+                        Token(tokens.tokenAddresses[tokenIndex]).transfer(msg.sender, amountObtained),
+                        "TotlePrimary - failed to transfer tokens bought to msg.sender"
+                    );
                 }
             } else {
                 // Add ether to refund balance
                 etherBalance = SafeMath.add(etherBalance, amountObtained);
                 // Transfer back un-sold tokens
                 if(amountRemaining > 0) {
-                    require(Token(tokens.tokenAddresses[tokenIndex]).transfer(msg.sender, amountRemaining));
+                    require(
+                        Token(tokens.tokenAddresses[tokenIndex]).transfer(msg.sender, amountRemaining),
+                        "TotlePrimary - failed to transfer remaining tokens to msg.sender after sell"
+                    );
                 }
             }
         }
@@ -505,17 +525,23 @@ contract TotlePrimary is Ownable {
                 totalEtherNeeded = SafeMath.add(totalEtherNeeded, tokens.amountToGive[i]);
             } else {
                 expectedEtherAvailable = SafeMath.add(expectedEtherAvailable, tokens.amountToObtain[i]);
-                require(TokenTransferProxy(tokenTransferProxy).transferFrom(
-                    tokens.tokenAddresses[i],
-                    msg.sender,
-                    this,
-                    tokens.amountToGive[i]
-                ));
+                require(
+                    TokenTransferProxy(tokenTransferProxy).transferFrom(
+                        tokens.tokenAddresses[i],
+                        msg.sender,
+                        this,
+                        tokens.amountToGive[i]
+                    ),
+                    "TotlePrimary - proxy failed to transfer tokens from user"
+                );
             }
         }
 
         // Make sure we have will have enough ETH after SELLs to cover our BUYs
-        require(expectedEtherAvailable >= totalEtherNeeded);
+        require(
+            expectedEtherAvailable >= totalEtherNeeded,
+            "TotlePrimary - not enough ether available to fill all orders"
+        );
     }
 
     /// @dev Performs a single trade via the requested exchange handler
@@ -531,7 +557,10 @@ contract TotlePrimary is Ownable {
         uint256 obtained = 0;
         uint256 remaining = initialRemaining;
 
-        require(orders.exchangeFees[index] < MAX_EXCHANGE_FEE_PERCENTAGE);
+        require(
+            orders.exchangeFees[index] < MAX_EXCHANGE_FEE_PERCENTAGE,
+            "TotlePrimary - exchange fee was above maximum"
+        );
 
         uint256 amountToFill = getAmountToFill(remaining, orders, index);
 
@@ -549,10 +578,13 @@ contract TotlePrimary is Ownable {
                     orders.s[index]
                 );
             } else {
-                require(Token(orders.tokenForOrder[index]).transfer(
-                    orders.exchanges[index],
-                    amountToFill
-                ));
+                require(
+                    Token(orders.tokenForOrder[index]).transfer(
+                        orders.exchanges[index],
+                        amountToFill
+                    ),
+                    "TotlePrimary - token transfer to handler failed for sell"
+                );
                 obtained = ExchangeHandler(orders.exchanges[index]).performSell(
                     orders.orderAddresses[index],
                     orders.orderValues[index],
@@ -613,6 +645,6 @@ contract TotlePrimary is Ownable {
         assembly {
             size := extcodesize(sender)
         }
-        require(size > 0);
+        require(size > 0, "TotlePrimary - can only send ether from another contract");
     }
 }
