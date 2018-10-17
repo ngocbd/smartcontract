@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PANAMA_WINS at 0xb8097d3ac8a0ac029e32092b2557b658bdf266d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PANAMA_WINS at 0xd055eeb8a420eec616bfcd59a41187f59f225ebe
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,10 +8,10 @@ contract	PANAMA_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	PANAMA_WINS		"	;
-	string	public		symbol =	"	PANWI		"	;
+	string	public		symbol =	"	PANWII		"	;
 	uint8	public		decimals =		18			;
 									
-	uint256 public totalSupply =		11555574524849100000000000000					;	
+	uint256 public totalSupply =		11638991191515700000000000000					;	
 									
 	event Transfer(address indexed from, address indexed to, uint256 value);								
 									
