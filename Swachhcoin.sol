@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swachhcoin at 0x3afe47a46289b8ee2597ef8d8ce7bebf0f64172e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swachhcoin at 0x75189bb6accb9732079e768a6202dc2dd84b63d2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 
 /**
