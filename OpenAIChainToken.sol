@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAIChainToken at 0x5e15a4f466f590eb2836e5f1d09c981513f2c355
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAIChainToken at 0xf9f15075dd55250887ef9f0d20bff77def79eb28
 */
 pragma solidity ^0.4.18;
 
@@ -104,7 +104,7 @@ contract OpenAIChainToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function OpenAIChainToken() public {
-        symbol = "OAC";
+        symbol = "OACT";
         name = "OpenAIChain Token";
         decimals = 18;
         _totalSupply = 1000000000000000000000000000000;
