@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELIX at 0x19bcf5962a8e85180d95efee47b5401d517d63cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELIX at 0x7e74ebfd6d2e1adca6dabe8775b450a1622ceccc
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.16;
 
 /**
  * @title SafeMath
@@ -305,8 +305,8 @@ contract ELIX is PausableToken {
     /**
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
-    function Elixer() {
-      totalSupply = 10000000000 * (10**(uint256(decimals)));
+    function ELIX() {
+      totalSupply = 100000000 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
     }
     
