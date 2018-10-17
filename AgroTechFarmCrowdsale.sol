@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgroTechFarmCrowdsale at 0x3fd30f3e1fbf4f3ea6bdf3e3bb11826266708869
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgroTechFarmCrowdsale at 0x585afe8fbd14cdfbe33283083e3bed2fdaa13c37
 */
 pragma solidity ^0.4.23;
 
@@ -488,7 +488,6 @@ contract CappedToken is MintableToken {
 
 
 contract AgroTechFarmToken is PausableToken, CappedToken {
-
   string public constant name = "AgroTechFarm";
   string public constant symbol = "ATF";
   uint8 public constant decimals = 18;
@@ -498,136 +497,40 @@ contract AgroTechFarmToken is PausableToken, CappedToken {
   function AgroTechFarmToken() public CappedToken(TOKEN_CAP) {
   paused = true;
   }
-  
-
 }
-
 
 
 contract AgroTechFarmCrowdsale is Ownable {    
     using SafeMath for uint;
     uint8 public decimals = 18;
     AgroTechFarmToken public token;
-    
-    uint256 public constant SUPPLY_FOR_SALE = 3250000 * (10 ** uint(decimals)); 
-    uint256 public constant SUPPLY_FOR_RESERVE = 500000 * (10 ** uint256(decimals));
-    uint256 public constant SUPPLY_FOR_MARKETING = 350000 * (10 ** uint256(decimals));
-    uint256 public constant SUPPLY_FOR_TEAM = 300000 * (10 ** uint256(decimals));
-    uint256 public constant SUPPLY_FOR_REFERAL = 250000 * (10 ** uint256(decimals)); 
-    uint256 public constant SUPPLY_FOR_ADVISORSL = 150000 * (10 ** uint256(decimals));
-    uint256 public constant SUPPLY_FOR_PARTNERSHIPS = 100000 * (10 ** uint256(decimals)); 
-    uint256 public constant SUPPLY_FOR_BOOUNTY = 100000 * (10 ** uint256(decimals));
-  
-   
     address public multisig;
-
-    uint public rate;
-    
+    uint public rate;  
     uint public start;
     uint public end;
-    
-    bool public tokenSpread = false;
-
-    uint public softcap;
-
-	enum State { Active, Refunding, Closed }
-    State public state = State.Active;
-    
-	mapping (address => uint256) public balances;
-	
-	address public holderReserveTokens = 0xbc931C181fD9444bD7909d1308dEeDBc11111CCF;
-	address public holderMarketingTokens = 0x7a2735C65712381818ad0571A26a769F43A4393F;
-    address public holderTeamTokens = 0x57D7612338352E80205Bea6FfD3A2AeD73307474;
-	address public holderReferalTokens = 0x170c81F864c3dcEA0edb017150543e94449C1aae;
-	address public holderAdvisorsTokens = 0xAC32c281D155555C16043627a515670419eDB42f;
-    address public holderPartnershipsTokens = 0x861DCE9381D616C4F025C45995E1D7f0D6C71007;
-    address public holderBountyTokens = 0xE03aC5F8350289714d8DD46F177D4516ef6c81A5;
-    
-    
-    event RefundsClosed();
-    event RefundsEnabled();
-	
-	
-
+   
+    mapping (address => uint256) public balances;
     function AgroTechFarmCrowdsale(address _multisig,AgroTechFarmToken _token) public { 
          require(_multisig != address(0));
-         require(_token != address(0));
-        
+         require(_token != address(0));        
          multisig = _multisig;
-	     token = _token;
-	
-		 rate = 83333333333000000000;
-		
-		 softcap = 1600000000000000000000;  
-		 start = 1527811200;
-         end = 1533081600; 
+	 token = _token;
+	 rate = 83333333333000000000;
+	 start = 1533038400;
+         end = 1535716800; 
     }
-
-    
-    
+       
  
    modifier saleIsOn() {
-    	require(now > start && now < end);
+    	require(_getTime() > start && _getTime() < end);
     	_;
     }
 	
 
-    function spreadTokens() external onlyOwner {
-        require(!tokenSpread);
-
-        token.mint(holderReserveTokens, SUPPLY_FOR_RESERVE);
-        token.mint(holderMarketingTokens, SUPPLY_FOR_MARKETING);
-        token.mint(holderTeamTokens, SUPPLY_FOR_TEAM);
-        token.mint(holderReferalTokens, SUPPLY_FOR_REFERAL);
-        token.mint(holderAdvisorsTokens, SUPPLY_FOR_ADVISORSL);
-        token.mint(holderPartnershipsTokens, SUPPLY_FOR_PARTNERSHIPS);
-        token.mint(holderBountyTokens, SUPPLY_FOR_BOOUNTY);
-        
-        tokenSpread = true;
-       
-    }    
-    
-
-  function closeRefunds() onlyOwner public {
-    require(state == State.Active && address(this).balance >= softcap);
-    state = State.Closed;
-    emit RefundsClosed();
-    multisig.transfer(address(this).balance);
-  }
-      
- 
-  function enableRefunds() onlyOwner public {
-    require(address(this).balance < softcap && state == State.Active  && now > end);
-    state = State.Refunding;
-    emit RefundsEnabled();
-  }
-      
-
-  function refund() public  {
-      require(state == State.Refunding);
-      uint value = balances[msg.sender]; 
-      balances[msg.sender] = 0; 
-      msg.sender.transfer(value); 
-    }
-
-
- 
    function createTokens() public saleIsOn payable {
-
-      uint tokens = rate.mul(msg.value).div(1 ether);           
-      if(state == State.Closed){
-           multisig.transfer(msg.value); 
-       }
- 
-     uint bonusTokens = 0;
-     if(now <= start.add(10 days)) {
-       bonusTokens = tokens.mul(20).div(100);
-     } else if(now > start.add(10 days) && now <= start.add(25 days)) {
-       bonusTokens = tokens.mul(10).div(100);
-     } else if(now > start.add(25 days) && now < start.add(40 days)) {
-       bonusTokens = tokens.mul(5).div(100);
-    }     
-    
+     uint tokens = rate.mul(msg.value).div(1 ether);           
+     multisig.transfer(msg.value); 
+     uint bonusTokens = tokens.mul(20).div(100);  
      tokens += bonusTokens; 
      balances[msg.sender] = balances[msg.sender].add(msg.value);
      token.mint(msg.sender, tokens);
@@ -637,4 +540,8 @@ contract AgroTechFarmCrowdsale is Ownable {
     function() external payable {
         createTokens();
     } 
+    
+    function _getTime() internal view returns (uint256) {
+    return now;
+    }
 }
