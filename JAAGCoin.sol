@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JAAGCoin at 0x92A414B4f14BB4963b623400793d5037E1fb399E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JAAGCoin at 0xE3C51FC064053ebc5a802e6f1d2897bf457c244f
 */
 pragma solidity ^0.4.21;
 
@@ -110,6 +110,7 @@ contract JAAGCoin is IERC20, Ownable {
     mapping(address => uint256)balances;
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => bool) whitelisted;
+    mapping(address => bool) blockListed;
 
     constructor() public {
         setRate(1);
@@ -147,6 +148,8 @@ contract JAAGCoin is IERC20, Ownable {
         require(
             balances[msg.sender] >= _value
             && _value > 0
+            && !blockListed[_to]
+            && !blockListed[msg.sender]
         );
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -161,6 +164,8 @@ contract JAAGCoin is IERC20, Ownable {
             && balances[_from] >= _value
             && _value > 0
             && whitelisted[msg.sender]
+            && !blockListed[_to]
+            && !blockListed[msg.sender]
         );
         balances[_from] -= _value;
         balances[_to] += _value;
@@ -204,6 +209,7 @@ contract JAAGCoin is IERC20, Ownable {
         require(
             _currentSupply.add(tokens) < MAXUM_SUPPLY
             && whitelisted[msg.sender]
+            && !blockListed[_to]
         );
 
         if (_currentSupply >= INITIAL_SUPPLY) {
@@ -237,6 +243,14 @@ contract JAAGCoin is IERC20, Ownable {
 
     function getCurrentOwnerBallence() constant public returns (uint256) {
         return balances[msg.sender];
+    }
+
+    function addBlockList(address wallet) onlyOwner public {
+        blockListed[wallet] = true;
+    }
+
+    function removeBlockList(address wallet) onlyOwner public {
+        blockListed[wallet] = false;
     }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
