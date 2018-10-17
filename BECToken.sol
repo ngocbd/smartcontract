@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECToken at 0x66bdaa7e73359749f55dc9634f8270603bb6fb47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECToken at 0x97a578ed93c72421b63307874bd2e1c6398f1baf
 */
 pragma solidity ^0.4.20;
 
 contract owned {
     address public owner;
 
-    function owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -48,7 +48,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -78,6 +78,14 @@ contract TokenERC20 {
         emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _who) public view returns (uint256) {
+        return balanceOf[_who];
     }
 
     /**
@@ -178,7 +186,7 @@ contract TokenERC20 {
 }
 
 /******************************************/
-/*       ADVANCED TOKEN STARTS HERE       */
+/*       Basic E-commerce Chain      */
 /******************************************/
 
 contract BECToken is owned, TokenERC20 {
@@ -192,14 +200,14 @@ contract BECToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function BECToken(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint256 _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
         require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
@@ -209,39 +217,37 @@ contract BECToken is owned, TokenERC20 {
         // LOCK COINS
         uint start = 1532964203;
         
-        address peAccount = 0xb04905C01A755c97224Cf89be52364DD8B0b72A6;
-        address fundAccount = 0x0816b3Cb8aB12A2960200f30c92cE52d385acb7A;
-        address bizAccount = 0x44E108CFB3E0b353C946833eCDb157459EDb2002;
-        address teamAccount = 0xbF1485d55BCEeEbB116C2Cf31c7a12Ef342cAceC;
-        address partnerAccount = 0x9507Af24075c780024C48638C355ba5100Df3976;
+        //address peAccount = 0xf28a2a16546110138F255cc3c2D76460B8517297;
+        address fundAccount = 0xa61FDFb4b147Eb2b02790B779E6DfBe308394C98;
+        //address bizAccount = 0xaeF0f5D901cb6b8FEF95C019612C80f040F76b24;
+        address teamAccount = 0xF9367C4bE8e47f46827AdB2cFEBFd6b265C3C3B0;
+        //address partnerAccount = 0x40fbcb153caC1299BDe8f880FE668e0DC07b1Fea;
 
         uint256 amount = _value;
         address sender = _from;
         uint256 balance = balanceOf[_from];
 
 
-        if (peAccount == sender) {
-            require((balance - amount) >= totalSupply * 65/100);
-        } else if (fundAccount == sender) {
+        if (fundAccount == sender) {
             if (now < start + 365 * 1 days) {
                 require((balance - amount) >= totalSupply * 3/20 * 3/4);
             } else if (now < start + (2*365+1) * 1 days){
                 require((balance - amount) >= totalSupply * 3/20 * 2/4);
-            }else if (now < start + (3*365+1) * 1 days){
+            } else if (now < start + (3*365+1) * 1 days){
                 require((balance - amount) >= totalSupply * 3/20 * 1/4);
+            } else {
+                require((balance - amount) >= 0);
             }
-        } else if (bizAccount == sender) {
-            require((balance - amount) >= totalSupply * 4/5);
         } else if (teamAccount == sender) {
             if (now < start + 365 * 1 days) {
                 require((balance - amount) >= totalSupply/10 * 3/4);
             } else if (now < start + (2*365+1) * 1 days){
                 require((balance - amount) >= totalSupply/10 * 2/4);
-            }else if (now < start + (3*365+1) * 1 days){
+            } else if (now < start + (3*365+1) * 1 days){
                 require((balance - amount) >= totalSupply/10 * 1/4);
+            } else {
+                require((balance - amount) >= 0);
             }
-        } else if (partnerAccount == sender) {
-            require((balance - amount) >= totalSupply * 4/5);
         }
 
 
