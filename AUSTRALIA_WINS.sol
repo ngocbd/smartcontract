@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUSTRALIA_WINS at 0x1712d58a38c8e3dd420503580800b8ec918c4f00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AUSTRALIA_WINS at 0x7acf3fe03f4eb2483f40f208ee07ae68e5063f77
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,10 +8,10 @@ contract	AUSTRALIA_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	AUSTRALIA_WINS		"	;
-	string	public		symbol =	"	AUSWI		"	;
+	string	public		symbol =	"	AUSWII		"	;
 	uint8	public		decimals =		18			;
 									
-	uint256 public totalSupply =		4629156228236240000000000000					;	
+	uint256 public totalSupply =		4662572894902910000000000000					;	
 									
 	event Transfer(address indexed from, address indexed to, uint256 value);								
 									
