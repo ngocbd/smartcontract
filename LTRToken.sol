@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x9b274af474ee59db9d1e9ab1181da35deda34c28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LTRToken at 0x724852c8437fcd71a2712f7cd5009fa63d076b61
 */
 pragma solidity ^0.4.4;
 
@@ -108,7 +108,7 @@ contract StandardToken is Token {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            TransferLottery(msg.sender, _to, _value, data);
+            Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
