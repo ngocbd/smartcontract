@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rich3D at 0x58232003B3D18021acFc9213D27D6F8b72F4F029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rich3D at 0x184f4938686fd628b93d54605a5ef6c3f8879c45
 */
 pragma solidity ^0.4.24;
 
@@ -469,7 +469,7 @@ contract Rich3D {
         activated_ = true ;
         rID_ = 1;
         // ----
-        round_[1].strt = 1535025600 ;                     // ????? 2018/8/23 20:00:00
+        round_[1].strt = 1535025600 ;                                   // ????? 2018/8/23 20:00:00
         round_[1].end = round_[1].strt + rndMax_;   
     }
     string constant public name   = "Rich 3D Official";                  // ????
@@ -506,10 +506,10 @@ contract Rich3D {
     
     constructor() public {
 
-        fees_[0] = Rich3DDatasets.TeamFee(28,10);
-        fees_[1] = Rich3DDatasets.TeamFee(38,10);
-        fees_[2] = Rich3DDatasets.TeamFee(52,14);
-        fees_[3] = Rich3DDatasets.TeamFee(40,12);
+        fees_[0] = Rich3DDatasets.TeamFee(33,5);
+        fees_[1] = Rich3DDatasets.TeamFee(41,4);
+        fees_[2] = Rich3DDatasets.TeamFee(61,5);
+        fees_[3] = Rich3DDatasets.TeamFee(47,5);
 
         potSplit_[0] = Rich3DDatasets.PotSplit(15,10);
         potSplit_[1] = Rich3DDatasets.PotSplit(25,0); 
