@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dquick at 0x9a0516cfb85c42a3f62cacb3c310784c0fcb0da2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dquick at 0xba77472071578e7fa408bb00f9098b2f635ef62b
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,6 @@ contract FoMo3Dquick is modularQuick {
     using NameFilter for string;
     using F3DKeysCalcQuick for uint256;
 
-    // #TODO: new playbook address
     PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x68f6199D97bbA1F18777FE69D1F354292C3d498C);
     DiviesInterface constant private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
 
@@ -140,10 +139,10 @@ contract FoMo3Dquick is modularQuick {
     string constant public name = "FOMO Quick";
     string constant public symbol = "QUICK";
     // TODO: these parameters seems reasonable, keep them as it is. 
-    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 private rndExtra_ = 0 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 0 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 15 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
