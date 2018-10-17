@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x57ef9b789c2144a6291911e129e422de54a68d3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xb09da55bb414b16f9aeea382d2a0347ae0d3de4f
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'SharedComputingPower';
-        symbol = 'SCP';
-        decimals = 18;
-        balanceOf[0x696423542f85B50fF3CA396A317De3abCb82f1c2] = totalSupply;
-        Transfer(address(0), 0x696423542f85B50fF3CA396A317De3abCb82f1c2, totalSupply);
+        totalSupply = 200000000;
+        name = 'HarborCoin';
+        symbol = 'HBC';
+        decimals = 0;
+        balanceOf[0x0de088f9e6991b7651450e564debcf702a4eb2ff] = totalSupply;
+        Transfer(address(0), 0x0de088f9e6991b7651450e564debcf702a4eb2ff, totalSupply);
     }
 }
