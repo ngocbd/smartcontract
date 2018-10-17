@@ -1,186 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xe5fdabc0bfc3fea5496376c5ab80740b5dab688d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x0433c529bb7fa84f18dfe49f0234c6815bd441fa
 */
 pragma solidity ^0.4.24;
-
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
-    {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        require(c / a == b, "SafeMath mul failed");
-        return c;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256)
-    {
-        require(b <= a, "SafeMath sub failed");
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b)
-        internal
-        pure
-        returns (uint256 c)
-    {
-        c = a + b;
-        require(c >= a, "SafeMath add failed");
-        return c;
-    }
-
-    /**
-     * @dev gives square root of given x.
-     */
-    function sqrt(uint256 x)
-        internal
-        pure
-        returns (uint256 y)
-    {
-        uint256 z = ((add(x,1)) / 2);
-        y = x;
-        while (z < y)
-        {
-            y = z;
-            z = ((add((x / z),z)) / 2);
-        }
-    }
-
-    /**
-     * @dev gives square. multiplies x by x
-     */
-    function sq(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
-        return (mul(x,x));
-    }
-
-    /**
-     * @dev x to the power of y
-     */
-    function pwr(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (x==0)
-            return (0);
-        else if (y==0)
-            return (1);
-        else
-        {
-            uint256 z = x;
-            for (uint256 i=1; i < y; i++)
-                z = mul(z,x);
-            return (z);
-        }
-    }
-}
-
-library NameFilter {
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                    // require character is a space
-                    _temp[i] == 0x20 ||
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;
-            }
-        }
-
-        require(_hasNonNumber == true, "string cannot be only numbers");
-
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
-}
-
-/**
- * @title SafeMath v0.1.9
- * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
- * - added sqrt
- * - added sq
- * - added pwr
- * - changed asserts to requires with error log outputs
- * - removed div, its useless
+/*
+ * -PlayerBook - v0.3.14
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *     ______   _                                 ______                 _
+ *====(_____ \=| |===============================(____  \===============| |=============*
+ *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
+ *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
+ *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
+ *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
+ *                        (____/
+ * ????????????????????????  ???????????? ????????????
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+ * ????????? ? ???? ???? ?   ???????????? ????????????
  */
 
 
@@ -226,34 +72,34 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0xA193C74F8085e61aeF64d030655ae8294Df9d145;
+        plyr_[1].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
         plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0xA193C74F8085e61aeF64d030655ae8294Df9d145] = 1;
+        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 1;
         pIDxName_["justo"] = 1;
         plyrNames_[1]["justo"] = true;
         plyrNameList_[1][1] = "justo";
 
-        plyr_[2].addr = 0xA193C74F8085e61aeF64d030655ae8294Df9d145;
+        plyr_[2].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
         plyr_[2].name = "mantso";
         plyr_[2].names = 1;
-        pIDxAddr_[0xA193C74F8085e61aeF64d030655ae8294Df9d145] = 2;
+        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 2;
         pIDxName_["mantso"] = 2;
         plyrNames_[2]["mantso"] = true;
         plyrNameList_[2][1] = "mantso";
 
-        plyr_[3].addr = 0xA193C74F8085e61aeF64d030655ae8294Df9d145;
+        plyr_[3].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
         plyr_[3].name = "sumpunk";
         plyr_[3].names = 1;
-        pIDxAddr_[0xA193C74F8085e61aeF64d030655ae8294Df9d145] = 3;
+        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 3;
         pIDxName_["sumpunk"] = 3;
         plyrNames_[3]["sumpunk"] = true;
         plyrNameList_[3][1] = "sumpunk";
 
-        plyr_[4].addr = 0xA193C74F8085e61aeF64d030655ae8294Df9d145;
+        plyr_[4].addr = 0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68;
         plyr_[4].name = "inventor";
         plyr_[4].names = 1;
-        pIDxAddr_[0xA193C74F8085e61aeF64d030655ae8294Df9d145] = 4;
+        pIDxAddr_[0x584f2b61b5fdae9aed5d12e1bf7f77db3766fc68] = 4;
         pIDxName_["inventor"] = 4;
         plyrNames_[4]["inventor"] = true;
         plyrNameList_[4][1] = "inventor";
@@ -276,6 +122,11 @@ contract PlayerBook {
         _;
     }
 
+    modifier onlyDevs()
+    {
+        require(admin == msg.sender, "msg sender is not a dev");
+        _;
+    }
 
     modifier isRegisteredGame()
     {
@@ -730,6 +581,7 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
+        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
@@ -746,9 +598,213 @@ contract PlayerBook {
     }
 
     function setRegistrationFee(uint256 _fee)
+        onlyDevs()
         public
     {
       registrationFee_ = _fee;
     }
 
+}
+
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /
+*                            (__ /          (_/ (, /                                      /)™
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
+library NameFilter {
+
+    /**
+     * @dev filters name strings
+     * -converts uppercase to lower case.
+     * -makes sure it does not start/end with a space
+     * -makes sure it does not contain multiple spaces in a row
+     * -cannot be only numbers
+     * -cannot start with 0x
+     * -restricts characters to A-Z, a-z, 0-9, and space.
+     * @return reprocessed string in bytes32 format
+     */
+    function nameFilter(string _input)
+        internal
+        pure
+        returns(bytes32)
+    {
+        bytes memory _temp = bytes(_input);
+        uint256 _length = _temp.length;
+
+        //sorry limited to 32 characters
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+        // make sure it doesnt start with or end with space
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        // make sure first two characters are not 0x
+        if (_temp[0] == 0x30)
+        {
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
+        }
+
+        // create a bool to track if we have a non number character
+        bool _hasNonNumber;
+
+        // convert & check
+        for (uint256 i = 0; i < _length; i++)
+        {
+            // if its uppercase A-Z
+            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
+            {
+                // convert to lower case a-z
+                _temp[i] = byte(uint(_temp[i]) + 32);
+
+                // we have a non number
+                if (_hasNonNumber == false)
+                    _hasNonNumber = true;
+            } else {
+                require
+                (
+                    // require character is a space
+                    _temp[i] == 0x20 ||
+                    // OR lowercase a-z
+                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
+                    // or 0-9
+                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                    "string contains invalid characters"
+                );
+                // make sure theres not 2x spaces in a row
+                if (_temp[i] == 0x20)
+                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
+
+                // see if we have a character other than a number
+                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
+                    _hasNonNumber = true;
+            }
+        }
+
+        require(_hasNonNumber == true, "string cannot be only numbers");
+
+        bytes32 _ret;
+        assembly {
+            _ret := mload(add(_temp, 32))
+        }
+        return (_ret);
+    }
+}
+
+/**
+ * @title SafeMath v0.1.9
+ * @dev Math operations with safety checks that throw on error
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
+ * - added sqrt
+ * - added sq
+ * - added pwr
+ * - changed asserts to requires with error log outputs
+ * - removed div, its useless
+ */
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c)
+    {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        require(c / a == b, "SafeMath mul failed");
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256)
+    {
+        require(b <= a, "SafeMath sub failed");
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b)
+        internal
+        pure
+        returns (uint256 c)
+    {
+        c = a + b;
+        require(c >= a, "SafeMath add failed");
+        return c;
+    }
+
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y)
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y)
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+
+    /**
+     * @dev x to the power of y
+     */
+    function pwr(uint256 x, uint256 y)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
+    }
 }
