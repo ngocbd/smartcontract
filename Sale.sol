@@ -1,41 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x3c5753b9de8c49101155a9b31116b965a5d82574
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x14148739bd55f4418deea2e47dbb3cc6b1386a9c
 */
 pragma solidity ^0.4.21;
 
-/*
-  
-    ****************************************************************
-    AVALANCHE BLOCKCHAIN GENESIS BLOCK COIN ALLOCATION SALE CONTRACT
-    ****************************************************************
-
-    The Genesis Block in the Avalanche will deploy with pre-filled addresses
-    according to the results of this token sale.
-    
-    The Avalanche tokens will be sent to the Ethereum address that buys them.
-    
-    When the Avalanche blockchain deploys, all ethereum addresses that contains
-    Avalanche tokens will be credited with the equivalent AVALANCHE ICE (XAI) in the Genesis Block.
-
-    There will be no developer premine. There will be no private presale. This is it.
-
-    @author CHRIS DCOSTA For Meek Inc 2018.
-    
-    Reference Code by Hunter Long
-    @repo https://github.com/hunterlong/ethereum-ico-contract
-
-*/
-
-
 contract ERC20 {
   uint public totalSupply;
-  function balanceOf(address who) public constant returns (uint);
-  function allowance(address owner, address spender) public constant returns (uint);
-  function transfer(address to, uint value) public returns (bool ok);
-  function transferFrom(address from, address to, uint value) public returns (bool ok);
-  function approve(address spender, uint value) public returns (bool ok);
-  function mintToken(address to, uint256 value) public returns (uint256);
-  function changeTransfer(bool allowed) public;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  function mintToken(address to, uint256 value) returns (uint256);
+  function changeTransfer(bool allowed);
 }
 
 
@@ -54,21 +30,26 @@ contract Sale {
     bool private configSet;
     address public creator;
 
-    event Contribution(address from, uint256 amount);
+    mapping (address => uint256) public heldTokens;
+    mapping (address => uint) public heldTimeline;
 
-    constructor(address _wallet) public {
-        startBlock = block.number; // imediate start 
-        maxMintable = 4045084999529091000000000000; // max sellable (18 decimals)
-        ETHWallet = _wallet; // 0x696863b0099394384cd595468b8b6270ea77fC68
+    event Contribution(address from, uint256 amount);
+    event ReleaseTokens(address from, uint256 amount);
+
+    function Sale(address _wallet) {
+        startBlock = block.number;
+        maxMintable = 110000000000000000000000000;
+        ETHWallet = _wallet;
         isFunding = true;
         creator = msg.sender;
-        exchangeRate = 13483;
+        createHeldCoins();
+        exchangeRate = 25000;
     }
 
     // setup function to be ran only 1 time
     // setup token address
     // setup end Block number
-    function setup(address token_address, uint end_block) public {
+    function setup(address token_address, uint end_block) {
         require(!configSet);
         Token = ERC20(token_address);
         endBlock = end_block;
@@ -80,7 +61,7 @@ contract Sale {
       isFunding = false;
     }
 
-    function () payable public {
+    function () payable {
         require(msg.value>0);
         require(isFunding);
         require(block.number <= endBlock);
@@ -90,11 +71,11 @@ contract Sale {
         totalMinted += total;
         ETHWallet.transfer(msg.value);
         Token.mintToken(msg.sender, amount);
-        emit Contribution(msg.sender, amount);
+        Contribution(msg.sender, amount);
     }
 
     // CONTRIBUTE FUNCTION
-    // converts ETH to Avalanche Genesis Block TOKEN and sends new Avalanche TOKEN to the sender
+    // converts ETH to TOKEN and sends new TOKEN to the sender
     function contribute() external payable {
         require(msg.value>0);
         require(isFunding);
@@ -105,10 +86,10 @@ contract Sale {
         totalMinted += total;
         ETHWallet.transfer(msg.value);
         Token.mintToken(msg.sender, amount);
-        emit Contribution(msg.sender, amount);
+        Contribution(msg.sender, amount);
     }
 
-    // update the ETH/XAIT rate
+    // update the ETH/COIN rate
     function updateRate(uint256 rate) external {
         require(msg.sender==creator);
         require(isFunding);
@@ -121,10 +102,44 @@ contract Sale {
         creator = _creator;
     }
 
-    // change transfer ability for ERC20 token (toggle on/off) 
+    // change transfer status for ERC20 token
     function changeTransferStats(bool _allowed) external {
         require(msg.sender==creator);
         Token.changeTransfer(_allowed);
     }
+
+    // internal function that allocates a specific amount of TOKENS at a specific block number.
+    // only ran 1 time on initialization
+    function createHeldCoins() internal {
+        createHoldToken(0xd04443ceae5aed6871db555caf1a154802ce1600, 40000000000000000000000000);
+        createHoldToken(0x8ce3b3d46e994b6ec215963e385b7bf20d60683d, 40000000000000000000000000);
+        createHoldToken(0x61777c00fc0353d8c62a8f8c34336dfc46596906, 10000000000000000000000000);
+    }
+
+    // public function to get the amount of tokens held for an address
+    function getHeldCoin(address _address) public constant returns (uint256) {
+        return heldTokens[_address];
+    }
+
+    // function to create held tokens for developer
+    function createHoldToken(address _to, uint256 amount) internal {
+        heldTokens[_to] = amount;
+        heldTimeline[_to] = block.number + 0;
+        heldTotal += amount;
+        totalMinted += heldTotal;
+    }
+
+    // function to release held tokens for developers
+    function releaseHeldCoins() external {
+        uint256 held = heldTokens[msg.sender];
+        uint heldBlock = heldTimeline[msg.sender];
+        require(held >= 0);
+        require(block.number >= heldBlock);
+        heldTokens[msg.sender] = 0;
+        heldTimeline[msg.sender] = 0;
+        Token.mintToken(msg.sender, held);
+        ReleaseTokens(msg.sender, held);
+    }
+
 
 }
