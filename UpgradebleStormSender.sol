@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xb786121c91539a76875e4dc76048963263229dc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpgradebleStormSender at 0xca6709db5af91877b62fb1cbb0406dcdbd076c62
 */
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/EternalStorage.sol
 
 pragma solidity 0.4.24;
 
@@ -21,7 +21,7 @@ contract EternalStorage {
 
 }
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/UpgradeabilityOwnerStorage.sol
 
 
 /**
@@ -49,7 +49,7 @@ contract UpgradeabilityOwnerStorage {
 
 }
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/UpgradeabilityStorage.sol
 
 
 /**
@@ -80,7 +80,7 @@ contract UpgradeabilityStorage {
     }
 }
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/OwnedUpgradeabilityStorage.sol
 
 
 /**
@@ -90,7 +90,7 @@ contract UpgradeabilityStorage {
  */
 contract OwnedUpgradeabilityStorage is UpgradeabilityOwnerStorage, UpgradeabilityStorage, EternalStorage {}
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/SafeMath.sol
 
 
 /**
@@ -139,7 +139,8 @@ library SafeMath {
   }
 }
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/multisender/Ownable.sol
+
 
 
 /**
@@ -188,7 +189,8 @@ contract Ownable is EternalStorage {
     }
 }
 
-// To Use this Dapp: http://tokensender.me/
+// File: contracts/multisender/Claimable.sol
+
 
 
 /**
@@ -228,8 +230,8 @@ contract Claimable is EternalStorage, Ownable {
     }
 }
 
+// File: contracts/multisender/UpgradebleStormSender.sol
 
-// To Use this Dapp: http://tokensender.me/
 
 
 /**
@@ -273,7 +275,7 @@ contract UpgradebleStormSender is OwnedUpgradeabilityStorage, Claimable {
         setOwner(_owner);
         setArrayLimit(200);
         setDiscountStep(0.00005 ether);
-        setFee(0.03 ether);
+        setFee(0.05 ether);
         boolStorage[keccak256("rs_multisender_initialized")] = true;
     }
 
