@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoinbitToken at 0xb6508eebe4031818aab9898f8dc73a2dbff0b5d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoinbitToken at 0x07e67c4f90d8fc1c818e93b4c470d9b5280c4354
 */
 pragma solidity ^0.4.18;
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18;
 //
 // Deployed to : 0x22030462f67e318e812358c1b7ee1a46f737b856
 // Symbol      : GBT
-// Name        : Goinbit Token
+// Name        : Goinbit.com Token
 // Total supply: 618000000
 // Decimals    : 18
 //
@@ -117,7 +117,7 @@ contract GoinbitToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function GoinbitToken() public {
         symbol = "GBT";
-        name = "Goinbit Token";
+        name = "Goinbit.com Token";
         decimals = 18;
         _totalSupply = 618000000000000000000000000;
         balances[0x22030462f67e318e812358c1b7ee1a46f737b856] = _totalSupply;
