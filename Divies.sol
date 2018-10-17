@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0xb4ad91edd0a7f2830b93f321130c393982e10958
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x08283bd008112266568bceffe13bb6c059ae7a8a
 */
 pragma solidity ^0.4.24;
 /** title -Divies- v0.7.1
@@ -44,7 +44,7 @@ contract Divies {
     using SafeMath for uint256;
     using UintCompressor for uint256;
 
-    HourglassInterface constant H4Dcontract_ = HourglassInterface(0x63456554CC52038bE211FdC3DcF03F617BCfC80D);
+    HourglassInterface constant H4Dcontract_ = HourglassInterface(0xd2371B1C095Fc57503bdce1F2d2673D81961c83a);
     
     uint256 public pusherTracker_ = 100;
     mapping (address => Pusher) public pushers_;
