@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STTC at 0x7bD93D340e712F0b5F0A67bF217438cd9F7B5771
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STTC at 0xc96D51Bc88AD3Dc5ca6Da7f87b0047984EdCFc54
 */
 pragma solidity ^0.4.16;
 contract owned{
@@ -104,8 +104,14 @@ contract STTC is TokenDemo{
       uint256 initialSupply,
       string tokenName,
       uint8 decimalUnits,
-      string tokenSymbol
-    ) TokenDemo (initialSupply, tokenName, decimalUnits,tokenSymbol) public {}
+      string tokenSymbol,
+      address centralMinter
+    ) TokenDemo (initialSupply, tokenName, decimalUnits,tokenSymbol) public {
+         if(centralMinter != 0 ){
+             owner = centralMinter;
+         } 
+         balances[owner] = totalSupply;
+    }
     function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(_to != 0x0);
