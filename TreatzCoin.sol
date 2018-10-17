@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TreatzCoin at 0x075a0f607a3072e748ef4bde2cbffe4db60268e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TreatzCoin at 0x8558ae630110977c50f5a2b52cbb3326e0e3e0d3
 */
 pragma solidity ^0.4.18;
+
 
 contract ERC20Interface {
   
@@ -32,6 +33,31 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
 // ----------------------------------------------------------------------------
 // Owned contract
 // ----------------------------------------------------------------------------
@@ -60,33 +86,6 @@ contract Owned {
         newOwner = address(0);
     }
 }
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function add(uint a, uint b) internal pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    
-    function sub(uint a, uint b) internal pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    
-    function mul(uint a, uint b) internal pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    
-    function div(uint a, uint b) internal pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-}
-
 contract TreatzCoin is ERC20Interface, Owned {
     using SafeMath for uint;
 
