@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATxAssetProxy at 0x829a9178281b0a872d8900d085b72a1bd1af65d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ATxAssetProxy at 0x1274b84ab87873a65cd0d69ceb557caf8d0a02c8
 */
 pragma solidity ^0.4.18;
 
