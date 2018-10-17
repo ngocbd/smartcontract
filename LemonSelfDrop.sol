@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LemonSelfDrop at 0x6d785cc7416a64c91d0c878f465ab8cd60893bae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LemonSelfDrop at 0x226fdeab4b52e855dc53d3c83f8c090003f180be
 */
 pragma solidity ^0.4.19;
 
@@ -53,10 +53,10 @@ contract LemonSelfDrop is Ownable {
         dropNumber = 1;
         LemonsDroppedToTheWorld = 0;
         LemonsRemainingToDrop = 0;
-        basicReward = 500; // set initial basic reward to 500 Lemon Tokens
-        donatorReward = 500; // set initial donator reward to 500 Lemon Tokens
-        holderReward = 500; // set initial holder reward to 500 Lemon Tokens
-        holderAmount = 50000; // set initial hold amount to 50000 Lemon Tokens for extra reward
+        basicReward = 50000000000; // set initial basic reward to 500 Lemon Tokens
+        donatorReward = 50000000000; // set initial donator reward to 500 Lemon Tokens
+        holderReward = 50000000000; // set initial holder reward to 500 Lemon Tokens
+        holderAmount = 5000000000000; // set initial hold amount to 50000 Lemon Tokens for extra reward
         totalDropTransactions = 0;
     }
     
