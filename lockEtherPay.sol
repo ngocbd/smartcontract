@@ -1,12 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x5351f202c5cf285ceda5791d7e8f4638fc760d7b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x7e712360a438127def4f900c53ea60f137f15742
 */
-pragma solidity ^0.4.18;
-
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
@@ -41,7 +39,7 @@ contract Ownable {
   address public owner;
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * @dev The Ownable constructor sets the original owner of the contract to the sender
    * account.
    */
   constructor() public{
@@ -66,7 +64,7 @@ contract Ownable {
 }
 
 contract lockEtherPay is Ownable {
-	using SafeMath for uint256;
+    using SafeMath for uint256;
 
   token token_reward;
   address public beneficiary;
@@ -74,13 +72,13 @@ contract lockEtherPay is Ownable {
   bool public isReleased = false;
   uint256 public start_time;
   uint256 public end_time;
-  uint256 public fifty_two_weeks = 30326400;
+  uint256 public fifty_two_weeks = 30499200;
 
   event TokenReleased(address beneficiary, uint256 token_amount);
 
   constructor() public{
     token_reward = token(0xAa1ae5e57dc05981D83eC7FcA0b3c7ee2565B7D6);
-    beneficiary = 0x70FB1b14F5a604fe978a79B5Ea8E805db6e18d6E;
+    beneficiary = 0xb1FD180530353F0b153bF04878B0E517fA996600;
   }
 
   function tokenBalance() constant public returns (uint256){
@@ -88,19 +86,19 @@ contract lockEtherPay is Ownable {
   }
 
   function lock() public onlyOwner returns (bool){
-  	require(!isLocked);
-  	require(tokenBalance() > 0);
-  	start_time = now;
-  	end_time = start_time.add(fifty_two_weeks);
-  	isLocked = true;
+      require(!isLocked);
+      require(tokenBalance() > 0);
+      start_time = now;
+      end_time = start_time.add(fifty_two_weeks);
+      isLocked = true;
   }
 
   function lockOver() constant public returns (bool){
-  	uint256 current_time = now;
-	return current_time > end_time;
+      uint256 current_time = now;
+    return current_time > end_time;
   }
 
-	function release() onlyOwner public{
+    function release() onlyOwner public{
     require(isLocked);
     require(!isReleased);
     require(lockOver());
