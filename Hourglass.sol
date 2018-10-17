@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x5aa487635b1c2bb10550c5c1fd39be943d43aa01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x192e606e24d3ef48003078401af248f82f99a634
 */
 pragma solidity ^0.4.20;
 
@@ -189,61 +189,8 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0xdd8bb99b13fe33e1c32254dfb8fff3e71193f6b730a89dd33bfe5dedc6d83002] = true;
-        
-        // add the ambassadors here.
-        // mantso - lead solidity dev & lead web dev. 
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // ponzibot - mathematics & website, and undisputed meme god.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // swagg - concept design, feedback, management.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // k-dawgz - shilling machine, meme maestro, bizman.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // elmojo - all those pretty .GIFs & memes you see? you can thank this man for that.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // capex - community moderator.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // jörmungandr - pentests & twitter trendsetter.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // inventor - the source behind the non-intrusive referral model.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // tocsick - pentesting, contract auditing.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // arc - pentesting, contract auditing.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // sumpunk - contract auditing.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // randall - charts & sheets, data dissector, advisor.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // ambius - 3d chart visualization.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true;
-        
-        // contributors that need to remain private out of security concerns.
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //dp
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //tc
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //ja
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //sf
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //tb
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //sm
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //mc
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //et
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //sn
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //bt
-        ambassadors_[0xc54bE7233A02FE64E499f7C1958cf46a637A45e0] = true; //al
-        
+        administrators[keccak256(0x24e0162606d558ac113722adc6597b434089adb7)] = true;     
+        ambassadors_[0x24e0162606d558ac113722adc6597b434089adb7] = true;        
 
     }
     
