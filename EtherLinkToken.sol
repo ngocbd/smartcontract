@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0xfcc353686c8c6893f29e4208c472ed4fe8cf0844
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLinkToken at 0x16c72ee9273834654f19764466149017ed010c19
 */
 pragma solidity ^0.4.11;
 /**
