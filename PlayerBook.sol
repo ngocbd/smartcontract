@@ -1,7 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xc5966621fe9617e23c6b4917a0405f5ce625f043
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x91e047c728bd71047ea30372456444239c76e341
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
+/*
+ * -PlayerBook - v0.3.14
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *     ______   _                                 ______                 _          
+ *====(_____ \=| |===============================(____  \===============| |=============*
+ *     _____) )| |  _____  _   _  _____   ____    ____)  )  ___    ___  | |  _
+ *    |  ____/ | | (____ || | | || ___ | / ___)  |  __  (  / _ \  / _ \ | |_/ )
+ *    | |      | | / ___ || |_| || ____|| |      | |__)  )| |_| || |_| ||  _ (
+ *====|_|=======\_)\_____|=\__  ||_____)|_|======|______/==\___/==\___/=|_|=\_)=========*
+ *                        (____/
+ * ????????????????????????  ???????????? ????????????                       
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?                      
+ * ????????? ? ???? ???? ?   ???????????? ????????????    
+ */
 
 
 interface PlayerBookReceiverInterface {
@@ -14,7 +40,7 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    address private communityAddr = 0x82B0721A8c142C6203F4cF58f80629E15b02a504;
+    address private admin = msg.sender;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -43,106 +69,77 @@ contract PlayerBook {
     constructor()
         public
     {
-        // premine the dev names (sorry not sorry)
+            // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x2f70dA23098d845CeB84f771129D04A79A9dB68B;
-        plyr_[1].name = "daddy";
-        plyr_[1].names = 1;
-        pIDxAddr_[0x2f70dA23098d845CeB84f771129D04A79A9dB68B] = 1;
-        pIDxName_["daddy"] = 1;
-        plyrNames_[1]["daddy"] = true;
-        plyrNameList_[1][1] = "daddy";
-        
-        plyr_[2].addr = 0x55636a5fD4A78d86415B72e09E131D9D0e095e57;
-        plyr_[2].name = "suoha";
-        plyr_[2].names = 1;
-        pIDxAddr_[0x55636a5fD4A78d86415B72e09E131D9D0e095e57] = 2;
-        pIDxName_["suoha"] = 2;
-        plyrNames_[2]["suoha"] = true;
-        plyrNameList_[2][1] = "suoha";
-        
-        plyr_[3].addr = 0xe948b1fF4e02cf8fa0A5Cc479b98E52022Aa5acF;
-        plyr_[3].name = "nodumb";
-        plyr_[3].names = 1;
-        pIDxAddr_[0xe948b1fF4e02cf8fa0A5Cc479b98E52022Aa5acF] = 3;
-        pIDxName_["nodumb"] = 3;
-        plyrNames_[3]["nodumb"] = true;
-        plyrNameList_[3][1] = "nodumb";
-        
-        plyr_[4].addr = 0x8cFD216Eb0a305Af16f838396DFD6BDeDecd0689;
-        plyr_[4].name = "dddos";
-        plyr_[4].names = 1;
-        pIDxAddr_[0x8cFD216Eb0a305Af16f838396DFD6BDeDecd0689] = 4;
-        pIDxName_["dddos"] = 4;
-        plyrNames_[4]["dddos"] = true;
-        plyrNameList_[4][1] = "dddos";
-        
-        pID_ = 4;
+            plyr_[1].addr = 0x33971deF18AC906cda3d7865b80c5C235Bf27E60;
+            plyr_[1].name = "justo";
+            plyr_[1].names = 1;
+            pIDxAddr_[0x33971deF18AC906cda3d7865b80c5C235Bf27E60] = 1;
+            pIDxName_["justo"] = 1;
+            plyrNames_[1]["justo"] = true;
+            plyrNameList_[1][1] = "justo";
+
+            pID_ = 1;
     }
-//==============================================================================
-//     _ _  _  _|. |`. _  _ _  .
-//    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
-//==============================================================================    
+    //==============================================================================
+    //     _ _  _  _|. |`. _  _ _  .
+    //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
+    //==============================================================================    
     /**
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "sorry humans only");
-        _;
+            address _addr = msg.sender;
+            uint256 _codeLength;
+
+            assembly {_codeLength := extcodesize(_addr)}
+            require(_codeLength == 0, "sorry humans only");
+            _;
     }
-    
-    modifier onlyCommunity() 
-    {
-        require(msg.sender == communityAddr, "msg sender is not the community");
-        _;
-    }
-    
+
+
     modifier isRegisteredGame()
     {
-        require(gameIDs_[msg.sender] != 0);
-        _;
+            require(gameIDs_[msg.sender] != 0);
+            _;
     }
-//==============================================================================
-//     _    _  _ _|_ _  .
-//    (/_\/(/_| | | _\  .
-//==============================================================================    
+    //==============================================================================
+    //     _    _  _ _|_ _  .
+    //    (/_\/(/_| | | _\  .
+    //==============================================================================    
     // fired whenever a player registers a name
     event onNewName
-    (
-        uint256 indexed playerID,
-        address indexed playerAddress,
-        bytes32 indexed playerName,
-        bool isNewPlayer,
-        uint256 affiliateID,
-        address affiliateAddress,
-        bytes32 affiliateName,
-        uint256 amountPaid,
-        uint256 timeStamp
-    );
-//==============================================================================
-//     _  _ _|__|_ _  _ _  .
-//    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
-//=====_|=======================================================================
+            (
+             uint256 indexed playerID,
+             address indexed playerAddress,
+             bytes32 indexed playerName,
+             bool isNewPlayer,
+             uint256 affiliateID,
+             address affiliateAddress,
+             bytes32 affiliateName,
+             uint256 amountPaid,
+             uint256 timeStamp
+            );
+    //==============================================================================
+    //     _  _ _|__|_ _  _ _  .
+    //    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
+    //=====_|=======================================================================
     function checkIfNameValid(string _nameStr)
-        public
-        view
-        returns(bool)
-    {
-        bytes32 _name = _nameStr.nameFilter();
-        if (pIDxName_[_name] == 0)
-            return (true);
-        else 
-            return (false);
-    }
-//==============================================================================
-//     _    |_ |. _   |`    _  __|_. _  _  _  .
-//    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
-//====|=========================================================================    
+            public
+            view
+            returns(bool)
+            {
+                    bytes32 _name = _nameStr.nameFilter();
+                    if (pIDxName_[_name] == 0)
+                            return (true);
+                    else 
+                            return (false);
+            }
+    //==============================================================================
+    //     _    |_ |. _   |`    _  __|_. _  _  _  .
+    //    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
+    //====|=========================================================================    
     /**
      * @dev registers a name.  UI will always display the last name you registered.
      * but you will still own all previously registered names to use as affiliate 
@@ -166,120 +163,120 @@ contract PlayerBook {
      * (this might cost a lot of gas)
      */
     function registerNameXID(string _nameString, uint256 _affCode, bool _all)
-        isHuman()
-        public
-        payable 
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // filter name + condition checks
-        bytes32 _name = NameFilter.nameFilter(_nameString);
-        
-        // set up address 
-        address _addr = msg.sender;
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code, lolz
-        if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) 
-        {
-            // update last affiliate 
-            plyr_[_pID].laff = _affCode;
-        } else if (_affCode == _pID) {
-            _affCode = 0;
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affCode, _name, _isNewPlayer, _all);
-    }
-    
+            isHuman()
+            public
+            payable 
+            {
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // filter name + condition checks
+                    bytes32 _name = NameFilter.nameFilter(_nameString);
+
+                    // set up address 
+                    address _addr = msg.sender;
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given, no new affiliate code was given, or the 
+                    // player tried to use their own pID as an affiliate code, lolz
+                    if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) 
+                    {
+                            // update last affiliate 
+                            plyr_[_pID].laff = _affCode;
+                    } else if (_affCode == _pID) {
+                            _affCode = 0;
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affCode, _name, _isNewPlayer, _all);
+            }
+
     function registerNameXaddr(string _nameString, address _affCode, bool _all)
-        isHuman()
-        public
-        payable 
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // filter name + condition checks
-        bytes32 _name = NameFilter.nameFilter(_nameString);
-        
-        // set up address 
-        address _addr = msg.sender;
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        uint256 _affID;
-        if (_affCode != address(0) && _affCode != _addr)
-        {
-            // get affiliate ID from aff Code 
-            _affID = pIDxAddr_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
+            isHuman()
+            public
+            payable 
             {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // filter name + condition checks
+                    bytes32 _name = NameFilter.nameFilter(_nameString);
+
+                    // set up address 
+                    address _addr = msg.sender;
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given or player tried to use their own, lolz
+                    uint256 _affID;
+                    if (_affCode != address(0) && _affCode != _addr)
+                    {
+                            // get affiliate ID from aff Code 
+                            _affID = pIDxAddr_[_affCode];
+
+                            // if affID is not the same as previously stored 
+                            if (_affID != plyr_[_pID].laff)
+                            {
+                                    // update last affiliate
+                                    plyr_[_pID].laff = _affID;
+                            }
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
             }
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
-    }
-    
+
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
-        isHuman()
-        public
-        payable 
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // filter name + condition checks
-        bytes32 _name = NameFilter.nameFilter(_nameString);
-        
-        // set up address 
-        address _addr = msg.sender;
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        uint256 _affID;
-        if (_affCode != "" && _affCode != _name)
-        {
-            // get affiliate ID from aff Code 
-            _affID = pIDxName_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
+            isHuman()
+            public
+            payable 
             {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // filter name + condition checks
+                    bytes32 _name = NameFilter.nameFilter(_nameString);
+
+                    // set up address 
+                    address _addr = msg.sender;
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given or player tried to use their own, lolz
+                    uint256 _affID;
+                    if (_affCode != "" && _affCode != _name)
+                    {
+                            // get affiliate ID from aff Code 
+                            _affID = pIDxName_[_affCode];
+
+                            // if affID is not the same as previously stored 
+                            if (_affID != plyr_[_pID].laff)
+                            {
+                                    // update last affiliate
+                                    plyr_[_pID].laff = _affID;
+                            }
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
             }
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
-    }
-    
+
     /**
      * @dev players, if you registered a profile, before a game was released, or
      * set the all bool to false when you registered, use this function to push
@@ -289,49 +286,49 @@ contract PlayerBook {
      * @param _gameID game id 
      */
     function addMeToGame(uint256 _gameID)
-        isHuman()
-        public
-    {
-        require(_gameID <= gID_, "silly player, that game doesn't exist yet");
-        address _addr = msg.sender;
-        uint256 _pID = pIDxAddr_[_addr];
-        require(_pID != 0, "hey there buddy, you dont even have an account");
-        uint256 _totalNames = plyr_[_pID].names;
-        
-        // add players profile and most recent name
-        games_[_gameID].receivePlayerInfo(_pID, _addr, plyr_[_pID].name, plyr_[_pID].laff);
-        
-        // add list of all names
-        if (_totalNames > 1)
-            for (uint256 ii = 1; ii <= _totalNames; ii++)
-                games_[_gameID].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
-    }
-    
+            isHuman()
+            public
+            {
+                    require(_gameID <= gID_, "silly player, that game doesn't exist yet");
+                    address _addr = msg.sender;
+                    uint256 _pID = pIDxAddr_[_addr];
+                    require(_pID != 0, "hey there buddy, you dont even have an account");
+                    uint256 _totalNames = plyr_[_pID].names;
+
+                    // add players profile and most recent name
+                    games_[_gameID].receivePlayerInfo(_pID, _addr, plyr_[_pID].name, plyr_[_pID].laff);
+
+                    // add list of all names
+                    if (_totalNames > 1)
+                            for (uint256 ii = 1; ii <= _totalNames; ii++)
+                                    games_[_gameID].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
+            }
+
     /**
      * @dev players, use this to push your player profile to all registered games.
      * -functionhash- 0x0c6940ea
      */
     function addMeToAllGames()
-        isHuman()
-        public
-    {
-        address _addr = msg.sender;
-        uint256 _pID = pIDxAddr_[_addr];
-        require(_pID != 0, "hey there buddy, you dont even have an account");
-        uint256 _laff = plyr_[_pID].laff;
-        uint256 _totalNames = plyr_[_pID].names;
-        bytes32 _name = plyr_[_pID].name;
-        
-        for (uint256 i = 1; i <= gID_; i++)
-        {
-            games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
-            if (_totalNames > 1)
-                for (uint256 ii = 1; ii <= _totalNames; ii++)
-                    games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
-        }
-                
-    }
-    
+            isHuman()
+            public
+            {
+                    address _addr = msg.sender;
+                    uint256 _pID = pIDxAddr_[_addr];
+                    require(_pID != 0, "hey there buddy, you dont even have an account");
+                    uint256 _laff = plyr_[_pID].laff;
+                    uint256 _totalNames = plyr_[_pID].names;
+                    bytes32 _name = plyr_[_pID].name;
+
+                    for (uint256 i = 1; i <= gID_; i++)
+                    {
+                            games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
+                            if (_totalNames > 1)
+                                    for (uint256 ii = 1; ii <= _totalNames; ii++)
+                                            games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
+                    }
+
+            }
+
     /**
      * @dev players use this to change back to one of your old names.  tip, you'll
      * still need to push that info to existing games.
@@ -339,248 +336,268 @@ contract PlayerBook {
      * @param _nameString the name you want to use 
      */
     function useMyOldName(string _nameString)
-        isHuman()
-        public 
-    {
-        // filter name, and get pID
-        bytes32 _name = _nameString.nameFilter();
-        uint256 _pID = pIDxAddr_[msg.sender];
-        
-        // make sure they own the name 
-        require(plyrNames_[_pID][_name] == true, "umm... thats not a name you own");
-        
-        // update their current name 
-        plyr_[_pID].name = _name;
-    }
-    
-//==============================================================================
-//     _ _  _ _   | _  _ . _  .
-//    (_(_)| (/_  |(_)(_||(_  . 
-//=====================_|=======================================================    
-    function registerNameCore(uint256 _pID, address _addr, uint256 _affID, bytes32 _name, bool _isNewPlayer, bool _all)
-        private
-    {
-        // if names already has been used, require that current msg sender owns the name
-        if (pIDxName_[_name] != 0)
-            require(plyrNames_[_pID][_name] == true, "sorry that names already taken");
-        
-        // add name to player profile, registry, and name book
-        plyr_[_pID].name = _name;
-        pIDxName_[_name] = _pID;
-        if (plyrNames_[_pID][_name] == false)
-        {
-            plyrNames_[_pID][_name] = true;
-            plyr_[_pID].names++;
-            plyrNameList_[_pID][plyr_[_pID].names] = _name;
-        }
-        
-        // registration fee goes directly to community rewards
-        communityAddr.transfer(address(this).balance);
-        
-        // push player info to games
-        if (_all == true)
-            for (uint256 i = 1; i <= gID_; i++)
-                games_[i].receivePlayerInfo(_pID, _addr, _name, _affID);
-        
-        // fire event
-        emit onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
-    }
-//==============================================================================
-//    _|_ _  _ | _  .
-//     | (_)(_)|_\  .
-//==============================================================================    
-    function determinePID(address _addr)
-        private
-        returns (bool)
-    {
-        if (pIDxAddr_[_addr] == 0)
-        {
-            pID_++;
-            pIDxAddr_[_addr] = pID_;
-            plyr_[pID_].addr = _addr;
-            
-            // set the new player bool to true
-            return (true);
-        } else {
-            return (false);
-        }
-    }
-//==============================================================================
-//   _   _|_ _  _ _  _ |   _ _ || _  .
-//  (/_>< | (/_| | |(_||  (_(_|||_\  .
-//==============================================================================
-    function getPlayerID(address _addr)
-        isRegisteredGame()
-        external
-        returns (uint256)
-    {
-        determinePID(_addr);
-        return (pIDxAddr_[_addr]);
-    }
-    function getPlayerName(uint256 _pID)
-        external
-        view
-        returns (bytes32)
-    {
-        return (plyr_[_pID].name);
-    }
-    function getPlayerLAff(uint256 _pID)
-        external
-        view
-        returns (uint256)
-    {
-        return (plyr_[_pID].laff);
-    }
-    function getPlayerAddr(uint256 _pID)
-        external
-        view
-        returns (address)
-    {
-        return (plyr_[_pID].addr);
-    }
-    function getNameFee()
-        external
-        view
-        returns (uint256)
-    {
-        return(registrationFee_);
-    }
-    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code, lolz
-        uint256 _affID = _affCode;
-        if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID) 
-        {
-            // update last affiliate 
-            plyr_[_pID].laff = _affID;
-        } else if (_affID == _pID) {
-            _affID = 0;
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
-        
-        return(_isNewPlayer, _affID);
-    }
-    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        uint256 _affID;
-        if (_affCode != address(0) && _affCode != _addr)
-        {
-            // get affiliate ID from aff Code 
-            _affID = pIDxAddr_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
+            isHuman()
+            public 
             {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
-        
-        return(_isNewPlayer, _affID);
-    }
-    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all)
-        isRegisteredGame()
-        external
-        payable
-        returns(bool, uint256)
-    {
-        // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
-        
-        // set up our tx event data and determine if player is new or not
-        bool _isNewPlayer = determinePID(_addr);
-        
-        // fetch player id
-        uint256 _pID = pIDxAddr_[_addr];
-        
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        uint256 _affID;
-        if (_affCode != "" && _affCode != _name)
-        {
-            // get affiliate ID from aff Code 
-            _affID = pIDxName_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
-            {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
-        }
-        
-        // register name 
-        registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
-        
-        return(_isNewPlayer, _affID);
-    }
-    
-//==============================================================================
-//   _ _ _|_    _   .
-//  _\(/_ | |_||_)  .
-//=============|================================================================
-    function addGame(address _gameAddress, string _gameNameStr)
-     onlyCommunity()
-        public
-    {
-        require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
+                    // filter name, and get pID
+                    bytes32 _name = _nameString.nameFilter();
+                    uint256 _pID = pIDxAddr_[msg.sender];
 
-            gID_++;
-            bytes32 _name = _gameNameStr.nameFilter();
-            gameIDs_[_gameAddress] = gID_;
-            gameNames_[_gameAddress] = _name;
-            games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
-        
-            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
-    }
-    
+                    // make sure they own the name 
+                    require(plyrNames_[_pID][_name] == true, "umm... thats not a name you own");
+
+                    // update their current name 
+                    plyr_[_pID].name = _name;
+            }
+
+    //==============================================================================
+    //     _ _  _ _   | _  _ . _  .
+    //    (_(_)| (/_  |(_)(_||(_  . 
+    //=====================_|=======================================================    
+    function registerNameCore(uint256 _pID, address _addr, uint256 _affID, bytes32 _name, bool _isNewPlayer, bool _all)
+            private
+            {
+                    // if names already has been used, require that current msg sender owns the name
+                    if (pIDxName_[_name] != 0)
+                            require(plyrNames_[_pID][_name] == true, "sorry that names already taken");
+
+                    // add name to player profile, registry, and name book
+                    plyr_[_pID].name = _name;
+                    pIDxName_[_name] = _pID;
+                    if (plyrNames_[_pID][_name] == false)
+                    {
+                            plyrNames_[_pID][_name] = true;
+                            plyr_[_pID].names++;
+                            plyrNameList_[_pID][plyr_[_pID].names] = _name;
+                    }
+
+                    // registration fee goes directly to community rewards
+                    admin.transfer(address(this).balance);
+
+                    // push player info to games
+                    if (_all == true)
+                            for (uint256 i = 1; i <= gID_; i++)
+                                    games_[i].receivePlayerInfo(_pID, _addr, _name, _affID);
+
+                    // fire event
+                    emit onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, msg.value, now);
+            }
+    //==============================================================================
+    //    _|_ _  _ | _  .
+    //     | (_)(_)|_\  .
+    //==============================================================================    
+    function determinePID(address _addr)
+            private
+            returns (bool)
+            {
+                    if (pIDxAddr_[_addr] == 0)
+                    {
+                            pID_++;
+                            pIDxAddr_[_addr] = pID_;
+                            plyr_[pID_].addr = _addr;
+
+                            // set the new player bool to true
+                            return (true);
+                    } else {
+                            return (false);
+                    }
+            }
+    //==============================================================================
+    //   _   _|_ _  _ _  _ |   _ _ || _  .
+    //  (/_>< | (/_| | |(_||  (_(_|||_\  .
+    //==============================================================================
+    function getPlayerID(address _addr)
+            isRegisteredGame()
+            external
+            returns (uint256)
+            {
+                    determinePID(_addr);
+                    return (pIDxAddr_[_addr]);
+            }
+    function getPlayerName(uint256 _pID)
+            external
+            view
+            returns (bytes32)
+            {
+                    return (plyr_[_pID].name);
+            }
+    function getPlayerLAff(uint256 _pID)
+            external
+            view
+            returns (uint256)
+            {
+                    return (plyr_[_pID].laff);
+            }
+    function getPlayerAddr(uint256 _pID)
+            external
+            view
+            returns (address)
+            {
+                    return (plyr_[_pID].addr);
+            }
+    function getNameFee()
+            external
+            view
+            returns (uint256)
+            {
+                    return(registrationFee_);
+            }
+    function registerNameXIDFromDapp(address _addr, bytes32 _name, uint256 _affCode, bool _all)
+            isRegisteredGame()
+            external
+            payable
+            returns(bool, uint256)
+            {
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given, no new affiliate code was given, or the 
+                    // player tried to use their own pID as an affiliate code, lolz
+                    uint256 _affID = _affCode;
+                    if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID) 
+                    {
+                            // update last affiliate 
+                            plyr_[_pID].laff = _affID;
+                    } else if (_affID == _pID) {
+                            _affID = 0;
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+
+                    return(_isNewPlayer, _affID);
+            }
+    function registerNameXaddrFromDapp(address _addr, bytes32 _name, address _affCode, bool _all)
+            isRegisteredGame()
+            external
+            payable
+            returns(bool, uint256)
+            {
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given or player tried to use their own, lolz
+                    uint256 _affID;
+                    if (_affCode != address(0) && _affCode != _addr)
+                    {
+                            // get affiliate ID from aff Code 
+                            _affID = pIDxAddr_[_affCode];
+
+                            // if affID is not the same as previously stored 
+                            if (_affID != plyr_[_pID].laff)
+                            {
+                                    // update last affiliate
+                                    plyr_[_pID].laff = _affID;
+                            }
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+
+                    return(_isNewPlayer, _affID);
+            }
+    function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all)
+            isRegisteredGame()
+            external
+            payable
+            returns(bool, uint256)
+            {
+                    // make sure name fees paid
+                    require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+
+                    // set up our tx event data and determine if player is new or not
+                    bool _isNewPlayer = determinePID(_addr);
+
+                    // fetch player id
+                    uint256 _pID = pIDxAddr_[_addr];
+
+                    // manage affiliate residuals
+                    // if no affiliate code was given or player tried to use their own, lolz
+                    uint256 _affID;
+                    if (_affCode != "" && _affCode != _name)
+                    {
+                            // get affiliate ID from aff Code 
+                            _affID = pIDxName_[_affCode];
+
+                            // if affID is not the same as previously stored 
+                            if (_affID != plyr_[_pID].laff)
+                            {
+                                    // update last affiliate
+                                    plyr_[_pID].laff = _affID;
+                            }
+                    }
+
+                    // register name 
+                    registerNameCore(_pID, _addr, _affID, _name, _isNewPlayer, _all);
+
+                    return(_isNewPlayer, _affID);
+            }
+
+    //==============================================================================
+    //   _ _ _|_    _   .
+    //  _\(/_ | |_||_)  .
+    //=============|================================================================
+    function addGame(address _gameAddress, string _gameNameStr)
+            public
+            {
+                    require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
+                    gID_++;
+                    bytes32 _name = _gameNameStr.nameFilter();
+                    gameIDs_[_gameAddress] = gID_;
+                    gameNames_[_gameAddress] = _name;
+                    games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
+
+                    games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
+                    games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+                    games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+                    games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+            }
+
     function setRegistrationFee(uint256 _fee)
-     onlyCommunity()
-        public
-    {
-            registrationFee_ = _fee;
-    }
-        
+            public
+            {
+                    registrationFee_ = _fee;
+            }
+
 } 
 
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 library NameFilter {
     
     /**
@@ -661,7 +678,7 @@ library NameFilter {
 /**
  * @title SafeMath v0.1.9
  * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by dddos
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
  * - added sqrt
  * - added sq
  * - added pwr 
