@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x42eb0a58b2af723531fecc2de3582725ff691e43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xdfc04a0fba45dd53680d4543e4092a3f80f4e507
 */
 pragma solidity 0.4.24;
 
@@ -256,7 +256,9 @@ contract TokenVesting is Ownable {
         } else if (block.timestamp >= start.add(duration) || revoked[token]) {
           return totalBalance;
         } else {
-          return totalBalance.mul(block.timestamp.sub(start)).div(duration).div(3600).mul(3600);
+          uint256 gap = 86400 * 30;
+          uint256 start_gap = block.timestamp.sub(start).div(gap).mul(gap);
+          return totalBalance.mul(start_gap).div(duration);
         }
     }
 
