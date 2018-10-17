@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x8f7f252c4499e5baa25d59967d7abad65e44115a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xb72758ffd33cf4f1f3b935a549939c2af62420d0
 */
 pragma solidity ^0.4.13;
 
@@ -247,7 +247,7 @@ contract Distribution is CanReclaimToken, Claimable, Whitelist {
         require(batchAmounts.length == batchReceivers.length);
         for (uint256 i = 0; i < batchReceivers.length; ++i) {
             address beneficiary = batchReceivers[i];
-            uint256 v = batchAmounts[i] * 1 ether;
+            uint256 v = batchAmounts[i];
             token.safeTransfer(beneficiary, v);
             emit Distributed(beneficiary, v);
         }
