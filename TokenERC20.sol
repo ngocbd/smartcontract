@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc6567539cda52d784226da1ec2654820b363a705
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xdecdf5780bd476918eacb21a84a0ae783b1846a3
 */
 pragma solidity ^0.4.21;
 
@@ -64,8 +64,8 @@ contract TokenERC20 is Ownable {
 	
     using SafeMath for uint256;
     
-    string public constant name       = "??";
-    string public constant symbol     = "TC";
+    string public constant name       = "Artificial Intelligence Community";
+    string public constant symbol     = "AIC";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
 
