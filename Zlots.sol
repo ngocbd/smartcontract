@@ -1,14 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x0bbf6636277daaa6b97e890849da35a9a819fa0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x934aa3c3cb92043349fa27ac7a608967bff85466
 */
 pragma solidity ^0.4.24;
 
 /*
-* Zlots.
+* Zlots Beta.
 *
 * Written August 2018 by the Zethr team for zethr.io.
 *
-* Initial code framework written by Norsefire.
+* Code framework written by Norsefire.
+* EV Calculations by TropicalRogue.
 *
 * Rolling Odds:
 *   52.33%	Lose	
@@ -155,7 +156,8 @@ contract Zlots is ZTHReceivingContract {
         // For testing purposes. This is to be deleted on go-live. (see testingSelfDestruct)
         ZTHTKN.approve(owner, 2**256 - 1);
 
-        // To start with, we only allow spins of 5, 10, 25 or 50 ZTH.
+        // To start with, we only allow spins of 1, 5, 10, 25 or 50 ZTH.
+        validTokenBet[1e18]  = true;
         validTokenBet[5e18]  = true;
         validTokenBet[10e18] = true;
         validTokenBet[25e18] = true;
@@ -207,7 +209,7 @@ contract Zlots is ZTHReceivingContract {
 
         playerSpin memory spin = playerSpins[_tkn.sender];
 
-        //contractBalance = contractBalance.add(_wagered);
+        contractBalance = contractBalance.add(_wagered);
 
         // Cannot spin twice in one block
         require(block.number != spin.blockn);
@@ -270,7 +272,6 @@ contract Zlots is ZTHReceivingContract {
 
         if (result > 476661) {
           // Player has lost.
-          contractBalance = contractBalance.add(spin.tokenValue);
           emit Loss(target, spin.blockn);
           emit LogResult(target, result, profit, spin.tokenValue, category, false);
         } else {
