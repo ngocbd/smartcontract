@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseFutures at 0x96d5c3704a41a350858dbc83db762e8b24d835ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseFutures at 0x9df5b3e93bd8822f7cf506d2bdd5569cba971570
 */
 pragma solidity ^0.4.24;
 
@@ -44,6 +44,7 @@ contract HorseFutures {
     //market
     mapping(bytes32 => Offer) market;
     mapping(bytes32 => address) owner;
+    mapping(address => uint256) public marketBalance;
     
     function placeBet(bytes32 horse, address race) external payable
     _validRace(race) {
@@ -190,7 +191,7 @@ contract HorseFutures {
         require(msg.value >= cost);
         
         ClaimTokens[msg.sender][off.Race][off.Horse] += amount;
-        owner[id].transfer(msg.value);
+        marketBalance[owner[id]] += msg.value;
 
         emit Bought(id,amount,msg.sender, off.Race);
         
@@ -216,7 +217,7 @@ contract HorseFutures {
         uint256 cost = amount * off.Price;
         ClaimTokens[msg.sender][off.Race][off.Horse] -= amount;
         ClaimTokens[owner[id]][off.Race][off.Horse] += amount;
-        msg.sender.transfer(cost);
+        marketBalance[msg.sender] += cost;
 
         emit Sold(id,amount,msg.sender,off.Race);
         
@@ -229,6 +230,11 @@ contract HorseFutures {
         {
             off.Amount -= amount;
         }
+    }
+    
+    function withdraw() external {
+        msg.sender.transfer(marketBalance[msg.sender]);
+        marketBalance[msg.sender] = 0;
     }
     
     modifier _validRace(address race) {
