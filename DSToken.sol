@@ -1,13 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x5dc4538ce872684d0cfc178a573767d157c7ddf4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x27a7abd7428bf446628c3faf14c57baf10eb7017
 */
+pragma solidity ^0.4.11;
+
 contract DSNote {
     event LogNote(
         bytes4   indexed  sig,
         address  indexed  guy,
         bytes32  indexed  foo,
         bytes32  indexed  bar,
-	uint	 	  wad,
+    uint           wad,
         bytes             fax
     ) anonymous;
 
@@ -24,6 +26,19 @@ contract DSNote {
 
         _;
     }
+}
+
+contract ERC20 {
+    function totalSupply() constant returns (uint supply);
+    function balanceOf( address who ) constant returns (uint value);
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
+
+    function transfer( address to, uint value) returns (bool ok);
+    function transferFrom( address from, address to, uint value) returns (bool ok);
+    function approve( address spender, uint value ) returns (bool ok);
+
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
 contract DSAuthority {
@@ -87,21 +102,44 @@ contract DSAuth is DSAuthEvents {
     }
 }
 
-contract DSStop is DSAuth, DSNote {
-
-    bool public stopped;
-
-    modifier stoppable {
-        assert (!stopped);
-        _;
+contract DSExec {
+    function tryExec( address target, bytes calldata, uint value)
+             internal
+             returns (bool call_ret)
+    {
+        return target.call.value(value)(calldata);
     }
-    function stop() auth note {
-        stopped = true;
-    }
-    function start() auth note {
-        stopped = false;
+    function exec( address target, bytes calldata, uint value)
+             internal
+    {
+        if(!tryExec(target, calldata, value)) {
+            throw;
+        }
     }
 
+    // Convenience aliases
+    function exec( address t, bytes c )
+        internal
+    {
+        exec(t, c, 0);
+    }
+    function exec( address t, uint256 v )
+        internal
+    {
+        bytes memory c; exec(t, c, v);
+    }
+    function tryExec( address t, bytes c )
+        internal
+        returns (bool)
+    {
+        return tryExec(t, c, 0);
+    }
+    function tryExec( address t, uint256 v )
+        internal
+        returns (bool)
+    {
+        bytes memory c; return tryExec(t, c, v);
+    }
 }
 
 contract DSMath {
@@ -264,17 +302,21 @@ contract DSMath {
 
 }
 
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf( address who ) constant returns (uint value);
-    function allowance( address owner, address spender ) constant returns (uint _allowance);
+contract DSStop is DSAuth, DSNote {
 
-    function transfer( address to, uint value) returns (bool ok);
-    function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve( address spender, uint value ) returns (bool ok);
+    bool public stopped;
 
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+    modifier stoppable {
+        assert (!stopped);
+        _;
+    }
+    function stop() auth note {
+        stopped = true;
+    }
+    function start() auth note {
+        stopped = false;
+    }
+
 }
 
 contract DSTokenBase is ERC20, DSMath {
@@ -331,26 +373,60 @@ contract DSTokenBase is ERC20, DSMath {
 
 }
 
+contract WhiteList {
+    
+    mapping (address => bool)   public  whiteList;
+    
+    address  public  owner;
+    
+    function WhiteList() public {
+        owner = msg.sender;
+        whiteList[owner] = true;
+    }
+    
+    function addToWhiteList(address [] _addresses) public {
+        require(msg.sender == owner);
+        
+        for (uint i = 0; i < _addresses.length; i++) {
+            whiteList[_addresses[i]] = true;
+        }
+    }
+    
+    function removeFromWhiteList(address [] _addresses) public {
+        require (msg.sender == owner);
+        for (uint i = 0; i < _addresses.length; i++) {
+            whiteList[_addresses[i]] = false;
+        }
+    }
+}
+
 contract DSToken is DSTokenBase(0), DSStop {
 
-    string  public  name = "";
-    string  public  symbol;
+    bytes32  public  symbol = "GENEOS";
     uint256  public  decimals = 18; // standard token precision. override to customize
+    
+    WhiteList public wlcontract;
 
-    function DSToken(string name_, string symbol_) {
-        name = name_;
-        symbol = symbol_;
+    function DSToken(WhiteList wlc_) {
+        require(msg.sender == wlc_.owner());
+        wlcontract = wlc_;
     }
 
     function transfer(address dst, uint wad) stoppable note returns (bool) {
+        require(wlcontract.whiteList(msg.sender));
+        require(wlcontract.whiteList(dst));
         return super.transfer(dst, wad);
     }
     function transferFrom(
         address src, address dst, uint wad
     ) stoppable note returns (bool) {
+        require(wlcontract.whiteList(src));
+        require(wlcontract.whiteList(dst));
         return super.transferFrom(src, dst, wad);
     }
     function approve(address guy, uint wad) stoppable note returns (bool) {
+        require(wlcontract.whiteList(msg.sender));
+        require(wlcontract.whiteList(guy));
         return super.approve(guy, wad);
     }
 
@@ -362,14 +438,21 @@ contract DSToken is DSTokenBase(0), DSStop {
     }
 
     function mint(uint128 wad) auth stoppable note {
+        require(wlcontract.whiteList(msg.sender));
         _balances[msg.sender] = add(_balances[msg.sender], wad);
         _supply = add(_supply, wad);
     }
     function burn(uint128 wad) auth stoppable note {
+        require(wlcontract.whiteList(msg.sender));
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _supply = sub(_supply, wad);
     }
-    function setName(string name_) auth {
+
+    // Optional token name
+
+    bytes32   public  name = "";
+    
+    function setName(bytes32 name_) auth {
         name = name_;
     }
 
