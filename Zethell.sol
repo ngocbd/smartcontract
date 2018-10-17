@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0xe69c6002f218d6939e13eefbb3d984b22c4e0448
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethell at 0xd556743cff4818543989e4c6256d5b18d153c258
 */
 pragma solidity ^0.4.23;
 
@@ -111,10 +111,10 @@ contract Zethell is ZTHReceivingContract {
         validTokenBet[50e18] = true;
 
         // Logarithmically decreasing time 'bonus' associated with higher amounts of ZTH staked.
-        tokenToTimer[5e18]  = 24 hours;
-        tokenToTimer[10e18] = 18 hours;
-        tokenToTimer[25e18] = 10 hours;
-        tokenToTimer[50e18] = 6 hours;
+        tokenToTimer[5e18]  = 60 minutes;
+        tokenToTimer[10e18] = 40 minutes;
+        tokenToTimer[25e18] = 25 minutes;
+        tokenToTimer[50e18] = 15 minutes;
         
         // Set the initial timers to contract genesis.
         gameStarted = now;
@@ -122,8 +122,8 @@ contract Zethell is ZTHReceivingContract {
         gameActive  = true;
     }
     
-    // Zethr dividends gained are sent to Bankroll later
-    function() public payable {  }
+    // Don't send Ether to this, for the love of God.
+    function() public payable { revert(); }
 
     // If the contract receives tokens, bundle them up in a struct and fire them over to _stakeTokens for validation.
     struct TKN { address sender; uint value; }
