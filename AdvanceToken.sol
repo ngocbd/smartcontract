@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0xe0c6587acb61ae86a5e4a099c0e8534ecfad8f58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x21c1720f9330496bc19553ce335dea7d4b70e426
 */
 pragma solidity ^0.4.20;
 
@@ -50,21 +50,21 @@ contract ERC20Interface {
  
 contract ERC20 is ERC20Interface,SafeMath {
 
-   
+    // ?????????????balanceOf????
     mapping(address => uint256) public balanceOf;
 
-    
+    // allowed?????????????????address?? ????????????(?????address)?????uint256??
     mapping(address => mapping(address => uint256)) allowed;
 
     constructor(string _name) public {
-       name = _name; 
-       symbol = "ETOO";
+       name = _name;  // "UpChain";
+       symbol = "ETPP";
        decimals = 4;
-       totalSupply = 1038688590000;
+       totalSupply = 1038628770000;
        balanceOf[msg.sender] = totalSupply;
     }
 
-  
+  // ???
   function transfer(address _to, uint256 _value) returns (bool success) {
       require(_to != address(0));
       require(balanceOf[msg.sender] >= _value);
@@ -73,7 +73,7 @@ contract ERC20 is ERC20Interface,SafeMath {
       balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender],_value) ;
       balanceOf[_to] =SafeMath.safeAdd(balanceOf[_to] ,_value);
 
-      
+      // ???????
       emit Transfer(msg.sender, _to, _value);
 
       return true;
@@ -84,7 +84,7 @@ contract ERC20 is ERC20Interface,SafeMath {
       require(_to != address(0));
       require(allowed[_from][msg.sender] >= _value);
       require(balanceOf[_from] >= _value);
-      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
+      require(balanceOf[_to] + _value >= balanceOf[_to]);
 
       balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
       balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to],_value);
@@ -127,8 +127,30 @@ contract owned {
 
 }
 
+contract SelfDesctructionContract is owned {
+   
+   string  public someValue;
+   modifier ownerRestricted {
+      require(owner == msg.sender);
+      _;
+   } 
+   // constructor
+   function SelfDesctructionContract() {
+      owner = msg.sender;
+   }
+   // a simple setter function
+   function setSomeValue(string value){
+      someValue = value;
+   } 
+   // you can call it anything you want
+   function destroyContract() ownerRestricted {
+     selfdestruct(owner);
+   }
+}
 
-contract AdvanceToken is ERC20, owned{
+
+
+contract AdvanceToken is ERC20, owned,SelfDesctructionContract{
 
     mapping (address => bool) public frozenAccount;
 
