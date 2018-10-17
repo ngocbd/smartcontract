@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingMasterContract at 0x3c24f5560797280F12E190cac7e5711a73c91c63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingMasterContract at 0x4ecb7e25fa43d4277e0fa3b2e5f5755275983411
 */
 pragma solidity ^0.4.21;
 
@@ -149,15 +149,15 @@ contract TokenVestingContract is Owned {
     
     function getReleasableFunds() public view returns(uint256){
         uint256 balance = ERC20TokenInterface(tokenAddress).balanceOf(address(this));
-        // check if there is balance and if it is active yet
+       
         if (balance == 0 || (startTime >= now)){
             return 0;
         }
-        // all funds that may be released according to vesting schedule 
+        
         uint256 vestingScheduleAmount = (now.sub(startTime) / tickDuration) * amountPerTick;
-        // deduct already released funds 
+        
         uint256 releasableFunds = vestingScheduleAmount.sub(alreadyReleasedAmount);
-        // make sure to release remainder of funds for last payout
+        
         if(releasableFunds > balance){
             releasableFunds = balance;
         }
@@ -172,14 +172,14 @@ contract TokenVestingContract is Owned {
     
     function release() public returns(uint256 transferedAmount) {
         checkForReceivedTokens();
-        require(msg.sender == beneficiary);//, "Funds may be released only to beneficiary");
+        require(msg.sender == beneficiary);
         uint256 amountToTransfer = getReleasableFunds();
-        require(amountToTransfer > 0);//, "Out of funds");
-        // internal accounting
+        require(amountToTransfer > 0);
+      
         alreadyReleasedAmount = alreadyReleasedAmount.add(amountToTransfer);
         internalBalance = internalBalance.sub(amountToTransfer);
         VestingMasterInterface(owner).substractLockedAmount(amountToTransfer);
-        // actual transfer
+       
         ERC20TokenInterface(tokenAddress).transfer(beneficiary, amountToTransfer);
         emit Released(amountToTransfer);
         return amountToTransfer;
@@ -187,11 +187,11 @@ contract TokenVestingContract is Owned {
     
     function revoke(string _reason) external onlyOwner {
         require(revocable);
-        // returns funds not yet vested according to vesting schedule
+        
         uint256 releasableFunds = getReleasableFunds();
         ERC20TokenInterface(tokenAddress).transfer(beneficiary, releasableFunds);
-        VestingMasterInterface(owner).substractLockedAmount(releasableFunds);  // have to do it here, can't use return, because contract selfdestructs
-        // returns remainder of funds to VestingMaster and kill vesting contract
+        VestingMasterInterface(owner).substractLockedAmount(releasableFunds); 
+        
         VestingMasterInterface(owner).addInternalBalance(getTokenBalance());
         ERC20TokenInterface(tokenAddress).transfer(owner, getTokenBalance());
         emit RevokedAndDestroyed(_reason);
@@ -201,13 +201,13 @@ contract TokenVestingContract is Owned {
     function getTokenBalance() public view returns(uint256 tokenBalance) {
         return ERC20TokenInterface(tokenAddress).balanceOf(address(this));
     }
-    // todo public or internal?
-    // master calls this when it uploads funds in order to differentiate betwen funds from master and 3rd party
+    
+    
     function updateBalanceOnFunding(uint256 _amount) external onlyOwner{
         internalBalance = internalBalance.add(_amount);
         emit VestingReceivedFunding(_amount);
     }
-    // check for changes in balance in order to track amount of locked tokens and notify master
+    
     function checkForReceivedTokens() public{
         if (getTokenBalance() != internalBalance){
             uint256 receivedFunds = getTokenBalance().sub(internalBalance);
@@ -226,7 +226,7 @@ contract TokenVestingContract is Owned {
 contract VestingMasterContract is Owned {
     using SafeMath for uint256;
    
-    // TODO: set this before deploy
+    
     address public constant tokenAddress = 0xc7C03B8a3FC5719066E185ea616e87B88eba44a3;   
     uint256 public internalBalance = 0;
     uint256 public amountLockedInVestings = 0;
@@ -245,7 +245,7 @@ contract VestingMasterContract is Owned {
     event LockedAmountIncreased(uint256 amount);
     event TokensReceivedSinceLastCheck(uint256 amount);
 
-    ////////// STORAGE HELPERS  ///////////
+    
     function vestingExists(address _vestingAddress) public view returns(bool exists){
         if(vestingAddresses.length == 0) {return false;}
         return (vestingAddresses[addressToVesting[_vestingAddress].arrayPointer] == _vestingAddress);
@@ -270,7 +270,7 @@ contract VestingMasterContract is Owned {
     }
     
     function createNewVesting(
-        // todo uncomment
+        
         address _beneficiary,
         uint256 _startTime, 
         uint256 _tickDuration, 
@@ -295,13 +295,13 @@ contract VestingMasterContract is Owned {
         return newVesting;
     }
     
-    // add funds to vesting contract
+    
     function fundVesting(address _vestingContract, uint256 _amount) public onlyOwner {
-        // convenience, so you don't have to call it manualy if you just uploaded funds
+        
         checkForReceivedTokens();
-        // check if there is actually enough funds
+        
         require((internalBalance >= _amount) && (getTokenBalance() >= _amount));
-        // make sure that fundee is vesting contract on the list
+        
         require(vestingExists(_vestingContract)); 
         internalBalance = internalBalance.sub(_amount);
         ERC20TokenInterface(tokenAddress).transfer(_vestingContract, _amount);
@@ -312,30 +312,30 @@ contract VestingMasterContract is Owned {
     function getTokenBalance() public constant returns(uint256) {
         return ERC20TokenInterface(tokenAddress).balanceOf(address(this));
     }
-    // revoke vesting; release releasable funds to beneficiary and return remaining to master and kill vesting contract
+    
     function revokeVesting(address _vestingContract, string _reason) public onlyOwner{
         TokenVestingInterface subVestingContract = TokenVestingInterface(_vestingContract);
         subVestingContract.revoke(_reason);
         deleteVestingFromStorage(_vestingContract);
     }
-    // when vesting is revoked it sends back remaining tokens and updates internalBalance
+    
     function addInternalBalance(uint256 _amount) external {
         require(vestingExists(msg.sender));
         internalBalance = internalBalance.add(_amount);
     }
-    // vestings notifies if there has been any changes in amount of locked tokens
+    
     function addLockedAmount(uint256 _amount) external {
         require(vestingExists(msg.sender));
         amountLockedInVestings = amountLockedInVestings.add(_amount);
         emit LockedAmountIncreased(_amount);
     }
-    // vestings notifies if there has been any changes in amount of locked tokens
+    
     function substractLockedAmount(uint256 _amount) external {
         require(vestingExists(msg.sender));
         amountLockedInVestings = amountLockedInVestings.sub(_amount);
         emit LockedAmountDecreased(_amount);
     }
-    // check for changes in balance in order to track amount of locked tokens
+    
     function checkForReceivedTokens() public{
         if (getTokenBalance() != internalBalance){
             uint256 receivedFunds = getTokenBalance().sub(internalBalance);
