@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsRaffle at 0x2791528f5617e187a6d73c30034ac211b2f47042
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsRaffle at 0x4cb200957a11cbff512b4752e6ee38c9253fdd54
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -144,6 +144,7 @@ contract CardsRaffle is AccessAdmin {
   mapping(uint256 => address[]) private rafflePlayers; // Keeping a seperate list for each raffle has it's benefits. 
 
   uint256 private constant RAFFLE_TICKET_BASE_PRICE = 10000;
+  uint256 private constant MAX_LIMIT = 1000;
 
   // Current raffle info  
   uint256 private raffleEndTime;
@@ -156,7 +157,7 @@ contract CardsRaffle is AccessAdmin {
   // Raffle for rare items  
   function buyRaffleTicket(uint256 amount) external {
     require(raffleEndTime >= block.timestamp);  //close it if need test
-    require(amount > 0);
+    require(amount > 0 && amount<=MAX_LIMIT);
         
     uint256 ticketsCost = SafeMath.mul(RAFFLE_TICKET_BASE_PRICE, amount);
     require(cards.balanceOf(msg.sender) >= ticketsCost);
