@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0x3eb315dc2885135f9c70ad1b58283cc00a1e4695
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptualProjectToken at 0xa4e8aeeb40d972e6348cecadd0598712368ad6df
 */
 pragma solidity ^0.4.23;
 
@@ -317,68 +317,6 @@ contract StandardToken is ERC20, BasicToken {
 
 
 /**
- * @title RefundVault
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- */
-contract RefundVault is Ownable {
-  using SafeMath for uint256;
-
-  enum State { Active, Refunding, Closed }
-
-  mapping (address => uint256) public deposited;
-  address public wallet;
-  State public state;
-
-  event Closed();
-  event RefundsEnabled();
-  event Refunded(address indexed beneficiary, uint256 weiAmount);
-
-  /**
-   * @param _wallet Vault address
-   */
-  constructor(address _wallet) public {
-    require(_wallet != address(0));
-    wallet = _wallet;
-    state = State.Active;
-  }
-
-  /**
-   * @param investor Investor address
-   */
-  function deposit(address investor) onlyOwner public payable {
-    require(state == State.Active);
-    deposited[investor] = deposited[investor].add(msg.value);
-  }
-
-  function close() onlyOwner public {
-    require(state == State.Active);
-    state = State.Closed;
-    emit Closed();
-    wallet.transfer(address(this).balance);
-  }
-
-  function enableRefunds() onlyOwner public {
-    require(state == State.Active);
-    state = State.Refunding;
-    emit RefundsEnabled();
-  }
-
-  /**
-   * @param investor Investor address
-   */
-  function refund(address investor) public {
-    require(state == State.Refunding);
-    uint256 depositedValue = deposited[investor];
-    deposited[investor] = 0;
-    investor.transfer(depositedValue);
-    emit Refunded(investor, depositedValue);
-  }
-}
-
-
-/**
  * @title CryptualProjectToken
  * @dev Official ERC20 token contract for the Cryptual Project.
  * This contract includes both a presale and a crowdsale.
@@ -395,31 +333,29 @@ contract CryptualProjectToken is StandardToken, Ownable {
   uint256 public constant INITIAL_SUPPLY = 283000000;
   address public wallet;
 
-  // Presale constants
-  uint256 public constant PRESALE_OPENING_TIME = 1530356400; // 06/30/2018 11:00:00 GMT
-  uint256 public constant PRESALE_CLOSING_TIME = 1530921600; // 07/07/2018 00:00:00 GMT
+  // Private presale constants
+  uint256 public constant PRESALE_OPENING_TIME = 1531998000; // Thu, 19 Jul 2018 11:00:00 +0000
+  uint256 public constant PRESALE_CLOSING_TIME = 1532563200; // Thu, 26 Jul 2018 00:00:00 +0000
   uint256 public constant PRESALE_RATE = 150000;
   uint256 public constant PRESALE_WEI_CAP = 500 ether;
   uint256 public constant PRESALE_WEI_GOAL = 50 ether;
   
-  // Crowdsale constants
-  uint256 public constant CROWDSALE_OPENING_TIME = 1531047600; // 07/08/2018 11:00:00 GMT
-  uint256 public constant CROWDSALE_CLOSING_TIME = 1533686400; // 08/08/2018 00:00:00 GMT
+  // Public crowdsale constants
+  uint256 public constant CROWDSALE_OPENING_TIME = 1532602800; // Thu, 26 Jul 2018 11:00:00 +0000
+  uint256 public constant CROWDSALE_CLOSING_TIME = 1535328000; // Mon, 27 Aug 2018 00:00:00 +0000
   uint256 public constant CROWDSALE_WEI_CAP = 5000 ether;
 
-  // Combined wei goal for both sales
+  // Combined wei goal for both token sale stages
   uint256 public constant COMBINED_WEI_GOAL = 750 ether;
   
-  // More crowdsale parameters
+  // Public crowdsale parameters
   uint256[] public crowdsaleWeiAvailableLevels = [1000 ether, 1500 ether, 2000 ether];
   uint256[] public crowdsaleRates = [135000, 120000, 100000];
   uint256[] public crowdsaleMinElapsedTimeLevels = [0, 12 * 3600, 18 * 3600, 21 * 3600, 22 * 3600];
   uint256[] public crowdsaleUserCaps = [1 ether, 2 ether, 4 ether, 8 ether, CROWDSALE_WEI_CAP];
-
-  // List of contributions by address for user caps feature
   mapping(address => uint256) public crowdsaleContributions;
 
-  // Amount of wei raised
+  // Amount of wei raised for each token sale stage
   uint256 public presaleWeiRaised;
   uint256 public crowdsaleWeiRaised;
 
@@ -431,7 +367,6 @@ contract CryptualProjectToken is StandardToken, Ownable {
   ) public {
     require(_wallet != address(0));
     wallet = _wallet;
-    vault = new RefundVault(wallet);
 
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
@@ -499,7 +434,7 @@ contract CryptualProjectToken is StandardToken, Ownable {
     );
 
     if (isCrowdsale) crowdsaleContributions[_beneficiary] = crowdsaleContributions[_beneficiary].add(weiAmount);
-    vault.deposit.value(msg.value)(msg.sender);
+    deposited[_beneficiary] = deposited[_beneficiary].add(msg.value);
   }
 
   /**
@@ -535,22 +470,23 @@ contract CryptualProjectToken is StandardToken, Ownable {
 
     for (uint i = 0; i < crowdsaleWeiAvailableLevels.length; i++) {
       uint256 weiAvailable = crowdsaleWeiAvailableLevels[i];
+      uint256 rate = crowdsaleRates[i];
       
-      if (uncountedWeiRaised >= weiAvailable) {
-        uncountedWeiRaised = uncountedWeiRaised.sub(weiAvailable);
-      } else {
+      if (uncountedWeiRaised < weiAvailable) {
         if (uncountedWeiRaised > 0) {
-            weiAvailable = weiAvailable.sub(uncountedWeiRaised);
-            uncountedWeiRaised = 0;
+          weiAvailable = weiAvailable.sub(uncountedWeiRaised);
+          uncountedWeiRaised = 0;
         }
-        
+
         if (uncountedWeiAmount <= weiAvailable) {
-          tokenAmount = tokenAmount.add(uncountedWeiAmount.mul(crowdsaleRates[i]));
+          tokenAmount = tokenAmount.add(uncountedWeiAmount.mul(rate));
           break;
         } else {
           uncountedWeiAmount = uncountedWeiAmount.sub(weiAvailable);
-          tokenAmount = tokenAmount.add(weiAvailable.mul(crowdsaleRates[i]));
+          tokenAmount = tokenAmount.add(weiAvailable.mul(rate));
         }
+      } else {
+        uncountedWeiRaised = uncountedWeiRaised.sub(weiAvailable);
       }
     }
 
@@ -597,13 +533,17 @@ contract CryptualProjectToken is StandardToken, Ownable {
     whitelist[_beneficiary] = false;
   }
 
-  // Crowdsale finalization/refunding
+  // Crowdsale finalization/refunding variables
   bool public isCrowdsaleFinalized = false;
+  mapping (address => uint256) public deposited;
 
+  // Crowdsale finalization/refunding events
   event CrowdsaleFinalized();
+  event RefundsEnabled();
+  event Refunded(address indexed beneficiary, uint256 weiAmount);
 
   /**
-   * @dev Must be called after crowdsale ends, to do some extra finalization
+   * @dev Must be called after crowdsale ends, to do some extra finalization (forwarding/refunding)
    * work. Calls the contract's finalization function.
    */
   function finalizeCrowdsale() external {
@@ -611,27 +551,27 @@ contract CryptualProjectToken is StandardToken, Ownable {
     require(block.timestamp > CROWDSALE_CLOSING_TIME || (block.timestamp > PRESALE_CLOSING_TIME && presaleWeiRaised < PRESALE_WEI_GOAL));
 
     if (combinedGoalReached()) {
-      vault.close();
+      wallet.transfer(address(this).balance);
     } else {
-      vault.enableRefunds();
+      emit RefundsEnabled();
     }
 
     emit CrowdsaleFinalized();
-
     isCrowdsaleFinalized = true;
   }
 
-  // Refund vault used to hold funds while crowdsale is running
-  RefundVault public vault;
-
   /**
-   * @dev Investors can claim refunds here if crowdsale is unsuccessful
+   * @dev Investors can claim refunds here if presale/crowdsale is unsuccessful
    */
   function claimRefund() external {
     require(isCrowdsaleFinalized);
     require(!combinedGoalReached());
+    require(deposited[msg.sender] > 0);
 
-    vault.refund(msg.sender);
+    uint256 depositedValue = deposited[msg.sender];
+    deposited[msg.sender] = 0;
+    msg.sender.transfer(depositedValue);
+    emit Refunded(msg.sender, depositedValue);
   }
 
   /**
