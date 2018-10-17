@@ -1,68 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x4f40cbd1fde9214b3bcbdc0359d132e6458f5e20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x5969c6afdf69ebf671f46ced3461d55969deef3c
 */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+pragma solidity ^0.4.13;
 
+contract FinalizeAgent {
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SafeMathLib {
-
-  function times(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
+  function isFinalizeAgent() public constant returns(bool) {
+    return true;
   }
 
-  function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
+  /** Return true if we can run finalizeCrowdsale() properly.
+   *
+   * This is a safety check function that doesn't allow crowdsale to begin
+   * unless the finalizer has been set up properly.
+   */
+  function isSane() public constant returns (bool);
 
-  function plus(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a);
-    return c;
-  }
+  /** Called once by crowdsale finalize() if the sale was success. */
+  function finalizeCrowdsale();
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * Interface for defining crowdsale pricing.
- */
 contract PricingStrategy {
 
   /** Interface declaration. */
@@ -101,117 +59,41 @@ contract PricingStrategy {
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+library SafeMathLib {
 
-
-/**
- * Finalize agent defines what happens at the end of succeseful crowdsale.
- *
- * - Allocate tokens for founders, bounties and community
- * - Make tokens transferable
- * - etc.
- */
-contract FinalizeAgent {
-
-  function isFinalizeAgent() public constant returns(bool) {
-    return true;
+  function times(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  /** Return true if we can run finalizeCrowdsale() properly.
-   *
-   * This is a safety check function that doesn't allow crowdsale to begin
-   * unless the finalizer has been set up properly.
-   */
-  function isSane() public constant returns (bool);
+  function minus(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-  /** Called once by crowdsale finalize() if the sale was success. */
-  function finalizeCrowdsale();
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * A token that defines fractional units as decimals.
- */
-contract FractionalERC20 is ERC20 {
-
-  uint public decimals;
+  function plus(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a);
+    return c;
+  }
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -221,28 +103,38 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
+contract Recoverable is Ownable {
 
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
+  /// @dev Empty constructor (for now)
+  function Recoverable() {
+  }
+
+  /// @dev This will be invoked by the owner, when owner wants to rescue tokens
+  /// @param token Token which will we rescue to the owner from the contract
+  function recoverTokens(ERC20Basic token) onlyOwner public {
+    token.transfer(owner, tokensToBeReturned(token));
+  }
+
+  /// @dev Interface function, can be overwritten by the superclass
+  /// @param token Token which balance we will check and return
+  /// @return The amount of tokens (in smallest denominator) the contract owns
+  function tokensToBeReturned(ERC20Basic token) public returns (uint) {
+    return token.balanceOf(this);
+  }
+}
+
 contract Haltable is Ownable {
   bool public halted;
 
@@ -273,22 +165,269 @@ contract Haltable is Ownable {
 
 }
 
+contract Whitelist is Ownable {
+  mapping(address => bool) public whitelist;
+  
+  event WhitelistedAddressAdded(address addr);
+  event WhitelistedAddressRemoved(address addr);
+
+  /**
+   * @dev Throws if called by any account that's not whitelisted.
+   */
+  modifier onlyWhitelisted() {
+    require(whitelist[msg.sender]);
+    _;
+  }
+
+  /**
+   * @dev add an address to the whitelist
+   * @param addr address
+   * @return true if the address was added to the whitelist, false if the address was already in the whitelist 
+   */
+  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (!whitelist[addr]) {
+      whitelist[addr] = true;
+      WhitelistedAddressAdded(addr);
+      success = true; 
+    }
+  }
+
+  /**
+   * @dev add addresses to the whitelist
+   * @param addrs addresses
+   * @return true if at least one address was added to the whitelist, 
+   * false if all addresses were already in the whitelist  
+   */
+  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (addAddressToWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+  /**
+   * @dev remove an address from the whitelist
+   * @param addr address
+   * @return true if the address was removed from the whitelist, 
+   * false if the address wasn't in the whitelist in the first place 
+   */
+  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
+    if (whitelist[addr]) {
+      whitelist[addr] = false;
+      WhitelistedAddressRemoved(addr);
+      success = true;
+    }
+  }
+
+  /**
+   * @dev remove addresses from the whitelist
+   * @param addrs addresses
+   * @return true if at least one address was removed from the whitelist, 
+   * false if all addresses weren't in the whitelist in the first place
+   */
+  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
+    for (uint256 i = 0; i < addrs.length; i++) {
+      if (removeAddressFromWhitelist(addrs[i])) {
+        success = true;
+      }
+    }
+  }
+
+}
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
 
-/**
- * Crowdsale state machine without buy functionality.
- *
- * Implements basic state machine logic, but leaves out all buy functions,
- * so that subclasses can implement their own buying logic.
- *
- *
- * For the default buy() implementation see Crowdsale.sol.
- */
-contract CrowdsaleBase is Haltable {
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+contract CrowdsaleBase is Haltable, Whitelist {
 
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
@@ -376,14 +515,11 @@ contract CrowdsaleBase is Haltable {
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
 
-  State public testState;
-
   function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
     token = FractionalERC20(_token);
-
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
@@ -414,10 +550,11 @@ contract CrowdsaleBase is Haltable {
 
   /**
    * Don't expect to just send in money and get tokens.
+   *
+   * function() payable {
+   *  throw;
+   * }
    */
-  function() payable {
-    throw;
-  }
 
   /**
    * Make an investment.
@@ -432,6 +569,18 @@ contract CrowdsaleBase is Haltable {
    */
   function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
 
+    // Determine reciever address is Whitelisted or not.
+	//   require(whitelist[msg.sender]);
+	//   require(whitelist[receiver]);
+    
+    // Define address of a pre-deployed Whitelist Contract and call the whitelist function on the contract to verify msg.sender and receiver
+    Whitelist dc;
+    address contract_addr = 0x062e41d1037745dc203e8c1AAcA651B8d157Da96;
+    dc = Whitelist(contract_addr);
+    require (dc.whitelist(msg.sender));
+    require (dc.whitelist(receiver));
+    
+    
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
@@ -447,7 +596,8 @@ contract CrowdsaleBase is Haltable {
     }
 
     uint weiAmount = msg.value;
-
+    require(weiAmount >= minimumFundingGoal);
+    
     // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
@@ -701,25 +851,6 @@ contract CrowdsaleBase is Haltable {
   function assignTokens(address receiver, uint tokenAmount) internal;
 }
 
-
-
-/**
- * Abstract base contract for token sales with the default buy entry points.
- *
- * Handle
- * - start and end dates
- * - accepting investments
- * - minimum funding goal and refund
- * - various statistics during the crowdfund
- * - different pricing strategies
- * - different investment policies (require server side customer id, allow only whitelisted addresses)
- *
- * Does not Handle
- *
- * - Token allocation (minting vs. transfer)
- * - Cap rules
- *
- */
 contract Crowdsale is CrowdsaleBase {
 
   /* Do we need to have unique contributor id for each customer */
@@ -809,6 +940,15 @@ contract Crowdsale is CrowdsaleBase {
    * Invest to tokens, recognize the payer.
    *
    */
+  function buyWithCustomerIdWithChecksum(uint128 customerId, bytes1 checksum) public payable {
+    // see customerid.py
+    if (bytes1(sha3(customerId)) != checksum) throw;
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * Legacy API signature.
+   */
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
   }
@@ -819,13 +959,6 @@ contract Crowdsale is CrowdsaleBase {
    * Pay for funding, get invested tokens back in the sender address.
    */
   function buy() public payable {
-    invest(msg.sender);
-  }
-
-  /**
-   * Buy tokens as generic fallback
-   */
-  function() payable {
     invest(msg.sender);
   }
 
@@ -850,167 +983,167 @@ contract Crowdsale is CrowdsaleBase {
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
 
-}
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
+  /** Default function to allow for Sending Ether to contract and Recieving Tokens  */
+	
+  function () public payable {
+     invest(msg.sender);
   }
 
 }
 
+contract MintedTokenCappedCrowdsale is Crowdsale {
 
+  /* Maximum amount of tokens this crowdsale can sell. */
+  uint public maximumSellableTokens;
 
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
+  function MintedTokenCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+    maximumSellableTokens = _maximumSellableTokens;
+  }
 
   /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * Called from invest() to confirm if the curret investment does not break our cap rule.
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+  function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken) {
+    return tokensSoldTotal > maximumSellableTokens;
+  }
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+  function isCrowdsaleFull() public constant returns (bool) {
+    return tokensSold >= maximumSellableTokens;
+  }
 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
+  /**
+   * Dynamically create tokens and assign them to the investor.
+   */
+  function assignTokens(address receiver, uint tokenAmount) internal {
+    MintableToken mintableToken = MintableToken(token);
+    mintableToken.mint(receiver, tokenAmount);
+  }
+}
+
+contract ERC827 is ERC20 {
+
+  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
+  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
+  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
+
+}
+
+contract ERC827Token is ERC827, StandardToken {
+
+  /**
+     @dev Addition to ERC20 token methods. It allows to
+     approve the transfer of value and execute a call with the sent data.
+
+     Beware that changing an allowance with this method brings the risk that
+     someone may use both the old and the new allowance by unfortunate
+     transaction ordering. One possible solution to mitigate this race condition
+     is to first reduce the spender's allowance to 0 and set the desired value
+     afterwards:
+     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+
+     @param _spender The address that will spend the funds.
+     @param _value The amount of tokens to be spent.
+     @param _data ABI-encoded contract call to call `_to` address.
+
+     @return true if the call function was executed successfully
+   */
+  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
+    require(_spender != address(this));
+
+    super.approve(_spender, _value);
+
+    require(_spender.call(_data));
+
     return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     @dev Addition to ERC20 token methods. Transfer tokens to a specified
+     address and execute a call with the sent data on the same transaction
+
+     @param _to address The address which you want to transfer to
+     @param _value uint256 the amout of tokens to be transfered
+     @param _data ABI-encoded contract call to call `_to` address.
+
+     @return true if the call function was executed successfully
+   */
+  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
+    require(_to != address(this));
+
+    super.transfer(_to, _value);
+
+    require(_to.call(_data));
+    return true;
+  }
+
+  /**
+     @dev Addition to ERC20 token methods. Transfer tokens from one address to
+     another and make a contract call on the same transaction
+
+     @param _from The address which you want to send tokens from
+     @param _to The address which you want to transfer to
+     @param _value The amout of tokens to be transferred
+     @param _data ABI-encoded contract call to call `_to` address.
+
+     @return true if the call function was executed successfully
+   */
+  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
+    require(_to != address(this));
+
+    super.transferFrom(_from, _to, _value);
+
+    require(_to.call(_data));
+    return true;
+  }
+
+  /**
+   * @dev Addition to StandardToken methods. Increase the amount of tokens that
+   * an owner allowed to a spender and execute a call with the sent data.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
    * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
+  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
+    require(_spender != address(this));
 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    super.increaseApproval(_spender, _addedValue);
 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    require(_spender.call(_data));
+
     return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
+   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
+   * an owner allowed to a spender and execute a call with the sent data.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   * @param _data ABI-encoded contract call to call `_spender` address.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
+  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
+    require(_spender != address(this));
+
+    super.decreaseApproval(_spender, _subtractedValue);
+
+    require(_spender.call(_data));
+
+    return true;
   }
 
 }
 
-
-
-/**
- * Standard EIP-20 token with an interface marker.
- *
- * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
- *
- */
-contract StandardTokenExt is StandardToken {
+contract StandardTokenExt is StandardToken, ERC827Token, Recoverable {
 
   /* Interface declaration */
   function isToken() public constant returns (bool weAre) {
@@ -1018,17 +1151,7 @@ contract StandardTokenExt is StandardToken {
   }
 }
 
-
-
-
-/**
- * A token that can increase its supply by another contract.
- *
- * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
- * Only mint agents, contracts whitelisted by owner, can mint new tokens.
- *
- */
-contract MintableToken is StandardTokenExt, Ownable {
+contract MintableToken is StandardTokenExt {
 
   using SafeMathLib for uint;
 
@@ -1046,7 +1169,7 @@ contract MintableToken is StandardTokenExt, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
+    totalSupply_ = totalSupply_.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
 
     // This will make the mint transaction apper in EtherScan.io
@@ -1074,42 +1197,5 @@ contract MintableToken is StandardTokenExt, Ownable {
   modifier canMint() {
     if(mintingFinished) throw;
     _;
-  }
-}
-
-
-/**
- * ICO crowdsale contract that is capped by amout of tokens.
- *
- * - Tokens are dynamically created during the crowdsale
- *
- *
- */
-contract MintedTokenCappedCrowdsale is Crowdsale {
-
-  /* Maximum amount of tokens this crowdsale can sell. */
-  uint public maximumSellableTokens;
-
-  function MintedTokenCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
-    maximumSellableTokens = _maximumSellableTokens;
-  }
-
-  /**
-   * Called from invest() to confirm if the curret investment does not break our cap rule.
-   */
-  function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken) {
-    return tokensSoldTotal > maximumSellableTokens;
-  }
-
-  function isCrowdsaleFull() public constant returns (bool) {
-    return tokensSold >= maximumSellableTokens;
-  }
-
-  /**
-   * Dynamically create tokens and assign them to the investor.
-   */
-  function assignTokens(address receiver, uint tokenAmount) internal {
-    MintableToken mintableToken = MintableToken(token);
-    mintableToken.mint(receiver, tokenAmount);
   }
 }
