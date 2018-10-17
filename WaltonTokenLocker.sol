@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0xd8e86bd68e4d82609f049dc3f86070d4f81cf71f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0x8b2bae1a7e8f7ef0cbd997f0cdcae5b6e7591c21
 */
 pragma solidity ^0.4.11;
 
@@ -22,14 +22,14 @@ contract WaltonTokenLocker {
 
     address public beneficiary;
     uint256 public releaseTime;
-    string constant public name = "refund locker";
+    string constant public name = "team locker";
 
     Token public token = Token('0xb7cB1C96dB6B22b0D3d9536E0108d062BD488F74');
 
     function WaltonTokenLocker() public {
-        // refund account
-        beneficiary = address('0x38A9e09E14397Fe3A5Fe59dfc1d98D8B8897D610');
-        releaseTime = 1538236800;     // 2018-09-30 00:00
+        // team account
+        beneficiary = address('0x732f589BA0b134DC35454716c4C87A06C890445b');
+        releaseTime = 1563379200;     // 2019-07-18 00:00
     }
 
     // when releaseTime reached, and release() has been called
