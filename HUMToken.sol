@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMToken at 0x301a7F0F98725D3f9cA889E935b579f1D896B322
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMToken at 0xc16bc517fe6b15903d6cbf02ffc447291477a43a
 */
 pragma solidity ^0.4.23;
-
-
-
 
 /**
  * @title SafeMath
@@ -53,53 +50,6 @@ library SafeMath {
 }
 
 
-
-
-/**
- * @title MultiOwnable
- */
-contract MultiOwnable {
-  address public root;
-  mapping (address => address) public owners; // owner => parent of owner
-  
-  /**
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
-  constructor() public {
-    root = msg.sender;
-    owners[root] = root;
-  }
-  
-  /**
-  * @dev Throws if called by any account other than the owner.
-  */
-  modifier onlyOwner() {
-    require(owners[msg.sender] != 0);
-    _;
-  }
-  
-  /**
-  * @dev Adding new owners
-  */
-  function newOwner(address _owner) onlyOwner external returns (bool) {
-    require(_owner != 0);
-    owners[_owner] = msg.sender;
-    return true;
-  }
-  
-  /**
-    * @dev Deleting owners
-    */
-  function deleteOwner(address _owner) onlyOwner external returns (bool) {
-    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
-    owners[_owner] = 0;
-    return true;
-  }
-}
-
-
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -111,19 +61,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 /**
  * @title Basic token
@@ -168,40 +105,16 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-
-
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
-
 
 /**
  * @title Standard ERC20 token
@@ -298,8 +211,121 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+/**
+ * @title MultiOwnable
+ */
+contract MultiOwnable {
+  address public root;
+  mapping (address => address) public owners; // owner => parent of owner
+  
+  /**
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  constructor() public {
+    root = msg.sender;
+    owners[root] = root;
+  }
+  
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier onlyOwner() {
+    require(owners[msg.sender] != 0);
+    _;
+  }
+  
+  /**
+  * @dev Adding new owners
+  */
+  function newOwner(address _owner) onlyOwner external returns (bool) {
+    require(_owner != 0);
+    owners[_owner] = msg.sender;
+    return true;
+  }
+  
+  /**
+    * @dev Deleting owners
+    */
+  function deleteOwner(address _owner) onlyOwner external returns (bool) {
+    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
+    owners[_owner] = 0;
+    return true;
+  }
+}
 
 
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract Blacklisted is MultiOwnable {
+
+  mapping(address => bool) public blacklist;
+
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier notBlacklisted() {
+    require(blacklist[msg.sender] == false);
+    _;
+  }
+
+  /**
+   * @dev Adds single address to blacklist.
+   * @param _villain Address to be added to the blacklist
+   */
+  function addToBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = true;
+  }
+
+  /**
+   * @dev Adds list of addresses to blacklist. Not overloaded due to limitations with truffle testing.
+   * @param _villains Addresses to be added to the blacklist
+   */
+  function addManyToBlacklist(address[] _villains) external onlyOwner {
+    for (uint256 i = 0; i < _villains.length; i++) {
+      blacklist[_villains[i]] = true;
+    }
+  }
+
+  /**
+   * @dev Removes single address from blacklist.
+   * @param _villain Address to be removed to the blacklist
+   */
+  function removeFromBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = false;
+  }
+}
 
 
 /**
@@ -346,15 +372,13 @@ contract MintableToken is StandardToken, MultiOwnable {
 }
 
 
-
-
 /**
  * @title HUMToken
  * @dev ERC20 HUMToken.
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
-contract HUMToken is MintableToken, BurnableToken {
+contract HUMToken is MintableToken, BurnableToken, Blacklisted {
 
   string public constant name = "HUMToken"; // solium-disable-line uppercase
   string public constant symbol = "HUM"; // solium-disable-line uppercase
@@ -378,16 +402,20 @@ contract HUMToken is MintableToken, BurnableToken {
     _;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public onlyTransferable returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public onlyTransferable notBlacklisted returns (bool) {
       return super.transferFrom(_from, _to, _value);
   }
 
-  function transfer(address _to, uint256 _value) public onlyTransferable returns (bool) {
+  function transfer(address _to, uint256 _value) public onlyTransferable notBlacklisted returns (bool) {
       return super.transfer(_to, _value);
   }
   
   function unlockTransfer() public onlyOwner {
       isUnlocked = true;
+  }
+  
+  function lockTransfer() public onlyOwner {
+      isUnlocked = false;
   }
 
 }
