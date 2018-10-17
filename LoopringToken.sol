@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringToken at 0xEF68e7C694F40c8202821eDF525dE3782458639f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringToken at 0xd37ef59fd8effbba1ebdc63fa96f11bc5c50e6cb
 */
 /*
 
@@ -197,8 +197,8 @@ contract StandardToken is BasicToken, ERC20 {
 /// For more information about this token sale, please visit https://loopring.org
 /// @author Kongliang Zhong - <kongliang@loopring.org>, Daniel Wang - <daniel@loopring.org>.
 contract LoopringToken is StandardToken {
-    string public constant NAME = "LoopringCoin";
-    string public constant SYMBOL = "LRC";
+    string public constant NAME = "drc";
+    string public constant SYMBOL = "DRC";
     uint public constant DECIMALS = 18;
 
     /// During token sale, we use one consistent price: 5000 LRC/ETH.
