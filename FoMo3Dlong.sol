@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x7bb3edadd00684cd48cc53b64ee87fb4767158eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xf9b66672c9736236027c4474c40fc78b1b1bac6b
 */
 pragma solidity ^0.4.24;
 
@@ -145,11 +145,11 @@ contract FoMo3Dlong is modularLong {
 
     string constant public name = "Break the Bank";
     string constant public symbol = "BTB";
-    uint256 private rndExtra_ = 30;//extSettings.getLongExtra();     // length of the very first ICO 
-    uint256 private rndGap_ = 1 hours; //extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 8 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 60 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 8 hours;                // max length a round timer can be
+    uint256 private rndExtra_ = 45 seconds;//extSettings.getLongExtra();     // length of the very first ICO 
+    uint256 private rndGap_ = 10 minutes; //extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
 
 // Data Settings
 
@@ -1691,25 +1691,25 @@ library F3DKeysCalcLong {
      * @param _eth eth "in contract"
      * @return number of keys that would exist
      */
-    function keys(uint256 _eth)
+    function keys(uint256 _eth) 
         internal
         pure
         returns(uint256)
     {
-        return (((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000)) / 50;
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
     }
-
+    
     /**
      * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract"
+     * @param _keys number of keys "in contract" 
      * @return eth that would exists
      */
-    function eth(uint256 _keys)
+    function eth(uint256 _keys) 
         internal
         pure
-        returns(uint256)
+        returns(uint256)  
     {
-        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq()) * 50;
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
     }
 }
 
