@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompanyShare at 0x3760ee3fc7c9f7bacd05f94f25a4b1c22881f48e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompanyShare at 0x03347abb58cc3071fdbba7f7bd7cca03c8e04229
 */
 pragma solidity ^0.4.24;
 
@@ -24,17 +24,20 @@ contract CompanyShare {
     constructor()
         public
     {
-        address first = 0x70AAbFDcf6b98F571E0bEbC4eb777F7CaaA42429;
-        address second = 0x446c67dc80E44588405Dbbfcfd1DE5718797CDe8;
-        address third = 0x9a099cF4d575f9152AB98b0F566c4e255D08C7a3;
+        address first = 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0;
+        address second = 0x6b5d2ba1691e30376a394c13e38f48e25634724f;
+        address third = 0x459b5286e28d0dd452af4f38ffed4d302fc833c8;
+        address fourth = 0xd775c5063bef4eda77a21646a6880494d9a1156b;
 
         //creatTeam
-        team_[1] = CompanySharedatasets.Player(first,0, 50);
+        team_[1] = CompanySharedatasets.Player(first,0, 500);
         pIDxAddr_[first] = 1;
-        team_[2] = CompanySharedatasets.Player(second,0, 25);
+        team_[2] = CompanySharedatasets.Player(second,0, 250);
         pIDxAddr_[second] = 2;
-        team_[3] = CompanySharedatasets.Player(third,0, 25);
+        team_[3] = CompanySharedatasets.Player(third,0, 125);
         pIDxAddr_[third] = 3;
+        team_[4] = CompanySharedatasets.Player(fourth,0, 125);
+        pIDxAddr_[fourth] = 4;
 	}
 
     /**
@@ -60,17 +63,19 @@ contract CompanyShare {
         return true;
     }
 
-function giveGen(uint256 _eth)
-    private
-    returns(uint256)
+	function giveGen(uint256 _eth)
+		private
+		returns(uint256)
     {
-        uint256 _genFirst = _eth.mul(team_[1].percent) /100;
-        uint256 _genSecond = _eth.mul(team_[2].percent) /100;
-        uint256 _genThird = _eth.sub(_genFirst).sub(_genSecond);
+        uint256 _genFirst = _eth.mul(team_[1].percent) /1000;
+        uint256 _genSecond = _eth.mul(team_[2].percent) /1000;
+        uint256 _genThird = _eth.mul(team_[3].percent) /1000;
+        uint256 _genFourth = _eth.sub(_genFirst).sub(_genSecond).sub(_genThird);
         //give gen
         team_[1].gen = _genFirst.add(team_[1].gen);
         team_[2].gen = _genSecond.add(team_[2].gen);
         team_[3].gen = _genThird.add(team_[3].gen);
+        team_[4].gen = _genFourth.add(team_[4].gen);
     }
 
         /**
@@ -111,15 +116,21 @@ function giveGen(uint256 _eth)
     }
 
     function getGen()
-    public
-    view
-    returns(uint256)
+		public
+		view
+		returns(uint256)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        require(_pID != 0, "sorry not team");
+        require(_pID != 0, "sorry not in team");
         uint256 _earnings = team_[_pID].gen;
         return _earnings;
     }
+    
+    
+     function destroy() public{ // so funds not locked in contract forever
+         require(msg.sender == 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0, "sorry not the admin");
+         suicide(0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0); // send funds to organizer
+     }
 }
 
 
