@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecuringInternetPayer at 0xb887c328dc993103386403e06222a563b4ff76c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecuringInternetPayer at 0x922c591cc3a51253953d7006a6f1dc7413670697
 */
 pragma solidity ^0.4.24;
 contract Token {
@@ -12,7 +12,7 @@ contract RecuringInternetPayer{
     address josh = 0x650a7762FdB32BF64849345209DeaA8F9574cBC7;
     Token dai = Token(0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359); //DAI token address
     uint constant perSecondDaiParticlePayout = 28935185185185 ; // $75 x 10^18 / (60*60*24*30)
-    uint public totalPaid;
+    uint amountPaid;
     uint createdAt;
     
     constructor() public { createdAt = now; }
@@ -20,11 +20,11 @@ contract RecuringInternetPayer{
     modifier onlyZacOrJosh(){ require(msg.sender == zac || msg.sender == josh); _; }
     
     function payJosh() public{
-        uint currentPayment = perSecondDaiParticlePayout * (now - createdAt) - totalPaid;
-        dai.transfer(josh, currentPayment);
-        totalPaid += currentPayment;
+        uint totalPayout = perSecondDaiParticlePayout * (now - createdAt);
+        dai.transfer(josh, totalPayout - amountPaid);
+        amountPaid = totalPayout;
     }
-    function withdraw() public onlyZacOrJosh{ // discontinue service
+    function withdraw() public onlyZacOrJosh{
         payJosh();
         dai.transfer(zac, dai.balanceOf(this));
     }
