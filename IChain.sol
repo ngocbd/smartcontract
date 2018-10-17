@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IChain at 0x41aef9b47f6e37de66e34ce073023b36f1823b2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IChain at 0x742134547b314adbf197ae10d53efcebfc6ff1e8
 */
 pragma solidity ^0.4.18;
 
@@ -142,10 +142,10 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract IChain is StandardToken {
-  string public name = 'I Chain';
+  string public name = 'IChain';
   string public symbol = 'ISC';
   uint8 public decimals = 18;
-  uint public totalSupply = 1000000000 ether;
+  uint public INITIAL_SUPPLY = 210000000 ether;
   
    address public beneficiary;  
    address public owner; 
@@ -159,25 +159,25 @@ contract IChain is StandardToken {
   
   uint256 public price;
   
-  uint256 public totalDistributed = 800000000 ether;
+  uint256 public totalDistributed = 157500000 ether;
   
   uint256 public totalRemaining;
 
   
-  uint256 public tokenReward = totalSupply.sub(totalDistributed);
+  uint256 public tokenReward = INITIAL_SUPPLY.sub(totalDistributed);
 
-     bool public fundingGoalReached = false;  
-     bool public crowdsaleClosed = false;  
+     bool public fundingGoalReached = true;  
+     bool public crowdsaleClosed = true;  
   
-    
-    event GoalReached(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amounteth, bool isContribution);
+   event Transfer(address indexed _from, address indexed _to, uint256 _value);
+   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+   event Distr(address indexed to, uint256 amount);
   
   function IChain(address ifSuccessfulSendTo,
         uint fundingGoalInEthers,
 		uint _price
          ) public {
-		
+			totalSupply_ = INITIAL_SUPPLY;
 			beneficiary = ifSuccessfulSendTo;
             fundingGoal = fundingGoalInEthers * 1 ether;       
             price = _price;          
@@ -215,20 +215,25 @@ contract IChain is StandardToken {
 		
 		balances[beneficiary] = balances[beneficiary].add(amount);	
 		
-		
+		emit Transfer(address(0), beneficiary, amount);
 		require(msg.sender.call.value(amountRaised)());	
 				
         return true;
     }	
- 
-  function extractTokenEth(uint amount) onlyOwner  public returns (bool) {	 
-		require(msg.sender.call.value(amount)());			
-        return true;
-    }		
+	function StartDistribution() onlyOwner   public returns (bool) {		
+		if(amountRaised == 0){
+			crowdsaleClosed = false;
+			fundingGoalReached = false;
+			return true;
+		}else{
+			return;
+		}		
+        
+    }	
 
 	
-  function getTokens() payable{
-			
+  function getTokens() canDistr payable {
+		
 		if (amountRaised >= fundingGoal) {
             fundingGoalReached = true;
 			return;
@@ -238,18 +243,20 @@ contract IChain is StandardToken {
         distr(investor,amount);	
     }
 	
+	function withdraw() onlyOwner public {
+        uint256 etherBalance = address(this).balance;
+        owner.transfer(etherBalance);
+    }
 	 
     function distr(address _to, uint256 _amount) canDistr private returns (bool) {
 		
-		amountRaised += _amount;		
+		amountRaised += _amount;				
+		_amount=_amount.mul(price); 	
+		amountRaisedIsc += _amount;		
+        balances[_to] = balances[_to].add(_amount);
 		
-		_amount=_amount.mul(price);
-	 	
-		amountRaisedIsc += _amount;
-		
-        balances[_to] = balances[_to].add(_amount);		
-        FundTransfer(msg.sender,_amount,true);
-		  		
+		emit Distr(_to, _amount);
+        emit Transfer(address(0), _to, _amount);		  		
         return true;           
 		
     }
