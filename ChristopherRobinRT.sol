@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristopherRobinRT at 0xafa4014970de50128e84f13472bc1a028554357a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristopherRobinRT at 0xa43e06dc0e4498488ebc4ab09293aed0a3a7b20c
 */
 pragma solidity ^0.4.11;
 
@@ -1034,7 +1034,7 @@ contract ChristopherRobinRT is usingOraclize {
   uint public constant COMMISSION = 0; // Commission for the owner
   uint public constant MIN_BET = 0.01 ether;
 
-  uint public EXPECTED_START = 1532199300; // When the bet's event is expected to start
+  uint public EXPECTED_START = 1532199600; // When the bet's event is expected to start
   uint public EXPECTED_END = 1533409200; // When the bet's event is expected to end
 
   uint public constant BETTING_OPENS = 1531989467;
