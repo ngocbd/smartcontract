@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyFirstToken at 0x87127bbd82bd6d767dc4c2b97bd24510d105d89c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyFirstToken at 0x77c4231384a09b335d6e32fbe2b313b4322bd184
 */
 pragma solidity ^0.4.17;
 
@@ -23,7 +23,7 @@ contract Token {
     string internal _symbol;
     string internal _name;
     uint8 internal _decimals;
-    uint internal _totalSupply = 100000000000;
+    uint internal _totalSupply = 400000000;
     mapping (address => uint) internal _balanceOf;
     mapping (address => mapping (address => uint)) internal _allowances;
 
@@ -81,7 +81,7 @@ library SafeMath {
   }
 }
 
-contract MyFirstToken is Token("RTC", "RetirementCoin", 4, 100000000000), ERC20, ERC223 {
+contract MyFirstToken is Token("MYN", "MYNERS", 0, 400000000), ERC20, ERC223 {
 
     using SafeMath for uint;
 
@@ -98,7 +98,7 @@ contract MyFirstToken is Token("RTC", "RetirementCoin", 4, 100000000000), ERC20,
     }
 
     function transfer(address _to, uint _value) public returns (bool) {
-        if (_value > 100 &&
+        if (_value > 0 &&
             _value <= _balanceOf[msg.sender] &&
             !isContract(_to)) {
             _balanceOf[msg.sender] = _balanceOf[msg.sender].sub(_value);
@@ -110,7 +110,7 @@ contract MyFirstToken is Token("RTC", "RetirementCoin", 4, 100000000000), ERC20,
     }
 
     function transfer(address _to, uint _value, bytes _data) public returns (bool) {
-        if (_value > 100 &&
+        if (_value > 0 &&
             _value <= _balanceOf[msg.sender] &&
             isContract(_to)) {
             _balanceOf[msg.sender] = _balanceOf[msg.sender].sub(_value);
