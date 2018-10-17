@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x32c08c8047d2d9114445ef72055c87173b5ca955
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x69126f7fa0f53ef95c241b48cf3ac0dc88461bb8
 */
 pragma solidity ^0.4.24;
 
@@ -839,14 +839,10 @@ contract TaskRegister is Upgradable, VanityLib {
         }
 
         uint256 minerReward = task.reward.mul(MAX_PERCENT - serviceFee).div(MAX_PERCENT); // 1% fee
+        uint256 referrerReward = task.reward.mul(serviceFee).mul(referrerFee).div(MAX_PERCENT).div(MAX_PERCENT); // 50% of service fee
         msg.sender.transfer(minerReward);
-        totalReward = totalReward.sub(minerReward);
-
-        if (task.referrer != 0) {
-            uint256 referrerReward = task.reward.mul(serviceFee).mul(referrerFee).div(MAX_PERCENT).div(MAX_PERCENT); // 50% of service fee
-            task.referrer.transfer(referrerReward);
-            totalReward = totalReward.sub(referrerReward);
-        }
+        task.referrer.transfer(referrerReward);
+        totalReward = totalReward.sub(task.reward.sub(minerReward.add(referrerReward)));
 
         _completeTask(_taskId, taskIndex);
         emit TaskSolved(_taskId, minerReward);
