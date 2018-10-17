@@ -1,79 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0x464904238b5CdBdCE12722A7E6014EC1C0B66928
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamJust at 0x769dc1023042fa16fa231c0ca4ce1e5db96acaca
 */
 pragma solidity ^0.4.24;
-/* -Team Just- v0.2.5
- * ????????????   ?? ???????  ????????????????????????
- *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
- *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
- *                                  _____                      _____
- *                                 (, /     /)       /) /)    (, /      /)          /)
- *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
- *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
- *          ? ?                /   /          .-/ _____   (__ /                               
- *                            (__ /          (_/ (, /                                      /)™ 
- *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
- * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
- * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
- * ?  ??????????????? ?                                        (_/
- *              JJJJJJJJJJUUUUUUUU     UUUUUUUU  SSSSSSSSSSSSSSSTTTTTTTTTTTTTTTTTTTTTTT
- *==============J:::::::::U::::::U=====U::::::USS:::::::::::::::T:::::::::::::::::::::T======*
- *              J:::::::::U::::::U     U::::::S:::::SSSSSS::::::T:::::::::::::::::::::T
- *              JJ:::::::JUU:::::U     U:::::US:::::S     SSSSSST:::::TT:::::::TT:::::T
- *                J:::::J  U:::::U     U:::::US:::::S           TTTTTT  T:::::T  TTTTTT
- *                J::_________ : ________::::US::_::S     ____    ____  T:::::T
- *                J:|  _   _  |:|_   __  |:::U S/ \:SSSS |_   \  /   _| T:::::T
- *                J:|_/:| |U\_|::D| |_ \_|:::U / _ \::::SSS|   \/   |   T:::::T
- *                J:::::| |U:::::D|  _| _::::U/ ___ \::::::| |\  /| |   T:::::T
- *    JJJJJJJ     J::::_| |_:::::_| |__/ |::_/ /   \ \_SS _| |_\/_| |_  T:::::T
- *    J:::::J     J:::|_____|:::|________|:|____| |____| |_____||_____| T:::::T
- *    J::::::J   J::::::J  U::::::U   U::::::U            S:::::S       T:::::T
- *    J:::::::JJJ:::::::J  U:::::::UUU:::::::USSSSSSS     S:::::S     TT:::::::TT
- *     JJ:::::::::::::JJ    UU:::::::::::::UU S::::::SSSSSS:::::S     T:::::::::T
- *=======JJ:::::::::JJ========UU:::::::::UU===S:::::::::::::::SS======T:::::::::T============*
- *         JJJJJJJJJ            UUUUUUUUU      SSSSSSSSSSSSSSS        TTTTTTTTTTT
- * 
- * ????????????????????????  ???????????? ????????????
- * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
- * ????????? ? ???? ???? ?   ???????????? ????????????
- *
- *         ????????????????????????????????????????????????????????????????????????
- *         ? Que up intensely spectacular intro music...  In walks, Team Just.    ?
- *         ?                         Everyone goes crazy.                         ?
- *         ? This is a companion to MSFun.  It's a central database of Devs and   ?
- *         ? Admin's that we can import to any dapp to allow them management      ?
- *         ? permissions.                                                         ?
- *         ????????????????????????????????????????????????????????????????????????
- *                                ??????????????????????
- *                                ? Setup Instructions ?
- *                                ??????????????????????
- * (Step 1) import this contracts interface into your contract
- * 
- *    import "./TeamJustInterface.sol";
- *
- * (Step 2) set up the interface to point to the TeamJust contract
- * 
- *    TeamJustInterface constant TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
- *
- *    modifier onlyAdmins() {require(TeamJust.isAdmin(msg.sender) == true, "onlyAdmins failed - msg.sender is not an admin"); _;}
- *    modifier onlyDevs() {require(TeamJust.isDev(msg.sender) == true, "onlyDevs failed - msg.sender is not a dev"); _;}
- *                                ??????????????????????
- *                                ? Usage Instructions ?
- *                                ??????????????????????
- * use onlyAdmins() and onlyDevs() modifiers as you normally would on any function
- * you wish to restrict to admins/devs registered with this contract.
- * 
- * to get required signatures for admins or devs
- *       uint256 x = TeamJust.requiredSignatures();
- *       uint256 x = TeamJust.requiredDevSignatures();
- * 
- * to get admin count or dev count 
- *       uint256 x = TeamJust.adminCount();
- *       uint256 x = TeamJust.devCount();
- * 
- * to get the name of an admin (in bytes32 format)
- *       bytes32 x = TeamJust.adminName(address);
- */
 
 interface JIincForwarderInterface {
     function deposit() external payable returns(bool);
@@ -115,20 +43,12 @@ contract TeamJust {
     constructor()
         public
     {
-        address inventor = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
-        address mantso   = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
-        address justo    = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
-        address sumpunk  = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
-		address deployer = 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3;
+        address ss = 0x9F2cBF9f685062d804DC6e711fb459D3bD823756;
         
-        admins_[inventor] = Admin(true, true, "inventor");
-        admins_[mantso]   = Admin(true, true, "mantso");
-        admins_[justo]    = Admin(true, true, "justo");
-        admins_[sumpunk]  = Admin(true, true, "sumpunk");
-		admins_[deployer] = Admin(true, true, "deployer");
+        admins_[ss] = Admin(true, true, "ss");
         
-        adminCount_ = 5;
-        devCount_ = 5;
+        adminCount_ = 1;
+        devCount_ = 1;
         requiredSignatures_ = 1;
         requiredDevSignatures_ = 1;
     }
