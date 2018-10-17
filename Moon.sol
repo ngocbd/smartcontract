@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moon at 0x5203deab886c7e84f84549865baf0ece0ff98667
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moon at 0x3439cf24121115a1d9898bba876037272e2f0bd2
 */
 pragma solidity ^0.4.18;
 
@@ -1103,7 +1103,7 @@ contract Moon is usingOraclize{
     /// Buy ticket of the lottery. Probability to win is proportional to your stake
     function buyTicket() public payable {
         require((now <= gameEnd) || (totalAmount == 0));
-        //Close to the dollar , Euro value
+        //Montant minimal de l'ordre de grandeur de l'euro
         require(msg.value > 1000000000000000);
         require(ticketsForGame[msg.sender] < gameNumber);
         require(msg.value + totalAmount < 2000000000000000000000);
@@ -1141,7 +1141,7 @@ contract Moon is usingOraclize{
 
     function __callback(bytes32 myid, string result) public {
        require(msg.sender == oraclize_cbAddress());
-       randomNumber = parseInt(result) * 10000000000000;
+       randomNumber = parseInt(result);
        return;
        myid;
    }
@@ -1153,8 +1153,7 @@ contract Moon is usingOraclize{
         require((now > gameEnd) && (totalAmount > 0));
 
 
-        //So that the value is below 10^9 with wolfram alpha
-        concatSecond = uint2str(totalAmount / 10000000000000);
+        concatSecond = uint2str(totalAmount);
         concatRequest = strConcat(concatFirst, concatSecond);
         oraclize_query("WolframAlpha", concatRequest);
     }
@@ -1304,4 +1303,7 @@ contract Moon is usingOraclize{
     function clearSums() private{
         numSums = 0;
     }
+    
+
+
 }
