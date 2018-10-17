@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoreGainCoin at 0x5d001d55972ddf8647030c010972b08dc6bb9bdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoreGainCoin at 0x227e9dd77717a4f08da3c1cc9ffff383478b0f71
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract MoreGainCoin {
     // Public variables of the token
-    string public name;
-    string public symbol;
+    string public name = "MoreGain Coin";
+    string public symbol = "MGC";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 1000000000 * (uint256(10) ** decimals);
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
