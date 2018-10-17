@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reward at 0x6a23f64f13681360a83eef71365221cba5d5b8ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reward at 0x9fca8394b1ffe9900decfd3af7098747b9e756ca
 */
 // Ethertote - Reward/Recogniton contract
 // 09.08.18 
@@ -231,8 +231,9 @@ contract Reward {
                 require(claimants[i].claimantHasClaimed == false);
                 return claimants[i].claimantAmount;
             }
-            else return 0;
+            
         }  
+        return 0;
     }
     
     
@@ -243,8 +244,15 @@ contract Reward {
                 require(claimants[i].claimantHasClaimed == false);
                 return claimants[i].claimantAmount;
             }
-            else return 0;
+            
         }  
+        return 0;
+    }
+    
+    
+    // total number of claimants
+    function numberOfClaimants() public view returns(uint) {
+        return claimants.length;
     }
     
     
