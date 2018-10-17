@@ -1,455 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0x1894c53d5ebd18b5123c0e65d06950508714b834
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Testtoken at 0x019e14e66c3c79e180d025f155a8a59d8a4ff66c
 */
-pragma solidity 0.4.24;
+pragma solidity ^0.4.4;
 
+contract Token {
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-    /**
-     * @dev Multiplies two numbers, throws on overflow.
-     */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /**
-     * @dev Integer division of two numbers, truncating the quotient.
-     */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /**
-     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-     */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /**
-     * @dev Adds two numbers, throws on overflow.
-     */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}   
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    address public owner;
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
-
-/** 
- * @title Based on the 'final' ERC20 token standard as specified at:
- * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md 
- */
-contract ERC20Interface {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function name() public view returns (string);
-    function symbol() public view returns (string);
-    function decimals() public view returns (uint8);
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address _owner) public view returns (uint256);
-    function allowance(address _owner, address _spender) public view returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
-    function approve(address _spender, uint256 _value) public returns (bool);
 }
 
-/**
- * @title TestToken
- * @dev The TestToken contract provides the token functionality of the IPT Global token
- * and allows the admin to distribute frozen tokens which requires defrosting to become transferable.
- */
-contract TestToken is ERC20Interface, Ownable {
-    using SafeMath for uint256;
-    
-    //Name of the token.
-    string  internal constant NAME = "Test Token";
-    
-    //Symbol of the token.
-    string  internal constant SYMBOL = "TEST";     
-    
-    //Granularity of the token.
-    uint8   internal constant DECIMALS = 8;        
-    
-    //Factor for numerical calculations.
-    uint256 internal constant DECIMALFACTOR = 10 ** uint(DECIMALS); 
-    
-    //Total supply of IPT Global tokens.
-    uint256 internal constant TOTAL_SUPPLY = 300000000 * uint256(DECIMALFACTOR);  
-    
-    //Base defrosting value used to calculate fractional percentage of 0.2 %
-    uint8 internal constant standardDefrostingValue = 2;
-    
-    //Base defrosting numerator used to calculate fractional percentage of 0.2 %
-    uint8 internal constant standardDefrostingNumerator = 10;
+contract StandardToken is Token {
 
-    
-    //Stores all frozen TEST Global token holders.
-    mapping(address => bool)    public frostbite;
-    
-    //Stores received frozen IPT Global tokens in an accumulated fashion. 
-    mapping(address => uint256) public frozenTokensReceived;
-    
-    //Stores and tracks frozen IPT Global token balances.
-    mapping(address => uint256) public frozenBalance;
-    
-    //Stores custom frozen IPT Global token defrosting % rates. 
-    mapping(address => uint8) public customDefrostingRate;
-    
-    //Stores the balance of IPT Global holders (complies with ERC-Standard).
-    mapping(address => uint256) internal balances; 
-    
-    //Stores any allowances given to other IPT Global holders.
-    mapping(address => mapping(address => uint256)) internal allowed; 
-    
-    
-    //Event which allows for logging of frostbite granting activities.
-    event FrostbiteGranted(
-        address recipient, 
-        uint256 frozenAmount, 
-        uint256 defrostingRate);
-    
-    //Event which allows for logging of frostbite terminating activities.
-    event FrostBiteTerminated(
-        address recipient,
-        uint256 frozenBalance);
-    
-    //Event which allows for logging of frozen token transfer activities.
-    event FrozenTokensTransferred(
-        address owner, 
-        address recipient, 
-        uint256 frozenAmount, 
-        uint256 defrostingRate);
-    
-    //Event which allows for logging of custom frozen token defrosting activities.   
-    event CustomTokenDefrosting(
-        address owner,
-        uint256 percentage,
-        uint256 defrostedAmount);
-        
-    //Event which allows for logging of calculated frozen token defrosting activities.   
-    event CalculatedTokenDefrosting(
-        address owner,
-        uint256 defrostedAmount);
-    
-    //Event which allows for logging of complete recipient recovery activities.
-    event RecipientRecovered(
-        address recipient,
-        uint256 customDefrostingRate,
-        uint256 frozenBalance,
-        bool frostbite);
-     
-    //Event which allows for logging of recipient balance recovery activities.   
-    event FrozenBalanceDefrosted(
-        address recipient,
-        uint256 frozenBalance,
-        bool frostbite);
-    
-    //Event which allows for logging of defrostingrate-adjusting activities.
-    event DefrostingRateChanged(
-        address recipient,
-        uint256 defrostingRate);
-        
-    //Event which allows for logging of frozenBalance-adjusting activities.
-    event FrozenBalanceChanged(
-        address recipient, 
-        uint256 defrostedAmount);
-    
-    
-    /**
-     * @dev constructor sets initialises and configurates the smart contract.
-     * More specifically, it grants the smart contract owner the total supply
-     * of IPT Global tokens.
-     */
-    constructor() public {
-        balances[msg.sender] = TOTAL_SUPPLY;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-
-    /**
-     * @dev frozenTokenTransfer function allows the owner of the smart contract to Transfer
-     * frozen tokens (untransferable till melted) to a particular recipient.
-     * @param _recipient the address which will receive the frozen tokens.
-     * @param _frozenAmount the value which will be sent to the _recipient.
-     * @param _customDefrostingRate the rate at which the tokens will be melted.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function frozenTokenTransfer(address _recipient, uint256 _frozenAmount, uint8 _customDefrostingRate) external onlyOwner returns (bool) {
-        require(_recipient != address(0));
-        require(_frozenAmount <= balances[msg.sender]);
-        
-        frozenTokensReceived[_recipient] = _frozenAmount;
-               frozenBalance[_recipient] = _frozenAmount;
-        customDefrostingRate[_recipient] = _customDefrostingRate;
-                   frostbite[_recipient] = true;
-
-        balances[msg.sender] = balances[msg.sender].sub(_frozenAmount);
-        balances[_recipient] = balances[_recipient].add(_frozenAmount);
-        
-        emit FrozenTokensTransferred(msg.sender, _recipient, _frozenAmount, customDefrostingRate[_recipient]);
-        return true;
-    }
-    
-    /**
-     * @dev changeCustomDefrostingRate function allows the owner of the smart contract to change individual custom defrosting rates.
-     * @param _recipient the address whose defrostingRate will be adjusted.
-     * @param _newCustomDefrostingRate the new defrosting rate which will be placed on the recipient.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function changeCustomDefrostingRate(address _recipient, uint8 _newCustomDefrostingRate) external onlyOwner returns (bool) {
-        require(_recipient != address(0));
-        require(frostbite[_recipient]);
-        
-        customDefrostingRate[_recipient] = _newCustomDefrostingRate;
-        
-        emit DefrostingRateChanged(_recipient, _newCustomDefrostingRate);
-        return true;
-    }
-    
-    /**
-     * @dev changeFrozenBalance function allows the owner of the smart contract to change individual particular frozen balances.
-     * @param _recipient the address whose defrostingRate will be adjusted.
-     * @param _defrostedAmount the defrosted/subtracted amount of an existing particular frozen balance..
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function changeFrozenBalance(address _recipient, uint256 _defrostedAmount) external onlyOwner returns (bool) {
-        require(_recipient != address(0));
-        require(_defrostedAmount <= frozenBalance[_recipient]);
-        require(frostbite[_recipient]);
-        
-        frozenBalance[_recipient] = frozenBalance[_recipient].sub(_defrostedAmount);
-        
-        emit FrozenBalanceChanged(_recipient, _defrostedAmount);
-        return true;
-    }
-    
-    /**
-     * @dev removeFrozenTokenConfigurations function allows the owner of the smart contract to remove all 
-     * frostbites, frozenbalances and defrosting rates of an array of recipient addresses < 50.
-     * @param _recipients the address(es) which will be recovered.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function removeFrozenTokenConfigurations(address[] _recipients) external onlyOwner returns (bool) {
-        
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            if (frostbite[_recipients[i]]) {
-                customDefrostingRate[_recipients[i]] = 0;
-                       frozenBalance[_recipients[i]] = 0;
-                           frostbite[_recipients[i]] = false;
-                
-                emit RecipientRecovered(_recipients[i], customDefrostingRate[_recipients[i]], frozenBalance[_recipients[i]], false);
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * @dev standardTokenDefrosting function allows the owner of the smart contract to defrost
-     * frozen tokens based on a base defrosting Rate of 0.2 % (from multiple recipients at once if desired) of particular recipient addresses < 50.
-     * @param _recipients the address(es) which will receive defrosting of frozen tokens.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function standardTokenDefrosting(address[] _recipients) external onlyOwner returns (bool) {
-        
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            if (frostbite[_recipients[i]]) {
-                uint256 defrostedAmount = (frozenTokensReceived[_recipients[i]].mul(standardDefrostingValue).div(standardDefrostingNumerator)).div(100);
-                
-                frozenBalance[_recipients[i]] = frozenBalance[_recipients[i]].sub(defrostedAmount);
-                
-                emit CalculatedTokenDefrosting(msg.sender, defrostedAmount);
-            }
-            if (frozenBalance[_recipients[i]] == 0) {
-                         frostbite[_recipients[i]] = false;
-                         
-                emit FrozenBalanceDefrosted(_recipients[i], frozenBalance[_recipients[i]], false);
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * @dev customTokenDefrosting function allows the owner of the smart contract to defrost
-     * frozen tokens based on custom defrosting Rates (from multiple recipients at once if desired) of particular recipient addresses < 50.
-     * @param _recipients the address(es) which will receive defrosting of frozen tokens.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function customTokenDefrosting(address[] _recipients) external onlyOwner returns (bool) {
-        
-        for (uint256 i = 0; i < _recipients.length; i++) {
-            if (frostbite[_recipients[i]]) {
-                uint256 defrostedAmount = (frozenTokensReceived[_recipients[i]].mul(customDefrostingRate[_recipients[i]])).div(100);
-                
-                frozenBalance[_recipients[i]] = frozenBalance[_recipients[i]].sub(defrostedAmount);
-               
-                emit CustomTokenDefrosting(msg.sender, customDefrostingRate[_recipients[i]], defrostedAmount);
-            }
-            if (frozenBalance[_recipients[i]] == 0) {
-                         frostbite[_recipients[i]] = false;
-                         
-                    emit FrozenBalanceDefrosted(_recipients[i], frozenBalance[_recipients[i]], false);
-            }
-        }
-        return true;
-    }
-    
-    /**
-     * @dev Transfer token for a specified address
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        
-        if (frostbite[msg.sender]) {
-            require(_value <= balances[msg.sender].sub(frozenBalance[msg.sender]));
-        }
-        
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-         
-    }
-    
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        
-        if (frostbite[_from]) {
-            require(_value <= balances[_from].sub(frozenBalance[_from]));
-            require(_value <= allowed[_from][msg.sender]);
-        }
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     * @return a boolean representing whether the function was executed succesfully.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    /**
-     * @dev balanceOf function gets the balance of the specified address.
-     * @param _owner The address to query the balance of.
-     * @return An uint256 representing the token balance of the passed address.
-     */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
-        
-    /**
-     * @dev allowance function checks the amount of tokens allowed by an owner for a spender to spend.
-     * @param _owner address is the address which owns the spendable funds.
-     * @param _spender address is the address which will spend the owned funds.
-     * @return A uint256 specifying the amount of tokens which are still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-    
-    /**
-     * @dev totalSupply function returns the total supply of tokens.
-     */
-    function totalSupply() public view returns (uint256) {
-        return TOTAL_SUPPLY;
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
-    
-    /** 
-     * @dev decimals function returns the decimal units of the token. 
-     */
-    function decimals() public view returns (uint8) {
-        return DECIMALS;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+contract Testtoken is StandardToken { // CHANGE THIS. Update the contract name.
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   // Token Name
+    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
+    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
+    address public fundsWallet;           // Where should the raised ETH go?
+
+    // This is a constructor function 
+    // which means the following function name has to match the contract name declared above
+    function Testtoken() {
+        balances[msg.sender] = 100000000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 100000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "Testtoken";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "TT";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 1000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
-            
-    /** 
-     * @dev symbol function returns the symbol ticker of the token. 
-     */
-    function symbol() public view returns (string) {
-        return SYMBOL;
+
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
+
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
     }
-    
-    /** 
-     * @dev name function returns the name of the token. 
-     */
-    function name() public view returns (string) {
-        return NAME;
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
