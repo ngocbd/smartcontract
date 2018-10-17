@@ -1,614 +1,568 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x722baa20d3b42fc1ec0b63fb84ba3fda47da4a26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x7151ad609184a80001811a98ab61dd071d1bd7fc
 */
-pragma solidity ^0.4.23;
-/// @title ERC-165 Standard Interface Detection
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md
-interface ERC165 {
-    function supportsInterface(bytes4 interfaceID) external view returns (bool);
+pragma solidity ^0.4.24;
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-/// @title ERC-721 Non-Fungible Token Standard
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-contract ERC721 is ERC165 {
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
-    function balanceOf(address _owner) external view returns (uint256);
-    function ownerOf(uint256 _tokenId) external view returns (address);
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external;
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
-    function approve(address _approved, uint256 _tokenId) external;
-    function setApprovalForAll(address _operator, bool _approved) external;
-    function getApproved(uint256 _tokenId) external view returns (address);
-    function isApprovedForAll(address _owner, address _operator) external view returns (bool);
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/// @title ERC-721 Non-Fungible Token Standard
-interface ERC721TokenReceiver {
-	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract Random {
-    uint256 _seed;
 
-    function _rand() internal returns (uint256) {
-        _seed = uint256(keccak256(_seed, blockhash(block.number - 1), block.coinbase, block.difficulty));
-        return _seed;
-    }
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    function _randBySeed(uint256 _outSeed) internal view returns (uint256) {
-        return uint256(keccak256(_outSeed, blockhash(block.number - 1), block.coinbase, block.difficulty));
-    }
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+  modifier onlyPayloadSize(uint256 numwords) {
+    assert(msg.data.length >= numwords * 32 + 4);
+    _;
+  }
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) onlyPayloadSize(2) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
 }
 
-contract AccessAdmin {
-    bool public isPaused = false;
-    address public addrAdmin;  
+/**
+ * @title Standard ERC20 token
+ * @dev Implementation of the basic standard token.
+ */
+contract StandardToken is ERC20, BasicToken {
 
-    event AdminTransferred(address indexed preAdmin, address indexed newAdmin);
+  mapping (address => mapping (address => uint256)) internal allowed;
 
-    constructor() public {
-        addrAdmin = msg.sender;
-    }  
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
 
-    modifier onlyAdmin() {
-        require(msg.sender == addrAdmin);
-        _;
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) onlyPayloadSize(2) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) onlyPayloadSize(2) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) onlyPayloadSize(2) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    modifier whenNotPaused() {
-        require(!isPaused);
-        _;
-    }
-
-    modifier whenPaused {
-        require(isPaused);
-        _;
-    }
-
-    function setAdmin(address _newAdmin) external onlyAdmin {
-        require(_newAdmin != address(0));
-        emit AdminTransferred(addrAdmin, _newAdmin);
-        addrAdmin = _newAdmin;
-    }
-
-    function doPause() external onlyAdmin whenNotPaused {
-        isPaused = true;
-    }
-
-    function doUnpause() external onlyAdmin whenPaused {
-        isPaused = false;
-    }
 }
 
-contract AccessService is AccessAdmin {
-    address public addrService;
-    address public addrFinance;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    modifier onlyService() {
-        require(msg.sender == addrService);
-        _;
-    }
 
-    modifier onlyFinance() {
-        require(msg.sender == addrFinance);
-        _;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function setService(address _newService) external {
-        require(msg.sender == addrService || msg.sender == addrAdmin);
-        require(_newService != address(0));
-        addrService = _newService;
-    }
 
-    function setFinance(address _newFinance) external {
-        require(msg.sender == addrFinance || msg.sender == addrAdmin);
-        require(_newFinance != address(0));
-        addrFinance = _newFinance;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-//Ether League Hero Token
-contract ELHeroToken is ERC721,AccessAdmin{
-    struct Card {
-        uint16 protoId;     // 0  10001-10025 Gen 0 Heroes
-        uint16 hero;        // 1  1-25 hero ID
-        uint16 quality;     // 2  rarities: 1 Common 2 Uncommon 3 Rare 4 Epic 5 Legendary 6 Gen 0 Heroes
-        uint16 feature;     // 3  feature
-        uint16 level;       // 4  level
-        uint16 attrExt1;    // 5  future stat 1
-        uint16 attrExt2;    // 6  future stat 2
-    }
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+
+/**
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
+ */
+contract Claimable is Ownable {
+  address public pendingOwner;
+
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ */
+contract MintableToken is PausableToken {
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+  
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  address public saleAgent = address(0);
+  address public saleAgent2 = address(0);
+
+  function setSaleAgent(address newSaleAgent) onlyOwner public {
+    saleAgent = newSaleAgent;
+  }
+
+  function setSaleAgent2(address newSaleAgent) onlyOwner public {
+    saleAgent2 = newSaleAgent;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) canMint public returns (bool) {
+    require(msg.sender == saleAgent || msg.sender == saleAgent2 || msg.sender == owner);
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(this), _to, _amount);
     
-    /// @dev All card tokenArray (not exceeding 2^32-1)
-    Card[] public cardArray;
+    return true;
+  }   
+  
 
-    /// @dev Amount of tokens destroyed
-    uint256 destroyCardCount;
-
-    /// @dev Card token ID vs owner address
-    mapping (uint256 => address) cardIdToOwner;
-
-    /// @dev cards owner by the owner (array)
-    mapping (address => uint256[]) ownerToCardArray;
-    
-    /// @dev card token ID search in owner array
-    mapping (uint256 => uint256) cardIdToOwnerIndex;
-
-    /// @dev The authorized address for each token
-    mapping (uint256 => address) cardIdToApprovals;
-
-    /// @dev The authorized operators for each address
-    mapping (address => mapping (address => bool)) operatorToApprovals;
-
-    /// @dev Trust contract
-    mapping (address => bool) actionContracts;
-
-    function setActionContract(address _actionAddr, bool _useful) external onlyAdmin {
-        actionContracts[_actionAddr] = _useful;
-    }
-
-    function getActionContract(address _actionAddr) external view onlyAdmin returns(bool) {
-        return actionContracts[_actionAddr];
-    }
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-    event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
-    event CreateCard(address indexed owner, uint256 tokenId, uint16 protoId, uint16 hero, uint16 quality, uint16 createType);
-    event DeleteCard(address indexed owner, uint256 tokenId, uint16 deleteType);
-    event ChangeCard(address indexed owner, uint256 tokenId, uint16 changeType);
-    
-
-    modifier isValidToken(uint256 _tokenId) {
-        require(_tokenId >= 1 && _tokenId <= cardArray.length);
-        require(cardIdToOwner[_tokenId] != address(0)); 
-        _;
-    }
-
-    modifier canTransfer(uint256 _tokenId) {
-        address owner = cardIdToOwner[_tokenId];
-        require(msg.sender == owner || msg.sender == cardIdToApprovals[_tokenId] || operatorToApprovals[owner][msg.sender]);
-        _;
-    }
-
-    // ERC721
-    function supportsInterface(bytes4 _interfaceId) external view returns(bool) {
-        // ERC165 || ERC721 || ERC165^ERC721
-        return (_interfaceId == 0x01ffc9a7 || _interfaceId == 0x80ac58cd || _interfaceId == 0x8153916a) && (_interfaceId != 0xffffffff);
-    }
-
-    constructor() public {
-        addrAdmin = msg.sender;
-        cardArray.length += 1;
-    }
-
-
-    function name() public pure returns(string) {
-        return "Ether League Hero Token";
-    }
-
-    function symbol() public pure returns(string) {
-        return "ELHT";
-    }
-
-    /// @dev Search for token quantity address
-    /// @param _owner Address that needs to be searched
-    /// @return Returns token quantity
-    function balanceOf(address _owner) external view returns (uint256){
-        require(_owner != address(0));
-        return ownerToCardArray[_owner].length;
-    }
-
-    /// @dev Find the owner of an ELHT
-    /// @param _tokenId The tokenId of ELHT
-    /// @return Give The address of the owner of this ELHT
-    function ownerOf(uint256 _tokenId) external view returns (address){
-        return cardIdToOwner[_tokenId];
-    }
-
-    /// @dev Transfers the ownership of an ELHT from one address to another address
-    /// @param _from The current owner of the ELHT
-    /// @param _to The new owner
-    /// @param _tokenId The ELHT to transfer
-    /// @param data Additional data with no specified format, sent in call to `_to`
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) external whenNotPaused{
-        _safeTransferFrom(_from, _to, _tokenId, data);
-    }
-
-    /// @dev Transfers the ownership of an ELHT from one address to another address
-    /// @param _from The current owner of the ELHT
-    /// @param _to The new owner
-    /// @param _tokenId The ELHT to transfer
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external whenNotPaused{
-        _safeTransferFrom(_from, _to, _tokenId, "");
-    }
-
-    /// @dev Transfer ownership of an ELHT, '_to' must be a vaild address, or the ELHT will lost
-    /// @param _from The current owner of the ELHT
-    /// @param _to The new owner
-    /// @param _tokenId The ELHT to transfer
-    function transferFrom(address _from, address _to, uint256 _tokenId) external whenNotPaused isValidToken(_tokenId) canTransfer(_tokenId){
-        address owner = cardIdToOwner[_tokenId];
-        require(owner != address(0));
-        require(_to != address(0));
-        require(owner == _from);
-        
-        _transfer(_from, _to, _tokenId);
-    }
-    
-
-    /// @dev Set or reaffirm the approved address for an ELHT
-    /// @param _approved The new approved ELHT controller
-    /// @param _tokenId The ELHT to approve
-    function approve(address _approved, uint256 _tokenId) external whenNotPaused{
-        address owner = cardIdToOwner[_tokenId];
-        require(owner != address(0));
-        require(msg.sender == owner || operatorToApprovals[owner][msg.sender]);
-
-        cardIdToApprovals[_tokenId] = _approved;
-        emit Approval(owner, _approved, _tokenId);
-    }
-
-    /// @dev Enable or disable approval for a third party ("operator") to manage all your asset.
-    /// @param _operator Address to add to the set of authorized operators.
-    /// @param _approved True if the operators is approved, false to revoke approval
-    function setApprovalForAll(address _operator, bool _approved) external whenNotPaused{
-        operatorToApprovals[msg.sender][_operator] = _approved;
-        emit ApprovalForAll(msg.sender, _operator, _approved);
-    }
-
-    /// @dev Get the approved address for a single ELHT
-    /// @param _tokenId The ELHT to find the approved address for
-    /// @return The approved address for this ELHT, or the zero address if there is none
-    function getApproved(uint256 _tokenId) external view isValidToken(_tokenId) returns (address) {
-        return cardIdToApprovals[_tokenId];
-    }
-
-    /// @dev Query if an address is an authorized operator for another address ?????????????????
-    /// @param _owner The address that owns the ELHTs
-    /// @param _operator The address that acts on behalf of the owner
-    /// @return True if `_operator` is an approved operator for `_owner`, false otherwise
-    function isApprovedForAll(address _owner, address _operator) external view returns (bool) {
-        return operatorToApprovals[_owner][_operator];
-    }
-
-    /// @dev Count ELHTs tracked by this contract
-    /// @return A count of valid ELHTs tracked by this contract, where each one of them has an assigned and queryable owner not equal to the zero address
-    function totalSupply() external view returns (uint256) {
-        return cardArray.length - destroyCardCount - 1;
-    }
-
-    /// @dev Actually perform the safeTransferFrom
-    function _safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes data) internal isValidToken(_tokenId) canTransfer(_tokenId){
-        address owner = cardIdToOwner[_tokenId];
-        require(owner != address(0));
-        require(_to != address(0));
-        require(owner == _from);
-        
-        _transfer(_from, _to, _tokenId);
-
-        // Do the callback after everything is done to avoid reentrancy attack
-        uint256 codeSize;
-        assembly { codeSize := extcodesize(_to) }
-        if (codeSize == 0) {
-            return;
-        }
-        bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(_from, _tokenId, data);
-        // bytes4(keccak256("onERC721Received(address,uint256,bytes)")) = 0xf0b9e5ba;
-        require(retval == 0xf0b9e5ba);
-    }
-
-    /// @dev Do the real transfer with out any condition checking
-    /// @param _from The old owner of this ELHT(If created: 0x0)
-    /// @param _to The new owner of this ELHT 
-    /// @param _tokenId The tokenId of the ELHT
-    function _transfer(address _from, address _to, uint256 _tokenId) internal {
-        if (_from != address(0)) {
-            uint256 indexFrom = cardIdToOwnerIndex[_tokenId];
-            uint256[] storage cdArray = ownerToCardArray[_from];
-            require(cdArray[indexFrom] == _tokenId);
-
-            // If the ELHT is not the element of array, change it to with the last
-            if (indexFrom != cdArray.length - 1) {
-                uint256 lastTokenId = cdArray[cdArray.length - 1];
-                cdArray[indexFrom] = lastTokenId; 
-                cardIdToOwnerIndex[lastTokenId] = indexFrom;
-            }
-            cdArray.length -= 1; 
-            
-            if (cardIdToApprovals[_tokenId] != address(0)) {
-                delete cardIdToApprovals[_tokenId];
-            }      
-        }
-
-        // Give the ELHT to '_to'
-        cardIdToOwner[_tokenId] = _to;
-        ownerToCardArray[_to].push(_tokenId);
-        cardIdToOwnerIndex[_tokenId] = ownerToCardArray[_to].length - 1;
-        
-        emit Transfer(_from != address(0) ? _from : this, _to, _tokenId);
-    }
-
-
-
-    /*----------------------------------------------------------------------------------------------------------*/
-
-
-    /// @dev Card creation
-    /// @param _owner Owner of the equipment created
-    /// @param _attrs Attributes of the equipment created
-    /// @return Token ID of the equipment created
-    function createCard(address _owner, uint16[5] _attrs, uint16 _createType) external whenNotPaused returns(uint256){
-        require(actionContracts[msg.sender]);
-        require(_owner != address(0));
-        uint256 newCardId = cardArray.length;
-        require(newCardId < 4294967296);
-
-        cardArray.length += 1;
-        Card storage cd = cardArray[newCardId];
-        cd.protoId = _attrs[0];
-        cd.hero = _attrs[1];
-        cd.quality = _attrs[2];
-        cd.feature = _attrs[3];
-        cd.level = _attrs[4];
-
-        _transfer(0, _owner, newCardId);
-        emit CreateCard(_owner, newCardId, _attrs[0], _attrs[1], _attrs[2], _createType);
-        return newCardId;
-    }
-
-    /// @dev One specific attribute of the equipment modified
-    function _changeAttrByIndex(Card storage _cd, uint16 _index, uint16 _val) internal {
-        if (_index == 2) {
-            _cd.quality = _val;
-        } else if(_index == 3) {
-            _cd.feature = _val;
-        } else if(_index == 4) {
-            _cd.level = _val;
-        } else if(_index == 5) {
-            _cd.attrExt1 = _val;
-        } else if(_index == 6) {
-            _cd.attrExt2 = _val;
-        }
-    }
-
-    /// @dev Equiment attributes modified (max 4 stats modified)
-    /// @param _tokenId Equipment Token ID
-    /// @param _idxArray Stats order that must be modified
-    /// @param _params Stat value that must be modified
-    /// @param _changeType Modification type such as enhance, socket, etc.
-    function changeCardAttr(uint256 _tokenId, uint16[5] _idxArray, uint16[5] _params, uint16 _changeType) external whenNotPaused isValidToken(_tokenId) {
-        require(actionContracts[msg.sender]);
-
-        Card storage cd = cardArray[_tokenId];
-        if (_idxArray[0] > 0) _changeAttrByIndex(cd, _idxArray[0], _params[0]);
-        if (_idxArray[1] > 0) _changeAttrByIndex(cd, _idxArray[1], _params[1]);
-        if (_idxArray[2] > 0) _changeAttrByIndex(cd, _idxArray[2], _params[2]);
-        if (_idxArray[3] > 0) _changeAttrByIndex(cd, _idxArray[3], _params[3]);
-        if (_idxArray[4] > 0) _changeAttrByIndex(cd, _idxArray[4], _params[4]);
-        
-        emit ChangeCard(cardIdToOwner[_tokenId], _tokenId, _changeType);
-    }
-
-    /// @dev Equipment destruction
-    /// @param _tokenId Equipment Token ID
-    /// @param _deleteType Destruction type, such as craft
-    function destroyCard(uint256 _tokenId, uint16 _deleteType) external whenNotPaused isValidToken(_tokenId) {
-        require(actionContracts[msg.sender]);
-
-        address _from = cardIdToOwner[_tokenId];
-        uint256 indexFrom = cardIdToOwnerIndex[_tokenId];
-        uint256[] storage cdArray = ownerToCardArray[_from]; 
-        require(cdArray[indexFrom] == _tokenId);
-
-        if (indexFrom != cdArray.length - 1) {
-            uint256 lastTokenId = cdArray[cdArray.length - 1];
-            cdArray[indexFrom] = lastTokenId; 
-            cardIdToOwnerIndex[lastTokenId] = indexFrom;
-        }
-        cdArray.length -= 1; 
-
-        cardIdToOwner[_tokenId] = address(0);
-        delete cardIdToOwnerIndex[_tokenId];
-        destroyCardCount += 1;
-
-        emit Transfer(_from, 0, _tokenId);
-
-        emit DeleteCard(_from, _tokenId, _deleteType);
-    }
-
-    /// @dev Safe transfer by trust contracts
-    function safeTransferByContract(uint256 _tokenId, address _to) external whenNotPaused{
-        require(actionContracts[msg.sender]);
-
-        require(_tokenId >= 1 && _tokenId <= cardArray.length);
-        address owner = cardIdToOwner[_tokenId];
-        require(owner != address(0));
-        require(_to != address(0));
-        require(owner != _to);
-
-        _transfer(owner, _to, _tokenId);
-    }
-
-    /// @dev Get fashion attrs by tokenId
-    function getCard(uint256 _tokenId) external view isValidToken(_tokenId) returns (uint16[7] datas) {
-        Card storage cd = cardArray[_tokenId];
-        datas[0] = cd.protoId;
-        datas[1] = cd.hero;
-        datas[2] = cd.quality;
-        datas[3] = cd.feature;
-        datas[4] = cd.level;
-        datas[5] = cd.attrExt1;
-        datas[6] = cd.attrExt2;
-    }
-
-    /// Get tokenIds and flags by owner
-    function getOwnCard(address _owner) external view returns(uint256[] tokens, uint32[] flags) {
-        require(_owner != address(0));
-        uint256[] storage cdArray = ownerToCardArray[_owner];
-        uint256 length = cdArray.length;
-        tokens = new uint256[](length);
-        flags = new uint32[](length);
-        for (uint256 i = 0; i < length; ++i) {
-            tokens[i] = cdArray[i];
-            Card storage cd = cardArray[cdArray[i]];
-            flags[i] = uint32(uint32(cd.protoId) * 1000 + uint32(cd.hero) * 10 + cd.quality);
-        }
-    }
-
-    /// ELHT token info returned based on Token ID transfered (64 at most)
-    function getCardAttrs(uint256[] _tokens) external view returns(uint16[] attrs) {
-        uint256 length = _tokens.length;
-        require(length <= 64);
-        attrs = new uint16[](length * 11);
-        uint256 tokenId;
-        uint256 index;
-        for (uint256 i = 0; i < length; ++i) {
-            tokenId = _tokens[i];
-            if (cardIdToOwner[tokenId] != address(0)) {
-                index = i * 11;
-                Card storage cd = cardArray[tokenId];
-                attrs[index] = cd.hero;
-                attrs[index + 1] = cd.quality;
-                attrs[index + 2] = cd.feature;
-                attrs[index + 3] = cd.level;
-                attrs[index + 4] = cd.attrExt1;
-                attrs[index + 5] = cd.attrExt2;
-            }   
-        }
-    }
-
-
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
 }
 
-contract Presale is AccessService, Random {
-    ELHeroToken tokenContract;
-    mapping (uint16 => uint16) public cardPresaleCounter;
-    mapping (address => uint16[]) OwnerToPresale;
-    uint256 public jackpotBalance;
 
-    event CardPreSelled(address indexed buyer, uint16 protoId);
-    event Jackpot(address indexed _winner, uint256 _value, uint16 _type);
+contract LEAD is MintableToken, Claimable {
+    string public constant name = "LEADEX"; 
+    string public constant symbol = "LEAD";
+    uint public constant decimals = 8;
+}
 
-    constructor(address _nftAddr) public {
-        addrAdmin = msg.sender;
-        addrService = msg.sender;
-        addrFinance = msg.sender;
+contract PreSale is Ownable {
+    
+    using SafeMath for uint;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 constant dec = 10 ** 8;
+    uint256 public tokensToSale = 500000000 * 10 ** 8;
+    // address where funds are collected
+    address public wallet;
+    // one token per one rate
+    uint256 public rate = 800;
+    LEAD public token;
+    // Amount of raised money in wei
+    uint256 public weiRaised;
+    uint256 public minTokensToSale = 200 * dec;
 
-        tokenContract = ELHeroToken(_nftAddr);
+    // Round bonuses
+    uint256 bonus1 = 20;
+    uint256 bonus2 = 30;
+    uint256 bonus3 = 40;
+    uint256 bonus4 = 50;
 
-        cardPresaleCounter[1] = 20; //Human Fighter
-        cardPresaleCounter[2] = 20; //Human Tank
-        cardPresaleCounter[3] = 20; //Human Marksman
-        cardPresaleCounter[4] = 20; //Human Mage
-        cardPresaleCounter[5] = 20; //Human Support
-        cardPresaleCounter[6] = 20; //Elf Fighter
-        cardPresaleCounter[7] = 20; //Elf Tank
-        cardPresaleCounter[8] = 20; //...
-        cardPresaleCounter[9] = 20;
-        cardPresaleCounter[10] = 20;
-        cardPresaleCounter[11] = 20;//Orc
-        cardPresaleCounter[12] = 20;
-        cardPresaleCounter[13] = 20;
-        cardPresaleCounter[14] = 20;
-        cardPresaleCounter[15] = 20;
-        cardPresaleCounter[16] = 20;//Undead
-        cardPresaleCounter[17] = 20;
-        cardPresaleCounter[18] = 20;
-        cardPresaleCounter[19] = 20;
-        cardPresaleCounter[20] = 20;
-        cardPresaleCounter[21] = 20;//Spirit
-        cardPresaleCounter[22] = 20;
-        cardPresaleCounter[23] = 20;
-        cardPresaleCounter[24] = 20;
-        cardPresaleCounter[25] = 20;
+    // Amount bonuses
+    uint256 amount1 = 0 * dec;
+    uint256 amount2 = 2 * dec;
+    uint256 amount3 = 3 * dec;
+    uint256 amount4 = 5 * dec;
+
+
+    constructor(
+        address _token,
+        uint256 _startTime,
+        uint256 _endTime,
+        address _wallet) public {
+        require(_token != address(0));
+        require(_endTime > _startTime);
+        require(_wallet != address(0));
+        token = LEAD(_token);
+        startTime = _startTime;
+        endTime = _endTime;
+        wallet = _wallet;
     }
 
-    function() external payable {
-        require(msg.value > 0);
-        jackpotBalance += msg.value;
+    modifier saleIsOn() {
+        uint tokenSupply = token.totalSupply();
+        require(now > startTime && now < endTime);
+        require(tokenSupply <= tokensToSale);
+        _;
     }
 
-    function setELHeroTokenAddr(address _nftAddr) external onlyAdmin {
-        tokenContract = ELHeroToken(_nftAddr);
-
+    function setMinTokensToSale(
+        uint256 _newMinTokensToSale) onlyOwner public {
+        minTokensToSale = _newMinTokensToSale;
     }
 
-    function cardPresale(uint16 _protoId) external payable whenNotPaused{
-        uint16 curSupply = cardPresaleCounter[_protoId];
-        require(curSupply > 0);
-        require(msg.value == 0.25 ether);
-        uint16[] storage buyArray = OwnerToPresale[msg.sender];
-        uint16[5] memory param = [10000 + _protoId, _protoId, 6, 0, 1];
-        tokenContract.createCard(msg.sender, param, 1);
-        buyArray.push(_protoId);
-        cardPresaleCounter[_protoId] = curSupply - 1;
-        emit CardPreSelled(msg.sender, _protoId);
+    function setAmount(
+        uint256 _newAmount1,
+        uint256 _newAmount2,
+        uint256 _newAmount3,
+        uint256 _newAmount4) onlyOwner public {
+        amount1 = _newAmount1;
+        amount2 = _newAmount2;
+        amount3 = _newAmount3;
+        amount4 = _newAmount4;
+    }
 
-        jackpotBalance += msg.value * 2 / 10;
-        addrFinance.transfer(address(this).balance - jackpotBalance);
-        //1%
-        uint256 seed = _rand();
-        if(seed % 100 == 99){
-            emit Jackpot(msg.sender, jackpotBalance, 2);
-            msg.sender.transfer(jackpotBalance);
+    function setBonuses(
+        uint256 _newBonus1,
+        uint256 _newBonus2,
+        uint256 _newBonus3,
+        uint256 _newBonus4) onlyOwner public {
+        bonus1 = _newBonus1;
+        bonus2 = _newBonus2;
+        bonus3 = _newBonus3;
+        bonus4 = _newBonus4;
+    }
+
+
+    function getBonus(uint256 _value) internal view returns (uint256) {
+        if(_value > amount1 && _value <= amount2) { 
+            return bonus1;
+        } else if(_value > amount2 && _value <= amount3) {
+            return bonus2;
+        } else if(_value > amount3 && _value <= amount4) {
+            return bonus3;
+        } else if(_value > amount4) {
+            return bonus4;
         }
     }
 
-    function withdraw() external {
-        require(msg.sender == addrFinance || msg.sender == addrAdmin);
-        addrFinance.transfer(address(this).balance);
+    function setEndTime(uint256 _newEndTime) onlyOwner public {
+        require(now < _newEndTime);
+        endTime = _newEndTime;
     }
 
-    function getCardCanPresaleCount() external view returns (uint16[25] cntArray) {
-        cntArray[0] = cardPresaleCounter[1];
-        cntArray[1] = cardPresaleCounter[2];
-        cntArray[2] = cardPresaleCounter[3];
-        cntArray[3] = cardPresaleCounter[4];
-        cntArray[4] = cardPresaleCounter[5];
-        cntArray[5] = cardPresaleCounter[6];
-        cntArray[6] = cardPresaleCounter[7];
-        cntArray[7] = cardPresaleCounter[8];
-        cntArray[8] = cardPresaleCounter[9];
-        cntArray[9] = cardPresaleCounter[10];
-        cntArray[10] = cardPresaleCounter[11];
-        cntArray[11] = cardPresaleCounter[12];
-        cntArray[12] = cardPresaleCounter[13];
-        cntArray[13] = cardPresaleCounter[14];
-        cntArray[14] = cardPresaleCounter[15];
-        cntArray[15] = cardPresaleCounter[16];
-        cntArray[16] = cardPresaleCounter[17];
-        cntArray[17] = cardPresaleCounter[18];
-        cntArray[18] = cardPresaleCounter[19];
-        cntArray[19] = cardPresaleCounter[20];
-        cntArray[20] = cardPresaleCounter[21];
-        cntArray[21] = cardPresaleCounter[22];
-        cntArray[22] = cardPresaleCounter[23];
-        cntArray[23] = cardPresaleCounter[24];
-        cntArray[24] = cardPresaleCounter[25];
+    function setRate(uint256 _newRate) public onlyOwner {
+        rate = _newRate;
     }
 
-    function getBuyCount(address _owner) external view returns (uint32) {
-        return uint32(OwnerToPresale[_owner].length);
+    function setTeamAddress(address _newWallet) onlyOwner public {
+        require(_newWallet != address(0));
+        wallet = _newWallet;
     }
 
-    function getBuyArray(address _owner) external view returns (uint16[]) {
-        uint16[] storage buyArray = OwnerToPresale[_owner];
-        return buyArray;
+    /**
+    * events for token purchase logging
+    * @param purchaser who paid for the tokens
+    * @param beneficiary who got the tokens
+    * @param value weis paid for purchase
+    * @param amount amount of tokens purchased
+    */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenPartners(address indexed purchaser, address indexed beneficiary, uint256 amount);
+
+    function buyTokens(address beneficiary) saleIsOn public payable {
+        require(beneficiary != address(0));
+        uint256 weiAmount = (msg.value).div(10 ** 10);
+        uint256 all = 100;
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+        require(tokens >= minTokensToSale);
+        uint256 bonusNow = getBonus(tokens);
+        tokens = tokens.mul(bonusNow).div(all);
+        require(tokensToSale > tokens.add(token.totalSupply()));
+        weiRaised = weiRaised.add(msg.value);
+        token.mint(beneficiary, tokens);
+        emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        wallet.transfer(msg.value);
     }
 
-    function eventPirze(address _addr, uint8 _id) public onlyAdmin{
-        require(_id == 20 || _id == 21);
-        uint16 curSupply = cardPresaleCounter[_id];
-        require(curSupply > 0);
-        uint16[] storage buyArray = OwnerToPresale[_addr];
-        uint16[5] memory param = [10000 + _id, _id, 6, 0, 1];
-        tokenContract.createCard(_addr, param, 1);
-        buyArray.push(_id);
-        cardPresaleCounter[_id] = curSupply - 1;
+    // fallback function can be used to buy tokens
+    function () external payable {
+        buyTokens(msg.sender);
     }
+
+    // @return true if tokensale event has ended
+    function hasEnded() public view returns (bool) {
+        return now > endTime;
+    }
+
+    function kill() onlyOwner public { selfdestruct(owner); }
+    
 }
