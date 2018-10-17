@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCT at 0xb2b96b1eb1c5213ee90ed40f2790862266c4b520
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCT at 0x51cfb4c420da4849d420a4b0d8827a654b30f3e9
 */
 pragma solidity ^ 0.4 .16;
 /* ???????????? */
@@ -323,14 +323,6 @@ contract BTYCT is owned, TokenERC20 {
 		emit Transfer(this, msg.sender, amount); // execute an event reflecting the change
 		return amount; // ends function and returns
 	}
-	function getprice() constant public returns (uint256 bprice,uint256 spice) {
-          bprice = buyPrice;
-          spice = sellPrice;
-    }
-    function getset() constant public returns (uint256 sprice,uint256 sper) {
-          sprice = sysPrice;
-          sper = sysPer;
-    }
 
 	// ??
 	function sell(uint256 amount) public returns(uint revenue) {
