@@ -1,65 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0x7d3ae940eb73dc9131758ad2e326c7d863b0916a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0x21857261ad06753cee383716e87422168102a453
 */
-contract Doubler {
+pragma solidity ^0.4.24;
 
-    struct Participant {
-        address etherAddress;
-        uint amount;
-    }
-
-    Participant[] public participants;
-
-	uint public payoutIdx = 0;
-	uint public collectedFees = 0;
-	uint balance = 0;
-
-  // only owner modifier
-	address public owner;
-    modifier onlyowner { if (msg.sender == owner) _ }
-
-  // contract Constructor
-    function Doubler() {
-        owner = msg.sender;
-    }
-
- // fallback function
-    function(){
-        enter();
-    }
-
-	function enter(){
-      // collect fee
-        uint fee = msg.value / 40; // 2.5 % fee
-        collectedFees += fee;
-
-      // add a new participant
-		uint idx = participants.length;
-        participants.length++;
-        participants[idx].etherAddress = msg.sender;
-        participants[idx].amount = msg.value - fee;
-
-      // update available balance
-      	balance += msg.value - fee;
-      	
-	  // if there are enough ether on the balance we can pay out to an earlier participant
-	  	uint txAmount = participants[payoutIdx].amount * 2;
-        if(balance >= txAmount){
-        	if(!participants[payoutIdx].etherAddress.send(txAmount)) throw;
-
-            balance -= txAmount;
-            payoutIdx++;
+contract Doubler{
+    uint public price = 1 wei;
+    address public winner = msg.sender;
+    
+    function() public payable {
+        require(msg.value >= price); 
+        if (msg.value > price){
+            msg.sender.transfer(msg.value - price);
         }
+        if (!winner.send(price)){
+            msg.sender.transfer(price);
+        }
+        winner = msg.sender;
+        price = price * 2;
     }
-
-    function collectFees() onlyowner {
-        if(collectedFees == 0)return;
-
-        if(!owner.send(collectedFees))throw;
-        collectedFees = 0;
-    }
-
-    function setOwner(address _owner) onlyowner {
-        owner = _owner;
-    }
+    
+    
 }
