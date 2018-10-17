@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecurityToken at 0x62bf6e1d9424bec0ccbbf35d413d6e7d516e635e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SecurityToken at 0xaec587f5ca622e7029d3b278e5a42a57a814d85e
 */
 pragma solidity ^0.4.13;
 
@@ -413,6 +413,18 @@ contract SecurityController is ISecurityController, Ownable {
         affiliateList = IAffiliateList(_affiliateList);
     }
 
+    function setDependencies(address _token, address _ledger, address _sale,
+        address _investorList, address _transferAuthorizations, address _affiliateList)
+        public onlyOwner
+    {
+        token = ISecurityToken(_token);
+        ledger = ISecurityLedger(_ledger);
+        sale = ISecuritySale(_sale);
+        investorList = IInvestorList(_investorList);
+        transferAuthorizations = ITransferAuthorizations(_transferAuthorizations);
+        affiliateList = IAffiliateList(_affiliateList);
+    }
+
     function setTransferAuthPermission(address agent, bool hasPermission) public onlyOwner {
         require(agent != address(0));
         transferAuthPermission[agent] = hasPermission;
@@ -533,7 +545,6 @@ contract SecurityController is ISecurityController, Ownable {
     // functions below this line are onlyToken
 
     function transfer(address _from, address _to, uint _value) public onlyToken returns (bool success) {
-        //TODO: this could be configurable
         uint lockoutTime = block.timestamp - lockoutPeriod;
         bool canTransfer;
         bool useLockoutTime;
@@ -555,7 +566,6 @@ contract SecurityController is ISecurityController, Ownable {
     }
 
     function transferFrom(address _spender, address _from, address _to, uint _value) public onlyToken returns (bool success) {
-        //TODO: this could be configurable
         uint lockoutTime = block.timestamp - lockoutPeriod;
         bool canTransfer;
         bool useLockoutTime;
@@ -720,7 +730,7 @@ contract SecurityLedger is Ownable {
                 }
             }
 
-            uint remaining = amount - numTransferrableTokens;
+            uint remaining = amount.sub(numTransferrableTokens);
 
             if(lotAmount >= remaining) {
                 numTransferrableTokens = numTransferrableTokens.add(remaining);
@@ -922,6 +932,14 @@ contract SecurityToken is Ownable{
 
     // functions below this line are onlyOwner
 
+    function setName(string _name) public onlyOwner {
+        name = _name;
+    }
+
+    function setSymbol(string _symbol) public onlyOwner {
+        symbol = _symbol;
+    }
+    
     function setController(address _c) public onlyOwner {
         controller = ISecurityController(_c);
     }
