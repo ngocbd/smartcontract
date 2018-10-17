@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheEthGame at 0x27ce49590684308d22fe7adcb8b80976701774d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheEthGame at 0x92b523389e12bd63905c07190a05bdad0b0a1588
 */
 /*
  _______  _______  ______    _______  _______  _______  ______   _______  _______  ______    _______  
@@ -113,7 +113,7 @@ contract TheEthGame {
     uint256 constant private DEFAULT_POINTS_PER_CELL = 3;
     uint256 constant private POINTS_PER_NEIGHBOUR = 1;
 
-    uint256 constant private CELL_STARTING_PRICE = 0.002 ether;
+    uint256 constant private CELL_STARTING_PRICE = 0.01 ether;
     uint256 constant private BLOCKS_TO_CONFIRM_TO_WIN_THE_GAME = 10000;
     uint256 constant private PRICE_INCREASE_PERCENTAGE = uint(2);
     uint256 constant private REFERREAL_PERCENTAGE = uint(10);
