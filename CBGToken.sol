@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CBGToken at 0xebb3499b37d2e386ff584340d4a91af729fd76d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CBGToken at 0xc037f2d079a7e23674b23676e34db9635da289db
 */
 pragma solidity ^0.4.24;
 
@@ -163,23 +163,6 @@ contract StandardToken is ERC20, Basic {
   }
 }
 
-contract Burnable is StandardToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
-
 contract Mineable is StandardToken, HasOwner {
 
   event Mine(address indexed to, uint256 amount);
@@ -206,7 +189,7 @@ contract Mineable is StandardToken, HasOwner {
 
 }
 
-contract CBGToken is Mineable, Burnable {
+contract CBGToken is Mineable {
   string public name = "CBG Token";
   string public symbol = "CBG";
   uint8 public decimals = 3;
