@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtchToken at 0x55e5f0ade5f35ece33b6e59c11264b7e9b4b0106
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtchToken at 0x4e55bc3943a24e46a935359e8522c66e504821ad
 */
 pragma solidity ^0.4.11;
 
@@ -283,7 +283,7 @@ contract EtchToken is ERC20, EtchTokenStandard,Ownable {
     }
 
     function ownerSetStakeStartTime(uint timestamp) onlyOwner {
-        require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
+        require((stakeStartTime <=  1505404563) && (timestamp >= chainStartTime));
         stakeStartTime = timestamp;
     }
 
