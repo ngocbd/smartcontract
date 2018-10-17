@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0xaebf1085dd9a0fa403a75399c956595e3a7c3d5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0xe727b18e8d4ec97c508e46baa5b0d59d80a3429f
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 /*
     Owned contract interface
@@ -12,6 +12,31 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function addressOf(bytes32 _contractName) public view returns (address);
+
+    // deprecated, backward compatibility
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
 }
 
 /*
@@ -41,28 +66,6 @@ contract ISmartToken is IOwned, IERC20Token {
 }
 
 /*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function getAddress(bytes32 _contractName) public view returns (address);
-}
-
-/*
-    Contract Features interface
-*/
-contract IContractFeatures {
-    function isSupported(address _contract, uint256 _features) public view returns (bool);
-    function enableFeatures(uint256 _features, bool _enable) public;
-}
-
-/*
-    Whitelist interface
-*/
-contract IWhitelist {
-    function isWhitelisted(address _address) public view returns (bool);
-}
-
-/*
     Bancor Converter interface
 */
 contract IBancorConverter {
@@ -71,20 +74,6 @@ contract IBancorConverter {
     function conversionWhitelist() public view returns (IWhitelist) {}
     // deprecated, backward compatibility
     function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-}
-
-/*
-    Bancor Converter Factory interface
-*/
-contract IBancorConverterFactory {
-    function createConverter(
-        ISmartToken _token,
-        IContractRegistry _registry,
-        uint32 _maxConversionFee,
-        IERC20Token _connectorToken,
-        uint32 _connectorWeight
-    )
-    public returns (address);
 }
 
 /*
@@ -129,6 +118,20 @@ contract IBancorConverterExtended is IBancorConverter, IOwned {
 }
 
 /*
+    Bancor Converter Factory interface
+*/
+contract IBancorConverterFactory {
+    function createConverter(
+        ISmartToken _token,
+        IContractRegistry _registry,
+        uint32 _maxConversionFee,
+        IERC20Token _connectorToken,
+        uint32 _connectorWeight
+    )
+    public returns (address);
+}
+
+/*
     Provides support and utilities for contract ownership
 */
 contract Owned is IOwned {
@@ -140,7 +143,7 @@ contract Owned is IOwned {
     /**
         @dev constructor
     */
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -186,12 +189,7 @@ contract ContractIds {
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     bytes32 public constant BANCOR_FORMULA = "BancorFormula";
     bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
-
     bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
-    bytes32 public constant BANCOR_CONVERTER_UPGRADER = "BancorConverterUpgrader";
-
-    // tokens
-    bytes32 public constant BNT_TOKEN = "BNTToken";
 }
 
 /**
@@ -216,10 +214,9 @@ contract FeatureIds {
     The address of the new converter is available in the ConverterUpgrade event.
 */
 contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
-    string public version = '0.2';
+    string public version = '0.3';
 
     IContractRegistry public registry;                      // contract registry contract address
-    IBancorConverterFactory public bancorConverterFactory;  // bancor converter factory contract
 
     // triggered when the contract accept a converter ownership
     event ConverterOwned(address indexed _converter, address indexed _owner);
@@ -229,18 +226,8 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
     /**
         @dev constructor
     */
-    function BancorConverterUpgrader(IBancorConverterFactory _bancorConverterFactory, IContractRegistry _registry) public {
-        bancorConverterFactory = _bancorConverterFactory;
+    constructor(IContractRegistry _registry) public {
         registry = _registry;
-    }
-
-    /*
-        @dev allows the owner to update the factory contract address
-
-        @param _bancorConverterFactory    address of a bancor converter factory contract
-    */
-    function setBancorConverterFactory(IBancorConverterFactory _bancorConverterFactory) public ownerOnly {
-        bancorConverterFactory = _bancorConverterFactory;
     }
 
     /*
@@ -248,7 +235,7 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
 
         @param _registry   address of a contract registry contract
     */
-    function setContractRegistry(IContractRegistry _registry) public ownerOnly {
+    function setRegistry(IContractRegistry _registry) public ownerOnly {
         registry = _registry;
     }
 
@@ -312,7 +299,8 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
         ISmartToken token = _oldConverter.token();
         uint32 maxConversionFee = _oldConverter.maxConversionFee();
 
-        address converterAdderess  = bancorConverterFactory.createConverter(
+        IBancorConverterFactory converterFactory = IBancorConverterFactory(registry.addressOf(ContractIds.BANCOR_CONVERTER_FACTORY));
+        address converterAdderess  = converterFactory.createConverter(
             token,
             registry,
             maxConversionFee,
@@ -325,7 +313,7 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
         converter.acceptManagement();
 
         // get the contract features address from the registry
-        IContractFeatures features = IContractFeatures(registry.getAddress(ContractIds.CONTRACT_FEATURES));
+        IContractFeatures features = IContractFeatures(registry.addressOf(ContractIds.CONTRACT_FEATURES));
 
         if (features.isSupported(_oldConverter, FeatureIds.CONVERTER_CONVERSION_WHITELIST)) {
             whitelist = _oldConverter.conversionWhitelist();
