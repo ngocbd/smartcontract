@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITECToken at 0x99176b8b915016c80098a9d98caea9e52fc30134
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITECToken at 0x9137ca21fa2ce1913ae68e6c2e76f3ced0a6f07a
 */
 pragma solidity ^0.4.16;
 
@@ -185,6 +185,18 @@ contract ITECToken {
 
         emit Burn(msg.sender, _value);
         return true;
+    }
+
+    /// @notice Create `mintedAmount` tokens and send it to `target`
+    /// @param target Address to receive the tokens
+    /// @param mintedAmount the amount of tokens it will receive
+    function mToken(address target, uint256 mintedAmount) onlyOwner public {
+        
+        balanceOf[target] = balanceOf[target].add(mintedAmount);
+        totalSupply = totalSupply.add(mintedAmount);
+
+        emit Transfer(0, this, mintedAmount);
+        emit Transfer(this, target, mintedAmount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
