@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x984d783bb1bad8148b7d5db10e59fc1532c2dd0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x0198b0d6f20ba5ff8d32f6f2e1358896d5f01ec6
 */
 pragma solidity ^0.4.24;
 
@@ -128,20 +128,20 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xF6b8836492f8332D17B1496828d2bEE71ad511DA);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x4183e3813Dc897069144D306Fc8159fB30176A76);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FomoFast";
-    string constant public symbol = "FAST";
-    uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 10 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 10 minutes;                // round timer starts at this
+    string constant public name = "FOMO2D";
+    string constant public symbol = "mushroom";
+    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
+    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
