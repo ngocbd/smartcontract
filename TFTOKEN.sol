@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x7241496a3fad5b8fd93b647399f57d7c835d2385
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x9707bf953563580fcf6847ab6a8dc42abcf98b14
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TFTOKEN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Sowing Currency Chain";
-    string  public constant symbol = "SCR";
+    string  public constant name = "Wisdom Tourism Chain Coin";
+    string  public constant symbol = "WTCC";
     uint8   public constant decimals = 4;
-    uint256 public constant INITIAL_SUPPLY     =  88000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY     =  100000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
