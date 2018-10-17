@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0x0ffb3f4605dd9f01de1a06052b7687418a9d82ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTeamContract at 0xb85a54944b58342b07887942e6f530f616479efd
 */
 pragma solidity ^0.4.21;
 
@@ -316,7 +316,7 @@ contract EthTeamContract is StandardToken, Ownable {
     * @param _gameTime The game begin time. optional
     */
     function beginGame(address _gameOpponent, uint64 _gameTime) onlyOwner public {
-        require(_gameOpponent != address(0) && _gameOpponent != address(this) && gameOpponent == address(0));
+        require(_gameOpponent != address(this));
         // 1514764800 = 2018-01-01
         require(_gameTime == 0 || (_gameTime > 1514764800));
         gameOpponent = _gameOpponent;
