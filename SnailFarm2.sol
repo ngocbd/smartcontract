@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnailFarm2 at 0xa78b54123b7fd920cba3b95427b3515c94461099
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnailFarm2 at 0xeb93e12e23acd78f622fcdb6b51906b7ba0aed2b
 */
 pragma solidity ^0.4.24;
 
@@ -158,7 +158,7 @@ contract SnailFarm2 {
         require(msg.sender == gameOwner);
         
         marketEggs = _eggs.mul(TIME_TO_HATCH_1SNAIL); //for readability
-        snailPot = msg.value.div(10); //10% to the snailpot
+        snailPot = msg.value.div(2); //50% to the snailpot
         treePot = msg.value.sub(snailPot); //remainder to the treepot
 		previousSnailPot = snailPot.mul(10); //encourage early acorn funding
         totalAcorns = _acorns; 
@@ -298,7 +298,7 @@ contract SnailFarm2 {
     // SellEggs
     // Sells current player eggs for ETH at a snail cost
 	
-    // One fifth of the player's snails are killed
+    // Ether is taken from the snailpot
 	// Eggs sold are added to the market
     
     function SellEggs() public {
@@ -309,6 +309,7 @@ contract SnailFarm2 {
         claimedEggs[msg.sender] = 0;
         lastHatch[msg.sender] = now;
         marketEggs = marketEggs.add(eggsSold);
+        snailPot = snailPot.sub(eggValue);
         playerEarnings[msg.sender] = playerEarnings[msg.sender].add(eggValue);
         
         emit SoldEgg(msg.sender, eggsSold, eggValue);
