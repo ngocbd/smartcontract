@@ -1,21 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0xbf4de56095f9e39d59fd4f54bc63b39f4f0f7afc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x2359ffa8e5b7a7f3d44f4aa9fbe03d061a4b5d0c
 */
-// ----------------------------------------------------------------------------
-// 'buckycoin' AIRDROP token contract
-//
-// Deployed to : 0xbf4de56095f9e39d59fd4f54bc63b39f4f0f7afc
-// Symbol      : BUC
-// Name        : buckycoin Token
-// Total supply: 940000000
-// Decimals    : 18
-//
-// POWERED BY BUCKY HOUSE.
-//
-// (c) by Team @ BUCKYHOUSE  2018.
-// ----------------------------------------------------------------------------
-
-
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
