@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0x5b6eb8bf0068bda562b3b4e19066221eac13b4d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WaltonTokenLocker at 0xd8e86bd68e4d82609f049dc3f86070d4f81cf71f
 */
 pragma solidity ^0.4.11;
 
@@ -22,14 +22,14 @@ contract WaltonTokenLocker {
 
     address public beneficiary;
     uint256 public releaseTime;
-    string constant public name = "team locker v2";
+    string constant public name = "refund locker";
 
     Token public token = Token('0xb7cB1C96dB6B22b0D3d9536E0108d062BD488F74');
 
     function WaltonTokenLocker() public {
-        // team account
-        beneficiary = address('0x732f589BA0b134DC35454716c4C87A06C890445b');
-        releaseTime = 1563379200;     // 2019-07-18 00:00
+        // refund account
+        beneficiary = address('0x38A9e09E14397Fe3A5Fe59dfc1d98D8B8897D610');
+        releaseTime = 1538236800;     // 2018-09-30 00:00
     }
 
     // when releaseTime reached, and release() has been called
@@ -41,6 +41,17 @@ contract WaltonTokenLocker {
         uint256 totalTokenBalance = token.balanceOf(this);
         if (totalTokenBalance > 0)
             if (!token.transfer(beneficiary, totalTokenBalance))
+                throw;
+    }
+    // release token by token contract address
+    function releaseToken(address _tokenContractAddress) public {
+        if (block.timestamp < releaseTime)
+            throw;
+
+        Token _token = Token(_tokenContractAddress);
+        uint256 totalTokenBalance = _token.balanceOf(this);
+        if (totalTokenBalance > 0)
+            if (!_token.transfer(beneficiary, totalTokenBalance))
                 throw;
     }
 
