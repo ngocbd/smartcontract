@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JokerToken at 0x6e62831311a9b48694636004b06232b9b09d81dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JokerToken at 0x9d934a83fd602872d156c5adcf191bf65b5cd632
 */
 pragma solidity ^0.4.18;
 
@@ -70,7 +70,7 @@ contract Ownable {
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-    function Ownable() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -88,7 +88,7 @@ contract Ownable {
      */
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
@@ -158,7 +158,7 @@ contract BasicToken is ERC20Basic {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -192,7 +192,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -208,7 +208,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -234,7 +234,7 @@ contract StandardToken is ERC20, BasicToken {
      */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -255,25 +255,30 @@ contract StandardToken is ERC20, BasicToken {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-
 }
 
-contract EthRateOracle is Ownable {
-    uint256 public ethUsdRate;
+contract FreeLimitPool is BasicToken, Ownable {
+    // not for sell vars pool
+    uint256 public nfsPoolLeft;
+    uint256 public nfsPoolCount;
 
-    function update(uint256 _newValue) public onlyOwner {
-        ethUsdRate = _newValue;
+    function nfsPoolTransfer(address _to, uint256 _value) public onlyOwner returns (bool) {
+        require(nfsPoolLeft >= _value, "Value more than tokens left");
+        require(_to != address(0), "Not allowed send to trash tokens");
+
+        nfsPoolLeft -= _value;
+        balances[_to] = balances[_to].add(_value);
+
+        emit Transfer(address(0), _to, _value);
+
+        return true;
     }
 }
 
-contract JokerToken is StandardToken, Ownable {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-
+contract TwoPhases is FreeLimitPool {
     EthRateOracle public oracle;
     uint256 public soldTokensCount = 0;
 
@@ -287,56 +292,11 @@ contract JokerToken is StandardToken, Ownable {
     uint256 public sPeriodEndDate;
     uint256 public sPeriodSoldTokensLimit;
 
-    // not for sell vars pool
-    uint256 public nfsPoolLeft;
-    uint256 public nfsPoolCount;
-
-    uint256 public transfersAllowDate;
-
-    constructor() public {
-        name = "Joker.buzz token";
-        symbol = "JOKER";
-        decimals = 18;
-        // in us cents
-        tokenStartPrice = 40;
-        // not for sell
-        nfsPoolCount = 10900000 * (uint256(10) ** decimals);
-        nfsPoolLeft = nfsPoolCount;
-        // period 2, another price, and after some date
-        tokenSecondPeriodPrice = 200;
-        sPerDate = now + 179 days;
-        sPeriodEndDate = now + 284 days;
-        sPeriodSoldTokensLimit = (totalSupply_ - nfsPoolCount) - 1200000 * (uint256(10) ** decimals);
-        // transfer ability
-        transfersAllowDate = now + 284 days;
-        totalSupply_ = 20000000 * (uint256(10) ** decimals);
-    }
-
-
-
-    function nfsPoolTransfer(address _to, uint256 _value) public onlyOwner returns (bool) {
-        require(nfsPoolLeft >= _value, "Value more than tokens left");
-        require(_to != address(0), "Not allowed send to trash tokens");
-
-        nfsPoolLeft -= _value;
-        balances[_to] = balances[_to].add(_value);
-
-        emit Transfer(address(0), _to, _value);
-
-        return true;
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(transfersAllowDate <= now, "Function cannot be called at this time.");
-
-        return BasicToken.transfer(_to, _value);
-    }
-
     function() public payable {
-        uint256 tokensCount;
-        require(150000000000000 <= msg.value, "min limit eth");
-        uint256 ethUsdRate = oracle.ethUsdRate();
+        require(0.0001 ether <= msg.value, "min limit eth 0.0001");
         require(sPeriodEndDate >= now, "Sell tokens all periods ended");
+        uint256 tokensCount;
+        uint256 ethUsdRate = oracle.getEthUsdRate();
         bool isSecondPeriodNow = now >= sPerDate;
         bool isSecondPeriodTokensLimitReached = soldTokensCount >= (totalSupply_ - sPeriodSoldTokensLimit - nfsPoolCount);
 
@@ -374,19 +334,115 @@ contract JokerToken is StandardToken, Ownable {
     function setOracleAddress(address _oracleAddress) public onlyOwner {
         oracle = EthRateOracle(_oracleAddress);
     }
+}
 
-    function weiBalance() public constant returns (uint weiBal) {
-        return address(this).balance;
-    }
+contract Exchangeable is StandardToken, Ownable {
+    uint256 public transfersAllowDate;
 
-    function weiToOwner(address _address, uint amount) public onlyOwner {
-        require(amount <= address(this).balance);
-        _address.transfer(amount);
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(transfersAllowDate <= now, "Function cannot be called at this time.");
+
+        return BasicToken.transfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(transfersAllowDate <= now);
 
         return StandardToken.transferFrom(_from, _to, _value);
+    }
+}
+
+contract EthRateOracle is Ownable {
+    uint256 public ethUsdRate;
+
+    function update(uint256 _newValue) public onlyOwner {
+        ethUsdRate = _newValue;
+    }
+
+    function getEthUsdRate() public view returns (uint256) {
+        return ethUsdRate;
+    }
+}
+
+contract JokerToken is Exchangeable, TwoPhases {
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+
+    constructor() public {
+        name = "Joker.buzz token";
+        symbol = "JOKER";
+        decimals = 18;
+        totalSupply_ = 20000000 * (uint256(10) ** decimals);
+        // in us cents
+        tokenStartPrice = 40;
+        // not for sell
+        nfsPoolCount = 10900000 * (uint256(10) ** decimals);
+        nfsPoolLeft = nfsPoolCount;
+        // period 2, another price, and after some date
+        tokenSecondPeriodPrice = 200;
+        sPerDate = now + 149 days;
+        sPeriodEndDate = now + 281 days;
+        sPeriodSoldTokensLimit = (totalSupply_ - nfsPoolCount) - 1200000 * (uint256(10) ** decimals);
+        // transfer ability
+        transfersAllowDate = now + 281 days;
+    }
+
+    function getCurrentPhase() public view returns (string) {
+        bool isSecondPeriodNow = now >= sPerDate;
+        bool isSecondPeriodTokensLimitReached = soldTokensCount >= (totalSupply_ - sPeriodSoldTokensLimit - nfsPoolCount);
+        if (transfersAllowDate <= now) {
+            return "Last third phase, you can transfer tokens between users, but can't buy more tokens.";
+        }
+        if (sPeriodEndDate < now) {
+            return "Second phase ended, You can not buy more tokens.";
+        }
+        if (isSecondPeriodNow && isSecondPeriodTokensLimitReached) {
+            return "Second phase by time and solded tokens";
+        }
+        if (isSecondPeriodNow) {
+            return "Second phase by time";
+        }
+        if (isSecondPeriodTokensLimitReached) {
+            return "Second phase by solded tokens";
+        }
+        return "First phase";
+    }
+
+    function getIsSecondPhaseByTime() public view returns (bool) {
+        return now >= sPerDate;
+    }
+
+    function getRemainingDaysToSecondPhase() public view returns (uint) {
+        return (sPerDate - now) / 1 days;
+    }
+
+    function getRemainingDaysToThirdPhase() public view returns (uint) {
+        return (transfersAllowDate - now) / 1 days;
+    }
+
+    function getIsSecondPhaseEndedByTime() public view returns (bool) {
+        return sPeriodEndDate < now;
+    }
+
+    function getIsSecondPhaseBySoldedTokens() public view returns (bool) {
+        return soldTokensCount >= (totalSupply_ - sPeriodSoldTokensLimit - nfsPoolCount);
+    }
+
+    function getIsThirdPhase() public view returns (bool) {
+        return transfersAllowDate <= now;
+    }
+
+    function getBalance(address addr) public view returns (uint) {
+        return balances[addr];
+    }
+
+    function getWeiBalance() public constant returns (uint weiBal) {
+        return address(this).balance;
+    }
+
+    function EthToOwner(address _address, uint amount) public onlyOwner {
+        require(amount <= address(this).balance);
+        _address.transfer(amount);
     }
 }
