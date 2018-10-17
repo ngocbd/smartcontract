@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapFeeBurner at 0xDD5536241D27072CB1971d5aB950Ef390D78D3D1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapFeeBurner at 0xbe401c3cf8528db1b963e2e40827a2e0e1d98ee4
 */
 pragma solidity 0.4.18;
 
@@ -274,26 +274,34 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
         knc = kncToken;
     }
 
+    event ReserveDataSet(address reserve, uint feeInBps, address kncWallet);
     function setReserveData(address reserve, uint feesInBps, address kncWallet) public onlyAdmin {
         require(feesInBps < 100); // make sure it is always < 1%
         require(kncWallet != address(0));
         reserveFeesInBps[reserve] = feesInBps;
         reserveKNCWallet[reserve] = kncWallet;
+        ReserveDataSet(reserve, feesInBps, kncWallet);
     }
 
+    event WalletFeesSet(address wallet, uint feesInBps);
     function setWalletFees(address wallet, uint feesInBps) public onlyAdmin {
         require(feesInBps < 10000); // under 100%
         walletFeesInBps[wallet] = feesInBps;
+        WalletFeesSet(wallet, feesInBps);
     }
 
+    event TaxFeesSet(uint feesInBps);
     function setTaxInBps(uint _taxFeeBps) public onlyAdmin {
         require(_taxFeeBps < 10000); // under 100%
         taxFeeBps = _taxFeeBps;
+        TaxFeesSet(_taxFeeBps);
     }
 
+    event TaxWalletSet(address taxWallet);
     function setTaxWallet(address _taxWallet) public onlyAdmin {
         require(_taxWallet != address(0));
         taxWallet = _taxWallet;
+        TaxWalletSet(_taxWallet);
     }
 
     function setKNCRate(uint rate) public onlyAdmin {
@@ -329,11 +337,11 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
         return true;
     }
 
-
-    // this function is callable by anyone
     event BurnAssignedFees(address indexed reserve, address sender, uint quantity);
+
     event SendTaxFee(address indexed reserve, address sender, address taxWallet, uint quantity);
 
+    // this function is callable by anyone
     function burnReserveFees(address reserve) public {
         uint burnAmount = reserveFeeToBurn[reserve];
         uint taxToSend = 0;
@@ -344,7 +352,7 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
             require(burnAmount - 1 > taxToSend);
             burnAmount -= taxToSend;
             if (taxToSend > 0) {
-                require (knc.transferFrom(reserveKNCWallet[reserve], taxWallet, taxToSend));
+                require(knc.transferFrom(reserveKNCWallet[reserve], taxWallet, taxToSend));
                 SendTaxFee(reserve, msg.sender, taxWallet, taxToSend);
             }
         }
@@ -437,14 +445,11 @@ contract WrapperBase is Withdrawable {
 
 // File: contracts/wrapperContracts/WrapFeeBurner.sol
 
-//import "../Withdrawable.sol";
-
-
-
-
 contract WrapFeeBurner is WrapperBase {
 
-    FeeBurner private feeBurnerContract;
+    FeeBurner public feeBurnerContract;
+    address[] internal feeSharingWallets;
+    uint public feeSharingBps = 3000;
 
     //knc rate range
     struct KncPerEth {
@@ -467,7 +472,7 @@ contract WrapFeeBurner is WrapperBase {
 
     //wallet fee parameters
     struct WalletFee {
-        address wAddress;
+        address walletAddress;
         uint feeBps;
     }
 
@@ -494,6 +499,27 @@ contract WrapFeeBurner is WrapperBase {
     {
         require(_feeBurner != address(0));
         feeBurnerContract = _feeBurner;
+    }
+
+    //register wallets for fee sharing
+    /////////////////////////////////
+    function setFeeSharingValue(uint feeBps) public onlyAdmin {
+        require(feeBps < 10000);
+        feeSharingBps = feeBps;
+    }
+
+    event WalletRegisteredForFeeSharing(address sender, address walletAddress);
+    function registerWalletForFeeSharing(address walletAddress) public {
+        require(feeBurnerContract.walletFeesInBps(walletAddress) == 0);
+
+        // if fee sharing value is 0. means the wallet wasn't added.
+        feeBurnerContract.setWalletFees(walletAddress, feeSharingBps);
+        feeSharingWallets.push(walletAddress);
+        WalletRegisteredForFeeSharing(msg.sender, walletAddress);
+    }
+
+    function getFeeSharingWallets() public view returns(address[]) {
+        return feeSharingWallets;
     }
 
     // knc rate handling
@@ -583,7 +609,7 @@ contract WrapFeeBurner is WrapperBase {
     function setPendingWalletFee(address wallet, uint feeInBps) public onlyOperator {
         require(wallet != address(0));
         require(feeInBps > 0);
-        walletFee.wAddress = wallet;
+        walletFee.walletAddress = wallet;
         walletFee.feeBps = feeInBps;
         setNewData(WALLET_FEE_INDEX);
     }
@@ -591,14 +617,14 @@ contract WrapFeeBurner is WrapperBase {
     function approveWalletFeeData(uint nonce) public onlyOperator {
         if (addSignature(WALLET_FEE_INDEX, nonce, msg.sender)) {
             // can perform operation.
-            feeBurnerContract.setWalletFees(walletFee.wAddress, walletFee.feeBps);
+            feeBurnerContract.setWalletFees(walletFee.walletAddress, walletFee.feeBps);
         }
     }
 
     function getPendingWalletFeeData() public view returns(address wallet, uint feeBps, uint nonce) {
         address[] memory signatures;
         (signatures, nonce) = getDataTrackingParameters(WALLET_FEE_INDEX);
-        return(walletFee.wAddress, walletFee.feeBps, nonce);
+        return(walletFee.walletAddress, walletFee.feeBps, nonce);
     }
 
     function getWalletFeeSignatures() public view returns (address[] signatures) {
