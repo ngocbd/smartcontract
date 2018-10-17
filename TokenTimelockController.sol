@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelockController at 0xfa4c5e8f1182b4aba0b990bd10e04fd3b4717f0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelockController at 0xbbbcb8834bdd5cf931ac6b12b68eae85faf2e580
 */
 pragma solidity ^0.4.23;
 
@@ -191,7 +191,7 @@ contract TokenTimelockController is Ownable {
 
   uint256 public constant TEAM_LOCK_DURATION_PART1 = 1 * 365 days;
   uint256 public constant TEAM_LOCK_DURATION_PART2 = 2 * 365 days;
-  uint256 public constant INVESTOR_LOCK_DURATION = 1 hours;
+  uint256 public constant INVESTOR_LOCK_DURATION = 6 * 30 days;
 
   mapping (address => TokenTimelock[]) tokenTimeLocks;
   
