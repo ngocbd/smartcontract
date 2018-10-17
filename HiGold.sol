@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiGold at 0xb4453c40afd61f43e25ed073c84332fd573df4c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiGold at 0x8ae00fedaf768bb88ce028e5e6dea6fa356d2d97
 */
 pragma solidity ^0.4.24;
 
@@ -211,9 +211,9 @@ contract HiGold is StandardToken, Ownable {
 
     /*** FUNCTIONS ***/
     // Constructor function
-    constructor() public {
+    constructor(address _cold) public {
         totalSupply = 105 * (10 ** 26);
-        balances[msg.sender] = totalSupply;
+        balances[_cold] = totalSupply;
     }
 
     // Public functions
