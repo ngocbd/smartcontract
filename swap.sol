@@ -1,179 +1,108 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SWAP at 0x14a52cf6b4f68431bd5d9524e4fcd6f41ce4ade9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SWAP at 0xe995E03275dAfDb7CC1Fa17C6BBC21bFED379fdd
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.18;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract TokenInterface{
+    uint256 public totalSupply;
+    uint256 public price;
+    uint256 public decimals;
+    function () public payable;
+    function balanceOf(address _owner) view public returns(uint256);
+    function transfer(address _to, uint256 _value) public returns(bool);
 }
 
-contract Base {
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
+contract SWAP{
+    
+    string public name="SWAP";
+    string public symbol="SWAP";
+    
+    uint256 public totalSupply; 
+    uint256 public price = 50;
+    uint256 public decimals = 18; 
+
+    address MyETHWallet;
+    function SWAP() public {  
+        MyETHWallet = msg.sender;
+        name="SWAP";
+        symbol="SWAP";
+    }
+
+    modifier onlyValidAddress(address _to){
+        require(_to != address(0x00));
         _;
     }
-}
+    mapping (address => uint256) balances; 
+    mapping (address => mapping (address => uint256)) public allowance; //phu cap
 
-contract Owned is Base {
-
-    address public owner;
-    address newOwner;
-
-    function Owned() public {
-        owner = msg.sender;
+    function setPrice(uint256 _price) public returns (uint256){
+        price = _price;
+        return price;
     }
 
-    function transferOwnership(address _newOwner) only(owner) public {
-        newOwner = _newOwner;
+    function setDecimals(uint256 _decimals) public returns (uint256){
+        decimals = _decimals;
+        return decimals;
     }
-
-    function acceptOwnership() only(newOwner) public {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-}
-
-contract ERC20 is Owned {
-    using SafeMath for uint;
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    function transfer(address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
     
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-    
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) constant public returns (uint balance) {
+    function balanceOf(address _owner) view public returns(uint256){
         return balances[_owner];
     }
+    
+    //t?o ra m?t s? ki?n công khai trên blockchain s? thông báo cho khách hàng
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Withdraw(address to, uint amount); //rut tien
 
-    function approve_fixed(address _spender, uint _currentValue, uint _value) isStartedOnly public returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
-        }
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balances[_from] >= _value);
+        require(balances[_to] + _value >= balances[_to]);
+        
+        uint previousBalances = balances[_from] + balances[_to];
+        
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        emit Transfer(_from, _to, _value);
+        
+        assert(balances[_from] + balances[_to] == previousBalances);
     }
 
-    function approve(address _spender, uint _value) isStartedOnly public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);  
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant public returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-
-    uint public totalSupply;
-    bool    public isStarted = false;
-
-    modifier isStartedOnly() {
-        require(isStarted);
-        _;
-    }
-
-}
-
-contract SWAP is ERC20 {
-    using SafeMath for uint;
-
-    string public name = "www.swap.online community token";
-    string public symbol = "SWAP";
-    uint8 public decimals = 18;
-
-    modifier isNotStartedOnly() {
-        require(!isStarted);
-        _;
-    }
-
-    function getTotalSupply()
-    public
-    constant
-    returns(uint)
-    {
-        return totalSupply;
-    }
-
-    function start()
-    public
-    only(owner)
-    isNotStartedOnly
-    {
-        isStarted = true;
-    }
-
-    //================= Crowdsale Only =================
-    function mint(address _to, uint _amount) public
-    only(owner)
-    isNotStartedOnly
-    returns(bool)
-    {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
         return true;
     }
+   
+    function () public payable {
+        uint256 token = (msg.value*price)/10**decimals; //1 eth = 10^18 wei
+        totalSupply += token;
+        balances[msg.sender] = token;
+    }
+    
+    
+    modifier onlyMyETHWallet(){
+        require(msg.sender == MyETHWallet);
+        _;
+    }
+    
+    function withdrawEtherOnlyOwner() external onlyMyETHWallet{
+        msg.sender.transfer(address(this).balance);
+        emit Withdraw(msg.sender,address(this).balance);
+    }
 
-
-    function multimint(address[] dests, uint[] values) public
-    only(owner)
-    isNotStartedOnly
-    returns (uint) {
-        uint i = 0;
-        while (i < dests.length) {
-           mint(dests[i], values[i]);
-           i += 1;
-        }
-        return(i);
+    function sendEthToAddress(address _address, uint256 _value) external onlyValidAddress(_address){
+        _address.transfer(_value);
+        emit Withdraw(_address,_value);
     }
 }
