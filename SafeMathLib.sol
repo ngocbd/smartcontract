@@ -1,26 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLib at 0xdb57a3dd6d4d05423d5ca9c30838a2413ed2458c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLib at 0x6ae73e72787bf0eda92da4eaa13335c23b332103
 */
-// File: contracts/SafeMathLib.sol
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-pragma solidity ^0.4.6;
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
 library SafeMathLib {
 
   function times(uint a, uint b) returns (uint) {
@@ -36,8 +16,11 @@ library SafeMathLib {
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a);
+    assert(c>=a && c>=b);
     return c;
   }
 
+  function assert(bool assertion) private {
+    if (!assertion) throw;
+  }
 }
