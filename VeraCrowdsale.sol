@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeraCrowdsale at 0x7ad012fd817f8f5296805cbdc74e3a49c4affe5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeraCrowdsale at 0x5ac3c4518ebaec379f9dd0e60e4b72f1eb432592
 */
 pragma solidity ^0.4.24;
 
+// File: contracts/math/Math.sol
 
 /**
  * @title Math
@@ -26,6 +27,7 @@ library Math {
   }
 }
 
+// File: contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -37,13 +39,9 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
-
     c = a * b;
     assert(c / a == b);
     return c;
@@ -77,6 +75,7 @@ library SafeMath {
   }
 }
 
+// File: contracts/rbac/Roles.sol
 
 /**
  * @title Roles
@@ -131,6 +130,7 @@ library Roles {
   }
 }
 
+// File: contracts/rbac/RBAC.sol
 
 /**
  * @title RBAC (Role-Based Access Control)
@@ -212,8 +212,31 @@ contract RBAC {
     checkRole(msg.sender, roleName);
     _;
   }
+
+  /**
+   * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
+   * @param roleNames the names of the roles to scope access to
+   * // reverts
+   *
+   * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
+   *  see: https://github.com/ethereum/solidity/issues/2467
+   */
+  // modifier onlyRoles(string[] roleNames) {
+  //     bool hasAnyRole = false;
+  //     for (uint8 i = 0; i < roleNames.length; i++) {
+  //         if (hasRole(msg.sender, roleNames[i])) {
+  //             hasAnyRole = true;
+  //             break;
+  //         }
+  //     }
+
+  //     require(hasAnyRole);
+
+  //     _;
+  // }
 }
 
+// File: contracts/VeraCrowdsale.sol
 
 /**
  * @title Interface of Price oracle
@@ -258,7 +281,7 @@ contract VeraCrowdsale is RBAC {
   uint256 public tokenPriceInCents = 200;
 
   // Minimal amount of USD cents to invest. Transactions of less value will be reverted.
-  uint256 public minDepositInCents = 800000;
+  uint256 public minDepositInCents = 1000;
 
   // Amount of USD cents raised. Continuously increments on each transaction.
   // Note: may be irrelevant because the actual amount of harvested ethers depends on ETH/USD price at the moment.
