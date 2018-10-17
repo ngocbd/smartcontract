@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SUREToken at 0x1b20d171d65245d0996989c9792d1051d5b47672
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SUREToken at 0x95382ac82e886a367bac9e1e23beabe569bcfed8
 */
 pragma solidity ^0.4.24;
 
@@ -333,8 +333,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract SUREToken is MintableToken {
     address private deployedAddress = 0x65E5fF263Dd264b78ADcb08c1788c4CEC8910B4B; //Replace this address by the Ethereum main net
-    string public name = "SURE";
-    string public symbol = "SURE Token";    
+    string public name = "SURETY Token";
+    string public symbol = "SURE";    
     uint public decimals = 6;
     uint public totalSupplyToken = 500000000;  
 
@@ -346,6 +346,12 @@ contract SUREToken is MintableToken {
 
      /* Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
     mapping (address => bool) public transferAgents;
+
+     /* A contract can release SURETY.AI team members/advisors to transfertoken. If false we are are in transfer lock up period.*/
+    bool public releasedTeam = false;
+
+     /* Map of SURETY.AI's team members/advisors. */
+    mapping (address => bool) public teamMembers;
     
     constructor() public {                    
         totalSupply_ = totalSupplyToken * (10 ** decimals);
@@ -362,9 +368,13 @@ contract SUREToken is MintableToken {
 
         if(!released) {
             if(!transferAgents[_sender]) {
-                revert();
+                revert("The token is in the locking period");
             }
         }
+        else if (!releasedTeam && teamMembers[_sender])
+        {
+            revert("Team members/advisors cannot trade during this period.");
+        }    
         _;
     }
 
@@ -379,8 +389,18 @@ contract SUREToken is MintableToken {
     * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
     */
     function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
-        transferAgents[addr] = state;
+        require (!teamMembers[addr], "Error! This address is a team member/advisor address.");
+        transferAgents[addr] = state;       
     }
+
+     /**
+    * Owner can add the team member/advisor address.
+    */
+    function setTeamMember(address addr, bool state) onlyOwner inReleaseState(false) public {
+        require (!transferAgents[addr], "Error! This address is in the transfer agent list.");
+        teamMembers[addr] = state;            
+    }
+
 
     /**
     * End locking state
@@ -394,6 +414,20 @@ contract SUREToken is MintableToken {
     */
     function stopTokenTransfer() public onlyReleaseAgent {
         released = false;
+    }
+
+     /**
+    * End locking state for team member/advisor.
+    */
+    function releaseTeamTokenTransfer() public onlyReleaseAgent {
+        releasedTeam = true;
+    }
+
+    /**
+    * Resume locking state for team member/advisor.
+    */
+    function stopTeamTokenTransfer() public onlyReleaseAgent {
+        releasedTeam = false;
     }
 
     /** The function can be called only before or after the tokens have been releasesd */
