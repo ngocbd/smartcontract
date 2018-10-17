@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokensHolder at 0xdb3c23c835d208b863f50093d85f20760b951aa9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokensHolder at 0xcbf0efadbe57205e235701efc46b331e17bef3c0
 */
 pragma solidity ^0.4.24;
 
@@ -233,6 +233,7 @@ contract TeamTokensHolder is Owned{
     uint256 public amountPerRelease = total.div(6);       // 375 million
     uint256 public collectedTokens;
 
+    address public TeamAddress = 0x7572b353B176Cc8ceF510616D0fDF8B4551Ba16e;
 
     event TokensWithdrawn(address indexed _holder, uint256 _amount);
     event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
@@ -263,8 +264,8 @@ contract TeamTokensHolder is Owned{
             amount = balance;
         }
 
-        assert (LBC.transfer(owner, amount));
-        emit TokensWithdrawn(owner, amount);
+        assert (LBC.transfer(TeamAddress, amount));
+        emit TokensWithdrawn(TeamAddress, amount);
         collectedTokens = collectedTokens.add(amount);
         
         return true;
@@ -328,9 +329,9 @@ contract TokenLock is Owned{
     uint256 public collectedTokens;
     uint256 public startTime;
 
-    address public POSAddress       = 0x72CE608648c5b2E7FB5575F72De32B4F5dfCee18; //30% DPOS
-    address public CommunityAddress = 0x7fD2944a178f4dc0A50783De6Bad1857147774c0; //10% Community promotion
-    address public OperationAddress = 0x33Df6bace87AE59666DD1DE2FDEB383D164f1f36; //10% Operation and maintenance
+    address public POSAddress       = 0x23eB4df52175d89d8Df83F44992A5723bBbac00c; //30% DPOS
+    address public CommunityAddress = 0x9370973BEa603b86F07C2BFA8461f178081ce49F; //10% Community promotion
+    address public OperationAddress = 0x69Ce6E9E77869bFcf0Ec3c217b5e7E4905F4AFFf; //10% Operation and maintenance
 
     uint256 _1stYear = totalLocked.mul(5000).div(10000);  // 50%
     uint256 _2stYear = totalLocked.mul(2500).div(10000);  // 25%
@@ -338,11 +339,12 @@ contract TokenLock is Owned{
     uint256 _4stYear = totalLocked.mul(625).div(10000);   // 6.25%
     uint256 _5stYear = totalLocked.mul(625).div(10000);   // 6.25%
 
-    mapping (address => bool) whiteList;
+    mapping (address => bool) public whiteList;
     
 
     event TokensWithdrawn(uint256 _amount);
     event LogMangeWhile(address indexed _dest, bool _allow);
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
 
     modifier onlyWhite() { 
         require (whiteList[msg.sender] == true); 
@@ -384,12 +386,12 @@ contract TokenLock is Owned{
      * @dev Calculates the total number of tokens that can be unlocked based on time.
      * @return uint256 : total number of unlockable
      */
-    function calculation() view internal returns(uint256){
+    function calculation() view public returns(uint256){
         uint256 _month = getMonths();
         uint256 _amount;
 
         if (_month == 0){
-            revert();
+            return 0;
         }
 
         if (_month <= 12 ){
@@ -423,7 +425,7 @@ contract TokenLock is Owned{
     }
 
     /* Get how many months have passed since the contract was deployed. */
-    function getMonths() view internal returns(uint256){
+    function getMonths() view public returns(uint256){
         uint256 countMonth = (getTime().sub(startTime)).div(30 * 24 * 3600);
         return countMonth; // begin 0
     }
@@ -446,7 +448,21 @@ contract TokenLock is Owned{
     }
 
     /* Get the timestamp of the current block */
-    function getTime() view internal returns(uint256){
+    function getTime() view public returns(uint256){
         return now; //block.timestamp
+    }
+
+
+    /// Safe Function
+    /// @dev This method can be used by the controller to extract mistakenly
+    /// @param _token The address of the token contract that you want to recover
+    function claimTokens(address _token) public onlyOwner returns(bool){
+        require(_token != address(LBC));
+
+        ERC20 token = ERC20(_token);
+        uint256 balance = token.balanceOf(this);
+        token.transfer(owner, balance);
+        emit ClaimedTokens(_token, owner, balance);
+        return true;
     }
 }
