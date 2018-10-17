@@ -1,86 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x7932f0fd456084c829336452d6001f3c7dbf5639
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0xe6bee8b2d49e623dbad414d9d3fa2fad35d9a6e6
 */
 pragma solidity ^0.4.24;
 
-interface Token {
-  function transfer(address _to, uint256 _value) external returns (bool);
-  function balanceOf(address who) external view returns (uint256 _user);
-}
+/**
+ * SmartEth.co
+ * ERC20 Token and ICO smart contracts development, smart contracts audit, ICO websites.
+ * contact@smarteth.co
+ */
 
-contract onlyOwner {
+/**
+ * @title Ownable
+ */
+contract Ownable {
   address public owner;
-    bool private stopped = false;
-  /** 
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
   constructor() public {
-    owner = 0x073db5ac9aa943253a513cd692d16160f1c10e74;
-
+    owner = 0x05C40Def8a40771aA5fd362BCd96e1bb64Ec9044;
   }
-    
-    modifier isRunning {
-        require(!stopped);
-        _;
-    }
-    
-    function stop() isOwner public {
-        stopped = true;
-    }
 
-    function start() isOwner public {
-        stopped = false;
-    }
-  /**
-  * @dev Throws if called by any account other than the owner. 
-  */
-  modifier isOwner {
+  modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-contract AirDrop is onlyOwner{
+/**
+ * @title ERC20Basic
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-  Token token;
-  address _creator = 0x073db5ac9aa943253a513cd692d16160f1c10e74;
-  event TransferredToken(address indexed to, uint256 value);
+/**
+ * @title ERC20 interface
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
+contract Airdrop is Ownable {
 
-  constructor() public{
-      address _tokenAddr =  0x99092a458b405fb8c06c5a3aa01cffd826019568; //here pass address of your token
-      token = Token(_tokenAddr);
-  }
+  ERC20 public token = ERC20(0x259059f137CB9B8F60AE27Bd199d97aBb69E539B);
 
-    function() external payable{
-        withdraw();
-    }
-    
-    function sendResidualAmount(uint256 value) isOwner public returns(bool){
-        token.transfer(_creator, value*10**18);
-        emit TransferredToken(msg.sender, value);
-    }    
-    
-    function sendAmount(address _user, uint256 value) isOwner public returns(bool){
-        _user.transfer(value);
-    }
-    
-  function sendInternally(uint256 tokensToSend, uint256 valueToPresent) internal {
-    require(msg.sender != address(0));
-    uint balance = userXRTBalance(msg.sender);
-    require(balance == 0);
-    token.transfer(msg.sender, tokensToSend);
-    emit TransferredToken(msg.sender, valueToPresent);
-    
+  function airdrop(address[] recipient, uint256[] amount) public onlyOwner returns (uint256) {
+    uint256 i = 0;
+      while (i < recipient.length) {
+        token.transfer(recipient[i], amount[i]);
+        i += 1;
+      }
+    return(i);
   }
   
-  function userXRTBalance(address _user) private view returns(uint){
-      return token.balanceOf(_user);
-  }
-
-  function withdraw() isRunning private returns(bool) {
-    sendInternally(400*10**18,400);
-    return true;   
+  function airdropSameAmount(address[] recipient, uint256 amount) public onlyOwner returns (uint256) {
+    uint256 i = 0;
+      while (i < recipient.length) {
+        token.transfer(recipient[i], amount);
+        i += 1;
+      }
+    return(i);
   }
 }
