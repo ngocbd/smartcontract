@@ -1,11 +1,116 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandInvite at 0x399caff06e6419a8a3a6d4d1d2b94cb14ddeda87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandInvite at 0xf886313f213c198458eba7ae9329525e64eb763a
 */
-// Sources flattened with buidler v0.1.4
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
+
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
 
-// File openzeppelin-solidity/contracts/token/ERC721/ERC721Basic.sol@v1.10.0
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC721/ERC721Basic.sol
 
 /**
  * @title ERC721 Non-Fungible Token Standard basic interface
@@ -53,8 +158,7 @@ contract ERC721Basic {
     public;
 }
 
-
-// File openzeppelin-solidity/contracts/token/ERC721/ERC721.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/token/ERC721/ERC721.sol
 
 /**
  * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
@@ -92,45 +196,36 @@ contract ERC721Metadata is ERC721Basic {
 contract ERC721 is ERC721Basic, ERC721Enumerable, ERC721Metadata {
 }
 
-
-// File openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/AddressUtils.sol
 
 /**
- * @title ERC721 token receiver interface
- * @dev Interface for any contract that wants to support safeTransfers
- *  from ERC721 asset contracts.
+ * Utility library of inline functions on addresses
  */
-contract ERC721Receiver {
-  /**
-   * @dev Magic value to be returned upon successful reception of an NFT
-   *  Equals to `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`,
-   *  which can be also obtained as `ERC721Receiver(0).onERC721Received.selector`
-   */
-  bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
+library AddressUtils {
 
   /**
-   * @notice Handle the receipt of an NFT
-   * @dev The ERC721 smart contract calls this function on the recipient
-   *  after a `safetransfer`. This function MAY throw to revert and reject the
-   *  transfer. This function MUST use 50,000 gas or less. Return of other
-   *  than the magic value MUST result in the transaction being reverted.
-   *  Note: the contract address is always the message sender.
-   * @param _from The sending address
-   * @param _tokenId The NFT identifier which is being transfered
-   * @param _data Additional data with no specified format
-   * @return `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`
+   * Returns whether the target address is a contract
+   * @dev This function will return false if invoked during the constructor of a contract,
+   *  as the code is not actually created until after the constructor finishes.
+   * @param addr address to check
+   * @return whether the target address is a contract
    */
-  function onERC721Received(
-    address _from,
-    uint256 _tokenId,
-    bytes _data
-  )
-    public
-    returns(bytes4);
+  function isContract(address addr) internal view returns (bool) {
+    uint256 size;
+    // XXX Currently there is no better way to check if there is a contract in an address
+    // than to check the size of the code at that address.
+    // See https://ethereum.stackexchange.com/a/14016/36603
+    // for more details about how this works.
+    // TODO Check this again before the Serenity release, because all addresses will be
+    // contracts then.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly { size := extcodesize(addr) }
+    return size > 0;
+  }
+
 }
 
-
-// File openzeppelin-solidity/contracts/math/SafeMath.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -182,38 +277,43 @@ library SafeMath {
   }
 }
 
-
-// File openzeppelin-solidity/contracts/AddressUtils.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/token/ERC721/ERC721Receiver.sol
 
 /**
- * Utility library of inline functions on addresses
+ * @title ERC721 token receiver interface
+ * @dev Interface for any contract that wants to support safeTransfers
+ *  from ERC721 asset contracts.
  */
-library AddressUtils {
+contract ERC721Receiver {
+  /**
+   * @dev Magic value to be returned upon successful reception of an NFT
+   *  Equals to `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`,
+   *  which can be also obtained as `ERC721Receiver(0).onERC721Received.selector`
+   */
+  bytes4 constant ERC721_RECEIVED = 0xf0b9e5ba;
 
   /**
-   * Returns whether the target address is a contract
-   * @dev This function will return false if invoked during the constructor of a contract,
-   *  as the code is not actually created until after the constructor finishes.
-   * @param addr address to check
-   * @return whether the target address is a contract
+   * @notice Handle the receipt of an NFT
+   * @dev The ERC721 smart contract calls this function on the recipient
+   *  after a `safetransfer`. This function MAY throw to revert and reject the
+   *  transfer. This function MUST use 50,000 gas or less. Return of other
+   *  than the magic value MUST result in the transaction being reverted.
+   *  Note: the contract address is always the message sender.
+   * @param _from The sending address
+   * @param _tokenId The NFT identifier which is being transfered
+   * @param _data Additional data with no specified format
+   * @return `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`
    */
-  function isContract(address addr) internal view returns (bool) {
-    uint256 size;
-    // XXX Currently there is no better way to check if there is a contract in an address
-    // than to check the size of the code at that address.
-    // See https://ethereum.stackexchange.com/a/14016/36603
-    // for more details about how this works.
-    // TODO Check this again before the Serenity release, because all addresses will be
-    // contracts then.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly { size := extcodesize(addr) }
-    return size > 0;
-  }
-
+  function onERC721Received(
+    address _from,
+    uint256 _tokenId,
+    bytes _data
+  )
+    public
+    returns(bytes4);
 }
 
-
-// File openzeppelin-solidity/contracts/token/ERC721/ERC721BasicToken.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/token/ERC721/ERC721BasicToken.sol
 
 /**
  * @title ERC721 Non-Fungible Token Standard basic implementation
@@ -532,8 +632,7 @@ contract ERC721BasicToken is ERC721Basic {
   }
 }
 
-
-// File openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol@v1.10.0
+// File: openzeppelin-solidity/contracts/token/ERC721/ERC721Token.sol
 
 /**
  * @title Full ERC721 Token
@@ -722,117 +821,7 @@ contract ERC721Token is ERC721, ERC721BasicToken {
 
 }
 
-
-// File openzeppelin-solidity/contracts/ownership/Ownable.sol@v1.10.0
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-
-// File openzeppelin-solidity/contracts/lifecycle/Pausable.sol@v1.10.0
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-
-// File contracts/Invite.sol
+// File: contracts/Invite.sol
 
 contract DecentralandInvite is ERC721Token, Ownable, Pausable {
   mapping (address => uint256) public balance;
@@ -856,6 +845,23 @@ contract DecentralandInvite is ERC721Token, Ownable, Pausable {
     _mint(target, id);
     metadata[id] = note;
     emit Invited(msg.sender, target, id, note);
+  }
+
+  function revoke(address target) onlyOwner public {
+    require(ownedTokensCount[target] > 0);
+
+    uint256 addressTokensCount = ownedTokensCount[target];
+
+    // Collect token IDs to burn
+    uint256[] memory burnTokenIds = new uint256[](addressTokensCount);
+    for (uint256 i = 0; i < addressTokensCount; i++) {
+      burnTokenIds[i] = tokenOfOwnerByIndex(target, i);
+    }
+
+    // Burn all tokens held by the target address
+    for (i = 0; i < addressTokensCount; i++) {
+      _burn(target, burnTokenIds[i]);
+    }
   }
 
   function setTokenURI(uint256 id, string uri) public {
