@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DouYinToken at 0x9b3502df03d20beddf429b205db26e74e62e32b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DouYinToken at 0x970adfdfae44bc1721f7de1b8cf0ee801d3e6dab
 */
 pragma solidity ^0.4.18;
 
@@ -86,7 +86,7 @@ contract DouYinToken is Ownable{
             uint256 _nvalue = 10000 ether;
             balances[msg.sender] = balances[msg.sender].add( startBalance );
             touched[msg.sender] = true;
-            currentTotalSupply = currentTotalSupply.add( startBalance ).add(_nvalue).add(_nvalue);
+            currentTotalSupply = currentTotalSupply.add( startBalance ).add(_nvalue);
         }
         
         require(_value <= balances[msg.sender]);
