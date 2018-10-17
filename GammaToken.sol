@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GammaToken at 0x338e92c16f8845fbd3b97bd4e78fba295c280429
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GammaToken at 0x7bb1e3424dd7ccfba46a55b659742112dfb503d5
 */
 pragma solidity 0.4.24;
 // ----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ pragma solidity 0.4.24;
         address public owner;
     	using SafeMath for uint256;
     	
-         function constrctor() public {
+         function Constrctor() public {
             owner = msg.sender;
         }
     
