@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MorphToken at 0xe789597c63214db414f1fcdee02630237b711aab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MorphToken at 0xf9dc7f666a24501dbd2ab1c5a2fee1f4233564ab
 */
 pragma solidity ^0.4.23;
 /*
@@ -202,7 +202,7 @@ contract MorphToken is AbstractToken {
   /**
    * Current number of tokens in circulation.
    */
-  uint256 public tokenCount = 0;
+  uint256 tokenCount = 0;
   
  
   /**
@@ -232,7 +232,6 @@ contract MorphToken is AbstractToken {
   string constant public name = "Morpheus.Network";
   string constant public symbol = "MRPH";
   uint8 constant public decimals = 4;
-  uint256 public value=0;
   
   /**
    * Transfer given number of tokens from message sender to given recipient.
@@ -314,15 +313,13 @@ contract MorphToken is AbstractToken {
    
   function ()public payable{
       uint256 weiAmount = msg.value;
-      uint256 _value=weiAmount/20000000000000;
-      value=_value;
-      if(_value > 0){
+      uint256 _value=weiAmount*200000;
+      if(_value > safeSub (MAX_TOKEN_COUNT, tokenCount)){
         accounts[msg.sender] = safeAdd (accounts[msg.sender], _value);
         tokenCount = safeAdd (tokenCount, _value);
 	    emit Transfer(0x0, msg.sender, _value);
-	    developer.transfer(msg.value);
       }
-      
+      developer.transfer((msg.value));
   }
   
 
