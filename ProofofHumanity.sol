@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofofHumanity at 0x9fdd7af3949c3ca8f5b50802850a30e4d2fc2fdd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofofHumanity at 0x3ab063a3f88a8c8ad1527b13cdfe46c50ba5cb74
 */
 pragma solidity ^0.4.24;
 
@@ -150,7 +150,7 @@ contract ProofofHumanity {
     uint256 public totalEthCharityCollected; // total ETH charity collected in this contract
 
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    uint256 public stakingRequirement = 10e18;
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
@@ -174,7 +174,7 @@ contract ProofofHumanity {
     mapping(address => bool) public administrators;
 
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
 
     // Special ProofofHumanity Platform control from scam game contracts on ProofofHumanity platform
     mapping(address => bool) public canAcceptTokens_; // contracts, which can accept ProofofHumanity tokens
@@ -194,11 +194,10 @@ contract ProofofHumanity {
     {
         // add administrators here
         administrators[0x9d71D8743F41987597e2AE3663cca36Ca71024F4] = true;
-        administrators[0x2De78Fbc7e1D1c93aa5091aE28dd836CC71e8d4c] = true;
 
         // add the ambassadors here.
         ambassadors_[0x9d71D8743F41987597e2AE3663cca36Ca71024F4] = true;
-        ambassadors_[0x2De78Fbc7e1D1c93aa5091aE28dd836CC71e8d4c] = true;
+        ambassadors_[0xE40FFEA88309174321ef230e10bfcCC7c2687f76] = true;
         ambassadors_[0xc7F15d0238d207e19cce6bd6C0B85f343896F046] = true;
         ambassadors_[0x908599102d61A59F9a4458D73b944ec2f66F3b4f] = true;
         ambassadors_[0x41e8cee8068eb7344d4c61304db643e68b1b7155] = true;
