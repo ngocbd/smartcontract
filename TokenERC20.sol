@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf7e0ce5f3ce442d743a153f42b098f74c1ff29cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x0a32d139ea424f11feaa39eb23a503592f272de0
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
-    string public name;         //DY INTL BUSINESS INSTITUTE 
+    string public name;         //?????? china pai brands blockchain
     string public symbol;
     uint8 public decimals = 18;  
     uint256 public totalSupply;  
