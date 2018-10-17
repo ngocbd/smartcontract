@@ -1,200 +1,138 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd75ee6c853ce690668c923e7ba7b8411ca81db46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7beb466c221d3bdf50b314beccef69acf0eed94d
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.16;
 
-/**
-* @title SafeMath by OpenZeppelin (commit: 5daaf60)
-* @dev Math operations with safety checks that throw on error
-*/
-library SafeMath {
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (a == 0) 
-            return 0;
-
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-interface Token {
-    function transfer(address to, uint256 value) external returns (bool success);
-    function burn(uint256 amount) external;
-    function balanceOf(address owner) external returns (uint256 balance);
+interface token {
+    function transfer(address receiver, uint amount);
 }
 
 contract Crowdsale {
-    address public owner;                       // Address of the contract owner
-    address public fundRaiser;                  // Address which can withraw funds raised
-    uint256 public amountRaisedInWei;           // Total amount of ether raised in wei
-    uint256 public tokensSold;                  // Total number of tokens sold
-    uint256 public tokensClaimed;               // Total Number of tokens claimed by participants
-    uint256 public icoDeadline;                 // Duration this ICO will end
-    uint256 public tokensClaimableAfter;        // Duration after tokens will be claimable
-    uint256 public tokensPerWei;                // How many token units a buyer gets per wei 
-    Token public tokenReward;                   // Token contract being distributed 
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
+    // Release progress
+    uint public percent;
+    mapping(address => uint256) public percentOf;
 
-    // Map of crowdsale participants, address as key and Participant structure as value
-    mapping(address => Participant) public participants;    
-
-    // This is a type for a single Participant
-    struct Participant {
-        bool whitelisted;
-        uint256 tokens;
-        bool tokensClaimed;
-    }
-
-    event FundTransfer(address to, uint amount);
-
-    modifier afterIcoDeadline() { if (now >= icoDeadline) _; }
-    modifier afterTokensClaimableDeadline() { if (now >= tokensClaimableAfter) _; }
-    modifier onlyOwner() { require(msg.sender == owner); _; }
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    event RewardToken(address backer, uint amount, uint percent);
 
     /**
      * Constructor function
+     *
+     * Setup the owner
      */
     function Crowdsale(
-        address fundRaiserAccount,
-        uint256 durationOfIcoInDays,
-        uint256 durationTokensClaimableAfterInDays,
-        uint256 tokensForOneWei,
-        address addressOfToken
-    ) 
-        public 
-    {
-        owner = msg.sender;
-        fundRaiser = fundRaiserAccount;
-        icoDeadline = now + durationOfIcoInDays * 1 days;
-        tokensClaimableAfter = now + durationTokensClaimableAfterInDays * 1 days;
-        tokensPerWei = tokensForOneWei;
-        tokenReward = Token(addressOfToken);
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint durationInMinutes,
+        uint weiCostOfEachToken,
+        address addressOfTokenUsedAsReward,
+        uint initPercent
+    ) {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        deadline = now + durationInMinutes * 1 minutes;
+        price = weiCostOfEachToken * 1 wei;
+        tokenReward = token(addressOfTokenUsedAsReward);
+        percent = initPercent;
     }
 
     /**
-     * Fallback function: Buy token
-     * The function without name is the default function that is called whenever anyone sends funds to a contract.
-     * Reserves a number tokens per participant by multiplying tokensPerWei and sent ether in wei.
-     * This function is able to buy token in four cases:
-     *      - Before deadline
-     *      - Payer is whitelisted
-     *      - Sent ether is equal or bigger than minimum transaction (0.01 ether) 
-     *      - There are enough tokens to sell in contract (Tokens in contract minus tokensSold)
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
-    function() payable public {
-        require(now < icoDeadline);
-        require(participants[msg.sender].whitelisted);             
-        require(msg.value >= 0.01 ether); 
-        uint256 tokensToBuy = SafeMath.mul(msg.value, tokensPerWei);
-        require(tokensToBuy <= SafeMath.sub(tokenReward.balanceOf(this), tokensSold));
-        participants[msg.sender].tokens = SafeMath.add(participants[msg.sender].tokens, tokensToBuy);      
-        amountRaisedInWei = SafeMath.add(amountRaisedInWei, msg.value);
-        tokensSold = SafeMath.add(tokensSold, tokensToBuy);
+    function () payable {
+        if (crowdsaleClosed) {
+            uint amount2 = balanceOf[msg.sender];
+            uint rewardPercent = percent - percentOf[msg.sender];
+            require(amount2 > 0 && rewardPercent > 0);
+            percentOf[msg.sender] = percent;
+            // Release percent of reward token
+            uint rewardAmount2 = amount2 * 10**18 * rewardPercent / price / 100;
+            tokenReward.transfer(msg.sender, rewardAmount2);
+            RewardToken(msg.sender, rewardAmount2, rewardPercent);
+        } else {
+            uint amount = msg.value;
+            balanceOf[msg.sender] += amount;
+            amountRaised += amount;
+            percentOf[msg.sender] = percent;
+            // Release init percent of reward token
+            uint rewardAmount = amount * 10**18 * percent / price / 100;
+            tokenReward.transfer(msg.sender, rewardAmount);
+            FundTransfer(msg.sender, amount, true);
+            RewardToken(msg.sender, rewardAmount, percent);
+        }
+    }
+
+    modifier afterDeadline() { if (now >= deadline) _; }
+
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline {
+        if (amountRaised >= fundingGoal){
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
+    }
+
+
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline {
+        require(crowdsaleClosed);
+
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
+
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
     }
     
     /**
-    * Add single address into the whitelist. 
-    * Note: Use this function for a single address save transaction fee
-    */ 
-    function addToWhitelist(address addr) onlyOwner public {
-        participants[addr].whitelisted = true;   
-    }
+     * Release 10% of reward token
+     *
+     * Release 10% of reward token when beneficiary call this function.
+     */
+    function releaseTenPercent() afterDeadline {
+        require(crowdsaleClosed);
 
-    /**
-    * Remove single address into the whitelist. 
-    * Note: Use this function for a single address save transaction fee
-    */ 
-    function removeFromWhitelist(address addr) onlyOwner public {
-        participants[addr].whitelisted = false;   
-    }
-
-    /**
-    * Remove single address into the whitelist. 
-    * Note-1: Use addToWhitelist for a single address to save transaction fee
-    * Note-2: Use this function for more than one address to save transaction fee
-    */ 
-    function addAddressesToWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            participants[addresses[i]].whitelisted = true;   
+        require(percent <= 90);
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            percent += 10;
         }
-    }
-
-    /**
-    * Add single address into the whitelist
-    * Note-1: Use addToWhitelist for a single address to save transaction fee
-    * Note-2: Use this function for more than one address to save transaction fee
-    */ 
-    function removeAddressesFromWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            participants[addresses[i]].whitelisted = false;   
-        }
-    }
-
-    // ----------- After ICO Deadline ------------
-
-    /**
-    * Fundraiser address claims the raised funds after ICO deadline
-    */ 
-    function withdrawFunds() afterIcoDeadline public {
-        require(fundRaiser == msg.sender);
-        fundRaiser.transfer(address(this).balance);
-        emit FundTransfer(fundRaiser, address(this).balance);        
-    }
-
-    /**
-    * Burn unsold tokens after ICO deadline
-    * This function is designed to be used after Final-ICO ends to burn unsold tokens
-    */ 
-    function burnUnsoldTokens()  onlyOwner afterIcoDeadline public {  
-        uint256 tokensUnclaimed = SafeMath.sub(tokensSold, tokensClaimed);
-        uint256 unsoldTokens = SafeMath.sub(tokenReward.balanceOf(this), tokensUnclaimed);
-        tokenReward.burn(unsoldTokens);
-    }    
-
-    /**
-    * Transfer unsold tokens after ico deadline
-    * This function is designed to be used after Pre-ICO ends to transfer unsold tokens into Final-ICO contract.
-    */ 
-    function transferUnsoldTokens(address toAddress) onlyOwner afterIcoDeadline public {
-        uint256 tokensUnclaimed = SafeMath.sub(tokensSold, tokensClaimed);
-        uint256 unsoldTokens = SafeMath.sub(tokenReward.balanceOf(this), tokensUnclaimed);
-        tokenReward.transfer(toAddress, unsoldTokens);
-    }
-
-    // ----------- After Tokens Claimable Duration ------------
-
-    /**
-    * Each participant will be able to claim his tokens after duration tokensClaimableAfter
-    */ 
-    function withdrawTokens() afterTokensClaimableDeadline public {
-        require(participants[msg.sender].whitelisted);                
-        require(!participants[msg.sender].tokensClaimed);        
-        participants[msg.sender].tokensClaimed = true;
-        uint256 tokens = participants[msg.sender].tokens;
-        tokenReward.transfer(msg.sender, tokens); 
-        tokensClaimed = SafeMath.add(tokensClaimed, tokens);
     }
 }
