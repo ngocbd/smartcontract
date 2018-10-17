@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HitToken at 0x7995ab36bb307afa6a683c24a25d90dc1ea83566
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HitToken at 0xf0acd56b420563a2ed2a875c5b7011dbfa4026f8
 */
 pragma solidity 0.4.24;
 
@@ -360,8 +360,7 @@ contract  Lock is PausableToken{
         uint256 lockTime = teamLockTime[_to];
         uint256 time = now1.sub(lockTime);
         uint256 percent = 0;
-        //locks team account for 1 year
-        if(time >= 365 days) {
+        if(time >= 30 days) {
           percent =  (time.div(30 days)) .add(1);
         }
         percent = percent > 12 ? 12 : percent;
@@ -372,7 +371,7 @@ contract  Lock is PausableToken{
     }
     
     /**
-     * @dev Get the number of Tokens available for the current private fund account 
+     * @dev Get the number of Tokens available for the current account private placement
      * @param _to mainFundAccount's address
     **/
     function fundAvailable(address _to) internal constant returns (uint256) {
