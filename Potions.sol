@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Potions at 0xd9de5e3357501e97c273cab57a2f1e9d2bc24b98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Potions at 0x6b096ce0f3933c39b0e9fb7fbb0b16c75e749dd0
 */
 pragma solidity ^0.4.24;
 
@@ -70,7 +70,7 @@ contract Potions{
 
     constructor() public
     {
-        BITcontract = BIT(0x645f0c9695F2B970E623aE29538FdB1A67bd6b6E); //8thereum contract
+        BITcontract = BIT(0x79a92e3E07eB9Dad756214e7B6D8ba982c2141A5); //8thereum contract
         openToPublic = false;
         owner = msg.sender;
     }
