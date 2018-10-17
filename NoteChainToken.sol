@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NoteChainToken at 0xe4ddb3b1c10061786eedda0c3aa411a7f2cfeab3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NoteChainToken at 0x8de1CB4124904edE26D7295Ef1f83bAb4c2bcfC0
 */
 pragma solidity ^0.4.24;
 
 
 /**
  * 
- * Author: NoteChain Developer
+ * Author: Iceman
+ * Telegram: iceman_0
  * 
  * Token Details:-
  * Name: NoteChain
@@ -104,11 +105,7 @@ contract Ownable {
   }
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+
 contract ERC20Basic is Ownable {
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
@@ -116,21 +113,35 @@ contract ERC20Basic is Ownable {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
+
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
   
+    mapping (address => bool) public frozenAccount;
+
+  /* This generates a public event on the blockchain that will notify clients */
+  event FrozenFunds(address target, bool frozen);
+
+
+    /**
+     * @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+     * @param target Address to be frozen
+     * @param freeze either to freeze it or not
+     */
+    function freezeAccount(address target, bool freeze)  public onlyOwner{
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
+    }
+    
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value)public returns (bool) {
+    require(!frozenAccount[msg.sender]);
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -149,10 +160,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
+
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender)
     public view returns (uint256);
@@ -171,8 +179,6 @@ contract ERC20 is ERC20Basic {
 /**
  * @title Standard ERC20 token
  *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -196,6 +202,7 @@ contract StandardToken is ERC20, BasicToken {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
+    require(!frozenAccount[_from]);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -286,6 +293,9 @@ contract StandardToken is ERC20, BasicToken {
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
+  
+  
+
 
 }
 
@@ -299,14 +309,14 @@ contract NoteChainToken is StandardToken {
   uint256 public constant INITIAL_SUPPLY = 20000000000 * 10**decimals;
 
   /**
-   * @dev Contructor that gives msg.sender all of existing tokens.
+   * @dev Upon deplyment the tokens will be credidet to 4 addresses
    */
   constructor() public {
     totalSupply = INITIAL_SUPPLY;
-    balances[address(0x72EBbA77118bb1eA4ed3F66dB59705A38aB24B4C)] = (INITIAL_SUPPLY.mul(20).div(100));
-    balances[address(0x59C8245babfcb77B72574117659C3a6a4882E548)] = (INITIAL_SUPPLY.mul(20).div(100));
-    balances[address(0xab005AEe9352d411f4024778E291F4efC77E34eB)] = (INITIAL_SUPPLY.mul(25).div(100));
-    balances[address(0xb72b84090E2BFEb295a8bDeA7978de5f80a53ED4)] = (INITIAL_SUPPLY.mul(35).div(100));
+    balances[address(0x750Da02fb96538AbAf5aDd7E09eAC25f1553109D)] = (INITIAL_SUPPLY.mul(20).div(100));
+    balances[address(0xb85e5Eb2C4F43fE44c1dF949c1c49F1638cb772B)] = (INITIAL_SUPPLY.mul(20).div(100));
+    balances[address(0xBd058b319A1355A271B732044f37BBF2Be07A0B1)] = (INITIAL_SUPPLY.mul(25).div(100));
+    balances[address(0x53da2841810e6886254B514d338146d209B164a2)] = (INITIAL_SUPPLY.mul(35).div(100));
   }
   
 
