@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xa7109224355da983bda08a4fbd2dee111a6dcb98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x99af1723b493C6b57A2063D355b7865d862B1fEd
 */
 pragma solidity ^0.4.16;
+
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
     // Public variables of the token
@@ -29,18 +31,15 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-     
-    function TokenERC20() public {
-    /*
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
-    */
-        totalSupply = 100000000 * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
-        name = "CSM Version 0.2";
-        symbol = "CSM2";
     }
 
     /**
@@ -160,5 +159,3 @@ contract TokenERC20 {
         return true;
     }
 }
-
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
