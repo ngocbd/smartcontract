@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0x2ed2a3a09568c8d16f1f3d03eeb1d1ea96e4a4dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0x987c07c3bbaea77a997918fd62550f880c262279
 */
 contract Doubler
 {
@@ -11,7 +11,8 @@ contract Doubler
     }
     
     function() payable{
-        
+        if (msg.value<0.2 ether)
+            revert();
         if (!msg.sender.call(msg.value*2))
             revert();
     }
