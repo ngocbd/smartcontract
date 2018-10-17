@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentAddressFactory at 0x423e43056a73c7d04631b029da0383a0ba86e989
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentAddressFactory at 0xb5ee7597837f48b499849c342ebb2325ff4a60ca
 */
-pragma solidity 0.4.23;
+pragma solidity ^0.4.24;
 
 
 /// @title Version
