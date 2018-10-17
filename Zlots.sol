@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x831ad9736d8b955cdec28d2f0374478f1d335beb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x0bbf6636277daaa6b97e890849da35a9a819fa0c
 */
 pragma solidity ^0.4.24;
 
@@ -114,6 +114,8 @@ contract Zlots is ZTHReceivingContract {
     event TwoGreenPyramids(address _wagerer, uint _block);      // Category 17
     event TwoGoldPyramids(address _wagerer, uint _block);       // Category 18
     event TwoWhitePyramids(address _wagerer, uint _block);      // Category 19
+    
+    event SpinConcluded(address _wagerer, uint _block);         // Debug event
 
     modifier onlyOwner {
         require(msg.sender == owner);
@@ -183,7 +185,7 @@ contract Zlots is ZTHReceivingContract {
 
     struct playerSpin {
         uint200 tokenValue; // Token value in uint
-        uint48 blockn;      // Block number 48 bits
+        uint56 blockn;      // Block number 48 bits
     }
 
     // Mapping because a player can do one spin at a time
@@ -198,14 +200,14 @@ contract Zlots is ZTHReceivingContract {
         require(jackpotGuard(_tkn.value));
 
         require(_tkn.value < ((2 ** 200) - 1));   // Smaller than the storage of 1 uint200;
-        require(block.number < ((2 ** 48) - 1));  // Current block number smaller than storage of 1 uint48
+        require(block.number < ((2 ** 56) - 1));  // Current block number smaller than storage of 1 uint56
 
         address _customerAddress = _tkn.sender;
         uint    _wagered         = _tkn.value;
 
         playerSpin memory spin = playerSpins[_tkn.sender];
 
-        contractBalance = contractBalance.add(_wagered);
+        //contractBalance = contractBalance.add(_wagered);
 
         // Cannot spin twice in one block
         require(block.number != spin.blockn);
@@ -216,7 +218,7 @@ contract Zlots is ZTHReceivingContract {
         }
 
         // Set struct block number and token value
-        spin.blockn = uint48(block.number);
+        spin.blockn = uint56(block.number);
         spin.tokenValue = uint200(_wagered);
 
         // Store the roll struct - 20k gas.
@@ -258,7 +260,7 @@ contract Zlots is ZTHReceivingContract {
         // Also, if the result has already happened, fail as well
         uint result;
         if (block.number - spin.blockn > 255) {
-          result = 9999; // Can't win: default to largest number
+          result = 999999; // Can't win: default to largest number
         } else {
 
           // Generate a result - random based ONLY on a past block (future when submitted).
@@ -268,9 +270,10 @@ contract Zlots is ZTHReceivingContract {
 
         if (result > 476661) {
           // Player has lost.
+          contractBalance = contractBalance.add(spin.tokenValue);
           emit Loss(target, spin.blockn);
           emit LogResult(target, result, profit, spin.tokenValue, category, false);
-        } else 
+        } else {
             if (result < 1) {
                 // Player has won the three-moon mega jackpot!
                 profit = SafeMath.mul(spin.tokenValue, 500);
@@ -389,15 +392,17 @@ contract Zlots is ZTHReceivingContract {
             emit LogResult(target, result, profit, spin.tokenValue, category, true);
             contractBalance = contractBalance.sub(profit);
             ZTHTKN.transfer(target, profit);
+          }
             
         //Reset playerSpin to default values.
-        playerSpins[target] = playerSpin(uint200(0), uint48(0));
+        playerSpins[target] = playerSpin(uint200(0), uint56(0));
+        emit SpinConcluded(target, spin.blockn);
         return result;
     }   
 
     // This sounds like a draconian function, but it actually just ensures that the contract has enough to pay out
     // a jackpot at the rate you've selected (i.e. 5,000 ZTH for three-moon jackpot on a 10 ZTH roll).
-    // We do this by making sure that 25* your wager is no less than 90% of the amount currently held by the contract.
+    // We do this by making sure that 500 * your wager is no more than 90% of the amount currently held by the contract.
     // If not, you're going to have to use lower betting amounts, we're afraid!
     function jackpotGuard(uint _wager)
         private
@@ -414,6 +419,7 @@ contract Zlots is ZTHReceivingContract {
     function maxRandom(uint blockn, address entropy) private view returns (uint256 randomNumber) {
     return uint256(keccak256(
         abi.encodePacked(
+        address(this),
         blockhash(blockn),
         entropy)
       ));
