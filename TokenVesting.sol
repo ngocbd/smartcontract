@@ -1,40 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xb5c912c9184621afc4e0dea69a578f71563b3cce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x5d6f5d3122b41d06202111d17f747382509d1fd1
 */
-/**
-    Copyright (c) 2018 SmartTaylor
+pragma solidity ^0.4.13;
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
+library Math {
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
 
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
 
-    based on the contracts of OpenZeppelin:
-    https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+}
 
-**/
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-pragma solidity ^0.4.18;
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract Ownable {
   address public owner;
 
@@ -46,7 +58,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
 
@@ -64,7 +76,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -72,326 +84,134 @@ contract Ownable {
 
 }
 
-
-/**
-  @title TaylorToken
-**/
-contract TaylorToken is Ownable{
-
-    using SafeMath for uint256;
-
-    /**
-        EVENTS
-    **/
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burn(address indexed _owner, uint256 _amount);
-    /**
-        CONTRACT VARIABLES
-    **/
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-
-    //this address can transfer even when transfer is disabled.
-    mapping (address => bool) public whitelistedTransfer;
-    mapping (address => bool) public whitelistedBurn;
-
-    string public name = "Taylor";
-    string public symbol = "TAY";
-    uint8 public decimals = 18;
-    uint256 constant internal DECIMAL_CASES = 10**18;
-    uint256 public totalSupply = 10**7 * DECIMAL_CASES;
-    bool public transferable = false;
-
-    /**
-        MODIFIERS
-    **/
-    modifier onlyWhenTransferable(){
-      if(!whitelistedTransfer[msg.sender]){
-        require(transferable);
-      }
-      _;
-    }
-
-    /**
-        CONSTRUCTOR
-    **/
-
-    /**
-      @dev Constructor function executed on contract creation
-    **/
-    function TaylorToken()
-      Ownable()
-      public
-    {
-      balances[owner] = balances[owner].add(totalSupply);
-      whitelistedTransfer[msg.sender] = true;
-      whitelistedBurn[msg.sender] = true;
-      Transfer(address(0),owner, totalSupply);
-    }
-
-    /**
-        OWNER ONLY FUNCTIONS
-    **/
-
-    /**
-      @dev Activates the trasfer for all users
-    **/
-    function activateTransfers()
-      public
-      onlyOwner
-    {
-      transferable = true;
-    }
-
-    /**
-      @dev Allows the owner to add addresse that can bypass the
-      transfer lock. Eg: ICO contract, TGE contract.
-      @param _address address Address to be added
-    **/
-    function addWhitelistedTransfer(address _address)
-      public
-      onlyOwner
-    {
-      whitelistedTransfer[_address] = true;
-    }
-
-    /**
-      @dev Sends all avaible TAY to the TGE contract to be properly
-      distribute
-      @param _tgeAddress address Address of the token distribution
-      contract
-    **/
-    function distribute(address _tgeAddress)
-      public
-      onlyOwner
-    {
-      whitelistedTransfer[_tgeAddress] = true;
-      transfer(_tgeAddress, balances[owner]);
-    }
-
-
-    /**
-      @dev Allows the owner to add addresse that can burn tokens
-      Eg: ICO contract, TGE contract.
-      @param _address address Address to be added
-    **/
-    function addWhitelistedBurn(address _address)
-      public
-      onlyOwner
-    {
-      whitelistedBurn[_address] = true;
-    }
-
-    /**
-        PUBLIC FUNCTIONS
-    **/
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value)
-      public
-      onlyWhenTransferable
-      returns (bool success)
-    {
-      require(_to != address(0));
-      require(_value <= balances[msg.sender]);
-
-      balances[msg.sender] = balances[msg.sender].sub(_value);
-      balances[_to] = balances[_to].add(_value);
-      Transfer(msg.sender, _to, _value);
-      return true;
-    }
-
-    /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-    function transferFrom
-      (address _from,
-        address _to,
-        uint256 _value)
-        public
-        onlyWhenTransferable
-        returns (bool success) {
-      require(_to != address(0));
-      require(_value <= balances[_from]);
-      require(_value <= allowed[_from][msg.sender]);
-
-      balances[_from] = balances[_from].sub(_value);
-      balances[_to] = balances[_to].add(_value);
-      allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-      Transfer(_from, _to, _value);
-      return true;
-    }
-
-    /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    For security reasons, if one need to change the value from a existing allowance, it must furst sets
-    it to zero and then sets the new value
-
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-    function approve(address _spender, uint256 _value)
-      public
-      onlyWhenTransferable
-      returns (bool success)
-    {
-      allowed[msg.sender][_spender] = _value;
-      Approval(msg.sender, _spender, _value);
-      return true;
-    }
-
-      /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue)
-      public
-      returns (bool)
-    {
-      allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue)
-      public
-      returns (bool)
-    {
-      uint oldValue = allowed[msg.sender][_spender];
-      if (_subtractedValue > oldValue) {
-        allowed[msg.sender][_spender] = 0;
-      } else {
-        allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-    }
-
-    /**
-      @dev Allows for msg.sender to burn his on tokens
-      @param _amount uint256 The amount of tokens to be burned
-    **/
-    function burn(uint256 _amount)
-      public
-      returns (bool success)
-    {
-      require(whitelistedBurn[msg.sender]);
-      require(_amount <= balances[msg.sender]);
-      balances[msg.sender] = balances[msg.sender].sub(_amount);
-      totalSupply =  totalSupply.sub(_amount);
-      Burn(msg.sender, _amount);
-      return true;
-    }
-
-
-    /**
-        CONSTANT FUNCTIONS
-    **/
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) view public returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-    function allowance(address _owner, address _spender)
-      view
-      public
-      returns (uint256 remaining)
-    {
-      return allowed[_owner][_spender];
-    }
-
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
   }
 }
 
+contract ReturnVestingRegistry is Ownable {
 
-/**
- * @title TokenVesting
- * @dev A token holder contract that can release its token balance gradually like a
- * typical vesting scheme, with a cliff and vesting period.
- */
+  mapping (address => address) public returnAddress;
+
+  function record(address from, address to) onlyOwner public {
+    require(from != 0);
+
+    returnAddress[from] = to;
+  }
+}
+
+contract TerraformReserve is Ownable {
+
+  /* Storing a balance for each user */
+  mapping (address => uint256) public lockedBalance;
+
+  /* Store the total sum locked */
+  uint public totalLocked;
+
+  /* Reference to the token */
+  ERC20 public manaToken;
+
+  /* Contract that will assign the LAND and burn/return tokens */
+  address public landClaim;
+
+  /* Prevent the token from accepting deposits */
+  bool public acceptingDeposits;
+
+  event LockedBalance(address user, uint mana);
+  event LandClaimContractSet(address target);
+  event LandClaimExecuted(address user, uint value, bytes data);
+  event AcceptingDepositsChanged(bool _acceptingDeposits);
+
+  function TerraformReserve(address _token) {
+    require(_token != 0);
+    manaToken = ERC20(_token);
+    acceptingDeposits = true;
+  }
+
+  /**
+   * Lock MANA into the contract.
+   * This contract does not have another way to take the tokens out other than
+   * through the target contract.
+   */
+  function lockMana(address _from, uint256 mana) public {
+    require(acceptingDeposits);
+    require(mana >= 1000 * 1e18);
+    require(manaToken.transferFrom(_from, this, mana));
+
+    lockedBalance[_from] += mana;
+    totalLocked += mana;
+    LockedBalance(_from, mana);
+  }
+
+  /**
+   * Allows the owner of the contract to pause acceptingDeposits
+   */
+  function changeContractState(bool _acceptingDeposits) public onlyOwner {
+    acceptingDeposits = _acceptingDeposits;
+    AcceptingDepositsChanged(acceptingDeposits);
+  }
+
+  /**
+   * Set the contract that can move the staked MANA.
+   * Calls the `approve` function of the ERC20 token with the total amount.
+   */
+  function setTargetContract(address target) public onlyOwner {
+    landClaim = target;
+    manaToken.approve(landClaim, totalLocked);
+    LandClaimContractSet(target);
+  }
+
+  /**
+   * Prevent payments to the contract
+   */
+  function () public payable {
+    revert();
+  }
+}
+
 contract TokenVesting is Ownable {
   using SafeMath for uint256;
+  using SafeERC20 for ERC20;
 
   event Released(uint256 amount);
+  event Revoked();
 
   // beneficiary of tokens after they are released
   address public beneficiary;
-
-  TaylorToken public token;
 
   uint256 public cliff;
   uint256 public start;
   uint256 public duration;
 
+  bool public revocable;
+  bool public revoked;
+
   uint256 public released;
+
+  ERC20 public token;
 
   /**
    * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
@@ -400,53 +220,122 @@ contract TokenVesting is Ownable {
    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
    * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
    * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _token The token to be vested
+   * @param _revocable whether the vesting is revocable or not
+   * @param _token address of the ERC20 token contract
    */
-  function TokenVesting(address _beneficiary,address _token, uint256 _start, uint256 _cliff, uint256 _duration) public {
-    require(_beneficiary != address(0));
+  function TokenVesting(
+    address _beneficiary,
+    uint256 _start,
+    uint256 _cliff,
+    uint256 _duration,
+    bool    _revocable,
+    address _token
+  ) {
+    require(_beneficiary != 0x0);
     require(_cliff <= _duration);
 
     beneficiary = _beneficiary;
-    duration = _duration;
-    token = TaylorToken(_token);
-    cliff = _start.add(_cliff);
-    start = _start;
+    start       = _start;
+    cliff       = _start.add(_cliff);
+    duration    = _duration;
+    revocable   = _revocable;
+    token       = ERC20(_token);
+  }
+
+  /**
+   * @notice Only allow calls from the beneficiary of the vesting contract
+   */
+  modifier onlyBeneficiary() {
+    require(msg.sender == beneficiary);
+    _;
+  }
+
+  /**
+   * @notice Allow the beneficiary to change its address
+   * @param target the address to transfer the right to
+   */
+  function changeBeneficiary(address target) onlyBeneficiary public {
+    require(target != 0);
+    beneficiary = target;
   }
 
   /**
    * @notice Transfers vested tokens to beneficiary.
    */
-  function release() public {
+  function release() onlyBeneficiary public {
+    require(now >= cliff);
+    _releaseTo(beneficiary);
+  }
+
+  /**
+   * @notice Transfers vested tokens to a target address.
+   * @param target the address to send the tokens to
+   */
+  function releaseTo(address target) onlyBeneficiary public {
+    require(now >= cliff);
+    _releaseTo(target);
+  }
+
+  /**
+   * @notice Transfers vested tokens to beneficiary.
+   */
+  function _releaseTo(address target) internal {
     uint256 unreleased = releasableAmount();
-    require(unreleased > 0);
 
     released = released.add(unreleased);
 
-    token.transfer(beneficiary, unreleased);
+    token.safeTransfer(target, unreleased);
 
-    Released(unreleased);
+    Released(released);
   }
+
+  /**
+   * @notice Allows the owner to revoke the vesting. Tokens already vested are sent to the beneficiary.
+   */
+  function revoke() onlyOwner public {
+    require(revocable);
+    require(!revoked);
+
+    // Release all vested tokens
+    _releaseTo(beneficiary);
+
+    // Send the remainder to the owner
+    token.safeTransfer(owner, token.balanceOf(this));
+
+    revoked = true;
+
+    Revoked();
+  }
+
 
   /**
    * @dev Calculates the amount that has already vested but hasn't been released yet.
    */
-  function releasableAmount() public view returns (uint256) {
+  function releasableAmount() public constant returns (uint256) {
     return vestedAmount().sub(released);
   }
 
   /**
    * @dev Calculates the amount that has already vested.
    */
-  function vestedAmount() public view returns (uint256) {
+  function vestedAmount() public constant returns (uint256) {
     uint256 currentBalance = token.balanceOf(this);
     uint256 totalBalance = currentBalance.add(released);
 
     if (now < cliff) {
       return 0;
-    } else if (now >= cliff && now < start.add(duration)) {
-      return totalBalance / 2;
-    } else {
+    } else if (now >= start.add(duration) || revoked) {
       return totalBalance;
+    } else {
+      return totalBalance.mul(now.sub(start)).div(duration);
     }
+  }
+
+  /**
+   * @notice Allow withdrawing any token other than the relevant one
+   */
+  function releaseForeignToken(ERC20 _token, uint256 amount) onlyOwner {
+    require(_token != token);
+    _token.transfer(owner, amount);
   }
 }
