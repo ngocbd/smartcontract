@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0x1fe4e0811a09e3be95f18a6f6aba8c4852e4d19e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0xfa857ed39183356e595603b7a6ced99941725b03
 */
 pragma solidity ^0.4.23;
 
@@ -133,7 +133,7 @@ contract AirDropForERC223 is Ownable {
     // flag to stop airdrop
     bool public stop = false;
 
-    ERC223Interface public erc223;
+    ERC223Interface public erc20;
 
     uint256 public startTime;
     uint256 public endTime;
@@ -143,6 +143,7 @@ contract AirDropForERC223 is Ownable {
     event LogStop();
     event LogStart();
     event LogWithdrawal(address indexed receiver, uint amount);
+    event LogInfoUpdate(uint256 startTime, uint256 endTime, uint256 airDropAmount);
 
     /**
     * @dev Constructor to set _airDropAmount and _tokenAddresss.
@@ -157,8 +158,8 @@ contract AirDropForERC223 is Ownable {
         );
         startTime = _startTime;
         endTime = _endTime;
-        erc223 = ERC223Interface(_tokenAddress);
-        uint tokenDecimals = erc223.decimals();
+        erc20 = ERC223Interface(_tokenAddress);
+        uint tokenDecimals = erc20.decimals();
         airDropAmount = _airDropAmount.mul(10 ** tokenDecimals);
     }
 
@@ -169,7 +170,7 @@ contract AirDropForERC223 is Ownable {
      * @param _value Amount of tokens.
      * @param _data  Transaction metadata.
      */
-    function tokenFallback(address _from, uint _value, bytes _data) public {}
+    function tokenFallback(address _from, uint _value, bytes _data) {}
 
     /**
     * @dev Confirm that airDrop is available.
@@ -207,7 +208,7 @@ contract AirDropForERC223 is Ownable {
         arrayAirDropReceivers.push(msg.sender);
 
         // execute transfer
-        erc223.transfer(msg.sender, airDropAmount);
+        erc20.transfer(msg.sender, airDropAmount);
 
         emit LogAirDrop(msg.sender, airDropAmount);
     }
@@ -233,8 +234,30 @@ contract AirDropForERC223 is Ownable {
         require(stop || now > endTime);
         require(_address != address(0));
         uint tokenBalanceOfContract = getRemainingToken();
-        erc223.transfer(_address, tokenBalanceOfContract);
+        erc20.transfer(_address, tokenBalanceOfContract);
         emit LogWithdrawal(_address, tokenBalanceOfContract);
+    }
+
+    /**
+    * @dev Update the information regarding to period and amount.
+    * @param _startTime The start time this airdrop starts.
+    * @param _endTime The end time this sirdrop ends.
+    * @param _airDropAmount The airDrop Amount that user can get via airdrop.
+    */
+    function updateInfo(uint256 _startTime, uint256 _endTime, uint256 _airDropAmount) public onlyOwner {
+        require(stop || now > endTime);
+        require(
+            _startTime >= now &&
+            _endTime >= _startTime &&
+            _airDropAmount > 0
+        );
+
+        startTime = _startTime;
+        endTime = _endTime;
+        uint tokenDecimals = erc20.decimals();
+        airDropAmount = _airDropAmount.mul(10 ** tokenDecimals);
+
+        emit LogInfoUpdate(startTime, endTime, airDropAmount);
     }
 
     /**
@@ -250,7 +273,7 @@ contract AirDropForERC223 is Ownable {
     * @return Uint256 the amount of token that user can reveive.
     */
     function getRemainingToken() public view returns (uint256) {
-        return erc223.balanceOf(this);
+        return erc20.balanceOf(this);
     }
 
     /**
