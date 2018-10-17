@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavaWallet at 0x2f9cc1042d889353caf2e346b63ccfec985ae515
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LavaWallet at 0xcba65975b1c66586bfe7910f32377e0ee55f783e
 */
 pragma solidity ^0.4.18;
- 
 
+ 
 
 /*
 
@@ -13,20 +13,8 @@ Store your tokens in this contract to give them super powers
 
 Tokens can be spent from the contract with only an ecSignature from the owner - onchain approve is not needed
 
- 
+
 */
-
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
 
 
 library ECRecovery {
@@ -67,6 +55,7 @@ library ECRecovery {
   }
 
 }
+
 
 /**
  * @title SafeMath
@@ -114,24 +103,20 @@ library SafeMath {
   }
 }
 
-//wEth interface
-contract WrapperInterface
-{
-  function() public payable;
-  function deposit() public payable ;
-  function withdraw(uint wad) public;
-  function totalSupply() public view returns (uint);
-  function approve(address guy, uint wad) public returns (bool success);
-  function transfer(address dst, uint wad) public returns (bool success);
-  function transferFrom(address src, address dst, uint wad) public returns (bool);
 
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-  event  Approval(address indexed src, address indexed guy, uint wad);
-  event  Transfer(address indexed src, address indexed dst, uint wad);
-  event  Deposit(address indexed dst, uint wad);
-  event  Withdrawal(address indexed src, uint wad);
-
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
+
+
 
 contract ApproveAndCallFallBack {
 
@@ -202,7 +187,7 @@ contract LavaWallet is Owned {
    //token => owner => spender : amount
    mapping(address => mapping (address => mapping (address => uint256))) allowed;
 
-
+   mapping(address => uint256) depositedTokens;
 
    mapping(bytes32 => uint256) burnedSignatures;
 
@@ -229,6 +214,7 @@ contract LavaWallet is Owned {
       //we already have approval so lets do a transferFrom - transfer the tokens into this contract
       ERC20Interface(token).transferFrom(from, this, tokens);
       balances[token][from] = balances[token][from].add(tokens);
+      depositedTokens[token] = depositedTokens[token].add(tokens);
 
       Deposit(token, from, tokens, balances[token][from]);
 
@@ -239,6 +225,7 @@ contract LavaWallet is Owned {
   //No approve needed, only from msg.sender
   function withdrawTokens(address token, uint256 tokens) public {
     balances[token][msg.sender] = balances[token][msg.sender].sub(tokens);
+    depositedTokens[token] = depositedTokens[token].sub(tokens);
 
     ERC20Interface(token).transfer(msg.sender, tokens);
 
@@ -248,6 +235,7 @@ contract LavaWallet is Owned {
   //Requires approval so it can be public
   function withdrawTokensFrom( address from, address to,address token,  uint tokens) public returns (bool success) {
       balances[token][from] = balances[token][from].sub(tokens);
+      depositedTokens[token] = depositedTokens[token].sub(tokens);
       allowed[token][from][to] = allowed[token][from][to].sub(tokens);
 
       ERC20Interface(token).transfer(to, tokens);
@@ -441,12 +429,24 @@ contract LavaWallet is Owned {
  // ------------------------------------------------------------------------
 
  // Owner can transfer out any accidentally sent ERC20 tokens
+ // Owner CANNOT transfer out tokens which were purposefully deposited
 
  // ------------------------------------------------------------------------
 
  function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
 
-     return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    //find actual balance of the contract
+     uint tokenBalance = ERC20Interface(tokenAddress).balanceOf(this);
+
+     //find number of accidentally deposited tokens (actual - purposefully deposited)
+     uint undepositedTokens = tokenBalance.sub(depositedTokens[tokenAddress]);
+
+     //only allow withdrawing of accidentally deposited tokens
+     assert(tokens <= undepositedTokens);
+
+     ERC20Interface(tokenAddress).transfer(owner, tokens);
+
+     return true;
 
  }
 
