@@ -1,92 +1,224 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FitToken at 0x8d51efc43c810b7982e599f67e59ee27c46bcc25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FITToken at 0x3f14d7da845a30bbd248c1da4966327ccb5c1600
 */
-pragma solidity ^0.4.11;
-
-contract FitToken {
-string public symbol;
-string public name;
-uint256 public decimals;
-uint256 _totalSupply;
-
-address public owner;
-
-mapping(address => uint256) balances;
-
-mapping(address => mapping (address => uint256)) allowed;
-
-modifier onlyOwner() {
-if (msg.sender != owner) {
-revert();
-}
-_;
-}
-
-event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-
-function FitToken() {
-owner = msg.sender;
-decimals = 18;
-_totalSupply = 400000000 * (10**decimals);
-balances[owner] = _totalSupply;
-symbol = "FIT";
-name = "FIT TOKEN";
-}
-
-
-function totalSupply() public constant returns (uint256 totalSupply) {
-totalSupply = _totalSupply;
-}
-
-
-function balanceOf(address _owner) public constant returns (uint256 balance) {
-return balances[_owner];
-}
-
-
-function transfer(address _to, uint256 _amount) public returns (bool success) {
-if (balances[msg.sender] >= _amount 
-&& _amount > 0
-&& balances[_to] + _amount > balances[_to]) {
-balances[msg.sender] -= _amount;
-balances[_to] += _amount;
-Transfer(msg.sender, _to, _amount);
-return true;
-} else {
-return false;
-}
-}
-
-
-function transferFrom (
-address _from,
-address _to,
-uint256 _amount
-) public returns (bool success) {
-if (balances[_from] >= _amount
-&& allowed[_from][msg.sender] >= _amount
-&& _amount > 0
-&& balances[_to] + _amount > balances[_to]) {
-balances[_from] -= _amount;
-allowed[_from][msg.sender] -= _amount;
-balances[_to] += _amount;
-Transfer(_from, _to, _amount);
-return true;
-} else {
-return false;
-}
-}
-
-
-function approve(address _spender, uint256 _amount) public returns (bool success) {
-allowed[msg.sender][_spender] = _amount;
-Approval(msg.sender, _spender, _amount);
-return true;
-}
-
-function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-return allowed[_owner][_spender];
-}
-}
+pragma solidity ^0.4.21;
+  
+  // ----------------------------------------------------------------------------
+  //
+  // Symbol      : FIT
+  // Name        : Facite
+  // Total supply: 1,000,000,000.000000000000000000
+  // Decimals    : 18
+  //
+  // Created 2018-08-22
+  // ----------------------------------------------------------------------------
+  
+  
+  // ----------------------------------------------------------------------------
+  // Safe maths
+  // ----------------------------------------------------------------------------
+  library SafeMath {
+      function add(uint a, uint b) internal pure returns (uint c) {
+          c = a + b;
+          require(c >= a);
+      }
+      function sub(uint a, uint b) internal pure returns (uint c) {
+          require(b <= a);
+          c = a - b;
+      }
+      function mul(uint a, uint b) internal pure returns (uint c) {
+          c = a * b;
+          require(a == 0 || c / a == b);
+      }
+      function div(uint a, uint b) internal pure returns (uint c) {
+          require(b > 0);
+          c = a / b;
+      }
+  }
+  
+  
+  // ----------------------------------------------------------------------------
+  // ERC Token Standard #20 Interface
+  // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+  // ----------------------------------------------------------------------------
+  contract ERC20Interface {
+      function totalSupply() public constant returns (uint);
+      function balanceOf(address tokenOwner) public constant returns (uint balance);
+      function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+      function transfer(address to, uint tokens) public returns (bool success);
+      function approve(address spender, uint tokens) public returns (bool success);
+      function transferFrom(address from, address to, uint tokens) public returns (bool success);
+  
+      event Transfer(address indexed from, address indexed to, uint tokens);
+      event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+  }
+  
+  
+  // ----------------------------------------------------------------------------
+  // Contract function to receive approval and execute function in one call
+  //
+  // Borrowed from MiniMeToken
+  // ----------------------------------------------------------------------------
+  contract ApproveAndCallFallBack {
+      function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+  }
+  
+  
+  // ----------------------------------------------------------------------------
+  // Owned contract
+  // ----------------------------------------------------------------------------
+  contract Owned {
+      address public owner;
+      address public newOwner;
+  
+      event OwnershipTransferred(address indexed _from, address indexed _to);
+  
+      function Owned() public {
+          owner = msg.sender;
+      }
+  
+      modifier onlyOwner {
+          require(msg.sender == owner);
+          _;
+      }
+  
+      function transferOwnership(address _newOwner) public onlyOwner {
+          newOwner = _newOwner;
+      }
+      function acceptOwnership() public {
+          require(msg.sender == newOwner);
+          OwnershipTransferred(owner, newOwner);
+          owner = newOwner;
+          newOwner = address(0);
+      }
+  }
+  
+  
+  // ----------------------------------------------------------------------------
+  // ERC20 Token, with the addition of symbol, name and decimals and an
+  // initial fixed supply
+ // ----------------------------------------------------------------------------
+ contract FITToken is ERC20Interface, Owned {
+     using SafeMath for uint;
+ 
+     string public symbol;
+     string public  name;
+     uint8 public decimals;
+     uint public _totalSupply;
+ 
+     mapping(address => uint) balances;
+     mapping(address => mapping(address => uint)) allowed;
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Constructor
+     // ------------------------------------------------------------------------
+     function FITToken() public {
+         symbol = "FIT";
+         name = "Facite";
+         decimals = 18;
+         _totalSupply = 1000000000 * 10**uint(decimals);
+         balances[owner] = _totalSupply;
+         Transfer(address(0), owner, _totalSupply);
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Total supply
+     // ------------------------------------------------------------------------
+     function totalSupply() public constant returns (uint) {
+         return _totalSupply  - balances[address(0)];
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Get the token balance for account `tokenOwner`
+     // ------------------------------------------------------------------------
+     function balanceOf(address tokenOwner) public constant returns (uint balance) {
+         return balances[tokenOwner];
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Transfer the balance from token owner's account to `to` account
+     // - Owner's account must have sufficient balance to transfer
+     // - 0 value transfers are allowed
+     // ------------------------------------------------------------------------
+     function transfer(address to, uint tokens) public returns (bool success) {
+         balances[msg.sender] = balances[msg.sender].sub(tokens);
+         balances[to] = balances[to].add(tokens);
+         Transfer(msg.sender, to, tokens);
+         return true;
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Token owner can approve for `spender` to transferFrom(...) `tokens`
+     // from the token owner's account
+     //
+     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+     // recommends that there are no checks for the approval double-spend attack
+     // as this should be implemented in user interfaces 
+     // ------------------------------------------------------------------------
+     function approve(address spender, uint tokens) public returns (bool success) {
+         allowed[msg.sender][spender] = tokens;
+         Approval(msg.sender, spender, tokens);
+         return true;
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Transfer `tokens` from the `from` account to the `to` account
+     // 
+     // The calling account must already have sufficient tokens approve(...)-d
+     // for spending from the `from` account and
+     // - From account must have sufficient balance to transfer
+     // - Spender must have sufficient allowance to transfer
+     // - 0 value transfers are allowed
+     // ------------------------------------------------------------------------
+     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+         balances[from] = balances[from].sub(tokens);
+         allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+         balances[to] = balances[to].add(tokens);
+         Transfer(from, to, tokens);
+         return true;
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Returns the amount of tokens approved by the owner that can be
+     // transferred to the spender's account
+     // ------------------------------------------------------------------------
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+         return allowed[tokenOwner][spender];
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Token owner can approve for `spender` to transferFrom(...) `tokens`
+     // from the token owner's account. The `spender` contract function
+     // `receiveApproval(...)` is then executed
+     // ------------------------------------------------------------------------
+     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+         allowed[msg.sender][spender] = tokens;
+         Approval(msg.sender, spender, tokens);
+         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+         return true;
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Don't accept ETH
+     // ------------------------------------------------------------------------
+     function () public payable {
+         revert();
+     }
+ 
+ 
+     // ------------------------------------------------------------------------
+     // Owner can transfer out any accidentally sent ERC20 tokens
+     // ------------------------------------------------------------------------
+     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+     }
+ }
