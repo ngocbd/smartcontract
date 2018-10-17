@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minewar at 0x781878427cf56C8Ab7745cA02910a801503c6eCC
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minewar at 0xdbbd9e60fb406521c3c7da7172e46dedf8d238cb
 */
 pragma solidity ^0.4.2;
 
@@ -49,12 +49,16 @@ library SafeMath {
     }
 }
 
+//--------------------------------------------------------------------------
+// EtherMinewar
+// copyright by mark_hu 
+// http://www.etherminewar.com/
+//--------------------------------------------------------------------------
 contract Minewar {
     bool public initialized = false;
-    uint256 round = 0;
+    uint256 public roundNumber = 0;
     uint256 public deadline;
     uint256 public CRTSTAL_MINING_PERIOD = 86400; 
-    uint256 public SHARE_CRYSTAL = 10 * CRTSTAL_MINING_PERIOD;
     uint256 public HALF_TIME = 8 hours;
     uint256 public ROUND_TIME = 86400 * 7;
     uint256 BASE_PRICE = 0.005 ether;
@@ -79,11 +83,12 @@ contract Minewar {
     address public administrator;
     /*** DATATYPES ***/
     struct PlyerData {
-        uint256 round;
+        uint256 roundNumber;
         mapping(uint256 => uint256) minerCount;
         uint256 hashrate;
         uint256 crystals;
         uint256 lastUpdateTime;
+        uint256 referral_count;
     }
     struct MinerData {
         uint256 basePrice;
@@ -114,11 +119,12 @@ contract Minewar {
     modifier isNotOver() 
     {
         require(now <= deadline);
+        require(tx.origin == msg.sender);
         _;
     }
     modifier isCurrentRound() 
     {
-        require(players[msg.sender].round == round);
+        require(players[msg.sender].roundNumber == roundNumber);
         _;
     }
     modifier limitSell() 
@@ -136,7 +142,7 @@ contract Minewar {
             _;
         }
     }
-    function Minewar() public payable
+    function Minewar() public
     {
         administrator = msg.sender;
         numberOfMiners = 8;
@@ -154,7 +160,10 @@ contract Minewar {
         minerData[6] = MinerData(204800,        204800,     64);   //lv7 
         minerData[7] = MinerData(1638400,       819200,     65536); //lv8
     }
+    function () public payable
+    {
 
+    }
     function startGame() public
     {
         require(msg.sender == administrator);
@@ -166,7 +175,7 @@ contract Minewar {
     function startNewRound() private 
     {
         deadline = SafeMath.add(now, ROUND_TIME);
-        round = SafeMath.add(round, 1);
+        roundNumber = SafeMath.add(roundNumber, 1);
         initData();
     }
     function initData() private
@@ -192,12 +201,13 @@ contract Minewar {
     function lottery() public 
     {
         require(now > deadline);
+        require(tx.origin == msg.sender);
         uint256 balance = SafeMath.div(SafeMath.mul(this.balance, 90), 100);
-        administrator.transfer(SafeMath.div(SafeMath.mul(this.balance, 5), 100));
+        administrator.send(SafeMath.div(SafeMath.mul(this.balance, 5), 100));
         uint8[10] memory profit = [30,20,10,8,7,5,5,5,5,5];
         for(uint256 idx = 0; idx < 10; idx++){
             if(rankList[idx] != 0){
-                rankList[idx].transfer(SafeMath.div(SafeMath.mul(balance,profit[idx]),100));
+                rankList[idx].send(SafeMath.div(SafeMath.mul(balance,profit[idx]),100));
             }
         }
         startNewRound();
@@ -210,7 +220,7 @@ contract Minewar {
     function becomeSponsor() public isNotOver isCurrentRound payable
     {
         require(msg.value >= getSponsorFee());
-        sponsor.transfer(getCurrentPrice(sponsorLevel));
+        sponsor.send(getCurrentPrice(sponsorLevel));
         sponsor = msg.sender;
         sponsorLevel = SafeMath.add(sponsorLevel, 1);
     }
@@ -223,7 +233,7 @@ contract Minewar {
     //--------------------------------------------------------------------------
     function getFreeMiner(address ref) isNotOver public 
     {
-        require(players[msg.sender].round != round);
+        require(players[msg.sender].roundNumber != roundNumber);
         PlyerData storage p = players[msg.sender];
         //reset player data
         if(p.hashrate > 0){
@@ -232,23 +242,25 @@ contract Minewar {
             }
         }
         p.crystals = 0;
-        p.round = round;
+        p.roundNumber = roundNumber;
         //free miner
         p.lastUpdateTime = now;
+        p.referral_count = 0;
         p.minerCount[0] = 1;
         MinerData storage m0 = minerData[0];
         p.hashrate = m0.baseProduct;
         //send referral 
         if (ref != msg.sender) {
             PlyerData storage referral = players[ref];
-            if(referral.round == round){ 
-                p.crystals = SafeMath.add(p.crystals, SHARE_CRYSTAL);
-                referral.crystals = SafeMath.add(referral.crystals, SHARE_CRYSTAL);
+            if(referral.roundNumber == roundNumber){ 
+                updateCrytal(ref);
+                p.referral_count = 1;
+                referral.referral_count = SafeMath.add(referral.referral_count, 1);
             }
         }
     }
     function buyMiner(uint256[] minerNumbers) public isNotOver isCurrentRound
-    {
+    {   
         require(minerNumbers.length == numberOfMiners);
         uint256 minerIdx = 0;
         MinerData memory m;
@@ -283,27 +295,28 @@ contract Minewar {
         p.crystals = SafeMath.sub(p.crystals, price);
         updateHashrate(msg.sender);
     }
-    function getPlayerData(address addr) public view 
-    returns (uint256 crystals, uint256 lastupdate, uint256 hashratePerDay, uint256[8] miners, uint256 hasBoost)
+    function getPlayerData(address addr) public view
+    returns (uint256 crystals, uint256 lastupdate, uint256 hashratePerDay, uint256[8] miners, uint256 hasBoost, uint256 referral_count)
     {
         PlyerData storage p = players[addr];
-        if(p.round != round){
+        if(p.roundNumber != roundNumber){
             p = players[0];
         }
         crystals = SafeMath.div(p.crystals, CRTSTAL_MINING_PERIOD);
         lastupdate = p.lastUpdateTime;
-        hashratePerDay = p.hashrate;
+        hashratePerDay = addReferralHashrate(addr, p.hashrate);
         uint256 i = 0;
         for(i = 0; i < numberOfMiners; i++)
         {
             miners[i] = p.minerCount[i];
         }
         hasBoost = hasBooster(addr);
+        referral_count = p.referral_count;
     }
     function getHashratePerDay(address minerAddr) public view returns (uint256 personalProduction)
     {
         PlyerData storage p = players[minerAddr];   
-        personalProduction = p.hashrate;
+        personalProduction = addReferralHashrate(minerAddr, p.hashrate);
         uint256 boosterIdx = hasBooster(minerAddr);
         if (boosterIdx != 999) {
             BoostData storage b = boostData[boosterIdx];
@@ -321,8 +334,10 @@ contract Minewar {
             revert();
         }
         address beneficiary = b.owner;
-        sponsor.transfer(devFee(getBoosterPrice(idx)));
-        beneficiary.transfer(SafeMath.div(SafeMath.mul(getBoosterPrice(idx), 55), 100));
+        sponsor.send(devFee(getBoosterPrice(idx)));
+        if(beneficiary != 0){
+            beneficiary.send(SafeMath.div(SafeMath.mul(getBoosterPrice(idx), 55), 100));
+        }
         updateCrytal(msg.sender);
         updateCrytal(beneficiary);
         uint256 level = getCurrentLevel(b.startingLevel, b.startingTime, b.halfLife);
@@ -373,7 +388,7 @@ contract Minewar {
         }
         uint256 balance = SafeMath.mul(o.amount, o.unitPrice);
         if (o.owner != 0){
-            o.owner.transfer(balance);
+            o.owner.send(balance);
         }
         o.owner = msg.sender;
         o.unitPrice = unitPrice;
@@ -393,12 +408,12 @@ contract Minewar {
         require(seller.crystals >= amount * CRTSTAL_MINING_PERIOD);
         uint256 price = SafeMath.mul(amount, o.unitPrice);
         uint256 fee = devFee(price);
-        sponsor.transfer(fee);
-        administrator.transfer(fee);
+        sponsor.send(fee);
+        administrator.send(fee);
         buyer.crystals = SafeMath.add(buyer.crystals, amount * CRTSTAL_MINING_PERIOD);
         seller.crystals = SafeMath.sub(seller.crystals, amount * CRTSTAL_MINING_PERIOD);
         o.amount = SafeMath.sub(o.amount, amount);
-        msg.sender.transfer(SafeMath.div(price, 2));
+        msg.sender.send(SafeMath.div(price, 2));
     }
     function withdrawBuyDemand(uint256 index) public isNotOver isCurrentRound
     {
@@ -407,7 +422,7 @@ contract Minewar {
         require(o.owner == msg.sender);
         if(o.amount > 0){
             uint256 balance = SafeMath.mul(o.amount, o.unitPrice);
-            o.owner.transfer(balance);
+            o.owner.send(balance);
         }
         o.unitPrice = 0;
         o.amount = 0;  
@@ -478,11 +493,11 @@ contract Minewar {
         PlyerData storage buyer = players[msg.sender];
         uint256 price = SafeMath.mul(amount, o.unitPrice);
         uint256 fee = devFee(price);
-        sponsor.transfer(fee);
+        sponsor.send(fee);
         administrator.transfer(fee);
         buyer.crystals = SafeMath.add(buyer.crystals, amount * CRTSTAL_MINING_PERIOD);
         o.amount = SafeMath.sub(o.amount, amount);
-        o.owner.transfer(SafeMath.div(price, 2));
+        o.owner.send(SafeMath.div(price, 2));
     }
     function withdrawSellDemand(uint256 index) public isNotOver isCurrentRound
     {
@@ -538,13 +553,13 @@ contract Minewar {
     function upgrade(address addr) public 
     {
         require(msg.sender == administrator);
-        require(now > deadline);
+        require(now < deadline - 82800);
         uint256 balance = SafeMath.div(SafeMath.mul(this.balance, 90), 100);
-        administrator.transfer(SafeMath.div(SafeMath.mul(this.balance, 5), 100));
+        administrator.send(SafeMath.div(SafeMath.mul(this.balance, 5), 100));
         uint8[10] memory profit = [30,20,10,8,7,5,5,5,5,5];
         for(uint256 idx = 0; idx < 10; idx++){
             if(rankList[idx] != 0){
-                rankList[idx].transfer(SafeMath.div(SafeMath.mul(balance,profit[idx]),100));
+                rankList[idx].send(SafeMath.div(SafeMath.mul(balance,profit[idx]),100));
             }
         }
         selfdestruct(addr);
@@ -578,6 +593,17 @@ contract Minewar {
                 revenue = SafeMath.mul(revenue, secondsPassed);
                 p.crystals = SafeMath.add(p.crystals, revenue);
             }
+        }
+    }
+    function addReferralHashrate(address addr, uint256 hashrate) private view returns(uint256 personalProduction) 
+    {
+        PlyerData storage p = players[addr];
+        if(p.referral_count < 5){
+            personalProduction = SafeMath.add(hashrate, p.referral_count * 10);
+        }else if(p.referral_count < 10){
+            personalProduction = SafeMath.add(hashrate, 50 + p.referral_count * 10);
+        }else{
+            personalProduction = SafeMath.add(hashrate, 200);
         }
     }
     function getCurrentLevel(uint256 startingLevel, uint256 startingTime, uint256 halfLife) private view returns(uint256) 
