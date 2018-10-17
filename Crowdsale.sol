@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0xe555924f1ffaadfdbb75804dfabc019f5bac2eba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x2C8d8e2f62833De53E0115F0935E84D6C1077797
 */
 pragma solidity 0.4.24;
 
@@ -122,7 +122,7 @@ contract EyeToken is ERC20, Ownable {
         uint until;
     }
 
-    string public name = "EyeCoin";
+    string public name = "EYE Token";
     string public symbol = "EYE";
     uint8 public decimals = 18;
 
@@ -188,7 +188,7 @@ contract EyeToken is ERC20, Ownable {
      * @param _from The address to transfer from.
      */
     modifier allowTransfer(address _from) {
-        assert(!isICO);
+        require(!isICO, "ICO phase");
         if (frozenAccounts[_from].frozen) {
             require(frozenAccounts[_from].until != 0 && frozenAccounts[_from].until < now, "Frozen account");
             delete frozenAccounts[_from];
@@ -213,7 +213,7 @@ contract EyeToken is ERC20, Ownable {
     * @param _value The amount to be transferred.
     */
     function transferICO(address _to, uint256 _value) public onlyOwner returns (bool) {
-        assert(isICO);
+        require(isICO, "Not ICO phase");
         require(_to != address(0), "Zero address 'To'");
         require(_value <= balances[wallet], "Not enought balance");
         balances[wallet] = balances[wallet].sub(_value);
@@ -441,25 +441,25 @@ contract CrowdSale is Ownable {
      */
     function start(address _token, uint256 _rate) public onlyOwnerOrManager {
         require(_rate > 0, "Invalid exchange rate");
-        assert(phase_i == PHASE_NOT_STARTED);
+        require(phase_i == PHASE_NOT_STARTED, "Bad phase");
 
         token = EyeToken(_token);
         base_wallet = token.wallet();
         dec_mul = 10 ** uint256(token.decimals());
 
         // Organizasional expenses
-        address org_exp = 0x45709fcBeb5D133bFA336d8c70FFFF98eE815359;
+        address org_exp = 0xeb967ECF00e86F58F6EB8019d003c48186679A96;
         // Early birds
-        address ear_brd = 0xE640b346E1d9A1eb3F809608a8a92f041D02F3BE;
+        address ear_brd = 0x469A97b357C2056B927fF4CA097513BD927db99E;
         // Community development
-        address com_dev = 0xdC2c6398F7a9cF2CbdCfEcB37CF732f486642316;
+        address com_dev = 0x877D6a4865478f50219a20870Bdd16E6f7aa954F;
         // Special coins
-        address special = 0x1dBcDb11c6C05a4EA541227fBdEeB02d6492BD07;
+        address special = 0x5D2C58e6aCC5BcC1aaA9b54B007e0c9c3E091adE;
         // Team lock
-        vest_1 = 0xC49d11a05aF6D5BDeBfd18E0010516D9840f3610;
-        vest_2 = 0x7Fd486029C8D81f4894e4ef0D460c2bD97187aeF;
-        vest_3 = 0xcCcC86e1086015AEE865165f6f93a82dE591Cb3C;
-        vest_4 = 0xd7569317e6af13D4d3832613F930cc5b7cecaE6e;
+        vest_1 = 0x47997109aE9bEd21efbBBA362957F1b20F435BF3;
+        vest_2 = 0xd031B38d0520aa10450046Dc0328447C3FF59147;
+        vest_3 = 0x32FcE00BfE1fEC48A45DC543224748f280a5c69E;
+        vest_4 = 0x07B489712235197736E207836f3B71ffaC6b1220;
 
         token.transferICO(org_exp, 600000000 * dec_mul);
         token.transferICO(ear_brd, 1000000000 * dec_mul);
@@ -480,7 +480,7 @@ contract CrowdSale is Ownable {
      * @dev Finalize ICO
      */
     function _finalizeICO() internal {
-        assert(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED);
+        require(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED, "Bad phase");
         phase_i = PHASE_ICO_FINISHED;
         uint curr_date = now;
         finish_date = (curr_date < ico_phase_5_end ? ico_phase_5_end : curr_date).add(SECONDS_IN_DAY * 10);
@@ -490,7 +490,7 @@ contract CrowdSale is Ownable {
      * @dev Finalize crowd-sale
      */
     function _finalize() internal {
-        assert(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED);
+        require(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED, "Bad phase");
 
         uint date = now.add(SECONDS_IN_YEAR);
         token.freeze(vest_1, date);
@@ -559,14 +559,14 @@ contract CrowdSale is Ownable {
                     phase_i = new_phase;
             }
         if (check_can_sale)
-            assert(phase_i >= 0);
+            require(phase_i >= 0, "Bad phase");
     }
 
     /**
      * @dev Update phase end times
      */
     function _updatePhaseTimes() internal {
-        assert(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED);
+        require(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED, "Bad phase");
         if (phase_i < PHASE_ICO_1)
             ico_phase_1_end = ico_start.add(SECONDS_IN_DAY.mul(ico_phase_1_days));
         if (phase_i < PHASE_ICO_2)
@@ -644,7 +644,7 @@ contract CrowdSale is Ownable {
      * executed by CRM
      */
     function freeze(address[] _accounts) public onlyOwnerOrManager {
-        assert(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED);
+        require(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED, "Bad phase");
         uint i;
         for (i = 0; i < _accounts.length; i++) {
             require(_accounts[i] != address(0), "Zero address");
@@ -660,7 +660,7 @@ contract CrowdSale is Ownable {
      * @param _accounts Given accounts
      */
     function unfreeze(address[] _accounts) public onlyOwnerOrManager {
-        assert(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED);
+        require(phase_i != PHASE_NOT_STARTED && phase_i != PHASE_FINISHED, "Bad phase");
         uint i;
         for (i = 0; i < _accounts.length; i++) {
             require(_accounts[i] != address(0), "Zero address");
@@ -686,10 +686,10 @@ contract CrowdSale is Ownable {
      */
     function setPresaleDates(uint _presale_start, uint _presale_end) public onlyOwnerOrManager {
         _updatePhase(false);
-        assert(phase_i == PHASE_BEFORE_PRESALE);
+        require(phase_i == PHASE_BEFORE_PRESALE, "Bad phase");
         // require(_presale_start >= now);
-        require(_presale_start < _presale_end);
-        require(_presale_end < ico_start);
+        require(_presale_start < _presale_end, "Invalid presale dates");
+        require(_presale_end < ico_start, "Invalid dates");
         presale_start = _presale_start;
         presale_end = _presale_end;
     }
@@ -705,8 +705,8 @@ contract CrowdSale is Ownable {
      */
     function setICODates(uint _ico_start, uint _ico_1_days, uint _ico_2_days, uint _ico_3_days, uint _ico_4_days, uint _ico_5_days) public onlyOwnerOrManager {
         _updatePhase(false);
-        assert(phase_i != PHASE_FINISHED && phase_i != PHASE_ICO_FINISHED && phase_i < PHASE_ICO_1);
-        require(presale_end < _ico_start);
+        require(phase_i != PHASE_FINISHED && phase_i != PHASE_ICO_FINISHED && phase_i < PHASE_ICO_1, "Bad phase");
+        require(presale_end < _ico_start, "Invalid dates");
         ico_start = _ico_start;
         ico_phase_1_days = _ico_1_days;
         ico_phase_2_days = _ico_2_days;
