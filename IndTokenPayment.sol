@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x5805b8c8d2363384b031537ee2f10216ff1684b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x09df4d4490c34608b13afdea0a1e6577f8e6b21a
 */
 pragma solidity ^0.4.23;
 
@@ -177,12 +177,6 @@ contract IContractRegistry {
  * @notice It does not support ERC20 to ERC20 transfer.
  */
 
-
-
-
-
-
-
 contract IndTokenPayment is Ownable, ReentrancyGuard {  
     IERC20Token[] public path;    
     address public destinationWallet;       
@@ -222,7 +216,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
         assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
         IBancorNetwork bancorNetwork = IBancorNetwork(bancorRegistry.getAddress(BANCOR_NETWORK));   
         //TODO : Compute minReturn
-        uint256 minReturn =0;
+        uint256 minReturn =1;
         uint256 convTokens =  bancorNetwork.convertFor.value(msg.value)(path,msg.value,minReturn,destinationWallet);        
         assert(convTokens > 0);
         emit conversionSucceded(msg.sender,msg.value,destinationWallet,convTokens);                                                                    
@@ -257,7 +251,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     *
     */
 
-    function getBancorContractAddress() public returns(address) {
+    function getBancorContractAddress() public view returns(address) {
         return bancorRegistry.getAddress(BANCOR_NETWORK);
     }
 
