@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNETToken at 0xcc720aab8941961bcaff1858f26913e16a8bf2fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNETToken at 0xf019a59c5b83404185f73aefabca1d4ad7a49b5a
 */
 pragma solidity ^0.4.24;
 
@@ -135,7 +135,7 @@ contract BNETToken is StandardToken {
   uint8 public constant decimals = 18;
 
   constructor() public {
-    totalSupply = 2100000000000000000000000000000;
+    totalSupply = 2100000000000000000000000000;
     balances[msg.sender] = totalSupply;
   }
 }
