@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArconaDigitalLand at 0xdf5d68d54433661b1e5e90a547237ffb0adf6ec2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArconaDigitalLand at 0x4179528afb522747d4f2cf10e86306a135e3cda5
 */
 pragma solidity 0.4.24;
 
@@ -92,36 +92,31 @@ contract Ownable {
 
 
 
+contract LandTokenInterface {
+    //ERC721
+    function balanceOf(address _owner) public view returns (uint256 _balance);
+    function ownerOf(uint256 _landId) public view returns (address _owner);
+    function transfer(address _to, uint256 _landId) public;
+    function approve(address _to, uint256 _landId) public;
+    function takeOwnership(uint256 _landId) public;
+    function totalSupply() public view returns (uint);
+    function owns(address _claimant, uint256 _landId) public view returns (bool);
+    function allowance(address _claimant, uint256 _landId) public view returns (bool);
+    function transferFrom(address _from, address _to, uint256 _landId) public;
+    function createLand(address _owner) external returns (uint);
+}
+
 interface tokenRecipient {
     function receiveApproval(address _from, address _token, uint _value, bytes _extraData) external;
-    function receiveCreateAuction(address _from, address _token, uint _tokenId, uint _startPrice, uint _duration) external;
+    function receiveCreateAuction(address _from, address _token, uint _landId, uint _startPrice, uint _duration) external;
     function receiveCreateAuctionFromArray(address _from, address _token, uint[] _landIds, uint _startPrice, uint _duration) external;
 }
 
-
-contract ERC721 {
-    function implementsERC721() public pure returns (bool);
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) public view returns (address owner);
-    function approve(address _to, uint256 _tokenId) public returns (bool);
-    function transferFrom(address _from, address _to, uint256 _tokenId) public returns (bool);
-    function transfer(address _to, uint256 _tokenId) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-
-    // Optional
-    // function name() public view returns (string name);
-    // function symbol() public view returns (string symbol);
-    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
-    // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
-}
-
-
-
-contract LandBase is ERC721, Ownable {
+contract LandBase is Ownable {
     using SafeMath for uint;
 
+    event Transfer(address indexed from, address indexed to, uint256 indexed landId);
+    event Approval(address indexed owner, address indexed approved, uint256 landId);
     event NewLand(address indexed owner, uint256 landId);
 
     struct Land {
@@ -152,18 +147,18 @@ contract LandBase is ERC721, Ownable {
     mapping(uint256 => uint256) private ownedLandsIndex;
 
 
-    modifier onlyOwnerOf(uint256 _tokenId) {
-        require(owns(msg.sender, _tokenId));
+    modifier onlyOwnerOf(uint256 _landId) {
+        require(owns(msg.sender, _landId));
         _;
     }
 
     /**
     * @dev Gets the owner of the specified land ID
-    * @param _tokenId uint256 ID of the land to query the owner of
+    * @param _landId uint256 ID of the land to query the owner of
     * @return owner address currently marked as the owner of the given land ID
     */
-    function ownerOf(uint256 _tokenId) public view returns (address) {
-        return landOwner[_tokenId];
+    function ownerOf(uint256 _landId) public view returns (address) {
+        return landOwner[_landId];
     }
 
     function totalSupply() public view returns (uint256) {
@@ -190,52 +185,52 @@ contract LandBase is ERC721, Ownable {
 
     /**
     * @dev Gets the approved address to take ownership of a given land ID
-    * @param _tokenId uint256 ID of the land to query the approval of
+    * @param _landId uint256 ID of the land to query the approval of
     * @return address currently approved to take ownership of the given land ID
     */
-    function approvedFor(uint256 _tokenId) public view returns (address) {
-        return landApprovals[_tokenId];
+    function approvedFor(uint256 _landId) public view returns (address) {
+        return landApprovals[_landId];
     }
 
     /**
     * @dev Tells whether the msg.sender is approved for the given land ID or not
     * This function is not private so it can be extended in further implementations like the operatable ERC721
     * @param _owner address of the owner to query the approval of
-    * @param _tokenId uint256 ID of the land to query the approval of
+    * @param _landId uint256 ID of the land to query the approval of
     * @return bool whether the msg.sender is approved for the given land ID or not
     */
-    function allowance(address _owner, uint256 _tokenId) public view returns (bool) {
-        return approvedFor(_tokenId) == _owner;
+    function allowance(address _owner, uint256 _landId) public view returns (bool) {
+        return approvedFor(_landId) == _owner;
     }
 
     /**
     * @dev Approves another address to claim for the ownership of the given land ID
     * @param _to address to be approved for the given land ID
-    * @param _tokenId uint256 ID of the land to be approved
+    * @param _landId uint256 ID of the land to be approved
     */
-    function approve(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId) returns (bool) {
+    function approve(address _to, uint256 _landId) public onlyOwnerOf(_landId) returns (bool) {
         require(_to != msg.sender);
-        if (approvedFor(_tokenId) != address(0) || _to != address(0)) {
-            landApprovals[_tokenId] = _to;
-            emit Approval(msg.sender, _to, _tokenId);
+        if (approvedFor(_landId) != address(0) || _to != address(0)) {
+            landApprovals[_landId] = _to;
+            emit Approval(msg.sender, _to, _landId);
             return true;
         }
     }
 
 
-    function approveAndCall(address _spender, uint256 _tokenId, bytes _extraData) public returns (bool) {
+    function approveAndCall(address _spender, uint256 _landId, bytes _extraData) public returns (bool) {
         tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _tokenId)) {
-            spender.receiveApproval(msg.sender, this, _tokenId, _extraData);
+        if (approve(_spender, _landId)) {
+            spender.receiveApproval(msg.sender, this, _landId, _extraData);
             return true;
         }
     }
 
 
-    function createAuction(address _auction, uint _tokenId, uint _startPrice, uint _duration) public returns (bool) {
+    function createAuction(address _auction, uint _landId, uint _startPrice, uint _duration) public returns (bool) {
         tokenRecipient auction = tokenRecipient(_auction);
-        if (approve(_auction, _tokenId)) {
-            auction.receiveCreateAuction(msg.sender, this, _tokenId, _startPrice, _duration);
+        if (approve(_auction, _landId)) {
+            auction.receiveCreateAuction(msg.sender, this, _landId, _startPrice, _duration);
             return true;
         }
     }
@@ -253,26 +248,26 @@ contract LandBase is ERC721, Ownable {
 
     /**
     * @dev Claims the ownership of a given land ID
-    * @param _tokenId uint256 ID of the land being claimed by the msg.sender
+    * @param _landId uint256 ID of the land being claimed by the msg.sender
     */
-    function takeOwnership(uint256 _tokenId) public {
-        require(allowance(msg.sender, _tokenId));
-        clearApprovalAndTransfer(ownerOf(_tokenId), msg.sender, _tokenId);
+    function takeOwnership(uint256 _landId) public {
+        require(allowance(msg.sender, _landId));
+        clearApprovalAndTransfer(ownerOf(_landId), msg.sender, _landId);
     }
 
     /**
     * @dev Transfers the ownership of a given land ID to another address
     * @param _to address to receive the ownership of the given land ID
-    * @param _tokenId uint256 ID of the land to be transferred
+    * @param _landId uint256 ID of the land to be transferred
     */
-    function transfer(address _to, uint256 _tokenId) public onlyOwnerOf(_tokenId) returns (bool) {
-        clearApprovalAndTransfer(msg.sender, _to, _tokenId);
+    function transfer(address _to, uint256 _landId) public onlyOwnerOf(_landId) returns (bool) {
+        clearApprovalAndTransfer(msg.sender, _to, _landId);
         return true;
     }
 
 
-    function ownerTransfer(address _from, address _to, uint256 _tokenId) onlyAdmin public returns (bool) {
-        clearApprovalAndTransfer(_from, _to, _tokenId);
+    function ownerTransfer(address _from, address _to, uint256 _landId) onlyAdmin public returns (bool) {
+        clearApprovalAndTransfer(_from, _to, _landId);
         return true;
     }
 
@@ -280,66 +275,66 @@ contract LandBase is ERC721, Ownable {
     * @dev Internal function to clear current approval and transfer the ownership of a given land ID
     * @param _from address which you want to send lands from
     * @param _to address which you want to transfer the land to
-    * @param _tokenId uint256 ID of the land to be transferred
+    * @param _landId uint256 ID of the land to be transferred
     */
-    function clearApprovalAndTransfer(address _from, address _to, uint256 _tokenId) internal {
-        require(owns(_from, _tokenId));
+    function clearApprovalAndTransfer(address _from, address _to, uint256 _landId) internal {
+        require(owns(_from, _landId));
         require(_to != address(0));
-        require(_to != ownerOf(_tokenId));
+        require(_to != ownerOf(_landId));
 
-        clearApproval(_from, _tokenId);
-        removeLand(_from, _tokenId);
-        addLand(_to, _tokenId);
-        emit Transfer(_from, _to, _tokenId);
+        clearApproval(_from, _landId);
+        removeLand(_from, _landId);
+        addLand(_to, _landId);
+        emit Transfer(_from, _to, _landId);
     }
 
     /**
     * @dev Internal function to clear current approval of a given land ID
-    * @param _tokenId uint256 ID of the land to be transferred
+    * @param _landId uint256 ID of the land to be transferred
     */
-    function clearApproval(address _owner, uint256 _tokenId) private {
-        require(owns(_owner, _tokenId));
-        landApprovals[_tokenId] = address(0);
-        emit Approval(_owner, address(0), _tokenId);
+    function clearApproval(address _owner, uint256 _landId) private {
+        require(owns(_owner, _landId));
+        landApprovals[_landId] = address(0);
+        emit Approval(_owner, address(0), _landId);
     }
 
     /**
     * @dev Internal function to add a land ID to the list of a given address
     * @param _to address representing the new owner of the given land ID
-    * @param _tokenId uint256 ID of the land to be added to the lands list of the given address
+    * @param _landId uint256 ID of the land to be added to the lands list of the given address
     */
-    function addLand(address _to, uint256 _tokenId) private {
-        require(landOwner[_tokenId] == address(0));
-        landOwner[_tokenId] = _to;
+    function addLand(address _to, uint256 _landId) private {
+        require(landOwner[_landId] == address(0));
+        landOwner[_landId] = _to;
 
         uint256 length = ownedLands[_to].length;
-        ownedLands[_to].push(_tokenId);
-        ownedLandsIndex[_tokenId] = length;
+        ownedLands[_to].push(_landId);
+        ownedLandsIndex[_landId] = length;
         totalLands = totalLands.add(1);
     }
 
     /**
     * @dev Internal function to remove a land ID from the list of a given address
     * @param _from address representing the previous owner of the given land ID
-    * @param _tokenId uint256 ID of the land to be removed from the lands list of the given address
+    * @param _landId uint256 ID of the land to be removed from the lands list of the given address
     */
-    function removeLand(address _from, uint256 _tokenId) private {
-        require(owns(_from, _tokenId));
+    function removeLand(address _from, uint256 _landId) private {
+        require(owns(_from, _landId));
 
-        uint256 landIndex = ownedLandsIndex[_tokenId];
+        uint256 landIndex = ownedLandsIndex[_landId];
         //        uint256 lastLandIndex = balanceOf(_from).sub(1);
         uint256 lastLandIndex = ownedLands[_from].length.sub(1);
         uint256 lastLand = ownedLands[_from][lastLandIndex];
 
-        landOwner[_tokenId] = address(0);
+        landOwner[_landId] = address(0);
         ownedLands[_from][landIndex] = lastLand;
         ownedLands[_from][lastLandIndex] = 0;
         // Note that this will handle single-element arrays. In that case, both landIndex and lastLandIndex are going to
-        // be zero. Then we can make sure that we will remove _tokenId from the ownedLands list since we are first swapping
+        // be zero. Then we can make sure that we will remove _landId from the ownedLands list since we are first swapping
         // the lastLand to the first position, and then dropping the element placed in the last position of the list
 
         ownedLands[_from].length--;
-        ownedLandsIndex[_tokenId] = 0;
+        ownedLandsIndex[_landId] = 0;
         ownedLandsIndex[lastLand] = landIndex;
         totalLands = totalLands.sub(1);
     }
@@ -347,15 +342,15 @@ contract LandBase is ERC721, Ownable {
 
     function createLand(address _owner, uint _id) onlyAdmin public returns (uint) {
         require(_owner != address(0));
-        uint256 _tokenId = lastLandId++;
-        addLand(_owner, _tokenId);
+        uint256 _landId = lastLandId++;
+        addLand(_owner, _landId);
         //store new land data
-        lands[_tokenId] = Land({
+        lands[_landId] = Land({
             id : _id
             });
-        emit Transfer(address(0), _owner, _tokenId);
-        emit NewLand(_owner, _tokenId);
-        return _tokenId;
+        emit Transfer(address(0), _owner, _landId);
+        emit NewLand(_owner, _landId);
+        return _landId;
     }
 
     function createLandAndAuction(address _owner, uint _id, address _auction, uint _startPrice, uint _duration) onlyAdmin public
@@ -365,15 +360,15 @@ contract LandBase is ERC721, Ownable {
     }
 
 
-    function owns(address _claimant, uint256 _tokenId) public view returns (bool) {
-        return ownerOf(_tokenId) == _claimant && ownerOf(_tokenId) != address(0);
+    function owns(address _claimant, uint256 _landId) public view returns (bool) {
+        return ownerOf(_landId) == _claimant && ownerOf(_landId) != address(0);
     }
 
 
-    function transferFrom(address _from, address _to, uint256 _tokenId) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _landId) public returns (bool) {
         require(_to != address(this));
-        require(allowance(msg.sender, _tokenId));
-        clearApprovalAndTransfer(_from, _to, _tokenId);
+        require(allowance(msg.sender, _landId));
+        clearApprovalAndTransfer(_from, _to, _landId);
         return true;
     }
 
@@ -383,11 +378,6 @@ contract LandBase is ERC721, Ownable {
 contract ArconaDigitalLand is LandBase {
     string public constant name = " Arcona Digital Land";
     string public constant symbol = "ARDL";
-
-    function implementsERC721() public pure returns (bool)
-    {
-        return true;
-    }
 
     function() public payable{
         revert();
