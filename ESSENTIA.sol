@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0x1fc3db544c4d4dd09f7a0524f3c64c9d0ac2abac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0x67f9d598df00cf5f89584953fa9bb0df9bcb5247
 */
 pragma solidity ^0.4.24;
 
@@ -83,7 +83,7 @@ contract Ownable {
 //                                                          //
 //                 ESSENTIA erc20 & Genesis                 //
 //                   https://essentia.one                   //
-//.                                                        .//
+//                                                          //
 //////////////////////////////////////////////////////////////
 
 
@@ -100,11 +100,11 @@ contract ESSENTIA_ERC20 is Ownable {
 
 
 
-    // Public variables for the ESSENTIA ERC20 ESS Token Contract and Genesis
+    /* Public variables for the ERC20 token */
     string public constant standard = "ESSENTIA erc20 and Genesis";
-    uint256 public constant decimals = 18;   // hardcoded to be a constant
+    uint8 public constant decimals = 18; // hardcoded to be a constant
     string public name = "ESSENTIA";
-    string public symbol = "BOB";
+    string public symbol = "ESS";
     uint256 public totalSupply;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -173,7 +173,7 @@ contract ESSENTIA_ERC20 is Ownable {
         return true;
     }
 
-    /* Approve and then communicate the approved contract in a single tx */
+    /*  and then communicate the  contract in a single tx */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
 
@@ -191,11 +191,6 @@ interface tokenRecipient {
 }
 
 
-//
-// This creates and adds two genesis pools of ESS tokens to the balance of the A and B ETH addresses.
-// The A/B ESS Genesis pools are 35/65 of the A+B total ESS Token supply. Integer rounded.
-//
-
 
 contract ESSENTIA is ESSENTIA_ERC20 {
 
@@ -208,8 +203,8 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
         ) public {
 
-        A = 0x43436beFDbB139f0E78DDd1bCF4f4cB75e215346;
-        B = 0xB33532656433f4Eca3782F6B20298d1424d1F2CF;
+        A = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
+        B = 0xb7586945167e9271E2881E92c13F13a8Cc776406;
 
 
         balances[A]=balances[A].add(614359681*(uint256(10)**decimals));
