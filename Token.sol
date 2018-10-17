@@ -1,435 +1,322 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x70504eeed81fa1d75c84cf83c67e9f8cc03350b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa149bf8a64ef4a57ab368f789b490fd096769127
 */
-/*! silkroad.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+pragma solidity ^0.4.24;
+/* ANCI
+// Antrodia Cinamomum Token (ANCI)
+// ERC20 Contract with Timelock capabilities
+// The bigger intricate timelock mechanisms out here
+// ---
+// ---
+//   _   _            _   _  _  ___ ___   ___
+//  | |_| |_  ___    /_\ | \| |/ __|_ _| | _ \_____ __ _____ _ _
+//  |  _| ' \/ -_)  / _ \| .` | (__ | |  |  _/ _ \ V  V / -_) '_|
+//   \__|_||_\___| /_/ \_\_|\_|\___|___| |_| \___/\_/\_/\___|_|
+//
+// ---
+// ---
+*/
 
-pragma solidity 0.4.24;
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        if(a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a / b;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-contract Ownable {
+/* an owner is required */
+contract Owned {
     address public owner;
 
-    event OwnershipRenounced(address indexed previousOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() { require(msg.sender == owner); _;  }
-
-    constructor() public {
+    function Owned() public {
         owner = msg.sender;
     }
 
-    function _transferOwnership(address _newOwner) internal {
-        require(_newOwner != address(0));
-        emit OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipRenounced(owner);
-        owner = address(0);
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        _transferOwnership(_newOwner);
+    function setOwner(address _owner) onlyOwner public {
+        owner = _owner;
     }
 }
 
-contract ERC20 {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+/* SafeMath implementation to guard against overflows */
+contract SafeMath {
+    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a + _b;
+        assert(c >= _a); // checks for overflow
+        return c;
+    }
 
-    function totalSupply() public view returns(uint256);
-    function balanceOf(address who) public view returns(uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-    function transferFrom(address from, address to, uint256 value) public returns(bool);
-    function allowance(address owner, address spender) public view returns(uint256);
-    function approve(address spender, uint256 value) public returns(bool);
+    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        assert(_a >= _b); // guards against overflow
+        return _a - _b;
+    }
+
+    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+        uint256 c = _a * _b;
+        assert(_a == 0 || c / _a == _b); // checks for overflow
+        return c;
+    }
 }
 
-contract StandardToken is ERC20 {
-    using SafeMath for uint256;
+/* The main contract for the timelock capable ERC20 token */
+contract Token is SafeMath, Owned {
+    uint256 constant DAY_IN_SECONDS = 86400;
+    string public constant standard = "0.777";
+    string public name = "";
+    string public symbol = "";
+    uint8 public decimals = 0;
+    uint256 public totalSupply = 0;
+    mapping (address => uint256) public balanceP;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    uint256 totalSupply_;
+    mapping (address => uint256[]) public lockTime;
+    mapping (address => uint256[]) public lockValue;
+    mapping (address => uint256) public lockNum;
+    mapping (address => bool) public locker;
+    uint256 public later = 0;
+    uint256 public earlier = 0;
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) internal allowed;
+    /* standard ERC20 events */
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    constructor(string _name, string _symbol, uint8 _decimals) public {
+    /* custom lock-related events */
+    event TransferredLocked(address indexed _from, address indexed _to, uint256 _time, uint256 _value);
+    event TokenUnlocked(address indexed _address, uint256 _value);
+
+    /* ERC20 constructor */
+    function Token(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
+        require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
+
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        totalSupply = _totalSupply;
+
+        balanceP[msg.sender] = _totalSupply;
+
     }
 
-    function totalSupply() public view returns(uint256) {
-        return totalSupply_;
+    /* don't allow zero address */
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
     }
 
-    function balanceOf(address _owner) public view returns(uint256) {
-        return balances[_owner];
+    /* owner may add & remove optional locker contract */
+    function addLocker(address _address) public validAddress(_address) onlyOwner {
+        locker[_address] = true;
     }
 
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    function removeLocker(address _address) public validAddress(_address) onlyOwner {
+        locker[_address] = false;
     }
 
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        require(_to.length == _value.length);
+    /* owner may fast-forward or delay ALL timelocks */
+    function setUnlockEarlier(uint256 _earlier) public onlyOwner {
+        earlier = add(earlier, _earlier);
+    }
 
-        for(uint i = 0; i < _to.length; i++) {
-            transfer(_to[i], _value[i]);
+    function setUnlockLater(uint256 _later) public onlyOwner {
+        later = add(later, _later);
+    }
+
+    /* shows unlocked balance */
+    function balanceUnlocked(address _address) public view returns (uint256 _balance) {
+        _balance = balanceP[_address];
+        uint256 i = 0;
+        while (i < lockNum[_address]) {
+            if (add(now, earlier) > add(lockTime[_address][i], later)) _balance = add(_balance, lockValue[_address][i]);
+            i++;
         }
-
-        return true;
+        return _balance;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-
-        emit Transfer(_from, _to, _value);
-        return true;
+    /* shows locked balance */
+    function balanceLocked(address _address) public view returns (uint256 _balance) {
+        _balance = 0;
+        uint256 i = 0;
+        while (i < lockNum[_address]) {
+            if (add(now, earlier) < add(lockTime[_address][i], later)) _balance = add(_balance, lockValue[_address][i]);
+            i++;
+        }
+        return  _balance;
     }
 
-    function allowance(address _owner, address _spender) public view returns(uint256) {
-        return allowed[_owner][_spender];
+    /* standard ERC20 compatible balance accessor */
+    function balanceOf(address _address) public view returns (uint256 _balance) {
+        _balance = balanceP[_address];
+        uint256 i = 0;
+        while (i < lockNum[_address]) {
+            _balance = add(_balance, lockValue[_address][i]);
+            i++;
+        }
+        return _balance;
     }
 
-    function approve(address _spender, uint256 _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
+    /* show the timelock periods and locked values */
+    function showTime(address _address) public view validAddress(_address) returns (uint256[] _time) {
+        uint i = 0;
+        uint256[] memory tempLockTime = new uint256[](lockNum[_address]);
+        while (i < lockNum[_address]) {
+            tempLockTime[i] = sub(add(lockTime[_address][i], later), earlier);
+            i++;
+        }
+        return tempLockTime;
+    }
 
+    function showValue(address _address) public view validAddress(_address) returns (uint256[] _value) {
+        return lockValue[_address];
+    }
+
+    /* calculates and handles the timelocks before related operations */
+    function calcUnlock(address _address) private {
+        uint256 i = 0;
+        uint256 j = 0;
+        uint256[] memory currentLockTime;
+        uint256[] memory currentLockValue;
+        uint256[] memory newLockTime = new uint256[](lockNum[_address]);
+        uint256[] memory newLockValue = new uint256[](lockNum[_address]);
+        currentLockTime = lockTime[_address];
+        currentLockValue = lockValue[_address];
+        while (i < lockNum[_address]) {
+            if (add(now, earlier) > add(currentLockTime[i], later)) {
+                balanceP[_address] = add(balanceP[_address], currentLockValue[i]);
+
+                /* emit custom timelock expiration event */
+                emit TokenUnlocked(_address, currentLockValue[i]);
+            } else {
+                newLockTime[j] = currentLockTime[i];
+                newLockValue[j] = currentLockValue[i];
+                j++;
+            }
+            i++;
+        }
+        uint256[] memory trimLockTime = new uint256[](j);
+        uint256[] memory trimLockValue = new uint256[](j);
+        i = 0;
+        while (i < j) {
+            trimLockTime[i] = newLockTime[i];
+            trimLockValue[i] = newLockValue[i];
+            i++;
+        }
+        lockTime[_address] = trimLockTime;
+        lockValue[_address] = trimLockValue;
+        lockNum[_address] = j;
+    }
+
+    /* ERC20 compliant transfer method */
+    function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool success) {
+        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
+        if (balanceP[msg.sender] >= _value && _value > 0) {
+            balanceP[msg.sender] = sub(balanceP[msg.sender], _value);
+            balanceP[_to] = add(balanceP[_to], _value);
+            emit Transfer(msg.sender, _to, _value);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /* custom timelocked transfer method */
+    function transferLocked(address _to, uint256[] _time, uint256[] _value) public validAddress(_to) returns (bool success) {
+        require(_value.length == _time.length);
+
+        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
+        uint256 i = 0;
+        uint256 totalValue = 0;
+        while (i < _value.length) {
+            totalValue = add(totalValue, _value[i]);
+            i++;
+        }
+        if (balanceP[msg.sender] >= totalValue && totalValue > 0) {
+            i = 0;
+            while (i < _time.length) {
+                balanceP[msg.sender] = sub(balanceP[msg.sender], _value[i]);
+                lockTime[_to].length = lockNum[_to]+1;
+                lockValue[_to].length = lockNum[_to]+1;
+                lockTime[_to][lockNum[_to]] = add(now, _time[i]);
+                lockValue[_to][lockNum[_to]] = _value[i];
+
+                /* emit custom timelock event */
+                emit TransferredLocked(msg.sender, _to, lockTime[_to][lockNum[_to]], lockValue[_to][lockNum[_to]]);
+
+                /* emit standard transfer event */
+                emit Transfer(msg.sender, _to, lockValue[_to][lockNum[_to]]);
+                lockNum[_to]++;
+                i++;
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /* custom timelocker method */
+    function transferLockedFrom(address _from, address _to, uint256[] _time, uint256[] _value) public
+	    validAddress(_from) validAddress(_to) returns (bool success) {
+        require(locker[msg.sender]);
+        require(_value.length == _time.length);
+
+        if (lockNum[_from] > 0) calcUnlock(_from);
+        uint256 i = 0;
+        uint256 totalValue = 0;
+        while (i < _value.length) {
+            totalValue = add(totalValue, _value[i]);
+            i++;
+        }
+        if (balanceP[_from] >= totalValue && totalValue > 0) {
+            i = 0;
+            while (i < _time.length) {
+                balanceP[_from] = sub(balanceP[_from], _value[i]);
+                lockTime[_to].length = lockNum[_to]+1;
+                lockValue[_to].length = lockNum[_to]+1;
+                lockTime[_to][lockNum[_to]] = add(now, _time[i]);
+                lockValue[_to][lockNum[_to]] = _value[i];
+
+                /* emit custom timelock event */
+                emit TransferredLocked(_from, _to, lockTime[_to][lockNum[_to]], lockValue[_to][lockNum[_to]]);
+
+                /* emit standard transfer event */
+                emit Transfer(_from, _to, lockValue[_to][lockNum[_to]]);
+                lockNum[_to]++;
+                i++;
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /* standard ERC20 compliant transferFrom method */
+    function transferFrom(address _from, address _to, uint256 _value) public validAddress(_from) validAddress(_to) returns (bool success) {
+        if (lockNum[_from] > 0) calcUnlock(_from);
+        if (balanceP[_from] >= _value && _value > 0) {
+            allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
+            balanceP[_from] = sub(balanceP[_from], _value);
+            balanceP[_to] = add(balanceP[_to], _value);
+            emit Transfer(_from, _to, _value);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /* standard ERC20 compliant approve method */
+    function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+
+        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
+        allowance[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
-        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
+    /* safety method against ether transfer */
+    function () public payable {
+        revert();
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        }
-        else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-}
-
-contract MintableToken is StandardToken, Ownable {
-    bool public mintingFinished = false;
-
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    modifier canMint() { require(!mintingFinished); _; }
-    modifier hasMintPermission() { require(msg.sender == owner); _; }
-
-    function mint(address _to, uint256 _amount) hasMintPermission canMint public returns(bool) {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function finishMinting() onlyOwner canMint public returns(bool) {
-        mintingFinished = true;
-
-        emit MintFinished();
-        return true;
-    }
-}
-
-contract CappedToken is MintableToken {
-    uint256 public cap;
-
-    constructor(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
-    }
-
-    function mint(address _to, uint256 _amount) public returns(bool) {
-        require(totalSupply_.add(_amount) <= cap);
-
-        return super.mint(_to, _amount);
-    }
-}
-
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
-
-    function _burn(address _who, uint256 _value) internal {
-        require(_value <= balances[_who]);
-
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-
-        emit Burn(_who, _value);
-        emit Transfer(_who, address(0), _value);
-    }
-
-    function burn(uint256 _value) public {
-        _burn(msg.sender, _value);
-    }
-
-    function burnFrom(address _from, uint256 _value) public {
-        require(_value <= allowed[_from][msg.sender]);
-        
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        _burn(_from, _value);
-    }
-}
-
-contract Withdrawable is Ownable {
-    function withdrawEther(address _to, uint _value) onlyOwner public {
-        require(_to != address(0));
-        require(address(this).balance >= _value);
-
-        _to.transfer(_value);
-    }
-
-    function withdrawTokensTransfer(ERC20 _token, address _to, uint256 _value) onlyOwner public {
-        require(_token.transfer(_to, _value));
-    }
-
-    function withdrawTokensTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) onlyOwner public {
-        require(_token.transferFrom(_from, _to, _value));
-    }
-
-    function withdrawTokensApprove(ERC20 _token, address _spender, uint256 _value) onlyOwner public {
-        require(_token.approve(_spender, _value));
-    }
-}
-
-contract Pausable is Ownable {
-    bool public paused = false;
-
-    event Pause();
-    event Unpause();
-
-    modifier whenNotPaused() { require(!paused); _; }
-    modifier whenPaused() { require(paused); _; }
-
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
-    }
-}
-
-contract Manageable is Ownable {
-    address[] public managers;
-
-    event ManagerAdded(address indexed manager);
-    event ManagerRemoved(address indexed manager);
-
-    modifier onlyManager() { require(isManager(msg.sender)); _; }
-
-    function countManagers() view public returns(uint) {
-        return managers.length;
-    }
-
-    function getManagers() view public returns(address[]) {
-        return managers;
-    }
-
-    function isManager(address _manager) view public returns(bool) {
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function addManager(address _manager) onlyOwner public {
-        require(_manager != address(0));
-        require(!isManager(_manager));
-
-        managers.push(_manager);
-
-        emit ManagerAdded(_manager);
-    }
-
-    function removeManager(address _manager) onlyOwner public {
-        require(isManager(_manager));
-
-        uint index = 0;
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                index = i;
-            }
-        }
-
-        for(; index < managers.length - 1; index++) {
-            managers[index] = managers[index + 1];
-        }
-        
-        managers.length--;
-        emit ManagerRemoved(_manager);
-    }
-}
-
-contract RewardToken is StandardToken, Ownable {
-    struct Payment {
-        uint time;
-        uint amount;
-    }
-
-    Payment[] public repayments;
-    mapping(address => Payment[]) public rewards;
-
-    event Repayment(address indexed from, uint256 time, uint256 amount);
-    event Reward(address indexed to, uint256 time, uint256 amount);
-
-    function repayment() onlyOwner payable public {
-        require(msg.value >= 0.01 * 1 ether);
-
-        repayments.push(Payment({time : now, amount : msg.value}));
-
-        emit Repayment(msg.sender, now, msg.value);
-    }
-
-    function _reward(address _to) private returns(bool) {
-        if(rewards[_to].length < repayments.length) {
-            uint sum = 0;
-            for(uint i = rewards[_to].length; i < repayments.length; i++) {
-                uint amount = balances[_to] > 0 ? (repayments[i].amount.mul(balances[_to]).div(totalSupply_)) : 0;
-                rewards[_to].push(Payment({time : now, amount : amount}));
-                sum = sum.add(amount);
-            }
-
-            if(sum > 0) {
-                _to.transfer(sum);
-                emit Reward(_to, now, sum);
-            }
-
-            return true;
-        }
-        return false;
-    }
-
-    function reward() public returns(bool) {
-        return _reward(msg.sender);
-    }
-
-    function availableReward(address _to) public view returns(uint256 value) {
-        if(rewards[_to].length < repayments.length && balances[_to] > 0) {
-            uint sum = 0;
-            for(uint i = rewards[_to].length; i < repayments.length; i++) {
-                sum = sum.add(repayments[i].amount.mul(balances[_to]).div(totalSupply_));
-            }
-
-            return sum;
-        }
-        return 0;
-    }
-
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        _reward(msg.sender);
-        _reward(_to);
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        _reward(_from);
-        _reward(_to);
-        return super.transferFrom(_from, _to, _value);
-    }
-}
-
-
-/*
-    ICO Silkroadmining
-*/
-contract Token is CappedToken, BurnableToken, RewardToken, Withdrawable {
-    constructor() CappedToken(100000000 * 1e8) StandardToken("SILK", "SILK", 8) public {
-        
-    }
-}
-
-contract Crowdsale is Manageable, Withdrawable, Pausable {
-    using SafeMath for uint;
-
-    Token public token;
-    bool public crowdsaleClosed = false;
-
-    event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
-    event CrowdsaleClose();
-   
-    constructor() public {
-        token = new Token();
-
-        addManager(0x915c517cB57fAB7C532262cB9f109C875bEd7d18);
-    }
-
-    function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
-        token.mint(_to, _tokens);
-        emit ExternalPurchase(_to, _tx, _currency, _value, _rate, _tokens);
-    }
-
-    function closeCrowdsale(address _to) onlyOwner public {
-        require(!crowdsaleClosed);
-
-        token.finishMinting();
-        token.transferOwnership(_to);
-
-        crowdsaleClosed = true;
-
-        emit CrowdsaleClose();
-    }
 }
