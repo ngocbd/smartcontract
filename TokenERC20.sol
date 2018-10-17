@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbbecab25674c958d5dbb4a51ff65dac54ed36062
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x453d151b7137c57d1dc0568b733e902620618da9
 */
 pragma solidity ^0.4.21;
 
@@ -65,8 +65,8 @@ contract TokenERC20 is Ownable {
 	
     using SafeMath for uint256;
     
-    string public constant name       = "registration traceability";
-    string public constant symbol     = "REGcoin";
+    string public constant name       = "aubar";
+    string public constant symbol     = "AUB";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
     uint256 public currentTotalSupply = 0;
@@ -97,16 +97,8 @@ contract TokenERC20 is Ownable {
 	
 	function transfer(address _to, uint256 _value) public returns (bool) {
 		require(_to != address(0));
-		 
-		if( !touched[msg.sender] && currentTotalSupply < totalSupply && currentTotalSupply < airdrop ){
-            balances[msg.sender] = balances[msg.sender].add( startBalance );
-            touched[msg.sender] = true;
-            currentTotalSupply = currentTotalSupply.add( startBalance );
-        }
-		
 		require(!frozenAccount[msg.sender]); 
 		require(_value <= balances[msg.sender]);
-
 		balances[msg.sender] = balances[msg.sender].sub(_value);
 		balances[_to] = balances[_to].add(_value);
 		emit Transfer(msg.sender, _to, _value);
@@ -118,13 +110,6 @@ contract TokenERC20 is Ownable {
 		require(_value <= balances[_from]);
 		require(_value <= allowed[_from][msg.sender]);	
 		require(!frozenAccount[_from]); 
-		
-        if( !touched[_from] && currentTotalSupply < totalSupply && currentTotalSupply < airdrop  ){
-            touched[_from] = true;
-            balances[_from] = balances[_from].add( startBalance );
-            currentTotalSupply = currentTotalSupply.add( startBalance );
-        }
-
 		balances[_from] = balances[_from].sub(_value);
 		balances[_to] = balances[_to].add(_value);
 		allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -203,15 +188,10 @@ contract TokenERC20 is Ownable {
     }
 	
  
-	function setPrices(uint256 newBuyPrice) onlyOwner public {
-        buyPrice = newBuyPrice;
-    }
+
 	
 	function () payable public {
-    	uint amount = msg.value * buyPrice;               
-    	balances[msg.sender] = balances[msg.sender].add(amount);                  
-        balances[owner] = balances[owner].sub(amount);                        
-        emit Transfer(owner, msg.sender, amount);    
+ 
     }
 	
  
@@ -224,18 +204,7 @@ contract TokenERC20 is Ownable {
     	owner.transfer(num);
     }
 	
- 
-	function modifyairdrop(uint256 _airdrop,uint256 _startBalance ) public onlyOwner {
-		airdrop = _airdrop;
-		startBalance = _startBalance;
-	}
-	
-	function zhuchu(uint256 shuliang) public onlyOwner {
-	   require (balances[this] >= shuliang); 
-	   balances[this] -= shuliang;
-	   balances[msg.sender] += 	shuliang;
-	   emit Transfer(this, msg.sender, shuliang); 
-	}
+
  
 	
 }
