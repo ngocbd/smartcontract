@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x845bfe096fbe3eabe473edc3953d8af1b19bbbc7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x5805b8c8d2363384b031537ee2f10216ff1684b3
 */
 pragma solidity ^0.4.23;
 
@@ -219,12 +219,12 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     }    
     
     function convertToInd() internal nonReentrant {
-        //assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
-        IBancorNetwork bancorNetwork = IBancorNetwork(0xF20b9e713A33F61fA38792d2aFaF1cD30339126A);   
+        assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
+        IBancorNetwork bancorNetwork = IBancorNetwork(bancorRegistry.getAddress(BANCOR_NETWORK));   
         //TODO : Compute minReturn
         uint256 minReturn =0;
         uint256 convTokens =  bancorNetwork.convertFor.value(msg.value)(path,msg.value,minReturn,destinationWallet);        
-        //assert(convTokens > 0);
+        assert(convTokens > 0);
         emit conversionSucceded(msg.sender,msg.value,destinationWallet,convTokens);                                                                    
     }
 
@@ -257,7 +257,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     *
     */
 
-    function getBancorContractAddress() public view returns(address) {
+    function getBancorContractAddress() public returns(address) {
         return bancorRegistry.getAddress(BANCOR_NETWORK);
     }
 
