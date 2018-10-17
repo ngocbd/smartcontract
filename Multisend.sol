@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0xac3ee03753399057e7ff29201f6fa4d5df078ab9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x74364027f6c41f26cf22f7134100c0a9fde3aeb2
 */
 library SafeMath {
 
@@ -143,6 +143,6 @@ contract Multisend is Ownable {
                i += 1;
             }
         }
-        return (token_index);
+        return (i*token_index);
     }
 }
