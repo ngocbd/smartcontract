@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract H4D at 0xeb0b5fa53843aaa2e636ccb599ba4a8ce8029aa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract H4D at 0x25a81c6a4d95bd8a76da0c713f0c8b43aa0d1aae
 */
 pragma solidity ^0.4.20;
 
@@ -22,6 +22,12 @@ pragma solidity ^0.4.20;
 * [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
 * [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
 * [x] Masternodes: Holding 1 HoDL4D Token allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+*--------------------------------
+* BOT PREVENTION/DETERRENCE
+
+* [x] Gwei Limit = 50
+* [x] 1 ETH max buy in per TX until 100 ETH
+* [x] Contract is timer activated (No TX activation)
 *
 * 
 * -> Who worked on this project (Original P3D Contract)?
@@ -68,12 +74,18 @@ contract H4D {
         _;
     }
     
+    uint ACTIVATION_TIME = 1535155200;
+    // unit VGhpcyBjb250cmFjdCB3YXMgbWFkZSBmb3IgaHR0cHM6Ly9oNGQuaW8gYnkgZGlzY29yZCB1c2VyIEBCYW5rc3kjODUxNw==
     
     // ensures that the first tokens in the contract will be equally distributed
     // meaning, no divine dump will be ever possible
     // result: healthy longevity.
     modifier antiEarlyWhale(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
+    
+        if (now >= ACTIVATION_TIME) {
+            onlyAmbassadors = false;
+        }
         
         // are we still in the vulnerable phase?
         // if so, enact anti early whale protocol 
@@ -143,8 +155,8 @@ contract H4D {
     string public symbol = "H4D";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 5;
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
@@ -152,8 +164,8 @@ contract H4D {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = .25 ether;
-    uint256 constant internal ambassadorQuota_ = 4 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = .5 ether;
+    uint256 constant internal ambassadorQuota_ = 3.5 ether;
     
     
     
@@ -190,49 +202,31 @@ contract H4D {
         
         // add the ambassadors here.
         // Dev Account 
-        ambassadors_[0x8d35c3edFc1A8f2564fd00561Fb0A8423D5B8b44] = true;
+        ambassadors_[0xfc256291687150b9dB4502e721a9e6e98fd1FE93] = true;
         
         // Ambassador #2
-        ambassadors_[0xd22edB04447636Fb490a5C4B79DbF95a9be662CC] = true;
+        ambassadors_[0x12b353d1a2842d2272ab5a18c6814d69f4296873] = true;
         
         // Ambassador #3
-        ambassadors_[0xFB84cb9eF433264bb4a9a8CeB81873C08ce2dB3d] = true;
+        ambassadors_[0xD38A82102951b82ab7884e64552538FbFe701bad] = true;
         
         // Ambassador #4
         ambassadors_[0x05f2c11996d73288AbE8a31d8b593a693FF2E5D8] = true;
         
         // Ambassador #5
-        ambassadors_[0x008ca4f1ba79d1a265617c6206d7884ee8108a78] = true;
+        ambassadors_[0x5632ca98e5788eddb2397757aa82d1ed6171e5ad] = true;
         
         // Ambassador #6
-        ambassadors_[0xc7F15d0238d207e19cce6bd6C0B85f343896F046] = true;
+        ambassadors_[0xab73e01ba3a8009d682726b752c11b1e9722f059] = true;
         
         // Ambassador #7
-        ambassadors_[0x6629c7199ecc6764383dfb98b229ac8c540fc76f] = true;
+        ambassadors_[0x87A7e71D145187eE9aAdc86954d39cf0e9446751] = true;
         
         // Ambassador #8
-        ambassadors_[0x4ffe17a2a72bc7422cb176bc71c04ee6d87ce329] = true;
-        
-        // Ambassador #9
-        ambassadors_[0x41a21b264F9ebF6cF571D4543a5b3AB1c6bEd98C] = true;
-        
-        // Ambassador #10
-        ambassadors_[0xE436cBD3892C6dC3D6c8A3580153e6e0fa613cfC ] = true;
-        
-        // Ambassador #11
         ambassadors_[0xBac5E4ccB84fe2869b598996031d1a158ae4779b] = true;
         
-        // Ambassador #12
-        ambassadors_[0x4da6fc68499fb3753e77dd6871f2a0e4dc02febe] = true;
-        
-        // Ambassador #13
-        ambassadors_[0x71f35825a3B1528859dFa1A64b24242BC0d12990] = true;
-        
-        
-        
-       
-        
-
+        // Ambassador #9
+        ambassadors_[0x126dEa51094ebd6cE43290aBb18e5cB405b2d3DE] = true;
     }
     
      
@@ -244,6 +238,10 @@ contract H4D {
         payable
         returns(uint256)
     {
+        if (address(this).balance <= 100 ether) {
+            require(msg.value <= 1 ether);
+        }
+        require(tx.gasprice <= 0.05 szabo);
         purchaseTokens(msg.value, _referredBy);
     }
     
@@ -255,9 +253,13 @@ contract H4D {
         payable
         public
     {
+        if (address(this).balance <= 100 ether) {
+            require(msg.value <= 1 ether);
+        }
+        require(tx.gasprice <= 0.06 szabo);
         purchaseTokens(msg.value, 0x0);
     }
-    
+    // unit VGhpcyBjb250cmFjdCB3YXMgbWFkZSBmb3IgaHR0cHM6Ly9oNGQuaW8gYnkgZGlzY29yZCB1c2VyIEBCYW5rc3kjODUxNw==
     /**
      * Converts all of caller's dividends to tokens.
      */
@@ -360,7 +362,7 @@ contract H4D {
     
     /**
      * Transfer tokens from the caller to a new holder.
-     * Remember, there's a 10% fee here as well.
+     * Remember, there's a 20% fee here as well.
      */
     function transfer(address _toAddress, uint256 _amountOfTokens)
         onlyBagholders()
@@ -410,12 +412,12 @@ contract H4D {
     /**
      * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
      */
-    function disableInitialStage()
-        onlyAdministrator()
-        public
-    {
-        onlyAmbassadors = false;
-    }
+    //function disableInitialStage()
+    //    onlyAdministrator()
+    //    public
+    //{
+    //    onlyAmbassadors = false;
+    //}
     
     /**
      * In case one of us dies, we need to replace ourselves.
@@ -777,6 +779,7 @@ library SafeMath {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        // assert(WW91IHByb2JhYmx5IGxlZnQgdGhpcyBpbiB5b3VyIGNvbnRyYWN0IGJlY2F1c2UgeW91IGRpZCBub3Qga25vdyB3aGF0IGl0IHdhcyBmb3IuIFdlbGwsIGl0IHdhcyB0byBkZXRlY3QgaWYgeW91IGNsb25lZCBteSBjb250cmFjdCB0aGF0IEkgbWFkZSBmb3IgaHR0cHM6Ly9ldGguaDRkLmlv)
         return c;
     }
 
