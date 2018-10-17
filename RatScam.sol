@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0xc7c3cfa5eca6fcea6db68f2ccbf17826e40a2828
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x768864b2c8e9e15ec91be1db124469f861cfd2c2
 */
 pragma solidity ^0.4.24;
 
@@ -113,8 +113,8 @@ contract RatScam is modularRatScam {
     using RSKeysCalc for uint256;
 	
     // TODO: check address
-    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0x5edbe4c6275be3b42a02fd77674d0a6e490e9aa0);
-	RatBookInterface constant private RatBook = RatBookInterface(0x89348bf4fb32c4cea21e4158b2d92ed9ee03cf79);
+    RatInterfaceForForwarder constant private RatKingCorp = RatInterfaceForForwarder(0x7099eA5286AA066b5e6194ffebEe691332502d8a);
+	RatBookInterface constant private RatBook = RatBookInterface(0xc9bbdf8cb30fdb0a6a40abecc267ccaa7e222dbe);
 
     string constant public name = "RatScam Round #1";
     string constant public symbol = "RS1";
@@ -172,11 +172,7 @@ contract RatScam is modularRatScam {
      * @dev prevents contracts from interacting with ratscam 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "non smart contract address only");
+        require(msg.sender == tx.origin);
         _;
     }
 
@@ -948,9 +944,16 @@ contract RatScam is modularRatScam {
             round_.keys = _keys.add(round_.keys);
             round_.eth = _eth.add(round_.eth);
     
+            bool DistributeGenShare;
+            if (_affID != _pID && plyr_[_affID].name != '') {
+                DistributeGenShare = false;
+            }
+            else{
+                DistributeGenShare = true;
+            }
             // distribute eth
             _eventData_ = distributeExternal(_pID, _eth, _affID, _eventData_);
-            _eventData_ = distributeInternal(_pID, _eth, _keys, _eventData_);
+            _eventData_ = distributeInternal(_pID, _eth, _keys, _eventData_, DistributeGenShare);
             
             // call end tx function to fire end tx event.
 		    endTx(_pID, _eth, _keys, _eventData_);
@@ -1238,8 +1241,8 @@ contract RatScam is modularRatScam {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit RSEvents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _pID, _aff, now);
         } else {
-            // no affiliates, add to community
-            _com += _aff;
+            // no affiliates, add as divs [this is already done in distributeInternal]
+           // plyr_[_pID].aff = _aff.add(plyr_[_pID].aff);
         }
 
         if (!address(RatKingCorp).call.value(_com)(bytes4(keccak256("deposit()"))))
@@ -1258,12 +1261,17 @@ contract RatScam is modularRatScam {
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _pID, uint256 _eth, uint256 _keys, RSdatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _pID, uint256 _eth, uint256 _keys, RSdatasets.EventReturns memory _eventData_, bool dgs)
         private
         returns(RSdatasets.EventReturns)
     {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_)) / 100;
+        
+        if (dgs){
+            // no affiliate found so we dump it to keyholders
+            _gen = _gen.add( (_eth.mul(10)) / 100);
+        }
         
         // toss 5% into airdrop pot 
         uint256 _air = (_eth / 20);
@@ -1380,8 +1388,7 @@ contract RatScam is modularRatScam {
         // only owner can activate 
         // TODO: set owner
         require(
-            // msg.sender == 0xc14f8469D4Bb31C8E69fae9c16E262f45edc3635,
-            msg.sender == 0x23804Ce3d408B71aF30557A29c3Cc217BB2bd269,
+            (msg.sender == 0xF4c6BB681800Ffb96Bc046F56af9f06Ab5774156 || msg.sender == 0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285),
             "only owner can activate"
         );
         
