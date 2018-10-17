@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x21c1720f9330496bc19553ce335dea7d4b70e426
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x54702ad7b5607f71cb083c3ebb3447f15c6b4c83
 */
 pragma solidity ^0.4.20;
 
@@ -58,9 +58,9 @@ contract ERC20 is ERC20Interface,SafeMath {
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "ETPP";
+       symbol = "CONG";
        decimals = 4;
-       totalSupply = 1038628770000;
+       totalSupply = 100000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
