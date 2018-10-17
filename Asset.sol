@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract asset at 0xd93312042604a31f9d3fefc866459d4d101acae6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract asset at 0x59f0f78a802d2f7b767b97840395c99e5828c140
 */
 /**
  * Copyright (C) 2017-2018 Hashfuture Inc. All rights reserved.
@@ -7,10 +7,6 @@
 
 pragma solidity ^0.4.22;
 
-/**
- * @title String & slice utility library for Solidity contracts.
- * @author Nick Johnson <arachnid@notdot.net>
- */
 library strings {
     struct slice {
         uint _len;
@@ -174,17 +170,14 @@ contract owned {
     }
 
     modifier onlyHolder {
-        require(msg.sender == holder, "This function can only be called by holder");
+        require(msg.sender == holder, "This func only can be calle by holder");
         _;
     }
 }
 
 contract asset is owned {
     using strings for *;
-
-    /**
-    * Asset Struct
-    */
+    /*Asset Struct*/
     struct data {
         //link URL of the original information for storing data
         //     null means undisclosed
@@ -227,7 +220,7 @@ contract asset is owned {
     /**
      * Initialize a new asset
      * @param dataNumber The number of data array
-     * @param linkSet The set of URL of the original information for storing data, empty means undisclosed
+     * @param linkSet The set of URL of the original information for storing data, if null means undisclosed
      *          needle is " "
      * @param encryptionTypeSet The set of encryption method of the original data, such as SHA-256
      *          needle is " "
@@ -251,10 +244,10 @@ contract asset is owned {
         require(isInit == false, "The contract has been initialized");
 
         //check data
-        require(dataNumber >= 1, "Param dataNumber smaller than 1");
-        require(dataNumber - 1 == links.count(delim), "Param linkSet invalid");
-        require(dataNumber - 1 == encryptionTypes.count(delim), "Param encryptionTypeSet invalid");
-        require(dataNumber - 1 == hashValues.count(delim), "Param hashValueSet invalid");
+        require(dataNumber >= 1, "The dataNumber should bigger than 1");
+        require(dataNumber - 1 == links.count(delim), "The uumber of linkSet error");
+        require(dataNumber - 1 == encryptionTypes.count(delim), "The uumber of encryptionTypeSet error");
+        require(dataNumber - 1 == hashValues.count(delim), "The uumber of hashValues error");
         
         isInit = true;
         
@@ -267,8 +260,8 @@ contract asset is owned {
             
             //require data not null
             // link can be empty
-            require(!encryptionType.empty(), "Param encryptionTypeSet data error");
-            require(!hashValue.empty(), "Param hashValueSet data error");
+            require(!encryptionType.empty(), "The encryptionTypeSet data error");
+            require(!hashValue.empty(), "The hashValues data error");
             
             dataArray.push(
                 data(link.toString(), encryptionType.toString(), hashValue.toString())
@@ -284,7 +277,7 @@ contract asset is owned {
                                                  uint _dataNum,
                                                  string _remark1,
                                                  string _remark2) {
-        require(isValid == true, "contract invaild");
+        require(isValid == true, "contract is invaild");
         _price = price;
         _isTradeable = isTradeable;
         _dataNum = dataNum;
@@ -297,9 +290,9 @@ contract asset is owned {
      * @param index index of dataArray
      */
     function getDataByIndex(uint index) public view returns (string link, string encryptionType, string hashValue) {
-        require(isValid == true, "contract invaild");
-        require(index >= 0, "Param index smaller than 0");
-        require(index < dataNum, "Param index not smaller than dataNum");
+        require(isValid == true, "contract is invaild");
+        require(index >= 0, "The idx smaller than 0");
+        require(index < dataNum, "The idx bigger than dataNum");
         link = dataArray[index].link;
         encryptionType = dataArray[index].encryptionType;
         hashValue = dataArray[index].hashValue;
@@ -311,7 +304,7 @@ contract asset is owned {
      * Only can be called by holder
      */
     function setPrice(uint newPrice) public onlyHolder {
-        require(isValid == true, "contract invaild");
+        require(isValid == true, "contract is invaild");
         price = newPrice;
     }
 
@@ -321,7 +314,7 @@ contract asset is owned {
      * Only can be called by holder
      */
     function setTradeable(bool status) public onlyHolder {
-        require(isValid == true, "contract invaild");
+        require(isValid == true, "contract is invaild");
         isTradeable = status;
     }
 
@@ -331,7 +324,7 @@ contract asset is owned {
      * Only can be called by holder
      */
     function setRemark1(string content) public onlyHolder {
-        require(isValid == true, "contract invaild");
+        require(isValid == true, "contract is invaild");
         remark1 = content;
     }
 
@@ -341,7 +334,7 @@ contract asset is owned {
      * Only can be called by holder
      */
     function setRemark2(string content) public onlyHolder {
-        require(isValid == true, "contract invaild");
+        require(isValid == true, "contract is invaild");
         remark2 = content;
     }
 
@@ -352,9 +345,9 @@ contract asset is owned {
      * Only can be called by holder
      */
     function setDataLink(uint index, string url) public onlyHolder {
-        require(isValid == true, "contract invaild");
-        require(index >= 0, "Param index smaller than 0");
-        require(index < dataNum, "Param index not smaller than dataNum");
+        require(isValid == true, "contract is invaild");
+        require(index >= 0, "The index smaller than 0");
+        require(index < dataNum, "The index bigger than dataNum");
         dataArray[index].link = url;
     }
 
