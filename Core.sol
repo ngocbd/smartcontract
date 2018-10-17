@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0x22e0024d7a802b251996084b562cd99fd0f94d94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0xc6c2a8f2c957806ac0580b46d84d2717291b9df1
 */
-pragma solidity 0.4.19;
-
+pragma solidity 0.4.21;
 
 contract Maths {
 
@@ -30,17 +29,21 @@ contract Maths {
 
 }
 
-
 contract Owned is Maths {
 
     address public owner;
-    uint256 TotalSupply = 10000000000000000000000000000;
+    address public collector;
+    bool public transfer_status = true;
+    event OwnershipChanged(address indexed _invoker, address indexed _newOwner);        
+    event TransferStatusChanged(bool _newStatus);
+    uint256 public TotalSupply = 500000000000000000000000000;
     mapping(address => uint256) UserBalances;
-    mapping(address => mapping(address => uint256)) public Allowance;
-    event OwnershipChanged(address indexed _invoker, address indexed _newOwner);
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
         
     function Owned() public {
-        owner = 0x76365B524DB2984E9c3BEa560470dcfDF3558A91;
+        owner = msg.sender;
+        collector = msg.sender;
     }
 
     modifier _onlyOwner() {
@@ -51,7 +54,47 @@ contract Owned is Maths {
     function ChangeOwner(address _AddressToMake) public _onlyOwner returns (bool _success) {
 
         owner = _AddressToMake;
-        OwnershipChanged(msg.sender, _AddressToMake);
+        emit OwnershipChanged(msg.sender, _AddressToMake);
+
+        return true;
+
+    }
+    
+    function ChangeCollector(address _AddressToMake) public _onlyOwner returns (bool _success) {
+
+        collector = _AddressToMake;
+
+        return true;
+
+    }
+
+    function ChangeTransferStatus(bool _newStatus) public _onlyOwner returns (bool _success) {
+
+        transfer_status = _newStatus;
+        emit TransferStatusChanged(_newStatus);
+    
+        return true;
+    
+    }
+	
+   function Mint(uint256 _amount) public _onlyOwner returns (bool _success) {
+
+        TotalSupply = Add(TotalSupply, _amount);
+        UserBalances[msg.sender] = Add(UserBalances[msg.sender], _amount);
+	
+    	emit Transfer(address(0), msg.sender, _amount);
+
+        return true;
+
+    }
+
+    function Burn(uint256 _amount) public _onlyOwner returns (bool _success) {
+
+        require(Sub(UserBalances[msg.sender], _amount) >= 0);
+        TotalSupply = Sub(TotalSupply, _amount);
+        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
+	
+	    emit Transfer(msg.sender, address(0), _amount);
 
         return true;
 
@@ -59,24 +102,26 @@ contract Owned is Maths {
         
 }
 
-
 contract Core is Owned {
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event OrderPaid(uint256 indexed _orderID, uint256 _value);
 
-    string public name = "TestAbbrev";
-    string public symbol = "TEST";
+    string public name = "CoinMarketAlert";
+    string public symbol = "CMA";
     uint256 public decimals = 18;
+    mapping(uint256 => bool) public OrdersPaid;
+    mapping(address => mapping(address => uint256)) public Allowance;
 
     function Core() public {
 
-        UserBalances[0x76365B524DB2984E9c3BEa560470dcfDF3558A91] = TotalSupply;
+        UserBalances[msg.sender] = TotalSupply;
 
     }
 
     function _transferCheck(address _sender, address _recipient, uint256 _amount) private view returns (bool success) {
-    
+
+        require(transfer_status == true);
         require(_amount > 0);
         require(_recipient != address(0));
         require(UserBalances[_sender] >= _amount);
@@ -86,13 +131,28 @@ contract Core is Owned {
         return true;
 
     }
+    
+    function payOrder(uint256 _orderID, uint256 _amount) public returns (bool status) {
+        
+        require(OrdersPaid[_orderID] == false);
+        require(_transferCheck(msg.sender, collector, _amount));
+        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
+        UserBalances[collector] = Add(UserBalances[collector], _amount);
+		OrdersPaid[_orderID] = true;
+        emit OrderPaid(_orderID,  _amount);
+		emit Transfer(msg.sender, collector, _amount);
+        
+        return true;
+        
+
+    }
 
     function transfer(address _receiver, uint256 _amount) public returns (bool status) {
 
         require(_transferCheck(msg.sender, _receiver, _amount));
         UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
-        UserBalances[_receiver] = Add(UserBalances[msg.sender], _amount);
-        Transfer(msg.sender, _receiver, _amount);
+        UserBalances[_receiver] = Add(UserBalances[_receiver], _amount);
+        emit Transfer(msg.sender, _receiver, _amount);
         
         return true;
 
@@ -105,8 +165,7 @@ contract Core is Owned {
         Allowance[_owner][msg.sender] = Sub(Allowance[_owner][msg.sender], _amount);
         UserBalances[_owner] = Sub(UserBalances[_owner], _amount);
         UserBalances[_receiver] = Add(UserBalances[_receiver], _amount);
-        Allowance[_owner][msg.sender] = Sub(Allowance[_owner][msg.sender], _amount);
-        Transfer(_owner, _receiver, _amount);
+        emit Transfer(_owner, _receiver, _amount);
 
         return true;
 
@@ -114,11 +173,8 @@ contract Core is Owned {
 
     function multiTransfer(address[] _destinations, uint256[] _values) public returns (uint256) {
 
-        uint256 i = 0;
-
-        while (i < _destinations.length) {
-            transfer(_destinations[i], _values[i]);
-            i += 1;
+		for (uint256 i = 0; i < _destinations.length; i++) {
+            require(transfer(_destinations[i], _values[i]));
         }
 
         return (i);
@@ -129,7 +185,7 @@ contract Core is Owned {
 
         require(_amount >= 0);
         Allowance[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+        emit Approval(msg.sender, _spender, _amount);
 
         return true;
 
