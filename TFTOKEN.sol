@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0xadf1bb0286018cca396980e1adee2920b58244e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x15c182401e5f9d1636100930d6fbabf20e3fd840
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TFTOKEN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Ant Token";
-    string  public constant symbol = "ANT";
-    uint8   public constant decimals = 8;
-    uint256 public constant INITIAL_SUPPLY     =  21000000 * (10 ** uint256(decimals));
+    string  public constant name = "Bloom";
+    string  public constant symbol = "BLOOM";
+    uint8   public constant decimals = 4;
+    uint256 public constant INITIAL_SUPPLY     =  1000000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
