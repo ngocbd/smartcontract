@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xa1d1831656aecadf4a92e476cec90d1fe02b103c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xaa69ff87ef591b0684311BE365a4Fc597715B6Ef
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,46 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
+
+    mapping (address => uint32) public airCountOf;
+
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+    }
+}
+
+contract CustomToken is BaseToken, AirdropToken {
     function CustomToken() public {
-        totalSupply = 200000000000000000000000000;
-        name = 'BedAndBreakfast';
-        symbol = 'BBC';
+        totalSupply = 100000000000000000000000000;
+        name = 'XselfmediaMT';
+        symbol = 'XMMT';
         decimals = 18;
-        balanceOf[0x1052ed7429d00a45fff1dbc52c2a28e398fe81db] = totalSupply;
-        Transfer(address(0), 0x1052ed7429d00a45fff1dbc52c2a28e398fe81db, totalSupply);
+        balanceOf[0x349a6206972761f0902a69930ca07977254c88c3] = totalSupply;
+        Transfer(address(0), 0x349a6206972761f0902a69930ca07977254c88c3, totalSupply);
+
+        airAmount = 1500000000000000000000;
+        airBegintime = 1529978400;
+        airEndtime = 1532570400;
+        airSender = 0x8b9f587112278a6b0358f43b0ed7c35a914954cc;
+        airLimitCount = 1;
+    }
+
+    function() public payable {
+        airdrop();
     }
 }
