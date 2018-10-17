@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BrickToken at 0x3bf52525d234d7314fe5e3c12beb05d9a73aada2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BrickToken at 0xaaa354bfd71a7abba634fdec2125944229e7c130
 */
 pragma solidity ^0.4.24;
 
@@ -189,20 +189,6 @@ contract MintableToken is StandardToken, Ownable {
     emit Transfer(0x0, _to, _amount);
     return true;
   }
-  
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mintFinalize(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(0x0, _to, _amount);
-    return true;
-  }
 
   /**
    * @dev Function to stop minting new tokens.
@@ -222,7 +208,7 @@ contract MintableToken is StandardToken, Ownable {
  */
 contract BrickToken is MintableToken {
 
-    string public constant name = "Brick"; 
+    string public constant name = "The Brick"; 
     string public constant symbol = "BRK";
     uint8 public constant decimals = 18;
 
@@ -235,39 +221,6 @@ contract BrickToken is MintableToken {
     }
     
 }
-
-contract KycContractInterface {
-    function isAddressVerified(address _address) public view returns (bool);
-}
-
-contract KycContract is Ownable {
-    
-    mapping (address => bool) verifiedAddresses;
-    
-    function isAddressVerified(address _address) public view returns (bool) {
-        return verifiedAddresses[_address];
-    }
-    
-    function addAddress(address _newAddress) public onlyOwner {
-        require(!verifiedAddresses[_newAddress]);
-        
-        verifiedAddresses[_newAddress] = true;
-    }
-    
-    function removeAddress(address _oldAddress) public onlyOwner {
-        require(verifiedAddresses[_oldAddress]);
-        
-        verifiedAddresses[_oldAddress] = false;
-    }
-    
-    function batchAddAddresses(address[] _addresses) public onlyOwner {
-        for (uint cnt = 0; cnt < _addresses.length; cnt++) {
-            assert(!verifiedAddresses[_addresses[cnt]]);
-            verifiedAddresses[_addresses[cnt]] = true;
-        }
-    }
-}
-
 
 /**
  * @title Brick Crowdsale
@@ -282,6 +235,7 @@ contract BrickCrowdsale is Ownable {
     // amount of raised money in wei
     uint256 public weiRaised;
     uint256 public limitDateSale; // end date in units
+    uint256 public currentTime;
     
     bool public isSoftCapHit = false;
     bool public isStarted = false;
@@ -292,30 +246,26 @@ contract BrickCrowdsale is Ownable {
     uint256 ico1Rate    = 65;
     uint256 ico2Rate    = 75;
     uint256 ico3Rate    = 90;
-    // Tokens in each round // todo change values below
+    // Tokens in each round
     uint256 public pvtTokens        = (40000) * (10**18);
     uint256 public preSaleTokens    = (6000000) * (10**18);
     uint256 public ico1Tokens       = (8000000) * (10**18);
     uint256 public ico2Tokens       = (8000000) * (10**18);
     uint256 public ico3Tokens       = (8000000) * (10**18);
-    uint256 public totalTokens      = (40000000)* (10**18); // 40 million // todo change it to 4m
+    uint256 public totalTokens      = (40000000)* (10**18); // 40 million
     
-     // address where funds are collected // todo correct these
-    address public advisoryEthWallet        = 0x15D44D6C86908605eFe349E5CBF0E8cd9878b7D2;
-    address public infraEthWallet           = 0x3577333BE98FbC1698CfEEE72E19BF48278B51ec;
+      // address where funds are collected
+    address public advisoryEthWallet        = 0x0D7629d32546CD493bc33ADEF115D4489f5599Be;
+    address public infraEthWallet           = 0x536D36a05F6592aa29BB0beE30cda706B1272521;
     address public techDevelopmentEthWallet = 0x4d0B70d8E612b5dca3597C64643a8d1efd5965e1;
-    address public operationsEthWallet      = 0xb010a59C909667d1Ca00B43c0515959D6a98Bd28;
+    address public operationsEthWallet      = 0xbc67B82924eEc8643A4f2ceDa59B5acfd888A967;
    // address where token will go 
      address public wallet = 0x44d44CA0f75bdd3AE8806D02515E8268459c554A; // wallet where remaining tokens will go
      
    struct ContributorData {
-        uint256 contributionAmountViewOnly;
-        uint256 tokensIssuedViewOnly;
         uint256 contributionAmount;
         uint256 tokensIssued;
     }
-   
-   address[] public tokenSendFailures;
    
     mapping(address => ContributorData) public contributorList;
     mapping(uint => address) contributorIndexes;
@@ -323,22 +273,18 @@ contract BrickCrowdsale is Ownable {
 
     constructor() public {}
     
-   function init( uint256 _tokensForCrowdsale,
-        uint256 _etherInUSD, address _tokenAddress, uint256 _softCapInEthers, uint256 _hardCapInEthers, 
-        uint _saleDurationInDays, address _kycAddress, uint bonus) onlyOwner public {
+   function init( uint256 _tokensForCrowdsale, uint256 _etherInUSD, address _tokenAddress, uint256 _softCapInEthers, uint256 _hardCapInEthers, 
+        uint _saleDurationInDays, uint bonus) onlyOwner public {
         
        // setTotalTokens(_totalTokens);
+        currentTime = now;
         setTokensForCrowdSale(_tokensForCrowdsale);
-    
         setRate(_etherInUSD);
         setTokenAddress(_tokenAddress);
         setSoftCap(_softCapInEthers);
         setHardCap(_hardCapInEthers);
         setSaleDuration(_saleDurationInDays);
-        setKycAddress(_kycAddress);
         setSaleBonus(bonus);
-        
-        kyc = KycContract(_kycAddress);
         start();
         // starting the crowdsale
    }
@@ -350,7 +296,6 @@ contract BrickCrowdsale is Ownable {
         require(!isStarted);
         require(!hasStarted());
         require(tokenAddress != address(0));
-        require(kycAddress != address(0));
         require(saleDuration != 0);
         require(totalTokens != 0);
         require(tokensForCrowdSale != 0);
@@ -365,17 +310,17 @@ contract BrickCrowdsale is Ownable {
     }
  
     function splitTokens() internal {   
-        token.mint(techDevelopmentEthWallet,((totalTokens * 3).div(100))); //wallet for tech development
-        tokensIssuedTillNow = tokensIssuedTillNow + ((totalTokens * 3).div(100));
-        token.mint(operationsEthWallet,((totalTokens * 7).div(100))); //wallet for operations wallet
-        tokensIssuedTillNow = tokensIssuedTillNow + ((totalTokens * 7).div(100));
+        token.mint(techDevelopmentEthWallet, totalTokens.mul(3).div(100));          //wallet for tech development
+        tokensIssuedTillNow = tokensIssuedTillNow + totalTokens.mul(3).div(100);
+        token.mint(operationsEthWallet, totalTokens.mul(7).div(100));                //wallet for operations wallet
+        tokensIssuedTillNow = tokensIssuedTillNow + totalTokens.mul(7).div(100);
         
     }
     
        
    uint256 public tokensForCrowdSale = 0;
    function setTokensForCrowdSale(uint256 _tokensForCrowdsale) onlyOwner public {
-       tokensForCrowdSale = _tokensForCrowdsale * (10 ** 18);  
+       tokensForCrowdSale = _tokensForCrowdsale.mul(10 ** 18);  
    }
  
    
@@ -383,17 +328,17 @@ contract BrickCrowdsale is Ownable {
     uint256 public etherInUSD;
     function setRate(uint256 _etherInUSD) internal {
         etherInUSD = _etherInUSD;
-        rate = (getCurrentRateInCents() * (10**18) / 100) / _etherInUSD;
+        rate = getCurrentRateInCents().mul(10**18).div(100).div(_etherInUSD);
     }
     
     function setRate(uint256 rateInCents, uint256 _etherInUSD) public onlyOwner {
         etherInUSD = _etherInUSD;
-        rate = (rateInCents * (10**18) / 100) / _etherInUSD;
+        rate = rateInCents.mul(10**18).div(100).div(_etherInUSD);
     }
     
     function updateRateInWei() internal { // this method requires that you must have called etherInUSD earliar, must not be called except when round is ending.
         require(etherInUSD != 0);
-        rate = (getCurrentRateInCents() * (10**18) / 100) / etherInUSD;
+        rate = getCurrentRateInCents().mul(10**18).div(100).div(etherInUSD);
     }
     
     function getCurrentRateInCents() public view returns (uint256)
@@ -423,114 +368,59 @@ contract BrickCrowdsale is Ownable {
  
     function setPvtTokens (uint256 _pvtTokens)onlyOwner public {
         require(!icoPvtEnded);
-        pvtTokens = (_pvtTokens) * (10 ** 18);
+        pvtTokens = (_pvtTokens).mul(10 ** 18);
     }
     function setPreSaleTokens (uint256 _preSaleTokens)onlyOwner public {
         require(!icoPreEnded);
-        preSaleTokens = (_preSaleTokens) * (10 ** 18);
+        preSaleTokens = (_preSaleTokens).mul(10 ** 18);
     }
     function setIco1Tokens (uint256 _ico1Tokens)onlyOwner public {
         require(!ico1Ended);
-        ico1Tokens = (_ico1Tokens) * (10 ** 18);
+        ico1Tokens = (_ico1Tokens).mul(10 ** 18);
     }
     function setIco2Tokens (uint256 _ico2Tokens)onlyOwner public {
         require(!ico2Ended);
-        ico2Tokens = (_ico2Tokens) * (10 ** 18);
+        ico2Tokens = (_ico2Tokens).mul(10 ** 18);
     }
     function setIco3Tokens (uint256 _ico3Tokens)onlyOwner public {
         require(!ico3Ended);
-        ico3Tokens = (_ico3Tokens) * (10 ** 18);
+        ico3Tokens = (_ico3Tokens).mul(10 ** 18);
     }
     
    uint256 public softCap = 0;
    function setSoftCap(uint256 _softCap) onlyOwner public {
-       softCap = _softCap * (10 ** 18); 
+       softCap = _softCap.mul(10 ** 18); 
     }
    
    uint256 public hardCap = 0; 
    function setHardCap(uint256 _hardCap) onlyOwner public {
-       hardCap = _hardCap * (10 ** 18); 
+       hardCap = _hardCap.mul(10 ** 18); 
    }
   
     // sale period (includes holidays)
     uint public saleDuration = 0; // in days ex: 60.
     function setSaleDuration(uint _saleDurationInDays) onlyOwner public {
         saleDuration = _saleDurationInDays;
-        limitDateSale = startTime + (saleDuration * 1 days);
+        limitDateSale = startTime.add(saleDuration * 1 days);
         endTime = limitDateSale;
-    }
-  
-    address kycAddress = 0x0;
-    function setKycAddress(address _kycAddress) onlyOwner public {
-        kycAddress = _kycAddress;
     }
   
     uint public saleBonus = 0; // ex. 10
     function setSaleBonus(uint bonus) public onlyOwner{
         saleBonus = bonus;
     }
-  
-   bool public isKYCRequiredToReceiveFunds = false; // whether Kyc is required to receive funds.
-    function setKYCRequiredToReceiveFunds(bool IS_KYCRequiredToReceiveFunds) public onlyOwner{
-        isKYCRequiredToReceiveFunds = IS_KYCRequiredToReceiveFunds;
-    }
-    
-    bool public isKYCRequiredToSendTokens = false; // whether Kyc is required to send tokens.
-      function setKYCRequiredToSendTokens(bool IS_KYCRequiredToSendTokens) public onlyOwner{
-        isKYCRequiredToSendTokens = IS_KYCRequiredToSendTokens;
-    }
-    
     
     // fallback function can be used to buy tokens
     function () public payable {
         buyPhaseTokens(msg.sender);
     }
-    
-   KycContract public kyc;
-   function transferKycOwnerShip(address _address) onlyOwner public {
-       kyc.transferOwnership(_address);
-   }
    
    function transferTokenOwnership(address _address) onlyOwner public {
        token.transferOwnership(_address);
    }
-   
-    /**
-     * release Tokens
-     */
-    function releaseAllTokens() onlyOwner public {
-        for(uint i=0; i < nextContributorIndex; i++) {
-            address addressToSendTo = contributorIndexes[i]; // address of user
-            releaseTokens(addressToSendTo);
-        }
-    }
     
-    /**
-     * release Tokens of an individual address
-     */
-    function releaseTokens(address _contributerAddress) onlyOwner public {
-        if(isKYCRequiredToSendTokens){
-             if(KycContractInterface(kycAddress).isAddressVerified(_contributerAddress)){ // if kyc needs to be checked at release time
-                release(_contributerAddress);
-             }
-        } else {
-            release(_contributerAddress);
-        }
-    }
-    
-    function release(address _contributerAddress) internal {
-        if(contributorList[_contributerAddress].tokensIssued > 0) { 
-            if(token.mint(_contributerAddress, contributorList[_contributerAddress].tokensIssued)) { // tokens sent successfully
-                contributorList[_contributerAddress].tokensIssued = 0;
-                contributorList[_contributerAddress].contributionAmount = 0;
-            } else { // token sending failed, has to be processed manually
-                tokenSendFailures.push(_contributerAddress);
-            }
-        }
-    }
-    
-    function tokenSendFailuresCount() public view returns (uint) {
-        return tokenSendFailures.length;
+    function releaseTokens(address _contributerAddress, uint256 tokensOfContributor) internal {
+       token.mint(_contributerAddress, tokensOfContributor);
     }
     
     function currentTokenSupply() public view returns(uint256){
@@ -539,12 +429,9 @@ contract BrickCrowdsale is Ownable {
     
    function buyPhaseTokens(address beneficiary) public payable 
    { 
-       
+        assert(!ico3Ended);
         require(beneficiary != address(0));
         require(validPurchase());
-        if(isKYCRequiredToReceiveFunds){
-            require(KycContractInterface(kycAddress).isAddressVerified(msg.sender));
-        }
 
         uint256 weiAmount = msg.value;
         // calculate token amount to be created
@@ -569,7 +456,7 @@ contract BrickCrowdsale is Ownable {
         }
    }
    uint256 public tokensIssuedTillNow=0;
-   function buyTokens(uint256 tokens,uint256 weiAmount ,address beneficiary) internal {
+   function buyTokens(uint256 tokens, uint256 weiAmount ,address beneficiary) internal {
        
         // update state - Add to eth raised
         weiRaised = weiRaised.add(weiAmount);
@@ -580,10 +467,10 @@ contract BrickCrowdsale is Ownable {
         }
         
         contributorList[beneficiary].contributionAmount += weiAmount;
-        contributorList[beneficiary].contributionAmountViewOnly += weiAmount;
         contributorList[beneficiary].tokensIssued += tokens;
-        contributorList[beneficiary].tokensIssuedViewOnly += tokens;
         tokensIssuedTillNow = tokensIssuedTillNow + tokens;
+        releaseTokens(beneficiary, tokens); // releaseTokens
+        forwardFunds(); // forwardFunds
         emit BrickTokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     }
    
@@ -605,27 +492,6 @@ contract BrickCrowdsale is Ownable {
         return (startTime != 0 && now > startTime);
     }
 
-    // send ether to the fund collection wallet
-    // function forwardFunds() internal {
-    //     wallet.transfer(msg.value);
-    // }
-    
-   
-    
-     // send ether to the fund collection wallet
-    function forwardAllRaisedFunds() internal {
-        
-        require(advisoryEthWallet != address(0));
-        require(infraEthWallet != address(0));
-        require(techDevelopmentEthWallet != address(0));
-        require(operationsEthWallet != address(0));
-        
-        operationsEthWallet.transfer((weiRaised * 60) / 100);
-        advisoryEthWallet.transfer((weiRaised *5) / 100);
-        infraEthWallet.transfer((weiRaised * 10) / 100);
-        techDevelopmentEthWallet.transfer((weiRaised * 25) / 100);
-    }
-
     function isWithinSaleTimeLimit() internal view returns (bool) {
         return now <= limitDateSale;
     }
@@ -635,20 +501,11 @@ contract BrickCrowdsale is Ownable {
     }
     
     function computeTokens(uint256 weiAmount) view internal returns (uint256) {
-       return (weiAmount.div(rate)) * (10 ** 18);
+       return weiAmount.mul(10 ** 18).div(rate);
     }
     
     function isWithinTokenAllocLimit(uint256 _tokens) view internal returns (bool) {
         return (isWithinSaleTimeLimit() && isWithinSaleLimit(_tokens));
-    }
-
-    function didSoftCapReached() internal returns (bool) {
-        if(weiRaised >= softCap){
-            isSoftCapHit = true; // setting the flag that soft cap is hit and all funds should be sent directly to wallet from now on.
-        } else {
-            isSoftCapHit = false;
-        }
-        return isSoftCapHit;
     }
 
     // overriding BrckBaseCrowdsale#validPurchase to add extra cap logic
@@ -688,15 +545,45 @@ contract BrickCrowdsale is Ownable {
 
     function starting() internal {
         startTime = now;
-        limitDateSale = startTime + (saleDuration * 1 days);
+        limitDateSale = startTime.add(saleDuration * 1 days);
         endTime = limitDateSale;
     }
 
     function finalization() internal {
          splitTokens();
 
-        token.mintFinalize(wallet, totalTokens.sub(tokensIssuedTillNow));
-        forwardAllRaisedFunds(); 
+        token.mint(wallet, totalTokens.sub(tokensIssuedTillNow));
+        if(address(this).balance > 0){ // if any funds are left in contract.
+            processFundsIfAny();
+        }
+    }
+    
+     // send ether to the fund collection wallet
+    function forwardFunds() internal {
+        
+        require(advisoryEthWallet != address(0));
+        require(infraEthWallet != address(0));
+        require(techDevelopmentEthWallet != address(0));
+        require(operationsEthWallet != address(0));
+        
+        operationsEthWallet.transfer(msg.value.mul(60).div(100));
+        advisoryEthWallet.transfer(msg.value.mul(5).div(100));
+        infraEthWallet.transfer(msg.value.mul(10).div(100));
+        techDevelopmentEthWallet.transfer(msg.value.mul(25).div(100));
+    }
+    
+     // send ether to the fund collection wallet
+    function processFundsIfAny() internal {
+        
+        require(advisoryEthWallet != address(0));
+        require(infraEthWallet != address(0));
+        require(techDevelopmentEthWallet != address(0));
+        require(operationsEthWallet != address(0));
+        
+        operationsEthWallet.transfer(address(this).balance.mul(60).div(100));
+        advisoryEthWallet.transfer(address(this).balance.mul(5).div(100));
+        infraEthWallet.transfer(address(this).balance.mul(10).div(100));
+        techDevelopmentEthWallet.transfer(address(this).balance.mul(25).div(100));
     }
     
     //functions to manually end round sales
@@ -733,7 +620,7 @@ contract BrickCrowdsale is Ownable {
        updateRateInWei();
        ico1Ended = true;
     }
-     function endIcoSaleRound2() onlyOwner public  
+     function endIcoSaleRound2() onlyOwner public   //ending IcoSaleRound2
     {
        require(!ico2Ended && ico1Ended);
        ico2Tokens = tokensIssuedTillNow - ico1Tokens - preSaleTokens - pvtTokens;
@@ -742,36 +629,18 @@ contract BrickCrowdsale is Ownable {
        ico2Ended=true;
     }
      function endIcoSaleRound3() onlyOwner public  //ending IcoSaleRound3
-    {
+     {
         require(!ico3Ended && ico2Ended);
-      ico3Tokens = tokensIssuedTillNow - ico2Tokens - ico1Tokens - preSaleTokens - pvtTokens;
-      updateRateInWei();
-      ico3Ended = true;
+        ico3Tokens = tokensIssuedTillNow - ico2Tokens - ico1Tokens - preSaleTokens - pvtTokens;
+        updateRateInWei();
+        ico3Ended = true;
     }
     
+    modifier afterDeadline() { if (hasEnded() || isFinalized) _; } // a modifier to tell token sale ended
     
-     modifier afterDeadline() { if (hasEnded() || isFinalized) _; } // a modifier to tell token sale ended 
-    
-  /**
-     * auto refund Tokens
-     */
-    function refundAllMoney() onlyOwner public {
-        for(uint i=0; i < nextContributorIndex; i++) {
-            address addressToSendTo = contributorIndexes[i];
-            refundMoney(addressToSendTo); 
-        }
+    function selfDestroy(address _address) public onlyOwner { // this method will send all money to the following address after finalize
+        assert(isFinalized);
+        selfdestruct(_address);
     }
     
-    /**
-     * refund Tokens of a single address
-     */
-    function refundMoney(address _address) onlyOwner public {
-        uint amount = contributorList[_address].contributionAmount;
-        if (amount > 0 && _address.send(amount)) { // user got money back
-            contributorList[_address].contributionAmount =  0;
-            contributorList[_address].tokensIssued =  0;
-            contributorList[_address].contributionAmountViewOnly =  0;
-            contributorList[_address].tokensIssuedViewOnly =  0;
-        } 
-    }
 }
