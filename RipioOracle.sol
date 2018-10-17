@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RipioOracle at 0x22222c1944efcc38ca46489f96c3a372c4db74e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RipioOracle at 0x33332025ad35a821eec5f1e10459222c8e4c62c3
 */
 pragma solidity ^0.4.19;
 
@@ -20,15 +20,18 @@ contract Ownable {
 
         @param _to Address of the new owner
     */
-    function transferTo(address _to) public onlyOwner returns (bool) {
+    function setOwner(address _to) public onlyOwner returns (bool) {
         require(_to != address(0));
         owner = _to;
         return true;
     } 
-} 
+}
 
 
 contract Delegable is Ownable {
+    event AddDelegate(address delegate);
+    event RemoveDelegate(address delegate);
+
     mapping(address => DelegateLog) public delegates;
 
     struct DelegateLog {
@@ -79,6 +82,7 @@ contract Delegable is Ownable {
         DelegateLog storage delegateLog = delegates[_address];
         require(delegateLog.started == 0);
         delegateLog.started = block.timestamp;
+        emit AddDelegate(_address);
         return true;
     }
 
@@ -91,9 +95,29 @@ contract Delegable is Ownable {
         DelegateLog storage delegateLog = delegates[_address];
         require(delegateLog.started != 0 && delegateLog.ended == 0);
         delegateLog.ended = block.timestamp;
+        emit RemoveDelegate(_address);
         return true;
     }
 }
+
+contract BytesUtils {
+    function readBytes32(bytes data, uint256 index) internal pure returns (bytes32 o) {
+        require(data.length / 32 > index);
+        assembly {
+            o := mload(add(data, add(32, mul(32, index))))
+        }
+    }
+}
+
+contract Token {
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+}
+
 
 /**
     @dev Defines the interface of a standard RCN oracle.
@@ -164,8 +188,12 @@ contract Oracle is Ownable {
 }
 
 
-contract RipioOracle is Oracle, Delegable {
-    uint256 public expiration = 15 minutes;
+contract RipioOracle is Oracle, Delegable, BytesUtils {
+    event DelegatedCall(address requester, address to);
+    event CacheHit(address requester, bytes32 currency, uint256 requestTimestamp, uint256 deliverTimestamp, uint256 rate, uint256 decimals);
+    event DeliveredRate(address requester, bytes32 currency, address signer, uint256 requestTimestamp, uint256 rate, uint256 decimals);
+
+    uint256 public expiration = 6 hours;
 
     uint constant private INDEX_TIMESTAMP = 0;
     uint constant private INDEX_RATE = 1;
@@ -175,10 +203,10 @@ contract RipioOracle is Oracle, Delegable {
     uint constant private INDEX_S = 5;
 
     string private infoUrl;
-
-    mapping(bytes32 => RateCache) private cache;
-
-    address public fallback;
+    
+    address public prevOracle;
+    Oracle public fallback;
+    mapping(bytes32 => RateCache) public cache;
 
     struct RateCache {
         uint256 timestamp;
@@ -191,8 +219,8 @@ contract RipioOracle is Oracle, Delegable {
     }
 
     /**
-        @notice Sets the time window of the validity of the signed rates.
-        
+        @dev Sets the time window of the validity of the rates signed.
+
         @param time Duration of the window
 
         @return true is the time was set correctly
@@ -203,11 +231,9 @@ contract RipioOracle is Oracle, Delegable {
     }
 
     /**
-        @notice Sets the URL where the oracleData can be retrieved
+        @dev Sets the url to retrieve the data for 'getRate'
 
-        @param _url The URL
-
-        @return true if it was set correctly
+        @param _url New url
     */
     function setUrl(string _url) public onlyOwner returns (bool) {
         infoUrl = _url;
@@ -215,51 +241,34 @@ contract RipioOracle is Oracle, Delegable {
     }
 
     /**
-        @notice Sets the address of another contract to handle the requests of this contract,
-            it can be used to deprecate this Oracle
+        @dev Sets another oracle as the replacement to this oracle
+        All 'getRate' calls will be forwarded to this new oracle
 
-        @dev The fallback is only used if is not address(0)
-
-        @param _fallback The address of the contract
-
-        @return true if it was set correctly
+        @param _fallback New oracle
     */
-    function setFallback(address _fallback) public onlyOwner returns (bool) {
+    function setFallback(Oracle _fallback) public onlyOwner returns (bool) {
         fallback = _fallback;
         return true;
     }
 
     /**
-        @notice Reads a bytes32 word of a bytes array
+        @dev Invalidates the cache of a given currency
 
-        @param data The bytes array
-        @param index The index of the word, in chunks of 32 bytes
-
-        @return o The bytes32 word readed, or 0x0 if index out of bounds
+        @param currency Currency to invalidate the cache
     */
-    function readBytes32(bytes data, uint256 index) internal pure returns (bytes32 o) {
-        if(data.length / 32 > index) {
-            assembly {
-                o := mload(add(data, add(32, mul(32, index))))
-            }
-        }
+    function invalidateCache(bytes32 currency) public onlyOwner returns (bool) {
+        delete cache[currency].timestamp;
+        return true;
+    }
+    
+    function setPrevOracle(address oracle) public onlyOwner returns (bool) {
+        prevOracle = oracle;
+        return true;
     }
 
-    /**
-        @notice Executes a transaction from this contract
-
-        @dev It can be used to retrieve lost tokens or ETH
-
-        @param to Address to call
-        @param value Ethers to send
-        @param data Data for the call
-
-        @return true If the call didn't throw an exception
-    */
-    function sendTransaction(address to, uint256 value, bytes data) public onlyOwner returns (bool) {
-        return to.call.value(value)(data);
+    function isExpired(uint256 timestamp) internal view returns (bool) {
+        return timestamp <= now - expiration;
     }
-
 
     /**
         @dev Retrieves the convertion rate of a given currency, the information of the rate is carried over the 
@@ -274,31 +283,37 @@ contract RipioOracle is Oracle, Delegable {
     */
     function getRate(bytes32 currency, bytes data) public returns (uint256, uint256) {
         if (fallback != address(0)) {
-            return Oracle(fallback).getRate(currency, data);
+            emit DelegatedCall(msg.sender, fallback);
+            return fallback.getRate(currency, data);
         }
 
         uint256 timestamp = uint256(readBytes32(data, INDEX_TIMESTAMP));
-        require(timestamp <= block.timestamp);
-
-        uint256 expirationTime = block.timestamp - expiration;
-
-        if (cache[currency].timestamp >= timestamp && cache[currency].timestamp >= expirationTime) {
-            return (cache[currency].rate, cache[currency].decimals);
+        RateCache memory rateCache = cache[currency];
+        if (rateCache.timestamp >= timestamp && !isExpired(rateCache.timestamp)) {
+            emit CacheHit(msg.sender, currency, timestamp, rateCache.timestamp, rateCache.rate, rateCache.decimals);
+            return (rateCache.rate, rateCache.decimals);
         } else {
-            require(timestamp >= expirationTime);
+            require(!isExpired(timestamp), "The rate provided is expired");
             uint256 rate = uint256(readBytes32(data, INDEX_RATE));
             uint256 decimals = uint256(readBytes32(data, INDEX_DECIMALS));
             uint8 v = uint8(readBytes32(data, INDEX_V));
             bytes32 r = readBytes32(data, INDEX_R);
             bytes32 s = readBytes32(data, INDEX_S);
             
-            bytes32 _hash = keccak256(this, currency, rate, decimals, timestamp);
-            address signer = ecrecover(keccak256("\x19Ethereum Signed Message:\n32", _hash),v,r,s);
+            bytes32 _hash = keccak256(abi.encodePacked(this, currency, rate, decimals, timestamp));
+            address signer = ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)),v,r,s);
 
-            require(isDelegate(signer));
+            if(!isDelegate(signer)) {
+                _hash = keccak256(abi.encodePacked(prevOracle, currency, rate, decimals, timestamp));
+                signer = ecrecover(keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash)),v,r,s);
+                if(!isDelegate(signer)) {
+                    revert('Signature not valid');
+                }
+            }
 
             cache[currency] = RateCache(timestamp, rate, decimals);
 
+            emit DeliveredRate(msg.sender, currency, signer, timestamp, rate, decimals);
             return (rate, decimals);
         }
     }
