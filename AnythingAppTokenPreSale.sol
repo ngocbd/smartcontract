@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnythingAppTokenPreSale at 0x50d296fdab1e2143507299808c1cfe2309168009
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnythingAppTokenPreSale at 0x857597889ef49ee21699727e3749812b19e1f0e2
 */
 pragma solidity ^0.4.11;
 
@@ -285,7 +285,7 @@ contract ERC223ReceivingContract {
  */
 contract AnythingAppToken is Burnable, Ownable {
 
-  string public constant name = "AnyCoin";
+  string public constant name = "AnythingApp Token";
   string public constant symbol = "ANY";
   uint8 public constant decimals = 18;
   uint public constant INITIAL_SUPPLY = 400000000 * 1 ether;
@@ -298,6 +298,8 @@ contract AnythingAppToken is Burnable, Ownable {
 
   /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
   mapping (address => bool) public transferAgents;
+
+  event Transfer(address indexed from, address indexed to, uint value, bytes data);
 
   /**
    * Limit token transfer until the crowdsale is over.
@@ -384,7 +386,7 @@ contract AnythingAppToken is Burnable, Ownable {
           ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
           receiver.tokenFallback(msg.sender, _value, _data);
       }
-      Transfer(msg.sender, _to, _value);
+      Transfer(msg.sender, _to, _value, _data);
       return true;
     }
 
@@ -414,7 +416,7 @@ contract AnythingAppToken is Burnable, Ownable {
           ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
           receiver.tokenFallback(msg.sender, _value, empty);
       }
-      Transfer(msg.sender, _to, _value);
+      Transfer(msg.sender, _to, _value, empty);
       return true;
     }
 
@@ -502,14 +504,6 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
   mapping (address => bool) public refunded;
   mapping (address => uint) public deposited;
 
-  uint public constant BONUS_LEVEL_1 = 40;
-  uint public constant BONUS_LEVEL_2 = 35;
-  uint public constant BONUS_LEVEL_3 = 30;
-
-  uint public firstStage;
-  uint public secondStage;
-  uint public thirdStage;
-
   uint public constant MINIMAL_PURCHASE = 250 ether;
   uint public constant LIMIT_PER_USER = 500000 ether;
 
@@ -528,10 +522,6 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
     _;
   }
 
-  modifier inWhiteList() {
-    require(investorWhiteList.isAllowed(msg.sender));
-    _;
-  }
 
   function AnythingAppTokenPreSale(
     address _token,
@@ -542,10 +532,6 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
     uint _tokenPriceUsd,
 
     uint _baseEthUsdPrice,
-
-    uint _firstStage,
-    uint _secondStage,
-    uint _thirdStage,
 
     uint _startTime,
     uint _endTime
@@ -559,15 +545,11 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
     investorWhiteList = InvestorWhiteList(_investorWhiteList);
     beneficiary = _beneficiary;
 
-    firstStage = _firstStage.mul(1 ether);
-    secondStage = _secondStage.mul(1 ether);
-    thirdStage = _thirdStage.mul(1 ether);
-
     startTime = _startTime;
     endTime = _endTime;
   }
 
-  function() payable inWhiteList {
+  function() payable {
     doPurchase(msg.sender);
   }
 
@@ -579,9 +561,6 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
     uint tokens = msg.value.mul(ethUsdRate).div(tokenPriceUsd);
     address referral = investorWhiteList.getReferralOf(msg.sender);
     uint referralBonus = calculateReferralBonus(tokens);
-    uint bonus = calculateBonus(tokens, referral);
-
-    tokens = tokens.add(bonus);
 
     uint newTokensSold = tokensSold.add(tokens);
     if (referralBonus > 0 && referral != 0x0) {
@@ -605,56 +584,18 @@ contract AnythingAppTokenPreSale is Haltable, PriceReceiver {
     }
   }
 
-  function calculateBonus(uint _tokens, address _referral) private returns (uint _bonuses) {
-    uint bonus;
-
-    if (tokensSold < firstStage) {
-      bonus = BONUS_LEVEL_1;
-    } else if (tokensSold >= firstStage && tokensSold < secondStage) {
-      bonus = BONUS_LEVEL_2;
-    } else {
-      bonus = BONUS_LEVEL_3;
-    }
-
-    if (_referral != 0x0) {
-      bonus += 5;
-    }
-
-    return _tokens.mul(bonus).div(100);
-  }
-
   function calculateReferralBonus(uint _tokens) internal constant returns (uint _bonus) {
     return _tokens.mul(20).div(100);
   }
 
   function withdraw() external onlyOwner {
-    uint withdrawLimit = 500 ether;
-    if (withdrawn < withdrawLimit) {
-      uint toWithdraw = collected.sub(withdrawn);
-      if (toWithdraw + withdrawn > withdrawLimit) {
-        toWithdraw = withdrawLimit.sub(withdrawn);
-      }
-      beneficiary.transfer(toWithdraw);
-      withdrawn = withdrawn.add(toWithdraw);
-      return;
-    }
-    require(block.timestamp >= endTime);
-    beneficiary.transfer(collected);
-    token.transfer(beneficiary, token.balanceOf(this));
-    crowdsaleFinished = true;
+    uint toWithdraw = collected.sub(withdrawn);
+    beneficiary.transfer(toWithdraw);
+    withdrawn = withdrawn.add(toWithdraw);
   }
 
-  function refund() external preSaleEnded inNormalState {
-    require(refunded[msg.sender] == false);
-
-    uint refund = deposited[msg.sender];
-    require(refund > 0);
-
-    deposited[msg.sender] = 0;
-    refunded[msg.sender] = true;
-    weiRefunded = weiRefunded.add(refund);
-    msg.sender.transfer(refund);
-    Refunded(msg.sender, refund);
+  function withdrawTokens() external onlyOwner {
+    token.transfer(beneficiary, token.balanceOf(this));
   }
 
   function receiveEthPrice(uint ethUsdPrice) external onlyEthPriceProvider {
