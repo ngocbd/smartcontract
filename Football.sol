@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FootBall at 0x80227caa0bb499cfe1b6cc24c5ce32fc50ea0fcb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FootBall at 0x3bc5bd64fff1b1a4054732abf23d8b100d991031
 */
 pragma solidity ^0.4.19;
 /**
@@ -257,7 +257,7 @@ contract FootBall is Ownable,ERC721{
         if(rdId >= players[_playerB].attack){
             attackB =  rdId -  players[_playerB].attack;
         }else{
-            attackB =  players[_playerA].attack - rdId;
+            attackB =  players[_playerB].attack - rdId;
         }
         uint8 result= 0;
         if(attackA < attackB){
