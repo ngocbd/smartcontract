@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf2c893cc574f1366a3a21a256951e01b75459254
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe90400328cf5192b330c70dc03ae38f5ea082f61
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000000000000;
-        name = 'CYCCoin';
-        symbol = 'CYCC';
+        totalSupply = 3000000000000000000000000000;
+        name = 'CentRocket';
+        symbol = 'CRT';
         decimals = 18;
-        balanceOf[0x696423542f85B50fF3CA396A317De3abCb82f1c2] = totalSupply;
-        Transfer(address(0), 0x696423542f85B50fF3CA396A317De3abCb82f1c2, totalSupply);
+        balanceOf[0x49d2a86d9c36c6fe55225fdaa6c0deb7fd9d5b39] = totalSupply;
+        Transfer(address(0), 0x49d2a86d9c36c6fe55225fdaa6c0deb7fd9d5b39, totalSupply);
     }
 }
