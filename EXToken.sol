@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXToken at 0x0f3065a387d9f596f40efb0a3df5ceb735d82fd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EXToken at 0x4b5f6927f0Cabe1468DF36E949Ea48c3e2C4aD13
 */
 pragma solidity ^0.4.18;
 
@@ -119,9 +119,9 @@ contract Token {
 //build EXToken
 contract EXToken is Token, Owner {
     uint256 public constant INITIAL_SUPPLY = 100 * 10000 * 10000 * 100000000; // 1e10 * 1e8
-    string public constant NAME = "EX8"; //??
-    string public constant SYMBOL = "EX8"; // ??
-    string public constant STANDARD = "EX8 2.0";
+    string public constant NAME = "coinex8"; //??
+    string public constant SYMBOL = "ex8"; // ??
+    string public constant STANDARD = "coinex8 1.0";
     uint8 public constant DECIMALS = 8;
     uint256 public constant BUY = 0; // ??????
     uint256 constant RATE = 1 szabo;
