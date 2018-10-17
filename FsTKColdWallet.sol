@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKColdWallet at 0xE38eF9A2566D551C251d4FdEd0a44D2DF854B3fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FsTKColdWallet at 0x684564950fDaFeDad73A79C9074AeD1b85428FEb
 */
 pragma solidity ^0.4.24;
 pragma experimental "v0.5.0";
