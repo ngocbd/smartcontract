@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompanyShare at 0x03347abb58cc3071fdbba7f7bd7cca03c8e04229
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompanyShare at 0xab274af9ccf1dd9ac0d7de680fb41ffc2486ce8d
 */
 pragma solidity ^0.4.24;
 
@@ -24,10 +24,10 @@ contract CompanyShare {
     constructor()
         public
     {
-        address first = 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0;
-        address second = 0x6b5d2ba1691e30376a394c13e38f48e25634724f;
-        address third = 0x459b5286e28d0dd452af4f38ffed4d302fc833c8;
-        address fourth = 0xd775c5063bef4eda77a21646a6880494d9a1156b;
+        address first 	= 0xc1cac10cbe165706ce5c4fe5fad076394e8f6394;
+        address second 	= 0x70AAbFDcf6b98F571E0bEbC4eb777F7CaaA42429;
+        address third 	= 0x9a099cf4d575f9152ab98b0f566c4e255d08c7a3;
+        address fourth 	= 0xAdD148Cc4F7B1b7520325a7C5934C002420Ab3d5;
 
         //creatTeam
         team_[1] = CompanySharedatasets.Player(first,0, 500);
@@ -124,13 +124,7 @@ contract CompanyShare {
         require(_pID != 0, "sorry not in team");
         uint256 _earnings = team_[_pID].gen;
         return _earnings;
-    }
-    
-    
-     function destroy() public{ // so funds not locked in contract forever
-         require(msg.sender == 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0, "sorry not the admin");
-         suicide(0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0); // send funds to organizer
-     }
+    } 
 }
 
 
