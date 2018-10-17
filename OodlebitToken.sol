@@ -1,9 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OodlebitToken at 0xd169acd7706fdee8b16a472c79dfade3bd7e0fba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OodlebitToken at 0x0a2eaaff557d8e59bb829d2c67a7a097c9663b15
 */
 pragma solidity ^0.4.4;
  
 contract Token {
+    
+    function safeSub(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b <= a);
+    return a - b;
+    
+    }
  
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
@@ -30,6 +36,9 @@ contract Token {
     /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success) {}
+    
+    ///burns tokens from totaly supply forever
+    function burn(uint256 _value) returns (bool success) {}
  
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
@@ -38,7 +47,8 @@ contract Token {
  
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-   
+    event Burn(address indexed burner, uint256 value);
+    
 }
  
  
@@ -77,6 +87,15 @@ contract StandardToken is Token {
     function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function burn(uint256 _value) returns (bool success) {
+        if (balances[msg.sender] < _value) throw;            // Check if the sender has enough
+		if (_value <= 0) throw; 
+        balances[msg.sender] = Token.safeSub(balances[msg.sender], _value);                      // Subtract from the sender
+        totalSupply = Token.safeSub(totalSupply,_value);                                // Updates totalSupply
+        Burn(msg.sender, _value);
         return true;
     }
  
@@ -119,11 +138,15 @@ contract OodlebitToken is StandardToken {
  
     function OodlebitToken(
         ) {
-        balances[msg.sender] = 200000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 200000000;                        // Update total supply (100000 for example)
-        name = "Oodlebit";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+        balances[msg.sender] = 200000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 200000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "OODL";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "OODL";                               // Set the symbol for display purposes
+        
+        //200000000000000000000000000
+        //18 decimals
+        //total supply: 200,000,000 OODL
     }
  
     /* Approves and then calls the receiving contract */
