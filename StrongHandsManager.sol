@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x1e794e0bd4f713682bd13b6d2187095fb04deaac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x07905e74e5c8a30cd04038cfd60bc1d526b243f4
 */
 pragma solidity ^0.4.24;
 
@@ -16,13 +16,12 @@ interface StrongHandsManagerInterface {
 contract StrongHandsManager {
     
     event CreateStrongHand(address indexed owner, address indexed strongHand);
+    event MintToken(address indexed owner, uint256 indexed amount);
     
     mapping (address => address) public strongHands;
     mapping (address => uint256) public ownerToBalance;
     
     //ERC20
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
-    
     string public constant name = "Stronghands3D";
     string public constant symbol = "S3D";
     uint8 public constant decimals = 18;
@@ -47,7 +46,7 @@ contract StrongHandsManager {
         tokenSupply+= _amount;
         ownerToBalance[_owner]+= _amount;
         
-        emit Transfer(address(0), _owner, _amount);
+        emit MintToken(_owner, _amount);
     }
     
     //ERC20
