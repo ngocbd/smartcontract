@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xb443de2bb6e217a5f694be8e3d890a9fbb7ef77d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd308a2ec3e940a4873826a9c8161c6f90463cf81
 */
 pragma solidity ^0.4.4;
 
@@ -117,13 +117,12 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token(
-        ) {
-        balances[msg.sender] = 100001;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100001;                        // Update total supply (100000 for example)
-        name = "Otoni";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "OTO";                               // Set the symbol for display purposes
+    function ERC20Token() {
+        balances[msg.sender] = 12000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 12000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Angobit";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "XPT";                            // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
