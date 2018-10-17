@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x8a8b19e2e114b9edbd87498a02254743bffc3706
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x66bbe26673c760f9a7637baffea4d63d6e89fd75
 */
 pragma solidity ^0.4.24;
 
@@ -112,18 +112,15 @@ contract RatScam is modularRatScam {
     using NameFilter for string;
     using RSKeysCalc for uint256;
 
-    // TODO: check address
-    address constant private adminAddress = 0xFAdb9139a33a4F2FE67D340B6AAef0d04E9D5681;
-    RatBookInterface constant private RatBook = RatBookInterface(0x3257d637b8977781b4f8178365858a474b2a6195);
+    RatBookInterface constant private RatBook = RatBookInterface(0xA50A1d26f7F9FBf24EF1a41B2870E317f9c4BC93);
 
     string constant public name = "RatScam In One Hour";
     string constant public symbol = "RS";
     uint256 private rndGap_ = 0;
 
-    // TODO: check time
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
+    uint256 private rndInit_ = 1 hours;                // round timer starts at this
+    uint256 private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
+    uint256 private rndMax_ = 1 hours;                // max length a round timer can be
     //==============================================================================
     //     _| _ _|_ _    _ _ _|_    _   .
     //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -134,6 +131,7 @@ contract RatScam is modularRatScam {
     //****************
     // PLAYER DATA
     //****************
+    address private adminAddress;
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => RSdatasets.Player) public plyr_;   // (pID => data) player data
@@ -156,6 +154,7 @@ contract RatScam is modularRatScam {
     constructor()
     public
     {
+        adminAddress = msg.sender;
     }
     //==============================================================================
     //     _ _  _  _|. |`. _  _ _  .
@@ -783,44 +782,35 @@ contract RatScam is modularRatScam {
         // grab time
         uint256 _now = now;
 
-        // if round is active
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        // if round is end, fire endRound
+        if (_now > round_[_rID].end && round_[_rID].ended == false)
         {
-            // call core
-            core(_rID, _pID, msg.value, _affID, _eventData_);
+            // end the round (distributes pot) & start new round
+            round_[_rID].ended = true;
+            _eventData_ = endRound(_eventData_);
 
-            // if round is not active
-        } else {
-            // check to see if end round needs to be ran
-            if (_now > round_[_rID].end && round_[_rID].ended == false)
-            {
-                // end the round (distributes pot) & start new round
-                round_[_rID].ended = true;
-                _eventData_ = endRound(_eventData_);
+            // build event data
+            _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
+            _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
-                // build event data
-                _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
-                _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
-
-                // fire buy and distribute event
-                emit RSEvents.onBuyAndDistribute
-                (
-                    msg.sender,
-                    plyr_[_pID].name,
-                    msg.value,
-                    _eventData_.compressedData,
-                    _eventData_.compressedIDs,
-                    _eventData_.winnerAddr,
-                    _eventData_.winnerName,
-                    _eventData_.amountWon,
-                    _eventData_.newPot,
-                    _eventData_.genAmount
-                );
-            }
-
-            // put eth in players vault
-            plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
+            // fire buy and distribute event
+            emit RSEvents.onBuyAndDistribute
+            (
+                msg.sender,
+                plyr_[_pID].name,
+                msg.value,
+                _eventData_.compressedData,
+                _eventData_.compressedIDs,
+                _eventData_.winnerAddr,
+                _eventData_.winnerName,
+                _eventData_.amountWon,
+                _eventData_.newPot,
+                _eventData_.genAmount
+            );
         }
+        
+        _rID = rID_;
+        core(_rID, _pID, msg.value, _affID, _eventData_);
     }
 
     /**
@@ -836,19 +826,9 @@ contract RatScam is modularRatScam {
         // grab time
         uint256 _now = now;
 
-        // if round is active
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        // if round is end, fire endRound
+        if (_now > round_[_rID].end && round_[_rID].ended == false)
         {
-            // get earnings from all vaults and return unused to gen vault
-            // because we use a custom safemath library.  this will throw if player
-            // tried to spend more eth than they have.
-            plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
-
-            // call core
-            core( _rID, _pID, _eth, _affID, _eventData_);
-
-            // if round is not active and end round needs to be ran
-        } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
             // end the round (distributes pot) & start new round
             round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
@@ -858,10 +838,11 @@ contract RatScam is modularRatScam {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
             // fire buy and distribute event
-            emit RSEvents.onReLoadAndDistribute
+            emit RSEvents.onBuyAndDistribute
             (
                 msg.sender,
                 plyr_[_pID].name,
+                msg.value,
                 _eventData_.compressedData,
                 _eventData_.compressedIDs,
                 _eventData_.winnerAddr,
@@ -871,6 +852,14 @@ contract RatScam is modularRatScam {
                 _eventData_.genAmount
             );
         }
+        
+        // get earnings from all vaults and return unused to gen vault
+        // because we use a custom safemath library.  this will throw if player
+        // tried to spend more eth than they have.
+        plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
+
+        // call core
+        core( _rID, _pID, _eth, _affID, _eventData_);
     }
 
     /**
@@ -1154,7 +1143,7 @@ contract RatScam is modularRatScam {
 
         // grab our pot amount
         // add airdrop pot into the final pot
-        uint256 _pot = round_[_rID].pot + airDropPot_;
+        uint256 _pot = round_[_rID].pot;
 
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
@@ -1163,8 +1152,13 @@ contract RatScam is modularRatScam {
         uint256 _gen = (_pot.mul(potSplit_)) / 100;
 
         // calculate ppt for round mask
-        uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
+        uint256 _ppt = 0;
+        if(round_[_rID].keys > 0)
+        {
+            _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
+        }
         uint256 _dust = _gen.sub((_ppt.mul(round_[_rID].keys)) / 1000000000000000000);
+        
         if (_dust > 0)
         {
             _gen = _gen.sub(_dust);
@@ -1344,6 +1338,7 @@ contract RatScam is modularRatScam {
             on the rounds mask, my shares, and how much i've already withdrawn,
             how much is still owed to me?"
         */
+
         // calc profit per key & round mask based on this buy:  (dust goes to pot)
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1415,7 +1410,6 @@ contract RatScam is modularRatScam {
     public
     {
         // only owner can activate
-        // TODO: set owner
         require(
             msg.sender == adminAddress,
             "only owner can activate"
@@ -1431,6 +1425,17 @@ contract RatScam is modularRatScam {
         rID_ = 1;
         round_[1].strt = now - rndGap_;
         round_[1].end = now + rndInit_;
+    }
+
+    function setNextRndTime(uint32 rndInit, uint32 rndInc, uint32 rndMax)
+    public
+    {
+        // only owner
+        require(msg.sender == adminAddress, "only owner can setNextRndTime");
+
+        rndInit_ = rndInit * 1 hours;
+        rndInc_ = rndInc * 1 seconds;
+        rndMax_ = rndMax * 1 hours;
     }
 }
 
