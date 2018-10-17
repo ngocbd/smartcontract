@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x38a19ba829f192a30ec7e03cda1368c50dad9785
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x73eb144dcc349bc97cdf5d14377e1d8d151d2c86
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000;
-        name = 'TexasholdemPoker';
-        symbol = 'THPC';
-        decimals = 8;
-        balanceOf[0x348d6e3320f0bd8d7281a6aa3545c51f852a2892] = totalSupply;
-        Transfer(address(0), 0x348d6e3320f0bd8d7281a6aa3545c51f852a2892, totalSupply);
+        totalSupply = 1000000000000000000000000000;
+        name = 'DPSChain';
+        symbol = 'DPSC';
+        decimals = 18;
+        balanceOf[0x1634330910029ee9ec6ab59ddf16035cd4f4d239] = totalSupply;
+        Transfer(address(0), 0x1634330910029ee9ec6ab59ddf16035cd4f4d239, totalSupply);
     }
 }
