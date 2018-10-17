@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineToken at 0x87edffb28ffbbf51d6964e1876710d8448d8996d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineToken at 0x0c31f4ac8f7d6958e9226b4faf5dd7f235b9d552
 */
 pragma solidity ^0.4.23;
 
