@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMGC at 0xd1abb39d8824b1da15d9e66d9ad1b51d58ef25fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMGC at 0xcf780bb458ddfce225676a78b1cdd62ff626cbe9
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
 // 'SMGC' 'Smigg Coin'
 //
 // Symbol      : SMGC
-// Name        : SMIGG Coin
-// Total supply: 19,000,000,000.000000000000000000
+// Name        : Smigg Coin
+// Total supply: 900,000,000.000000000000000000
 // Decimals    : 18
 //
 //
@@ -119,7 +119,7 @@ contract SMGC is ERC20Interface, Owned {
         symbol = "SMGC";
         name = "Smigg Coin";
         decimals = 18;
-        _totalSupply = 19000000000 * 10**uint(decimals);
+        _totalSupply = 900000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
