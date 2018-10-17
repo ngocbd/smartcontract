@@ -1,193 +1,419 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xc90044e0c8ff4142d2b39d4eb9ef17c3e3dc50d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x876c6fbec71a498155cfa811f9d10fd3bb67e4c5
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
+/**
+ *      Preparing contracts 
+ * 
+ **/
 
-contract DI {
-    function ap(address u_) external;
-    function rb(address u_) external;
-    function ico(uint i_, address x_, uint c_) external;
-    function sco(uint i_, address x_, uint c_) external;
-    function gco(uint i_, address x_) public view returns (uint _c);
-    function gcp(uint ci_) public view returns (uint _c);
-    function cpn(uint ci_) external;
-    function gur(address x_, address y_) external returns (address _z);
-    function gcmp(uint i_, uint c_) public view returns (uint _c);
-    function cmpn(uint i_, uint c_) external;
-    function cg(address x_, uint gpc_, uint mg_, uint gc_) external;
-    function ggc(address x_) public view returns (uint _c);
-    function ggcd(address x_) public view returns (uint _c);
-    function guhb(address x_) public view returns (bool _c);
-    function gcsc(uint ci_) public view returns (uint _c);
-    function gcpn(uint ci_) public view returns (uint _c);
-    function gcpm(uint ci_) public view returns (uint _c);
-    function gcpa(uint ci_) public view returns (uint _c);
-    function gcsp(uint ci_) public view returns (uint _c);
-    function sc(uint ci_, uint csp_, uint cpm_, uint cpa_, uint csc_) external;
-    function irbg(address x_, uint c_) external;
-    function grg(address x_) public view returns (uint _c);
-}
+// Ownable contract with CFO
+contract Ownable {
+    address public owner;
+    address public cfoAddress;
 
-contract Presale {
-    event EventBc(address x_, uint ci_);
-    event EventBmc(address x_, uint ci_, uint c_);
-    event EventCg(address x_);
-
-    uint rb = 10;
-    uint GC = 10;
-    uint MG = 50;
-    uint GPC = 3;
-    uint npb = 50;
-
-    DI di;
-    address public opAddr;
-    address private newOpAddr;
-
-    function Presale() public {
-        opAddr = msg.sender;
+    constructor() public{
+        owner = msg.sender;
+        cfoAddress = msg.sender;
     }
 
-
-    function bc(uint ci_, address ref_) public payable {
-        uint cp_ = di.gcp(ci_);
-        require(cp_ > 0);
-        cp_ = cp_ * pf(msg.sender)/10000;
-        require(msg.value >= cp_);
-
-        uint excessMoney = msg.value - cp_;
-
-        di.cpn(ci_);
-        di.ico(ci_, msg.sender, 1);
-
-        di.ap(msg.sender);
-        di.rb(msg.sender);
-
-        EventBc(msg.sender, ci_);
-
-        address rr = di.gur(msg.sender, ref_);
-        if(rr != address(0))
-            rr.transfer(cp_ * rb / 100);
-
-        msg.sender.transfer(excessMoney);
-    }
-
-    function bmc(uint ci_, uint c_, address ref_) public payable {
-        require(di.gcp(ci_) > 0);
-
-        uint cmp_ = di.gcmp(ci_, c_);
-        cmp_ = cmp_ * pf(msg.sender)/10000;
-        require(msg.value >= cmp_);
-
-        uint excessMoney = msg.value - cmp_;
-            
-
-
-        di.cmpn(ci_, c_);
-        di.ico(ci_, msg.sender, c_);
-
-        di.ap(msg.sender);
-        di.rb(msg.sender);
-
-        EventBmc(msg.sender, ci_, c_);
-
-        address rr = di.gur(msg.sender, ref_);
-        if(rr != address(0)) {
-            uint rrb = cmp_ * rb / 100;
-            di.irbg(rr, rrb);
-            rr.transfer(rrb);
-        }
-        msg.sender.transfer(excessMoney);
-    }
-    
-    function cg() public {
-        di.cg(msg.sender, GPC, MG, GC);
-        di.ap(msg.sender);
-        EventCg(msg.sender);
-    }
-
-    function pf(address u_) public view returns (uint c) {
-        c = 10000;
-        if(!di.guhb(u_)) {
-            c = c * (100 - npb) / 100;
-        }
-        uint _gc = di.ggc(u_);
-        if(_gc > 0) {
-            c = c * (100 - _gc) / 100;
-        }
-    }
-
-    function cd1(address x_) public view returns (uint _gc, uint _gcd, bool _uhb, uint _npb, uint _ggcd, uint _mg, uint _gpc, uint _rb, uint _rg) {
-        _gc = di.ggc(x_);
-        _gcd = di.ggcd(x_);
-        _uhb = di.guhb(x_);
-        _npb = npb;
-        _ggcd = GC;
-        _mg = MG;
-        _gpc = GPC;
-        _rb = rb;
-        _rg = di.grg(x_);
-    }
-    function cd() public view returns (uint _gc, uint _gcd, bool _uhb, uint _npb, uint _ggcd, uint _mg, uint _gpc, uint _rb, uint _rg) {
-        return cd1(msg.sender);
-    }
-    function gcard(uint ci_, address co_) public view returns (uint _coc, uint _csc, uint _cp, uint _cpn, uint _cpm, uint _cpa, uint _csp) {
-        _coc = di.gco(ci_, co_);
-        _csc = di.gcsc(ci_);
-        _cp = di.gcp(ci_);
-        _cpn = di.gcpn(ci_);
-        _cpm = di.gcpm(ci_);
-        _cpa = di.gcpa(ci_);
-        _csp = di.gcsp(ci_);
-    }
-
-
-    function sc(uint ci_, uint csp_, uint cpm_, uint cpa_, uint csc_) public onlyOp {
-        di.sc(ci_, csp_, cpm_, cpa_, csc_);
-    }
-    function srb(uint rb_) external onlyOp {
-        rb = rb_;
-    }
-    function sgc(uint GC_) public onlyOp {
-        GC = GC_;
-    }
-    function smg(uint MG_) public onlyOp {
-        MG = MG_;
-    }   
-    function sgpc(uint GPC_) public onlyOp {
-        GPC = GPC_;
-    }    
-    function snpb(uint npb_) public onlyOp {
-        npb = npb_;
-    }
-
-    function payout(address to_) public onlyOp {
-        payoutX(to_, this.balance);
-    }
-    function payoutX(address to_, uint value_) public onlyOp {
-        require(address(0) != to_);
-        if(value_ > this.balance)
-            to_.transfer(this.balance);
-        else
-            to_.transfer(value_);
-    }
-
-    function sdc(address dc_) public onlyOp {
-        if(dc_ != address(0))
-            di = DI(dc_);
-    }
-    modifier onlyOp() {
-        require(msg.sender == opAddr);
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
-    function setOp(address newOpAddr_) public onlyOp {
-        require(newOpAddr_ != address(0));
-        newOpAddr = newOpAddr_;
+    
+    modifier onlyCFO() {
+        require(msg.sender == cfoAddress);
+        _;
     }
-    function acceptOp() public {
-        require(msg.sender == newOpAddr);
-        require(address(0) != newOpAddr);
-        opAddr = newOpAddr;
-        newOpAddr = address(0);
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
+    
+    function setCFO(address newCFO) external onlyOwner {
+        require(newCFO != address(0));
+
+        cfoAddress = newCFO;
+    }
+}
+
+// Pausable contract which allows children to implement an emergency stop mechanism.
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+    // Modifier to make a function callable only when the contract is not paused.
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    // Modifier to make a function callable only when the contract is paused.
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+
+    // called by the owner to pause, triggers stopped state
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+
+    // called by the owner to unpause, returns to normal state
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
+}
+
+// Gen mixer
+contract MixGenInterface {
+    function openEgg(uint64 userNumber, uint16 eggQuality) public returns (uint256 genes, uint16 quality);
+    function uniquePet(uint64 newPetId) public returns (uint256 genes, uint16 quality);
+}
+
+// Configuration of external contracts
+contract ExternalContracts is Ownable {
+    MixGenInterface public geneScience;
+    
+    address public marketAddress;
+    
+    function setMixGenAddress(address _address) external onlyOwner {
+        MixGenInterface candidateContract = MixGenInterface(_address);
+        
+        geneScience = candidateContract;
+    }
+    
+    function setMarketAddress(address _address) external onlyOwner {
+        marketAddress = _address;
+    }
+}
+
+// Population settings and base functions
+contract PopulationControl is Pausable {
+    
+    // start breed timeout is 12 hours
+    uint32 public breedTimeout = 12 hours;
+    uint32 maxTimeout = 178 days;
+    
+    function setBreedTimeout(uint32 timeout) external onlyOwner {
+        require(timeout <= maxTimeout);
+        
+        breedTimeout = timeout;
+    }
+}
+
+/**
+ *      Presale main contracts 
+ * 
+ **/
+
+// Pet base contract
+contract PetBase is PopulationControl{
+    
+    // events
+    event Birth(address owner, uint64 petId, uint16 quality, uint256 genes);
+    event Death(uint64 petId);
+    
+    event Transfer(address from, address to, uint256 tokenId);
+    
+    // data storage
+    struct Pet {
+        uint256 genes;
+        uint64 birthTime;
+        uint16 quality;
+    }
+    
+    mapping (uint64 => Pet) pets;
+    mapping (uint64 => address) petIndexToOwner;
+    mapping (address => uint256) public ownershipTokenCount;
+    mapping (uint64 => uint64) breedTimeouts;
+ 
+    uint64 tokensCount;
+    uint64 lastTokenId;
+
+    // pet creation
+    function createPet(
+        uint256 _genes,
+        uint16 _quality,
+        address _owner
+    )
+        internal
+        returns (uint64)
+    {
+        Pet memory _pet = Pet({
+            genes: _genes,
+            birthTime: uint64(now),
+            quality: _quality
+        });
+               
+        lastTokenId++;
+        tokensCount++;
+		
+        uint64 newPetId = lastTokenId;
+                
+        pets[newPetId] = _pet;
+        
+        _transfer(0, _owner, newPetId);
+        
+        breedTimeouts[newPetId] = uint64( now + (breedTimeout / 2) );
+        emit Birth(_owner, newPetId, _quality, _genes);
+
+        return newPetId;
+    }
+    
+    // transfer pet function
+    function _transfer(address _from, address _to, uint256 _tokenId) internal {
+        uint64 _tokenId64bit = uint64(_tokenId);
+        
+        ownershipTokenCount[_to]++;
+        petIndexToOwner[_tokenId64bit] = _to;
+        if (_from != address(0)) {
+            ownershipTokenCount[_from]--;
+        }
+        
+         emit Transfer(_from, _to, _tokenId);
+    }
+    
+	// calculation of recommended price
+    function recommendedPrice(uint16 quality) public pure returns(uint256 price) {
+        
+        require(quality <= uint16(0xF000));
+        require(quality >= uint16(0x1000));
+        
+        uint256 startPrice = 1000;
+        
+        price = startPrice;
+        
+        uint256 revertQuality = uint16(0xF000) - quality;
+        uint256 oneLevel = uint16(0x2000);
+        uint256 oneQuart = oneLevel/4;
+        
+        uint256 fullLevels = revertQuality/oneLevel;
+        uint256 fullQuarts =  (revertQuality % oneLevel) / oneQuart ;
+        
+        uint256 surplus = revertQuality - (fullLevels*oneLevel) - (fullQuarts*oneQuart);
+        
+        
+        // coefficeint is 4.4 per level
+        price = price * 44**fullLevels;
+        price = price / 10**fullLevels;
+        
+        // quart coefficient is sqrt(sqrt(4.4))
+        if(fullQuarts != 0)
+        {
+            price = price * 14483154**fullQuarts;
+            price = price / 10**(7 * fullQuarts);
+        }
+
+        // for surplus we using next quart coefficient
+        if(surplus != 0)
+        {
+            uint256 nextQuartPrice = (price * 14483154) / 10**7;
+            uint256 surPlusCoefficient = surplus * 10**6  /oneQuart;
+            uint256 surPlusPrice = ((nextQuartPrice - price) * surPlusCoefficient) / 10**6;
+            
+            price+= surPlusPrice;
+        }
+        
+        price*= 50 szabo;
+    }
+    
+	// grade calculation based on parrot quality
+    function getGradeByQuailty(uint16 quality) public pure returns (uint8 grade) {
+        
+        require(quality <= uint16(0xF000));
+        require(quality >= uint16(0x1000));
+        
+        if(quality == uint16(0xF000))
+            return 7;
+        
+        quality+= uint16(0x1000);
+        
+        return uint8 ( quality / uint16(0x2000) );
+    }
+}
+
+// Ownership
+contract PetOwnership is PetBase {
+
+    // function for the opportunity to gift parrots before the start of the game
+    function transfer(
+        address _to,
+        uint256 _tokenId
+    )
+        external
+        whenNotPaused
+    {
+        require(_to != address(0));
+        require(_to != address(this));
+        require(_owns(msg.sender, uint64(_tokenId)));
+
+        _transfer(msg.sender, _to, _tokenId);
+    }
+ 
+	// checks if a given address is the current owner of a particular pet
+    function _owns(address _claimant, uint64 _tokenId) internal view returns (bool) {
+        return petIndexToOwner[_tokenId] == _claimant;
+    }
+    
+	// returns the address currently assigned ownership of a given pet
+    function ownerOf(uint256 _tokenId) external view returns (address owner) {
+        uint64 _tokenId64bit = uint64(_tokenId);
+        owner = petIndexToOwner[_tokenId64bit];
+        
+        require(owner != address(0));
+    }   
+}
+
+// Settings for eggs minted by administration
+contract EggMinting is PetOwnership{
+    
+    uint8 public uniquePetsCount = 100;
+    
+    uint16 public globalPresaleLimit = 2500;
+
+    mapping (uint16 => uint16) public eggLimits;
+    mapping (uint16 => uint16) public purchesedEggs;
+    
+    constructor() public {
+        eggLimits[55375] = 200;
+        eggLimits[48770] = 1100;
+        eggLimits[39904] = 200;
+        eggLimits[32223] = 25;
+    }
+    
+    function totalSupply() public view returns (uint) {
+        return tokensCount;
+    }
+    
+    function setEggLimit(uint16 quality, uint16 limit) external onlyOwner {
+        eggLimits[quality] = limit;
+    }
+
+    function eggAvailable(uint16 quality) constant public returns(bool) {
+        // first 100 eggs - only cheap
+        if( quality < 48000 && tokensCount < ( 100 + uniquePetsCount ) )
+           return false;
+        
+        return (eggLimits[quality] > purchesedEggs[quality]);
+    }
+}
+
+// Buying eggs from the company
+contract EggPurchase is EggMinting, ExternalContracts {
+    
+    uint16[4] discountThresholds =    [20, 100, 500, 1000];
+    uint8[4]  discountPercents   =    [75, 50,  30,  20  ];
+    
+	// purchasing egg
+    function purchaseEgg(uint64 userNumber, uint16 quality) external payable whenNotPaused {
+
+        require(tokensCount >= uniquePetsCount);
+		
+        // checking egg availablity
+        require(eggAvailable(quality));
+        
+        // checking total count of presale eggs
+        require(tokensCount <= globalPresaleLimit);
+
+        // calculating price
+        uint256 eggPrice = ( recommendedPrice(quality) * (100 - getCurrentDiscountPercent()) ) / 100;
+
+        // checking payment amount
+        require(msg.value >= eggPrice);
+        
+        // increment egg counter
+        purchesedEggs[quality]++;
+        
+        // initialize variables for store child genes and quility
+        uint256 childGenes;
+        uint16 childQuality;
+
+        // get genes and quality of new pet by opening egg through external interface
+        (childGenes, childQuality) = geneScience.openEgg(userNumber, quality);
+         
+        // creating new pet
+        createPet(
+            childGenes,      // genes string
+            childQuality,    // child quality by open egg
+            msg.sender       // owner
+        );
+    }
+    
+    function getCurrentDiscountPercent() constant public returns (uint8 discount) {
+        
+        for(uint8 i = 0; i <= 3; i++)
+        {
+            if(tokensCount < (discountThresholds[i] + uniquePetsCount ))
+                return discountPercents[i];
+        }
+        
+        return 10;
+    }
+}
+
+// Launch it
+contract PreSale is EggPurchase {
+    
+    constructor() public {
+        paused = true;
+    }
+        
+    function generateUniquePets(uint8 count) external onlyOwner whenNotPaused {
+        
+        require(marketAddress != address(0));
+        require(address(geneScience) != address(0));
+        
+        uint256 childGenes;
+        uint16 childQuality;
+        uint64 newPetId;
+
+        for(uint8 i = 0; i< count; i++)
+        {
+            if(tokensCount >= uniquePetsCount)
+                continue;
+            
+            newPetId = tokensCount+1;
+
+            (childGenes, childQuality) = geneScience.uniquePet(newPetId);
+            createPet(childGenes, childQuality, marketAddress);
+        }
+    }
+    
+    function getPet(uint256 _id) external view returns (
+        uint64 birthTime,
+        uint256 genes,
+        uint64 breedTimeout,
+        uint16 quality,
+        address owner
+    ) {
+        uint64 _tokenId64bit = uint64(_id);
+        
+        Pet storage pet = pets[_tokenId64bit];
+        
+        birthTime = pet.birthTime;
+        genes = pet.genes;
+        breedTimeout = uint64(breedTimeouts[_tokenId64bit]);
+        quality = pet.quality;
+        owner = petIndexToOwner[_tokenId64bit];
+    }
+    
+    function unpause() public onlyOwner whenPaused {
+        require(address(geneScience) != address(0));
+
+        super.unpause();
+    }
+    
+    function withdrawBalance(uint256 summ) external onlyCFO {
+        cfoAddress.transfer(summ);
     }
 }
