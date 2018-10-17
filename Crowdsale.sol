@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcba127d6392e78639281a95a857504f3460656f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x12429741cfbb4a37cb27ff10e15396517ff4d272
 */
 pragma solidity ^0.4.11;
 
@@ -52,7 +52,7 @@ contract Crowdsale {
   // token address
   address public addressOfTokenUsedAsReward;
 
-  uint256 public price = 125000;
+  uint256 public price = 12500;
 
   token tokenReward;
 
