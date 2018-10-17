@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x71cf9cc55614a4dc115bdf86bd2a732499aaae63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x16df01874b07933f1ce8beaf42418a86b72a2dee
 */
 pragma solidity ^0.4.21;
 
@@ -261,6 +261,5 @@ contract TokenLiquidityPlatform {
   function withdraw_token(address _token, uint256 _amount) public only_admin() {
     require(Token(_token).transfer(admin, _amount));
   }
- 
-  function() public payable {} 
+  
 }
