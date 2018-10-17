@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0x25a5ed4828daee693b4bc3e07943dee025c6c2f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0x0248d2dbbf900dcd93ffbd902de779ae0dd5eec0
 */
 pragma solidity ^0.4.24;
 
@@ -121,7 +121,7 @@ contract NewChance is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xdF762c13796758D89C91F7fdac1287b8Eeb294c4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x729352cB059beB2AbbE10c5C7c05d1e00d33e14B);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
