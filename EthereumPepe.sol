@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPepe at 0x7dc12f1d5730271cb9617bacadc309ffc56ae3aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPepe at 0xec9faad25d2b524400fbf425011b59d7cc5c4b97
 */
 pragma solidity ^0.4.24;
 
@@ -22,9 +22,9 @@ contract EthereumPepe {
     constructor() public {
         
         /* Final token characteristics */
-        tokenName = "The Emperor's Coin";
-        tokenSymbol = "WH40K";
-        uint256 initSupply = 40000;
+        tokenName = "Ethereum Pepe";
+        tokenSymbol = "ETHPEPE";
+        uint256 initSupply = 120000;
         /*******************************/
         
         totalSupply = initSupply * 10 ** uint256(decimals);
