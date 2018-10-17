@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitGoals at 0x8dfd6fa19312ad2c4bcfc24189c23c9b4c0c4f2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitGoals at 0xa60f95fbb00d39165b9eb8819030289a866be5f4
 */
 pragma solidity ^0.4.20;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.20;
 //
 // Symbol           : STP
 // Name             : BitGoals
-// Total Supply     : 185,000,000
+// Total Supply     : 18,000,000
 // Decimals         : 18
 // ----------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ contract BitGoals is ERC20Interface {
         symbol = "STP";
         name = "BitGoals";
         decimals = 18;
-        _totalSupply = 185000000;
+        _totalSupply = 18000000;
         address owner = 0x209380a57d88B07352A409548F3Ff9A95066881D;
         _totalSupply = _totalSupply.mul(10 ** uint(decimals));
         balances[owner] = _totalSupply;
