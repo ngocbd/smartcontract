@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CR7 at 0x73b7a4522f3c2e9283b3a3370555008cbec09c66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CR7 at 0xc3291f1590755c8570c57f1c6c8d3ee2a8112e43
 */
 pragma solidity ^0.4.4;
 
@@ -110,10 +110,10 @@ contract CR7 is StandardToken { // CHANGE THIS. Update the contract name.
     function CR7() {
         balances[msg.sender] = 1000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Cristiano_Ronaldo_TokenCoin";                                       // Set the name for display purposes (CHANGE THIS)
+        name = "CR7_TokenCoin";                                       // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "CR7";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
