@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReadyPlayerONE at 0xe65060b5b855e2625cfc5038f013929a5a7170d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReadyPlayerONE at 0xb67bcb0134d2692581e09c20fe742043c3b448e3
 */
 pragma solidity ^0.4.24;
 /**
@@ -1551,6 +1551,10 @@ contract ReadyPlayerONE is modularLong {
     function activate()
         public
     {
+        // only team just can activate 
+        require(
+            msg.sender == community_addr, "only community can activate"
+        );
         
         // can only be ran once
         require(activated_ == false, "fomo3d already activated");
