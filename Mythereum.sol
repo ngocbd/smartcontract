@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0x54d3ad23846643b93098915001ab274ea19e5622
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mythereum at 0x2c3f2451143e8cec0341b064fcb8fe137ce5d6dd
 */
 pragma solidity ^0.4.21;
 
@@ -264,7 +264,7 @@ contract MythereumCardToken {
 
   function isEditionAvailable(uint8 _editionNumber) public view returns (bool);
   function cloneCard(address _owner, uint256 _tokenId) public returns (bool);
-  function mintEditionCards(
+  function mintRandomCards(
     address _owner,
     uint8 _editionNumber,
     uint8 _numCards
@@ -311,8 +311,7 @@ contract Mythereum is Manageable {
   mapping(address => uint256) public released;
 
   event CardsPurchased(uint256 editionNumber, uint256 packSize, address buyer);
-  event CardDamageUpgraded(uint256 cardId, uint256 newLevel, uint256 mythexCost);
-  event CardShieldUpgraded(uint256 cardId, uint256 newLevel, uint256 mythexCost);
+  event CardUpgraded(uint256 cardId, uint256 addedDamage, uint256 addedShield);
 
   modifier onlyHosts() {
     require(
@@ -326,11 +325,20 @@ contract Mythereum is Manageable {
   function Mythereum() public {
     editions[0] = Edition({
       name: "Genesis",
-      sales: 0,
+      sales: 3999,
       maxSales: 5000,
       packSize: 7,
       packPrice: 100 finney,
       packPriceIncrease: 1 finney
+    });
+
+    editions[1] = Edition({
+      name: "Survivor",
+      sales: 20,
+      maxSales: 1000000,
+      packSize: 10,
+      packPrice: 0,
+      packPriceIncrease: 0
     });
 
     isVIP[msg.sender] = true;
@@ -367,34 +375,45 @@ contract Mythereum is Manageable {
 
   function upgradeCardDamage(uint256 _cardId) public {
     require(cardDamageUpgradeLevel[_cardId].isLessThan(maxCardUpgradeLevel));
-    uint256 costOfUpgrade = 2 ** (cardDamageUpgradeLevel[_cardId] + 1);
+    uint256 costOfUpgrade = 32 * (cardDamageUpgradeLevel[_cardId] + 1);
 
     MythereumERC20Token mythexContract = MythereumERC20Token(mythexTokenAddress);
     require(mythexContract.balanceOf(msg.sender).isAtLeast(costOfUpgrade));
     burnMythexTokens(msg.sender, costOfUpgrade);
 
     cardDamageUpgradeLevel[_cardId]++;
-
-    MythereumCardToken cardToken = MythereumCardToken(cardTokenAddress);
-    require(cardToken.improveCard(_cardId, cardDamageUpgradeLevel[_cardId], 0));
-
-    CardDamageUpgraded(_cardId, cardDamageUpgradeLevel[_cardId], costOfUpgrade);
+    _improveCard(_cardId, 1, 0);
   }
 
   function upgradeCardShield(uint256 _cardId) public {
     require(cardShieldUpgradeLevel[_cardId].isLessThan(maxCardUpgradeLevel));
-    uint256 costOfUpgrade = 2 ** (cardShieldUpgradeLevel[_cardId] + 1);
+    uint256 costOfUpgrade = 32 * (cardShieldUpgradeLevel[_cardId] + 1);
 
     MythereumERC20Token mythexContract = MythereumERC20Token(mythexTokenAddress);
     require(mythexContract.balanceOf(msg.sender).isAtLeast(costOfUpgrade));
     burnMythexTokens(msg.sender, costOfUpgrade);
 
     cardShieldUpgradeLevel[_cardId]++;
+    _improveCard(_cardId, 0, 1);
+  }
 
+  function improveCard(
+    uint256 _cardId,
+    uint256 _addedDamage,
+    uint256 _addedShield
+  ) public onlyManagement {
+    require(cardShieldUpgradeLevel[_cardId].isLessThan(maxCardUpgradeLevel));
+    _improveCard(_cardId, _addedDamage, _addedShield);
+  }
+
+  function _improveCard(
+    uint256 _cardId,
+    uint256 _addedDamage,
+    uint256 _addedShield
+  ) internal {
     MythereumCardToken cardToken = MythereumCardToken(cardTokenAddress);
-    require(cardToken.improveCard(_cardId, 0, cardShieldUpgradeLevel[_cardId]));
-
-    CardShieldUpgraded(_cardId, cardShieldUpgradeLevel[_cardId], costOfUpgrade);
+    require(cardToken.improveCard(_cardId, _addedDamage, _addedShield));
+    CardUpgraded(_cardId, _addedDamage, _addedShield);
   }
 
   function receiveApproval(
@@ -483,6 +502,13 @@ contract Mythereum is Manageable {
 
   function removeVIP(address _vip) public onlyManagement {
     isVIP[_vip] = false;
+  }
+
+  function setEditionName(
+    uint8 _editionNumber,
+    string _name
+  ) public onlyManagement {
+    editions[_editionNumber].name = _name;
   }
 
   function setEditionSales(
@@ -615,7 +641,7 @@ contract Mythereum is Manageable {
     edition.packPrice = edition.packPrice.plus(edition.packPriceIncrease);
 
     MythereumCardToken cardToken = MythereumCardToken(cardTokenAddress);
-    cardToken.mintEditionCards(recipient, editionNumber, edition.packSize);
+    cardToken.mintRandomCards(recipient, editionNumber, edition.packSize);
 
     CardsPurchased(editionNumber, edition.packSize, recipient);
   }
