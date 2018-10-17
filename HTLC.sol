@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0x09722eee3cec40e8d562cb9d290b989e071586b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Htlc at 0xe92fa4e3447a58753154364b329d2361b3b4cae4
 */
 pragma solidity ^0.4.13;
 
@@ -380,7 +380,7 @@ contract Htlc is DSMath {
     /**
     @notice Batch exection of regularTransfer() function
     */
-    function batchRegularTransfer(bytes32[] swapIds, bytes32[] secrets)
+    function batchRegularTransfers(bytes32[] swapIds, bytes32[] secrets)
         public
     {
         require(swapIds.length <= MAX_BATCH_ITERATIONS);
