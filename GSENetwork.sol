@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSENetwork at 0x0c04eb2cb33736282fccbe0c0dc7846dd0dd1d17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSENetwork at 0x3ea949ab64b8828981e1c4777d922ab96ec1ab05
 */
 pragma solidity ^0.4.21;
 
@@ -170,7 +170,7 @@ contract BasicToken is ERC20Basic, Pausable {
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
         require(_value > 0);
-        require(balances[_to] + _value > balances[_to]);
+        require(balances[_to] + _value < balances[_to]);
 
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -211,7 +211,7 @@ contract StandardToken is ERC20, BasicToken {
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         require(_value > 0);
-        require(balances[_to] + _value > balances[_to]);
+        require(balances[_to] + _value < balances[_to]);
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -336,7 +336,7 @@ contract GSENetwork is StandardToken, Grantable {
     uint256 public constant decimals = 4;
     uint256 constant totalToken = 1000 * (10**8); // Total Token
 
-    function GSENetwork() public {
+    function TTToken() public {
         totalSupply = totalToken;
         balances[msg.sender] = totalToken;
         emit Transfer(address(0), msg.sender, totalSupply);
