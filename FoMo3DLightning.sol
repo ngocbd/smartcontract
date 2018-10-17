@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DLightning at 0x24da016c06941ec2c92Be28e0A2b2e679F0D1dC7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DLightning at 0x9520769b72e8f0730c0e91475d3b1c26c660b08d
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3DLightning is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xb57371379e8BF49d3c0a8A07638E429386A636A4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x9Ac0a90554a1Cb542D1F7a5763F0180633433C50);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -136,12 +136,12 @@ contract FoMo3DLightning is modularShort {
 //=================_|===========================================================
     address private admin = msg.sender;
     string constant public name = "FOMO Lightning";
-    string constant public symbol = "LTNG";
+    string constant public symbol = "SHORT";
     uint256 private rndExtra_ = 15 minutes;     // length of the very first ICO
     uint256 private rndGap_ = 15 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 15 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
+    uint256 constant private rndMax_ = 15 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -1559,11 +1559,11 @@ contract FoMo3DLightning is modularShort {
         public
     {
         // only team just can activate
-        require(msg.sender == admin);
+        require(msg.sender == admin, "only admin can activate");
 
 
         // can only be ran once
-        require(activated_ == false);
+        require(activated_ == false, "FOMO Short already activated");
 
         // activate the contract
         activated_ = true;
