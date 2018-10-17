@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YudiToken at 0xcf68d0f05580f5a4f7c6b3b557f2d0bc73f92afd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YudiToken at 0x672add2d77247b367824534d3247d15a57105ea0
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -26,7 +26,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 8;
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
