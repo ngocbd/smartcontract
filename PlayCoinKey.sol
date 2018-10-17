@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0xf2E91dA601F08833a11f93f95Def1a3ACaE697FB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x0f1f5b0aec864262aef8cbe1f89be64b7beb6a39
 */
 pragma solidity ^0.4.24;
 
@@ -133,9 +133,7 @@ contract PlayCoinKey is modularKey {
     using NameFilter for string;
     using PCKKeysCalcLong for uint256;
     
-    otherPCK private otherPCK_;
     PlayCoinGodInterface constant private PCGod = PlayCoinGodInterface(0x6f93Be8fD47EBb62F54ebd149B58658bf9BaCF4f);
-    ProForwarderInterface constant private Pro_Inc = ProForwarderInterface(0x97354A7281693b7C93f6348Ba4eC38B9DDd76D6e);
     PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x47D1c777f1853cac97E6b81226B1F5108FBD7B81);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -269,14 +267,20 @@ contract PlayCoinKey is modularKey {
         return rndReduceThreshold_;
     }
 
-    function setEnforce(bool _closed) onlyAdmins() public returns(bool) {
+    function setEnforce(bool _closed) onlyAdmins() public returns(bool, uint256, bool) {
         closed_ = _closed;
 
+        // open ,next round
         if( !closed_ && round_[rID_].ended == true && activated_ == true ){
             nextRound();
         }
-
-        return closed_;
+        // close,finish current round
+        else if( closed_ && round_[rID_].ended == false && activated_ == true ){
+            round_[rID_].end = now - 1;
+        }
+        
+        // close,roundId,finish
+        return (closed_, rID_, now > round_[rID_].end);
     }
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
@@ -908,7 +912,7 @@ contract PlayCoinKey is modularKey {
 
         
         // if round is active
-        if (!closed_ && _now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (_now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
             core(_rID, _pID, msg.value, _affID, _team, _eventData_);
@@ -917,7 +921,7 @@ contract PlayCoinKey is modularKey {
         } else {
 
             // check to see if end round needs to be ran
-            if ( (closed_ || _now > round_[_rID].end ) && round_[_rID].ended == false ) {
+            if ( _now > round_[_rID].end && round_[_rID].ended == false ) {
                 // end the round (distributes pot) & start new round
                 round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
@@ -965,7 +969,7 @@ contract PlayCoinKey is modularKey {
         uint256 _now = now;
         
         // if round is active
-        if (!closed_ && _now > ( round_[_rID].strt + rndGap_ ) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (_now > ( round_[_rID].strt + rndGap_ ) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player 
@@ -976,7 +980,7 @@ contract PlayCoinKey is modularKey {
             core(_rID, _pID, _eth, _affID, _team, _eventData_);
         
         // if round is not active and end round needs to be ran   
-        } else if ( ( closed_ || _now > round_[_rID].end ) && round_[_rID].ended == false ) {
+        } else if ( _now > round_[_rID].end && round_[_rID].ended == false ) {
             // end the round (distributes pot) & start new round
             round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
@@ -1333,7 +1337,7 @@ contract PlayCoinKey is modularKey {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
         
         // community rewards
-        if (!address(Pro_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        if (!address(admin).call.value(_com)())
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
@@ -1456,7 +1460,7 @@ contract PlayCoinKey is modularKey {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
         uint256 _p3d;
-        if (!address(Pro_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        if (!address(admin).call.value(_com)())
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
@@ -1470,7 +1474,7 @@ contract PlayCoinKey is modularKey {
         
         // pay 1% out to FoMo3D short
         uint256 _long = _eth / 100;
-        otherPCK_.potSwap.value(_long)();
+        potSwap(_long);
         
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
@@ -1498,15 +1502,12 @@ contract PlayCoinKey is modularKey {
         return(_eventData_);
     }
     
-    function potSwap()
-        external
-        payable
-    {
+    function potSwap(uint256 _pot) private {
         // setup local rID
         uint256 _rID = rID_ + 1;
         
-        round_[_rID].pot = round_[_rID].pot.add(msg.value);
-        emit PCKevents.onPotSwapDeposit(_rID, msg.value);
+        round_[_rID].pot = round_[_rID].pot.add(_pot);
+        emit PCKevents.onPotSwapDeposit(_rID, _pot);
     }
     
     /**
@@ -1641,9 +1642,6 @@ contract PlayCoinKey is modularKey {
             msg.sender == admin,
             "only team just can activate"
         );
-
-        // make sure that its been linked.
-        require(address(otherPCK_) != address(0), "must link to other PCK first");
         
         // can only be ran once
         require(activated_ == false, "PCK already activated");
@@ -1657,19 +1655,6 @@ contract PlayCoinKey is modularKey {
         round_[1].end = now + rndInit_ + rndExtra_;
     }
 
-    function setOtherPCK(address _otherPCK) public {
-        // only team just can activate 
-        require(
-            msg.sender == admin,
-            "only team just can activate"
-        );
-
-        // make sure that it HASNT yet been linked.
-        require(address(otherPCK_) == address(0), "silly dev, you already did that");
-        
-        // set up other fomo3d (fast or long) for pot swap
-        otherPCK_ = otherPCK(_otherPCK);
-    }
 }
 
 //==============================================================================
@@ -1811,9 +1796,6 @@ library PCKKeysCalcLong {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
-interface otherPCK {
-    function potSwap() external payable;
-}
 
 interface PCKExtSettingInterface {
     function getFastGap() external view returns(uint256);
