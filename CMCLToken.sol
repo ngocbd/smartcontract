@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCLToken at 0xb545602D4A78193a275ebdf5E5957a19B14784aF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CMCLToken at 0x816Fc943bB42DF26281822C86690318E0F68fa00
 */
 pragma solidity ^0.4.16;
 
@@ -28,9 +28,6 @@ contract CMCLToken is owned, Utils {
     uint256 public totalSupply; 
 
     mapping (address => uint256) public balanceOf;
-
-    event Transfer(address indexed from, address indexed to, uint256 value); 
-    event Burn(address indexed from, uint256 value);  
     
     function CMCLToken(uint256 initialSupply, string tokenName, string tokenSymbol) public {
 
@@ -50,7 +47,6 @@ contract CMCLToken is owned, Utils {
       uint256 previousBalances = safeAdd(balanceOf[_from], balanceOf[_to]); 
       balanceOf[_from] = safeSub(balanceOf[_from], _value); 
       balanceOf[_to] = safeAdd(balanceOf[_to], _value); 
-      emit Transfer(_from, _to, _value);
       assert(balanceOf[_from] + balanceOf[_to] == previousBalances); 
     }
 
@@ -61,8 +57,6 @@ contract CMCLToken is owned, Utils {
 
 		balanceOf[msg.sender] -= _value; 
         totalSupply -= _value; 
-        emit Burn(msg.sender, _value);
-		
         return true;
     }
 }
