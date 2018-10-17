@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contrat at 0x282ab16de1d4179d0e851f9e646fb98857ec0fdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contrat at 0xcd9b780dbfcda1bd58bb07b19679b2d76e246924
 */
 pragma solidity ^0.4.19;
 
@@ -7,7 +7,7 @@ contract Contrat {
 
     address owner;
 
-    event Sent(string hash);
+    event Sent(uint indexed i, string hash);
 
     constructor() public {
         owner = msg.sender;
@@ -23,7 +23,7 @@ contract Contrat {
         _;
     }
 
-    function addHash(string hashToAdd) canAddHash public {
-        emit Sent(hashToAdd);
+    function addHash(uint i, string hashToAdd) canAddHash public {
+        emit Sent(i, hashToAdd);
     }
 }
