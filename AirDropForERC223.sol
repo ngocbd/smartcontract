@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0xa4f07fe74eda130f7dcf66206f94989f201d508e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDropForERC223 at 0x1fe4e0811a09e3be95f18a6f6aba8c4852e4d19e
 */
 pragma solidity ^0.4.23;
 
