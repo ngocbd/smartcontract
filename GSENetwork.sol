@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSENetwork at 0xe530441f4f73bdb6dc2fa5af7c3fc5fd551ec838
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSENetwork at 0x0c04eb2cb33736282fccbe0c0dc7846dd0dd1d17
 */
 pragma solidity ^0.4.21;
 
@@ -334,7 +334,7 @@ contract GSENetwork is StandardToken, Grantable {
     string public constant name = "GSENetwork"; // Token Full Name
     string public constant symbol = "GSE"; // Token Simplied Name
     uint256 public constant decimals = 4;
-    uint256 constant totalToken = 1000 * (10**12); // Total Token
+    uint256 constant totalToken = 1000 * (10**8); // Total Token
 
     function GSENetwork() public {
         totalSupply = totalToken;
