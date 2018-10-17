@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x29500e03568ed3e770d4ca88be539c5057e36967
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x77a3181fa59f63edf8dec0f75fa8707f3d1df719
 */
 pragma solidity ^0.4.24;
 
@@ -14,7 +14,7 @@ pragma solidity ^0.4.24;
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public ;
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
