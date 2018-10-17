@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SqueezerTokenLock at 0xc3623d6bb3441ebc18a283b7e31499301d9b9d0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SqueezerTokenLock at 0xaf9be240948ee83b9d5a4596f40063a37d463142
 */
-pragma solidity 0.4.23;
+pragma solidity 0.4.24;
 
 contract ERC20Interface {
     function balanceOf(address _owner) public view returns (uint256 balance);
@@ -14,10 +14,8 @@ contract SqueezerTokenLock {
     uint constant public SQR_TOKEN_MULTIPLIER = 10**SQR_TOKEN_DECIMALS;
     address constant public PLATFORM_WALLET = 0xA76A464f409b5570a92b657E08FE23f9C4956068;
     address constant public TEAM_WALLET = 0x20de53dA97703BCB465A44D6067775e80536237E;
-    address constant public ADVISORS_WALLET = 0x20de53dA97703BCB465A44D6067775e80536237E;
     uint constant public PLATFORM_MONTHLY = (56250000 * SQR_TOKEN_MULTIPLIER) / 12;
     uint constant public TEAM_MONTHLY = (37500000 * SQR_TOKEN_MULTIPLIER) / 24;
-    uint constant public ADVISORS_MONTHLY = (9375000 * SQR_TOKEN_MULTIPLIER) / 24;
     uint96 constant AUG_15_2018 = 1534291200;
     uint96 constant SEP_15_2018 = 1536969600;
     uint96 constant OCT_15_2018 = 1539561600;
@@ -42,7 +40,7 @@ contract SqueezerTokenLock {
     uint96 constant MAY_15_2020 = 1589500800;
     uint96 constant JUN_15_2020 = 1592179200;
     uint96 constant JUL_15_2020 = 1594771200;
-    uint constant public TOTAL_LOCKS = 60;
+    uint constant public TOTAL_LOCKS = 37;
     uint8 public unlockStep;
 
     struct Lock {
@@ -59,64 +57,40 @@ contract SqueezerTokenLock {
         uint index = 0;
         _addLock(index++, AUG_15_2018, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, AUG_15_2018, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, AUG_15_2018, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, SEP_15_2018, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, SEP_15_2018, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, SEP_15_2018, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, OCT_15_2018, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, OCT_15_2018, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, OCT_15_2018, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, NOV_15_2018, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, NOV_15_2018, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, NOV_15_2018, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, DEC_15_2018, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, DEC_15_2018, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, DEC_15_2018, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JAN_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, JAN_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JAN_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, FEB_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, FEB_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, FEB_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, MAR_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, MAR_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, MAR_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, APR_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, APR_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, APR_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, MAY_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, MAY_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, MAY_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JUN_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, JUN_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JUN_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JUL_15_2019, PLATFORM_WALLET, PLATFORM_MONTHLY);
         _addLock(index++, JUL_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JUL_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, AUG_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, AUG_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, SEP_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, SEP_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, OCT_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, OCT_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, NOV_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, NOV_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, DEC_15_2019, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, DEC_15_2019, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JAN_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JAN_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, FEB_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, FEB_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, MAR_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, MAR_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, APR_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, APR_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, MAY_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, MAY_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JUN_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JUN_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
         _addLock(index++, JUL_15_2020, TEAM_WALLET, TEAM_MONTHLY);
-        _addLock(index++, JUL_15_2020, ADVISORS_WALLET, ADVISORS_MONTHLY);
     }
 
     function _addLock(uint _index, uint96 _releaseDate, address _receiver, uint _amount) internal {
