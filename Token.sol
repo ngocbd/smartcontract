@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x39ece9ae453a9824756c9e428d4d37e65a184bf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe8f9e9196eb6c80f0eb86ef130ecd14956f17d2d
 */
 pragma solidity ^0.4.18;        // v0.4.18 was the latest possible version. 0.4.19 and above were not allowed
 
@@ -142,7 +142,7 @@ contract Ownable
 ////////////////////////////////////////////////////////////////////////////////
 contract Lockable is Ownable 
 {
-    uint256 internal constant lockedUntil = 1533513600;     // 2018-08-06 00:00 (GMT+0)
+    uint256 internal constant lockedUntil = 1530604800;     // 2018-07-03 08:00 (GMT+0)
 
     address internal allowedSender;     // the address that can make transactions when the transaction is locked 
 
@@ -172,15 +172,15 @@ contract Token is ERC20, Lockable
 
     //------ TOKEN SPECIFICATION
 
-    string public constant      name     = "Playrs";
-    string public constant      symbol   = "PLAYR";
+    string public constant      name     = "TESTGVINE1";
+    string public constant      symbol   = "TESTGVINE1";
 
-    uint256 public constant     decimals = 4;      // Handle the coin as FIAT (2 decimals). ETH Handles 18 decimal places
+    uint256 public constant     decimals = 18;      // Handle the coin as FIAT (2 decimals). ETH Handles 18 decimal places
 
-    uint256 public constant     initSupply = 126000000 * 10**decimals;        // 10**18 max
+    uint256 public constant     initSupply = 825000000 * 10**decimals;        // 10**18 max
 
-    string private constant     supplyReserveMode="quantity";        // "quantity" or "percent"
-    uint256 public constant     supplyReserveVal = 26000000 * 10**decimals;          // if quantity => (val * 10**decimals)   if percent => val;
+    string private constant     supplyReserveMode="percent";        // "quantity" or "percent"
+    uint256 public constant     supplyReserveVal = 58;          // if quantity => (val * 10**decimals)   if percent => val;
 
     uint256 public              icoSalesSupply   = 0;                   // Needed when burning tokens
     uint256 public              icoReserveSupply = 0;
