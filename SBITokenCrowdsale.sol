@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SBITokenCrowdsale at 0x693bb391F6E2cB3C9B8d6A261916C662f9c86A45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SBITokenCrowdsale at 0xe01ba6c593003b0edcd43b7839a7c36b00a44dfc
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 contract CrowdsaleParameters {
     ///////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ contract Owned {
     function changeOwner(address newOwner) onlyOwner public {
         require(newOwner != address(0));
         require(newOwner != owner);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
@@ -151,7 +151,7 @@ contract SBIToken is Owned, CrowdsaleParameters {
         mintToken(bounty);
         mintToken(partners);
         mintToken(team);
-        NewSBIToken(address(this));
+        emit NewSBIToken(address(this));
     }
 
     modifier transfersAllowed {
@@ -180,7 +180,7 @@ contract SBIToken is Owned, CrowdsaleParameters {
         uint amount = tokenAllocation.amount * exponent;
 
         allowed[tokenAllocation.addr][_crowdsaleAddress] = amount;
-        Approval(tokenAllocation.addr, _crowdsaleAddress, amount);
+        emit Approval(tokenAllocation.addr, _crowdsaleAddress, amount);
     }
 
     /**
@@ -217,7 +217,7 @@ contract SBIToken is Owned, CrowdsaleParameters {
         require(_value <= balances[msg.sender]);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -237,8 +237,8 @@ contract SBIToken is Owned, CrowdsaleParameters {
         totalSupply += mintedAmount;
 
         // Emit Issue and Transfer events
-        Issuance(mintedAmount);
-        Transfer(address(this), tokenAllocation.addr, mintedAmount);
+        emit Issuance(mintedAmount);
+        emit Transfer(address(this), tokenAllocation.addr, mintedAmount);
     }
 
     /**
@@ -252,7 +252,7 @@ contract SBIToken is Owned, CrowdsaleParameters {
         require(_value == 0 || allowanceUsed[msg.sender][_spender] == false);
         allowed[msg.sender][_spender] = _value;
         allowanceUsed[msg.sender][_spender] = false;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -271,7 +271,7 @@ contract SBIToken is Owned, CrowdsaleParameters {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -309,9 +309,15 @@ contract SBITokenCrowdsale is Owned, CrowdsaleParameters {
     uint public saleStopTimestamp;
     uint public saleGoal;
     bool public goalReached = false;
-    uint public tokensPerEth = 48000;
+    uint public preicoTokensPerEth = 27314;
+    uint public tokensPerEth = 10500;
     mapping (address => uint256) private investmentRecords;
     address crowdsaleAddress = this;
+    uint256 public constant saleStartDate = 1530403200;
+    uint256 public constant saleEndDate = 1535759940;
+    uint256 public constant preSaleStartDate = 1529020800;
+    uint256 public constant preSaleEndDate = 1530403140;
+    uint public preSaleAmount = 5800000;
 
     /* Events */
     event TokenSale(address indexed tokenReceiver, uint indexed etherAmount, uint indexed tokenAmount, uint tokensPerEther);
@@ -337,7 +343,7 @@ contract SBITokenCrowdsale is Owned, CrowdsaleParameters {
     * @return active - True, if sale is active
     */
     function isICOActive() public constant returns (bool active) {
-        active = ((generalSaleStartDate <= now) && (now < generalSaleEndDate) && (!goalReached));
+        active = ((preSaleStartDate <= now) && (now <= saleEndDate) && (!goalReached));
         return active;
     }
 
@@ -364,33 +370,55 @@ contract SBITokenCrowdsale is Owned, CrowdsaleParameters {
         assert(msg.value > 0 finney);
 
         // Fund transfer event
-        FundTransfer(investorAddress, address(this), amount);
+        emit FundTransfer(investorAddress, address(this), amount);
+        uint remainingTokenBalance = token.balanceOf(saleWalletAddress) / tokenMultiplier;
 
         // Calculate token amount that is purchased,
         // truncate to integer
-        uint tokenAmount = amount * tokensPerEth / 1e18;
+
+        uint tokensRate = 0;
+        uint tokenAmount = 0;
+        uint acceptedAmount = 0;
+        uint mainTokens = 0;
+        uint discountTokens = 0;
+
+        if (preSaleStartDate <= now && now <= preSaleEndDate && remainingTokenBalance > 17000000) {
+          tokensRate = preicoTokensPerEth;
+          discountTokens = remainingTokenBalance - 17000000;
+
+          uint acceptedPreicoAmount = discountTokens * 1e18 / preicoTokensPerEth; // 212
+          uint acceptedMainAmount = 17000000 * 1e18 / tokensPerEth; // 1619
+          acceptedAmount = acceptedPreicoAmount + acceptedMainAmount;
+
+          if (acceptedPreicoAmount < amount) {
+            mainTokens = (amount - acceptedPreicoAmount) * tokensPerEth / 1e18;
+            tokenAmount = discountTokens + mainTokens;
+          } else {
+            tokenAmount = preicoTokensPerEth * amount / 1e18;
+          }
+
+        } else {
+          tokensRate = tokensPerEth;
+          tokenAmount = amount * tokensPerEth / 1e18;
+          acceptedAmount = remainingTokenBalance * tokensPerEth * 1e18;
+        }
 
         // Check that stage wallet has enough tokens. If not, sell the rest and
         // return change.
-        uint remainingTokenBalance = token.balanceOf(saleWalletAddress) / tokenMultiplier;
         if (remainingTokenBalance <= tokenAmount) {
             tokenAmount = remainingTokenBalance;
             goalReached = true;
         }
 
-        // Calculate Wei amount that was received in this transaction
-        // adjusted to rounding and remaining token amount
-        uint acceptedAmount = tokenAmount * 1e18 / tokensPerEth;
-
         // Transfer tokens to baker and return ETH change
         token.transferFrom(saleWalletAddress, investorAddress, tokenAmount * tokenMultiplier);
-        TokenSale(investorAddress, amount, tokenAmount, tokensPerEth);
+        emit TokenSale(investorAddress, amount, tokenAmount, tokensRate);
 
         // Return change
-        uint change = amount - acceptedAmount;
-        if (change > 0) {
+        if (amount > acceptedAmount) {
+            uint change = amount - acceptedAmount;
             investorAddress.transfer(change);
-            FundTransfer(address(this), investorAddress, change);
+            emit FundTransfer(address(this), investorAddress, change);
         }
 
         // Update crowdsale performance
@@ -403,7 +431,7 @@ contract SBITokenCrowdsale is Owned, CrowdsaleParameters {
     */
     function safeWithdrawal() external onlyOwner {
         bank.transfer(crowdsaleAddress.balance);
-        FundTransfer(crowdsaleAddress, bank, crowdsaleAddress.balance);
+        emit FundTransfer(crowdsaleAddress, bank, crowdsaleAddress.balance);
     }
 
     /**
@@ -426,14 +454,14 @@ contract SBITokenCrowdsale is Owned, CrowdsaleParameters {
         if (crowdsaleAddress.balance > 0) {
             revert();
         }
-        if (now < generalSaleStartDate) {
+        if (now < preSaleStartDate) {
             selfdestruct(owner);
         }
         // save the not sold tokens to featureDevelopment wallet
         uint featureDevelopmentAmount = token.balanceOf(saleWalletAddress);
         // Transfer tokens to baker and return ETH change
         token.transferFrom(saleWalletAddress, featureDevelopment.addr, featureDevelopmentAmount);
-        FundTransfer(crowdsaleAddress, msg.sender, crowdsaleAddress.balance);
+        emit FundTransfer(crowdsaleAddress, msg.sender, crowdsaleAddress.balance);
         selfdestruct(owner);
     }
 }
