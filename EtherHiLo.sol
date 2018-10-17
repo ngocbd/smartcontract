@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x5cee173ee3a9568a4d66d882d78fdf5724251e82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x06e24feeaab8ff9b436dc466351852e972eef3ba
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 
 /**
@@ -10,46 +10,51 @@ pragma solidity ^0.4.18;
  */
 library SafeMath {
 
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (_a == 0) {
+      return 0;
     }
 
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+    c = _a * _b;
+    assert(c / _a == _b);
+    return c;
+  }
 
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    // assert(_b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = _a / _b;
+    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
+    return _a / _b;
+  }
 
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    assert(_b <= _a);
+    return _a - _b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
+    c = _a + _b;
+    assert(c >= _a);
+    return c;
+  }
 }
-pragma solidity ^0.4.18;
+
+pragma solidity ^0.4.24;
 
 
 /**
@@ -58,39 +63,62 @@ pragma solidity ^0.4.18;
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-    address public owner;
+  address public owner;
 
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
+
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -122,7 +150,8 @@ THE SOFTWARE.
 */
 
 // This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
-pragma solidity ^0.4.18;
+
+pragma solidity >=0.4.18;// Incompatible compiler version... please select one stated within pragma solidity or use different oraclizeAPI version
 
 contract OraclizeI {
     address public cbAddress;
@@ -138,17 +167,251 @@ contract OraclizeI {
     function setCustomGasPrice(uint _gasPrice) external;
     function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
 }
+
 contract OraclizeAddrResolverI {
     function getAddress() public returns (address _addr);
 }
+
+/*
+Begin solidity-cborutils
+
+https://github.com/smartcontractkit/solidity-cborutils
+
+MIT License
+
+Copyright (c) 2018 SmartContract ChainLink, Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+
+library Buffer {
+    struct buffer {
+        bytes buf;
+        uint capacity;
+    }
+
+    function init(buffer memory buf, uint _capacity) internal pure {
+        uint capacity = _capacity;
+        if(capacity % 32 != 0) capacity += 32 - (capacity % 32);
+        // Allocate space for the buffer data
+        buf.capacity = capacity;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(buf, ptr)
+            mstore(ptr, 0)
+            mstore(0x40, add(ptr, capacity))
+        }
+    }
+
+    function resize(buffer memory buf, uint capacity) private pure {
+        bytes memory oldbuf = buf.buf;
+        init(buf, capacity);
+        append(buf, oldbuf);
+    }
+
+    function max(uint a, uint b) private pure returns(uint) {
+        if(a > b) {
+            return a;
+        }
+        return b;
+    }
+
+    /**
+     * @dev Appends a byte array to the end of the buffer. Resizes if doing so
+     *      would exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, bytes data) internal pure returns(buffer memory) {
+        if(data.length + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, data.length) * 2);
+        }
+
+        uint dest;
+        uint src;
+        uint len = data.length;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Start address = buffer address + buffer length + sizeof(buffer length)
+            dest := add(add(bufptr, buflen), 32)
+            // Update buffer length
+            mstore(bufptr, add(buflen, mload(data)))
+            src := add(data, 32)
+        }
+
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
+
+        return buf;
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Resizes if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, uint8 data) internal pure {
+        if(buf.buf.length + 1 > buf.capacity) {
+            resize(buf, buf.capacity * 2);
+        }
+
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length)
+            let dest := add(add(bufptr, buflen), 32)
+            mstore8(dest, data)
+            // Update buffer length
+            mstore(bufptr, add(buflen, 1))
+        }
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Resizes if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function appendInt(buffer memory buf, uint data, uint len) internal pure returns(buffer memory) {
+        if(len + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, len) * 2);
+        }
+
+        uint mask = 256 ** len - 1;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length) + len
+            let dest := add(add(bufptr, buflen), len)
+            mstore(dest, or(and(mload(dest), not(mask)), data))
+            // Update buffer length
+            mstore(bufptr, add(buflen, len))
+        }
+        return buf;
+    }
+}
+
+library CBOR {
+    using Buffer for Buffer.buffer;
+
+    uint8 private constant MAJOR_TYPE_INT = 0;
+    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
+    uint8 private constant MAJOR_TYPE_BYTES = 2;
+    uint8 private constant MAJOR_TYPE_STRING = 3;
+    uint8 private constant MAJOR_TYPE_ARRAY = 4;
+    uint8 private constant MAJOR_TYPE_MAP = 5;
+    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
+
+    function encodeType(Buffer.buffer memory buf, uint8 major, uint value) private pure {
+        if(value <= 23) {
+            buf.append(uint8((major << 5) | value));
+        } else if(value <= 0xFF) {
+            buf.append(uint8((major << 5) | 24));
+            buf.appendInt(value, 1);
+        } else if(value <= 0xFFFF) {
+            buf.append(uint8((major << 5) | 25));
+            buf.appendInt(value, 2);
+        } else if(value <= 0xFFFFFFFF) {
+            buf.append(uint8((major << 5) | 26));
+            buf.appendInt(value, 4);
+        } else if(value <= 0xFFFFFFFFFFFFFFFF) {
+            buf.append(uint8((major << 5) | 27));
+            buf.appendInt(value, 8);
+        }
+    }
+
+    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private pure {
+        buf.append(uint8((major << 5) | 31));
+    }
+
+    function encodeUInt(Buffer.buffer memory buf, uint value) internal pure {
+        encodeType(buf, MAJOR_TYPE_INT, value);
+    }
+
+    function encodeInt(Buffer.buffer memory buf, int value) internal pure {
+        if(value >= 0) {
+            encodeType(buf, MAJOR_TYPE_INT, uint(value));
+        } else {
+            encodeType(buf, MAJOR_TYPE_NEGATIVE_INT, uint(-1 - value));
+        }
+    }
+
+    function encodeBytes(Buffer.buffer memory buf, bytes value) internal pure {
+        encodeType(buf, MAJOR_TYPE_BYTES, value.length);
+        buf.append(value);
+    }
+
+    function encodeString(Buffer.buffer memory buf, string value) internal pure {
+        encodeType(buf, MAJOR_TYPE_STRING, bytes(value).length);
+        buf.append(bytes(value));
+    }
+
+    function startArray(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_ARRAY);
+    }
+
+    function startMap(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_MAP);
+    }
+
+    function endSequence(Buffer.buffer memory buf) internal pure {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_CONTENT_FREE);
+    }
+}
+
+/*
+End solidity-cborutils
+ */
+
 contract usingOraclize {
     uint constant day = 60*60*24;
     uint constant week = 60*60*24*7;
     uint constant month = 60*60*24*30;
     byte constant proofType_NONE = 0x00;
     byte constant proofType_TLSNotary = 0x10;
-    byte constant proofType_Android = 0x20;
     byte constant proofType_Ledger = 0x30;
+    byte constant proofType_Android = 0x40;
     byte constant proofType_Native = 0xF0;
     byte constant proofStorage_IPFS = 0x01;
     uint8 constant networkID_auto = 0;
@@ -175,8 +438,8 @@ contract usingOraclize {
     }
 
     function oraclize_setNetwork(uint8 networkID) internal returns(bool){
-        return oraclize_setNetwork();
-        networkID; // silence the warning and remain backwards compatible
+      return oraclize_setNetwork();
+      networkID; // silence the warning and remain backwards compatible
     }
     function oraclize_setNetwork() internal returns(bool){
         if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
@@ -218,8 +481,8 @@ contract usingOraclize {
         __callback(myid, result, new bytes(0));
     }
     function __callback(bytes32 myid, string result, bytes proof) public {
-        return;
-        myid; result; proof; // Silence compiler warnings
+      return;
+      myid; result; proof; // Silence compiler warnings
     }
 
     function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
@@ -730,7 +993,7 @@ contract usingOraclize {
         for (uint i=0; i<bresult.length; i++){
             if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
                 if (decimals){
-                    if (_b == 0) break;
+                   if (_b == 0) break;
                     else _b--;
                 }
                 mint *= 10;
@@ -758,90 +1021,30 @@ contract usingOraclize {
         return string(bstr);
     }
 
+    using CBOR for Buffer.buffer;
     function stra2cbor(string[] arr) internal pure returns (bytes) {
-        uint arrlen = arr.length;
-
-        // get correct cbor output length
-        uint outputlen = 0;
-        bytes[] memory elemArray = new bytes[](arrlen);
-        for (uint i = 0; i < arrlen; i++) {
-            elemArray[i] = (bytes(arr[i]));
-            outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+        safeMemoryCleaner();
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeString(arr[i]);
         }
-        uint ctr = 0;
-        uint cborlen = arrlen + 0x80;
-        outputlen += byte(cborlen).length;
-        bytes memory res = new bytes(outputlen);
-
-        while (byte(cborlen).length > ctr) {
-            res[ctr] = byte(cborlen)[ctr];
-            ctr++;
-        }
-        for (i = 0; i < arrlen; i++) {
-            res[ctr] = 0x5F;
-            ctr++;
-            for (uint x = 0; x < elemArray[i].length; x++) {
-                // if there's a bug with larger strings, this may be the culprit
-                if (x % 23 == 0) {
-                    uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
-                    elemcborlen += 0x40;
-                    uint lctr = ctr;
-                    while (byte(elemcborlen).length > ctr - lctr) {
-                        res[ctr] = byte(elemcborlen)[ctr - lctr];
-                        ctr++;
-                    }
-                }
-                res[ctr] = elemArray[i][x];
-                ctr++;
-            }
-            res[ctr] = 0xFF;
-            ctr++;
-        }
-        return res;
+        buf.endSequence();
+        return buf.buf;
     }
 
     function ba2cbor(bytes[] arr) internal pure returns (bytes) {
-        uint arrlen = arr.length;
-
-        // get correct cbor output length
-        uint outputlen = 0;
-        bytes[] memory elemArray = new bytes[](arrlen);
-        for (uint i = 0; i < arrlen; i++) {
-            elemArray[i] = (bytes(arr[i]));
-            outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
+        safeMemoryCleaner();
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeBytes(arr[i]);
         }
-        uint ctr = 0;
-        uint cborlen = arrlen + 0x80;
-        outputlen += byte(cborlen).length;
-        bytes memory res = new bytes(outputlen);
-
-        while (byte(cborlen).length > ctr) {
-            res[ctr] = byte(cborlen)[ctr];
-            ctr++;
-        }
-        for (i = 0; i < arrlen; i++) {
-            res[ctr] = 0x5F;
-            ctr++;
-            for (uint x = 0; x < elemArray[i].length; x++) {
-                // if there's a bug with larger strings, this may be the culprit
-                if (x % 23 == 0) {
-                    uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
-                    elemcborlen += 0x40;
-                    uint lctr = ctr;
-                    while (byte(elemcborlen).length > ctr - lctr) {
-                        res[ctr] = byte(elemcborlen)[ctr - lctr];
-                        ctr++;
-                    }
-                }
-                res[ctr] = elemArray[i][x];
-                ctr++;
-            }
-            res[ctr] = 0xFF;
-            ctr++;
-        }
-        return res;
+        buf.endSequence();
+        return buf.buf;
     }
-
 
     string oraclize_network_name;
     function oraclize_setNetworkName(string _network_name) internal {
@@ -863,6 +1066,9 @@ contract usingOraclize {
         bytes32 sessionKeyHash_bytes32 = oraclize_randomDS_getSessionPubKeyHash();
         assembly {
             mstore(unonce, 0x20)
+            // the following variables can be relaxed
+            // check relaxed random contract under ethereum-examples repo
+            // for an idea on how to override and replace comit hash vars
             mstore(add(unonce, 0x20), xor(blockhash(sub(number, 1)), xor(coinbase, timestamp)))
             mstore(sessionKeyHash, 0x20)
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
@@ -1084,8 +1290,8 @@ contract usingOraclize {
             mstore(add(size, 64), r)
             mstore(add(size, 96), s)
 
-        // NOTE: we can reuse the request memory because we deal with
-        //       the return code
+            // NOTE: we can reuse the request memory because we deal with
+            //       the return code
             ret := call(3000, 1, 0, size, 128, size, 32)
             addr := mload(size)
         }
@@ -1100,7 +1306,7 @@ contract usingOraclize {
         uint8 v;
 
         if (sig.length != 65)
-            return (false, 0);
+          return (false, 0);
 
         // The signature format is a compact form of:
         //   {bytes32 r}{bytes32 s}{uint8 v}
@@ -1109,15 +1315,15 @@ contract usingOraclize {
             r := mload(add(sig, 32))
             s := mload(add(sig, 64))
 
-        // Here we are loading the last 32 bytes. We exploit the fact that
-        // 'mload' will pad with zeroes if we overread.
-        // There is no 'mload8' to do this, but that would be nicer.
+            // Here we are loading the last 32 bytes. We exploit the fact that
+            // 'mload' will pad with zeroes if we overread.
+            // There is no 'mload8' to do this, but that would be nicer.
             v := byte(0, mload(add(sig, 96)))
 
-        // Alternative solution:
-        // 'byte' is not working due to the Solidity parser, so lets
-        // use the second best option, 'and'
-        // v := and(mload(add(sig, 65)), 255)
+            // Alternative solution:
+            // 'byte' is not working due to the Solidity parser, so lets
+            // use the second best option, 'and'
+            // v := and(mload(add(sig, 65)), 255)
         }
 
         // albeit non-transactional signatures are not specified by the YP, one would expect it
@@ -1126,7 +1332,7 @@ contract usingOraclize {
         // geth uses [0, 1] and some clients have followed. This might change, see:
         //  https://github.com/ethereum/go-ethereum/issues/2053
         if (v < 27)
-            v += 27;
+          v += 27;
 
         if (v != 27 && v != 28)
             return (false, 0);
@@ -1134,10 +1340,18 @@ contract usingOraclize {
         return safer_ecrecover(hash, v, r, s);
     }
 
+    function safeMemoryCleaner() internal pure {
+        assembly {
+            let fmem := mload(0x40)
+            codecopy(fmem, codesize, sub(msize, fmem))
+        }
+    }
+
 }
 // </ORACLIZE_API>
 
-pragma solidity ^0.4.19;
+
+pragma solidity ^0.4.20;
 
 /// @title EtherHiLo
 /// @dev the contract than handles the EtherHiLo app
@@ -1147,10 +1361,10 @@ contract EtherHiLo is usingOraclize, Ownable {
     uint8 constant FAILED_ROLE = 69;
 
     // settings
-    uint public rngCallbackGas;
-    uint public minBet;
-    uint public maxBetThresholdPct;
-    bool public gameRunning;
+    uint public rngCallbackGas = 500000;
+    uint public minBet = 100 finney;
+    uint public maxBetThresholdPct = 75;
+    bool public gameRunning = false;
 
     // state
     uint public balanceInPlay;
@@ -1190,11 +1404,6 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // the constructor
     function EtherHiLo() public {
-        oraclize_setProof(proofType_Ledger);
-        setRNGCallbackGasConfig(1500000, 10000000000);
-        setMinBet(100 finney);
-        setGameRunning(true);
-        setMaxBetThresholdPct(75);
     }
 
     /// Default function
@@ -1212,9 +1421,11 @@ contract EtherHiLo is usingOraclize, Ownable {
         uint bet = msg.value;
 
         require(player != address(0));
-        require(gamesInProgress[player].state == GameState.None || gamesInProgress[player].state == GameState.Finished);
-        require(gameRunning);
-        require(bet >= minBet && bet <= getMaxBet());
+        require(gamesInProgress[player].state == GameState.None
+                || gamesInProgress[player].state == GameState.Finished,
+                "Invalid game state");
+        require(gameRunning, "Game is not currently running");
+        require(bet >= minBet && bet <= getMaxBet(), "Invalid bet");
 
         Game memory game = Game({
                 id:         uint(keccak256(block.number, player, bet)),
@@ -1227,13 +1438,10 @@ contract EtherHiLo is usingOraclize, Ownable {
                 direction:  BetDirection.None
             });
 
-        if (!rollDie(player)) {
-            player.transfer(msg.value);
-            return;
-        }
-
-        balanceInPlay = balanceInPlay + game.bet;
+        balanceInPlay = SafeMath.add(balanceInPlay, game.bet);
         gamesInProgress[player] = game;
+
+        require(rollDie(player), "Dice roll failed");
     }
 
     // finishes a game that is in progress
@@ -1241,16 +1449,15 @@ contract EtherHiLo is usingOraclize, Ownable {
         address player = msg.sender;
 
         require(player != address(0));
-        require(gamesInProgress[player].state != GameState.None && gamesInProgress[player].state != GameState.Finished);
-
-        if (!rollDie(player)) {
-            return;
-        }
+        require(gamesInProgress[player].state == GameState.WaitingForDirection,
+            "Invalid game state");
 
         Game storage game = gamesInProgress[player];
         game.direction = direction;
         game.state = GameState.WaitingForFinalCard;
         gamesInProgress[player] = game;
+
+        require(rollDie(player), "Dice roll failed");
     }
 
     // returns current game state
@@ -1274,7 +1481,7 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // Returns the maximum bet
     function getMaxBet() public view returns (uint) {
-        return SafeMath.div(SafeMath.div(SafeMath.mul(this.balance - balanceInPlay, maxBetThresholdPct), 100), 12);
+        return SafeMath.div(SafeMath.div(SafeMath.mul(SafeMath.sub(this.balance, balanceInPlay), maxBetThresholdPct), 100), 12);
     }
 
     // calculates winnings for the given bet and percent
@@ -1284,7 +1491,7 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // Returns the win percent when going low on the given number
     function getLowWinPercent(uint number) public pure returns (uint) {
-        require(number >= 2 && number <= NUM_DICE_SIDES);
+        require(number >= 2 && number <= NUM_DICE_SIDES, "Invalid number");
         if (number == 2) {
             return 1200;
         } else if (number == 3) {
@@ -1314,7 +1521,7 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // Returns the win percent when going high on the given number
     function getHighWinPercent(uint number) public pure returns (uint) {
-        require(number >= 1 && number < NUM_DICE_SIDES);
+        require(number >= 1 && number < NUM_DICE_SIDES, "Invalid number");
         if (number == 1) {
             return 100;
         } else if (number == 2) {
@@ -1360,6 +1567,9 @@ contract EtherHiLo is usingOraclize, Ownable {
             return;
         }
 
+        require(gamesInProgress[player].state == GameState.WaitingForFinalCard,
+            "Invalid game state");
+
         uint8 finalRoll = roll;
         uint winnings = 0;
 
@@ -1388,16 +1598,16 @@ contract EtherHiLo is usingOraclize, Ownable {
             }
         }
 
-        balanceInPlay = balanceInPlay - game.bet;
-
-        if (transferAmount > 0) {
-            game.player.transfer(transferAmount);
-        }
+        balanceInPlay = SafeMath.add(balanceInPlay, game.bet);
 
         game.finalRoll = finalRoll;
         game.winnings = winnings;
         game.state = GameState.Finished;
         gamesInProgress[player] = game;
+
+        if (transferAmount > 0) {
+            game.player.transfer(transferAmount);
+        }
 
         GameFinished(player, game.id, game.bet, game.firstRoll, finalRoll, winnings, transferAmount);
     }
@@ -1421,7 +1631,7 @@ contract EtherHiLo is usingOraclize, Ownable {
     // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
     // the proof validity is fully verified on-chain
     function __callback(bytes32 rollId, string _result, bytes _proof) public {
-        require(msg.sender == oraclize_cbAddress());
+        require(msg.sender == oraclize_cbAddress(), "Only Oraclize can call this method");
 
         address player = rollIdToGameAddress[rollId];
 
@@ -1475,6 +1685,7 @@ contract EtherHiLo is usingOraclize, Ownable {
     // set RNG callback gas
     function setRNGCallbackGasConfig(uint gas, uint price) public onlyOwner {
         rngCallbackGas = gas;
+        oraclize_setProof(proofType_Ledger);
         oraclize_setCustomGasPrice(price);
     }
 
