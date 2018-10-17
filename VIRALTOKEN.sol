@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRALTOKEN at 0x83f83b06f5779ce2d964bb63fda69a366dc5bf5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIRALTOKEN at 0xc8c33a956e2c004a7803b5642d829537c33123f2
 */
 pragma solidity ^0.4.16;
 // VIRAL Token contract based on the full ERC 20 Token standard
@@ -204,10 +204,10 @@ contract VIRALTOKEN is VRTStandardToken {
     */
     
     uint256 constant public decimals = 18; //How many decimals to show.
-    uint256 public totalSupply = 25 * (10**6) * 10**18 ; // 25 million tokens, 18 decimal places
+    uint256 public totalSupply = 25 * (10**6) * 10**8 ; // 25 million tokens, 18 decimal places
     string constant public name = "ViralToken"; //fancy name: eg VIRAL
     string constant public symbol = "VRT"; //An identifier: eg VRT
-    string constant public version = "v2";       //Version 2 standard. Just an arbitrary versioning scheme.
+    string constant public version = "v1";       //Version 2 standard. Just an arbitrary versioning scheme.
     
     function VIRALTOKEN(){
         balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
