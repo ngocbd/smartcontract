@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DGo at 0x6de7fd35c2f9b25b0efe85621306e9de41eab97f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DGo at 0x830ef78bc6f67c8f2bb691a72a74920a6c3d874a
 */
 pragma solidity ^0.4.24;
 
@@ -142,7 +142,7 @@ contract F3DGo is modularShort {
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 6 hours;                // max length a round timer can be
+    uint256 constant private rndMax_ = 60 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
