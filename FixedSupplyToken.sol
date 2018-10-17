@@ -1,7 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x52a90b3e6df84dc86f995c22bac32d9db2a0c9bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0x80d09da032f4293b1f1295274509cb76c2a5dc42
 */
 pragma solidity ^0.4.24;
+
+// ----------------------------------------------------------------------------
+// 'FIXED' 'Example Fixed Supply Token' token contract
+//
+// Symbol      : FIXED
+// Name        : Example Fixed Supply Token
+// Total supply: 1,000,000.000000000000000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) BokkyPooBah / Bok Consulting Pty Ltd 2018. The MIT Licence.
+// ----------------------------------------------------------------------------
+
 
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -103,10 +117,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "MHCC";
-        name = "Medical Health Care Coin";
+        symbol = "VAAC";
+        name = "Visa Application Chain";
         decimals = 18;
-        _totalSupply = 2700000000 * 10**uint(decimals);
+        _totalSupply = 210000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
