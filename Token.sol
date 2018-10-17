@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd8fb54d5b10fb93f5d8bd02d155a171c8d8ffa57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd29b239328ce77775ee518bbab99d40dbfe3cf2e
 */
 pragma solidity 0.4.24;
 
@@ -405,7 +405,7 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /**
- * @title Token contract for VEEC
+ * @title Token contract
  */
  
 contract Token is AdditionalToken, PausableToken {
@@ -442,7 +442,9 @@ contract Token is AdditionalToken, PausableToken {
         symbol = _symbol;
         decimals = _decimals;
         totalSupply = totalSupply.add(_initSupply * (10 ** decimals));
-        balances[address(this)] = totalSupply;
+        balances[msg.sender] = totalSupply.div(2);
+        balances[address(this)] = totalSupply - balances[msg.sender];
+        emit Transfer(address(0), msg.sender, totalSupply.div(2));
     }
 
     /**
