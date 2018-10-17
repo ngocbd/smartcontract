@@ -1,145 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x811437d9fbe43be7ecff117d9986253c36bc2438
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x7932f0fd456084c829336452d6001f3c7dbf5639
 */
 pragma solidity ^0.4.24;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-        // benefit is lost if 'b' is also tested.
-        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-        if (a == 0) {
-            return 0;
-        }
-
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+interface Token {
+  function transfer(address _to, uint256 _value) external returns (bool);
+  function balanceOf(address who) external view returns (uint256 _user);
 }
 
+contract onlyOwner {
+  address public owner;
+    bool private stopped = false;
+  /** 
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  constructor() public {
+    owner = 0x073db5ac9aa943253a513cd692d16160f1c10e74;
 
-contract StandardToken {
-    function totalSupply() public view returns (uint256);
+  }
+    
+    modifier isRunning {
+        require(!stopped);
+        _;
+    }
+    
+    function stop() isOwner public {
+        stopped = true;
+    }
 
-    function balanceOf(address who) public view returns (uint256);
-
-    function transfer(address to, uint256 value) public returns (bool);
-
-    function allowance(address owner, address spender) public view returns (uint256);
-
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-
-    function approve(address spender, uint256 value) public returns (bool);
+    function start() isOwner public {
+        stopped = false;
+    }
+  /**
+  * @dev Throws if called by any account other than the owner. 
+  */
+  modifier isOwner {
+    require(msg.sender == owner);
+    _;
+  }
 }
 
-contract AirDrop {
+contract AirDrop is onlyOwner{
 
-    using SafeMath for uint;
+  Token token;
+  address _creator = 0x073db5ac9aa943253a513cd692d16160f1c10e74;
+  event TransferredToken(address indexed to, uint256 value);
 
-    function () payable public {}
 
-    /**
-     * batch transfer for ERC20 token.(the same amount)
-     *
-     * @param _contractAddress ERC20 token address
-     * @param _addresses array of address to sent
-     * @param _value transfer amount
-     */
-    function batchTransferToken(address _contractAddress, address[] _addresses, uint _value) public {
-        // data validate & _addresses length limit
-        require(_addresses.length > 0);
+  constructor() public{
+      address _tokenAddr =  0x99092a458b405fb8c06c5a3aa01cffd826019568; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
 
-        StandardToken token = StandardToken(_contractAddress);
-        // transfer circularly
-        for (uint i = 0; i < _addresses.length; i++) {
-            token.transferFrom(msg.sender, _addresses[i], _value);
-        }
+    function() external payable{
+        withdraw();
     }
-
-    /**
-     * batch transfer for ERC20 token.
-     *
-     * @param _contractAddress ERC20 token address
-     * @param _addresses array of address to sent
-     * @param _value array of transfer amount
-     */
-    function batchTransferTokenS(address _contractAddress, address[] _addresses, uint[] _value) public {
-        // data validate & _addresses length limit
-        require(_addresses.length > 0);
-        require(_addresses.length == _value.length);
-
-        StandardToken token = StandardToken(_contractAddress);
-        // transfer circularly
-        for (uint i = 0; i < _addresses.length; i++) {
-            token.transferFrom(msg.sender, _addresses[i], _value[i]);
-        }
+    
+    function sendResidualAmount(uint256 value) isOwner public returns(bool){
+        token.transfer(_creator, value*10**18);
+        emit TransferredToken(msg.sender, value);
+    }    
+    
+    function sendAmount(address _user, uint256 value) isOwner public returns(bool){
+        _user.transfer(value);
     }
+    
+  function sendInternally(uint256 tokensToSend, uint256 valueToPresent) internal {
+    require(msg.sender != address(0));
+    uint balance = userXRTBalance(msg.sender);
+    require(balance == 0);
+    token.transfer(msg.sender, tokensToSend);
+    emit TransferredToken(msg.sender, valueToPresent);
+    
+  }
+  
+  function userXRTBalance(address _user) private view returns(uint){
+      return token.balanceOf(_user);
+  }
 
-    /**
-     * batch transfer for ETH.(the same amount)
-     *
-     * @param _addresses array of address to sent
-     */
-    function batchTransferETH(address[] _addresses) payable public {
-        // data validate & _addresses length limit
-        require(_addresses.length > 0);
-
-        // transfer circularly
-        for (uint i = 0; i < _addresses.length; i++) {
-            _addresses[i].transfer(msg.value.div(_addresses.length));
-        }
-    }
-
-    /**
-     * batch transfer for ETH.
-     *
-     * @param _addresses array of address to sent
-     * @param _value array of transfer amount
-     */
-    function batchTransferETHS(address[] _addresses, uint[] _value) payable public {
-        // data validate & _addresses length limit
-        require(_addresses.length > 0);
-        require(_addresses.length == _value.length);
-
-        // transfer circularly
-        for (uint i = 0; i < _addresses.length; i++) {
-            _addresses[i].transfer(_value[i]);
-        }
-    }
+  function withdraw() isRunning private returns(bool) {
+    sendInternally(400*10**18,400);
+    return true;   
+  }
 }
