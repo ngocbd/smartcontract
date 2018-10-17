@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0xb4910fe410240d2b79c557250adc767a9bc930c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0x9de9563e27c6aafcf907bacee733f83d50168959
 */
 pragma solidity ^0.4.21;
 
@@ -102,42 +102,23 @@ contract Bidding is Pausable
 {
     struct Auction
     {
-        uint256 highestBid;
+        uint128 highestBid;
         address highestBidder;
         uint40 timeEnd;
         uint40 lastBidTime;
+        uint40 timeStart;
     }
 
     address public operatorAddress;
 
-    struct Purchase
-    {
-        uint256 bid;
-        address winner;
-        uint16 auction;
-    }
-    Purchase[] public purchases;
     Auction[] public auctions;
 
     // Allowed withdrawals of previous bids
     mapping(address => uint) public pendingReturns;
     uint public totalReturns;
 
-    function getBiddingInfo(uint16 auction, address bidder) public view returns (
-        uint40 _timeEnd,
-        uint40 _lastBidTime,
-        uint256 _highestBid,
-        address _highestBidder,
-        bool _isEnded,
-        uint256 _pendingReturn)
-    {
-        _timeEnd = auctions[auction].timeEnd;
-        _lastBidTime = auctions[auction].lastBidTime;
-        _highestBid = auctions[auction].highestBid;
-        _highestBidder = auctions[auction].highestBidder;
-        _isEnded = isEnded(auction);
-        _pendingReturn = pendingReturns[bidder];
-    }
+    event Bid(address indexed bidder, address indexed prevBider, uint256 value, uint256 addedValue, uint40 auction);
+    event Withdraw(address indexed bidder, uint256 value);
 
     function getAuctions(address bidder) public view returns (
         uint40[5] _timeEnd,
@@ -152,7 +133,7 @@ contract Bidding is Pausable
         uint16 j = 0;
         for (uint16 i = 0; i < auctions.length; i++)
         {
-            if (!isEnded(i))
+            if (isActive(i))
             {
                 _timeEnd[j] = auctions[i].timeEnd;
                 _lastBidTime[j] = auctions[i].lastBidTime;
@@ -160,7 +141,7 @@ contract Bidding is Pausable
                 _highestBidder[j] = auctions[i].highestBidder;
                 _auctionIndex[j] = i;
                 j++;
-                if (j > 5)
+                if (j >= 5)
                 {
                     break;
                 }
@@ -181,20 +162,17 @@ contract Bidding is Pausable
         pendingReturns[msg.sender] -= amount;
 
         msg.sender.transfer(amount);
+        emit Withdraw(msg.sender, amount);
     }
 
     function finish(uint16 auction) public onlyOperator
     {
-        if (auctions[auction].highestBidder != address(0))
-        {
-            purchases.push(Purchase(auctions[auction].highestBid, auctions[auction].highestBidder, auction)); // archive last winner
-        }
         auctions[auction].timeEnd = 0;
     }
 
-    function addAuction(uint40 _duration, uint256 _startPrice) public onlyOperator
+    function addAuction(uint40 _startTime, uint40 _duration, uint128 _startPrice) public onlyOperator
     {
-        auctions.push(Auction(_startPrice, address(0), _duration + uint40(now), 0));
+        auctions.push(Auction(_startPrice, address(0), _startTime + _duration, 0, _startTime));
     }
 
     function isEnded(uint16 auction) public view returns (bool)
@@ -202,13 +180,15 @@ contract Bidding is Pausable
         return auctions[auction].timeEnd < now;
     }
 
+    function isActive(uint16 auction) public view returns (bool)
+    {
+        return auctions[auction].timeStart <= now && now <= auctions[auction].timeEnd;
+    }
+
     function bid(uint16 auction, uint256 useFromPendingReturn) public payable whenNotPaused
     {
-        if (auctions[auction].highestBidder != address(0))
-        {
-            pendingReturns[auctions[auction].highestBidder] += auctions[auction].highestBid;
-            totalReturns += auctions[auction].highestBid;
-        }
+        address prevBidder = auctions[auction].highestBidder;
+        uint256 returnValue = auctions[auction].highestBid;
 
         require (useFromPendingReturn <= pendingReturns[msg.sender]);
 
@@ -219,17 +199,29 @@ contract Bidding is Pausable
         uint256 currentBid = bank + msg.value;
 
         require(currentBid > auctions[auction].highestBid ||
-         currentBid == auctions[auction].highestBid && auctions[auction].highestBidder == address(0));
-        require(!isEnded(auction));
+                currentBid == auctions[auction].highestBid && prevBidder == address(0));
+        require(isActive(auction));
 
-        auctions[auction].highestBid = currentBid;
+        auctions[auction].highestBid = uint128(currentBid);
         auctions[auction].highestBidder = msg.sender;
         auctions[auction].lastBidTime = uint40(now);
-    }
 
-    function purchasesCount() public view returns (uint256)
-    {
-        return purchases.length;
+        emit Bid(msg.sender, prevBidder, currentBid, currentBid - returnValue, auction);
+
+        if (prevBidder != address(0))
+        {
+            if (!isContract(prevBidder)) // do not allow auto withdraw for contracts
+            {
+                if (prevBidder.send(returnValue))
+                {
+                    return; // sent ok, no need to keep returned money on contract
+                }
+            }
+
+            pendingReturns[prevBidder] += returnValue;
+            totalReturns += returnValue;
+        }
+
     }
 
     function destroyContract() public onlyOwner {
@@ -250,5 +242,11 @@ contract Bidding is Pausable
     modifier onlyOperator() {
         require(msg.sender == operatorAddress || msg.sender == owner);
         _;
+    }
+
+    function isContract(address addr) public view returns (bool) {
+        uint size;
+        assembly { size := extcodesize(addr) }
+        return size > 0;
     }
 }
