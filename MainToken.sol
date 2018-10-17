@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x0682c57e3b81556a05704279d83d4843ae739d43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x0d967e62532f11c616e72f30209d9ffcd74e700d
 */
 pragma solidity ^0.4.24;
 
@@ -421,14 +421,14 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
 
 
 contract Consts {
-    uint public constant TOKEN_DECIMALS = 3;
-    uint8 public constant TOKEN_DECIMALS_UINT8 = 3;
+    uint public constant TOKEN_DECIMALS = 2;
+    uint8 public constant TOKEN_DECIMALS_UINT8 = 2;
     uint public constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string public constant TOKEN_NAME = "Abri";
-    string public constant TOKEN_SYMBOL = "ABR";
+    string public constant TOKEN_NAME = "SmartFox";
+    string public constant TOKEN_SYMBOL = "FSC";
     bool public constant PAUSED = false;
-    address public constant TARGET_USER = 0x505c7f3B5fC1D6cD286425BA9460A0Bf0C605fD8;
+    address public constant TARGET_USER = 0x40F8C90561d3e3A2B2C6fd905c01b54a9C64bcaf;
     
     bool public constant CONTINUE_MINTING = false;
 }
@@ -475,8 +475,8 @@ contract MainToken is Consts, FreezableMintableToken, BurnableToken, Pausable
         }
 
         
-        address[1] memory addresses = [address(0x505c7f3B5fC1D6cD286425BA9460A0Bf0C605fD8)];
-        uint[1] memory amounts = [uint(200000000000)];
+        address[1] memory addresses = [address(0x40F8C90561d3e3A2B2C6fd905c01b54a9C64bcaf)];
+        uint[1] memory amounts = [uint(2100000000)];
         uint64[1] memory freezes = [uint64(0)];
 
         for (uint i = 0; i < addresses.length; i++) {
