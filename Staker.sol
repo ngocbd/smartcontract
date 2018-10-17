@@ -1,97 +1,70 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Staker at 0x672127296d3061fcf1c4aea9f7c4ccf926d7d4f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Staker at 0xbae235823d7255d9d48635ced4735227244cd583
 */
-pragma solidity ^0.4.23;
-
+pragma solidity 0.4.24;
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-pragma solidity ^0.4.23;
-
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-  address public owner;
+    address public owner;
 
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    constructor() public {
+        owner = msg.sender;
+    }
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        owner = newOwner;
+    }
 
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 }
 
 /**
@@ -101,49 +74,45 @@ contract Ownable {
  */
 contract ERC20Basic {
     uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
+    function allowance(address owner, address spender) public view returns (uint256);
     function transferFrom(address from, address to, uint256 value) public returns (bool);
     function approve(address spender, uint256 value) public returns (bool);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
-
-contract StakerStandard {
+contract StakerToken {
     uint256 public stakeStartTime;
     uint256 public stakeMinAge;
     uint256 public stakeMaxAge;
     function mint() public returns (bool);
-    function coinAge() public constant returns (uint256);
-    function annualInterest() public constant returns (uint256);
+    function coinAge() public view returns (uint256);
+    function annualInterest() public view returns (uint256);
     event Mint(address indexed _address, uint _reward);
 }
 
-
-contract Staker is ERC20, StakerStandard, Ownable {
+contract Staker is ERC20,StakerToken,Ownable {
     using SafeMath for uint256;
 
     string public name = "Staker";
     string public symbol = "STR";
     uint public decimals = 18;
 
-    uint public chainStartTime; 
-    uint public chainStartBlockNumber; 
-    uint public stakeStartTime; 
-    uint public stakeMinAge = 3 days; 
-    uint public stakeMaxAge = 90 days; 
-    uint public MintProofOfStake = 10**17; 
+    uint public chainStartTime;
+    uint public chainStartBlockNumber;
+    uint public stakeStartTime;
+    uint public stakeMinAge = 3 days;
+    uint public stakeMaxAge = 90 days;
+    uint public maxMintProofOfStake = 10**17;
 
     uint public totalSupply;
     uint public maxTotalSupply;
@@ -158,33 +127,25 @@ contract Staker is ERC20, StakerStandard, Ownable {
     mapping(address => mapping (address => uint256)) allowed;
     mapping(address => transferInStruct[]) transferIns;
 
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Fix for the ERC20 short address attack.
-     */
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
-    }
-
     modifier canPoSMint() {
         require(totalSupply < maxTotalSupply);
         _;
     }
 
     constructor() public {
-        maxTotalSupply = 7000000000000000000000000; 
-        totalInitialSupply = 1000000000000000000000000; 
+        maxTotalSupply = 7785000000000000000000000;
+        totalInitialSupply = 1785000000000000000000000;
 
-        chainStartTime = now;
-        chainStartBlockNumber = block.number;
+        chainStartTime = 1524771589; //Original Time
+        chainStartBlockNumber = 5510803; //Original Block
 
         balances[msg.sender] = totalInitialSupply;
         totalSupply = totalInitialSupply;
     }
 
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+
         if(msg.sender == _to) return mint();
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -196,17 +157,14 @@ contract Staker is ERC20, StakerStandard, Ownable {
         return true;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) public returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
 
-        var _allowance = allowed[_from][msg.sender];
-
-    
-
+        uint256 _allowance = allowed[_from][msg.sender];
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
@@ -226,12 +184,8 @@ contract Staker is ERC20, StakerStandard, Ownable {
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
-    }
-    
-    function changeRate(uint _rate) public onlyOwner {
-        MintProofOfStake = _rate * 10 ** uint256(decimals);
     }
 
     function mint() canPoSMint public returns (bool) {
@@ -254,12 +208,18 @@ contract Staker is ERC20, StakerStandard, Ownable {
         blockNumber = block.number.sub(chainStartBlockNumber);
     }
 
-    function coinAge() public constant returns (uint myCoinAge) {
-        myCoinAge = getCoinAge(msg.sender, now);
+    function coinAge() public view returns (uint myCoinAge) {
+        myCoinAge = getCoinAge(msg.sender,now);
     }
 
-    function annualInterest() public constant returns(uint interest) {
-        interest = MintProofOfStake;
+    function annualInterest() public view returns(uint interest) {
+        uint _now = now;
+        interest = maxMintProofOfStake;
+        if((_now.sub(stakeStartTime)).div(365 days) == 0) {
+            interest = (770 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(365 days) == 1){
+            interest = (435 * maxMintProofOfStake).div(100);
+        }
     }
 
     function getProofOfStakeReward(address _address) internal view returns (uint) {
@@ -269,9 +229,17 @@ contract Staker is ERC20, StakerStandard, Ownable {
         uint _coinAge = getCoinAge(_address, _now);
         if(_coinAge <= 0) return 0;
 
-        uint interest = MintProofOfStake;
+        uint interest = maxMintProofOfStake;
 
-        return (_coinAge * interest).div(365 * (10**uint256(decimals)));
+        if((_now.sub(stakeStartTime)).div(365 days) == 0) {
+
+            interest = (770 * maxMintProofOfStake).div(100);
+        } else if((_now.sub(stakeStartTime)).div(365 days) == 1){
+
+            interest = (435 * maxMintProofOfStake).div(100);
+        }
+
+        return (_coinAge * interest).div(365 * (10**decimals));
     }
 
     function getCoinAge(address _address, uint _now) internal view returns (uint _coinAge) {
@@ -287,27 +255,12 @@ contract Staker is ERC20, StakerStandard, Ownable {
         }
     }
 
-    function ownerSetStakeStartTime(uint timestamp) public onlyOwner {
+    function ownerSetStakeStartTime(uint timestamp) onlyOwner public {
         require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
         stakeStartTime = timestamp;
     }
 
-    function ownerBurnToken(uint _value) public onlyOwner {
-        require(_value > 0);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),uint64(now)));
-
-        totalSupply = totalSupply.sub(_value);
-        totalInitialSupply = totalInitialSupply.sub(_value);
-        maxTotalSupply = maxTotalSupply.sub(_value*10);
-
-        emit Burn(msg.sender, _value);
-    }
-
-    /* Batch token transfer. Used by contract creator to distribute initial tokens to holders */
-    function batchTransfer(address[] _recipients, uint[] _values) public onlyOwner returns (bool) {
+    function batchTransfer(address[] _recipients, uint[] _values) onlyOwner public returns (bool) {
         require( _recipients.length > 0 && _recipients.length == _values.length);
 
         uint total = 0;
