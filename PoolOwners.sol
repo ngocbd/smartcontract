@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0xdc24c07d023822793ce496847f6adb6687f81280
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x46500e1e31b127d1d6772449edf5108f47b0da80
 */
 pragma solidity ^0.4.3;
 
@@ -258,7 +258,7 @@ contract PoolOwners is Ownable {
         @param _sender The address of the sender to set the contribution for you
         @param _amount The amount that the owner has sent
      */
-    function addContribution(address _sender, uint256 _amount) public onlyOwner() { contribute(_sender, _amount); }
+    function setContribution(address _sender, uint256 _amount) public onlyOwner() { contribute(_sender, _amount); }
 
     /**
         @dev Registers a new contribution, sets their share
