@@ -1,23 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BackMeApp at 0x4ac0905481b48afc5d026a8ce639711087c716c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BackMeApp at 0xd39ff379cb1f4d6f2aade581c039c15db2cb28f8
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 contract BackMeApp {
   address public owner;
-  bool public isShutDown;
   uint256 public minEsteemAmount;
+  bool public isShutDown;
 
   struct EtherBox {
     bytes32 label;
     address owner;
-    string ownerUrl;
     uint256 expiration;
+    string ownerUrl;
   }
 
   mapping (address => bytes32) public nicknames;
   mapping (address => address[]) public ownerToEtherBoxes;
   mapping (address => EtherBox) public etherBoxes;
+  mapping (address => uint256) etherBoxesNonce;
 
   event NewEsteem(address indexed senderAddress, bytes32 senderNickname, address indexed etherBoxAddress, bytes32 etherBoxLabel, string message, uint amount, uint256 timestamp);
   event EtherBoxPublished(address indexed senderAddress, bytes32 senderNickname, address indexed etherBoxAddress, bytes32 etherBoxLabel, uint256 timestamp);
@@ -26,9 +27,8 @@ contract BackMeApp {
   modifier onlyWhenRunning() { require(isShutDown == false); _; }
 
   constructor() public { owner = msg.sender; minEsteemAmount = 1 finney; }
-  function() public payable {}
 
-  function getEtherBoxes(address _owner) external view returns (address[]) { return ownerToEtherBoxes[_owner]; }
+  function getEtherBoxes(address _owner) external view returns(address[]) { return ownerToEtherBoxes[_owner]; }
   function isExpired(address _etherBoxAddress) external view returns(bool) { return etherBoxes[_etherBoxAddress].expiration <= now ? true : false; }
 
   function esteem(bytes32 _nickname, string _message, address _to) external payable {
@@ -44,14 +44,9 @@ contract BackMeApp {
   function publishEtherBox (bytes32 _label, string _ownerUrl, uint _lifespan) external onlyWhenRunning() payable {
       require(ownerToEtherBoxes[msg.sender].length < 10);
       assert(bytes(_ownerUrl).length <= 200);
-      address etherBoxAddress = address(keccak256(msg.sender, now));
+      address etherBoxAddress = address(keccak256(abi.encodePacked(msg.sender, etherBoxesNonce[msg.sender]++, now)));
       ownerToEtherBoxes[msg.sender].push(etherBoxAddress);
-      etherBoxes[etherBoxAddress] = EtherBox({
-        label: _label,
-        owner: msg.sender,
-        ownerUrl: _ownerUrl,
-        expiration: now + _lifespan
-      });
+      etherBoxes[etherBoxAddress] = EtherBox({ label: _label, owner: msg.sender, ownerUrl: _ownerUrl, expiration: now+_lifespan });
       emit EtherBoxPublished(msg.sender, nicknames[msg.sender], etherBoxAddress, _label, now);
       if(msg.value > 0){ owner.transfer(msg.value); }
   }
@@ -73,8 +68,7 @@ contract BackMeApp {
     emit EtherBoxDeleted(msg.sender, nicknames[msg.sender], _etherBoxAddress, now);
   }
 
-  function getBalance() external view returns(uint) { return address(this).balance; }
-  function withdrawBalance() external onlyOwner() { owner.transfer(address(this).balance); }
+  function setMinEsteemAmount(uint256 _amount) external onlyOwner() { minEsteemAmount = _amount; }
   function toggleFactoryPower() external onlyOwner() { isShutDown = isShutDown == false ? true : false; }
   function destroyFactory() external onlyOwner() { selfdestruct(owner); }
 }
