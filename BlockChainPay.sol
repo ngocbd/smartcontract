@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockChainPay at 0xa1fac2aaf439b242b5b127c1667964d3f8dcf4bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockChainPay at 0x8cfad957a4803fd11820be455462a6f9f93eaf94
 */
 pragma solidity ^0.4.21;
 
@@ -235,7 +235,7 @@ contract BlockChainPay is StandardToken{
   string public name = "BlockChainPay";//????
   string public symbol = "BPCC";//?????
   uint8 public decimals =18;//?????????????????????10?18??
-  uint256 public INITIAL_SUPPLY = 3500000000*10**18;//??????
+  uint256 public INITIAL_SUPPLY = 3500000000;//??????
   //???
   function BlockChainPay() public {
     totalSupply_ = INITIAL_SUPPLY;
