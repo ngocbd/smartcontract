@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineToken at 0x6247e3bfbe93781b9771ddc72727a7e82a11044e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineToken at 0x8d870549d72f588fc56c1aaa22975d14c4d12ee5
 */
 pragma solidity ^0.4.23;
 
@@ -379,7 +379,7 @@ contract StandardToken is ERC20, BasicToken {
  **/
 contract GrapevineToken is DetailedERC20, BurnableToken, StandardToken, Ownable {
 
-  constructor() DetailedERC20("TESTGVINE", "TESTGVINE", 18) public {
+  constructor() DetailedERC20("GVINE", "GVINE", 18) public {
     totalSupply_ = 825000000 * (10 ** uint256(decimals)); // Update total supply with the decimal amount
     balances[msg.sender] = totalSupply_;
     emit Transfer(address(0), msg.sender, totalSupply_);
