@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineWhitelist at 0x9fa6cb72782de85c5ec9d567cbf4fc4c1e1941ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrapevineWhitelist at 0x4e0094499668b627872b5cde7b8299b854ac701d
 */
 pragma solidity ^0.4.23;
 
@@ -334,7 +334,6 @@ contract RBAC {
  * is valid. The owner of the contract adds/removes bouncers.
  * Bouncer addresses can be individual servers signing grants or different
  * users within a decentralized club that have permission to invite other members.
- * 
  * This technique is useful for whitelists and airdrops; instead of putting all
  * valid addresses on-chain, simply sign a grant of the form
  * keccak256(`:contractAddress` + `:granteeAddress`) using a valid bouncer address.
