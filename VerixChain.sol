@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerixChain at 0x28fcee4d79b26be99c4e00d8690b6e95a45bd3f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerixChain at 0x90999db3f07431a89bf97d5ced6c5b67d33fd378
 */
 // ---------------------------VerixChain-------------------------------------------------
 //
@@ -12,8 +12,7 @@
 //     Our future is here! 
 // 
 //  (c) VerixChain 2018  
-//
-//  (UPDATED CONTRACT FIX SOMEBUG)
+
 
 
 contract Token {
@@ -121,12 +120,12 @@ contract VerixChain is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function VerixChain() {
-        balances[msg.sender] = 33333333333000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 33333333333000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 33333333333e8;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 33333333333e8;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "VerixChain";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "Verix";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 333333333;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 50000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
