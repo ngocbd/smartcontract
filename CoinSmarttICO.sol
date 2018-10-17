@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinSmarttICO at 0x8f55ed1b4a96f13af108d9579336c79dcdd76ae6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinSmarttICO at 0x1f060991e27634cdc449776ed9771e6f8cce6dd0
 */
-pragma solidity ^0.4.24;
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -525,6 +523,271 @@ contract RBAC {
 }
 
 /**
+ * @title Superuser
+ * @dev The Superuser contract defines a single superuser who can transfer the ownership 
+ * of a contract to a new address, even if he is not the owner. 
+ * A superuser can transfer his role to a new address. 
+ */
+contract Superuser is Ownable, RBAC {
+  string public constant ROLE_SUPERUSER = "superuser";
+
+  constructor () public {
+    addRole(msg.sender, ROLE_SUPERUSER);
+  }
+
+  /**
+   * @dev Throws if called by any account that's not a superuser.
+   */
+  modifier onlySuperuser() {
+    checkRole(msg.sender, ROLE_SUPERUSER);
+    _;
+  }
+
+  modifier onlyOwnerOrSuperuser() {
+    require(msg.sender == owner || isSuperuser(msg.sender));
+    _;
+  }
+
+  /**
+   * @dev getter to determine if address has superuser role
+   */
+  function isSuperuser(address _addr)
+    public
+    view
+    returns (bool)
+  {
+    return hasRole(_addr, ROLE_SUPERUSER);
+  }
+
+  /**
+   * @dev Allows the current superuser to transfer his role to a newSuperuser.
+   * @param _newSuperuser The address to transfer ownership to.
+   */
+  function transferSuperuser(address _newSuperuser) public onlySuperuser {
+    require(_newSuperuser != address(0));
+    removeRole(msg.sender, ROLE_SUPERUSER);
+    addRole(_newSuperuser, ROLE_SUPERUSER);
+  }
+
+  /**
+   * @dev Allows the current superuser or owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwnerOrSuperuser {
+    _transferOwnership(_newOwner);
+  }
+}
+
+
+/**
+ * @title TimedCrowdsale
+ * @dev Crowdsale accepting contributions only within a time frame.
+ */
+contract TimedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public openingTime;
+  uint256 public closingTime;
+
+  /**
+   * @dev Reverts if not in crowdsale time range.
+   */
+  modifier onlyWhileOpen {
+    // solium-disable-next-line security/no-block-members
+    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
+    _;
+  }
+
+  /**
+   * @dev Constructor, takes crowdsale opening and closing times.
+   * @param _openingTime Crowdsale opening time
+   * @param _closingTime Crowdsale closing time
+   */
+  constructor(uint256 _openingTime, uint256 _closingTime) public {
+    // solium-disable-next-line security/no-block-members
+    require(_openingTime >= block.timestamp);
+    require(_closingTime >= _openingTime);
+
+    openingTime = _openingTime;
+    closingTime = _closingTime;
+  }
+
+  /**
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
+   */
+  function hasClosed() public view returns (bool) {
+    // solium-disable-next-line security/no-block-members
+    return block.timestamp > closingTime;
+  }
+
+  /**
+   * @dev Extend parent behavior requiring to be within contributing period
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+    onlyWhileOpen
+  {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
+
+}
+
+/**
+ * @title Whitelist
+ * @dev The Whitelist contract has a whitelist of addresses, and provides basic authorization control functions.
+ * This simplifies the implementation of "user permissions".
+ */
+contract Whitelist is Ownable, RBAC {
+  string public constant ROLE_WHITELISTED = "whitelist";
+
+  /**
+   * @dev Throws if operator is not whitelisted.
+   * @param _operator address
+   */
+  modifier onlyIfWhitelisted(address _operator) {
+    checkRole(_operator, ROLE_WHITELISTED);
+    _;
+  }
+
+  /**
+   * @dev add an address to the whitelist
+   * @param _operator address
+   * @return true if the address was added to the whitelist, false if the address was already in the whitelist
+   */
+  function addAddressToWhitelist(address _operator)
+    onlyOwner
+    public
+  {
+    addRole(_operator, ROLE_WHITELISTED);
+  }
+
+  /**
+   * @dev getter to determine if address is in whitelist
+   */
+  function whitelist(address _operator)
+    public
+    view
+    returns (bool)
+  {
+    return hasRole(_operator, ROLE_WHITELISTED);
+  }
+
+  /**
+   * @dev add addresses to the whitelist
+   * @param _operators addresses
+   * @return true if at least one address was added to the whitelist,
+   * false if all addresses were already in the whitelist
+   */
+  function addAddressesToWhitelist(address[] _operators)
+    onlyOwner
+    public
+  {
+    for (uint256 i = 0; i < _operators.length; i++) {
+      addAddressToWhitelist(_operators[i]);
+    }
+  }
+
+  /**
+   * @dev remove an address from the whitelist
+   * @param _operator address
+   * @return true if the address was removed from the whitelist,
+   * false if the address wasn't in the whitelist in the first place
+   */
+  function removeAddressFromWhitelist(address _operator)
+    onlyOwner
+    public
+  {
+    removeRole(_operator, ROLE_WHITELISTED);
+  }
+
+  /**
+   * @dev remove addresses from the whitelist
+   * @param _operators addresses
+   * @return true if at least one address was removed from the whitelist,
+   * false if all addresses weren't in the whitelist in the first place
+   */
+  function removeAddressesFromWhitelist(address[] _operators)
+    onlyOwner
+    public
+  {
+    for (uint256 i = 0; i < _operators.length; i++) {
+      removeAddressFromWhitelist(_operators[i]);
+    }
+  }
+
+}
+
+
+/**
+ * @title WhitelistedCrowdsale
+ * @dev Crowdsale in which only whitelisted users can contribute.
+ */
+contract WhitelistedCrowdsale is Whitelist, Crowdsale {
+  /**
+   * @dev Extend parent behavior requiring beneficiary to be in whitelist.
+   * @param _beneficiary Token beneficiary
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    onlyIfWhitelisted(_beneficiary)
+    internal
+  {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
+
+}
+/**
+ * @title CappedCrowdsale
+ * @dev Crowdsale with a limit for total contributions.
+ */
+contract CappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  /**
+   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
+   * @param _cap Max amount of wei to be contributed
+   */
+  constructor(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Checks whether the cap has been reached.
+   * @return Whether the cap was reached
+   */
+  function capReached() public view returns (bool) {
+    return weiRaised >= cap;
+  }
+
+  /**
+   * @dev Extend parent behavior requiring purchase to respect the funding cap.
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+    require(weiRaised.add(_weiAmount) <= cap);
+  }
+
+}
+/**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
@@ -769,14 +1032,65 @@ contract MintedCrowdsale is Crowdsale {
   }
 }
 
-contract CoinSmarttICO is MintedCrowdsale {
 
-	constructor(uint256 _rate, address _wallet, ERC20 _token)
+
+contract CoinSmarttICO is TimedCrowdsale, WhitelistedCrowdsale, MintedCrowdsale, Superuser {
+
+  uint256 public round;
+  uint256 public lastRound;
+
+	function CoinSmarttICO(uint256 _rate, 
+    address _wallet, 
+    ERC20 _token, 
+    uint256 _openingTime, 
+    uint256 _closingTime)
+  TimedCrowdsale(_openingTime, _closingTime)
 	Crowdsale(_rate, _wallet, _token)
+
 	{
+    round = 1;
+    lastRound = 0;
 	}
 
+  function changeRound(uint256 deadline, uint256 cap, uint256 _rate, uint256 _newAmount) internal {
+    // uint256 supplied = token.totalSupply();
+    if (now >= deadline || (_newAmount.sub(lastRound) >= cap)) {
+      round += 1;
+      lastRound = token.totalSupply();
+      rate = _rate;
+    }
+  }
 
+  function getRate(uint256 _newAmount) internal {
+    if(round == 4) {
+      //Final round, do nothing
+      //check cap
+    } else if (round == 3) {
+      //round 3
+      changeRound(1547596800, 666666667 ether, 32481, _newAmount);
+    } else if (round == 2) {
+      changeRound(1543622400, 333333333 ether, 38977, _newAmount);
+    } else if (round == 1) {
+      changeRound(1539648000, 250000000 ether, 48721, _newAmount);
+    }
+  }
+  function _preValidatePurchase(
+    address _beneficiary,
+    uint256 _weiAmount
+  )
+    internal
+  {
+    require(_getTokenAmount(_weiAmount).add(token.totalSupply()) < 3138888888 ether);
+    getRate(_getTokenAmount(_weiAmount).add(token.totalSupply()));
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
 
-
+  function bumpRound(uint256 _rate)
+  onlyOwner
+  {
+    //getRate(token.totalSupply());
+    round += 1;
+    lastRound = token.totalSupply();
+    rate = _rate;
+  }
 }
