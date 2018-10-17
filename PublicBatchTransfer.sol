@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicBatchTransfer at 0xaa5eb02bdaf93190922365f4e6326e1131dde3e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PublicBatchTransfer at 0x5a7be58959ff0ddf09aef2ad1e11a4d729b359fa
 */
 pragma solidity ^0.4.18;
-
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
     assert(token.transfer(to, value));
@@ -16,7 +15,6 @@ library SafeERC20 {
     assert(token.approve(spender, value));
   }
 }
-
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
