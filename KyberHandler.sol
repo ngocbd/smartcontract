@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberHandler at 0x70f51d971588005aeceb370768dac19bc28b61d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberHandler at 0xb4fe1abfac7444ce2d0f68d21b205b70ee4abb4b
 */
 pragma solidity 0.4.21;
-
-// File: contracts/ExchangeHandler.sol
 
 /// @title Interface for all exchange handler contracts
 interface ExchangeHandler {
@@ -145,14 +143,72 @@ interface Kyber {
     function trade(Token src, uint srcAmount, Token dest, address destAddress, uint maxDestAmount, uint minConversionRate, address walletId) public payable returns (uint);
 }
 
-contract KyberHandler is ExchangeHandler {
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+interface ENSResolver {
+    function resolve(bytes32 node) public view returns (address);
+}
+
+contract KyberHandler is ExchangeHandler, Ownable {
     // State variables
-    Kyber public exchange;
+    address public totlePrimary;
+    ENSResolver public ensResolver;
     Token constant public ETH_TOKEN_ADDRESS = Token(0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    bytes32 constant public kyberHash = 0xff4ab868fec98e1be4e10e14add037a8056132cf492bec627457a78c21f7531f;
+
+    modifier onlyTotle() {
+        require(msg.sender == totlePrimary);
+        _;
+    }
 
     // Constructor
-    function KyberHandler(address _exchange) public {
-        exchange = Kyber(_exchange);
+    function KyberHandler(
+        address _totlePrimary,
+        address _ensResolver
+    ) public {
+        require(_totlePrimary != address(0x0));
+        require(_ensResolver != address(0x0));
+        totlePrimary = _totlePrimary;
+        ensResolver = ENSResolver(_ensResolver);
     }
 
     // Public functions
@@ -176,7 +232,7 @@ contract KyberHandler is ExchangeHandler {
         uint8 v, // ignore
         bytes32 r, // ignore
         bytes32 s // ignore
-    ) external payable returns (uint256) {
+    ) external payable onlyTotle returns (uint256) {
         require(msg.value == orderValues[0]);
 
         uint256 tokenAmountObtained = trade(
@@ -205,9 +261,9 @@ contract KyberHandler is ExchangeHandler {
         uint8 v, // ignore
         bytes32 r, // ignore
         bytes32 s // ignore
-    ) external returns (uint256) {
+    ) external onlyTotle returns (uint256) {
 
-        require(Token(orderAddresses[0]).approve(address(exchange), orderValues[0]));
+        require(Token(orderAddresses[0]).approve(resolveExchangeAddress(), orderValues[0]));
 
         uint256 etherAmountObtained = trade(
             Token(orderAddresses[0]), // ERC20 src
@@ -236,6 +292,8 @@ contract KyberHandler is ExchangeHandler {
             valToSend = srcAmount;
         }
 
+        Kyber exchange = Kyber(resolveExchangeAddress());
+
         return exchange.trade.value(valToSend)(
             src,
             srcAmount,
@@ -247,7 +305,30 @@ contract KyberHandler is ExchangeHandler {
         );
     }
 
+    function resolveExchangeAddress() internal view returns (address) {
+        return ensResolver.resolve(kyberHash);
+    }
+
+    function withdrawToken(address _token, uint _amount) external onlyOwner returns (bool) {
+        return Token(_token).transfer(owner, _amount);
+    }
+
+    function withdrawETH(uint _amount) external onlyOwner returns (bool) {
+        owner.transfer(_amount);
+    }
+
+    function setTotle(address _totlePrimary) external onlyOwner {
+        require(_totlePrimary != address(0x0));
+        totlePrimary = _totlePrimary;
+    }
+
     function() public payable {
-        require(msg.sender == address(exchange));
+        // Check in here that the sender is a contract! (to stop accidents)
+        uint256 size;
+        address sender = msg.sender;
+        assembly {
+            size := extcodesize(sender)
+        }
+        require(size > 0);
     }
 }
