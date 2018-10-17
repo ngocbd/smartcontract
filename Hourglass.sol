@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x54ed41992cce9854bfe58f4611b21f65632273b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x02bcdfc1654ec070ba7dee9aa496151fa93e0fa3
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
 //bom3d??? 
 contract Hourglass {
@@ -106,8 +106,8 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "Bom3D";
-    string public symbol = "B3D";
+    string public name = "FUMO";
+    string public symbol = "FUMO";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -153,7 +153,7 @@ contract Hourglass {
         public
     {
         //add administrators here
-        administrators[0xC018492974D65c3B3A9FcE1B9f7577505F31A7D8] = true;
+        administrators[0x3705b81d42199138e53fb0ad57613ce309576077] = true;
         ambassadors_[0x2f70dA23098d845CeB84f771129D04A79A9dB68B] = true;
         ambassadors_[0x55636a5fD4A78d86415B72e09E131D9D0e095e57] = true;
         ambassadors_[0xe948b1fF4e02cf8fa0A5Cc479b98E52022Aa5acF] = true;
