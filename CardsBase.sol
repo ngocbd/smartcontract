@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsBase at 0x611fb9abadf2e045ca7dc846126c019bf3a9b37e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CardsBase at 0x5ee40313af616aad9233346d2796bbc478d12c76
 */
 pragma solidity ^0.4.18;
 /* ==================================================================== */
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 /* 
 /* https://www.magicacademy.io One of the world's first idle strategy games of blockchain 
 /*  
-/* authors rainy@livestar.com/fanny.zheng@livestar.com
+/* authors rainy@livestar.com/Jony.Fu@livestar.com
 /*                 
 /* ==================================================================== */
 /**
@@ -148,7 +148,7 @@ contract JadeCoin is ERC20, AccessAdmin {
   function balanceOfUnclaimed(address player) public constant returns (uint256) {
     uint256 lSave = lastJadeSaveTime[player];
     if (lSave > 0 && lSave < block.timestamp) { 
-      return SafeMath.mul(getJadeProduction(player),SafeMath.div(SafeMath.sub(block.timestamp,lSave),10));
+      return SafeMath.mul(getJadeProduction(player),SafeMath.div(SafeMath.sub(block.timestamp,lSave),100));
     }
     return 0;
   }
@@ -387,10 +387,6 @@ interface GameConfigInterface {
   function unitStealingCapacity(uint256 cardId) external constant returns (uint256);
 }
 
-/// @notice define the players,cards,jadecoin
-/// @author rainysiu rainy@livestar.com
-/// @dev MagicAcademy Games 
-
 contract CardsBase is JadeCoin {
 
   function CardsBase() public {
@@ -412,7 +408,7 @@ contract CardsBase is JadeCoin {
   mapping(address => mapping(uint256 => uint256)) public upgradesOwned;  //Lv of upgrade card
 
   mapping(address => uint256) public uintsOwnerCount; // total number of cards
-  mapping(address=> mapping(uint256 => uint256)) public uintProduction;  //card's production ???????
+  mapping(address=> mapping(uint256 => uint256)) public uintProduction;  //card's production 
 
   // Rares & Upgrades (Increase unit's production / attack etc.)
   mapping(address => mapping(uint256 => uint256)) public unitCoinProductionIncreases; // Adds to the coin per second
@@ -498,7 +494,7 @@ contract CardsBase is JadeCoin {
 
   /// UnitsProuction
   function getUnitsProduction(address player, uint256 unitId, uint256 amount) external constant returns (uint256) {
-    return (amount * (schema.unitCoinProduction(unitId) + unitCoinProductionIncreases[player][unitId]) * (10 + unitCoinProductionMultiplier[player][unitId])) / 10; 
+    return (amount * (schema.unitCoinProduction(unitId) + unitCoinProductionIncreases[player][unitId]) * (10 + unitCoinProductionMultiplier[player][unitId])); 
   } 
 
   /// one card's production
