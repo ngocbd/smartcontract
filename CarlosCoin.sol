@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarlosCoin at 0x278f5d89c85a4ac8aaa39e08444212cbb2546fd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarlosCoin at 0x589a7828c4ddff99638ed87dea7800e724b9f5a3
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract CarlosCoin is StandardToken {
 
     function CarlosCoin(
         ) {
-        balances[msg.sender] = 50000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 50000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Carlos Matos Token";                                   // Set the name for display purposes
+        balances[msg.sender] = 100000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "CarlosCoin Cash";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "HEY";                               // Set the symbol for display purposes
+        symbol = "HCH";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
