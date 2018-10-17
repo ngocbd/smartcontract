@@ -1,363 +1,179 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7dec1acd81e601b4bb7af06c2d46e17c9123a68b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6d5eb8a12eb8cc38001c5fcbf877f70313c57251
 */
-/*! mixrent.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
-
-pragma solidity 0.4.24;
+pragma solidity ^0.4.24;
 
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        if(a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
 
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a / b;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns(uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+  
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Ownable {
-    address public owner;
+contract AbstractERC20 {
 
-    event OwnershipRenounced(address indexed previousOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  uint256 public totalSupply;
 
-    modifier onlyOwner() { require(msg.sender == owner); _;  }
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    function _transferOwnership(address _newOwner) internal {
-        require(_newOwner != address(0));
-        emit OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
-
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipRenounced(owner);
-        owner = address(0);
-    }
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        _transferOwnership(_newOwner);
-    }
+  function balanceOf(address _owner) public constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+  function approve(address _spender, uint256 _value) public returns (bool success);
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 }
 
-contract ERC20 {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+/*
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
+contract StandardToken is AbstractERC20 {
+    
+  using SafeMath for uint256;
 
-    function totalSupply() public view returns(uint256);
-    function balanceOf(address who) public view returns(uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-    function transferFrom(address from, address to, uint256 value) public returns(bool);
-    function allowance(address owner, address spender) public view returns(uint256);
-    function approve(address spender, uint256 value) public returns(bool);
+  mapping (address => uint256) balances;
+  mapping (address => mapping (address => uint256)) allowed;
+
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+
+    require(balances[msg.sender] >= _value);
+    require(_to != 0x0);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+
+    require(balances[_from] >= _value);
+    require(allowed[_from][msg.sender] >= _value);
+    require(_to != 0x0);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool success) {
+
+    require(_spender != 0x0);
+    require(_value == 0 || allowed[msg.sender][_spender] == 0);
+
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
 }
 
-contract StandardToken is ERC20 {
-    using SafeMath for uint256;
+contract Owned {
 
-    uint256 totalSupply_;
+  address public owner;
+  address public newOwner;
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+  event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) internal allowed;
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    constructor(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
+  modifier ownerOnly {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function totalSupply() public view returns(uint256) {
-        return totalSupply_;
-    }
+  function transferOwnership(address _newOwner) public ownerOnly {
+    require(_newOwner != owner);
+    newOwner = _newOwner;
+  }
 
-    function balanceOf(address _owner) public view returns(uint256) {
-        return balances[_owner];
-    }
-
-    function transfer(address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        require(_to.length == _value.length);
-
-        for(uint i = 0; i < _to.length; i++) {
-            transfer(_to[i], _value[i]);
-        }
-
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) public view returns(uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    function approve(address _spender, uint256 _value) public returns(bool) {
-        allowed[msg.sender][_spender] = _value;
-
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public returns(bool) {
-        allowed[msg.sender][_spender] = (allowed[msg.sender][_spender].add(_addedValue));
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns(bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-
-        if(_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        }
-        else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+  function acceptOwnership() public {
+    require(msg.sender == newOwner);
+    emit OwnerUpdate(owner, newOwner);
+    owner = newOwner;
+    newOwner = address(0);
+  }
 }
 
-contract MintableToken is StandardToken, Ownable {
-    bool public mintingFinished = false;
+contract Destroyable is StandardToken {
 
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
+  event Destruction(uint256 _amount);
 
-    modifier canMint() { require(!mintingFinished); _; }
-    modifier hasMintPermission() { require(msg.sender == owner); _; }
+  function _destroy(address _from, uint256 _amount) internal {
 
-    function mint(address _to, uint256 _amount) hasMintPermission canMint public returns(bool) {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function finishMinting() onlyOwner canMint public returns(bool) {
-        mintingFinished = true;
-
-        emit MintFinished();
-        return true;
-    }
+    require(balances[_from] >= _amount);
+    balances[_from] = balances[_from].sub(_amount);
+    totalSupply = totalSupply.sub(_amount);
+    emit Destruction(_amount);
+    emit Transfer(_from, this, _amount);
+  }
 }
 
-contract CappedToken is MintableToken {
-    uint256 public cap;
+contract Token is StandardToken, Owned, Destroyable {
 
-    constructor(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
-    }
+  address owner;
+  string constant public name = "TYDO";
+  string constant public symbol = "TYD";
+  uint8 constant public decimals = 18;
+  
+  event Burn(address indexed _burner, uint256 _value);
+  
+  constructor(uint256 _initialSupply) public {
+  
+    owner = msg.sender;
+    balances[owner] = _initialSupply;
+    totalSupply = _initialSupply;
+  }
+  
+  function burn(uint256 _amount) external {
 
-    function mint(address _to, uint256 _amount) public returns(bool) {
-        require(totalSupply_.add(_amount) <= cap);
-
-        return super.mint(_to, _amount);
-    }
-}
-
-contract BurnableToken is StandardToken {
-    event Burn(address indexed burner, uint256 value);
-
-    function _burn(address _who, uint256 _value) internal {
-        require(_value <= balances[_who]);
-
-        balances[_who] = balances[_who].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-
-        emit Burn(_who, _value);
-        emit Transfer(_who, address(0), _value);
-    }
-
-    function burn(uint256 _value) public {
-        _burn(msg.sender, _value);
-    }
-
-    function burnFrom(address _from, uint256 _value) public {
-        require(_value <= allowed[_from][msg.sender]);
-        
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        _burn(_from, _value);
-    }
-}
-
-contract Withdrawable is Ownable {
-    function withdrawEther(address _to, uint _value) onlyOwner public {
-        require(_to != address(0));
-        require(address(this).balance >= _value);
-
-        _to.transfer(_value);
-    }
-
-    function withdrawTokensTransfer(ERC20 _token, address _to, uint256 _value) onlyOwner public {
-        require(_token.transfer(_to, _value));
-    }
-
-    function withdrawTokensTransferFrom(ERC20 _token, address _from, address _to, uint256 _value) onlyOwner public {
-        require(_token.transferFrom(_from, _to, _value));
-    }
-
-    function withdrawTokensApprove(ERC20 _token, address _spender, uint256 _value) onlyOwner public {
-        require(_token.approve(_spender, _value));
-    }
-}
-
-contract Pausable is Ownable {
-    bool public paused = false;
-
-    event Pause();
-    event Unpause();
-
-    modifier whenNotPaused() { require(!paused); _; }
-    modifier whenPaused() { require(paused); _; }
-
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
-    }
-}
-
-contract Manageable is Ownable {
-    address[] public managers;
-
-    event ManagerAdded(address indexed manager);
-    event ManagerRemoved(address indexed manager);
-
-    modifier onlyManager() { require(isManager(msg.sender)); _; }
-
-    function countManagers() view public returns(uint) {
-        return managers.length;
-    }
-
-    function getManagers() view public returns(address[]) {
-        return managers;
-    }
-
-    function isManager(address _manager) view public returns(bool) {
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function addManager(address _manager) onlyOwner public {
-        require(_manager != address(0));
-        require(!isManager(_manager));
-
-        managers.push(_manager);
-
-        emit ManagerAdded(_manager);
-    }
-
-    function removeManager(address _manager) onlyOwner public {
-        require(isManager(_manager));
-
-        uint index = 0;
-        for(uint i = 0; i < managers.length; i++) {
-            if(managers[i] == _manager) {
-                index = i;
-            }
-        }
-
-        for(; index < managers.length - 1; index++) {
-            managers[index] = managers[index + 1];
-        }
-        
-        managers.length--;
-        emit ManagerRemoved(_manager);
-    }
-}
-
-
-contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(1e16) StandardToken("MIX Token", "MIX", 8) public {
-        mint(0x1041626522f383431708D82B1f6c0AbF4d9e00f7, 25000000 * 1e8);      // Reserve fund 25%
-        mint(0x792841fd5598C8a1b5957E56e62F02958E6BD39f, 10000000 * 1e8);     // Team 10%
-        mint(0xb17489c6800fEEaFd8a3a2Baa752b6523a5AE25f, 8000000 * 1e8);      // Partners and Advisors 8%
-        mint(0xF68352d443102c59846E17Cb5aE6eb140A7dC5B9, 5000000 * 1e8);      // Bounty 5%
-    }
-}
-
-contract Crowdsale is Manageable, Withdrawable, Pausable {
-    using SafeMath for uint;
-
-    Token public token;
-    bool public crowdsaleClosed = false;
-
-    event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
-    event CrowdsaleClose();
-   
-    constructor() public {
-        token = new Token();
-    }
-
-    function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
-        token.mint(_to, _tokens);
-        emit ExternalPurchase(_to, _tx, _currency, _value, _rate, _tokens);
-    }
-
-    function closeCrowdsale(address _to) onlyOwner public {
-        require(!crowdsaleClosed);
-
-        token.transferOwnership(_to);
-        crowdsaleClosed = true;
-
-        emit CrowdsaleClose();
-    }
+    _destroy(msg.sender, _amount);
+    emit Burn(msg.sender, _amount);
+  }
 }
