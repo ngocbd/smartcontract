@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0xbfaacfdecfbbcc7ea8c17e19c8f4f84c523267de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuConsumptionPlan at 0x749aba9e082ccb185d1ef88fa514339e3c3368d3
 */
 pragma solidity ^0.4.23;
 
@@ -26,7 +26,7 @@ contract NokuPricingPlan {
     * @param multiplier The multiplier of the base service fee to apply.
     * @return The amount to approve before really paying such fee.
     */
-    function usageFee(bytes32 serviceName, uint256 multiplier) public constant returns(uint fee);
+    function usageFee(bytes32 serviceName, uint256 multiplier) public view returns(uint fee);
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -40,14 +40,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -60,15 +64,30 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 // File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
@@ -129,9 +148,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -186,10 +209,18 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 // File: contracts/NokuTokenBurner.sol
@@ -298,7 +329,7 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
 
     mapping(bytes32 => NokuService) private services;
 
-    // The NOKU utility token used for paying fee  
+    // The NOKU utility token used for paying fee
     address public nokuMasterToken;
 
     // The contract responsible for burning the NOKU tokens paid as service fee
@@ -314,9 +345,7 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
         emit LogNokuConsumptionPlanCreated(msg.sender, _nokuMasterToken, _tokenBurner);
     }
 
-    function isService(bytes32 _serviceName) public constant returns(bool isIndeed) {
-        require(_serviceName != 0, "_serviceName is zero");
-
+    function isService(bytes32 _serviceName) public view returns(bool isIndeed) {
         if (serviceIndex.length == 0)
             return false;
         else
@@ -360,8 +389,8 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
     }
 
     function payFee(bytes32 _serviceName, uint256 _amount, address _client) public returns(bool paid) {
-        //require(isService(_serviceName)); // Already checked by #usageFee
-        //require(_amount != 0); // Already checked by #usageFee
+        require(isService(_serviceName), "_serviceName not present");
+        require(_amount != 0, "_amount is zero");
         require(_client != 0, "_client is zero");
 
         uint256 fee = usageFee(_serviceName, _amount);
@@ -374,19 +403,16 @@ contract NokuConsumptionPlan is NokuPricingPlan, Ownable {
         return true;
     }
 
-    function usageFee(bytes32 _serviceName, uint256 _amount) public constant returns(uint fee) {
-        require(isService(_serviceName), "_serviceName not present");
-        require(_amount != 0, "_amount is zero");
-        
+    function usageFee(bytes32 _serviceName, uint256 _amount) public view returns(uint fee) {
         // Assume fee are represented in 18-decimals notation
         return _amount.mul(services[_serviceName].serviceFee).div(10**18);
     }
 
-    function serviceCount() public constant returns(uint count) {
+    function serviceCount() public view returns(uint count) {
         return serviceIndex.length;
     }
 
-    function serviceAtIndex(uint _index) public constant returns(bytes32 serviceName) {
+    function serviceAtIndex(uint _index) public view returns(bytes32 serviceName) {
         return serviceIndex[_index];
     }
 }
