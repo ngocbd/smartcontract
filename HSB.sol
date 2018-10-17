@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HSB at 0x30f59823408fd150ba9469fac2a327525fe07c20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HSB at 0x3e086fab1a3d2203d79e45c2f46278a89f8506b7
 */
 pragma solidity ^0.4.18;
 library SafeMath {
