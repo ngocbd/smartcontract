@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x7cf1ba3da73d1132da6cc1ef6e47f5dbdf023113
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x083167b34b1594ff66e6b029ae6d7ce8b60e8906
 */
 pragma solidity ^0.4.24;
 
@@ -128,7 +128,7 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xee83e20C6AEab2284685Efe0B5ffb250bE5480bf);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xFaeAEBF930712BFBd498C790b96863A4bB946491);
 
 
 //==============================================================================
@@ -136,8 +136,8 @@ contract FoMo3Dshort is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO Short";
-    string constant public symbol = "SHORT";
+    string constant public name = "GOLD COIN HEIST";
+    string constant public symbol = "HEIST";
     uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
     uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 500 hours;                // round timer starts at this
@@ -1557,7 +1557,7 @@ contract FoMo3Dshort is modularShort {
     /** upon contract deploy, it will be deactivated.  this is a one time
      * use function that will activate the contract.  we do this so devs
      * have time to set things up on the web end                            **/
-    bool public activated_ = false;
+    bool public activated_ = true;
     function activate()
         public
     {
