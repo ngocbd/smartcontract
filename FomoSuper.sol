@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0x994060c48c9b2ef77b99381926a848aef9ef4f10
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FomoSuper at 0x10c1a22866e51166e3398274ccd736211018b660
 */
 pragma solidity ^0.4.24;
 
@@ -128,23 +128,20 @@ contract FomoSuper is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xb57371379e8BF49d3c0a8A07638E429386A636A4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x004f29f33530cfa4a9f10e1a83ca4063ce96df7149);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    //address private feeResive1 = 0xd2ffbccb02a7ebdfdc461514c8c2521356e85ac1;
-    //address private feeResive2 = 0x7bc2a21c8e08539677fd36eecbd5a1492e040acf;
-   
     string constant public name = "FomoSuper";
     string constant public symbol = "FomoSuper";
-    uint256 private rndExtra_ = 15 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 15 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 15 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 30 minutes;                // max length a round timer can be
+    uint256 private rndExtra_ = 0;     // length of the very first ICO
+    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -186,17 +183,24 @@ contract FomoSuper is modularShort {
 		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(49,2);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(49,2);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(49,2);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(49,2);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(22,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(38,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(52,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(68,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(38,2);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(38,2);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(38,2);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(38,2);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
+
+        activated_ = true;
+
+        // lets start first round
+        rID_ = 1;
+        round_[1].strt = now + rndExtra_ - rndGap_;
+        round_[1].end = now + rndInit_ + rndExtra_;
 	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -961,9 +965,9 @@ contract FomoSuper is modularShort {
             _eventData_ = managePlayer(_pID, _eventData_);
 
         // early round eth limiter
-        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 2100000000000000000)
+        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
         {
-            uint256 _availableLimit = (2100000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
             uint256 _refund = _eth.sub(_availableLimit);
             plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
             _eth = _availableLimit;
@@ -1251,8 +1255,8 @@ contract FomoSuper is modularShort {
 
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
-        uint256 _win = (_pot.mul(48)) / 100; //48%
-        uint256 _com = (_pot / 50); //2% 
+        uint256 _win = (_pot.mul(48)) / 100;
+        uint256 _com = (_pot / 50);
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
@@ -1270,12 +1274,10 @@ contract FomoSuper is modularShort {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-
+        _com = _com.add(_p3d.sub(_p3d / 2));
         admin.transfer(_com);
 
-        admin.transfer(_p3d.sub(_p3d / 2));
-
-        round_[_rID].pot = _pot.add(_p3d / 2);
+        _res = _res.add(_p3d / 2);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1373,9 +1375,9 @@ contract FomoSuper is modularShort {
         returns(F3Ddatasets.EventReturns)
     {
         // pay 3% out to community rewards
-        uint256 _p1 = _eth / 100; //1%
-        uint256 _com = _eth / 50;  //2%
-        _com = _com.add(_p1); //1 + 2 = 3
+        uint256 _p1 = _eth / 100;
+        uint256 _com = _eth / 50;
+        _com = _com.add(_p1);
 
         uint256 _p3d;
         if (!address(admin).call.value(_com)())
@@ -1400,7 +1402,7 @@ contract FomoSuper is modularShort {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            _p3d = _aff;
+            _p3d = _p3d.add(_aff);
         }
 
         // pay out p3d
@@ -1562,11 +1564,11 @@ contract FomoSuper is modularShort {
         public
     {
         // only team just can activate
-        require(msg.sender == admin);
+        // require(msg.sender == admin, "only admin can activate"); // erik
 
 
         // can only be ran once
-        require(activated_ == false);
+        require(activated_ == false, "FOMO Short already activated");
 
         // activate the contract
         activated_ = true;
@@ -1729,6 +1731,29 @@ interface PlayerBookInterface {
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
 }
 
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /
+*                            (__ /          (_/ (, /                                      /)™
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 
 library NameFilter {
     /**
