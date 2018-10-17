@@ -1,6 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AquaToken at 0x77B9Dd6f9dF5B783a05a91f18Ad2E9319653f469
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AquaToken at 0x11e00b63842cff31ee5195f8503f78de9041a6aa
 */
+/*
+    Implements AquaToken, which is a test.
+
+    (Test Version 2.0)
+  
+    Portions of this code fall under the following license from "OpenZepplin"
+
+    The MIT License (MIT)
+
+    Copyright (c) 2016 Smart Contract Solutions, Inc.
+
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
+
 pragma solidity 0.4.24;
 
 contract ERC20Basic {
@@ -142,9 +175,22 @@ contract AquaToken is BurnableToken, StandardToken {
     string public symbol = "AQAU";
     uint public decimals = 18;
     uint public INITIAL_SUPPLY = 100000000 * 1 ether;
+    address public owner;
 
     constructor() public {
         totalSupply_ = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) public onlyOwner {
+        if(newOwner != address(0)) {
+            owner = newOwner;
+        }
     }
 }
