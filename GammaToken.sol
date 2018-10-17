@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GammaToken at 0x7bb1e3424dd7ccfba46a55b659742112dfb503d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GammaToken at 0x2f44567b781f9e079f5aae1c31023208c975ed6f
 */
 pragma solidity 0.4.24;
 // ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@ pragma solidity 0.4.24;
 //
 // Copyright(c) 2018 onwards VFTech, Inc. Australia (www.ExToke.com) 
 // Contract Designed with care by GDO Infotech Pvt Ltd, India (www.GDO.co.in)
-// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------  
     /**
      * @title SafeMath
      * @dev Math operations with safety checks that throw on error
@@ -51,7 +51,7 @@ pragma solidity 0.4.24;
         address public owner;
     	using SafeMath for uint256;
     	
-         function Constrctor() public {
+         constructor () public {
             owner = msg.sender;
         }
     
@@ -222,7 +222,7 @@ pragma solidity 0.4.24;
     /*       ADVANCED TOKEN STARTS HERE       */
     /******************************************/
     
-    contract GammaToken is owned, TokenERC20 {
+    contract GammaToken is owned, TokenERC20 { 
     
         uint256 public sellPrice;
         uint256 public buyPrice;
