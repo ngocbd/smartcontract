@@ -1,216 +1,321 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorBuyer at 0x77a77eca75445841875ebb67a33d0a97dc34d924
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorBuyer at 0x87902f1b5d50d1f71a17bc2ea613d38510e9aa67
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.24;
+//pragma experimental ABIEncoderV2;
 
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address owner) { owner; }
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-    event OwnerUpdate(address _prevOwner, address _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still need to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = 0x0;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string name) { name; }
-    function symbol() public constant returns (string symbol) { symbol; }
-    function decimals() public constant returns (uint8 decimals) { decimals; }
-    function totalSupply() public constant returns (uint256 totalSupply) { totalSupply; }
-    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+// File: contracts/registry/BancorBuyer.sol
+
+//pragma experimental ABIEncoderV2;
+
+
+
+
+contract IMultiToken {
+    function changeableTokenCount() external view returns(uint16 count);
+    function tokens(uint256 i) public view returns(ERC20);
+    function weights(address t) public view returns(uint256);
+    function totalSupply() public view returns(uint256);
+    function mint(address _to, uint256 _amount) public;
 }
 
-/*
-    We consider every contract to be a 'token holder' since it's currently not possible
-    for a contract to deny receiving tokens.
 
-    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
-    the owner to send tokens that were sent to the contract by mistake back to their sender.
-*/
-contract TokenHolder is ITokenHolder, Owned {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() {
+contract BancorBuyer {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) public balances;
+    mapping(address => mapping(address => uint256)) public tokenBalances; // [owner][token]
+
+    function sumWeightOfMultiToken(IMultiToken mtkn) public view returns(uint256 sumWeight) {
+        for (uint i = mtkn.changeableTokenCount(); i > 0; i--) {
+            sumWeight += mtkn.weights(mtkn.tokens(i - 1));
+        }
     }
 
-    // validates an address - currently only checks that it isn't null
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
-        _;
+    function deposit(address _beneficiary, address[] _tokens, uint256[] _tokenValues) payable external {
+        if (msg.value > 0) {
+            balances[_beneficiary] = balances[_beneficiary].add(msg.value);
+        }
+
+        for (uint i = 0; i < _tokens.length; i++) {
+            ERC20 token = ERC20(_tokens[i]);
+            uint256 tokenValue = _tokenValues[i];
+
+            uint256 balance = token.balanceOf(this);
+            token.transferFrom(msg.sender, this, tokenValue);
+            require(token.balanceOf(this) == balance.add(tokenValue));
+            tokenBalances[_beneficiary][token] = tokenBalances[_beneficiary][token].add(tokenValue);
+        }
     }
 
-    // verifies that the address is different than this contract address
-    modifier notThis(address _address) {
-        require(_address != address(this));
-        _;
+    function withdraw(address _to, uint256 _value, address[] _tokens, uint256[] _tokenValues) external {
+        if (_value > 0) {
+            _to.transfer(_value);
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+        }
+
+        for (uint i = 0; i < _tokens.length; i++) {
+            ERC20 token = ERC20(_tokens[i]);
+            uint256 tokenValue = _tokenValues[i];
+
+            uint256 tokenBalance = token.balanceOf(this);
+            token.transfer(_to, tokenValue);
+            require(token.balanceOf(this) == tokenBalance.sub(tokenValue));
+            tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token].sub(tokenValue);
+        }
     }
 
-    /**
-        @dev withdraws tokens held by the contract and sends them to an account
-        can only be called by the owner
+    // function approveAndCall(address _to, uint256 _value, bytes _data, address[] _tokens, uint256[] _tokenValues) payable external {
+    //     uint256[] memory tempBalances = new uint256[](_tokens.length);
+    //     for (uint i = 0; i < _tokens.length; i++) {
+    //         ERC20 token = ERC20(_tokens[i]);
+    //         uint256 tokenValue = _tokenValues[i];
 
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+    //         tempBalances[i] = token.balanceOf(this);
+    //         token.approve(_to, tokenValue);
+    //     }
+
+    //     require(_to.call.value(_value)(_data));
+    //     balances[msg.sender] = balances[msg.sender].add(msg.value).sub(_value);
+
+    //     for (i = 0; i < _tokens.length; i++) {
+    //         token = ERC20(_tokens[i]);
+    //         tokenValue = _tokenValues[i];
+
+    //         uint256 tokenSpent = tempBalances[i].sub(token.balanceOf(this));
+    //         tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token].sub(tokenSpent);
+    //         token.approve(_to, 0);
+    //     }
+    // }
+    
+    function buyOne(
+        ERC20 token,
+        address _exchange,
+        uint256 _value,
+        bytes _data
+    ) 
+        payable
         public
-        ownerOnly
-        validAddress(_token)
-        validAddress(_to)
-        notThis(_to)
     {
-        assert(_token.transfer(_to, _amount));
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        uint256 tokenBalance = token.balanceOf(this);
+        require(_exchange.call.value(_value)(_data));
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token]
+            .add(token.balanceOf(this).sub(tokenBalance));
     }
-}
-
-/*
-    EIP228 Token Changer interface
-*/
-contract ITokenChanger {
-    function changeableTokenCount() public constant returns (uint16 count);
-    function changeableToken(uint16 _tokenIndex) public constant returns (address tokenAddress);
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public constant returns (uint256 amount);
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 amount);
-}
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken is ITokenHolder, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-/*
-    Bancor Changer interface
-*/
-contract IBancorChanger is ITokenChanger {
-    function token() public constant returns (ISmartToken _token) { _token; }
-    function getReserveBalance(IERC20Token _reserveToken) public constant returns (uint256 balance);
-}
-
-/*
-    Ether Token interface
-*/
-contract IEtherToken is ITokenHolder, IERC20Token {
-    function deposit() public payable;
-    function withdraw(uint256 _amount) public;
-}
-
-/*
-    BancorBuyer v0.1
-
-    The bancor buyer contract is a simple bancor changer wrapper that allows buying smart tokens with ETH
-
-    WARNING: the contract will make the purchase using the current price at transaction mining time
-*/
-contract BancorBuyer is TokenHolder {
-    string public version = '0.1';
-    IBancorChanger public tokenChanger; // bancor ETH <-> smart token changer
-    IEtherToken public etherToken;      // ether token
-
-    /**
-        @dev constructor
-
-        @param _changer     bancor token changer that actually does the purchase
-        @param _etherToken  ether token used as a reserve in the token changer
-    */
-    function BancorBuyer(IBancorChanger _changer, IEtherToken _etherToken)
-        validAddress(_changer)
-        validAddress(_etherToken)
+    
+    function buy1(
+        address[] _tokens,
+        address[] _exchanges,
+        uint256[] _values,
+        bytes _data1
+    ) 
+        payable
+        public
     {
-        tokenChanger = _changer;
-        etherToken = _etherToken;
-
-        // ensure that the ether token is used as one of the changer's reserves
-        tokenChanger.getReserveBalance(etherToken);
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        this.buyOne(ERC20(_tokens[0]), _exchanges[0], _values[0], _data1);
     }
-
-    /**
-        @dev buys the smart token with ETH
-        note that the purchase will use the price at the time of the purchase
-
-        @return tokens issued in return
-    */
-    function buy() public payable returns (uint256 amount) {
-        etherToken.deposit.value(msg.value)(); // deposit ETH in the reserve
-        assert(etherToken.approve(tokenChanger, 0)); // need to reset the allowance to 0 before setting a new one
-        assert(etherToken.approve(tokenChanger, msg.value)); // approve the changer to use the ETH amount for the purchase
-
-        ISmartToken smartToken = tokenChanger.token();
-        uint256 returnAmount = tokenChanger.change(etherToken, smartToken, msg.value, 1); // do the actual change using the current price
-        assert(smartToken.transfer(msg.sender, returnAmount)); // transfer the tokens to the sender
-        return returnAmount;
+    
+    function buy2(
+        address[] _tokens,
+        address[] _exchanges,
+        uint256[] _values,
+        bytes _data1,
+        bytes _data2
+    ) 
+        payable
+        public
+    {
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        this.buyOne(ERC20(_tokens[0]), _exchanges[0], _values[0], _data1);
+        this.buyOne(ERC20(_tokens[1]), _exchanges[1], _values[1], _data2);
     }
-
-    // fallback
-    function() payable {
-        buy();
+    
+    function buy3(
+        address[] _tokens,
+        address[] _exchanges,
+        uint256[] _values,
+        bytes _data1,
+        bytes _data2,
+        bytes _data3
+    ) 
+        payable
+        public
+    {
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        this.buyOne(ERC20(_tokens[0]), _exchanges[0], _values[0], _data1);
+        this.buyOne(ERC20(_tokens[1]), _exchanges[1], _values[1], _data2);
+        this.buyOne(ERC20(_tokens[2]), _exchanges[2], _values[2], _data3);
     }
+    
+    // function buyMany(
+    //     address[] _tokens,
+    //     address[] _exchanges,
+    //     uint256[] _values,
+    //     bytes[] _datas
+    // ) 
+    //     payable
+    //     public
+    // {
+    //     balances[msg.sender] = balances[msg.sender].add(msg.value);
+    //     for (uint i = 0; i < _tokens.length; i++) {
+    //         this.buyOne(ERC20(_tokens[i]), _exchanges[i], _values[i], _datas[i]);
+    //     }
+    // }
+
+    // function buy(
+    //     IMultiToken _mtkn, // may be 0
+    //     address[] _exchanges, // may have 0
+    //     uint256[] _values,
+    //     bytes[] _datas
+    // ) 
+    //     payable
+    //     public
+    // {
+    //     require(_mtkn.changeableTokenCount() == _exchanges.length, "");
+
+    //     balances[msg.sender] = balances[msg.sender].add(msg.value);
+    //     for (uint i = 0; i < _exchanges.length; i++) {
+    //         if (_exchanges[i] == 0) {
+    //             continue;
+    //         }
+
+    //         ERC20 token = _mtkn.tokens(i);
+            
+    //         // ETH => XXX
+    //         uint256 tokenBalance = token.balanceOf(this);
+    //         require(_exchanges[i].call.value(_values[i])(_datas[i]));
+    //         balances[msg.sender] = balances[msg.sender].sub(_values[i]);
+    //         tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token].add(token.balanceOf(this).sub(tokenBalance));
+    //     }
+    // }
+
+    // function buyAndMint(
+    //     IMultiToken _mtkn, // may be 0
+    //     uint256 _minAmount,
+    //     address[] _exchanges, // may have 0
+    //     uint256[] _values,
+    //     bytes[] _datas
+    // ) 
+    //     payable
+    //     public
+    // {
+    //     buy(_mtkn, _exchanges, _values, _datas);
+
+    //     uint256 totalSupply = _mtkn.totalSupply();
+    //     uint256 bestAmount = uint256(-1);
+    //     for (uint i = 0; i < _exchanges.length; i++) {
+    //         ERC20 token = _mtkn.tokens(i);
+
+    //         // Approve XXX to mtkn
+    //         uint256 thisTokenBalance = tokenBalances[msg.sender][token];
+    //         uint256 mtknTokenBalance = token.balanceOf(_mtkn);
+    //         _values[i] = token.balanceOf(this);
+    //         token.approve(_mtkn, thisTokenBalance);
+            
+    //         uint256 amount = totalSupply.mul(thisTokenBalance).div(mtknTokenBalance);
+    //         if (amount < bestAmount) {
+    //             bestAmount = amount;
+    //         }
+    //     }
+
+    //     require(bestAmount >= _minAmount);
+    //     _mtkn.mint(msg.sender, bestAmount);
+
+    //     for (i = 0; i < _exchanges.length; i++) {
+    //         token = _mtkn.tokens(i);
+    //         token.approve(_mtkn, 0);
+    //         tokenBalances[msg.sender][token] = tokenBalances[msg.sender][token].sub(token.balanceOf(this).sub(_values[i]));
+    //     }
+    // }
+
 }
