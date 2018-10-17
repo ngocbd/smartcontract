@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZexoMagiCoin at 0xb7a4CeA6559C42A1e45c2AA86C25949c8c3483B4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZexoMagiCoin at 0x224a8776834a223bb57cd1d5f7ba5fa7330a7409
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x44AbD846905277D555e8529C638302A2C396B877
 // Symbol      : ZXMC
 // Name        : ZexoMagi Coin
-// Total supply: 200000000
+// Total supply: 100000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -120,7 +120,7 @@ contract ZexoMagiCoin is ERC20Interface, Owned, SafeMath {
         symbol = "ZXMC";
         name = "ZexoMagi Coin";
         decimals = 18;
-        _totalSupply = 200000000000000000000000000;
+        _totalSupply = 100000000000000000000000000;
         balances[0x44AbD846905277D555e8529C638302A2C396B877] = _totalSupply;
         emit Transfer(address(0), 0x44AbD846905277D555e8529C638302A2C396B877, _totalSupply);
     }
