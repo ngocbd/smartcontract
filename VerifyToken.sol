@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerifyToken at 0x96357e75b7ccb1a7cf10ac6432021aea7174c803
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VerifyToken at 0x5bd574410f3a2da202babba1609330db02ad64c2
 */
 pragma solidity ^0.4.24;
 
@@ -61,7 +61,7 @@ contract VerifyToken is ERC20Interface {
     bool public activated=false;
     address public creator;
 
-    EthVerifyCore public ethVerify=EthVerifyCore(0x1Ea6fAd76886fE0C0BF8eBb3F51678B33D24186c);//0x286A090b31462890cD9Bf9f167b610Ed8AA8bD1a);
+    EthVerifyCore public ethVerify=EthVerifyCore(0x1c307A39511C16F74783fCd0091a921ec29A0b51);//0x1Ea6fAd76886fE0C0BF8eBb3F51678B33D24186c);//0x286A090b31462890cD9Bf9f167b610Ed8AA8bD1a);
 
     // ------------------------------------------------------------------------
     // Constructor
