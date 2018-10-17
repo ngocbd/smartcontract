@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xeed618b2d17b2d6bb5f7cccc737c3f216a4b5e7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x72fa80bf9fad3595a2cd9632e04b1ea4d6a7f552
 */
 pragma solidity ^0.4.21;
 
@@ -60,7 +60,7 @@ contract EIP20 is EIP20Interface {
     string public symbol;                 //An identifier: eg SBX
 
     constructor() public {
-        uint256 _initialAmount = 1 * 10**28;
+        uint256 _initialAmount = 1 * 10**27;
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = "GameRoot Token";                                   // Set the name for display purposes
