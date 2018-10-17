@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArconaMarketplaceContract at 0xf31957ce9d9c9a30c9f3ed658b1ca8f29380d969
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArconaMarketplaceContract at 0x0e5632feb2c2619dba9c7e2dc5a7ed3fd14969da
 */
 pragma solidity 0.4.24;
 
@@ -229,6 +229,7 @@ contract ArconaMarketplaceContract is Ownable {
         require(now > auctions[_auctionId].stopTime);
         //require(auctions[_auctionId].winner == address(0));
         require(_finalPrice >= auctions[_auctionId].startPrice);
+
         auctions[_auctionId].winner = _winner;
         auctions[_auctionId].finalPrice = _finalPrice;
         if (_executeTime > 0) {
@@ -247,7 +248,7 @@ contract ArconaMarketplaceContract is Ownable {
         uint fullPrice = auctions[_auctionId].finalPrice;
         require(arconaToken.transferFrom(msg.sender, this, fullPrice));
 
-        if (!inWhiteList(msg.sender)) {
+        if (!inWhiteList(auctions[_auctionId].owner)) {
             uint fee = valueFromPercent(fullPrice, auctionFee);
             fullPrice = fullPrice.sub(fee).sub(gasInTokens);
         }
