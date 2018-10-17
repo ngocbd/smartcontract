@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMVToken at 0x5665283a664afc8ab30145d32274811b840eeddb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMVToken at 0x71b775e98c26393d548ebbcef79373af308390bd
 */
 pragma solidity ^0.4.24;
 
@@ -64,9 +64,9 @@ contract BMVToken is ERC20 {
   mapping (address => mapping (address => uint256)) internal allowed;
 
   uint256 totalSupply_ = 1500000000000000;
-  string public name  = "BlockMoveVelocity";                   
-  uint8 public decimals = 6;               
-  string public symbol ="BMV";               
+  string public name_  = "BlockMoveVelocity";                   
+  uint8 public decimals_ = 6;               
+  string public symbol_ ="BMV";               
   
   constructor() public {
     balances[msg.sender] = totalSupply_; 
