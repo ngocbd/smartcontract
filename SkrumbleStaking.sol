@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkrumbleStaking at 0xf40692384d14b9c2395cfae369621447429ae149
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkrumbleStaking at 0x5a01b24ec723b30de5fb4fca9915927bda0dedb9
 */
 pragma solidity ^0.4.24;
 
@@ -234,7 +234,7 @@ contract SkrumbleStaking {
   	stakerMap[_staker] = Staker(0, 0, 0, 0);
   }
 
-  function stakeTokensManually (address _staker, uint _level, uint time) public onlyUnlocked {
+  function stakeTokensManually (address _staker, uint _level, uint time) public onlyOwner {
     Reward storage reward = rewardLevels[_level];
     require (stakerMap[_staker].balance == 0);
     require (count < limit);
