@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0x38a0d00ddb1269795c0055691d8b88eb4dfa80dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0x205f841f40cca82b8370391f727a8fa3f301f9ad
 */
 pragma solidity ^0.4.24;
 
@@ -248,9 +248,6 @@ contract CrowdsaleWPTByRounds is Ownable {
 
   //Minimal value of investment
   uint public minInvestmentValue;
-  
-  //Flags to on/off checks for buy Token
-  bool public checksOn;
 
   /**
    * @dev Allows the owner to set the minter contract.
@@ -291,8 +288,6 @@ constructor () public {
     closingTime = 1535320800;
 
     minInvestmentValue = 0.02 ether;
-    
-    checksOn = true;
   }
 
    /**
@@ -336,13 +331,6 @@ constructor () public {
    */
   function changeMinInvest(uint256 newMinValue) public onlyOwner {
     rate = newMinValue;
-  }
-
-   /**
-   * @dev Flag to sell WPT without checks.
-   */
-  function setChecksOn(bool _checksOn) public onlyOwner {
-    checksOn = _checksOn;
   }
 
    /**
@@ -401,10 +389,8 @@ constructor () public {
   function buyTokens(address _beneficiary) payable public{
 
     uint256 weiAmount = msg.value;
-    if (checksOn) {
-        _preValidatePurchase(_beneficiary, weiAmount);
-    }
-    
+    _preValidatePurchase(_beneficiary, weiAmount);
+
     // calculate token amount to be created
     uint256 tokens = _getTokenAmount(weiAmount);
 
