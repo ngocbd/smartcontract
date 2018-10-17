@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRHT at 0xf2dc0708fc54cbba40c9924e7b5c70c39e718270
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRHT at 0x50d1eea88e9be7a39601f4b693887e21a601fd58
 */
 pragma solidity ^0.4.21;
 
@@ -11,17 +11,14 @@ contract ERC20 {
     function totalSupply() constant public returns (uint256 _supply);
     function balanceOf(address who) public constant returns (uint256);
     function transfer(address to, uint256 value) public returns (bool ok);
-    function transfer(address to, uint256 value, bytes data) public returns (bool ok);
     function name() constant public returns (string _name);
     function symbol() constant public returns (string _symbol);
     function decimals() constant public returns (uint8 _decimals);
 
     // ERC20 Event 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
     event FrozenFunds(address target, bool frozen);
-	event Burn(address indexed from, uint256 value);
-    
+	event Burn(address indexed from, uint256 value); 
 }
 
 /// Include SafeMath Lib
@@ -69,14 +66,14 @@ contract ContractReceiver {
     }
 }
 
-/// Realthium is an ERC20 token with ERC223 Extensions
+/// REALTHIUM inc.
 contract TokenRHT is ERC20, SafeMath {
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
     address public owner;
-    bool public SC_locked = false;
+    bool public SC_locked = true;
     bool public tokenCreated = false;
 	uint public DateCreateToken;
 
@@ -92,7 +89,7 @@ contract TokenRHT is ERC20, SafeMath {
 
         owner = msg.sender;
         
-		name = "Realthium";
+		name = "REALTHIUM";
         symbol = "RHT";
         decimals = 5;
         totalSupply = 500000000 * 10 ** uint256(decimals);
@@ -148,23 +145,6 @@ contract TokenRHT is ERC20, SafeMath {
         return SmartContract_Allowed[_target];
     }
 
-    // Function that is called when a user or another contract wants to transfer funds .
-    function transfer(address _to, uint256 _value, bytes _data) public  returns (bool success) {
-        // Only allow transfer once Locked
-        // Once it is Locked, it is Locked forever and no one can lock again
-		require(!SC_locked);
-		require(!frozenAccount[msg.sender]);
-		require(!frozenAccount[_to]);
-		
-        if (isContract(_to)) {
-            return transferToContract(_to, _value, _data);
-        } 
-        else {
-            return transferToAddress(_to, _value, _data);
-        }
-    }
-
-    // Standard function transfer similar to ERC20 transfer with no _data .
     // Added due to backwards compatibility reasons .
     function transfer(address _to, uint256 _value) public returns (bool success) {
         // Only allow transfer once Locked
@@ -173,13 +153,11 @@ contract TokenRHT is ERC20, SafeMath {
 		require(!frozenAccount[_to]);
 
         //standard function transfer similar to ERC20 transfer with no _data
-        //added due to backwards compatibility reasons
-        bytes memory empty;
         if (isContract(_to)) {
-            return transferToContract(_to, _value, empty);
+            return transferToContract(_to, _value);
         } 
         else {
-            return transferToAddress(_to, _value, empty);
+            return transferToAddress(_to, _value);
         }
     }
 
@@ -194,28 +172,35 @@ contract TokenRHT is ERC20, SafeMath {
     }
 
     // function that is called when transaction target is an address
-    function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
+    function transferToAddress(address _to, uint256 _value) private returns (bool success) {
         if (balanceOf(msg.sender) < _value) revert();
         balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
         balances[_to] = safeAdd(balanceOf(_to), _value);
-        emit Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
     // function that is called when transaction target is a contract
-    function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
+    function transferToContract(address _to, uint256 _value) private returns (bool success) {
         require(SmartContract_Allowed[_to]);
 		
 		if (balanceOf(msg.sender) < _value) revert();
         balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
         balances[_to] = safeAdd(balanceOf(_to), _value);
-        emit Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
 	// Function to activate Ether reception in the smart Contract address only by the Owner
     function () public payable { 
 		if(msg.sender != owner) { revert(); }
+    }
+
+	// Creator/Owner change name and symbol
+    function OWN_ChangeToken(string _name, string _symbol, uint8 _decimals) onlyOwner public {
+		name = _name;
+        symbol = _symbol;
+		decimals = _decimals;
     }
 
 	// Creator/Owner can Locked/Unlock smart contract
@@ -275,12 +260,11 @@ contract TokenRHT is ERC20, SafeMath {
 			frozenAccount[addresses[i]] = freeze;
 			emit FrozenFunds(addresses[i], freeze);
 			
-			bytes memory empty;
 			if (isContract(addresses[i])) {
-				transferToContract(addresses[i], _value, empty);
+				transferToContract(addresses[i], _value);
 			} 
 			else {
-				transferToAddress(addresses[i], _value, empty);
+				transferToAddress(addresses[i], _value);
 			}
 		}
 	}
