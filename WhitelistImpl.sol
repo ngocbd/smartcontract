@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistImpl at 0xef39d617f813d650ad9cc4b87d562de98bc012b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistImpl at 0xe5fa6942a9662787c52e2ac1c61b895c580f799a
 */
 pragma solidity ^0.4.24;
 
-/*
- * Part of Daonomic platform (daonomic.io)
+/**
+ * Powered by Daonomic (https://daonomic.io)
  */
 
 contract Whitelist {
-  function isInWhitelist(address addr) view public returns (bool);
+  function isInWhitelist(address addr) public view returns (bool);
 }
 
 /**
@@ -81,19 +81,19 @@ contract WhitelistImpl is Ownable, Whitelist {
     return whitelist[addr];
   }
 
-  function addToWhitelist(address[] _addresses) onlyOwner public {
+  function addToWhitelist(address[] _addresses) public onlyOwner {
     for (uint i = 0; i < _addresses.length; i++) {
       setWhitelistInternal(_addresses[i], true);
     }
   }
 
-  function removeFromWhitelist(address[] _addresses) onlyOwner public {
+  function removeFromWhitelist(address[] _addresses) public onlyOwner {
     for (uint i = 0; i < _addresses.length; i++) {
       setWhitelistInternal(_addresses[i], false);
     }
   }
 
-  function setWhitelist(address addr, bool allow) onlyOwner public {
+  function setWhitelist(address addr, bool allow) public onlyOwner {
     setWhitelistInternal(addr, allow);
   }
 
