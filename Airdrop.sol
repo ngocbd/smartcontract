@@ -1,38 +1,58 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x0b72b3fB545fe6cb63E27273078d7A8656a34c42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x9c4f63aa33c477774faf43299eda660664e7663d
 */
-pragma solidity ^0.4.21;
+// Congratulations! Its your free airdrop token! Get 6 USD in EToken FREE!
+// Promocode: 6forfree
+// More: tokensale.endo.im/promo/
+// Join us: https://t.me/endo_en
+// ENDO is a Protocol that solves the problem of certified information tracking and encrypted data storage. 
+// The ENDO ecosystem allows organisations and users to participate in information and service exchange through the EToken.
 
-/**
- * Changes by https://www.docademic.com/
- */
- 
- /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+// ?????????????????????????????????????EToken???6???????????????
+// ???????????6forfree?
+// ???????tokensale.endo.im/promo/
+// ??????Telegram?????????????https://t.me/endo_jp?
+// ENDO???????????????????????????????????????????? 
+// ENDO?????????????????EToken????????????????????????
+
+// ??? ??????????? ????6???EToken?
+// ?????6forfree
+// ???tokensale.endo.im/promo/
+// ?????https://t.me/endo_cn
+// ENDO????????????????????????
+// ENDO?????????????EToken??????????
+
+// ?????! ?? ???? ??! EToken?? 6 ????!
+// ???? ?? : 6forfree
+// ??? : tokensale.endo.im/promo/
+// ??? ?????? : https://t.me/endo_ko
+// ENDO? ??? ???? ???? ??? ? ??? ?? ???? ???.
+// ENDO ???? ??? ???? ??? ? ? ????.
+
+// ???????????! ??? ???????????? Airdrop ??? ?????! ???????? 6 USD ? ??????????? EToken ?????????!
+// ????????: 6forfree
+// ?????? ??????: tokensale.endo.im/promo/
+// ??????????????? ? ???: https://t.me/endo_ru
+// ENDO – ??? ????????, ???????? ???????? ???????????? ?????????????? ?????????? ? ???????? ????????????? ??????. 
+// ?????????? ENDO ????????? ???????????? ? ????????????? ????????? ??????? ? ???????? ?????? ??????????? ? ???????????? ???????? ? ??????? ?????? ENDO.
+
+
+pragma solidity ^0.4.11;
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
     uint256 c = a * b;
-    assert(c / a == b);
+    assert(a == 0 || c / a == b);
     return c;
   }
-
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -40,355 +60,118 @@ library SafeMath {
   }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public returns (uint256);
+  //function transfer(address to, uint256 value) public returns(bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public returns (uint256);
+  //function transferFrom(address from, address to, uint256 value) public returns(bool);
+  //function approve(address spender, uint256 value) public returns(bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+  mapping(address => uint256) balances;
+  function transfer(address _to, uint256 _value) public {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+  }
+  function balanceOf(address _owner) public returns (uint256 balance) {
+    return balances[_owner];
+  }
+}
+contract StandardToken is ERC20, BasicToken {
+  mapping (address => mapping (address => uint256)) allowed;
+  function transferFrom(address _from, address _to, uint256 _value) public {
+    var _allowance = allowed[_from][msg.sender];
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+  }
+  function approve(address _spender, uint256 _value) public {
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
+  function allowance(address _owner, address _spender) public returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+}
 contract Ownable {
   address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() public {
     owner = msg.sender;
   }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      revert();
+    }
+    _;
+  }
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  string public name = "ENDO.network Promo Token";
+  string public symbol = "ETP";
+  uint256 public decimals = 18;
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    if(mintingFinished) revert();
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
   }
 }
 
-contract Destroyable is Ownable{
-    /**
-     * @notice Allows to destroy the contract and return the tokens to the owner.
-     */
-    function destroy() public onlyOwner{
-        selfdestruct(owner);
+contract Airdrop {
+  using SafeMath for uint256;
+
+  MintableToken public token;
+  
+  uint256 public currentTokenCount;
+  address public owner;
+  uint256 public maxTokenCount;
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  function Airdrop() public {
+    token = createTokenContract();
+    owner = msg.sender;
+  }
+  
+  function sendToken(address[] recipients, uint256 values) public {
+    for (uint256 i = 0; i < recipients.length; i++) {
+      token.mint(recipients[i], values);
     }
-}
+  }
 
-interface Token {
-    function transfer(address _to, uint256 _value) external returns (bool);
+  function createTokenContract() internal returns (MintableToken) {
+    return new MintableToken();
+  }
 
-    function balanceOf(address who) view external returns (uint256);
-}
-
-contract Airdrop is Ownable, Destroyable {
-    using SafeMath for uint256;
-
-    /*
-     *   Structures
-     */
-    // Holder of tokens
-    struct Beneficiary {
-        uint256 balance;
-        uint256 airdrop;
-        bool isBeneficiary;
-    }
-
-    /*
-     *  State
-     */
-    bool public filled;
-    bool public airdropped;
-    uint256 public airdropLimit;
-    uint256 public currentCirculating;
-    uint256 public burn;
-    address public hell;
-    address[] public addresses;
-    Token public token;
-    mapping(address => Beneficiary) public beneficiaries;
-
-
-    /*
-     *  Events
-     */
-    event NewBeneficiary(address _beneficiary);
-    event SnapshotTaken(uint256 _totalBalance, uint256 _totalAirdrop, uint256 _toBurn,uint256 _numberOfBeneficiaries, uint256 _numberOfAirdrops);
-    event Airdropped(uint256 _totalAirdrop, uint256 _numberOfAirdrops);
-    event TokenChanged(address _prevToken, address _token);
-    event AirdropLimitChanged(uint256 _prevLimit, uint256 _airdropLimit);
-    event CurrentCirculatingChanged(uint256 _prevCirculating, uint256 _currentCirculating);
-    event Cleaned(uint256 _numberOfBeneficiaries);
-    event Burned(uint256 _tokensBurned);
-
-    /*
-     *  Modifiers
-     */
-    modifier isNotBeneficiary(address _beneficiary) {
-        require(!beneficiaries[_beneficiary].isBeneficiary);
-        _;
-    }
-    modifier isBeneficiary(address _beneficiary) {
-        require(beneficiaries[_beneficiary].isBeneficiary);
-        _;
-    }
-    modifier isFilled() {
-        require(filled);
-        _;
-    }
-    modifier isNotFilled() {
-        require(!filled);
-        _;
-    }
-    modifier wasAirdropped() {
-        require(airdropped);
-        _;
-    }
-    modifier wasNotAirdropped() {
-        require(!airdropped);
-        _;
-    }
-
-    /*
-     *  Behavior
-     */
-
-    /**
-     * @dev Constructor.
-     * @param _token The token address
-     * @param _airdropLimit The token limit by airdrop in wei
-     * @param _currentCirculating The current circulating tokens in wei
-     * @param _hell The address where tokens wil be burned
-     */
-    function Airdrop(address _token, uint256 _airdropLimit, uint256 _currentCirculating, address _hell) public{
-        require(_token != address(0));
-        token = Token(_token);
-        airdropLimit = _airdropLimit;
-        currentCirculating = _currentCirculating;
-        hell = _hell;
-    }
-
-    /**
-     * @dev Allows the sender to register itself as a beneficiary for the airdrop.
-     */
-    function() payable public {
-        addBeneficiary(msg.sender);
-    }
-
-
-    /**
-     * @dev Allows the sender to register itself as a beneficiary for the airdrop.
-     */
-    function register() public {
-        addBeneficiary(msg.sender);
-    }
-
-    /**
-     * @dev Allows the owner to register a beneficiary for the airdrop.
-     * @param _beneficiary The address of the beneficiary
-     */
-    function registerBeneficiary(address _beneficiary) public
-    onlyOwner {
-        addBeneficiary(_beneficiary);
-    }
-
-    /**
-     * @dev Allows the owner to register beneficiaries for the airdrop.
-     * @param _beneficiaries The array of addresses
-     */
-    function registerBeneficiaries(address[] _beneficiaries) public
-    onlyOwner {
-        for (uint i = 0; i < _beneficiaries.length; i++) {
-            addBeneficiary(_beneficiaries[i]);
-        }
-    }
-
-    /**
-     * @dev Add a beneficiary for the airdrop.
-     * @param _beneficiary The address of the beneficiary
-     */
-    function addBeneficiary(address _beneficiary) private
-    isNotBeneficiary(_beneficiary) {
-        require(_beneficiary != address(0));
-        beneficiaries[_beneficiary] = Beneficiary({
-            balance : 0,
-            airdrop : 0,
-            isBeneficiary : true
-            });
-        addresses.push(_beneficiary);
-        emit NewBeneficiary(_beneficiary);
-    }
-
-    /**
-     * @dev Take the balance of all the beneficiaries.
-     */
-    function takeSnapshot() public
-    onlyOwner
-    isNotFilled
-    wasNotAirdropped {
-        uint256 totalBalance = 0;
-        uint256 totalAirdrop = 0;
-        uint256 airdrops = 0;
-        for (uint i = 0; i < addresses.length; i++) {
-            Beneficiary storage beneficiary = beneficiaries[addresses[i]];
-            beneficiary.balance = token.balanceOf(addresses[i]);
-            totalBalance = totalBalance.add(beneficiary.balance);
-            if (beneficiary.balance > 0) {
-                beneficiary.airdrop = (beneficiary.balance.mul(airdropLimit).div(currentCirculating));
-                totalAirdrop = totalAirdrop.add(beneficiary.airdrop);
-                airdrops = airdrops.add(1);
-            }
-        }
-        filled = true;
-        burn = airdropLimit.sub(totalAirdrop);
-        emit SnapshotTaken(totalBalance, totalAirdrop, burn, addresses.length, airdrops);
-    }
-
-    /**
-     * @dev Start the airdrop.
-     */
-    function airdropAndBurn() public
-    onlyOwner
-    isFilled
-    wasNotAirdropped {
-        uint256 airdrops = 0;
-        uint256 totalAirdrop = 0;
-        for (uint256 i = 0; i < addresses.length; i++)
-        {
-            Beneficiary storage beneficiary = beneficiaries[addresses[i]];
-            if (beneficiary.airdrop > 0) {
-                require(token.transfer(addresses[i], beneficiary.airdrop));
-                totalAirdrop = totalAirdrop.add(beneficiary.airdrop);
-                airdrops = airdrops.add(1);
-            }
-        }
-        airdropped = true;
-        currentCirculating = currentCirculating.add(totalAirdrop);
-        emit Airdropped(totalAirdrop, airdrops);
-        emit Burned(burn);
-        token.transfer(hell, burn);
-
-    }
-
-    /**
-     * @dev Reset all the balances to 0 and the state to false.
-     */
-    function clean() public
-    onlyOwner {
-        for (uint256 i = 0; i < addresses.length; i++)
-        {
-            Beneficiary storage beneficiary = beneficiaries[addresses[i]];
-            beneficiary.balance = 0;
-            beneficiary.airdrop = 0;
-        }
-        filled = false;
-        airdropped = false;
-        burn = 0;
-        emit Cleaned(addresses.length);
-    }
-
-    /**
-     * @dev Allows the owner to change the token address.
-     * @param _token New token address.
-     */
-    function changeToken(address _token) public
-    onlyOwner {
-        emit TokenChanged(address(token), _token);
-        token = Token(_token);
-    }
-
-    /**
-     * @dev Allows the owner to change the token limit by airdrop.
-     * @param _airdropLimit The token limit by airdrop in wei.
-     */
-    function changeAirdropLimit(uint256 _airdropLimit) public
-    onlyOwner {
-        emit AirdropLimitChanged(airdropLimit, _airdropLimit);
-        airdropLimit = _airdropLimit;
-    }
-
-    /**
-     * @dev Allows the owner to change the token limit by airdrop.
-     * @param _currentCirculating The current circulating tokens in wei.
-     */
-    function changeCurrentCirculating(uint256 _currentCirculating) public
-    onlyOwner {
-        emit CurrentCirculatingChanged(currentCirculating, _currentCirculating);
-        currentCirculating = _currentCirculating;
-    }
-
-    /**
-     * @dev Allows the owner to flush the eth.
-     */
-    function flushEth() public onlyOwner {
-        owner.transfer(address(this).balance);
-    }
-
-    /**
-     * @dev Allows the owner to flush the tokens of the contract.
-     */
-    function flushTokens() public onlyOwner {
-        token.transfer(owner, token.balanceOf(address(this)));
-    }
-
-    /**
-     * @dev Allows the owner to destroy the contract and return the tokens to the owner.
-     */
-    function destroy() public onlyOwner {
-        token.transfer(owner, token.balanceOf(address(this)));
-        selfdestruct(owner);
-    }
-
-    /**
-     * @dev Get the token balance of the contract.
-     * @return _balance The token balance of this contract
-     */
-    function tokenBalance() view public returns (uint256 _balance) {
-        return token.balanceOf(address(this));
-    }
-
-    /**
-     * @dev Get the token balance of the beneficiary.
-     * @param _beneficiary The address of the beneficiary
-     * @return _balance The token balance of the beneficiary
-     */
-    function getBalanceAtSnapshot(address _beneficiary) view public returns (uint256 _balance) {
-        return beneficiaries[_beneficiary].balance / 1 ether;
-    }
-
-    /**
-     * @dev Get the airdrop reward of the beneficiary.
-     * @param _beneficiary The address of the beneficiary
-     * @return _airdrop The token balance of the beneficiary
-     */
-    function getAirdropAtSnapshot(address _beneficiary) view public returns (uint256 _airdrop) {
-        return beneficiaries[_beneficiary].airdrop / 1 ether;
-    }
-
-    /**
-     * @dev Allows a beneficiary to verify if he is already registered.
-     * @param _beneficiary The address of the beneficiary
-     * @return _isBeneficiary The boolean value
-     */
-    function amIBeneficiary(address _beneficiary) view public returns (bool _isBeneficiary) {
-        return beneficiaries[_beneficiary].isBeneficiary;
-    }
-
-    /**
-     * @dev Get the number of beneficiaries.
-     * @return _length The number of beneficiaries
-     */
-    function beneficiariesLength() view public returns (uint256 _length) {
-        return addresses.length;
-    }
 }
