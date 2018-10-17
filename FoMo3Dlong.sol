@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xa62142888aba8370742be823c1782d17a0389da1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0x9a2b42c4a269204bc3645ae2fc83e8d5eb5cc58c
 */
 pragma solidity ^0.4.24;
 /**
@@ -94,7 +94,7 @@ contract F3Devents {
         uint256 airDropPot
     );
     
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -184,28 +184,28 @@ contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
-	
-	otherFoMo3D private otherF3D_;
-    DiviesInterface constant private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
-    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
-    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
+    
+    otherFoMo3D private otherF3D_;
+    DiviesInterface constant private Divies = DiviesInterface(0xf54643360a7a1a74c107b8847dab1e40d544bf19);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x9524d6bef8fcd03edc10822ba13b9533a0b3fb58);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe095c3362ecb60663cb6e9fbd20de2988638f34c);
+
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     string constant public name = "FoMo3D Long Official";
     string constant public symbol = "F3D";
-	uint256 private rndExtra_ = extSettings.getLongExtra();     // length of the very first ICO 
-    uint256 private rndGap_ = extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
+    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 10 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
+    uint256 constant private rndMax_ = 2 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
 //=============================|================================================
-	uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
+    uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;    // round id number / total rounds that have happened
 //****************
@@ -233,13 +233,13 @@ contract FoMo3Dlong is modularLong {
     constructor()
         public
     {
-		// Team allocation structures
+        // Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-		// Team allocation percentages
+        // Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
@@ -253,7 +253,7 @@ contract FoMo3Dlong is modularLong {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-	}
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -585,10 +585,10 @@ contract FoMo3Dlong is modularLong {
             F3Ddatasets.EventReturns memory _eventData_;
             
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
             
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
             
             // gib moni
@@ -868,7 +868,7 @@ contract FoMo3Dlong is modularLong {
      * @return winnings vault
      * @return general vault 
      * @return affiliate vault 
-	 * @return player round eth
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public 
@@ -925,7 +925,7 @@ contract FoMo3Dlong is modularLong {
             if (_now > round_[_rID].end && round_[_rID].ended == false) 
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
                 
                 // build event data
@@ -1114,7 +1114,7 @@ contract FoMo3Dlong is modularLong {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
             
             // call end tx function to fire end tx event.
-		    endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1183,7 +1183,7 @@ contract FoMo3Dlong is modularLong {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract 
+     * @dev receives name/player info from names contract 
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1628,11 +1628,11 @@ contract FoMo3Dlong is modularLong {
             msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
             msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
             msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
+            msg.sender == 0xB1819CFd705255422A32916Db7d08170d474dA15,
             "only team just can activate"
         );
 
-		// make sure that its been linked.
+        // make sure that its been linked.
         require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
         
         // can only be ran once
@@ -1642,7 +1642,7 @@ contract FoMo3Dlong is modularLong {
         activated_ = true;
         
         // lets start first round
-		rID_ = 1;
+        rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
         round_[1].end = now + rndInit_ + rndExtra_;
     }
@@ -1655,7 +1655,7 @@ contract FoMo3Dlong is modularLong {
             msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
             msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
             msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-			msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
+            msg.sender == 0xB1819CFd705255422A32916Db7d08170d474dA15,
             "only team just can activate"
         );
 
@@ -1810,12 +1810,6 @@ interface otherFoMo3D {
     function potSwap() external payable;
 }
 
-interface F3DexternalSettingsInterface {
-    function getFastGap() external returns(uint256);
-    function getLongGap() external returns(uint256);
-    function getFastExtra() external returns(uint256);
-    function getLongExtra() external returns(uint256);
-}
 
 interface DiviesInterface {
     function deposit() external payable;
