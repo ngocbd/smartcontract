@@ -1,322 +1,435 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa149bf8a64ef4a57ab368f789b490fd096769127
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x03a82e40049bcab41f6207a91134f244a56b850c
 */
-pragma solidity ^0.4.24;
-/* ANCI
-// Antrodia Cinamomum Token (ANCI)
-// ERC20 Contract with Timelock capabilities
-// The bigger intricate timelock mechanisms out here
-// ---
-// ---
-//   _   _            _   _  _  ___ ___   ___
-//  | |_| |_  ___    /_\ | \| |/ __|_ _| | _ \_____ __ _____ _ _
-//  |  _| ' \/ -_)  / _ \| .` | (__ | |  |  _/ _ \ V  V / -_) '_|
-//   \__|_||_\___| /_/ \_\_|\_|\___|___| |_| \___/\_/\_/\___|_|
-//
-// ---
-// ---
-*/
+//This file contains an eRAY token contract along with some other accompanying contracts
+//Generally speaking, the difference between plain ERC20 token is in way of generating token via prescribed TGR (Token Generation Rounds)
+//and possibility to burn token to receive contributed Ether back
 
-/* an owner is required */
-contract Owned {
-    address public owner;
+// Authors: Alexander Shevtsov <randomlogin76@gmail.com>
+//          Vladimir Bobrov <v@decenturygroup.com>
+//          vladiuz1 <vs@array.io>
+// License: see the repository file
+// Last updated: 16 August 2018
+pragma solidity ^0.4.22;
 
-    function Owned() public {
-        owner = msg.sender;
-    }
+library SafeMath {
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function setOwner(address _owner) onlyOwner public {
-        owner = _owner;
-    }
-}
-
-/* SafeMath implementation to guard against overflows */
-contract SafeMath {
-    function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        uint256 c = _a + _b;
-        assert(c >= _a); // checks for overflow
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
         return c;
     }
 
-    function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        assert(_a >= _b); // guards against overflow
-        return _a - _b;
-    }
-
-    function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
-        uint256 c = _a * _b;
-        assert(_a == 0 || c / _a == _b); // checks for overflow
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
         return c;
     }
-}
 
-/* The main contract for the timelock capable ERC20 token */
-contract Token is SafeMath, Owned {
-    uint256 constant DAY_IN_SECONDS = 86400;
-    string public constant standard = "0.777";
-    string public name = "";
-    string public symbol = "";
-    uint8 public decimals = 0;
-    uint256 public totalSupply = 0;
-    mapping (address => uint256) public balanceP;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    mapping (address => uint256[]) public lockTime;
-    mapping (address => uint256[]) public lockValue;
-    mapping (address => uint256) public lockNum;
-    mapping (address => bool) public locker;
-    uint256 public later = 0;
-    uint256 public earlier = 0;
-
-
-    /* standard ERC20 events */
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    /* custom lock-related events */
-    event TransferredLocked(address indexed _from, address indexed _to, uint256 _time, uint256 _value);
-    event TokenUnlocked(address indexed _address, uint256 _value);
-
-    /* ERC20 constructor */
-    function Token(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
-        require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
-
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-        totalSupply = _totalSupply;
-
-        balanceP[msg.sender] = _totalSupply;
-
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
-    /* don't allow zero address */
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+}
+
+
+contract Base {
+
+    uint private bitlocks = 0;
+
+    modifier noAnyReentrancy {
+        uint _locks = bitlocks;
+        require(_locks <= 0);
+        bitlocks = uint(-1);
+        _;
+        bitlocks = _locks;
+    }
+
+    modifier only(address allowed) {
+        require(msg.sender == allowed);
         _;
     }
 
-    /* owner may add & remove optional locker contract */
-    function addLocker(address _address) public validAddress(_address) onlyOwner {
-        locker[_address] = true;
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length == size + 4);
+        _;
+    } 
+
+}
+
+
+contract ERC20 is Base {
+    
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+    using SafeMath for uint;
+    uint public totalSupply;
+    bool public isFrozen = false; //it's not part of ERC20 specification, however it has to be here to place modifiers on usual ERC20 functions
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+
+    modifier isNotFrozenOnly() {
+        require(!isFrozen);
+        _;
     }
 
-    function removeLocker(address _address) public validAddress(_address) onlyOwner {
-        locker[_address] = false;
+    modifier isFrozenOnly(){
+        require(isFrozen);
+        _;
     }
 
-    /* owner may fast-forward or delay ALL timelocks */
-    function setUnlockEarlier(uint256 _earlier) public onlyOwner {
-        earlier = add(earlier, _earlier);
+    function transferFrom(address _from, address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
+        require(_to != address(0));
+        require(_to != address(this));
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
     }
 
-    function setUnlockLater(uint256 _later) public onlyOwner {
-        later = add(later, _later);
+    function balanceOf(address _owner) public view returns (uint balance) {
+        return balances[_owner];
     }
 
-    /* shows unlocked balance */
-    function balanceUnlocked(address _address) public view returns (uint256 _balance) {
-        _balance = balanceP[_address];
-        uint256 i = 0;
-        while (i < lockNum[_address]) {
-            if (add(now, earlier) > add(lockTime[_address][i], later)) _balance = add(_balance, lockValue[_address][i]);
-            i++;
-        }
-        return _balance;
-    }
-
-    /* shows locked balance */
-    function balanceLocked(address _address) public view returns (uint256 _balance) {
-        _balance = 0;
-        uint256 i = 0;
-        while (i < lockNum[_address]) {
-            if (add(now, earlier) < add(lockTime[_address][i], later)) _balance = add(_balance, lockValue[_address][i]);
-            i++;
-        }
-        return  _balance;
-    }
-
-    /* standard ERC20 compatible balance accessor */
-    function balanceOf(address _address) public view returns (uint256 _balance) {
-        _balance = balanceP[_address];
-        uint256 i = 0;
-        while (i < lockNum[_address]) {
-            _balance = add(_balance, lockValue[_address][i]);
-            i++;
-        }
-        return _balance;
-    }
-
-    /* show the timelock periods and locked values */
-    function showTime(address _address) public view validAddress(_address) returns (uint256[] _time) {
-        uint i = 0;
-        uint256[] memory tempLockTime = new uint256[](lockNum[_address]);
-        while (i < lockNum[_address]) {
-            tempLockTime[i] = sub(add(lockTime[_address][i], later), earlier);
-            i++;
-        }
-        return tempLockTime;
-    }
-
-    function showValue(address _address) public view validAddress(_address) returns (uint256[] _value) {
-        return lockValue[_address];
-    }
-
-    /* calculates and handles the timelocks before related operations */
-    function calcUnlock(address _address) private {
-        uint256 i = 0;
-        uint256 j = 0;
-        uint256[] memory currentLockTime;
-        uint256[] memory currentLockValue;
-        uint256[] memory newLockTime = new uint256[](lockNum[_address]);
-        uint256[] memory newLockValue = new uint256[](lockNum[_address]);
-        currentLockTime = lockTime[_address];
-        currentLockValue = lockValue[_address];
-        while (i < lockNum[_address]) {
-            if (add(now, earlier) > add(currentLockTime[i], later)) {
-                balanceP[_address] = add(balanceP[_address], currentLockValue[i]);
-
-                /* emit custom timelock expiration event */
-                emit TokenUnlocked(_address, currentLockValue[i]);
-            } else {
-                newLockTime[j] = currentLockTime[i];
-                newLockValue[j] = currentLockValue[i];
-                j++;
-            }
-            i++;
-        }
-        uint256[] memory trimLockTime = new uint256[](j);
-        uint256[] memory trimLockValue = new uint256[](j);
-        i = 0;
-        while (i < j) {
-            trimLockTime[i] = newLockTime[i];
-            trimLockValue[i] = newLockValue[i];
-            i++;
-        }
-        lockTime[_address] = trimLockTime;
-        lockValue[_address] = trimLockValue;
-        lockNum[_address] = j;
-    }
-
-    /* ERC20 compliant transfer method */
-    function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool success) {
-        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
-        if (balanceP[msg.sender] >= _value && _value > 0) {
-            balanceP[msg.sender] = sub(balanceP[msg.sender], _value);
-            balanceP[_to] = add(balanceP[_to], _value);
-            emit Transfer(msg.sender, _to, _value);
+    function approve_fixed(address _spender, uint _currentValue, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
+        if(allowed[msg.sender][_spender] == _currentValue){
+            allowed[msg.sender][_spender] = _value;
+            emit Approval(msg.sender, _spender, _value);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
-    /* custom timelocked transfer method */
-    function transferLocked(address _to, uint256[] _time, uint256[] _value) public validAddress(_to) returns (bool success) {
-        require(_value.length == _time.length);
-
-        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
-        uint256 i = 0;
-        uint256 totalValue = 0;
-        while (i < _value.length) {
-            totalValue = add(totalValue, _value[i]);
-            i++;
-        }
-        if (balanceP[msg.sender] >= totalValue && totalValue > 0) {
-            i = 0;
-            while (i < _time.length) {
-                balanceP[msg.sender] = sub(balanceP[msg.sender], _value[i]);
-                lockTime[_to].length = lockNum[_to]+1;
-                lockValue[_to].length = lockNum[_to]+1;
-                lockTime[_to][lockNum[_to]] = add(now, _time[i]);
-                lockValue[_to][lockNum[_to]] = _value[i];
-
-                /* emit custom timelock event */
-                emit TransferredLocked(msg.sender, _to, lockTime[_to][lockNum[_to]], lockValue[_to][lockNum[_to]]);
-
-                /* emit standard transfer event */
-                emit Transfer(msg.sender, _to, lockValue[_to][lockNum[_to]]);
-                lockNum[_to]++;
-                i++;
-            }
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /* custom timelocker method */
-    function transferLockedFrom(address _from, address _to, uint256[] _time, uint256[] _value) public
-	    validAddress(_from) validAddress(_to) returns (bool success) {
-        require(locker[msg.sender]);
-        require(_value.length == _time.length);
-
-        if (lockNum[_from] > 0) calcUnlock(_from);
-        uint256 i = 0;
-        uint256 totalValue = 0;
-        while (i < _value.length) {
-            totalValue = add(totalValue, _value[i]);
-            i++;
-        }
-        if (balanceP[_from] >= totalValue && totalValue > 0) {
-            i = 0;
-            while (i < _time.length) {
-                balanceP[_from] = sub(balanceP[_from], _value[i]);
-                lockTime[_to].length = lockNum[_to]+1;
-                lockValue[_to].length = lockNum[_to]+1;
-                lockTime[_to][lockNum[_to]] = add(now, _time[i]);
-                lockValue[_to][lockNum[_to]] = _value[i];
-
-                /* emit custom timelock event */
-                emit TransferredLocked(_from, _to, lockTime[_to][lockNum[_to]], lockValue[_to][lockNum[_to]]);
-
-                /* emit standard transfer event */
-                emit Transfer(_from, _to, lockValue[_to][lockNum[_to]]);
-                lockNum[_to]++;
-                i++;
-            }
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /* standard ERC20 compliant transferFrom method */
-    function transferFrom(address _from, address _to, uint256 _value) public validAddress(_from) validAddress(_to) returns (bool success) {
-        if (lockNum[_from] > 0) calcUnlock(_from);
-        if (balanceP[_from] >= _value && _value > 0) {
-            allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
-            balanceP[_from] = sub(balanceP[_from], _value);
-            balanceP[_to] = add(balanceP[_to], _value);
-            emit Transfer(_from, _to, _value);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /* standard ERC20 compliant approve method */
-    function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool success) {
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-
-        if (lockNum[msg.sender] > 0) calcUnlock(msg.sender);
-        allowance[msg.sender][_spender] = _value;
+    function approve(address _spender, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    /* safety method against ether transfer */
-    function () public payable {
-        revert();
+    function allowance(address _owner, address _spender) public view returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+
+}
+
+contract Whitelist {
+
+    mapping(address => bool) public whitelist;
+    mapping(address => bool) operators;
+    address authority;
+
+    constructor(address _authority) {
+        authority = _authority;
+        operators[_authority] = true;
+    }
+    
+    function add(address _address) public {
+        require(operators[msg.sender]);
+        whitelist[_address] = true;
+    }
+
+    function remove(address _address) public {
+        require(operators[msg.sender]);
+        whitelist[_address] = false;
+    }
+
+    function addOperator(address _address) public {
+        require(authority == msg.sender);
+        operators[_address] = true;
+    }
+
+    function removeOperator(address _address) public {
+        require(authority == msg.sender);
+        operators[_address] = false;
+    }
+}
+
+
+contract Token is ERC20 {
+
+    //some ERC20 definitions
+    string public constant name = "Array.io Token";
+    string public constant symbol = "eRAY";
+    uint8 public constant decimals = 18;
+
+    //these are settings, i.e. the values set by the initiator at the beginning of each token generation round
+    uint public tgrSettingsAmount; //how much is needed for current round goals. It doesn't depend on how much total funds is contributed, rather than on how much has the project received.
+    uint public tgrSettingsMinimalContribution; 
+    uint public tgrSettingsPartContributor;
+    uint public tgrSettingsPartProject;
+    uint public tgrSettingsPartFounders;
+    uint public tgrSettingsBlocksPerStage;
+    uint public tgrSettingsPartContributorIncreasePerStage;
+    uint public tgrSettingsMaxStages;
+
+    //these are properties, i.e. some valuable variables which are changed automatically in the process of execution of this smart contract
+    uint public tgrStartBlock; //current token generation round initial block number
+    uint public tgrNumber; //how many rounds has been started. That means it equals the oridnal number of current active round starting from 1
+    uint public tgrAmountCollected; //total amount of funds received by PROJECT
+    uint public tgrContributedAmount; //total contributed amount for current round
+
+    address public projectWallet;
+    address public foundersWallet;
+    address constant public burnAddress = address(0);
+    mapping (address => uint) public invBalances;
+    uint public totalInvSupply;
+    Whitelist public whitelist;
+
+
+    modifier isTgrLive(){
+        require(tgrLive());
+        _;
+    }
+
+    modifier isNotTgrLive(){
+        require(!tgrLive());
+        _;
+    }
+
+    event Burn(address indexed _owner,  uint _value);
+    event TGRStarted(uint tgrSettingsAmount,
+                     uint tgrSettingsMinimalContribution,
+                     uint tgrSettingsPartContributor,
+                     uint tgrSettingsPartProject, 
+                     uint tgrSettingsPartFounders, 
+                     uint tgrSettingsBlocksPerStage, 
+                     uint tgrSettingsPartContributorIncreasePerStage,
+                     uint tgrSettingsMaxStages,
+                     uint blockNumber,
+                     uint tgrNumber); 
+
+    event TGRFinished(uint blockNumber, uint amountCollected);
+
+
+    /// @dev Constructor
+    /// @param _projectWallet Wallet of project
+    /// @param _foundersWallet Wallet of founders
+    constructor(address _projectWallet, address _foundersWallet) public {
+        projectWallet = _projectWallet;
+        foundersWallet = _foundersWallet;
+    }
+
+    /// @dev Fallback function allows to buy tokens
+    function () public payable isTgrLive isNotFrozenOnly noAnyReentrancy {
+        require(whitelist.whitelist(msg.sender)); //checking if sender is allowed to send Ether
+        require(tgrAmountCollected < tgrSettingsAmount); //checking if target amount is not achieved
+        require(msg.value >= tgrSettingsMinimalContribution); 
+
+        uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
+        require(stage < tgrSettingsMaxStages); //checking if max stage is not reached
+
+        //if the value sent is bigger than remaining amount to achieve the target, the difference is refunded
+        uint etherToRefund = 0;
+        uint etherContributed = msg.value;
+
+        uint currentPartContributor = tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage));
+
+        uint allStakes = currentPartContributor.add(tgrSettingsPartProject).add(tgrSettingsPartFounders);
+        uint remainsToContribute = (tgrSettingsAmount.sub(tgrAmountCollected)).mul(allStakes).div(tgrSettingsPartProject);
+
+        if ((tgrSettingsAmount.sub(tgrAmountCollected)).mul(allStakes) % tgrSettingsPartProject != 0) {
+            remainsToContribute = remainsToContribute + allStakes;
+        }
+
+        if (remainsToContribute < msg.value) {
+            etherToRefund = msg.value.sub(remainsToContribute);
+            etherContributed = remainsToContribute;
+        }
+
+        uint tokensProject = etherContributed.mul(tgrSettingsPartProject).div(allStakes);
+        uint tokensFounders = etherContributed.mul(tgrSettingsPartFounders).div(allStakes);
+        uint tokensContributor = etherContributed.sub(tokensProject).sub(tokensFounders);
+        
+        tgrAmountCollected = tgrAmountCollected.add(tokensProject);
+        tgrContributedAmount = tgrContributedAmount.add(etherContributed);
+        _mint(tokensProject, tokensFounders, tokensContributor);
+        msg.sender.transfer(etherToRefund);
+    }
+
+    /// @dev Start new tgr stage
+    function tgrSetLive() public only(projectWallet) isNotTgrLive isNotFrozenOnly {
+        tgrNumber +=1;
+        tgrStartBlock = block.number;
+        tgrAmountCollected = 0;
+        tgrContributedAmount = 0;
+        emit TGRStarted(tgrSettingsAmount,
+                     tgrSettingsMinimalContribution,
+                     tgrSettingsPartContributor,
+                     tgrSettingsPartProject, 
+                     tgrSettingsPartFounders, 
+                     tgrSettingsBlocksPerStage, 
+                     tgrSettingsPartContributorIncreasePerStage,
+                     tgrSettingsMaxStages,
+                     block.number,
+                     tgrNumber); 
+    }
+
+    function tgrSetFinished() public only(projectWallet) isTgrLive isNotFrozenOnly {
+        emit TGRFinished(block.number, tgrAmountCollected); 
+        tgrStartBlock = 0;
+    }
+
+    /// @dev Burn tokens to burnAddress from msg.sender wallet
+    /// @param _amount Amount of tokens
+    function burn(uint _amount) public isNotFrozenOnly noAnyReentrancy returns(bool _success) {
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[burnAddress] = balances[burnAddress].add(_amount);
+        totalSupply = totalSupply.sub(_amount);
+        msg.sender.transfer(_amount);
+        emit Transfer(msg.sender, burnAddress, _amount);
+        emit Burn(burnAddress, _amount);
+        return true;
+    }
+
+    function transfer(address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
+        require(_to != address(0));
+        require(_to != address(this));
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /// @dev _foundersWallet Wallet of founders
+    /// @param dests array of addresses 
+    /// @param values array amount of tokens to transfer    
+    function multiTransfer(address[] dests, uint[] values) public isNotFrozenOnly returns(uint) {
+        uint i = 0;
+        while (i < dests.length) {
+           transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return i;
+    }
+    
+    /// @dev Allows to users withdraw eth in frozen stage 
+    function withdrawFrozen() public isFrozenOnly noAnyReentrancy {
+        uint amountWithdraw = totalSupply.mul(invBalances[msg.sender]).div(totalInvSupply);
+        // fix possible rounding errors for last withdrawal:
+        if (amountWithdraw > address(this).balance) {
+            amountWithdraw = address(this).balance;
+        }
+        invBalances[msg.sender] = 0;
+        msg.sender.transfer(amountWithdraw);
+    }
+
+    function setWhitelist(address _address) public only(projectWallet) isNotFrozenOnly returns (bool) {
+        whitelist = Whitelist(_address);
+    }
+
+    /// @dev Allows an owner to confirm a change settings request.
+    function executeSettingsChange(
+        uint amount, 
+        uint minimalContribution,
+        uint partContributor,
+        uint partProject, 
+        uint partFounders, 
+        uint blocksPerStage, 
+        uint partContributorIncreasePerStage,
+        uint maxStages
+    ) 
+    public
+    only(projectWallet)
+    isNotTgrLive 
+    isNotFrozenOnly
+    returns(bool success) 
+    {
+        tgrSettingsAmount = amount;
+        tgrSettingsMinimalContribution = minimalContribution;
+        tgrSettingsPartContributor = partContributor;
+        tgrSettingsPartProject = partProject;
+        tgrSettingsPartFounders = partFounders;
+        tgrSettingsBlocksPerStage = blocksPerStage;
+        tgrSettingsPartContributorIncreasePerStage = partContributorIncreasePerStage;
+        tgrSettingsMaxStages = maxStages;
+        return true;
+    }
+
+    /// @dev Allows an owner to confirm freezeng process
+    function setFreeze() public only(projectWallet) isNotFrozenOnly returns (bool) {
+        isFrozen = true;
+        return true;
+    }
+
+    function _mint(uint _tokensProject, uint _tokensFounders, uint _tokensContributor) internal {
+        balances[projectWallet] = balances[projectWallet].add(_tokensProject);
+        balances[foundersWallet] = balances[foundersWallet].add(_tokensFounders);
+        balances[msg.sender] = balances[msg.sender].add(_tokensContributor);
+
+        invBalances[msg.sender] = invBalances[msg.sender].add(_tokensContributor).add(_tokensFounders).add(_tokensProject);
+        totalInvSupply = totalInvSupply.add(_tokensContributor).add(_tokensFounders).add(_tokensProject);
+        totalSupply = totalSupply.add(_tokensProject).add(_tokensFounders).add(_tokensContributor);
+
+        emit Transfer(0x0, msg.sender, _tokensContributor);
+        emit Transfer(0x0, projectWallet, _tokensProject);
+        emit Transfer(0x0, foundersWallet, _tokensFounders);
+    }
+
+
+    //Status of tgr is initially defined by the start block of the tgr, if it's zero then tgr is not live
+    function tgrLive() view public returns(bool) {
+        if (tgrStartBlock == 0) {
+            return false;
+        }
+        uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
+        if (stage < tgrSettingsMaxStages) {
+            if (tgrAmountCollected >= tgrSettingsAmount){
+                return false;
+            } else { 
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    //These functions are used to show information at the website.
+    //-1 shows that information is not accurate, for example numbers of blocks left is nonsense when the stage is not
+    //active. This way is easier handle than throwing errors.
+
+    /// @dev Amount of blocks left to the end of this stage of TGR 
+    function tgrStageBlockLeft() public view returns(int) {
+        if (tgrLive()) {
+            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
+            return int(tgrStartBlock.add((stage+1).mul(tgrSettingsBlocksPerStage)).sub(block.number));
+        } else {
+            return -1;
+        }
+    }
+
+    function tgrCurrentPartContributor() public view returns(int) {
+        if (tgrLive()) {
+            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
+            return int(tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage)));
+        } else {
+            return -1;
+        }
+    }
+
+    function tgrNextPartContributor() public view returns(int) {
+        if (tgrLive()) {
+            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage).add(1);        
+            return int(tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage)));
+        } else {
+            return -1;
+        }
+    }
+
+    //Keep in mind that internally stage count is started from 0 while user receives it incremented, i.e. starting from 1
+    function tgrCurrentStage() public view returns(int) {
+        if (tgrLive()) {
+            return int(block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage).add(1));        
+        } else {
+            return -1;
+        }
     }
 
 }
