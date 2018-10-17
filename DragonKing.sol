@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0xa03b5ea89ede664ccb3b4a49c5b25f6a4658e174
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x6ee4d5d2dec16454b53c6697b6a5f672935a765f
 */
 /**
  * Note for the truffle testversion:
@@ -19,14 +19,8 @@
   * @author: Julia Altenried, Yuriy Kashnikov
   * */
 
-pragma solidity ^ 0.4 .17;
+pragma solidity ^0.4.17;
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -88,6 +82,7 @@ contract DragonKing is mortal {
 		uint8 characterType;
 		uint128 value;
 		address owner;
+		uint64 purchaseTimestamp;
 	}
 
 	/** array holding ids of the curret characters*/
@@ -135,20 +130,20 @@ contract DragonKing is mortal {
 	uint8 public fightFactor;
 
 	/** the teleport token contract used to send knights to the game scene */
-	Token teleportToken;
+	Token public teleportToken;
 	/** the price for teleportation*/
 	uint public teleportPrice;
 	/** the neverdue token contract used to purchase protection from eruptions and fights */
-	Token neverdieToken;
+	Token public neverdieToken;
 	/** the price for protection */
 	uint public protectionPrice;
 	/** tells the number of times a character is protected */
 	mapping(uint32 => uint8) public protection;
 
 	/** the SKL token contract **/
-	Token sklToken;
+	Token public sklToken;
 	/** the XP token contract **/
-	Token xperToken;
+	Token public xperToken;
 
 	// EVENTS
 
@@ -187,7 +182,7 @@ contract DragonKing is mortal {
 			costs.push(uint128(balloonsCosts[j]) * 1 finney);
 			values.push(costs[balloonsIndex + j] - costs[balloonsIndex + j] / 100 * fee);
 		}
-		eruptionThreshold = uint(eruptionThresholdInHours) * 60 * 60; // convert to seconds
+		eruptionThreshold = uint256(eruptionThresholdInHours) * 60 * 60; // convert to seconds
 		percentageToKill = percentageOfCharactersToKill;
 		maxCharacters = 600;
 		nextId = 1;
@@ -205,6 +200,7 @@ contract DragonKing is mortal {
 	 * @param characterType the type of the character
 	 */
 	function addCharacters(uint8 characterType) payable public {
+		require(tx.origin == msg.sender);
 		uint16 amount = uint16(msg.value / costs[characterType]);
 		uint16 nchars = numCharacters;
 		if (characterType >= costs.length || msg.value < costs[characterType] || nchars + amount > maxCharacters) revert();
@@ -216,7 +212,7 @@ contract DragonKing is mortal {
 				oldest = nid;
 			for (uint8 i = 0; i < amount; i++) {
 				addCharacter(nid + i, nchars + i);
-				characters[nid + i] = Character(characterType, values[characterType], msg.sender);
+				characters[nid + i] = Character(characterType, values[characterType], msg.sender, uint64(now));
 			}
 			numCharactersXType[characterType] += amount;
 			numCharacters += amount;
@@ -224,7 +220,7 @@ contract DragonKing is mortal {
 		else {
 			// to enter game knights should be teleported later
 			for (uint8 j = 0; j < amount; j++) {
-				characters[nid + j] = Character(characterType, values[characterType], msg.sender);
+				characters[nid + j] = Character(characterType, values[characterType], msg.sender, uint64(now));
 			}
 		}
 		nextId = nid + amount;
@@ -256,9 +252,14 @@ contract DragonKing is mortal {
 		uint playerBalance;
 		uint16 nchars = numCharacters;
 		for (uint16 i = 0; i < nchars; i++) {
-			if (characters[ids[i]].owner == msg.sender && characters[ids[i]].characterType < 2*numDragonTypes) {
+			if (characters[ids[i]].owner == msg.sender 
+					&& characters[ids[i]].purchaseTimestamp + 1 days < now
+					&& characters[ids[i]].characterType < 2*numDragonTypes) {
 				//first delete all characters at the end of the array
-				while (nchars > 0 && characters[ids[nchars - 1]].owner == msg.sender && characters[ids[nchars - 1]].characterType < 2*numDragonTypes) {
+				while (nchars > 0 
+						&& characters[ids[nchars - 1]].owner == msg.sender 
+						&& characters[ids[nchars - 1]].purchaseTimestamp + 1 days < now
+						&& characters[ids[nchars - 1]].characterType < 2*numDragonTypes) {
 					nchars--;
 					lastId = ids[nchars];
 					numCharactersXType[characters[lastId].characterType]--;
@@ -306,6 +307,7 @@ contract DragonKing is mortal {
 	 * */
 
 	function triggerVolcanoEruption() public {
+	    require(tx.origin == msg.sender);
 		require(now >= lastEruptionTimestamp + eruptionThreshold);
 		require(numCharacters>0);
 		lastEruptionTimestamp = now;
@@ -346,6 +348,7 @@ contract DragonKing is mortal {
 	 *						In case it's unknown or incorrect, the index is looked up in the array.
 	 * */
 	function fight(uint32 knightID, uint16 knightIndex) public {
+		require(tx.origin == msg.sender);
 		if (knightID != ids[knightIndex])
 			knightIndex = getCharacterIndex(knightID);
 		Character storage knight = characters[knightID];
@@ -378,6 +381,7 @@ contract DragonKing is mortal {
 				base_probability += uint16((100 * knight.value) / dragon.value / fightFactor);
 		}
   
+		cooldown[knightID] = now;
 		if (dice >= base_probability) {
 			// dragon won
 			value = hitCharacter(knightIndex, numCharacters);
@@ -393,7 +397,6 @@ contract DragonKing is mortal {
 				numCharacters--;
 			}
 			knight.value += value;
-			cooldown[knightID] = now;
 			if (oldest == 0) findOldest();
 			NewFight(knightID, dragonID, value, base_probability, dice);
 		}
@@ -540,8 +543,10 @@ contract DragonKing is mortal {
 	 * @param characterId the id of the character
 	 * */
 	function sellCharacter(uint32 characterId) public {
+		require(tx.origin == msg.sender);
 		require(msg.sender == characters[characterId].owner);
 		require(characters[characterId].characterType < 2*numDragonTypes);
+		require(characters[characterId].purchaseTimestamp + 1 days < now);
 		uint128 val = characters[characterId].value;
 		numCharacters--;
 		replaceCharacter(getCharacterIndex(characterId), numCharacters);
