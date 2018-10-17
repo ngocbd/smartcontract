@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x6e5ace49d0e051936fcbe63e192445c808fcd490
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x32c08c8047d2d9114445ef72055c87173b5ca955
 */
 pragma solidity ^0.4.24;
 
@@ -669,12 +669,12 @@ contract TaskRegister is Upgradable, VanityLib {
     }
 
     function setServiceFee(uint256 _serviceFee) public onlyOwner {
-        require(_serviceFee <= 20000); // 2% of reward
+        require(_serviceFee < 20000); // 2% of reward
         serviceFee = _serviceFee;
     }
 
     function setReferrerFee(uint256 _referrerFee) public onlyOwner {
-        require(_referrerFee <= 500000); // 50% of serviceFee
+        require(_referrerFee < 50000); // 50% of serviceFee
         referrerFee = _referrerFee;
     }
 
@@ -685,8 +685,9 @@ contract TaskRegister is Upgradable, VanityLib {
         // Migrate some vars
         nextTaskId = TaskRegister(upgradableState.prevVersion).nextTaskId();
         totalReward = TaskRegister(upgradableState.prevVersion).totalReward();
-        serviceFee = TaskRegister(upgradableState.prevVersion).serviceFee();
-        referrerFee = TaskRegister(upgradableState.prevVersion).referrerFee();
+        //TODO: uncomment for the next version
+        //serviceFee = TaskRegister(upgradableState.prevVersion).serviceFee();
+        //referrerFee = TaskRegister(upgradableState.prevVersion).referrerFee();
         
         uint index = tasks.length;
         uint tasksCount = TaskRegister(upgradableState.prevVersion).tasksCount();
