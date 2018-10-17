@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x324b50caa2b95df219e78e016a3014e9b70ef5a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x52083b1a21a5abc422b1b0bce5c43ca86ef74cd1
 */
 pragma solidity ^0.4.24;
 
@@ -37,7 +37,7 @@ contract F3Devents {
         uint256 airDropPot
     );
 
-    // fired whenever theres a withdraw
+	// fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -128,20 +128,21 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x18A586F55DA3C95Fe1bD79A4E54F9a37987b688A);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xee83e20C6AEab2284685Efe0B5ffb250bE5480bf);
+
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "FOMO Fast";
-    string constant public symbol = "Fast";
-    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
-    uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 1 hours;                // max length a round timer can be
+    string constant public name = "FOMO Short";
+    string constant public symbol = "SHORT";
+    uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
+    uint256 private rndGap_ = 1 seconds;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 5000 hours;                // round timer starts at this
+    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds (SUBSTRACTS) this much to the timer
+    uint256 constant private rndMax_ = 5000 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -174,13 +175,13 @@ contract FoMo3Dshort is modularShort {
     constructor()
         public
     {
-        // Team allocation structures
+		// Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-        // Team allocation percentages
+		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
@@ -194,7 +195,7 @@ contract FoMo3Dshort is modularShort {
         potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
         potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
         potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-    }
+	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -526,10 +527,10 @@ contract FoMo3Dshort is modularShort {
             F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-            round_[_rID].ended = true;
+			round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-            // get their earnings
+			// get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -809,7 +810,7 @@ contract FoMo3Dshort is modularShort {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-     * @return player round eth
+	 * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -866,7 +867,7 @@ contract FoMo3Dshort is modularShort {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-                round_[_rID].ended = true;
+			    round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -958,13 +959,13 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = managePlayer(_pID, _eventData_);
 
         // early round eth limiter
-        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
-        {
-            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
-            uint256 _refund = _eth.sub(_availableLimit);
-            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
-            _eth = _availableLimit;
-        }
+        //    if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
+        //    {
+        //        uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+        //        uint256 _refund = _eth.sub(_availableLimit);
+        //        plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
+        //        _eth = _availableLimit;
+        //    }
 
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000)
@@ -1055,7 +1056,7 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-            endTx(_pID, _team, _eth, _keys, _eventData_);
+		    endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1124,7 +1125,7 @@ contract FoMo3Dshort is modularShort {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-     * @dev receives name/player info from names contract
+	 * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1267,12 +1268,12 @@ contract FoMo3Dshort is modularShort {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-
+        
         admin.transfer(_com);
 
-        admin.transfer(_p3d.sub(_p3d / 2));
-
-        round_[_rID].pot = _pot.add(_p3d / 2);
+        //p3d straight to the pot
+        
+        round_[_rID].pot = _pot.add(_p3d);
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1325,15 +1326,18 @@ contract FoMo3Dshort is modularShort {
         // calculate time based on number of keys bought
         uint256 _newTime;
         if (_now > round_[_rID].end && round_[_rID].plyr == 0)
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(_now);
+            //_newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(_now);
+            _newTime = _now.sub(((_keys) / (1000000000000000000)).mul(rndInc_));
         else
-            _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
+            //_newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
+            _newTime = round_[_rID].end.sub(((_keys) / (1000000000000000000)).mul(rndInc_));
 
         // compare to max and set new end time
         if (_newTime < (rndMax_).add(_now))
             round_[_rID].end = _newTime;
         else
             round_[_rID].end = rndMax_.add(_now);
+            
     }
 
     /**
@@ -1405,10 +1409,9 @@ contract FoMo3Dshort is modularShort {
         if (_p3d > 0)
         {
             // deposit to divies contract
-            uint256 _potAmount = _p3d / 2;
-
-            admin.transfer(_p3d.sub(_potAmount));
-
+            uint256 _potAmount = _p3d;
+            
+            //p3d rewards straight to the pot enjoy
             round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
             // set up event data
