@@ -1,15 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HgcToken at 0xdc957c422026177afe24421fc5ac8b2fa0c38ac7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HgcToken at 0x7ff386aeabfb72a4339d5a1b3bf1a8d982c12bdf
 */
 pragma solidity ^0.4.16;
+//pragma experimental ABIEncoderV2;
 
 contract HgcToken {
 
-    string public name = "Happy Guess Chain Coin";
-    string public symbol = "HGCC";
+    string public name = "Hello Hello Coins";
+    string public symbol = "ZZZHHC";
     uint256 public decimals = 6;
 
-    uint256 constant initSupplyUnits = 2100000000000000;
+    uint256 constant initSupplyUnits = 21000000000000000;
 
     uint256 public totalSupply = 0;
     bool public stopped = false;
@@ -171,6 +172,10 @@ contract HgcToken {
     function accountOf() public constant returns (uint256 available, uint256 locked){
         Account storage account = accounts[msg.sender];
         return (account.available, account.frozen);
+    }
+
+    function kill() public isOwner {
+        selfdestruct(owner);
     }
 
 }
