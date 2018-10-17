@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x9fb2fd4bce3061b826bf1a0b53b737c6f3e0e586
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapperLockEth at 0x1294d23b74c103d0e6d9c8f98abe9383c7900735
 */
-pragma solidity ^0.4.22;
-
-
+pragma solidity 0.4.24;
 
 /**
  * @title ERC20Basic
@@ -16,52 +14,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -73,6 +25,27 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+/**ERC20OldBasic.sol
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ */
+contract ERC20OldBasic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public;
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Old is ERC20OldBasic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public;
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title SafeMath
@@ -120,6 +93,50 @@ library SafeMath {
   }
 }
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
 
 /**
  * @title Ownable
@@ -181,7 +198,7 @@ contract WrapperLockEth is BasicToken, Ownable {
     mapping (address => uint) public depositLock;
     mapping (address => uint256) public balances;
 
-    function WrapperLockEth(string _name, string _symbol, uint _decimals, address _transferProxy) {
+    function WrapperLockEth(string _name, string _symbol, uint _decimals, address _transferProxy) Ownable() {
         TRANSFER_PROXY = _transferProxy;
         name = _name;
         symbol = _symbol;
@@ -221,12 +238,21 @@ contract WrapperLockEth is BasicToken, Ownable {
         return true;
     }
 
+    function withdrawDifferentToken(address _token, bool _erc20old) public onlyOwner returns (bool) {
+        require(ERC20(_token).balanceOf(address(this)) > 0);
+        if (_erc20old) {
+            ERC20Old(_token).transfer(msg.sender, ERC20(_token).balanceOf(address(this)));
+        } else {
+            ERC20(_token).transfer(msg.sender, ERC20(_token).balanceOf(address(this)));
+        }
+        return true;
+    }
+
     function transfer(address _to, uint256 _value) public returns (bool) {
         return false;
     }
 
     function transferFrom(address _from, address _to, uint _value) public {
-        require(_to == owner || _from == owner);
         assert(msg.sender == TRANSFER_PROXY);
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
