@@ -1,7 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x9fa668f5e5572ea04db6eff1a62eb39ff7fb809e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleMarket at 0x5a6fc364c0232299fcb7c533b9964ae8d41d7b72
 */
 pragma solidity ^0.4.24;
+
+pragma solidity ^0.4.24;
+
+pragma solidity ^0.4.20;
 
 contract CutieCoreInterface
 {
@@ -404,7 +408,7 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         _removeAuction(_cutieId);
 
         // Transfer proceeds to seller (if there are any!)
-        if (price > 0 && seller != address(coreContract)) {
+        if (price > 0) {
             uint128 fee = _computeFee(price);
             uint128 sellerValue = price - fee;
 
@@ -559,7 +563,7 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
         return uint128(uint256(priceWei) * ethPerToken / 1 ether);
     }
 
-    function getCutieId(bytes _extraData) internal returns (uint40)
+    function getCutieId(bytes _extraData) pure internal returns (uint40)
     {
         return
             uint40(_extraData[0]) +
@@ -599,14 +603,16 @@ contract Market is MarketInterface, Pausable, TokenRecipientInterface
 
         _removeAuction(cutieId);
 
-        // Transfer proceeds to seller (if there are any!)
-        if (priceInTokens > 0) {
+        require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
+
+        if (seller != address(coreContract))
+        {
             uint128 fee = _computeFee(priceInTokens);
             uint128 sellerValue = priceInTokens - fee;
 
-            require(tokenContract.transferFrom(_sender, address(this), priceInTokens));
             tokenContract.transfer(seller, sellerValue);
         }
+
         emit AuctionSuccessfulForToken(cutieId, priceWei, _sender, priceInTokens, _tokenContract);
         _transfer(_sender, cutieId);
     }
