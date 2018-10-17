@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinderHyper at 0x00e3ea0019005cba812824d95814d7133ed616b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinderHyper at 0xf3139bda757ec81d70c50093f195889a66991410
 */
 pragma solidity ^0.4.8;
 
@@ -16,8 +16,8 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-// FinderHyper
-// YOU get a FinderHyper, and YOU get a FinderHyper, and YOU get a FinderHyper!
+// penispenispenispenis
+// YOU get a penis, and YOU get a penis, and YOU get a penis!
 contract FinderHyper is ERC20Interface {
     string public constant symbol = "FH";
     string public constant name = "Finder Hyper";
@@ -31,12 +31,12 @@ contract FinderHyper is ERC20Interface {
     mapping(address => uint256) balances;
     mapping(address => bool) initialized;
 
-    // FinderHyper accepts request to tip-touch another FinderHyper
+    // Penis accepts request to tip-touch another Penis
     mapping(address => mapping (address => uint256)) allowed;
 
     function FinderHyper() {
         initialized[msg.sender] = true;
-        balances[msg.sender] = _airdropAmount * 19000000 - _cutoff;
+        balances[msg.sender] = _airdropAmount * 1900000000 - _cutoff;
         _totalSupply = balances[msg.sender];
     }
 
@@ -49,12 +49,12 @@ contract FinderHyper is ERC20Interface {
         return getBalance(msg.sender);
     }
 
-    // What is the length of a particular FinderHyper?
+    // What is the length of a particular Penis?
     function balanceOf(address _address) constant returns (uint256) {
         return getBalance(_address);
     }
 
-    // Tenderly remove hand from FinderHyper and place on another FinderHyper
+    // Tenderly remove hand from Penis and place on another Penis
     function transfer(address _to, uint256 _amount) returns (bool success) {
         initialize(msg.sender);
 
@@ -77,10 +77,10 @@ contract FinderHyper is ERC20Interface {
         }
     }
 
-    // Perform the inevitable actions which cause release of that which each FinderHyper
-    // is built to deliver. In EtherFinderHyperLand there are only FinderHyperes, so this 
-    // allows the transmission of one FinderHyper's payload (or partial payload but that
-    // is not as much fun) INTO another FinderHyper. This causes the FinderHyperae to change 
+    // Perform the inevitable actions which cause release of that which each Penis
+    // is built to deliver. In EtherPenisLand there are only Penises, so this 
+    // allows the transmission of one Penis's payload (or partial payload but that
+    // is not as much fun) INTO another Penis. This causes the Penisae to change 
     // form such that all may see the glory they each represent. Erections.
     function transferFrom(address _from, address _to, uint256 _amount) returns (bool success) {
         initialize(_from);
@@ -106,7 +106,7 @@ contract FinderHyper is ERC20Interface {
         }
     }
 
-    // Allow splooger to cause a payload release from your FinderHyper, multiple times, up to 
+    // Allow splooger to cause a payload release from your Penis, multiple times, up to 
     // the point at which no further release is possible..
     function approve(address _spender, uint256 _amount) returns (bool success) {
         allowed[msg.sender][_spender] = _amount;
