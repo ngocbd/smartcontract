@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CareerChainToken at 0x1ecbb185f0d00e2078b690276d0376198e81eda0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CareerChainToken at 0x770d9a45d6ed34562e1e1ec3e35670e481ea3c8c
 */
 pragma solidity ^0.4.21;
 
@@ -383,9 +383,9 @@ contract BurnableToken is BasicToken {
 }
 
 
-//CCH is a capped token with a max supply of 145249999 tokenSupply
+//CCH is a capped token with a max supply of 75250000 tokenSupply
 //It is a burnable token as well
-contract CareerChainToken is CappedToken(145249999000000000000000000), BurnableToken  {
+contract CareerChainToken is CappedToken(75250000000000000000000000), BurnableToken  {
     string public name = "CareerChain Token";
     string public symbol = "CCH";
     uint8 public decimals = 18;
