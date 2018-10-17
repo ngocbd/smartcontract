@@ -1,180 +1,193 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitway at 0x5afee136283f5adc22545ed191decfc2ba2eac33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitway at 0xc2dd4a8d1bb716c89404953ab41a5b366ab183f9
 */
-pragma solidity ^0.4.21;
-
-contract ERC20 {
-    function totalSupply() public constant returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function allowance(address owner, address spender) public view returns (uint256);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
+pragma solidity ^0.4.24;
+// ----------------------------------------------------------------------------
+// 'Bitway' 'ERC20 Token'
+// 
+// Name        : Bitway
+// Symbol      : BTWX
+// Max supply  : 21m
+// Decimals    : 18
+//
+// Bitway "BTWX"
+// ----------------------------------------------------------------------------
+//
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        require(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
+    function add(uint a, uint b) internal pure returns (uint c) {
+        c = a + b;
         require(c >= a);
-        return c;
+    }
+    function sub(uint a, uint b) internal pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function mul(uint a, uint b) internal pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function div(uint a, uint b) internal pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
+// ----------------------------------------------------------------------------
+// ERC20 Token Standard
+// ----------------------------------------------------------------------------
+contract ERC20 {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name, decimals and totalSupply
+// ----------------------------------------------------------------------------
 contract Bitway is ERC20 {
-
-    using SafeMath for uint256;
     
-    string public constant name = "Bitway";
-    string public constant symbol = "BTWN";
-    uint256 public constant maxSupply = 21 * million * multiplier;
-    uint256 public constant RATE = 1000;
-    uint256 public constant decimals = 18;
-    uint256 constant multiplier = 10 ** decimals;
-    uint256 constant million = 10 ** 6;
-    uint256 constant preSupply = 1 * million * multiplier;
-    uint256 constant softCap = 2 * million * multiplier;
-    uint256 constant bonusMiddleCriteria = 2 ether;
-    uint256 constant bonusHighCriteria = 10 ether;
-    uint256 constant stageTotal = 3;
+    using SafeMath for uint;
 
-    uint256[stageTotal] targetSupply = [
-        1 * million * multiplier + preSupply,
-        10 * million * multiplier + preSupply,
-        20 * million * multiplier + preSupply
-    ];
-
-    uint8[stageTotal * 3] bonus = [
-        30, 40, 50,
-        20, 30, 40,
-        10, 20, 30
+    string public name = "Bitway";
+    string public symbol = "BTWX";
+    uint public totalSupply = 0;
+    uint8 public decimals = 18;
+    uint public RATE = 1000;
+    
+    uint multiplier = 10 ** uint(decimals);
+    uint million = 10 ** 6;
+    uint millionTokens = 1 * million * multiplier;
+    
+    uint constant stageTotal = 5;
+    uint stage = 0;
+    uint [stageTotal] targetSupply = [
+         1 * millionTokens,
+         2 * millionTokens,
+         5 * millionTokens,
+         10 * millionTokens,
+         21 * millionTokens
     ];
     
-    uint256 public totalSupply = 0;
-    uint256 stage = 0;
     address public owner;
-    bool public paused = true;
-
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowed;
-
+    bool public completed = true;
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+    
+    constructor() public {
+    owner = msg.sender;
+    supplyTokens(millionTokens);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Payable token creation
+    // ------------------------------------------------------------------------
     function () public payable {
-        createCoins();
+        createTokens();
     }
-
-    function Bitway() public {
-        owner = msg.sender;
-        mineCoins(preSupply);
-    }
-
-    function currentStage() public constant returns (uint256) {
+    
+    // ------------------------------------------------------------------------
+    // Returns currentStage
+    // ------------------------------------------------------------------------
+    function currentStage() public constant returns (uint) {
         return stage + 1;
     }
-
-    function softCapReached() public constant returns (bool) {
-        return totalSupply >= softCap;
-    }
-
-    function hardCapReached() public constant returns (bool) {
+    
+    // ------------------------------------------------------------------------
+    // Returns maxSupplyReached True / False
+    // ------------------------------------------------------------------------
+    function maxSupplyReached() public constant returns (bool) {
         return stage >= stageTotal;
     }
-
-    function createCoins() public payable {
-        require(msg.value > 0);
-        require(!paused);
-        require(totalSupply < maxSupply);
-        mineCoins(msg.value.mul(RATE + bonusPercent() * RATE / 100));
+    
+    // ------------------------------------------------------------------------
+    // Token creation
+    // ------------------------------------------------------------------------
+    function createTokens() public payable {
+        require(!completed);
+        supplyTokens(msg.value.mul((15 - stage) * RATE / 10)); 
         owner.transfer(msg.value);
     }
-
-    function setPause(bool _paused) public {
+    
+    // ------------------------------------------------------------------------
+    // Complete token sale
+    // ------------------------------------------------------------------------
+    function setComplete(bool _completed) public {
         require(msg.sender == owner);
-        paused = _paused;
+        completed = _completed;
     }
-
-    function totalSupply() public constant returns (uint256) {
+    
+    // ------------------------------------------------------------------------
+    // Check totalSupply
+    // ------------------------------------------------------------------------
+    function totalSupply() public view returns (uint) {
         return totalSupply;
     }
 
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner];
+    // ------------------------------------------------------------------------
+    // Get the token balance for account `tokenOwner`
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public view returns (uint) {
+        return balances[tokenOwner];
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to `to` account
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(allowed[_from][msg.sender] >= _value);
-        require(balances[_from] >= _value);
-        require(_value > 0);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens` from the token owner's account
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+    // ------------------------------------------------------------------------
+    // Transfer `tokens` from the `from` account to the `to` account
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
+        emit Transfer(from, to, tokens);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public view returns (uint remaining) {
+        return allowed[tokenOwner][spender];
     }
-
-    function mineCoins(uint256 coins) internal {
-        require(!hardCapReached());
-        balances[msg.sender] = balances[msg.sender].add(coins);
-        totalSupply = totalSupply.add(coins);
-        if (totalSupply >= targetSupply[stage]) {
-            stage = stage.add(1);
-        }
-    }
-
-    function bonusPercent() internal constant returns (uint8) {
-        if (msg.value > bonusHighCriteria) {
-            return bonus[stage * stageTotal + 2];
-        } else if (msg.value > bonusMiddleCriteria) {
-            return bonus[stage * stageTotal + 1];
-        } else {
-            return bonus[stage * stageTotal];
-        }
-    }
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    // ------------------------------------------------------------------------
+    // Create tokens and supply to msg.sender balances
+    // ------------------------------------------------------------------------
+    function supplyTokens(uint tokens) private {
+        require(!maxSupplyReached());
+        balances[msg.sender] = balances[msg.sender].add(tokens);
+        totalSupply = totalSupply.add(tokens);
+        if (totalSupply >= targetSupply[stage]) {
+            stage += 1;
+        }
+        emit Transfer(address(0), msg.sender, tokens);
+    }
 
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
