@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x93a5418bae71c255b38d429266d165fe448c6130
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xcc74b05c7fdfa8c8329e90c0fd390a39847c541d
 */
 pragma solidity ^0.4.19;
 
+// Wolf Crypto pooling contract
 // written by @iamdefinitelyahuman
 
 library SafeMath {
-
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
