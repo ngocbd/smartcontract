@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Halo3DShrimpFarmer at 0x293ed09bfc80b93cdf5a64306aaedcfad3c64955
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Halo3DShrimpFarmer at 0x632d63a51dce16e5874fd957e57f31463ffd3926
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -10,11 +10,11 @@ contract ERC20Interface {
 
 contract Halo3D {
 
-    function buy(address) public payable returns(uint256);
+   
     function transfer(address, uint256) public returns(bool);
-    function myTokens() public view returns(uint256);
-    function myDividends(bool) public view returns(uint256);
-    function reinvest() public;
+    function balanceOf() public view returns(uint256);
+  
+   
 }
 
 /**
@@ -87,11 +87,11 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
         require(!_isContract(_from));
         require(_value >= 1 finney); // 0.001 H3D token
 
-        uint256 halo3DBalance = tokenContract.myTokens();
+        uint256 halo3DBalance = tokenContract.balanceOf();
 
         uint256 eggsBought=calculateEggBuy(_value, SafeMath.sub(halo3DBalance, _value));
         eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
-        reinvest();
+   
         tokenContract.transfer(ceoAddress, devFee(_value));
         claimedEggs[_from]=SafeMath.add(claimedEggs[_from],eggsBought);
 
@@ -124,7 +124,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        reinvest();
+     
         tokenContract.transfer(ceoAddress, fee);
         tokenContract.transfer(msg.sender, SafeMath.sub(eggValue,fee));
     }
@@ -140,11 +140,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
     // Reinvest Halo3D Shrimp Farm dividends
     // All the dividends this contract makes will be used to grow token fund for players
     // of the Halo3D Schrimp Farm
-    function reinvest() public {
-       if(tokenContract.myDividends(true) > 1) {
-         tokenContract.reinvest();
-       }
-    }
+ 
 
     //magic trade balancing algorithm
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
@@ -154,7 +150,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
 
     // Calculate trade to sell eggs
     function calculateEggSell(uint256 eggs) public view returns(uint256){
-        return calculateTrade(eggs,marketEggs, tokenContract.myTokens());
+        return calculateTrade(eggs,marketEggs, tokenContract.balanceOf());
     }
 
     // Calculate trade to buy eggs
@@ -164,7 +160,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
 
     // Calculate eggs to buy simple
     function calculateEggBuySimple(uint256 eth) public view returns(uint256){
-        return calculateEggBuy(eth, tokenContract.myTokens());
+        return calculateEggBuy(eth, tokenContract.balanceOf());
     }
 
     // Calculate dev fee in game
@@ -189,13 +185,11 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
     }
 
     // Collect information about doge farm dividents amount
-    function getContractDividends() public view returns(uint256) {
-      return tokenContract.myDividends(true); // + this.balance;
-    }
+
 
     // Get tokens balance of the doge farm
     function getBalance() public view returns(uint256){
-        return tokenContract.myTokens();
+        return tokenContract.balanceOf();
     }
 
     // Check transaction coming from the contract or not
