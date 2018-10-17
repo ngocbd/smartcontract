@@ -1,64 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xc63cbeebbfdd435d6d2c8eb42bf912e16976f79d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x7b71f14883f12b8ebce1f51beaa055eba4c56bf1
 */
-/* solium-disable security/no-block-members */
-
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.17;
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @title ERC20
+ * @dev ERC20 interface
  */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract ERC20 {
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
+contract Controlled {
+    /// @notice The address of the controller is the only address that can call
+    ///  a function with this modifier
+    modifier onlyController { require(msg.sender == controller); _; }
 
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
+    address public controller;
 
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
+    function Controlled() public { controller = msg.sender;}
+
+    /// @notice Changes the controller of the contract
+    /// @param _newController The new controller of the contract
+    function changeController(address _newController) public onlyController {
+        controller = _newController;
+    }
 }
 
 /**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ * @title MiniMe interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    require(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    require(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    require(token.approve(spender, value));
-  }
+contract ERC20MiniMe is ERC20, Controlled {
+    function approveAndCall(address _spender, uint256 _amount, bytes _extraData) public returns (bool);
+    function totalSupply() public constant returns (uint);
+    function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint);
+    function totalSupplyAt(uint _blockNumber) public constant returns(uint);
+    function createCloneToken(string _cloneTokenName, uint8 _cloneDecimalUnits, string _cloneTokenSymbol, uint _snapshotBlock, bool _transfersEnabled) public returns(address);
+    function generateTokens(address _owner, uint _amount) public returns (bool);
+    function destroyTokens(address _owner, uint _amount)  public returns (bool);
+    function enableTransfers(bool _transfersEnabled) public;
+    function isContract(address _addr) constant internal returns(bool);
+    function claimTokens(address _token) public;
+    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+    event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
 }
-
 
 /**
  * @title Ownable
@@ -69,20 +61,17 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  constructor() public {
+  function Ownable() {
     owner = msg.sender;
   }
+
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -92,23 +81,17 @@ contract Ownable {
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
 }
 
 /**
@@ -116,57 +99,39 @@ contract Ownable {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+    return c;
   }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-
 /**
- * @title TokenVesting
+ * @title Etheal TokenVesting for Advisors
  * @dev A token holder contract that can release its token balance gradually like a
  * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
  * owner.
  */
 contract TokenVesting is Ownable {
   using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
 
   event Released(uint256 amount);
   event Revoked();
@@ -192,15 +157,7 @@ contract TokenVesting is Ownable {
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  constructor(
-    address _beneficiary,
-    uint256 _start,
-    uint256 _cliff,
-    uint256 _duration,
-    bool _revocable
-  )
-    public
-  {
+  function TokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) {
     require(_beneficiary != address(0));
     require(_cliff <= _duration);
 
@@ -215,24 +172,24 @@ contract TokenVesting is Ownable {
    * @notice Transfers vested tokens to beneficiary.
    * @param token ERC20 token which is being vested
    */
-  function release(ERC20Basic token) public {
+  function release(ERC20MiniMe token) public {
     uint256 unreleased = releasableAmount(token);
 
     require(unreleased > 0);
 
     released[token] = released[token].add(unreleased);
 
-    token.safeTransfer(beneficiary, unreleased);
+    require(token.transfer(beneficiary, unreleased));
 
-    emit Released(unreleased);
+    Released(unreleased);
   }
 
   /**
    * @notice Allows the owner to revoke the vesting. Tokens already vested
    * remain in the contract, the rest are returned to the owner.
-   * @param token ERC20 token which is being vested
+   * @param token ERC20MiniMe token which is being vested
    */
-  function revoke(ERC20Basic token) public onlyOwner {
+  function revoke(ERC20MiniMe token) public onlyOwner {
     require(revocable);
     require(!revoked[token]);
 
@@ -243,33 +200,33 @@ contract TokenVesting is Ownable {
 
     revoked[token] = true;
 
-    token.safeTransfer(owner, refund);
+    require(token.transfer(owner, refund));
 
-    emit Revoked();
+    Revoked();
   }
 
   /**
    * @dev Calculates the amount that has already vested but hasn't been released yet.
-   * @param token ERC20 token which is being vested
+   * @param token ERC20MiniMe token which is being vested
    */
-  function releasableAmount(ERC20Basic token) public view returns (uint256) {
+  function releasableAmount(ERC20MiniMe token) public constant returns (uint256) {
     return vestedAmount(token).sub(released[token]);
   }
 
   /**
    * @dev Calculates the amount that has already vested.
-   * @param token ERC20 token which is being vested
+   * @param token ERC20MiniMe token which is being vested
    */
-  function vestedAmount(ERC20Basic token) public view returns (uint256) {
+  function vestedAmount(ERC20MiniMe token) public constant returns (uint256) {
     uint256 currentBalance = token.balanceOf(this);
     uint256 totalBalance = currentBalance.add(released[token]);
 
-    if (block.timestamp < cliff) {
+    if (now < cliff) {
       return 0;
-    } else if (block.timestamp >= start.add(duration) || revoked[token]) {
+    } else if (now >= start.add(duration) || revoked[token]) {
       return totalBalance;
     } else {
-      return totalBalance.mul(block.timestamp.sub(start)).div(duration);
+      return totalBalance.mul(now.sub(start)).div(duration);
     }
   }
 }
