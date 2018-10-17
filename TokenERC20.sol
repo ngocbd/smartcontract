@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x10b3880739801a38e99361c560f5e73862114d0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xd62097bfd175f44b4d075833540a372abd641573
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
-    string public name;         //dongyi global USD 
+    string public name;         //dongyi global RMB 
     string public symbol;
     uint8 public decimals = 18;  
     uint256 public totalSupply;  
