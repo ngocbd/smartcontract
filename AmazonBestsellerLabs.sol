@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmazonBestsellerLabs at 0x5842edf155b7820be0ecf177c13c385a6d735b6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AmazonBestsellerLabs at 0x2229f0c5746339959a1903c9b9040e70fd7d1500
 */
 /*
 This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
@@ -13,7 +13,7 @@ Machine-based, rapid creation of many tokens would not necessarily need these ex
 3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
 
 .*/
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.24;
 
 /**
 
@@ -39,7 +39,7 @@ library SafeMath {
 
     // benefit is lost if 'b' is also tested.
 
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+   
 
     if (a == 0) {
 
@@ -159,8 +159,8 @@ contract StandardToken is Token {
         //Replace the if with this one instead.
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
+            balances[msg.sender] =  balances[msg.sender].sub(_value) ;
+            balances[_to] = balances[_to].add(_value) ;
             Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
@@ -170,9 +170,9 @@ contract StandardToken is Token {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
+            balances[_to] = balances[_to].add(_value);
+            balances[_from] = balances[_from].sub(_value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
             Transfer(_from, _to, _value);
             return true;
         } else { return false; }
@@ -214,10 +214,10 @@ contract AmazonBestsellerLabs is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
+    string public name;                   
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'ABL1.0';       //Just an arbitrary versioning scheme.
+    string public symbol;                 //An identifier
+    string public version = 'ABL1.1';       //Just an arbitrary versioning scheme.
 
     function AmazonBestsellerLabs(
         uint256 _initialAmount,
