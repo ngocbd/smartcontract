@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zinoder at 0xbaf801c1838cb6a83efabaa61958aa86cedc2b6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zinoder at 0x893fe46aaeeb837b69425e32b75c36482c6e629c
 */
 pragma solidity ^0.4.23;
 
@@ -107,7 +107,7 @@ contract Zinoder is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function
     // which means the following function name has to match the contract name declared above
-    function EtherXeum() {
+    function Zinoder() {
         balances[msg.sender] = 600000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 600000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Zinoder";                                   // Set the name for display purposes (CHANGE THIS)
