@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CRYPTOZOLToken at 0x719A0C7762F374088d2967ffcE414385FdA0FD23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CRYPTOZOLToken at 0x516f49a1a2087d481b73abe69f50d6e663228cca
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'CRYPTOZOL' token contract
 //
-// Deployed to :  0xf65D4573250e7795cA6B2F478487B0dCEC3E3cD1
+// Deployed to :  0x9254ab18462437F517De179806d83Aa5c9A27031
 // Symbol      : ZOL
 // Name        : CRYPTOZOL Token
 // Total supply: 3000000000
@@ -120,8 +120,8 @@ contract CRYPTOZOLToken is ERC20Interface, Owned, SafeMath {
         name = "CRYPTOZOL Token";
         decimals = 18;
         _totalSupply = 3000000000000000000000000000;
-        balances[0xf65D4573250e7795cA6B2F478487B0dCEC3E3cD1] = _totalSupply;
-        Transfer(address(0), 0xf65D4573250e7795cA6B2F478487B0dCEC3E3cD1, _totalSupply);
+        balances[0x9254ab18462437F517De179806d83Aa5c9A27031] = _totalSupply;
+        Transfer(address(0), 0x9254ab18462437F517De179806d83Aa5c9A27031, _totalSupply);
     }
 
 
