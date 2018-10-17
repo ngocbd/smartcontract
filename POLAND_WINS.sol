@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POLAND_WINS at 0x8ec392732d1c1792276129149826b291f7afd9b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POLAND_WINS at 0xb2531f407dae0bd9b5312a0456539f97dfa33c61
 */
 pragma solidity 		^0.4.21	;						
 									
@@ -8,7 +8,7 @@ contract	POLAND_WINS				{
 	mapping (address => uint256) public balanceOf;								
 									
 	string	public		name =	"	POLAND_WINS		"	;
-	string	public		symbol =	"	POLWI		"	;
+	string	public		symbol =	"	NIGWI		"	;
 	uint8	public		decimals =		18			;
 									
 	uint256 public totalSupply =		819626165099184000000000000					;	
