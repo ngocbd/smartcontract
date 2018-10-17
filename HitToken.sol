@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HitToken at 0xf0acd56b420563a2ed2a875c5b7011dbfa4026f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HitToken at 0xe15d6bD97391A97a538Fbb4eAAE8FcF76949d9CC
 */
 pragma solidity 0.4.24;
 
@@ -732,12 +732,12 @@ contract HitToken is Lock {
         if(_value <= mainFundBalance){
             super.transfer(_to,_value);
             fundLock(_to,_value);
-            mainFundBalance = mainFundBalance.sub(_value);
+            mainFundBalance.sub(_value);
         }
     }
 
      /**
-      * @dev Issue the token 
+      * @dev Issues the token 
      */
      function issue() public onlyOwner  returns (uint){
          //Only one time 
