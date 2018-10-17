@@ -1,435 +1,438 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x03a82e40049bcab41f6207a91134f244a56b850c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb6aea65e014ede0d88707ac3ecc243d6de25b812
 */
-//This file contains an eRAY token contract along with some other accompanying contracts
-//Generally speaking, the difference between plain ERC20 token is in way of generating token via prescribed TGR (Token Generation Rounds)
-//and possibility to burn token to receive contributed Ether back
+pragma solidity ^0.4.18;
 
-// Authors: Alexander Shevtsov <randomlogin76@gmail.com>
-//          Vladimir Bobrov <v@decenturygroup.com>
-//          vladiuz1 <vs@array.io>
-// License: see the repository file
-// Last updated: 16 August 2018
-pragma solidity ^0.4.22;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
 
 }
 
 
-contract Base {
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
 
-    uint private bitlocks = 0;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
-    modifier noAnyReentrancy {
-        uint _locks = bitlocks;
-        require(_locks <= 0);
-        bitlocks = uint(-1);
-        _;
-        bitlocks = _locks;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
-    }
-
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length == size + 4);
-        _;
-    } 
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
 }
 
 
-contract ERC20 is Base {
-    
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    using SafeMath for uint;
-    uint public totalSupply;
-    bool public isFrozen = false; //it's not part of ERC20 specification, however it has to be here to place modifiers on usual ERC20 functions
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
 
-    modifier isNotFrozenOnly() {
-        require(!isFrozen);
-        _;
-    }
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    modifier isFrozenOnly(){
-        require(isFrozen);
-        _;
-    }
+  bool public mintingFinished = false;
 
-    function transferFrom(address _from, address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
 
-    function balanceOf(address _owner) public view returns (uint balance) {
-        return balances[_owner];
-    }
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
 
-    function approve_fixed(address _spender, uint _currentValue, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            emit Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
 
-    function approve(address _spender, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
 
-    function allowance(address _owner, address _spender) public view returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
+/**
+ * @title Capped token
+ * @dev Mintable token with a token cap.
+ */
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  function CappedToken(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
+  }
 
 }
 
-contract Whitelist {
 
-    mapping(address => bool) public whitelist;
-    mapping(address => bool) operators;
-    address authority;
 
-    constructor(address _authority) {
-        authority = _authority;
-        operators[_authority] = true;
-    }
-    
-    function add(address _address) public {
-        require(operators[msg.sender]);
-        whitelist[_address] = true;
-    }
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
 
-    function remove(address _address) public {
-        require(operators[msg.sender]);
-        whitelist[_address] = false;
-    }
+  event Burn(address indexed burner, uint256 value);
 
-    function addOperator(address _address) public {
-        require(authority == msg.sender);
-        operators[_address] = true;
-    }
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-    function removeOperator(address _address) public {
-        require(authority == msg.sender);
-        operators[_address] = false;
-    }
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+  }
 }
 
 
-contract Token is ERC20 {
 
-    //some ERC20 definitions
-    string public constant name = "Array.io Token";
-    string public constant symbol = "eRAY";
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract Token is StandardToken , MintableToken, CappedToken {
+
+    string public constant name = 'Poverty Eradication Coin';
+    string public constant symbol = 'PEC';
     uint8 public constant decimals = 18;
 
-    //these are settings, i.e. the values set by the initiator at the beginning of each token generation round
-    uint public tgrSettingsAmount; //how much is needed for current round goals. It doesn't depend on how much total funds is contributed, rather than on how much has the project received.
-    uint public tgrSettingsMinimalContribution; 
-    uint public tgrSettingsPartContributor;
-    uint public tgrSettingsPartProject;
-    uint public tgrSettingsPartFounders;
-    uint public tgrSettingsBlocksPerStage;
-    uint public tgrSettingsPartContributorIncreasePerStage;
-    uint public tgrSettingsMaxStages;
-
-    //these are properties, i.e. some valuable variables which are changed automatically in the process of execution of this smart contract
-    uint public tgrStartBlock; //current token generation round initial block number
-    uint public tgrNumber; //how many rounds has been started. That means it equals the oridnal number of current active round starting from 1
-    uint public tgrAmountCollected; //total amount of funds received by PROJECT
-    uint public tgrContributedAmount; //total contributed amount for current round
-
-    address public projectWallet;
-    address public foundersWallet;
-    address constant public burnAddress = address(0);
-    mapping (address => uint) public invBalances;
-    uint public totalInvSupply;
-    Whitelist public whitelist;
-
-
-    modifier isTgrLive(){
-        require(tgrLive());
-        _;
-    }
-
-    modifier isNotTgrLive(){
-        require(!tgrLive());
-        _;
-    }
-
-    event Burn(address indexed _owner,  uint _value);
-    event TGRStarted(uint tgrSettingsAmount,
-                     uint tgrSettingsMinimalContribution,
-                     uint tgrSettingsPartContributor,
-                     uint tgrSettingsPartProject, 
-                     uint tgrSettingsPartFounders, 
-                     uint tgrSettingsBlocksPerStage, 
-                     uint tgrSettingsPartContributorIncreasePerStage,
-                     uint tgrSettingsMaxStages,
-                     uint blockNumber,
-                     uint tgrNumber); 
-
-    event TGRFinished(uint blockNumber, uint amountCollected);
-
-
-    /// @dev Constructor
-    /// @param _projectWallet Wallet of project
-    /// @param _foundersWallet Wallet of founders
-    constructor(address _projectWallet, address _foundersWallet) public {
-        projectWallet = _projectWallet;
-        foundersWallet = _foundersWallet;
-    }
-
-    /// @dev Fallback function allows to buy tokens
-    function () public payable isTgrLive isNotFrozenOnly noAnyReentrancy {
-        require(whitelist.whitelist(msg.sender)); //checking if sender is allowed to send Ether
-        require(tgrAmountCollected < tgrSettingsAmount); //checking if target amount is not achieved
-        require(msg.value >= tgrSettingsMinimalContribution); 
-
-        uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
-        require(stage < tgrSettingsMaxStages); //checking if max stage is not reached
-
-        //if the value sent is bigger than remaining amount to achieve the target, the difference is refunded
-        uint etherToRefund = 0;
-        uint etherContributed = msg.value;
-
-        uint currentPartContributor = tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage));
-
-        uint allStakes = currentPartContributor.add(tgrSettingsPartProject).add(tgrSettingsPartFounders);
-        uint remainsToContribute = (tgrSettingsAmount.sub(tgrAmountCollected)).mul(allStakes).div(tgrSettingsPartProject);
-
-        if ((tgrSettingsAmount.sub(tgrAmountCollected)).mul(allStakes) % tgrSettingsPartProject != 0) {
-            remainsToContribute = remainsToContribute + allStakes;
-        }
-
-        if (remainsToContribute < msg.value) {
-            etherToRefund = msg.value.sub(remainsToContribute);
-            etherContributed = remainsToContribute;
-        }
-
-        uint tokensProject = etherContributed.mul(tgrSettingsPartProject).div(allStakes);
-        uint tokensFounders = etherContributed.mul(tgrSettingsPartFounders).div(allStakes);
-        uint tokensContributor = etherContributed.sub(tokensProject).sub(tokensFounders);
-        
-        tgrAmountCollected = tgrAmountCollected.add(tokensProject);
-        tgrContributedAmount = tgrContributedAmount.add(etherContributed);
-        _mint(tokensProject, tokensFounders, tokensContributor);
-        msg.sender.transfer(etherToRefund);
-    }
-
-    /// @dev Start new tgr stage
-    function tgrSetLive() public only(projectWallet) isNotTgrLive isNotFrozenOnly {
-        tgrNumber +=1;
-        tgrStartBlock = block.number;
-        tgrAmountCollected = 0;
-        tgrContributedAmount = 0;
-        emit TGRStarted(tgrSettingsAmount,
-                     tgrSettingsMinimalContribution,
-                     tgrSettingsPartContributor,
-                     tgrSettingsPartProject, 
-                     tgrSettingsPartFounders, 
-                     tgrSettingsBlocksPerStage, 
-                     tgrSettingsPartContributorIncreasePerStage,
-                     tgrSettingsMaxStages,
-                     block.number,
-                     tgrNumber); 
-    }
-
-    function tgrSetFinished() public only(projectWallet) isTgrLive isNotFrozenOnly {
-        emit TGRFinished(block.number, tgrAmountCollected); 
-        tgrStartBlock = 0;
-    }
-
-    /// @dev Burn tokens to burnAddress from msg.sender wallet
-    /// @param _amount Amount of tokens
-    function burn(uint _amount) public isNotFrozenOnly noAnyReentrancy returns(bool _success) {
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[burnAddress] = balances[burnAddress].add(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        msg.sender.transfer(_amount);
-        emit Transfer(msg.sender, burnAddress, _amount);
-        emit Burn(burnAddress, _amount);
-        return true;
-    }
-
-    function transfer(address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /// @dev _foundersWallet Wallet of founders
-    /// @param dests array of addresses 
-    /// @param values array amount of tokens to transfer    
-    function multiTransfer(address[] dests, uint[] values) public isNotFrozenOnly returns(uint) {
-        uint i = 0;
-        while (i < dests.length) {
-           transfer(dests[i], values[i]);
-           i += 1;
-        }
-        return i;
-    }
-    
-    /// @dev Allows to users withdraw eth in frozen stage 
-    function withdrawFrozen() public isFrozenOnly noAnyReentrancy {
-        uint amountWithdraw = totalSupply.mul(invBalances[msg.sender]).div(totalInvSupply);
-        // fix possible rounding errors for last withdrawal:
-        if (amountWithdraw > address(this).balance) {
-            amountWithdraw = address(this).balance;
-        }
-        invBalances[msg.sender] = 0;
-        msg.sender.transfer(amountWithdraw);
-    }
-
-    function setWhitelist(address _address) public only(projectWallet) isNotFrozenOnly returns (bool) {
-        whitelist = Whitelist(_address);
-    }
-
-    /// @dev Allows an owner to confirm a change settings request.
-    function executeSettingsChange(
-        uint amount, 
-        uint minimalContribution,
-        uint partContributor,
-        uint partProject, 
-        uint partFounders, 
-        uint blocksPerStage, 
-        uint partContributorIncreasePerStage,
-        uint maxStages
-    ) 
-    public
-    only(projectWallet)
-    isNotTgrLive 
-    isNotFrozenOnly
-    returns(bool success) 
+    function Token()
+        public
+        payable
+         CappedToken(100000000000*10**uint(decimals))
     {
-        tgrSettingsAmount = amount;
-        tgrSettingsMinimalContribution = minimalContribution;
-        tgrSettingsPartContributor = partContributor;
-        tgrSettingsPartProject = partProject;
-        tgrSettingsPartFounders = partFounders;
-        tgrSettingsBlocksPerStage = blocksPerStage;
-        tgrSettingsPartContributorIncreasePerStage = partContributorIncreasePerStage;
-        tgrSettingsMaxStages = maxStages;
-        return true;
-    }
+        
+                uint premintAmount = 30000000000*10**uint(decimals);
+                totalSupply_ = totalSupply_.add(premintAmount);
+                balances[msg.sender] = balances[msg.sender].add(premintAmount);
+                Transfer(address(0), msg.sender, premintAmount);
 
-    /// @dev Allows an owner to confirm freezeng process
-    function setFreeze() public only(projectWallet) isNotFrozenOnly returns (bool) {
-        isFrozen = true;
-        return true;
-    }
-
-    function _mint(uint _tokensProject, uint _tokensFounders, uint _tokensContributor) internal {
-        balances[projectWallet] = balances[projectWallet].add(_tokensProject);
-        balances[foundersWallet] = balances[foundersWallet].add(_tokensFounders);
-        balances[msg.sender] = balances[msg.sender].add(_tokensContributor);
-
-        invBalances[msg.sender] = invBalances[msg.sender].add(_tokensContributor).add(_tokensFounders).add(_tokensProject);
-        totalInvSupply = totalInvSupply.add(_tokensContributor).add(_tokensFounders).add(_tokensProject);
-        totalSupply = totalSupply.add(_tokensProject).add(_tokensFounders).add(_tokensContributor);
-
-        emit Transfer(0x0, msg.sender, _tokensContributor);
-        emit Transfer(0x0, projectWallet, _tokensProject);
-        emit Transfer(0x0, foundersWallet, _tokensFounders);
-    }
-
-
-    //Status of tgr is initially defined by the start block of the tgr, if it's zero then tgr is not live
-    function tgrLive() view public returns(bool) {
-        if (tgrStartBlock == 0) {
-            return false;
-        }
-        uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
-        if (stage < tgrSettingsMaxStages) {
-            if (tgrAmountCollected >= tgrSettingsAmount){
-                return false;
-            } else { 
-                return true;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    //These functions are used to show information at the website.
-    //-1 shows that information is not accurate, for example numbers of blocks left is nonsense when the stage is not
-    //active. This way is easier handle than throwing errors.
-
-    /// @dev Amount of blocks left to the end of this stage of TGR 
-    function tgrStageBlockLeft() public view returns(int) {
-        if (tgrLive()) {
-            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
-            return int(tgrStartBlock.add((stage+1).mul(tgrSettingsBlocksPerStage)).sub(block.number));
-        } else {
-            return -1;
-        }
-    }
-
-    function tgrCurrentPartContributor() public view returns(int) {
-        if (tgrLive()) {
-            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage);
-            return int(tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage)));
-        } else {
-            return -1;
-        }
-    }
-
-    function tgrNextPartContributor() public view returns(int) {
-        if (tgrLive()) {
-            uint stage = block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage).add(1);        
-            return int(tgrSettingsPartContributor.add(stage.mul(tgrSettingsPartContributorIncreasePerStage)));
-        } else {
-            return -1;
-        }
-    }
-
-    //Keep in mind that internally stage count is started from 0 while user receives it incremented, i.e. starting from 1
-    function tgrCurrentStage() public view returns(int) {
-        if (tgrLive()) {
-            return int(block.number.sub(tgrStartBlock).div(tgrSettingsBlocksPerStage).add(1));        
-        } else {
-            return -1;
-        }
+            
+        
     }
 
 }
