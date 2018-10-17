@@ -1,9 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xddc49dfefc8db2805aa792d04a97e4eb601ffcaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dlong at 0xfb0c78f6e1f9e2536c410ca529714921ef9fdc21
 */
 pragma solidity ^0.4.24;
 /**
- * cx mode of fomo3d
+ * @title -FoMo-3D v0.7.1
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /
+ *                            (__ /          (_/ (, /                                      /)™
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/   .--,-``-.
+ *========,---,.======================____==========================/   /     '.=======,---,====*
+ *      ,'  .' |                    ,'  , `.                       / ../        ;    .'  .' `\
+ *    ,---.'   |    ,---.        ,-+-,.' _ |    ,---.              \ ``\  .`-    ' ,---.'     \
+ *    |   |   .'   '   ,'\    ,-+-. ;   , ||   '   ,'\      ,---,.  \___\/   \   : |   |  .`\  |
+ *    :   :  :    /   /   |  ,--.'|'   |  ||  /   /   |   ,'  .' |       \   :   | :   : |  '  |
+ *    :   |  |-, .   ; ,. : |   |  ,', |  |, .   ; ,. : ,---.'   |       /  /   /  |   ' '  ;  :
+ *    |   :  ;/| '   | |: : |   | /  | |--'  '   | |: : |   |  .'        \  \   \  '   | ;  .  |
+ *    |   |   .' '   | .; : |   : |  | ,     '   | .; : :   |.'      ___ /   :   | |   | :  |  '
+ *    '   :  '   |   :    | |   : |  |/      |   :    | `---'       /   /\   /   : '   : | /  ;
+ *    |   |  |    \   \  /  |   | |`-'        \   \  /             / ,,/  ',-    . |   | '` ,/
+ *    |   :  \     `----'   |   ;/             `----'              \ ''\        ;  ;   :  .'
+ *====|   | ,'=============='---'==========(long version)===========\   \     .'===|   ,.'======*
+ *    `----'                                                         `--`-,,-'     '---'
+ *             ??????????????????   ??????????????????????????? ? ?????? ?????????? 
+ *             ? ??? ?? ??  ?????   ?   https://exitscam.me   ? ????? ??????? ? ??  
+ *             ????  ?  ?????? ???? ??????????????????????????? ????????????? ? ??? 
+ *   ??????????????????????????????????                     ????????????????????????????????
+ *   ????????  ????????? ?   ????????????????   ?????????????????????????   ????????????????
+ *   ????? ??  ? ??? ? ??? ?  ???? ????? ???? ? ???? ? ?? ????? ????  ??  ? ??? ? ????  ????
+ *   ??????????????? ?  ?    ????????????????   ???? ? ???????  ? ???????   ??? ? ? ????? ??
+ *   ?    ????????????           ?????????            ???????????              ??????????  ?
+ *   ?????? Inventor ????????????? Justo ?????????????? Sumpunk ???????????????? Mantso ????
+ *        ????????????           ?????????            ???????????              ??????????
+ *   ??????????????????????????????????????????????????????????? ???? ?????????????  ??????
+ *   ? Ambius, Aritz Cracker, Cryptoknight, Crypto McPump,     ?  ? ???????????????   ? ? ?
+ *   ? Capex, JogFera, The Shocker, Daok, Randazzz, PumpRabbi, ?  ? ? ?? ????? ????   ? ???
+ *   ? Kadaz, Incognito Jo, Lil Stronghands, Ninja Turtle,     ?????????????????????????????
+ *   ? Psaints, Satoshi, Vitalik, Nano 2nd, Bogdanoffs         Isaac Newton, Nikola Tesla, ? 
+ *   ? Le Comte De Saint Germain, Albert Einstein, Socrates, & all the volunteer moderator ?
+ *   ? & support staff, content, creators, autonomous agents, and indie devs for P3D.      ?
+ *   ?              Without your help, we wouldn't have the time to code this.             ?
+ *   ???????????????????????????????????????????????????????????????????????????????????????
+ * 
+ * This product is protected under license.  Any unauthorized copy, modification, or use without 
+ * express written consent from the creators is prohibited.
+ * 
+ * WARNING:  THIS PRODUCT IS HIGHLY ADDICTIVE.  IF YOU HAVE AN ADDICTIVE NATURE.  DO NOT PLAY.
  */
 
 //==============================================================================
@@ -44,7 +94,7 @@ contract F3Devents {
         uint256 airDropPot
     );
     
-	// fired whenever theres a withdraw
+    // fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -115,26 +165,11 @@ contract F3Devents {
         uint256 timeStamp
     );
     
-    // // received pot swap deposit
-    // event onPotSwapDeposit
-    // (
-    //     uint256 roundID,
-    //     uint256 amountAddedToPot
-    // );
-
-    event onRoundEnded1
+    // received pot swap deposit
+    event onPotSwapDeposit
     (
-        uint256 winrSeq,
-        uint256 winPID,
-        uint256 winVault
-    );
-
-    event onRoundEnded2
-    (
-        uint256 maxEthPID,
-        uint256 maxEthVault,
-        uint256 maxAffPID,
-        uint256 maxAffVault
+        uint256 roundID,
+        uint256 amountAddedToPot
     );
 }
 
@@ -142,31 +177,35 @@ contract F3Devents {
 //   _ _  _ _|_ _ _  __|_   _ _ _|_    _   .
 //  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
 //====================================|=========================================
-
+interface JIincInterfaceForForwarder {
+    function deposit(address _addr) external payable returns (bool);
+}
 contract modularLong is F3Devents {}
 
 contract FoMo3Dlong is modularLong {
     using SafeMath for *;
     using NameFilter for string;
     using F3DKeysCalcLong for uint256;
-	
-    //god of game
-    address constant private god = 0xe1B35fEBaB9Ff6da5b29C3A7A44eef06cD86B0f9;
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xf79341b38865310e1a00d7630bd1decc92a8f8b1);
+    
+    otherFoMo3D private otherF3D_;
+    DiviesInterface constant private Divies = DiviesInterface(0xb804dc1719852c036724944c7bbf7cb261609f88);
+    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xe5f55d966ef9b4d541b286dd5237209d7de9959f);
+    JIincForwarderInterface constant private otherF3DInc=JIincForwarderInterface(0x489da84a400bb7852de0ed986b733e771aebf648);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x58216fec6402978f53aab6b475fd68fd44cff8c6);
+    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0xdad91de8238386cacc3a797083aa14ffc855d2e5);
+
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    string constant public name = "FM3D Pyramid Selling Heihei~";
+    string constant public name = "FoMo3D Long Official";
     string constant public symbol = "F3D";
-    uint256 private rndExtra_ = 0 minutes;                     // length of the very first ICO 
-    uint256 private rndGap_ = 0 minutes;                       // length of ICO phase, set to 1 year for EOS.
+    uint256 private rndExtra_ = extSettings.getLongExtra();     // length of the very first ICO 
+    uint256 private rndGap_ = extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
-    uint256[3] private potToWinners_ = [30,15,10];              // pot of 55% to 3 winner, 30%->15%->10%    5% to next round
-    uint256 constant private potToMaxEth_ = 20;                 // 20% to max eth,
-    uint256 constant private potToMaxAff_ = 20;                 // 20% to max invite,
+   
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -187,7 +226,12 @@ contract FoMo3Dlong is modularLong {
 //****************
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-    uint256[3] private affPerLv_ = [20,10,5];  //affiliate's scale per level, parent 20%, pa's pa 10%, papapa 5%
+//****************
+// TEAM FEE DATA 
+//****************
+    mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
+    mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+   
 //==============================================================================
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
@@ -195,7 +239,26 @@ contract FoMo3Dlong is modularLong {
     constructor()
         public
     {
-        // 666
+        // Team allocation structures
+        // 0 = whales
+        // 1 = bears
+        // 2 = sneks
+        // 3 = bulls
+
+        // Team allocation percentages
+        // (F3D, P3D) + (Pot , Referrals, Community)
+            // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
+        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        
+        // how to split up the final pot based on which team was picked
+        // (F3D, P3D)
+        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
     }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
@@ -256,31 +319,6 @@ contract FoMo3Dlong is modularLong {
     }
     
     /**
-     * @dev determine player's affid
-     * @param _pID player's id
-     * @param _inAffID inviter's pid
-     * @return _affID player's real affid
-     */
-    function determineAffID(uint256 _pID, uint256 _inAffID) private returns(uint256){
-        // affiliate must not be self, and must have a name registered
-        if(plyr_[_pID].laff == 0 && 0 != _inAffID && _pID != _inAffID && plyr_[_inAffID].name != ''){
-            // update last affiliate 
-            plyr_[_pID].laff = _inAffID;
-
-            // _inAffID invite a new player, count it.
-            // update invite num of inviter for this round. if in round 0, add to round 1
-            uint256 _rID = (0 == rID_)?1:rID_;
-            plyrRnds_[_rID][_inAffID].affNum =  plyrRnds_[_rID][_inAffID].affNum.add(1);
-
-            //update max invite num pid of this round
-            if( plyrRnds_[_rID][round_[_rID].maxAffPID].affNum < plyrRnds_[_rID][_inAffID].affNum){
-                round_[_rID].maxAffPID = _inAffID;
-            }
-        }
-        return plyr_[_pID].laff;
-    }
-
-    /**
      * @dev converts all incoming ethereum to keys.
      * -functionhash- 0x8f38f309 (using ID for affiliate)
      * -functionhash- 0x98a0871d (using address for affiliate)
@@ -301,8 +339,18 @@ contract FoMo3Dlong is modularLong {
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // get real affid
-        _affCode = determineAffID(_pID,_affCode);
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == 0 || _affCode == _pID)
+        {
+            // use last stored affiliate code 
+            _affCode = plyr_[_pID].laff;
+            
+        // if affiliate code was given & its not the same as previously stored 
+        } else if (_affCode != plyr_[_pID].laff) {
+            // update last affiliate 
+            plyr_[_pID].laff = _affCode;
+        }
         
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -323,9 +371,27 @@ contract FoMo3Dlong is modularLong {
         
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
-
-        // get real affid
-        uint256 _affID = determineAffID(_pID,pIDxAddr_[_affCode]);
+        
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == address(0) || _affCode == msg.sender)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+        
+        // if affiliate code was given    
+        } else {
+            // get affiliate ID from aff Code 
+            _affID = pIDxAddr_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
         
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -347,8 +413,26 @@ contract FoMo3Dlong is modularLong {
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // get real affid
-        uint256 _affID = determineAffID(_pID,pIDxName_[_affCode]);
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == '' || _affCode == plyr_[_pID].name)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+        
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxName_[_affCode];
+            
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
         
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -378,9 +462,19 @@ contract FoMo3Dlong is modularLong {
         
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
-
-        // get real affid
-        _affCode = determineAffID(_pID,_affCode);
+        
+        // manage affiliate residuals
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == 0 || _affCode == _pID)
+        {
+            // use last stored affiliate code 
+            _affCode = plyr_[_pID].laff;
+            
+        // if affiliate code was given & its not the same as previously stored 
+        } else if (_affCode != plyr_[_pID].laff) {
+            // update last affiliate 
+            plyr_[_pID].laff = _affCode;
+        }
 
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -401,8 +495,26 @@ contract FoMo3Dlong is modularLong {
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // get real affid
-        uint256 _affID = determineAffID(_pID,pIDxAddr_[_affCode]);
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == address(0) || _affCode == msg.sender)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+        
+        // if affiliate code was given    
+        } else {
+            // get affiliate ID from aff Code 
+            _affID = pIDxAddr_[_affCode];
+            
+            // if affID is not the same as previously stored 
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
         
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -423,8 +535,26 @@ contract FoMo3Dlong is modularLong {
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // get real affid
-        uint256 _affID = determineAffID(_pID,pIDxName_[_affCode]);
+        // manage affiliate residuals
+        uint256 _affID;
+        // if no affiliate code was given or player tried to use their own, lolz
+        if (_affCode == '' || _affCode == plyr_[_pID].name)
+        {
+            // use last stored affiliate code
+            _affID = plyr_[_pID].laff;
+        
+        // if affiliate code was given
+        } else {
+            // get affiliate ID from aff Code
+            _affID = pIDxName_[_affCode];
+            
+            // if affID is not the same as previously stored
+            if (_affID != plyr_[_pID].laff)
+            {
+                // update last affiliate
+                plyr_[_pID].laff = _affID;
+            }
+        }
         
         // verify a valid team was selected
         _team = verifyTeam(_team);
@@ -461,10 +591,10 @@ contract FoMo3Dlong is modularLong {
             F3Ddatasets.EventReturns memory _eventData_;
             
             // end the round (distributes pot)
-			round_[_rID].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
             
-			// get their earnings
+            // get their earnings
             _eth = withdrawEarnings(_pID);
             
             // gib moni
@@ -653,7 +783,7 @@ contract FoMo3Dlong is modularLong {
                 return
                 (
                     (plyr_[_pID].win).add( ((round_[_rID].pot).mul(48)) / 100 ),
-                    (plyr_[_pID].gen),//.add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)   ),
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)   ),
                     plyr_[_pID].aff
                 );
             // if player is not the winner
@@ -661,7 +791,7 @@ contract FoMo3Dlong is modularLong {
                 return
                 (
                     plyr_[_pID].win,
-                    (plyr_[_pID].gen),//.add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)  ),
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)  ),
                     plyr_[_pID].aff
                 );
             }
@@ -685,7 +815,7 @@ contract FoMo3Dlong is modularLong {
         view
         returns(uint256)
     {
-        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(0)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
+        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit_[round_[_rID].team].gen)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
     }
     
     /**
@@ -734,35 +864,6 @@ contract FoMo3Dlong is modularLong {
     }
 
     /**
-     * @dev other round info. if player not set name, return null string
-     * @return max eth of round player name
-     * @return max eth of round
-     * @return max invite of round player name
-     * @return max invite of round
-     * @return last 1 name of buyer
-     * @return last 2 name of buyer
-     * @return last 3 name of buyer
-     */
-    function getCurrentRoundInfo2()
-        public
-        view
-        returns(bytes32, uint256, bytes32, uint256, bytes32, bytes32, bytes32)
-    {
-        // setup local rID
-        uint256 _rID = rID_;
-        return 
-        (
-            plyr_[round_[_rID].maxEthPID].name, //1
-            plyrRnds_[round_[_rID].maxEthPID][_rID].eth,  //2
-            plyr_[round_[_rID].maxAffPID].name, //3
-            plyrRnds_[round_[_rID].maxAffPID][_rID].affNum, //4
-            plyr_[round_[_rID].plyrs[0]].name,  //5
-            plyr_[round_[_rID].plyrs[1]].name,  //6
-            plyr_[round_[_rID].plyrs[2]].name   //7
-        );
-    }
-
-    /**
      * @dev returns player info based on address.  if no address is given, it will 
      * use msg.sender 
      * -functionhash- 0xee0b5d8b
@@ -773,13 +874,12 @@ contract FoMo3Dlong is modularLong {
      * @return winnings vault
      * @return general vault 
      * @return affiliate vault 
-	 * @return player round eth
-     * @return player's papa's name
+     * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public 
         view 
-        returns(uint256, bytes32, uint256, uint256, uint256, uint256, uint256, bytes32)
+        returns(uint256, bytes32, uint256, uint256, uint256, uint256, uint256)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -798,8 +898,7 @@ contract FoMo3Dlong is modularLong {
             plyr_[_pID].win,                    //3
             (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),       //4
             plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID][_rID].eth,          //6
-            plyr_[plyr_[_pID].laff].name        //7
+            plyrRnds_[_pID][_rID].eth           //6
         );
     }
 
@@ -832,7 +931,7 @@ contract FoMo3Dlong is modularLong {
             if (_now > round_[_rID].end && round_[_rID].ended == false) 
             {
                 // end the round (distributes pot) & start new round
-			    round_[_rID].ended = true;
+                round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
                 
                 // build event data
@@ -911,21 +1010,6 @@ contract FoMo3Dlong is modularLong {
             );
         }
     }
-
-    /**
-     * @dev update last multi pids who boungt key. pids able repeat
-     */
-    function updateLastBuyKeysPIDs(uint256 _rID, uint256 _lastPID)
-        private 
-    {
-        //move last pids
-        for(uint256 _i=potToWinners_.length-1; _i>=1; _i--){
-            round_[_rID].plyrs[_i] = round_[_rID].plyrs[_i - 1];
-        }
-        
-        //set lastPID to first of set
-        round_[_rID].plyrs[0] = _lastPID;
-    }
     
     /**
      * @dev this is the core logic for any buy/reload that happens while a round 
@@ -935,94 +1019,91 @@ contract FoMo3Dlong is modularLong {
         private
     {
         // if player is new to round
+       
         if (plyrRnds_[_pID][_rID].keys == 0)
             _eventData_ = managePlayer(_pID, _eventData_);
         
-        // // early round eth limiter 
-        // if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
-        // {
-        //     uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
-        //     uint256 _refund = _eth.sub(_availableLimit);
-        //     plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
-        //     _eth = _availableLimit;
-        // }
-        
+        // early round eth limiter 
+        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
+        {
+            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+            uint256 _refund = _eth.sub(_availableLimit);
+            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
+            _eth = _availableLimit;
+        }
+      
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000) 
         {
-            
+      
             // mint the new keys
             uint256 _keys = (round_[_rID].eth).keysRec(_eth);
             
             // if they bought at least 1 whole key
             if (_keys >= 1000000000000000000)
             {
-                updateTimer(_keys, _rID);
+            updateTimer(_keys, _rID);
 
-                // set new leaders is they cost eth >= 0.01
-                if(_eth > 10000000000000000){
-                    if (round_[_rID].plyr != _pID){
-                        round_[_rID].plyr = _pID;
-                    }
-                    //update last 3 player
-                    updateLastBuyKeysPIDs(_rID, _pID);
-                }
-                    
-                if (round_[_rID].team != _team){ round_[_rID].team = _team; } 
-                
-                // set the new leader bool to true
-                _eventData_.compressedData = _eventData_.compressedData + 100;
-            }
+            // set new leaders
+            if (round_[_rID].plyr != _pID)
+                round_[_rID].plyr = _pID;  
+            if (round_[_rID].team != _team)
+                round_[_rID].team = _team; 
             
+            // set the new leader bool to true
+            _eventData_.compressedData = _eventData_.compressedData + 100;
+        }
+          
             // manage airdrops
             if (_eth >= 100000000000000000)
             {
-                airDropTracker_++;
-                if (airdrop() == true)
+           
+            airDropTracker_++;
+            if (airdrop() == true)
+            {
+                // gib muni
+                uint256 _prize;
+                if (_eth >= 10000000000000000000)
                 {
-                    // gib muni
-                    uint256 _prize;
-                    if (_eth >= 10000000000000000000)
-                    {
-                        // calculate prize and give it to winner
-                        _prize = ((airDropPot_).mul(75)) / 100;
-                        plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                        
-                        // adjust airDropPot 
-                        airDropPot_ = (airDropPot_).sub(_prize);
-                        
-                        // let event know a tier 3 prize was won 
-                        _eventData_.compressedData += 300000000000000000000000000000000;
-                    } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
-                        // calculate prize and give it to winner
-                        _prize = ((airDropPot_).mul(50)) / 100;
-                        plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                        
-                        // adjust airDropPot 
-                        airDropPot_ = (airDropPot_).sub(_prize);
-                        
-                        // let event know a tier 2 prize was won 
-                        _eventData_.compressedData += 200000000000000000000000000000000;
-                    } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
-                        // calculate prize and give it to winner
-                        _prize = ((airDropPot_).mul(25)) / 100;
-                        plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                        
-                        // adjust airDropPot 
-                        airDropPot_ = (airDropPot_).sub(_prize);
-                        
-                        // let event know a tier 3 prize was won 
-                        _eventData_.compressedData += 300000000000000000000000000000000;
-                    }
-                    // set airdrop happened bool to true
-                    _eventData_.compressedData += 10000000000000000000000000000000;
-                    // let event know how much was won 
-                    _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(75)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
                     
-                    // reset air drop tracker
-                    airDropTracker_ = 0;
+                    // adjust airDropPot 
+                    airDropPot_ = (airDropPot_).sub(_prize);
+                    
+                    // let event know a tier 3 prize was won 
+                    _eventData_.compressedData += 300000000000000000000000000000000;
+                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(50)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+                    
+                    // adjust airDropPot 
+                    airDropPot_ = (airDropPot_).sub(_prize);
+                    
+                    // let event know a tier 2 prize was won 
+                    _eventData_.compressedData += 200000000000000000000000000000000;
+                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(25)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+                    
+                    // adjust airDropPot 
+                    airDropPot_ = (airDropPot_).sub(_prize);
+                    
+                    // let event know a tier 3 prize was won 
+                    _eventData_.compressedData += 300000000000000000000000000000000;
                 }
+                // set airdrop happened bool to true
+                _eventData_.compressedData += 10000000000000000000000000000000;
+                // let event know how much was won 
+                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
+                
+                // reset air drop tracker
+                airDropTracker_ = 0;
             }
+        }
     
             // store the air drop tracker number (number of buys since last airdrop)
             _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
@@ -1030,23 +1111,17 @@ contract FoMo3Dlong is modularLong {
             // update player 
             plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
             plyrRnds_[_pID][_rID].eth = _eth.add(plyrRnds_[_pID][_rID].eth);
-            
+          
             // update round
             round_[_rID].keys = _keys.add(round_[_rID].keys);
             round_[_rID].eth = _eth.add(round_[_rID].eth);
             rndTmEth_[_rID][_team] = _eth.add(rndTmEth_[_rID][_team]);
-
-            //update round of max eth player
-            if(0 == round_[_rID].maxEthPID || plyrRnds_[round_[_rID].maxEthPID][_rID].eth < plyrRnds_[_pID][_rID].eth){
-                round_[_rID].maxEthPID = _pID;
-            }
-    
             // distribute eth
             _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _team, _eventData_);
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
-            
+   
             // call end tx function to fire end tx event.
-		    endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1115,18 +1190,24 @@ contract FoMo3Dlong is modularLong {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-	 * @dev receives name/player info from names contract 
+     * @dev receives name/player info from names contract 
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
     {
         require (msg.sender == address(PlayerBook), "your not playerNames contract... hmmm..");
-        if (pIDxAddr_[_addr] != _pID){ pIDxAddr_[_addr] = _pID; }
-        if (pIDxName_[_name] != _pID){ pIDxName_[_name] = _pID; }
-        if (plyr_[_pID].addr != _addr){ plyr_[_pID].addr = _addr; }
-        if (plyr_[_pID].name != _name){ plyr_[_pID].name = _name; }
-        if (plyr_[_pID].laff != _laff){ determineAffID(_pID, _laff); }
-        if (plyrNames_[_pID][_name] == false){ plyrNames_[_pID][_name] = true; }
+        if (pIDxAddr_[_addr] != _pID)
+            pIDxAddr_[_addr] = _pID;
+        if (pIDxName_[_name] != _pID)
+            pIDxName_[_name] = _pID;
+        if (plyr_[_pID].addr != _addr)
+            plyr_[_pID].addr = _addr;
+        if (plyr_[_pID].name != _name)
+            plyr_[_pID].name = _name;
+        if (plyr_[_pID].laff != _laff)
+            plyr_[_pID].laff = _laff;
+        if (plyrNames_[_pID][_name] == false)
+            plyrNames_[_pID][_name] = true;
     }
     
     /**
@@ -1203,8 +1284,8 @@ contract FoMo3Dlong is modularLong {
         // if player has played a previous round, move their unmasked earnings
         // from that round to gen vault.
         if (plyr_[_pID].lrnd != 0)
-            
             updateGenVault(_pID, plyr_[_pID].lrnd);
+            
         // update player's last round played
         plyr_[_pID].lrnd = rID_;
             
@@ -1225,67 +1306,61 @@ contract FoMo3Dlong is modularLong {
         uint256 _rID = rID_;
         
         // grab our winning player and team id's
-        //uint256 _winPID = round_[_rID].plyr;
+        uint256 _winPID = round_[_rID].plyr;
         uint256 _winTID = round_[_rID].team;
-        uint256 _maxEthPID = round_[_rID].maxEthPID;
-        uint256 _maxAffPID = round_[_rID].maxAffPID;
-        if(0 == _maxAffPID){ _maxAffPID = 1; }
         
         // grab our pot amount
         uint256 _pot = round_[_rID].pot;
         
-        // calculate our winner, max buyer, max inviter share
-        // uint256 _win = (_pot.mul(potToWinner_)) / 100;
-        uint256 _maxEth = (_pot.mul(potToMaxEth_)) / 100;
-        uint256 _maxAff = (_pot.mul(potToMaxAff_)) / 100;
-        uint256 _res = _pot.sub(_win).sub(_maxEth);
+        // calculate our winner share, community rewards, gen share, 
+        // p3d share, and amount reserved for next pot 
+        uint256 _win = (_pot.mul(48)) / 100;
+        uint256 _com = (_pot / 50);
+        uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
+        uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
+        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
         
-        // // pay our winner
-        // plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
-        // pay for maxEth player
-        plyr_[_maxEthPID].win = _maxEth.add(plyr_[_maxEthPID].win);
-        // pay for maxAff player
-        plyr_[_maxAffPID].win = _maxAff.add(plyr_[_maxAffPID].win);
-
-        //deal multi winner, no.1 last, no.2 last, no.3 last...
-        for(uint256 _seq=0; _seq<potToWinners_.length; _seq++){
-            uint256 _win = _pot.mul(potToWinners_[_seq]) / 100;
-            uint256 _winPID = round_[_rID].plyrs[_seq];
-            if(0 == _winPID){
-               // invalid pid, set default pid:1
-               _winPID = 1;
-            }
-            
-            // pay our winner
-            plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
-            
-            // count res eth
-            _res = _res.sub(_win);
-             
-            // log it
-            emit F3Devents.onRoundEnded1(
-                _seq,
-                _winPID,
-                _win
-            );
+        // calculate ppt for round mask
+        uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
+        uint256 _dust = _gen.sub((_ppt.mul(round_[_rID].keys)) / 1000000000000000000);
+        if (_dust > 0)
+        {
+            _gen = _gen.sub(_dust);
+            _res = _res.add(_dust);
         }
-
-        //log once
-        emit F3Devents.onRoundEnded2(
-            _maxEthPID,
-            _maxEth,
-            _maxAffPID,
-            _maxAff
-        );
         
+        // pay our winner
+        plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
+        
+        // community rewards
+        
+        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _p3d.add(_com);
+            _com = 0;
+        }       
+        
+        // distribute gen portion to key holders
+        round_[_rID].mask = _ppt.add(round_[_rID].mask);
+        
+        // send share for p3d to divies
+        if (_p3d > 0)
+            Divies.deposit.value(_p3d)();
+            
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + (_winPID * 100000000000000000000000000) + (_winTID * 100000000000000000);
         _eventData_.winnerAddr = plyr_[_winPID].addr;
         _eventData_.winnerName = plyr_[_winPID].name;
         _eventData_.amountWon = _win;
-        _eventData_.genAmount = 0;
-        _eventData_.P3DAmount = 0;
+        _eventData_.genAmount = _gen;
+        _eventData_.P3DAmount = _p3d;
         _eventData_.newPot = _res;
         
         // start next round
@@ -1313,21 +1388,6 @@ contract FoMo3Dlong is modularLong {
             plyrRnds_[_pID][_rIDlast].mask = _earnings.add(plyrRnds_[_pID][_rIDlast].mask);
         }
     }
-
-    /**
-     * @dev calc real max time for spent time. maxtime make half per day
-     */
-    function getRealRndMaxTime(uint256 _rID)
-        public
-        returns(uint256)
-    {
-        uint256 _realRndMax = rndMax_;
-        uint256 _days = (now - round_[_rID].strt) / (1 days);
-        while(0 < _days --){
-            _realRndMax = _realRndMax / 2;
-        }
-        return (_realRndMax > 10 minutes) ? _realRndMax : 10 minutes;
-    }
     
     /**
      * @dev updates round timer based on number of whole keys bought.
@@ -1345,14 +1405,11 @@ contract FoMo3Dlong is modularLong {
         else
             _newTime = (((_keys) / (1000000000000000000)).mul(rndInc_)).add(round_[_rID].end);
         
-        //get real max time
-        uint256 _realRndMax = getRealRndMaxTime(_rID);
-
         // compare to max and set new end time
-        if (_newTime < (_realRndMax).add(_now))
+        if (_newTime < (rndMax_).add(_now))
             round_[_rID].end = _newTime;
         else
-            round_[_rID].end = _realRndMax.add(_now);
+            round_[_rID].end = rndMax_.add(_now);
     }
     
     /**
@@ -1388,46 +1445,64 @@ contract FoMo3Dlong is modularLong {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 5% out to community rewards
-        uint256 _com = _eth / 20;
+        // pay 2% out to community rewards
+        uint256 _com = _eth / 50;
+        uint256 _p3d;
+       
+        if (!address(Jekyll_Island_Inc).call.value(_com)(bytes4(keccak256("deposit()"))))
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _com;
+            _com = 0;
+        }
+      
+        
+        // pay 1% out to FoMo3D short
+        uint256 _long = _eth / 100;
+        //otherF3D_.potSwap.value(_long)();
+        address(otherF3DInc).call.value(_long)(bytes4(keccak256("deposit()")));
 
-        //community rewards and FoMo3D short all send to god
-        address(god).transfer(_com);
+        // distribute share to affiliate
+        uint256 _aff = _eth / 10;
         
         // decide what to do with affiliate share of fees
-        // uint256 _curAffID = _affID;
-        // use player's affid, not use param
-        uint256 _curAffID = plyr_[_pID].laff;
-        for(uint256 _i=0; _i< affPerLv_.length; _i++){
-            uint256 _aff =  _eth.mul(affPerLv_[_i]) / (100);
-
-            // affiliate must not be self, and must have a name registered
-            if (_curAffID == _pID || plyr_[_curAffID].name == '') {
-                //affID is not invalid. set default id: 1
-                _curAffID = 1;
-            }
-            plyr_[_curAffID].aff = _aff.add(plyr_[_curAffID].aff);
-            //log
-            emit F3Devents.onAffiliatePayout(_curAffID, plyr_[_curAffID].addr, plyr_[_curAffID].name, _rID, _pID, _aff, now);
-            //get affiliate's affiliate
-            _curAffID = plyr_[_curAffID].laff;
+        // affiliate must not be self, and must have a name registered
+        if (_affID != _pID && plyr_[_affID].name != '') {
+            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+        } else {
+            _p3d = _aff;
+        }
+        
+        // pay out p3d
+        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
+        if (_p3d > 0)
+        {
+            // deposit to divies contract
+            Divies.deposit.value(_p3d)();
+            
+            // set up event data
+            _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
         }
         
         return(_eventData_);
     }
     
-
-    // this function had a bug~
-    // function potSwap()
-    //     external
-    //     payable
-    // {
-    //     // setup local rID
-    //     uint256 _rID = rID_ + 1;
+    function potSwap()
+        external
+        payable
+    {
+        // setup local rID
+        uint256 _rID = rID_ + 1;
         
-    //     round_[_rID].pot = round_[_rID].pot.add(msg.value);
-    //     emit F3Devents.onPotSwapDeposit(_rID, msg.value);
-    // }
+        round_[_rID].pot = round_[_rID].pot.add(msg.value);
+        emit F3Devents.onPotSwapDeposit(_rID, msg.value);
+    }
     
     /**
      * @dev distributes eth based on fees to gen and pot
@@ -1436,18 +1511,18 @@ contract FoMo3Dlong is modularLong {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // calculate gen share, 40% of total
-        uint256 _gen = _eth.mul(40) / 100;
+        // calculate gen share
+        uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
         
-        // toss 0% into airdrop pot 
-        uint256 _air = 0; // (_eth / 100);
+        // toss 1% into airdrop pot 
+        uint256 _air = (_eth / 100);
         airDropPot_ = airDropPot_.add(_air);
         
-        // // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        // _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
-
+        // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
+        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+        
         // calculate pot 
-        uint256 _pot = (_eth.mul(20)) / 100; //_eth.sub(_gen);
+        uint256 _pot = _eth.sub(_gen);
         
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
@@ -1528,7 +1603,7 @@ contract FoMo3Dlong is modularLong {
     {
         _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
-        
+       
         emit F3Devents.onEndTx
         (
             _eventData_.compressedData,
@@ -1546,6 +1621,7 @@ contract FoMo3Dlong is modularLong {
             _eventData_.potAmount,
             airDropPot_
         );
+       
     }
 //==============================================================================
 //    (~ _  _    _._|_    .
@@ -1559,18 +1635,10 @@ contract FoMo3Dlong is modularLong {
         public
     {
         // only team just can activate 
-        // require(
-        //     msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
-        //     msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
-        //     msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
-        //     msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-		// 	msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
-        //     "only team just can activate"
-        // );
-        require(msg.sender == god, "only team just can activate");
+        require(msg.sender == 0x24e0162606d558ac113722adc6597b434089adb7,"only team just can activate");
 
-		// // make sure that its been linked.
-        // require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
+        // make sure that its been linked.
+        //require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
         
         // can only be ran once
         require(activated_ == false, "fomo3d already activated");
@@ -1579,29 +1647,27 @@ contract FoMo3Dlong is modularLong {
         activated_ = true;
         
         // lets start first round
-		rID_ = 1;
+        rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
         round_[1].end = now + rndInit_ + rndExtra_;
     }
-    // function setOtherFomo(address _otherF3D)
-    //     public
-    // {
-    //     // only team just can activate 
-    //     require(
-    //         msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C ||
-    //         msg.sender == 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D ||
-    //         msg.sender == 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53 ||
-    //         msg.sender == 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C ||
-	// 		msg.sender == 0xF39e044e1AB204460e06E87c6dca2c6319fC69E3,
-    //         "only team just can activate"
-    //     );
+    /*
+    function setOtherFomo(address _otherF3D)
+        public
+    {
+        // only team just can activate 
+        require(           
+            msg.sender == 0x24e0162606d558ac113722adc6597b434089adb7,
+            "only team just can activate"
+        );
 
-    //     // make sure that it HASNT yet been linked.
-    //     require(address(otherF3D_) == address(0), "silly dev, you already did that");
+        // make sure that it HASNT yet been linked.
+        require(address(otherF3D_) == address(0), "silly dev, you already did that");
         
-    //     // set up other fomo3d (fast or long) for pot swap
-    //     otherF3D_ = otherFoMo3D(_otherF3D);
-    // }
+        // set up other fomo3d (fast or long) for pot swap
+        otherF3D_ = otherFoMo3D(_otherF3D);
+    }
+    */
 }
 
 //==============================================================================
@@ -1653,10 +1719,9 @@ library F3Ddatasets {
         uint256 keys;   // keys
         uint256 mask;   // player mask 
         uint256 ico;    // ICO phase investment
-        uint256 affNum; // num of invite players in this round
     }
     struct Round {
-        uint256 plyr;  // pIDs of player in lead,
+        uint256 plyr;   // pID of player in lead
         uint256 team;   // tID of team in lead
         uint256 end;    // time ends/ended
         bool ended;     // has round end function been ran
@@ -1668,17 +1733,14 @@ library F3Ddatasets {
         uint256 ico;    // total eth sent in during ICO phase
         uint256 icoGen; // total eth for gen during ICO phase
         uint256 icoAvg; // average key price for ICO phase
-        uint256 maxEthPID;   // pid who buy max eth
-        uint256 maxAffPID;   // pid who invite max 
-        uint256[3] plyrs;   // pIDs of player in lead, the first is newest
     }
     struct TeamFee {
         uint256 gen;    // % of buy in thats paid to key holders of current round
-        // uint256 p3d;    // % of buy in thats paid to p3d holders
+        uint256 p3d;    // % of buy in thats paid to p3d holders
     }
     struct PotSplit {
         uint256 gen;    // % of pot thats paid to key holders of current round
-        // uint256 p3d;    // % of pot thats paid to p3d holders
+        uint256 p3d;    // % of pot thats paid to p3d holders
     }
 }
 
@@ -1747,9 +1809,9 @@ library F3DKeysCalcLong {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
-// interface otherFoMo3D {
-//     function potSwap() external payable;
-// }
+interface otherFoMo3D {
+    function potSwap() external payable;
+}
 
 interface F3DexternalSettingsInterface {
     function getFastGap() external returns(uint256);
@@ -1758,18 +1820,18 @@ interface F3DexternalSettingsInterface {
     function getLongExtra() external returns(uint256);
 }
 
-// interface DiviesInterface {
-//     function deposit() external payable;
-// }
+interface DiviesInterface {
+    function deposit() external payable;
+}
 
-// interface JIincForwarderInterface {
-//     function deposit() external payable returns(bool);
-//     function status() external view returns(address, address, bool);
-//     function startMigration(address _newCorpBank) external returns(bool);
-//     function cancelMigration() external returns(bool);
-//     function finishMigration() external returns(bool);
-//     function setup(address _firstCorpBank) external;
-// }
+interface JIincForwarderInterface {
+    function deposit() external payable returns(bool);
+    function status() external view returns(address, address, bool);
+    function startMigration(address _newCorpBank) external returns(bool);
+    function cancelMigration() external returns(bool);
+    function finishMigration() external returns(bool);
+    function setup(address _firstCorpBank) external;
+}
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
@@ -1782,6 +1844,29 @@ interface PlayerBookInterface {
     function registerNameXnameFromDapp(address _addr, bytes32 _name, bytes32 _affCode, bool _all) external payable returns(bool, uint256);
 }
 
+/**
+* @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___  
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
+*/
 
 library NameFilter {
     /**
