@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSGold at 0x75ef6bfe7010ab7615b223b1e0daaaefc5717809
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSGold at 0x1802fd8f8d49b38c709345f0723de14635cf63d1
 */
 pragma solidity ^0.4.24;
 
@@ -110,9 +110,9 @@ contract EOSGold is StandardToken { // CHANGE THIS. Update the contract name.
     function EOSGold () {
         balances[msg.sender] = 896149491000000000000000000;      
         totalSupply = 896149491000000000000000000;               
-        name = "EOS Gold";                                   
+        name = "EOSGold";                                   
         decimals = 18;                                        
-        symbol = "EOSG";                                       
+        symbol = "GEOS";                                       
         unitsOneEthCanBuy = 896149;                        
         fundsWallet = msg.sender;                             
     }
