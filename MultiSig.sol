@@ -1,10 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSig at 0x974f3327c53366d27979427e972875dabbed14de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSig at 0x2bd66db7fef6403bece86620ea43f5c9922eb679
 */
 pragma solidity 0.4.21;
 
 
 library SafeMath {
+    function mul(uint256 a, uint256 b) pure internal returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) pure internal returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
     function sub(uint256 a, uint256 b) pure internal returns (uint256) {
         assert(b <= a);
@@ -15,6 +25,22 @@ library SafeMath {
         uint256 c = a + b;
         assert(c >= a);
         return c;
+    }
+
+    function max64(uint64 a, uint64 b) pure internal returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) pure internal returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) pure internal returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) pure internal returns (uint256) {
+        return a < b ? a : b;
     }
 
 }
@@ -44,16 +70,16 @@ contract ReentrancyGuard {
 }
 
 /**
- * MultiSig is designed to hold funds of the ico. Account is controlled by three administrators. To trigger a payout
- * two out of three administrators will must agree on same amount of ether to be transferred. During the signing
- * process if one administrator sends different target address or amount of ether, process will abort and they
+ * MultiSig is designed to hold funds of the ico. Account is controlled by six administratos. To trigger a payout
+ * two out of six administrators will must agree on same amount of ethers to be transferred. During the signing
+ * process if one administrator sends different targetted address or amount of ethers, process will abort and they
  * need to start again.
- * Administrator can be replaced but two out of three must agree upon replacement of third administrator. Two
+ * Administrator can be replaced but two out of six must agree upon replacement of fourth administrator. Two
  * admins will send address of third administrator along with address of new one administrator. If a single one
  * sends different address the updating process will abort and they need to start again.
  */
 
-contract MultiSig is ReentrancyGuard {
+contract MultiSig is ReentrancyGuard{
 
     using SafeMath for uint256;
 
@@ -65,10 +91,10 @@ contract MultiSig is ReentrancyGuard {
     }
 
     // count and record signers with ethers they agree to transfer
-    Transaction private pending;
+    Transaction private  pending;
 
     // the number of administrator that must confirm the same operation before it is run.
-    uint256 public required = 2;
+    uint256 constant public required = 2;
 
     mapping(address => bool) private administrators;
 
@@ -84,6 +110,7 @@ contract MultiSig is ReentrancyGuard {
     // Administrator successfully signs a key update transaction
     event UpdateConfirmed(address indexed signer,address indexed newAddress,uint256 remainingConfirmations);
 
+
     // Administrator violated consensus
     event Violated(string action, address sender);
 
@@ -96,14 +123,17 @@ contract MultiSig is ReentrancyGuard {
 
     function MultiSig() public {
 
-        administrators[0xCDea686Bac6136E3B4D7136967dC3597f96fA24f] = true;
-        administrators[0xf964707c8fb25daf61aEeEF162A3816c2e8f25dD] = true;
         administrators[0xA45fb4e5A96D267c2BDc5efDD2E93a92b9516232] = true;
+        administrators[0x877994c4192184F18E24083Be0aA51BAA325FD9c] = true;
+        administrators[0x5Aa9E0727b57cF9aC354626A3Ea137317a30E636] = true;
+        administrators[0x8ee5De18c0b70Ccb7844768BAe07db6e208c7082] = true;
+        administrators[0x81e9b014d9cd8c5b76bb712cf03eae9a2669e765] = true;
+        administrators[0xed4c73ad76d90715d648797acd29a8529ed511a0] = true;
 
     }
 
     /**
-     * @dev  To trigger payout two out of three administrators call this
+     * @dev  To trigger payout three out of four administrators call this
      * function, funds will be transferred right after verification of
      * third signer call.
      * @param recipient The address of recipient
@@ -119,7 +149,7 @@ contract MultiSig is ReentrancyGuard {
         uint remaining;
 
         // Start of signing process, first signer will finalize inputs for remaining two
-        if (pending.confirmations == 0) {
+        if(pending.confirmations == 0){
 
             pending.signer[pending.confirmations] = msg.sender;
             pending.eth = amount;
@@ -131,13 +161,13 @@ contract MultiSig is ReentrancyGuard {
         }
 
         // Compare amount of wei with previous confirmtaion
-        if (pending.eth != amount) {
+        if(pending.eth != amount){
             transferViolated("Incorrect amount of wei passed");
             return;
         }
 
         // make sure signer is not trying to spam
-        if (msg.sender == pending.signer[0]) {
+        if(msg.sender == pending.signer[0]){
             transferViolated("Signer is spamming");
             return;
         }
@@ -147,30 +177,26 @@ contract MultiSig is ReentrancyGuard {
         remaining = required.sub(pending.confirmations);
 
         // make sure signer is not trying to spam
-        if (remaining == 0) {
-            
-            if (msg.sender == pending.signer[0]) {
+        if(remaining == 0){
+            if(msg.sender == pending.signer[0]){
                 transferViolated("One of signers is spamming");
                 return;
             }
-            
         }
 
         emit TransferConfirmed(msg.sender,amount,remaining);
 
-        // If two confirmation are done, trigger payout
-        if (pending.confirmations == 2) {
-            
-            if(recipient.send(amount)) {
+        // If three confirmation are done, trigger payout
+        if (pending.confirmations == 2){
+            if(recipient.send(amount)){
 
-                emit Transfer(pending.signer[0], pending.signer[1], recipient, amount, true);
+                emit Transfer(pending.signer[0],pending.signer[1], recipient,amount,true);
 
             } else {
 
-                emit Transfer(pending.signer[0], pending.signer[1], recipient, amount, false);
+                emit Transfer(pending.signer[0],pending.signer[1], recipient,amount,false);
 
             }
-            
             ResetTransferState();
         }
     }
@@ -197,11 +223,9 @@ contract MultiSig is ReentrancyGuard {
      * @dev Fallback function, receives value and emits a deposit event.
      */
     function() payable public {
-        // deposit ether
-        if (msg.value > 0){
+        // just being sent some cash?
+        if (msg.value > 0)
             emit Deposit(msg.sender, msg.value);
-        }
-
     }
 
     /**
@@ -214,7 +238,7 @@ contract MultiSig is ReentrancyGuard {
     }
 
     // Maintian state of administrator key update process
-    struct KeyUpdate {
+    struct KeyUpdate{
         address[2] signer;
         uint confirmations;
         address oldAddress;
@@ -231,17 +255,17 @@ contract MultiSig is ReentrancyGuard {
     function updateAdministratorKey(address _oldAddress, address _newAddress) external onlyAdmin {
 
         // input verifications
-        require( isAdministrator(_oldAddress) );
+        require(isAdministrator(_oldAddress));
         require( _newAddress != 0x00 );
-        require( !isAdministrator(_newAddress) );
+        require(!isAdministrator(_newAddress));
         require( msg.sender != _oldAddress );
 
         // count confirmation
         uint256 remaining;
 
         // start of updating process, first signer will finalize address to be replaced
-        // and new address to be registered, remaining two must confirm
-        if (updating.confirmations == 0) {
+        // and new address to be registered, remaining one must confirm
+        if( updating.confirmations == 0){
 
             updating.signer[updating.confirmations] = msg.sender;
             updating.oldAddress = _oldAddress;
@@ -254,21 +278,21 @@ contract MultiSig is ReentrancyGuard {
         }
 
         // violated consensus
-        if (updating.oldAddress != _oldAddress) {
+        if(updating.oldAddress != _oldAddress){
             emit Violated("Old addresses do not match",msg.sender);
             ResetUpdateState();
             return;
         }
 
-        if (updating.newAddress != _newAddress) {
-            emit Violated("New addresses do not match", msg.sender);
+        if(updating.newAddress != _newAddress){
+            emit Violated("New addresses do not match",msg.sender);
             ResetUpdateState();
             return;
         }
 
         // make sure admin is not trying to spam
-        if (msg.sender == updating.signer[0]) {
-            emit Violated("Signer is spamming", msg.sender);
+        if(msg.sender == updating.signer[0]){
+            emit Violated("Signer is spamming",msg.sender);
             ResetUpdateState();
             return;
         }
@@ -277,20 +301,18 @@ contract MultiSig is ReentrancyGuard {
         updating.confirmations = updating.confirmations.add(1);
         remaining = required.sub(updating.confirmations);
 
-        if (remaining == 0) {
-            
-            if (msg.sender == updating.signer[0]) {
+        if( remaining == 0){
+            if(msg.sender == updating.signer[0]){
                 emit Violated("One of signers is spamming",msg.sender);
                 ResetUpdateState();
                 return;
             }
-            
         }
 
         emit UpdateConfirmed(msg.sender,_newAddress,remaining);
 
         // if two confirmation are done, register new admin and remove old one
-        if (updating.confirmations == 2) {
+        if( updating.confirmations == 2 ){
             emit KeyReplaced(_oldAddress, _newAddress);
             ResetUpdateState();
             delete administrators[_oldAddress];
@@ -299,7 +321,8 @@ contract MultiSig is ReentrancyGuard {
         }
     }
 
-    function ResetUpdateState() internal {
+    function ResetUpdateState() internal
+    {
         delete updating;
         emit EventUpdateWasReset();
     }
@@ -307,14 +330,14 @@ contract MultiSig is ReentrancyGuard {
     /**
      * @dev Reset values of updating (KeyUpdate object)
      */
-    function abortUpdate() external onlyAdmin {
+    function abortUpdate() external onlyAdmin{
         ResetUpdateState();
     }
 
     /**
      * @dev modifier allow only if function is called by administrator
      */
-    modifier onlyAdmin() {
+    modifier onlyAdmin(){
         if( !administrators[msg.sender] ){
             revert();
         }
