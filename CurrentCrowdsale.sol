@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CurrentCrowdsale at 0x037213960f5fec272c05dda062c23b828de39445
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CurrentCrowdsale at 0x778e7132383bfe51D8a3b73D641F959DEb3c8F03
 */
 pragma solidity ^0.4.18;
 
@@ -89,6 +89,215 @@ contract Pausable is Ownable {
     paused = false;
     Unpause();
   }
+}
+
+// File: zeppelin-solidity/contracts/ownership/rbac/Roles.sol
+
+/**
+ * @title Roles
+ * @author Francisco Giordano (@frangio)
+ * @dev Library for managing addresses assigned to a Role.
+ *      See RBAC.sol for example usage.
+ */
+library Roles {
+  struct Role {
+    mapping (address => bool) bearer;
+  }
+
+  /**
+   * @dev give an address access to this role
+   */
+  function add(Role storage role, address addr)
+    internal
+  {
+    role.bearer[addr] = true;
+  }
+
+  /**
+   * @dev remove an address' access to this role
+   */
+  function remove(Role storage role, address addr)
+    internal
+  {
+    role.bearer[addr] = false;
+  }
+
+  /**
+   * @dev check if an address has this role
+   * // reverts
+   */
+  function check(Role storage role, address addr)
+    view
+    internal
+  {
+    require(has(role, addr));
+  }
+
+  /**
+   * @dev check if an address has this role
+   * @return bool
+   */
+  function has(Role storage role, address addr)
+    view
+    internal
+    returns (bool)
+  {
+    return role.bearer[addr];
+  }
+}
+
+// File: zeppelin-solidity/contracts/ownership/rbac/RBAC.sol
+
+/**
+ * @title RBAC (Role-Based Access Control)
+ * @author Matt Condon (@Shrugs)
+ * @dev Stores and provides setters and getters for roles and addresses.
+ *      Supports unlimited numbers of roles and addresses.
+ *      See //contracts/mocks/RBACMock.sol for an example of usage.
+ * This RBAC method uses strings to key roles. It may be beneficial
+ *  for you to write your own implementation of this interface using Enums or similar.
+ * It's also recommended that you define constants in the contract, like ROLE_ADMIN below,
+ *  to avoid typos.
+ */
+contract RBAC {
+  using Roles for Roles.Role;
+
+  mapping (string => Roles.Role) private roles;
+
+  event RoleAdded(address addr, string roleName);
+  event RoleRemoved(address addr, string roleName);
+
+  /**
+   * A constant role name for indicating admins.
+   */
+  string public constant ROLE_ADMIN = "admin";
+
+  /**
+   * @dev constructor. Sets msg.sender as admin by default
+   */
+  function RBAC()
+    public
+  {
+    addRole(msg.sender, ROLE_ADMIN);
+  }
+
+  /**
+   * @dev reverts if addr does not have role
+   * @param addr address
+   * @param roleName the name of the role
+   * // reverts
+   */
+  function checkRole(address addr, string roleName)
+    view
+    public
+  {
+    roles[roleName].check(addr);
+  }
+
+  /**
+   * @dev determine if addr has role
+   * @param addr address
+   * @param roleName the name of the role
+   * @return bool
+   */
+  function hasRole(address addr, string roleName)
+    view
+    public
+    returns (bool)
+  {
+    return roles[roleName].has(addr);
+  }
+
+  /**
+   * @dev add a role to an address
+   * @param addr address
+   * @param roleName the name of the role
+   */
+  function adminAddRole(address addr, string roleName)
+    onlyAdmin
+    public
+  {
+    addRole(addr, roleName);
+  }
+
+  /**
+   * @dev remove a role from an address
+   * @param addr address
+   * @param roleName the name of the role
+   */
+  function adminRemoveRole(address addr, string roleName)
+    onlyAdmin
+    public
+  {
+    removeRole(addr, roleName);
+  }
+
+  /**
+   * @dev add a role to an address
+   * @param addr address
+   * @param roleName the name of the role
+   */
+  function addRole(address addr, string roleName)
+    internal
+  {
+    roles[roleName].add(addr);
+    RoleAdded(addr, roleName);
+  }
+
+  /**
+   * @dev remove a role from an address
+   * @param addr address
+   * @param roleName the name of the role
+   */
+  function removeRole(address addr, string roleName)
+    internal
+  {
+    roles[roleName].remove(addr);
+    RoleRemoved(addr, roleName);
+  }
+
+  /**
+   * @dev modifier to scope access to a single role (uses msg.sender as addr)
+   * @param roleName the name of the role
+   * // reverts
+   */
+  modifier onlyRole(string roleName)
+  {
+    checkRole(msg.sender, roleName);
+    _;
+  }
+
+  /**
+   * @dev modifier to scope access to admins
+   * // reverts
+   */
+  modifier onlyAdmin()
+  {
+    checkRole(msg.sender, ROLE_ADMIN);
+    _;
+  }
+
+  /**
+   * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
+   * @param roleNames the names of the roles to scope access to
+   * // reverts
+   *
+   * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
+   *  see: https://github.com/ethereum/solidity/issues/2467
+   */
+  // modifier onlyRoles(string[] roleNames) {
+  //     bool hasAnyRole = false;
+  //     for (uint8 i = 0; i < roleNames.length; i++) {
+  //         if (hasRole(msg.sender, roleNames[i])) {
+  //             hasAnyRole = true;
+  //             break;
+  //         }
+  //     }
+
+  //     require(hasAnyRole);
+
+  //     _;
+  // }
 }
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
@@ -310,90 +519,195 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+// File: contracts/PausableToken.sol
+
+contract PausableToken is StandardToken, Pausable, RBAC {
+
+    string public constant ROLE_ADMINISTRATOR = "administrator";
+
+    modifier whenNotPausedOrAuthorized() {
+        require(!paused || hasRole(msg.sender, ROLE_ADMINISTRATOR));
+        _;
+    }
+    /**
+     * @dev Add an address that can administer the token even when paused.
+     * @param _administrator Address of the given administrator.
+     * @return True if the administrator has been added, false if the address was already an administrator.
+     */
+    function addAdministrator(address _administrator) onlyOwner public returns (bool) {
+        if (isAdministrator(_administrator)) {
+            return false;
+        } else {
+            addRole(_administrator, ROLE_ADMINISTRATOR);
+            return true;
+        }
+    }
+
+    /**
+     * @dev Remove an administrator.
+     * @param _administrator Address of the administrator to be removed.
+     * @return True if the administrator has been removed,
+     *  false if the address wasn't an administrator in the first place.
+     */
+    function removeAdministrator(address _administrator) onlyOwner public returns (bool) {
+        if (isAdministrator(_administrator)) {
+            removeRole(_administrator, ROLE_ADMINISTRATOR);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @dev Determine if address is an administrator.
+     * @param _administrator Address of the administrator to be checked.
+     */
+    function isAdministrator(address _administrator) public view returns (bool) {
+        return hasRole(_administrator, ROLE_ADMINISTRATOR);
+    }
+
+    /**
+    * @dev Transfer token for a specified address with pause feature for administrator.
+    * @dev Only applies when the transfer is allowed by the owner.
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public whenNotPausedOrAuthorized returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+    * @dev Transfer tokens from one address to another with pause feature for administrator.
+    * @dev Only applies when the transfer is allowed by the owner.
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPausedOrAuthorized returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+}
+
 // File: contracts/CurrentToken.sol
 
-contract CurrentToken is StandardToken, Pausable {
+contract CurrentToken is PausableToken {
     string constant public name = "CurrentCoin";
     string constant public symbol = "CUR";
     uint8 constant public decimals = 18;
 
     uint256 constant public INITIAL_TOTAL_SUPPLY = 1e11 * (uint256(10) ** decimals);
 
-    address private addressIco;
-
-    modifier onlyIco() {
-        require(msg.sender == addressIco);
-        _;
-    }
-
     /**
     * @dev Create CurrentToken contract and set pause
-    * @param _ico The address of ICO contract.
     */
-    function CurrentToken (address _ico) public {
-        require(_ico != address(0));
-
-        addressIco = _ico;
-
+    function CurrentToken() public {
         totalSupply_ = totalSupply_.add(INITIAL_TOTAL_SUPPLY);
-        balances[_ico] = balances[_ico].add(INITIAL_TOTAL_SUPPLY);
-        Transfer(address(0), _ico, INITIAL_TOTAL_SUPPLY);
+        balances[msg.sender] = totalSupply_;
+        Transfer(address(0), msg.sender, totalSupply_);
 
         pause();
     }
+}
+
+// File: contracts/VariableTimeBonusRate.sol
+
+/**
+ * @title VariableTimeRate
+ * @dev Contract with time dependent token distribution rate variable.
+ */
+contract VariableTimeBonusRate {
+    using SafeMath for uint256;
+
+    // Struct specifying the stages of rate modification.
+    struct RateModifier {
+        // Percentage by which the rate should be modified.
+        uint256 ratePermilles;
+
+        // start time for a given rate
+        uint256 start;
+    }
+
+    RateModifier[] private modifiers;
 
     /**
-    * @dev Transfer token for a specified address with pause feature for owner.
-    * @dev Only applies when the transfer is allowed by the owner.
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transfer(_to, _value);
+     * @dev Finds currently applicable rate modifier.
+     * @return Current rate modifier percentage.
+     */
+    function currentModifier() public view returns (uint256 rateModifier) {
+        // solium-disable-next-line security/no-block-members
+        uint256 comparisonVariable = now;
+        for (uint i = 0; i < modifiers.length; i++) {
+            if (comparisonVariable >= modifiers[i].start) {
+                rateModifier = modifiers[i].ratePermilles;
+            }
+        }
+    }
+
+    function getRateModifierInPermilles() public view returns (uint256) {
+        return currentModifier();
     }
 
     /**
-    * @dev Transfer tokens from one address to another with pause feature for owner.
-    * @dev Only applies when the transfer is allowed by the owner.
-    * @param _from address The address which you want to send tokens from
-    * @param _to address The address which you want to transfer to
-    * @param _value uint256 the amount of tokens to be transferred
-    */
-    function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) {
-        super.transferFrom(_from, _to, _value);
+     * @dev Adds rate modifier checking not to add one with a start smaller than the previous.
+     * @param _rateModifier RateModifier struct.
+     */
+    function pushModifier(RateModifier _rateModifier) internal {
+        require(modifiers.length == 0 || _rateModifier.start > modifiers[modifiers.length - 1].start);
+        modifiers.push(_rateModifier);
+    }
+}
+
+// File: contracts/TokenRate.sol
+
+contract TokenRate is VariableTimeBonusRate {
+
+    uint256 constant public REFERRED_BONUS_PERMILLE  = 5;
+    uint256 constant public REFERRAL_BONUS_PERMILLE = 50;
+
+    uint256 public rate;
+
+    function TokenRate(uint256 _rate) public {
+        rate = _rate;
+    }
+
+    function getCurrentBuyerRateInPermilles(bool isReferred) view public returns (uint256) {
+        uint256 permillesRate = VariableTimeBonusRate.getRateModifierInPermilles();
+        if (isReferred) {
+            permillesRate = permillesRate.add(REFERRED_BONUS_PERMILLE);
+        }
+        return permillesRate.add(1000);
     }
 
     /**
-    * @dev Transfer tokens from ICO address to another address.
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transferFromIco(address _to, uint256 _value) onlyIco public returns (bool) {
-        super.transfer(_to, _value);
+     * @dev amount for given wei calculation based on rate modifier percentage.
+     * @param _weiAmount Value in wei to be converted into tokens
+     * @return Number of tokens that can be purchased with the specified _weiAmount
+     */
+    function _getTokenAmountForBuyer(uint256 _weiAmount, bool isReferred) internal view returns (uint256) {
+        return _weiAmount.mul(rate).mul(getCurrentBuyerRateInPermilles(isReferred)).div(1000);
+    }
+
+    function _getTokenAmountForReferral(uint256 _weiAmount, bool isReferred) internal view returns (uint256) {
+        if (isReferred) {
+            return _weiAmount.mul(rate).mul(REFERRAL_BONUS_PERMILLE).div(1000);
+        }
+        return 0;
     }
 
     /**
-    * @dev Burn remaining tokens from the ICO balance.
-    */
-    function burnFromIco() onlyIco public {
-        uint256 remainingTokens = balanceOf(addressIco);
-
-        balances[addressIco] = balances[addressIco].sub(remainingTokens);
-        totalSupply_ = totalSupply_.sub(remainingTokens);
-        Transfer(addressIco, address(0), remainingTokens);
+     * @dev amount of wei to pay for tokens - calculation based on rate modifier percentage.
+     * @param _tokensLeft Value in tokens to be converted into wei
+     * @return Number of wei that you must pay (bonus rate is taken into account)
+     */
+    function _getWeiValueOfTokens(uint256 _tokensLeft, bool isReferred) internal view returns (uint256) {
+        uint256 permillesRate = getCurrentBuyerRateInPermilles(isReferred);
+        if (isReferred) {
+            permillesRate = permillesRate.add(REFERRAL_BONUS_PERMILLE);
+        }
+        uint256 tokensToBuy = _tokensLeft.mul(1000).div(permillesRate);
+        return tokensToBuy.div(rate);
     }
 
-    /**
-    * @dev Burn all tokens form balance of token holder during refund process.
-    * @param _from The address of token holder whose tokens to be burned.
-    */
-    function burnFromAddress(address _from) onlyIco public {
-        uint256 amount = balances[_from];
-
-        balances[_from] = 0;
-        totalSupply_ = totalSupply_.sub(amount);
-        Transfer(_from, address(0), amount);
-    }
 }
 
 // File: contracts/Whitelist.sol
@@ -441,10 +755,38 @@ contract Whitelist is Ownable {
 
 }
 
-// File: contracts/Whitelistable.sol
+// File: contracts/CurrentCrowdsale.sol
 
-contract Whitelistable {
+contract CurrentCrowdsale is Pausable, TokenRate {
+    using SafeMath for uint256;
+
+    uint256 constant private DECIMALS = 18;
+    uint256 constant public HARDCAP_TOKENS_PRE_ICO = 100e6 * (10 ** DECIMALS);
+    uint256 constant public HARDCAP_TOKENS_ICO = 499e8 * (10 ** DECIMALS);
+
+    uint256 public startPhase1 = 0;
+    uint256 public startPhase2 = 0;
+    uint256 public startPhase3 = 0;
+    uint256 public endOfPhase3 = 0;
+
+    uint256 public maxcap = 0;
+
+    uint256 public tokensSoldIco = 0;
+    uint256 public tokensRemainingIco = HARDCAP_TOKENS_ICO;
+    uint256 public tokensSoldTotal = 0;
+
+    uint256 public weiRaisedIco = 0;
+    uint256 public weiRaisedTotal = 0;
+
+    address private withdrawalWallet;
+
+    CurrentToken public token;
     Whitelist public whitelist;
+
+    modifier beforeReachingHardCap() {
+        require(tokensRemainingIco > 0 && weiRaisedIco < maxcap);
+        _;
+    }
 
     modifier whenWhitelisted(address _wallet) {
         require(whitelist.isWhitelisted(_wallet));
@@ -452,120 +794,60 @@ contract Whitelistable {
     }
 
     /**
-    * @dev Constructor for Whitelistable contract.
-    */
-    function Whitelistable() public {
-        whitelist = new Whitelist();
-    }
-}
-
-// File: contracts/CurrentCrowdsale.sol
-
-contract CurrentCrowdsale is Pausable, Whitelistable {
-    using SafeMath for uint256;
-
-    uint256 constant private DECIMALS = 18;
-    uint256 constant public RESERVED_TOKENS_FOUNDERS = 40e9 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_OPERATIONAL_EXPENSES = 10e9 * (10 ** DECIMALS);
-    uint256 constant public HARDCAP_TOKENS_PRE_ICO = 100e6 * (10 ** DECIMALS);
-    uint256 constant public HARDCAP_TOKENS_ICO = 499e8 * (10 ** DECIMALS);
-
-    uint256 public startTimePreIco = 0;
-    uint256 public endTimePreIco = 0;
-
-    uint256 public startTimeIco = 0;
-    uint256 public endTimeIco = 0;
-
-    uint256 public exchangeRatePreIco = 0;
-
-    bool public isTokenRateCalculated = false;
-
-    uint256 public exchangeRateIco = 0;
-
-    uint256 public mincap = 0;
-    uint256 public maxcap = 0;
-
-    mapping(address => uint256) private investments;    
-
-    uint256 public tokensSoldIco = 0;
-    uint256 public tokensRemainingIco = HARDCAP_TOKENS_ICO;
-    uint256 public tokensSoldTotal = 0;
-
-    uint256 public weiRaisedPreIco = 0;
-    uint256 public weiRaisedIco = 0;
-    uint256 public weiRaisedTotal = 0;
-
-    mapping(address => uint256) private investmentsPreIco;
-    address[] private investorsPreIco;
-
-    address private withdrawalWallet;
-
-    bool public isTokensPreIcoDistributed = false;
-    uint256 public distributionPreIcoCount = 0;
-
-    CurrentToken public token = new CurrentToken(this);
-
-    modifier beforeReachingHardCap() {
-        require(tokensRemainingIco > 0 && weiRaisedTotal < maxcap);
-        _;
-    }
-
-    modifier whenPreIcoSaleHasEnded() {
-        require(now > endTimePreIco);
-        _;
-    }
-
-    modifier whenIcoSaleHasEnded() {
-        require(endTimeIco > 0 && now > endTimeIco);
-        _;
-    }
-
-    /**
     * @dev Constructor for CurrentCrowdsale contract.
     * @dev Set the owner who can manage whitelist and token.
-    * @param _mincap The mincap value.
-    * @param _startTimePreIco The pre-ICO start time.
-    * @param _endTimePreIco The pre-ICO end time.
-    * @param _foundersWallet The address to which reserved tokens for founders will be transferred.
-    * @param _operationalExpensesWallet The address to which reserved tokens for operational expenses will be transferred.
+    * @param _maxcap The maxcap value.
+    * @param _startPhase1 The phase1 ICO start time.
+    * @param _startPhase2 The phase2 ICO start time.
+    * @param _startPhase3 The phase3 ICO start time.
+    * @param _endOfPhase3 The end time of ICO.
     * @param _withdrawalWallet The address to which raised funds will be withdrawn.
+    * @param _rate exchange rate for ico.
+    * @param _token address of token used for ico.
+    * @param _whitelist address of whitelist contract used for ico.
     */
     function CurrentCrowdsale(
-        uint256 _mincap,
         uint256 _maxcap,
-        uint256 _startTimePreIco,
-        uint256 _endTimePreIco,
-        address _foundersWallet,
-        address _operationalExpensesWallet,
-        address _withdrawalWallet
-    ) Whitelistable() public
+        uint256 _startPhase1,
+        uint256 _startPhase2,
+        uint256 _startPhase3,
+        uint256 _endOfPhase3,
+        address _withdrawalWallet,
+        uint256 _rate,
+        CurrentToken _token,
+        Whitelist _whitelist
+    )  TokenRate(_rate) public
     {
-        require(_foundersWallet != address(0) && _operationalExpensesWallet != address(0) && _withdrawalWallet != address(0));
-        require(_startTimePreIco >= now && _endTimePreIco > _startTimePreIco);
-        require(_mincap > 0 && _maxcap > _mincap);
+        require(_withdrawalWallet != address(0));
+        require(_token != address(0) && _whitelist != address(0));
+        require(_startPhase1 >= now);
+        require(_endOfPhase3 > _startPhase3);
+        require(_maxcap > 0);
 
-        startTimePreIco = _startTimePreIco;
-        endTimePreIco = _endTimePreIco;
+        token = _token;
+        whitelist = _whitelist;
+
+        startPhase1 = _startPhase1;
+        startPhase2 = _startPhase2;
+        startPhase3 = _startPhase3;
+        endOfPhase3 = _endOfPhase3;
 
         withdrawalWallet = _withdrawalWallet;
 
-        mincap = _mincap;
         maxcap = _maxcap;
+        tokensSoldTotal = HARDCAP_TOKENS_PRE_ICO;
+        weiRaisedTotal = tokensSoldTotal.div(_rate.mul(2));
 
-        whitelist.transferOwnership(msg.sender);
-
-        token.transferFromIco(_foundersWallet, RESERVED_TOKENS_FOUNDERS);
-        token.transferFromIco(_operationalExpensesWallet, RESERVED_TOKENS_OPERATIONAL_EXPENSES);
-        token.transferOwnership(msg.sender);
+        pushModifier(RateModifier(200, startPhase1));
+        pushModifier(RateModifier(150, startPhase2));
+        pushModifier(RateModifier(100, startPhase3));
     }
 
     /**
     * @dev Fallback function can be used to buy tokens.
     */
     function() public payable {
-        if (isPreIco()) {
-            sellTokensPreIco();
-        } else if (isIco()) {
+        if (isIco()) {
             sellTokensIco();
         } else {
             revert();
@@ -573,118 +855,69 @@ contract CurrentCrowdsale is Pausable, Whitelistable {
     }
 
     /**
-    * @dev Check whether the pre-ICO is active at the moment.
-    */
-    function isPreIco() public constant returns (bool) {
-        bool withinPreIco = now >= startTimePreIco && now <= endTimePreIco;
-        return withinPreIco;
-    }
-
-    /**
     * @dev Check whether the ICO is active at the moment.
     */
     function isIco() public constant returns (bool) {
-        bool withinIco = now >= startTimeIco && now <= endTimeIco;
-        return withinIco;
+        return now >= startPhase1 && now <= endOfPhase3;
     }
 
-    /**
-    * @dev Manual refund if mincap has not been reached.
-    * @dev Only applies when the ICO was ended. 
-    */
-    function manualRefund() whenIcoSaleHasEnded public {
-        require(weiRaisedTotal < mincap);
-
-        uint256 weiAmountTotal = investments[msg.sender];
-        require(weiAmountTotal > 0);
-
-        investments[msg.sender] = 0;
-
-        uint256 weiAmountPreIco = investmentsPreIco[msg.sender];
-        uint256 weiAmountIco = weiAmountTotal;
-
-        if (weiAmountPreIco > 0) {
-            investmentsPreIco[msg.sender] = 0;
-            weiRaisedPreIco = weiRaisedPreIco.sub(weiAmountPreIco);
-            weiAmountIco = weiAmountIco.sub(weiAmountPreIco);
-        }
-
-        if (weiAmountIco > 0) {
-            weiRaisedIco = weiRaisedIco.sub(weiAmountIco);
-            uint256 tokensIco = weiAmountIco.mul(exchangeRateIco);
-            tokensSoldIco = tokensSoldIco.sub(tokensIco);
-        }
-
-        weiRaisedTotal = weiRaisedTotal.sub(weiAmountTotal);
-
-        uint256 tokensAmount = token.balanceOf(msg.sender);
-
-        tokensSoldTotal = tokensSoldTotal.sub(tokensAmount);
-
-        token.burnFromAddress(msg.sender);
-
-        msg.sender.transfer(weiAmountTotal);
-    }
-
-    /**
-    * @dev Sell tokens during pre-ICO.
-    * @dev Sell tokens only for whitelisted wallets.
-    */
-    function sellTokensPreIco() beforeReachingHardCap whenWhitelisted(msg.sender) whenNotPaused public payable {
-        require(isPreIco());
-        require(msg.value > 0);
-
-        uint256 weiAmount = msg.value;
-        uint256 excessiveFunds = 0;
-
-        uint256 plannedWeiTotal = weiRaisedTotal.add(weiAmount);
-
-        if (plannedWeiTotal > maxcap) {
-            excessiveFunds = plannedWeiTotal.sub(maxcap);
-            weiAmount = maxcap.sub(weiRaisedTotal);
-        }
-
-        investments[msg.sender] = investments[msg.sender].add(weiAmount);
-
-        weiRaisedPreIco = weiRaisedPreIco.add(weiAmount);
-        weiRaisedTotal = weiRaisedTotal.add(weiAmount);
-
-        addInvestmentPreIco(msg.sender, weiAmount);
-
-        if (excessiveFunds > 0) {
-            msg.sender.transfer(excessiveFunds);
-        }
-    }
-
-    /**
-    * @dev Sell tokens during ICO.
-    * @dev Sell tokens only for whitelisted wallets.
-    */
     function sellTokensIco() beforeReachingHardCap whenWhitelisted(msg.sender) whenNotPaused public payable {
+        sellTokens(address(0));
+    }
+
+    function sellTokensIcoWithReferal(address referral) beforeReachingHardCap whenWhitelisted(msg.sender) whenNotPaused public payable {
+        if (referral != msg.sender && whitelist.isWhitelisted(referral)) {
+            sellTokens(referral);
+        } else {
+            revert();
+        }
+    }
+
+    /**
+    * @dev Manual send tokens to the specified address.
+    * @param _beneficiary The address of a investor.
+    * @param _tokensAmount Amount of tokens.
+    */
+    function manualSendTokens(address _beneficiary, uint256 _tokensAmount) public  onlyOwner {
+        require(_beneficiary != address(0));
+        require(_tokensAmount > 0);
+
+        token.transfer(_beneficiary, _tokensAmount);
+        tokensSoldIco = tokensSoldIco.add(_tokensAmount);
+        tokensSoldTotal = tokensSoldTotal.add(_tokensAmount);
+        tokensRemainingIco = tokensRemainingIco.sub(_tokensAmount);
+    }
+
+    /**
+    * @dev Sell tokens during ICO with referral.
+    */
+    function sellTokens(address referral) beforeReachingHardCap whenWhitelisted(msg.sender) whenNotPaused internal {
         require(isIco());
         require(msg.value > 0);
 
         uint256 weiAmount = msg.value;
         uint256 excessiveFunds = 0;
 
-        uint256 plannedWeiTotal = weiRaisedTotal.add(weiAmount);
+        uint256 plannedWeiTotal = weiRaisedIco.add(weiAmount);
 
         if (plannedWeiTotal > maxcap) {
             excessiveFunds = plannedWeiTotal.sub(maxcap);
-            weiAmount = maxcap.sub(weiRaisedTotal);
+            weiAmount = maxcap.sub(weiRaisedIco);
         }
-
-        uint256 tokensAmount = weiAmount.mul(exchangeRateIco);
+        bool isReferred = referral != address(0);
+        uint256 tokensForUser = _getTokenAmountForBuyer(weiAmount, isReferred);
+        uint256 tokensForReferral = _getTokenAmountForReferral(weiAmount, isReferred);
+        uint256 tokensAmount = tokensForUser.add(tokensForReferral);
 
         if (tokensAmount > tokensRemainingIco) {
-            uint256 weiToAccept = tokensRemainingIco.div(exchangeRateIco);
+            uint256 weiToAccept = _getWeiValueOfTokens(tokensRemainingIco, isReferred);
+            tokensForReferral = _getTokenAmountForReferral(weiToAccept, isReferred);
+            tokensForUser = tokensRemainingIco.sub(tokensForReferral);
             excessiveFunds = excessiveFunds.add(weiAmount.sub(weiToAccept));
-            
+
             tokensAmount = tokensRemainingIco;
             weiAmount = weiToAccept;
         }
-
-        investments[msg.sender] = investments[msg.sender].add(weiAmount);
 
         tokensSoldIco = tokensSoldIco.add(tokensAmount);
         tokensSoldTotal = tokensSoldTotal.add(tokensAmount);
@@ -693,124 +926,15 @@ contract CurrentCrowdsale is Pausable, Whitelistable {
         weiRaisedIco = weiRaisedIco.add(weiAmount);
         weiRaisedTotal = weiRaisedTotal.add(weiAmount);
 
-        token.transferFromIco(msg.sender, tokensAmount);
+        token.transfer(msg.sender, tokensForUser);
+        if (isReferred) {
+            token.transfer(referral, tokensForReferral);
+        }
 
         if (excessiveFunds > 0) {
             msg.sender.transfer(excessiveFunds);
         }
-    }
 
-    /**
-    * @dev Send raised funds to the withdrawal wallet.
-    */
-    function forwardFunds() onlyOwner public {
-        require(weiRaisedTotal >= mincap);
         withdrawalWallet.transfer(this.balance);
     }
-
-    /**
-    * @dev Calculate token exchange rate for pre-ICO and ICO.
-    * @dev Only applies when the pre-ICO was ended.
-    * @dev May be called only once.
-    */
-    function calcTokenRate() whenPreIcoSaleHasEnded onlyOwner public {
-        require(!isTokenRateCalculated);
-        require(weiRaisedPreIco > 0);
-
-        exchangeRatePreIco = HARDCAP_TOKENS_PRE_ICO.div(weiRaisedPreIco);
-
-        exchangeRateIco = exchangeRatePreIco.div(2);
-
-        isTokenRateCalculated = true;
-    }
-
-    /**
-    * @dev Distribute tokens to pre-ICO investors using pagination.
-    * @dev Pagination proceeds the set value (paginationCount) of tokens distributions per one function call.
-    * @param _paginationCount The value that used for pagination.
-    */
-    function distributeTokensPreIco(uint256 _paginationCount) onlyOwner public {
-        require(isTokenRateCalculated && !isTokensPreIcoDistributed);
-        require(_paginationCount > 0);
-
-        uint256 count = 0;
-        for (uint256 i = distributionPreIcoCount; i < getPreIcoInvestorsCount(); i++) {
-            if (count == _paginationCount) {
-                break;
-            }
-            uint256 investment = getPreIcoInvestment(getPreIcoInvestor(i));
-            uint256 tokensAmount = investment.mul(exchangeRatePreIco);
-            
-            tokensSoldTotal = tokensSoldTotal.add(tokensAmount);
-
-            token.transferFromIco(getPreIcoInvestor(i), tokensAmount);
-
-            count++;
-        }
-
-        distributionPreIcoCount = distributionPreIcoCount.add(count);
-
-        if (distributionPreIcoCount == getPreIcoInvestorsCount()) {
-            isTokensPreIcoDistributed = true;
-        }
-    }
-
-    /**
-    * @dev Burn unsold tokens from the ICO balance.
-    * @dev Only applies when the ICO was ended.
-    */
-    function burnUnsoldTokens() whenIcoSaleHasEnded onlyOwner public {
-        require(tokensRemainingIco > 0);
-        token.burnFromIco();
-        tokensRemainingIco = 0;
-    }
-
-    /**
-    * @dev Count the pre-ICO investors total.
-    */
-    function getPreIcoInvestorsCount() constant public returns (uint256) {
-        return investorsPreIco.length;
-    }
-
-    /**
-    * @dev Get the pre-ICO investor address.
-    * @param _index the index of investor in the array. 
-    */
-    function getPreIcoInvestor(uint256 _index) constant public returns (address) {
-        return investorsPreIco[_index];
-    }
-
-    /**
-    * @dev Gets the amount of tokens for pre-ICO investor.
-    * @param _investorPreIco the pre-ICO investor address.
-    */
-    function getPreIcoInvestment(address _investorPreIco) constant public returns (uint256) {
-        return investmentsPreIco[_investorPreIco];
-    }
-
-    /**
-    * @dev Set start time and end time for ICO.
-    * @dev Only applies when tokens distributions to pre-ICO investors were processed.
-    * @param _startTimeIco The ICO start time.
-    * @param _endTimeIco The ICO end time.
-    */
-    function setStartTimeIco(uint256 _startTimeIco, uint256 _endTimeIco) whenPreIcoSaleHasEnded beforeReachingHardCap onlyOwner public {
-        require(_startTimeIco >= now && _endTimeIco > _startTimeIco);
-        require(isTokenRateCalculated);
-
-        startTimeIco = _startTimeIco;
-        endTimeIco = _endTimeIco;
-    }
-
-    /**
-    * @dev Add new investment to the pre-ICO investments storage.
-    * @param _from The address of a pre-ICO investor.
-    * @param _value The investment received from a pre-ICO investor.
-    */
-    function addInvestmentPreIco(address _from, uint256 _value) internal {
-        if (investmentsPreIco[_from] == 0) {
-            investorsPreIco.push(_from);
-        }
-        investmentsPreIco[_from] = investmentsPreIco[_from].add(_value);
-    }  
 }
