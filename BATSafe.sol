@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BATSafe at 0x9f00f10e226ec430e888d6311e3f65e62093a9ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BATSafe at 0x0a1bad122f1dc2ec8735192ceaa70693414b0317
 */
 pragma solidity ^0.4.10;
 
@@ -60,7 +60,7 @@ contract StandardToken is Token {
 }
 
 
-// requires 133,650,000 BAT deposited here
+// requires 5,050,000 BAT deposited here
 contract BATSafe {
   mapping (address => uint256) allocations;
   uint256 public unlockDate;
@@ -69,9 +69,24 @@ contract BATSafe {
 
   function BATSafe(address _BAT) {
     BAT = _BAT;
-    unlockDate = now + 6 * 30 days;
-    allocations[0xc504E7BF907fccc389d08A1C302d03B7baB4E5DC] = 2000000;
-    allocations[0x2Cb6882D101d300694918e93F18b52327AA95302] = 2000000;
+    unlockDate = now + 6 * 31 days;
+    allocations[0x29940Eec1d3E79e4E20574bB69f4bDF382E60E8A] = 1250000;
+    allocations[0x16733a097bC4aE65356083e2919D9aAD32b9106D] = 800000;
+    allocations[0xB228d4dEe3fD0667F0161FeF769ad44d8F433Bc9] = 200000;
+    allocations[0x245B07814af3d708538D9A1f183450197F0FEBdd] = 200000;
+    allocations[0xb29458e5CaaCc3963D286Eb357CEf0734ff22504] = 200000;
+    allocations[0x31cC98831574d37966b05f9BE44bc14CA303FcCD] = 200000;
+    allocations[0x24f430377A8497cFaD9Ea2839941D6248c3d5275] = 200000;
+    allocations[0x7C350e02319eC6703B120160C3B712821A661f62] = 200000;
+    allocations[0x0DBaC4B5C00C8aAe3c030878c51524C6ED3d2a51] = 200000;
+    allocations[0xdFEb81B6c32c808D53914Ad1A462d6b6439E4230] = 200000;
+    allocations[0xE4d59Aa22c99051BC25e51CDC844d851A0C72aAD] = 200000;
+    allocations[0x76C12809FA051F5edf2a864de8890C26BFb952c2] = 200000;
+    allocations[0xC6204459C59D8e498284337012fc023b7680E7a3] = 200000;
+    allocations[0x92b79d1A09Dde9F5b5Ada7aDE3fe8eB1e56a4D79] = 200000;
+    allocations[0xEE575340dAbE28f989d9521CEb8ca92c4Cd76047] = 200000;
+    allocations[0xb3C7372Bf84D1f13C602b1Fe76A9Ea9B415Be908] = 200000;
+    allocations[0x2761B6a570dB5175668Bd622F0248E6c32b158B7] = 200000;
   }
 
   function unlock() external {
