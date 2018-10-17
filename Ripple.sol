@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ripple at 0xef583dff78668bca594f9ea85e53f56d916105a9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ripple at 0x095d9a5a0645ab8504934eae04e9327bc247f655
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -247,13 +247,11 @@ contract BurnableToken is StandardToken {
 }
 
 contract Ripple is BurnableToken, Ownable {
-
-
-    //you just have to touch these 4 lines don't touch anything else , else you might break the code.
-    string public constant name = "Ripple";//here you define the name
-    string public constant symbol = "RCC";//here yuou define the symbol of token
-    uint public constant decimals = 8; //just till here.
-    uint256 public constant initialSupply = 370000000 * (10 ** uint256(decimals));//500crore right yes ok let's deploy it now
+ 
+    string public constant name = "Ripplecash coin"; 
+    string public constant symbol = "RCC"; 
+    uint public constant decimals = 8;  
+    uint256 public constant initialSupply = 200000000 * (10 ** uint256(decimals)); 
 
     // Constructor
     function Ripple() {
