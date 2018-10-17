@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FantomToken at 0x4e15361fd6b4bb609fa63c81a2be19d873717870
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FantomToken at 0x80d6c1d4515e0fa811bccc3ab225c89e5348c582
 */
 pragma solidity ^0.4.23;
 
@@ -286,8 +286,8 @@ contract LockSlots is ERC20Token {
 
 contract FantomIcoDates is Owned {
 
-    uint public dateMainStart = 1529053200; // 15-JUN-2018 09:00 GMT + 0
-    uint public dateMainEnd   = 1529658000; // 22-JUN-2018 09:00 GMT + 0
+    uint public dateMainStart = 1529053200; // 15-JUN-2018 09:00 UTC
+    uint public dateMainEnd   = 1529658000; // 22-JUN-2018 09:00 UTC
 
     uint public constant DATE_LIMIT = 1529658000 + 180 days;
 
@@ -319,7 +319,7 @@ contract FantomIcoDates is Owned {
         emit IcoDateUpdated(2, _unixts);
     }
 
-    // where are we? Passed first day or not?
+    // where are we?
 
     function isMainFirstDay() public view returns (bool) {
         if (now > dateMainStart && now <= dateMainStart + 1 days) return true;
@@ -357,17 +357,11 @@ contract FantomToken is ERC20Token, Wallet, LockSlots, FantomIcoDates {
 
 
     // crowdsale parameters
-    // Opening ETH Rate: USD$463.28
-    // Therefore, 1 ETH = 11582 FTM
 
-
-    uint public tokensPerEth = 11582;
-
-    // USD$2,000,000/463.28 = 4317.043668 ether
-    // 4317.043668 ether/2551 addresses = 1.692294656 ether per address for the first 24 hours
+    uint public tokensPerEth = 15000;
 
     uint public constant MINIMUM_CONTRIBUTION = 0.2 ether;
-    uint public constant MAXIMUM_FIRST_DAY_CONTRIBUTION = 1.692294656 ether;
+    uint public constant MAXIMUM_FIRST_DAY_CONTRIBUTION = 1.5 ether;
 
     uint public constant TOKEN_MAIN_CAP = 50000000 * E18;
 
