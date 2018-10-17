@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x91d88c714e86caa99c6fd1f221a0a7702a4118f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x1887cfa2bb14e5755e092b75ce2991b2feb213ab
 */
 pragma solidity ^0.4.23;
 
@@ -159,6 +159,11 @@ interface ILANDRegistry {
     address indexed holder,  
     address indexed operator,  
     string data  
+  );
+
+  event UpdateOperator(
+    uint256 indexed assetId, 
+    address indexed operator
   );
 }
 
@@ -339,9 +344,9 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
   function isApprovedForAll(address operator, address assetHolder)
     external view returns (bool)
   {
-    return _isApprovedForAll(operator, assetHolder);
+    return _isApprovedForAll(assetHolder, operator);
   }
-  function _isApprovedForAll(address operator, address assetHolder)
+  function _isApprovedForAll(address assetHolder, address operator)
     internal view returns (bool)
   {
     return _operators[assetHolder][operator];
@@ -352,6 +357,9 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
    * @param assetId the asset to be queried for
    * @return bool true if the asset has been approved by the holder
    */
+  function getApproved(uint256 assetId) external view returns (address) {
+    return _getApprovedAddress(assetId);
+  }
   function getApprovedAddress(uint256 assetId) external view returns (address) {
     return _getApprovedAddress(assetId);
   }
@@ -375,7 +383,7 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
     if (operator == owner) {
       return true;
     }
-    return _isApprovedForAll(operator, owner) || _getApprovedAddress(assetId) == operator;
+    return _isApprovedForAll(owner, operator) || _getApprovedAddress(assetId) == operator;
   }
 
   //
@@ -392,13 +400,13 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
   }
   function _setApprovalForAll(address operator, bool authorized) internal {
     if (authorized) {
-      require(!_isApprovedForAll(operator, msg.sender));
+      require(!_isApprovedForAll(msg.sender, operator));
       _addAuthorization(operator, msg.sender);
     } else {
-      require(_isApprovedForAll(operator, msg.sender));
+      require(_isApprovedForAll(msg.sender, operator));
       _clearAuthorization(operator, msg.sender);
     }
-    emit ApprovalForAll(operator, msg.sender, authorized);
+    emit ApprovalForAll(msg.sender, operator, authorized);
   }
 
   /**
@@ -410,6 +418,7 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
     address holder = _ownerOf(assetId);
     require(msg.sender == holder || _isApprovedForAll(msg.sender, holder));
     require(operator != holder);
+
     if (_getApprovedAddress(assetId) != operator) {
       _approval[assetId] = operator;
       emit Approval(holder, operator, assetId);
@@ -619,7 +628,7 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
     if (_interfaceID == 0xffffffff) {
       return false;
     }
-    return _interfaceID == 0x01ffc9a7 || _interfaceID == 0x80ac58cd;
+    return (_interfaceID == 0x01ffc9a7) || (_interfaceID == 0x7c0633c6);
   }
 
   //
@@ -978,6 +987,7 @@ contract LANDRegistry is Storage,
 
   function setUpdateOperator(uint256 assetId, address operator) external onlyOwnerOf(assetId) {
     updateOperator[assetId] = operator;
+    emit UpdateOperator(assetId, operator);
   }
 
   //
