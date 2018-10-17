@@ -1,109 +1,187 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Affiliate at 0x7172ca5b3764f61216b3280e63bbd6c3834aef73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Affiliate at 0x1f44db3383190ae5287e10c7360f9cfa6a6086e5
 */
-// v7
+pragma solidity ^0.4.21;
+
 
 /**
- * Affiliate.sol
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-
-pragma solidity ^0.4.23;
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+library SafeMath {
 
   /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
-/**
- * @title TokenContract
- * @dev Token contract interface with transfer and balanceOf functions which need to be implemented
- */
-interface TokenContract {
-
-  /**
-   * @dev Transfer funds to recipient address
-   * @param _recipient Recipients address
-   * @param _amount Amount to transfer
-   */
-  function transfer(address _recipient, uint256 _amount) external returns (bool);
-
-  /**
-   * @dev Return balance of holders address
-   * @param _holder Holders address
-   */
-  function balanceOf(address _holder) external view returns (uint256);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title Affiliate
- * @dev Affiliate contract collects and stores all affiliates and token earnings for each affiliate
- */
-contract Affiliate is Ownable {
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-  TokenContract public tkn;
-  mapping (address => uint256) affiliates;
+contract WETH9 {
+    string public name     = "Wrapped Ether";
+    string public symbol   = "WETH";
+    uint8  public decimals = 18;
 
-  /**
-   * @dev Add affiliates in affiliate mapping
-   * @param _affiliates List of all affiliates
-   * @param _amount Amount earned
-   */
-  function addAffiliates(address[] _affiliates, uint256[] _amount) onlyOwner public {
-    require(_affiliates.length > 0);
-    require(_affiliates.length == _amount.length);
-    for (uint256 i = 0; i < _affiliates.length; i++) {
-      affiliates[_affiliates[i]] = _amount[i];
+    event  Approval(address indexed src, address indexed guy, uint wad);
+    event  Transfer(address indexed src, address indexed dst, uint wad);
+    event  Deposit(address indexed dst, uint wad);
+    event  Withdrawal(address indexed src, uint wad);
+
+    mapping (address => uint)                       public  balanceOf;
+    mapping (address => mapping (address => uint))  public  allowance;
+
+    function() public payable {
+        deposit();
     }
-  }
-
-  /**
-   * @dev Claim reward collected through your affiliates
-   */
-  function claimReward() public {
-    if (affiliates[msg.sender] > 0) {
-      require(tkn.transfer(msg.sender, affiliates[msg.sender]));
-      affiliates[msg.sender] = 0;
+    function deposit() public payable {
+        balanceOf[msg.sender] += msg.value;
+        Deposit(msg.sender, msg.value);
     }
+    function withdraw(uint wad) public {
+        require(balanceOf[msg.sender] >= wad);
+        balanceOf[msg.sender] -= wad;
+        msg.sender.transfer(wad);
+        Withdrawal(msg.sender, wad);
+    }
+
+    function totalSupply() public view returns (uint) {
+        return this.balance;
+    }
+
+    function approve(address guy, uint wad) public returns (bool) {
+        allowance[msg.sender][guy] = wad;
+        Approval(msg.sender, guy, wad);
+        return true;
+    }
+
+    function transfer(address dst, uint wad) public returns (bool) {
+        return transferFrom(msg.sender, dst, wad);
+    }
+
+    function transferFrom(address src, address dst, uint wad)
+        public
+        returns (bool)
+    {
+        require(balanceOf[src] >= wad);
+
+        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+            require(allowance[src][msg.sender] >= wad);
+            allowance[src][msg.sender] -= wad;
+        }
+
+        balanceOf[src] -= wad;
+        balanceOf[dst] += wad;
+
+        Transfer(src, dst, wad);
+
+        return true;
+    }
+}
+
+
+interface Registry {
+    function isAffiliated(address _affiliate) external returns (bool);
+}
+
+contract Affiliate {
+  struct Share {
+      address shareholder;
+      uint stake;
   }
 
-  /**
-   * @dev Terminate the Affiliate contract and destroy it
-   */
-  function terminateContract() onlyOwner public {
-    uint256 amount = tkn.balanceOf(address(this));
-    require(tkn.transfer(owner, amount));
-    selfdestruct(owner);
+  Share[] shares;
+  uint public totalShares;
+  string public relayerName;
+  address registry;
+  WETH9 weth;
+
+  event Payout(address indexed token, uint amount);
+
+  function init(address _registry, address[] shareholders, uint[] stakes, address _weth, string _name) public returns (bool) {
+    require(totalShares == 0);
+    require(shareholders.length == stakes.length);
+    weth = WETH9(_weth);
+    totalShares = 0;
+    for(uint i=0; i < shareholders.length; i++) {
+        shares.push(Share({shareholder: shareholders[i], stake: stakes[i]}));
+        totalShares += stakes[i];
+    }
+    relayerName = _name;
+    registry = _registry;
+    return true;
   }
+  function payout(address[] tokens) public {
+      // Payout all stakes at once, so we don't have to do bookkeeping on who has
+      // claimed their shares and who hasn't. If the number of shareholders is large
+      // this could run into some gas limits. In most cases, I expect two
+      // shareholders, but it could be a small handful. This also means the caller
+      // must pay gas for everyone's payouts.
+      for(uint i=0; i < tokens.length; i++) {
+          ERC20 token = ERC20(tokens[i]);
+          uint balance = token.balanceOf(this);
+          for(uint j=0; j < shares.length; j++) {
+              token.transfer(shares[j].shareholder, SafeMath.mul(balance, shares[j].stake) / totalShares);
+          }
+          emit Payout(tokens[i], balance);
+      }
+  }
+  function isAffiliated(address _affiliate) public returns (bool)
+  {
+      return Registry(registry).isAffiliated(_affiliate);
+  }
+
+  function() public payable {
+    // If we get paid in ETH, convert to WETH so payouts work the same.
+    // Converting to WETH also makes payouts a bit safer, as we don't have to
+    // worry about code execution if the stakeholder is a contract.
+    weth.deposit.value(msg.value)();
+  }
+
 }
