@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x27e21dfa8a81514e6b64ebc5294fe62f9db629d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0x723c7bca7ed11ab6a18b84c1ff5b979fec00f54e
 */
 pragma solidity ^0.4.24;
 
@@ -133,22 +133,22 @@ contract PlayCoinKey is modularKey {
     using NameFilter for string;
     using PCKKeysCalcLong for uint256;
     
-    otherPCK private otherPCK_;
-    PlayCoinGodInterface constant private PCGod = PlayCoinGodInterface(0x6f93Be8fD47EBb62F54ebd149B58658bf9BaCF4f);
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x47D1c777f1853cac97E6b81226B1F5108FBD7B81);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x14229878e85e57FF4109dc27bb2EfB5EA8067E6E);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    string constant public name = "PlayCoin Key";
+    string constant public name = "PlayCoin Game";
     string constant public symbol = "PCK";
-    uint256 private rndExtra_ = 15 minutes;     // length of the very first ICO 
+    uint256 private rndExtra_ = 2 minutes;     // length of the very first ICO 
     uint256 private rndGap_ = 15 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 12 hours;                // round timer starts at this
+    uint256 constant private rndInit_ = 24 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 6 hours;              // max length a round timer can be
+    uint256 constant private rndMax_ = 24 hours;              // max length a round timer can be
     uint256 constant private rndMin_ = 10 minutes;
 
+    uint256 public reduceMul_ = 3;
+    uint256 public reduceDiv_ = 2;
     uint256 public rndReduceThreshold_ = 10e18;           // 10ETH,reduce
     bool public closed_ = false;
     // admin is publish contract
@@ -165,6 +165,7 @@ contract PlayCoinKey is modularKey {
 //****************
 // PLAYER DATA 
 //****************
+    mapping (address => uint256) private blacklist_;
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
     mapping (uint256 => PCKdatasets.Player) public plyr_;   // (pID => data) player data
@@ -187,6 +188,10 @@ contract PlayCoinKey is modularKey {
     constructor()
         public
     {
+
+        // blacklist
+        blacklist_[0xB04B473418b6f09e5A1f809Ae2d01f14211e03fF] = 1;
+
         // Team allocation structures
         // 0 = whales
         // 1 = bears
@@ -230,8 +235,6 @@ contract PlayCoinKey is modularKey {
      * @dev prevents contracts from interacting with fomo3d 
      */
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
         
         require(msg.sender == tx.origin, "sorry humans only");
         _;
@@ -250,10 +253,27 @@ contract PlayCoinKey is modularKey {
         require(msg.sender == admin, "onlyAdmins failed - msg.sender is not an admin");
         _;
     }
+
+    modifier notBlacklist() {
+        require(blacklist_[msg.sender] == 0, "bad man,shut!");
+        _;
+    }
 //==============================================================================
 //     _    |_ |. _   |`    _  __|_. _  _  _  .
 //    |_)|_||_)||(_  ~|~|_|| |(_ | |(_)| |_\  .  (use these to interact with contract)
 //====|=========================================================================
+    function addBlacklist(address _black,bool _in) onlyAdmins() public {
+        if( _in ){
+            blacklist_[_black] = 1 ;
+        } else {
+            delete blacklist_[_black];
+        }
+    }
+
+    function getBlacklist(address _black) onlyAdmins() public view returns(bool) {
+        return blacklist_[_black] > 0;
+    }
+
     function kill () onlyAdmins() public {
         require(round_[rID_].ended == true && closed_ == true, "the round is active or not close");
         selfdestruct(admin);
@@ -263,9 +283,16 @@ contract PlayCoinKey is modularKey {
         return (rID_, round_[rID_].ended);
     }
 
-    function setThreshold(uint256 _threshold) onlyAdmins() public returns(uint256) {
+    function setThreshold(uint256 _threshold, uint256 _mul, uint256 _div) onlyAdmins() public {
+
+        require(_threshold > 0, "threshold must greater 0");
+        require(_mul > 0, "mul must greater 0");
+        require(_div > 0, "div must greater 0");
+
+
         rndReduceThreshold_ = _threshold;
-        return rndReduceThreshold_;
+        reduceMul_ = _mul;
+        reduceDiv_ = _div;
     }
 
     function setEnforce(bool _closed) onlyAdmins() public returns(bool, uint256, bool) {
@@ -902,7 +929,7 @@ contract PlayCoinKey is modularKey {
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
      */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, PCKdatasets.EventReturns memory _eventData_) private {
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, PCKdatasets.EventReturns memory _eventData_) notBlacklist() private {
 
         // setup local rID
         uint256 _rID = rID_;
@@ -913,7 +940,7 @@ contract PlayCoinKey is modularKey {
 
         
         // if round is active
-        if (_now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
             core(_rID, _pID, msg.value, _affID, _team, _eventData_);
@@ -1338,24 +1365,13 @@ contract PlayCoinKey is modularKey {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
         
         // community rewards
-        if (!address(admin).call.value(_com)())
-        {
-            // This ensures Team Just cannot influence the outcome of FoMo3D with
-            // bank migrations by breaking outgoing transactions.
-            // Something we would never do. But that's not the point.
-            // We spent 2000$ in eth re-deploying just to patch this, we hold the 
-            // highest belief that everything we create should be trustless.
-            // Team JUST, The name you shouldn't have to trust.
-            _p3d = _p3d.add(_com);
-            _com = 0;
-        }
+        admin.transfer(_com.add(_p3d.sub(_p3d / 2)));
         
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
         
-        // send share for p3d to PCGod
-        if (_p3d > 0)
-            PCGod.deposit.value(_p3d)();
+        // p3d half to next
+        _res = _res.add(_p3d / 2);
             
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
@@ -1367,13 +1383,15 @@ contract PlayCoinKey is modularKey {
         _eventData_.PCPAmount = _p3d;
         _eventData_.newPot = _res;
         
+        // clear pot
+        round_[_rID].pot = 0;
         // start next round
         //rID_++;
         _rID++;
         round_[_rID].ended = false;
         round_[_rID].strt = now;
         round_[_rID].end = now.add(rndInit_).add(rndGap_);
-        round_[_rID].pot = _res;
+        round_[_rID].pot = (round_[_rID].pot).add(_res);
         
         return(_eventData_);
     }
@@ -1419,14 +1437,32 @@ contract PlayCoinKey is modularKey {
 
         // biger to threshold, reduce
         if ( _eth >= rndReduceThreshold_ ) {
-            _newEndTime = (_newEndTime).sub( (((_keys) / (1000000000000000000))).mul(rndInc_).add( (((_keys) / (2000000000000000000) ).mul(rndInc_)) ) );
 
+            uint256 reduce = ((((_keys) / (1000000000000000000))).mul(rndInc_ * reduceMul_) / reduceDiv_);
+
+            if( _newEndTime > reduce && _now + rndMin_ + reduce < _newEndTime){
+                _newEndTime = (_newEndTime).sub(reduce);
+            }
             // last add 10 minutes
-            if( _newEndTime < _now + rndMin_ )
-                _newEndTime = _now + rndMin_ ;
+            else if ( _newEndTime > reduce ){
+                _newEndTime = _now + rndMin_;
+            }
         }
 
         round_[_rID].end = _newEndTime;
+    }
+
+
+    function getReduce(uint256 _rID, uint256 _eth) public view returns(uint256,uint256){
+
+        uint256 _keys = calcKeysReceived(_rID, _eth);
+
+        if ( _eth >= rndReduceThreshold_ ) {
+            return ( ((((_keys) / (1000000000000000000))).mul(rndInc_ * reduceMul_) / reduceDiv_), (((_keys) / (1000000000000000000)).mul(rndInc_)) );
+        } else {
+            return (0, (((_keys) / (1000000000000000000)).mul(rndInc_)) );
+        }
+
     }
     
     /**
@@ -1461,8 +1497,7 @@ contract PlayCoinKey is modularKey {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
         uint256 _p3d;
-        if (!address(admin).call.value(_com)())
-        {
+        if (!address(admin).call.value(_com)()) {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
             // Something we would never do. But that's not the point.
@@ -1473,9 +1508,9 @@ contract PlayCoinKey is modularKey {
             _com = 0;
         }
         
-        // pay 1% out to FoMo3D short
+        // pay 1% out to next
         uint256 _long = _eth / 100;
-        otherPCK_.potSwap.value(_long)();
+        potSwap(_long);
         
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
@@ -1493,8 +1528,9 @@ contract PlayCoinKey is modularKey {
         _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
         if (_p3d > 0)
         {
-            // deposit to PCGod contract
-            PCGod.deposit.value(_p3d)();
+            admin.transfer(_p3d.sub(_p3d / 2));
+
+            round_[_rID].pot = round_[_rID].pot.add(_p3d / 2);
             
             // set up event data
             _eventData_.PCPAmount = _p3d.add(_eventData_.PCPAmount);
@@ -1503,15 +1539,12 @@ contract PlayCoinKey is modularKey {
         return(_eventData_);
     }
     
-    function potSwap()
-        external
-        payable
-    {
+    function potSwap(uint256 _pot) private {
         // setup local rID
         uint256 _rID = rID_ + 1;
         
-        round_[_rID].pot = round_[_rID].pot.add(msg.value);
-        emit PCKevents.onPotSwapDeposit(_rID, msg.value);
+        round_[_rID].pot = round_[_rID].pot.add(_pot);
+        emit PCKevents.onPotSwapDeposit(_rID, _pot);
     }
     
     /**
@@ -1646,9 +1679,6 @@ contract PlayCoinKey is modularKey {
             msg.sender == admin,
             "only team just can activate"
         );
-
-        // make sure that its been linked.
-        require(address(otherPCK_) != address(0), "must link to other PCK first");
         
         // can only be ran once
         require(activated_ == false, "PCK already activated");
@@ -1662,19 +1692,6 @@ contract PlayCoinKey is modularKey {
         round_[1].end = now + rndInit_ + rndExtra_;
     }
 
-    function setOtherPCK(address _otherPCK) public {
-        // only team just can activate 
-        require(
-            msg.sender == admin,
-            "only team just can activate"
-        );
-
-        // make sure that it HASNT yet been linked.
-        require(address(otherPCK_) == address(0), "silly dev, you already did that");
-        
-        // set up other fomo3d (fast or long) for pot swap
-        otherPCK_ = otherPCK(_otherPCK);
-    }
 }
 
 //==============================================================================
@@ -1816,9 +1833,6 @@ library PCKKeysCalcLong {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
-interface otherPCK {
-    function potSwap() external payable;
-}
 
 interface PCKExtSettingInterface {
     function getFastGap() external view returns(uint256);
