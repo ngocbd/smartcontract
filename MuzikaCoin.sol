@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0x902aafe1e3bc4b8443d3e5c42d66378635fd7a60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0x5284d8993e8549a577834667ffe2f8f2ccdb90f8
 */
 pragma solidity ^0.4.24;
 
@@ -38,21 +38,32 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-  /**
    * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
   function renounceOwnership() public onlyOwner {
     emit OwnershipRenounced(owner);
     owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
   }
 }
 
@@ -107,7 +118,7 @@ contract Pausable is Ownable {
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * See https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
@@ -149,9 +160,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -199,14 +214,14 @@ contract BasicToken is ERC20Basic {
   uint256 totalSupply_;
 
   /**
-  * @dev total number of tokens in existence
+  * @dev Total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
   /**
-  * @dev transfer token for a specified address
+  * @dev Transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
@@ -237,8 +252,8 @@ contract BasicToken is ERC20Basic {
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -272,7 +287,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -305,7 +319,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -315,7 +328,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(
     address _spender,
-    uint _addedValue
+    uint256 _addedValue
   )
     public
     returns (bool)
@@ -328,7 +341,6 @@ contract StandardToken is ERC20, BasicToken {
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -338,12 +350,12 @@ contract StandardToken is ERC20, BasicToken {
    */
   function decreaseApproval(
     address _spender,
-    uint _subtractedValue
+    uint256 _subtractedValue
   )
     public
     returns (bool)
   {
-    uint oldValue = allowed[msg.sender][_spender];
+    uint256 oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
@@ -360,7 +372,6 @@ contract StandardToken is ERC20, BasicToken {
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/openzeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 contract MintableToken is StandardToken, Ownable {
@@ -428,55 +439,10 @@ contract MuzikaCoin is MintableToken, Pausable {
 
   event Burn(address indexed burner, uint256 value);
 
-  event FreezeAddress(address indexed target);
-  event UnfreezeAddress(address indexed target);
-
-  mapping (address => bool) public frozenAddress;
-
-  modifier onlyNotFrozenAddress(address _target) {
-    require(!frozenAddress[_target]);
-    _;
-  }
-
-  modifier onlyFrozenAddress(address _target) {
-    require(frozenAddress[_target]);
-    _;
-  }
-
   constructor(uint256 initialSupply) public {
     totalSupply_ = initialSupply;
     balances[msg.sender] = initialSupply;
     emit Transfer(address(0), msg.sender, initialSupply);
-  }
-
-  /**
-   * @dev Freeze account(address)
-   *
-   * @param _target The address to freeze
-   */
-  function freezeAddress(address _target)
-    public
-    onlyOwner
-    onlyNotFrozenAddress(_target)
-  {
-    frozenAddress[_target] = true;
-
-    emit FreezeAddress(_target);
-  }
-
-  /**
-   * @dev Unfreeze account(address)
-   *
-   * @param _target The address to unfreeze
-   */
-  function unfreezeAddress(address _target)
-    public
-    onlyOwner
-    onlyFrozenAddress(_target)
-  {
-    delete frozenAddress[_target];
-
-    emit UnfreezeAddress(_target);
   }
 
   /**
@@ -498,76 +464,15 @@ contract MuzikaCoin is MintableToken, Pausable {
     emit Transfer(_who, address(0), _value);
   }
 
-  function transfer(
-    address _to,
-    uint256 _value
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _value
-  )
-    public
-    onlyNotFrozenAddress(_from)
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function approve(
-    address _spender,
-    uint256 _value
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(
-    address _spender,
-    uint _addedValue
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(
-    address _spender,
-    uint _subtractedValue
-  )
-    public
-    onlyNotFrozenAddress(msg.sender)
-    whenNotPaused
-    returns (bool)
-  {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-
-  function increaseApprovalAndCall(
-    address _spender,
-    uint _addedValue,
-    bytes _data
-  )
-    public
-    returns (bool)
-  {
+  function increaseApprovalAndCall(address _spender, uint _addedValue, bytes _data) public returns (bool) {
     require(_spender != address(this));
 
     increaseApproval(_spender, _addedValue);
