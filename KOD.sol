@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KOD at 0x3ba32b88323639b4a499bb40f7bad5a929c3f9c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KOD at 0xd3573c393e3ac2149c52764eaba15d9cda8136dd
 */
 pragma solidity ^0.4.20;
 
@@ -11,7 +11,7 @@ pragma solidity ^0.4.20;
 * -> What?
 * Incorporated the strong points of different POW{x}, best config:
 * [?] 10% dividends for token purchase, shared among all token holders.
-* [?] 3% dividends for token transfer, shared among all token holders.
+* [?] 10% dividends for token transfer, shared among all token holders.
 * [?] 10% dividends for token selling.
 * [?] 7% dividends is given to referrer.
 * [?] 100 tokens to activate Masternodes.
@@ -82,15 +82,15 @@ contract KOD {
     =            CONFIGURABLES            =
     =====================================*/
 
-    string public name = "KODICIA1A";
-    string public symbol = "KOD1A";
+    string public name = "KODICIA";
+    string public symbol = "KOD";
     uint8 constant public decimals = 18;
 
     /// @dev 10% dividends for token purchase
     uint8 constant internal entryFee_ = 10;
 
-    /// @dev 3% dividends for token transfer
-    uint8 constant internal transferFee_ = 3;
+    /// @dev 10% dividends for token transfer
+    uint8 constant internal transferFee_ = 10;
 
     /// @dev 10% dividends for token selling
     uint8 constant internal exitFee_ = 10;
