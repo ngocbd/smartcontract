@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DXBCToken at 0x2896fc8a63e3453d7edf60bbef85dc336fbf982b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DXBCToken at 0x76080ecefa8912053297c251dd6fca5fc159530d
 */
 pragma solidity ^0.4.13;
 
@@ -158,10 +158,10 @@ contract StandardToken is ERC20, BasicToken {
 //the main DXBCToken contract
 contract DXBCToken is StandardToken {
   string public constant name = "???";
-  string public constant symbol = "DXBC";
+  string public constant symbol = "BOO";
   uint8 public constant decimals = 6;
 
-  uint256 public constant total= 200000000 * (10 ** uint256(decimals));
+  uint256 public constant total=  500000000* (10 ** uint256(decimals));
 
   function DXBCToken(address wallet) {
     balances[wallet] = total;
