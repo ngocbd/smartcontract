@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOKKA at 0x249D670abCcB0931B51B3AB21b37A1c8F7E75496
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOKKA at 0xE921e53386f0C62C90a81BfA491659cED880b9CC
 */
 pragma solidity ^0.4.18;
 
@@ -86,7 +86,6 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
   
-  uint256 totalSupply;
 
   /**
   * @dev transfer token for a specified address
