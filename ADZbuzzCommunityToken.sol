@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xb0b0c5bacd208badaf6226c71eaa51de08e9e40d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xebb737c5a4634dbdf66955fb514fab3493353e1f
 */
 pragma solidity ^0.4.18;
             
             // ----------------------------------------------------------------------------
-            // 'ACT216712' token contract
+            // 'ACT214446' token contract
             //
             // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-            // Symbol      : ACT216712
-            // Name        : ADZbuzz Cuttingthroughthematrix.com Community Token
+            // Symbol      : ACT214446
+            // Name        : ADZbuzz Qq.com Community Token
             // Total supply: 2000000
             // Decimals    : 8
             //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
                 // Constructor
                 // ------------------------------------------------------------------------
                 function ADZbuzzCommunityToken() public {
-                    symbol = "ACT216712";
-                    name = "ADZbuzz Cuttingthroughthematrix.com Community Token";
+                    symbol = "ACT214446";
+                    name = "ADZbuzz Qq.com Community Token";
                     decimals = 8;
                     _totalSupply = 200000000000000;
                     balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
