@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0x760fbd1446e3ce8f22cc7805ef057ad3b259161f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F3DSHORT at 0x951a88379a6ab4fa8f645622086ff5637e75c9e6
 */
 pragma solidity ^0.4.24;
 
@@ -135,13 +135,13 @@ contract F3DSHORT is modularShort {
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name = "f3dshort";
-    string constant public symbol = "f3dshort";
+    string constant public name = "F3DSHORT";
+    string constant public symbol = "F3DSHORT";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
-    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 8 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 10 minutes;                // max length a round timer can be
+    uint256 private rndGap_ = 8 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 42 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 40 minutes;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
