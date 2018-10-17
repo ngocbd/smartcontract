@@ -1,46 +1,118 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x0240a41a931a97b5360c0be928a4eadda219bf86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0xf5b54a8dd3e17c83990d57ad608ca336ec5cce68
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.20;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) public pure  returns (uint256)  {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+  function safeDiv(uint256 a, uint256 b)public pure returns (uint256) {
+    assert(b > 0);
+    uint256 c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function safeSub(uint256 a, uint256 b)public pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function safeAdd(uint256 a, uint256 b)public pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function _assert(bool assertion)public pure {
+    assert(!assertion);
+  }
 }
 
-contract owned {
 
+contract ERC20Interface {
+  string public name;
+  string public symbol;
+  uint8 public  decimals;
+  uint public totalSupply;
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) view returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ }
+ 
+contract ERC20 is ERC20Interface,SafeMath {
+
+    // ?????????????balanceOf????
+    mapping(address => uint256) public balanceOf;
+
+    // allowed?????????????????address?? ????????????(?????address)?????uint256??
+    mapping(address => mapping(address => uint256)) allowed;
+
+    constructor(string _name) public {
+       name = _name;  // "UpChain";
+       symbol = "REL";
+       decimals = 18;
+       totalSupply = 10000000000000000000000000000;
+       balanceOf[msg.sender] = totalSupply;
+    }
+
+  // ???
+  function transfer(address _to, uint256 _value) returns (bool success) {
+      require(_to != address(0));
+      require(balanceOf[msg.sender] >= _value);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);   // ??????
+
+      balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender],_value) ;
+      balanceOf[_to] =SafeMath.safeAdd(balanceOf[_to] ,_value);
+
+      // ???????
+      emit Transfer(msg.sender, _to, _value);
+
+      return true;
+  }
+
+
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+      require(_to != address(0));
+      require(allowed[_from][msg.sender] >= _value);
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
+
+      balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
+      balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to],_value);
+
+      allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender], _value);
+
+      emit Transfer(msg.sender, _to, _value);
+      return true;
+  }
+
+  function approve(address _spender, uint256 _value) returns (bool success) {
+      allowed[msg.sender][_spender] = _value;
+
+      emit Approval(msg.sender, _spender, _value);
+      return true;
+  }
+
+  function allowance(address _owner, address _spender) view returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+  }
+
+}
+
+
+contract owned {
     address public owner;
 
-    function owned() public {
+    constructor () public {
         owner = msg.sender;
     }
 
@@ -49,211 +121,83 @@ contract owned {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
+    function transferOwnerShip(address newOwer) public onlyOwner {
+        owner = newOwer;
     }
+
 }
 
-contract saleOwned is owned{
-    mapping (address => bool) public saleContract;
 
-    modifier onlySaleOwner {        
-        require(msg.sender == owner || true == saleContract[msg.sender]);
-        _;
-    }
+contract AdvanceToken is ERC20, owned{
 
-    function addSaleOwner(address saleOwner) onlyOwner public {
-        saleContract[saleOwner] = true;
-    }
-
-    function delSaleOwner(address saleOwner) onlyOwner public {
-        saleContract[saleOwner] = false;
-    }
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is saleOwned {
-    event Pause();
-    event Unpause();
-
-    bool public paused = false;
-
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-    modifier whenNotPaused() {
-        require(false == paused);
-        _;
-    }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-    modifier whenPaused {
-        require(true == paused);
-        _;
-    }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-    function pause() onlyOwner whenNotPaused public returns (bool) {
-        paused = true;
-        emit Pause();
-        return true;
-    }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-    function unpause() onlyOwner whenPaused public returns (bool) {
-        paused = false;
-        emit Unpause();
-        return true;
-    }
-}
-
-/******************************************/
-/*       BASE TOKEN STARTS HERE       */
-/******************************************/
-contract BaseToken is Pausable{
-    using SafeMath for uint256;    
-    
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256))  approvals;
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event TransferFrom(address indexed approval, address indexed from, address indexed to, uint256 value);
-    event Approval( address indexed owner, address indexed spender, uint value);
-
-    function BaseToken (
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        decimals = 18;
-        name = tokenName;
-        symbol = tokenSymbol;
-    }    
-    
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);
-        require (balanceOf[_from] >= _value);
-        require (balanceOf[_to] + _value > balanceOf[_to]);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        emit Transfer(_from, _to, _value);
-    }
-
-    function transfer(address _to, uint256 _value) whenNotPaused public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint _value) whenNotPaused public returns (bool) {
-        assert(balanceOf[_from] >= _value);
-        assert(approvals[_from][msg.sender] >= _value);
-        
-        approvals[_from][msg.sender] = approvals[_from][msg.sender].sub(_value);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        
-        emit Transfer(_from, _to, _value);
-        
-        return true;
-    }
-
-    function allowance(address src, address guy) public view returns (uint256) {
-        return approvals[src][guy];
-    }
-
-    function approve(address guy, uint256 _value) public returns (bool) {
-        approvals[msg.sender][guy] = _value;
-        
-        emit Approval(msg.sender, guy, _value);
-        
-        return true;
-    }
-}
-
-/******************************************/
-/*       ADVANCED TOKEN STARTS HERE       */
-/******************************************/
-contract AdvanceToken is BaseToken {
-    string tokenName        = "8ENCORE";       // Set the name for display purposes
-    string tokenSymbol      = "8EN";           // Set the symbol for display purposes
-
-    struct frozenStruct {
-        uint startTime;
-        uint endTime;
-    }
-    
     mapping (address => bool) public frozenAccount;
-    mapping (address => frozenStruct) public frozenTime;
 
-    event FrozenFunds(address target, bool frozen, uint startTime, uint endTime);    
-    event Burn(address indexed from, uint256 value);
-    
-    function AdvanceToken() BaseToken(tokenName, tokenSymbol) public {}
-    
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        require(false == isFrozen(_from));                  // Check if sender is frozen
-        if(saleContract[_from] == false)                    // for refund
-            require(false == isFrozen(_to));                // Check if recipient is frozen
-        balanceOf[_from] = balanceOf[_from].sub(_value);    // Subtract from the sender
-        balanceOf[_to] = balanceOf[_to].add(_value);        // Add the same to the recipient
+    event AddSupply(uint amount);
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address target, uint amount);
 
-        emit Transfer(_from, _to, _value);
-    }    
+    constructor (string _name) ERC20(_name) public {
 
-    function mintToken(uint256 mintedAmount) onlyOwner public {
-        uint256 mintSupply = mintedAmount.mul(10 ** uint256(decimals));
-        balanceOf[msg.sender] = balanceOf[msg.sender].add(mintSupply);
-        totalSupply = totalSupply.add(mintSupply);
-        emit Transfer(0, this, mintSupply);
-        emit Transfer(this, msg.sender, mintSupply);
     }
 
-    function isFrozen(address target) public view returns (bool success) {        
-        if(false == frozenAccount[target])
-            return false;
+    function mine(address target, uint amount) public onlyOwner {
+        totalSupply =SafeMath.safeAdd(totalSupply,amount) ;
+        balanceOf[target] = SafeMath.safeAdd(balanceOf[target],amount);
 
-        if(frozenTime[target].startTime <= now && now <= frozenTime[target].endTime)
-            return true;
-        
-        return false;
+        emit AddSupply(amount);
+        emit Transfer(0, target, amount);
     }
 
-    function freezeAccount(address target, bool freeze, uint startTime, uint endTime) onlySaleOwner public {
+    function freezeAccount(address target, bool freeze) public onlyOwner {
         frozenAccount[target] = freeze;
-        frozenTime[target].startTime = startTime;
-        frozenTime[target].endTime = endTime;
-        emit FrozenFunds(target, freeze, startTime, endTime);
+        emit FrozenFunds(target, freeze);
     }
 
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
+
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+        success = _transfer(msg.sender, _to, _value);
+  }
+
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(allowed[_from][msg.sender] >= _value);
+        success =  _transfer(_from, _to, _value);
+        allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender],_value) ;
+  }
+
+  function _transfer(address _from, address _to, uint256 _value) internal returns (bool) {
+      require(_to != address(0));
+      require(!frozenAccount[_from]);
+
+      require(balanceOf[_from] >= _value);
+      require(balanceOf[ _to] + _value >= balanceOf[ _to]);
+
+      balanceOf[_from] =SafeMath.safeSub(balanceOf[_from],_value) ;
+      balanceOf[_to] =SafeMath.safeAdd(balanceOf[_to],_value) ;
+
+      emit Transfer(_from, _to, _value);
+      return true;
+  }
+
+    function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        totalSupply = totalSupply.sub(_value);
+
+        totalSupply =SafeMath.safeSub(totalSupply,_value) ;
+        balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender],_value) ;
+
         emit Burn(msg.sender, _value);
         return true;
     }
 
-    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
+    function burnFrom(address _from, uint256 _value)  public returns (bool success) {
         require(balanceOf[_from] >= _value);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        emit Burn(_from, _value);
+        require(allowed[_from][msg.sender] >= _value);
+
+        totalSupply =SafeMath.safeSub(totalSupply,_value) ;
+        balanceOf[msg.sender] =SafeMath.safeSub(balanceOf[msg.sender], _value);
+        allowed[_from][msg.sender] =SafeMath.safeSub(allowed[_from][msg.sender],_value);
+
+        emit Burn(msg.sender, _value);
         return true;
     }
 }
