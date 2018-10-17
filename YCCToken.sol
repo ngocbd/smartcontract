@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCCToken at 0xf6183de7f0e997a47f58a3a49470b71bf0c25263
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCCToken at 0x9e8c568f638ff9b7a90dabc606573051969fa290
 */
 pragma solidity ^0.4.13;
 
@@ -49,8 +49,9 @@ contract YCCToken {
     /// @notice Send `_value` tokens to `_to` from your account
     /// @param _to The address of the recipient
     /// @param _value the amount to send
-    function transfer(address _to, uint256 _value) {
+    function transfer(address _to, uint256 _value) returns (bool success) {
         _transfer(msg.sender, _to, _value);
+		return true;
     }
 
     /// @notice Send `_value` tokens to `_to` in behalf of `_from`
@@ -67,8 +68,7 @@ contract YCCToken {
     /// @notice Allows `_spender` to spend no more than `_value` tokens in your behalf
     /// @param _spender The address authorized to spend
     /// @param _value the max amount they can spend
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
