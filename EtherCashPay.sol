@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCashPay at 0xba24bfbaf250dc602318b53d2a8c9723acdd79a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCashPay at 0x592e8c43a873633a41009151fdbaa32f7a21e58e
 */
 pragma solidity ^0.4.9;
 
@@ -172,7 +172,7 @@ contract EtherCashPay is SafeMath {
     admin = 0x756dD5bA2b8e20210ddEb345C59D69C3a011a4EC;
     feeAccount = 0x012662Cac702241e37BC1a2C81Ca7C4ee59aDad8;
     accountLevelsAddr = 0x0000000000000000000000000000000000000000;
-    feeMake = 1;
+    feeMake = 0;
     feeTake = 3000000000000000;
     feeRebate = 0;
   }
