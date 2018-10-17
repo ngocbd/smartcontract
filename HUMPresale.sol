@@ -1,83 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0xed8a2697d1af8f8cad0f6c5b9962d868d4ed2a41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0xa8d8ce50ee73f38411db73c2c994a26c840c25d6
 */
 pragma solidity ^0.4.23;
-
-/**
- * @title MultiOwnable
- */
-contract MultiOwnable {
-  address public root;
-  mapping (address => address) public owners; // owner => parent of owner
-  
-  /**
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
-  constructor() public {
-    root = msg.sender;
-    owners[root] = root;
-  }
-  
-  /**
-  * @dev Throws if called by any account other than the owner.
-  */
-  modifier onlyOwner() {
-    require(owners[msg.sender] != 0);
-    _;
-  }
-  
-  /**
-  * @dev Adding new owners
-  */
-  function newOwner(address _owner) onlyOwner external returns (bool) {
-    require(_owner != 0);
-    owners[_owner] = msg.sender;
-    return true;
-  }
-  
-  /**
-    * @dev Deleting owners
-    */
-  function deleteOwner(address _owner) onlyOwner external returns (bool) {
-    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
-    owners[_owner] = 0;
-    return true;
-  }
-}
-
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
 
 
 
@@ -128,10 +52,28 @@ library SafeMath {
   }
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-
-
-
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title Basic token
@@ -176,11 +118,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
-
-
-
 
 /**
  * @title Standard ERC20 token
@@ -276,141 +213,6 @@ contract StandardToken is ERC20, BasicToken {
   }
 
 }
-
-
-
-
-
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, MultiOwnable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-
-
-
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
-
-
-
-
-
-
-/**
- * @title HUMToken
- * @dev ERC20 HUMToken.
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
-contract HUMToken is MintableToken, BurnableToken {
-
-  string public constant name = "HUMToken"; // solium-disable-line uppercase
-  string public constant symbol = "HUM"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase, // 18 decimals is the strongly suggested default, avoid changing it
-
-  uint256 public constant INITIAL_SUPPLY = 2500 * 1000 * 1000 * (10 ** uint256(decimals)); // 2,500,000,000 HUM
-
-  bool public isUnlocked = false;
-  
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  constructor(address _wallet) public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[_wallet] = INITIAL_SUPPLY;
-    emit Transfer(address(0), _wallet, INITIAL_SUPPLY);
-  }
-
-  modifier onlyTransferable() {
-    require(isUnlocked || owners[msg.sender] != 0);
-    _;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public onlyTransferable returns (bool) {
-      return super.transferFrom(_from, _to, _value);
-  }
-
-  function transfer(address _to, uint256 _value) public onlyTransferable returns (bool) {
-      return super.transfer(_to, _value);
-  }
-  
-  function unlockTransfer() public onlyOwner {
-      isUnlocked = true;
-  }
-
-}
-
-
-
-
-
 
 /**
  * @title Crowdsale
@@ -570,68 +372,48 @@ contract Crowdsale {
   }
 }
 
-
-
-
-
-
 /**
- * @title IndividuallyCappedCrowdsale
- * @dev Crowdsale with per-user caps.
+ * @title MultiOwnable
  */
-contract IndividuallyCappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) public contributions;
-  uint256 public individualCap;
-
-  constructor(uint256 _individualCap) public {
-    individualCap = _individualCap;
-  }
-
+contract MultiOwnable {
+  address public root;
+  mapping (address => address) public owners; // owner => parent of owner
+  
   /**
-   * @dev Returns the cap per a user.
-   * @return Current cap for individual user
-   */
-  function getUserCap() public view returns (uint256) {
-    return individualCap;
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  constructor() public {
+    root = msg.sender;
+    owners[root] = root;
   }
-
+  
   /**
-   * @dev Returns the amount contributed so far by a sepecific user.
-   * @param _beneficiary Address of contributor
-   * @return User contribution so far
-   */
-  function getUserContribution(address _beneficiary) public view returns (uint256) {
-    return contributions[_beneficiary];
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier onlyOwner() {
+    require(owners[msg.sender] != 0);
+    _;
   }
-
+  
   /**
-   * @dev Extend parent behavior requiring purchase to respect the user's funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(contributions[_beneficiary].add(_weiAmount) <= individualCap);
+  * @dev Adding new owners
+  */
+  function newOwner(address _owner) onlyOwner external returns (bool) {
+    require(_owner != 0);
+    owners[_owner] = msg.sender;
+    return true;
   }
-
+  
   /**
-   * @dev Extend parent behavior to update user contributions
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-    super._updatePurchasingState(_beneficiary, _weiAmount);
-    contributions[_beneficiary] = contributions[_beneficiary].add(_weiAmount);
+    * @dev Deleting owners
+    */
+  function deleteOwner(address _owner) onlyOwner external returns (bool) {
+    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
+    owners[_owner] = 0;
+    return true;
   }
-
 }
-
-
-
-
-
 
 /**
  * @title WhitelistedCrowdsale
@@ -686,10 +468,215 @@ contract WhitelistedCrowdsale is Crowdsale, MultiOwnable {
 
 }
 
+/**
+ * @title IndividuallyCappedCrowdsale
+ * @dev Crowdsale with per-user caps.
+ */
+contract IndividuallyCappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) public contributions;
+  uint256 public individualCap;
+
+  constructor(uint256 _individualCap) public {
+    individualCap = _individualCap;
+  }
+
+  /**
+   * @dev Returns the cap per a user.
+   * @return Current cap for individual user
+   */
+  function getUserCap() public view returns (uint256) {
+    return individualCap;
+  }
+
+  /**
+   * @dev Returns the amount contributed so far by a sepecific user.
+   * @param _beneficiary Address of contributor
+   * @return User contribution so far
+   */
+  function getUserContribution(address _beneficiary) public view returns (uint256) {
+    return contributions[_beneficiary];
+  }
+
+  /**
+   * @dev Extend parent behavior requiring purchase to respect the user's funding cap.
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+    require(contributions[_beneficiary].add(_weiAmount) <= individualCap);
+  }
+
+  /**
+   * @dev Extend parent behavior to update user contributions
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
+    super._updatePurchasingState(_beneficiary, _weiAmount);
+    contributions[_beneficiary] = contributions[_beneficiary].add(_weiAmount);
+  }
+
+}
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract MintableToken is StandardToken, MultiOwnable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
 
 
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract Blacklisted is MultiOwnable {
+
+  mapping(address => bool) public blacklist;
+
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier notBlacklisted() {
+    require(blacklist[msg.sender] == false);
+    _;
+  }
+
+  /**
+   * @dev Adds single address to blacklist.
+   * @param _villain Address to be added to the blacklist
+   */
+  function addToBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = true;
+  }
+
+  /**
+   * @dev Adds list of addresses to blacklist. Not overloaded due to limitations with truffle testing.
+   * @param _villains Addresses to be added to the blacklist
+   */
+  function addManyToBlacklist(address[] _villains) external onlyOwner {
+    for (uint256 i = 0; i < _villains.length; i++) {
+      blacklist[_villains[i]] = true;
+    }
+  }
+
+  /**
+   * @dev Removes single address from blacklist.
+   * @param _villain Address to be removed to the blacklist
+   */
+  function removeFromBlacklist(address _villain) external onlyOwner {
+    blacklist[_villain] = false;
+  }
+}
 
 
+contract HUMToken is MintableToken, BurnableToken, Blacklisted {
+
+  string public constant name = "HUMToken"; // solium-disable-line uppercase
+  string public constant symbol = "HUM"; // solium-disable-line uppercase
+  uint8 public constant decimals = 18; // solium-disable-line uppercase, // 18 decimals is the strongly suggested default, avoid changing it
+
+  uint256 public constant INITIAL_SUPPLY = 2500 * 1000 * 1000 * (10 ** uint256(decimals)); // 2,500,000,000 HUM
+
+  bool public isUnlocked = false;
+  
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+  constructor(address _wallet) public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[_wallet] = INITIAL_SUPPLY;
+    emit Transfer(address(0), _wallet, INITIAL_SUPPLY);
+  }
+
+  modifier onlyTransferable() {
+    require(isUnlocked || owners[msg.sender] != 0);
+    _;
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public onlyTransferable notBlacklisted returns (bool) {
+      return super.transferFrom(_from, _to, _value);
+  }
+
+  function transfer(address _to, uint256 _value) public onlyTransferable notBlacklisted returns (bool) {
+      return super.transfer(_to, _value);
+  }
+  
+  function unlockTransfer() public onlyOwner {
+      isUnlocked = true;
+  }
+  
+  function lockTransfer() public onlyOwner {
+      isUnlocked = false;
+  }
+
+}
 
 contract HUMPresale is WhitelistedCrowdsale, IndividuallyCappedCrowdsale {
   
