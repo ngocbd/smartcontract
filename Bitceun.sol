@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitceun at 0x3b6d3a653e01c62b4cffe87ef1d541ba90874e02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitceun at 0x74580728294756bc035cb30945c651528b2450b1
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -126,12 +126,12 @@ contract StandardToken is ERC20 {
 }
 
 contract Bitceun is StandardToken {
-  string public constant name = "Bitceun";
+  string public constant name = "Biceun";
   string public constant symbol = "BIT";
   uint8 public constant decimals = 0;
 
   function Bitceun() public {
-    totalSupply = 10000000000000000;
+    totalSupply = 1000000000;
     balances[msg.sender] = totalSupply;
   }
 }
