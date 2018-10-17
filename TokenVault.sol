@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x616085c0b50e450a084a2c3871d0297cc409b38b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xa6b123fcdc975a2d708c29522d15ae84e9ec24e2
 */
 /**
    * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
