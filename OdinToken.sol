@@ -1,9 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0xbf67a3c43198c19643cbf31e8996e0b895f8e759
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OdinToken at 0x57c8d5d5b87a1580fdaf996cef674bb0d7f14c98
 */
 pragma solidity ^0.4.24;
 //
-// OdinToken Token
+// Odin Browser Token
+// Author: Odin browser group
+// Contact: support@odinlink.com
+// Home page: https://www.odinlink.com
+// Telegram:  https://t.me/OdinChain666666
 //
 library SafeMath{
 	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -31,8 +35,8 @@ library SafeMath{
 
 contract OdinToken {
 	using SafeMath for uint256;
-    string public constant name         = "OdinChain";
-    string public constant symbol       = "OdinB";
+    string public constant name         = "OdinBrowser";
+    string public constant symbol       = "ODIN";
     uint public constant decimals       = 18;
     
     uint256 OdinEthRate                  = 10 ** decimals;
