@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x07030ff547be357df4520ad113d6d76072acbff5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x1f3602daacc20b623b4dcd7738b844998c5bc0da
 */
 pragma solidity ^0.4.18;
 
@@ -74,7 +74,7 @@ contract lockEtherPay is Ownable {
   bool public isReleased = false;
   uint256 public start_time;
   uint256 public end_time;
-  uint256 public fifty_two_weeks = 28857600;
+  uint256 public fifty_two_weeks = 28598400;
 
   event TokenReleased(address beneficiary, uint256 token_amount);
 
