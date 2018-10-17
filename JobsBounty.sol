@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JobsBounty at 0xa797bd5e3307d2b5854a81c5d267f694f9528a8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JobsBounty at 0x9895661e433b93e5fb8331ff8d6e89a8de7d962d
 */
 pragma solidity ^0.4.24;
 
@@ -189,13 +189,12 @@ contract JobsBounty is Ownable, ReentrancyGuard {
     }
     
     function payOutBounty(address _referrerAddress, address _candidateAddress) public onlyOwner nonReentrant returns(bool){
-        uint256 amountCandidate = (ERC20(INDToken).balanceOf(this) / 100) * 50;
-        uint256 amountReferrer = (ERC20(INDToken).balanceOf(this) / 100) * 50;
+        uint256 individualAmounts = (ERC20(INDToken).balanceOf(this) / 100) * 50;
         
         assert(block.timestamp >= endDate);
         // Tranferring to the candidate first
-        assert(ERC20(INDToken).transfer(_candidateAddress, amountCandidate));
-        assert(ERC20(INDToken).transfer(_referrerAddress, amountReferrer));
+        assert(ERC20(INDToken).transfer(_candidateAddress, individualAmounts));
+        assert(ERC20(INDToken).transfer(_referrerAddress, individualAmounts));
         return true;    
     }
     
@@ -203,12 +202,9 @@ contract JobsBounty is Ownable, ReentrancyGuard {
     // 1st one if to withdraw tokens that are accidentally send to this Contract
     // 2nd is to actually withdraw the tokens and return it to the company in case they don't find a candidate
     function withdrawERC20Token(address anyToken) public onlyOwner nonReentrant returns(bool){
-        if( anyToken != address(0x0) ) {
-            assert(block.timestamp >= endDate);
-            assert(ERC20(anyToken).transfer(owner, ERC20(anyToken).balanceOf(this)));        
-            return true;
-        }
-        return false;
+        assert(block.timestamp >= endDate);
+        assert(ERC20(anyToken).transfer(owner, ERC20(anyToken).balanceOf(this)));        
+        return true;
     }
     
     //ETH cannot get locked in this contract. If it does, this can be used to withdraw
