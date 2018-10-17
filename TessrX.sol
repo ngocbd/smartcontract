@@ -1,17 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TessrX at 0xc7130eabaf24429a3963aff68b51ed31f2686097
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tessrX at 0x8c5227134c834815d0dfa5c6d66d9aaa281aeae0
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// --- 'TSRX' 'TessrX' token contract
+// --- 'TSRX' 'tessr.credit' token contract
 // --- Symbol      : TSRX
-// --- Name        : TessrX
+// --- Name        : tessr.credit
 // --- Total supply: Generated from contributions
 // --- Decimals    : 18
 // --- @author EJS32 
-// --- @title for 01101101 01111001 01101100 01101111 01110110 01100101
-// --- (c) Tessr8RT / tessr.io 2018. The MIT License.
+// --- @title for 01101100 01101111 01110110 01100101
+// --- (c) tessr.credit / tessr.io 2018. The MIT License.
+// --- Version pragma solidity v0.4.21+commit.dfe3193c
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -37,8 +38,7 @@ contract SafeMath {
 }
 
 // ----------------------------------------------------------------------------
-// --- ERC Token Standard #20 Interface
-// --- https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// --- ERC Token Standard
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
@@ -47,11 +47,9 @@ contract ERC20Interface {
     function transfer(address to, uint tokens) public returns (bool success);
     function approve(address spender, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
-
 
 // ----------------------------------------------------------------------------
 // --- Contract function to receive approval and execute function in one call
@@ -60,16 +58,13 @@ contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
 
-
 // ----------------------------------------------------------------------------
-// --- Owned contract
+// --- Contract Owned
 // ----------------------------------------------------------------------------
 contract Owned {
     address public owner;
     address public newOwner;
-
     event OwnershipTransferred(address indexed _from, address indexed _to);
-
     function Owned() public {
         owner = msg.sender;
     }
@@ -82,6 +77,7 @@ contract Owned {
     function transferOwnership(address _newOwner) public onlyOwner {
         newOwner = _newOwner;
     }
+	
     function acceptOwnership() public {
         require(msg.sender == newOwner);
          emit OwnershipTransferred(owner, newOwner);
@@ -91,10 +87,9 @@ contract Owned {
 }
 
 // ----------------------------------------------------------------------------
-// --- ERC20 Token, with the addition of symbol, name and decimals
-// --- Receives ETH and generates tokens
+// --- Contract tessrX
 // ----------------------------------------------------------------------------
-contract TessrX is ERC20Interface, Owned, SafeMath {
+contract tessrX is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -102,26 +97,23 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
     uint public startDate;
     uint public bonusEnds;
     uint public endDate;
-
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
-
 
 // ------------------------------------------------------------------------
 // --- Constructor
 // ------------------------------------------------------------------------
-    function TessrX() public {
+    function tessrX() public {
         symbol = "TSRX";
-        name = "TessrX";
+        name = "tessr.credit";
         decimals = 18;
         _totalSupply = 400000000000000000000000000;
         startDate = now;
-        bonusEnds = now + 1 weeks;
-        endDate = now + 4 weeks;
+        bonusEnds = now + 7 days;
+        endDate = now + 38 days;
         balances[owner] = _totalSupply;
-        emit Transfer(address(0), owner, _totalSupply);
+         emit Transfer(address(0), owner, _totalSupply);
     }
-
 
 // ------------------------------------------------------------------------
 // --- Total supply
@@ -129,7 +121,6 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
     function totalSupply() public constant returns (uint) {
         return _totalSupply  - balances[address(0)];
     }
-
 
 // ------------------------------------------------------------------------
 // --- Get the token balance for account `tokenOwner`
@@ -139,7 +130,7 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
     }
 
 // ------------------------------------------------------------------------
-// --- Transfer the balance from token owner's account to `to` account
+// --- Transfer the balance from token owner's account to the `to` account
 // --- Owner's account must have sufficient balance to transfer
 // --- 0 value transfers are allowed
 // ------------------------------------------------------------------------
@@ -151,22 +142,17 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
     }
 
 // ------------------------------------------------------------------------
-// --- Token owner can approve for `spender` to transferFrom(...) `tokens`
-// --- from the token owner's account
-// --- https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// --- recommends that there are no checks for the approval double-spend attack
-// --- as this should be implemented in user interfaces 
+// --- Token owner can approve for `spender` to transferFrom `tokens`
 // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
+         emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
 // ------------------------------------------------------------------------
 // --- Transfer `tokens` from the `from` account to the `to` account
-// --- The calling account must already have sufficient tokens approve(...)-d
-// --- for spending from the `from` account and
+// --- The calling account must already have sufficient tokens approved
 // --- From account must have sufficient balance to transfer
 // --- Spender must have sufficient allowance to transfer
 // --- 0 value transfers are allowed
@@ -180,8 +166,7 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
     }
 
 // ------------------------------------------------------------------------
-// --- Returns the amount of tokens approved by the owner that can be
-// --- transferred to the spender's account
+// --- Returns the amount of tokens approved by the owner that can be transferred
 // ------------------------------------------------------------------------
     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
         return allowed[tokenOwner][spender];
@@ -189,9 +174,7 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
 
 
 // ------------------------------------------------------------------------
-// --- Token owner can approve for `spender` to transferFrom(...) `tokens`
-// --- from the token owner's account. The `spender` contract function
-// --- `receiveApproval(...)` is then executed
+// --- Token owner can approve for `spender` to transferFrom `tokens`
 // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -200,24 +183,22 @@ contract TessrX is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
-
 // ------------------------------------------------------------------------
-// --- 6,000 tokens per 1 ETH, with 0% bonus
+// --- 5,000 tokens per 1 ETH, with 25% bonus
 // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
         uint tokens;
         if (now <= bonusEnds) {
-            tokens = msg.value * 6000;
+            tokens = msg.value * 6250;
         } else {
-            tokens = msg.value * 6000;
+            tokens = msg.value * 5000;
         }
         balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
         _totalSupply = safeAdd(_totalSupply, tokens);
          emit Transfer(address(0), msg.sender, tokens);
         owner.transfer(msg.value);
     }
-
 
 // ------------------------------------------------------------------------
 // --- Owner can transfer out any accidentally sent ERC20 tokens
