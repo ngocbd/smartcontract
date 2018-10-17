@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubricoin at 0xcbeabd17c4545e6ae5a3b40d49c8c1b896688d85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubricoin at 0xf7439bae7cd0c506ccd35d70b3a06b8a4ae9c2f6
 */
 pragma solidity 0.4.24;
 
@@ -157,13 +157,13 @@ contract UbricoinPresale {
 
     // Token manager has exclusive priveleges to call administrative
     // functions on this contract.
-    address public tokenManager=0xAC762012330350DDd97Cc64B133536F8E32193a8;
+    address public tokenManager;
 
     // Gathered funds can be withdrawn only to escrow's address.
-    address public escrow=0x28970854Bfa61C0d6fE56Cc9daAAe5271CEaEC09;
+    address public escrow;
 
     // Crowdsale manager has exclusive priveleges to burn presale tokens.
-    address public crowdsaleManager=0x9888375f4663891770DaaaF9286d97d44FeFC82E;
+    address public crowdsaleManager;
 
     mapping (address => uint256) private balance;
 
@@ -326,7 +326,7 @@ contract WhitelistedCrowdsale is Ownable {
 
    contract UbricoinCrowdsale is FinalizeAgent,WhitelistedCrowdsale {
     using SafeMath for uint256;
-    address public beneficiary=0x28970854Bfa61C0d6fE56Cc9daAAe5271CEaEC09;
+    address public beneficiary;
     uint256 public fundingGoal;
     uint256 public amountRaised;
     uint256 public deadline;
@@ -569,7 +569,7 @@ contract Ubricoin is UbricoinPresale,Ownable,Haltable, UbricoinCrowdsale,Upgrade
     
     event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
     
-    uint256 public AVAILABLE_AIRDROP_SUPPLY = 100000000; // 100% Released at Token distribution
+    uint256 public AVAILABLE_AIRDROP_SUPPLY = 100000000* decimals; // 100% Released at Token distribution
     uint256 public grandTotalClaimed = 1;
     uint256 public startTime;
     
