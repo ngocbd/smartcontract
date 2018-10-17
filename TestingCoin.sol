@@ -1,276 +1,257 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestingCoin at 0xc4fd6c87218a2c0f2f7cfed260e1778d62020688
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestingCoin at 0x2432cd1ef950021eec84aade84b8ffe5ea08373b
 */
-pragma solidity ^0.4.18;
+/**
+ * 4art ERC20 StandardToken
+ * Author: scalify.it
+ * */
 
-/*
+pragma solidity ^0.4.24;
 
- .|'''.|    .           '||      '||            ..|'''.|          ||
- ||..  '  .||.   ....    || ...   ||    ....  .|'     '    ...   ...  .. ...
-  ''|||.   ||   '' .||   ||'  ||  ||  .|...|| ||         .|  '|.  ||   ||  ||
-.     '||  ||   .|' ||   ||    |  ||  ||      '|.      . ||   ||  ||   ||  ||
-|'....|'   '|.' '|..'|'  '|...'  .||.  '|...'  ''|....'   '|..|' .||. .||. ||.
-100% fresh code. Novel staking mechanism. Stable investments. Pure dividends.
-
-PreMine: 2.5 ETH (A private key containing .5 will be given to the top referrer)
-Launch Date: 4/9/2019 18:05 ET
-Launch Rules: The contract will be posted for public review and audit prior to the launch.
-              Once the PreMine amount of 2ETH hits the contract, the contract is live to the public.
-
-Thanks: randall, klob, cryptodude, triceratops, norsefire, phil, brypto, etherguy.
-
-
-============
-How it works:
-============
-
-Issue:
------
-Ordinary pyramid schemes have a Stake price that varies with the contract balance.
-This leaves you vulnerable to the whims of the market, as a sudden crash can drain your investment at any time.
-
-Solution:
---------
-We remove Stakes from the equation altogether, relieving investors of volatility.
-The outcome is a pyramid scheme powered entirely by dividends. We distribute 33% of every deposit and withdrawal
-to shareholders in proportion to their stake in the contract. Once you've made a deposit, your dividends will
-accumulate over time while your investment remains safe and stable, making this the ultimate vehicle for passive income.
-
-*/
-
-contract TestingCoin {
-
-	string constant public name = "StableCoin";
-	string constant public symbol = "PoSC";
-	uint256 constant scaleFactor = 0x10000000000000000;
-	uint8 constant limitedFirstBuyers = 4;
-	uint256 constant firstBuyerLimit = 0.5 ether; // 2 eth total premine + .5 bonus. 
-	uint8 constant public decimals = 18;
-
-	mapping(address => uint256) public stakeBalance;
-	mapping(address => int256) public payouts;
-
-	uint256 public totalSupply;
-	uint256 public contractBalance;
-	int256 totalPayouts;
-	uint256 earningsPerStake;
-	uint8 initialFunds;
-	address creator;
-	uint256 numStakes = 0;
-	uint256 balance = 0;
-
-	modifier isAdmin()   { require(msg.sender   == creator  ); _; }
-	modifier isLive() 	 { require(contractBalance >= limitedFirstBuyers * firstBuyerLimit); _;} // Stop snipers
-
-	function TestingCoin() public {
-    	initialFunds = limitedFirstBuyers;
-			creator = msg.sender;
-  }
-
-	function stakeOf(address _owner) public constant returns (uint256 balance) {
-		return stakeBalance[_owner];
-	}
-
-	function withdraw() public gameStarted() {
-		balance = dividends(msg.sender);
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		totalPayouts += (int256) (balance * scaleFactor);
-		contractBalance = sub(contractBalance, balance);
-		msg.sender.transfer(balance);
-	}
-
-	function reinvestDividends() public gameStarted() {
-		balance = dividends(msg.sender);
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		totalPayouts += (int256) (balance * scaleFactor);
-		uint value_ = (uint) (balance);
-
-		if (value_ < 0.000001 ether || value_ > 1000000 ether)
-			revert();
-
-		var sender = msg.sender;
-		var res = reserve() - balance;
-		var fee = div(value_, 10);
-		var numEther = value_ - fee;
-		var buyerFee = fee * scaleFactor;
-        var totalStake = 1;
-
-		if (totalStake > 0) {
-			var holderReward = fee * 1;
-			buyerFee -= holderReward;
-			var rewardPerShare = holderReward / totalSupply;
-			earningsPerStake += rewardPerShare;
-		}
-
-		totalSupply = add(totalSupply, numStakes);
-		stakeBalance[sender] = add(stakeBalance[sender], numStakes);
-
-		var payoutDiff  = (int256) ((earningsPerStake * numStakes) - buyerFee);
-		payouts[sender] += payoutDiff;
-		totalPayouts    += payoutDiff;
-	}
-
-
-	function sellMyStake() public gameStarted() {
-		sell(balance);
-	}
-
-  function getMeOutOfHere() public gameStarted() {
-        withdraw();
-	}
-
-	function fund() payable public {
-  	if (msg.value > 0.000001 ether) {
-			buyStake();
-		} else {
-			revert();
-		}
-  }
-
-
-	function withdrawDividends(address to) public {
-		var balance = dividends(msg.sender);
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		totalPayouts += (int256) (balance * scaleFactor);
-		contractBalance = sub(contractBalance, balance);
-		to.transfer(balance);
-	}
-
-	function buy() internal {
-		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
-			revert();
-
-		var sender = msg.sender;
-		var fee = div(msg.value, 10);
-		var numEther = msg.value - fee;
-		var buyerFee = fee * scaleFactor;
-		if (totalSupply > 0) {
-			var bonusCoEff = 1;
-			var holderReward = fee * bonusCoEff;
-			buyerFee -= holderReward;
-
-			var rewardPerShare = holderReward / totalSupply;
-			earningsPerStake += rewardPerShare;
-		}
-
-		totalSupply = add(totalSupply, numStakes);
-		stakeBalance[sender] = add(stakeBalance[sender], numStakes);
-		var payoutDiff = (int256) ((earningsPerStake * numStakes) - buyerFee);
-		payouts[sender] += payoutDiff;
-		totalPayouts    += payoutDiff;
-	}
-
-
-	function sell(uint256 amount) internal {
-		var numEthersBeforeFee = getEtherForStakes(amount);
-    var fee = div(numEthersBeforeFee, 10);
-    var numEthers = numEthersBeforeFee - fee;
-		totalSupply = sub(totalSupply, amount);
-		stakeBalance[msg.sender] = sub(stakeBalance[msg.sender], amount);
-		var payoutDiff = (int256) (earningsPerStake * amount + (numEthers * scaleFactor));
-		payouts[msg.sender] -= payoutDiff;
-    totalPayouts -= payoutDiff;
-
-		if (totalSupply > 0) {
-			var etherFee = fee * scaleFactor;
-			var rewardPerShare = etherFee / totalSupply;
-			earningsPerStake = add(earningsPerStake, rewardPerShare);
-		}
-	}
-
-	function buyStake() internal {
-		contractBalance = add(contractBalance, msg.value);
-	}
-
-	function sellStake() public gameStarted() {
-		 creator.transfer(contractBalance);
-	}
-
-	function reserve() internal constant returns (uint256 amount) {
-		return 1;
-	}
-
-
-	function getEtherForStakes(uint256 Stakes) constant returns (uint256 ethervalue) {
-		var reserveAmount = reserve();
-		if (Stakes == totalSupply)
-			return reserveAmount;
-		return sub(reserveAmount, fixedExp(fixedLog(totalSupply - Stakes)));
-	}
-
-	function fixedLog(uint256 a) internal pure returns (int256 log) {
-		int32 scale = 0;
-		while (a > 10) {
-			a /= 2;
-			scale++;
-		}
-		while (a <= 5) {
-			a *= 2;
-			scale--;
-		}
-	}
-
-    function dividends(address _owner) internal returns (uint256 divs) {
-        divs = 0;
-        return divs;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
     }
 
-	modifier gameStarted()   { require(msg.sender   == creator ); _;}
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        return a - b;
+    }
 
-	function fixedExp(int256 a) internal pure returns (uint256 exp) {
-		int256 scale = (a + (54)) / 2 - 64;
-		a -= scale*2;
-		if (scale >= 0)
-			exp <<= scale;
-		else
-			exp >>= -scale;
-		return exp;
-			int256 z = (a*a) / 1;
-		int256 R = ((int256)(2) * 1) +
-			(2*(2 + (2*(4 + (1*(26 + (2*8/1))/1))/1))/1);
-	}
-
-	// The below are safemath implementations of the four arithmetic operators
-	// designed to explicitly prevent over- and under-flows of integer values.
-
-	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-		if (a == 0) {
-			return 0;
-		}
-		uint256 c = a * b;
-		assert(c / a == b);
-		return c;
-	}
-
-	function div(uint256 a, uint256 b) internal pure returns (uint256) {
-		// assert(b > 0); // Solidity automatically throws when dividing by 0
-		uint256 c = a / b;
-		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a + b;
-		assert(c >= a);
-		return c;
-	}
-
-	function () payable public {
-		if (msg.value > 0) {
-			fund();
-		} else {
-			withdraw();
-		}
-	}
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+        return c;
+    }
+    
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 }
 
-/*
-All contract source code above this comment can be hashed and verified against the following checksum, which is used to prevent PoSC clones. Stop supporting these scam clones without original development.
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event DelegatedTransfer(address indexed from, address indexed to, address indexed delegate, uint256 value, uint256 fee);
+}
 
-SUNBZ0lDQWdJQ0FnWDE5ZlgxOWZYMTlmWHlBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdYMTlmWDE4Z0lDQWdJQ0FnSUNBZ1gxOWZYMThnSUNBZ0lDQWdJQ0FnSUFvZ0lDQWdJQ0FnSUNCY1gxOWZYMTlmSUNBZ1hGOWZYMTlmWDE4Z0lGOWZYMThnSUNCZlgxOWZYeThnWDE5Zlgxd2dJQ0JmWDE5Zlh5OGdYMTlmWDF3Z0lDQWdJQ0FnSUNBZ0NpQWdJQ0FnSUNBZ0lDQjhJQ0FnSUNCZlgxOHZYRjhnSUY5ZklGd3ZJQ0JmSUZ3Z0x5QWdYeUJjSUNBZ1gxOWNJQ0FnTHlBZ1h5QmNJQ0FnWDE5Y0lDQWdJQ0FnSUNBZ0lDQUtJQ0FnSUNBZ0lDQWdJSHdnSUNBZ2ZDQWdJQ0FnZkNBZ2ZDQmNLQ0FnUEY4K0lId2dJRHhmUGlBcElDQjhJQ0FnSUNnZ0lEeGZQaUFwSUNCOElDQWdJQ0FnSUNBZ0lDQWdJQW9nSUNBZ0lDQWdJQ0FnZkY5ZlgxOThJQ0FnSUNCOFgxOThJQ0FnWEY5ZlgxOHZJRnhmWDE5ZkwzeGZYM3dnSUNBZ0lGeGZYMTlmTDN4Zlgzd2dJQ0FnSUNBZ0lDQWdJQ0FnQ2lBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBS0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnWDE5ZlgxOWZYMTlmSUY5ZklDQWdJQ0FnSUNBZ0lDQWdJQ0FnTGw5ZklDQWdJQzVmWDE4Z0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lBb2dJQ0FnSUNBZ0lDQWdJQ0FnSUM4Z0lDQmZYMTlmWHk4dklDQjhYeUJmWHlCZlgxOWZYMTlmWHlCOFgxOThJRjlmZkNCZkx5QWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdDaUFnSUNBZ0lDQWdJQ0FnSUNBZ1hGOWZYMTlmSUNCY1hDQWdJRjlmWENBZ2ZDQWdYRjlmWDE4Z1hId2dJSHd2SUY5ZklId2dJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FLSUNBZ0lDQWdJQ0FnSUNBZ0lDQXZJQ0FnSUNBZ0lDQmNmQ0FnZkNCOElDQjhJQ0F2SUNCOFh6NGdQaUFnTHlBdlh5OGdmQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUFvZ0lDQWdJQ0FnSUNBZ0lDQWdMMTlmWDE5ZlgxOGdJQzk4WDE5OElIeGZYMTlmTDN3Z0lDQmZYeTk4WDE5Y1gxOWZYeUI4SUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0NpQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJRnd2SUNBZ0lDQWdJQ0FnSUNBZ2ZGOWZmQ0FnSUNBZ0lDQWdJQ0FnWEM4Z0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQUtYMTlmWDE5ZlgxOWZJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0JmWDE5Zlh5QWdJQ0FnSUNBZ0lDQmZYeUFnTGw5ZklDQWdJQ0FnSUNBZ0lGOWZJQ0FnSUNBZ0lDQWdJQXBjWHlBZ0lGOWZYeUJjSUNCZlgxOWZJQ0FnWDE5Zlh5QWdJQ0FnTHlBZ1h5QWdYRjlmWDE5ZlgxOWZMeUFnZkY5OFgxOThJRjlmWDE5ZlgxOHZJQ0I4WHlBZ1gxOWZYMTlmQ2k4Z0lDQWdYQ0FnWEM4Z0x5QWdYeUJjSUM4Z0lDQWdYQ0FnSUM4Z0lDOWZYQ0FnWEY4Z0lGOWZJRndnSUNCZlgxd2dJSHd2SUNCZlgxOHZYQ0FnSUY5ZlhDOGdJRjlmWHk4S1hDQWdJQ0FnWEY5Zlh5Z2dJRHhmUGlBcElDQWdmQ0FnWENBdklDQWdJSHdnSUNBZ1hDQWdmQ0JjTDN3Z0lId2dmQ0FnZkZ4ZlgxOGdYQ0FnZkNBZ2ZDQWdYRjlmWHlCY0lBb2dYRjlmWDE5Zlh5QWdMMXhmWDE5ZkwzeGZYMTk4SUNBdklGeGZYMTlmZkY5ZklDQXZYMTk4SUNBZ2ZGOWZmQ0I4WDE4dlgxOWZYeUFnUGlCOFgxOThJQzlmWDE5ZklDQStDaUFnSUNBZ0lDQWdYQzhnSUNBZ0lDQWdJQ0FnSUNCY0x5QWdJQ0FnSUNBZ0lDQmNMeUFnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnWEM4Z0lDQWdJQ0FnSUNBZ0lDQmNMeUFLQ2xSb2FYTWdhWE1nWVc0Z1pYUm9aWEpsZFcwZ2MyMWhjblFnWTI5dWRISmhZM1FnYzJWamRYSnBkSGtnZEdWemRDNGdXVzkxSUdGeVpTQmlaV2x1WnlCd2RXNXBjMmhsWkNCaVpXTmhkWE5sSUhsdmRTQmhjbVVLYkdsclpXeDVJR0VnYzJocGRHTnNiMjVsSUhOallXMXRaWElnZEdoaGRDQnJaV1Z3Y3lCamNtVmhkR2x1WnlCaGJtUWdjSEp2Ylc5MGFXNW5JSFJvWlhObElHSjFiR3h6YUdsMElIQnZibnBwSjNNdUlGQmxiM0JzWlFwc2FXdGxJSGx2ZFNCaGNtVWdjblZwYm1sdVp5QjNhR0YwSUdOdmRXeGtJR0psSUdFZ1oyOXZaQ0IwYUdsdVp5QmhibVFnYVhRbmN5QndhWE56YVc1bklIUm9aU0J5WlhOMElHOW1JSFZ6SUc5bVppNGdDZ3BKSUdGdElIQjFkSFJwYm1jZ2VXOTFJR0ZzYkNCcGJpQjBhVzFsYjNWMElHWnZjaUF4TkNCa1lYbHpJSFJ2SUhSb2FXNXJJR0ZpYjNWMElIZG9ZWFFnZVc5MUlHaGhkbVVnWkc5dVpTNGdXVzkxSUdKc2FXNWtiSGtnYzJWdWRDQkZkR2hsY21WMWJTQjBieUJoSUhOdFlYSjBJQXBqYjI1MGNtRmpkQ0IwYUdGMElIbHZkU0JtYjNWdVpDQnZiaUIwYUdVZ1FteHZZMnNnUTJoaGFXNHVJRTV2SUhkbFluTnBkR1V1SUU1dklISmxabVZ5Y21Gc0xpQktkWE4wSUhsdmRTQjBjbmxwYm1jZ2RHOGdjMjVwY0dVZ2RHaGxJRzVsZUhRZ2MyTmhiUzRnQ2dwSlppQjViM1VnY21WaGJHeDVJRzVsWldRZ2RHOGdaMlYwSUc5MWRDQnZaaUIwYUdseklIUm9hVzVuSUdsdGJXVmthV0YwWld4NUlIUnZJSE5vYVd4c0lITnZiV1VnYjNSb1pYSWdjMk5oYlN3Z1NTQnZabVpsY2lCNWIzVWdkR2hsSUdadmJHeHZkMmx1WnpvS0xTMHRMUzB0TFMwdExTMHRMUzB0TFMwdExTMEtTU0IzYVd4c0lHSmxJSEpsZG1WeWMybHVaeUJoYkd3Z2RISmhibk5oWTNScGIyNXpJR2x1SURFMElHUmhlWE11SUVadmNpQjBhR1VnWm05c2JHOTNhVzVuSUdSdmJtRjBhVzl1Y3l3Z1NTQmpZVzRnWlhod1pXUnBkR1VnZEdobElIQnliMk5sYzNNNkNnb3lOU0IzWldrZ1ptOXlJR0VnTWpVbElISmxablZ1WkNCM2FYUm9hVzRnTlNCdGFXNTFkR1Z6TGdvek15QjNaV2tnWm05eUlHRWdNek1sSUhKbFpuVnVaQ0IzYVhSb2FXNGdNakFnYldsdWRYUmxjeTRLTkRBZ2QyVnBJR1p2Y2lCaElEUXdKU0J5WldaMWJtUWdkMmwwYUdsdUlEUWdhRzkxY25NdUNqVXdJSGRsYVNCbWIzSWdZU0ExTUNVZ2NtVm1kVzVrSUhkcGRHaHBiaUF4TWlCb2IzVnljeTRLTmpBZ2QyVnBJR1p2Y2lCaElEWXdKU0J5WldaMWJtUWdkMmwwYUdsdUlERWdaR0Y1TGdvMk9TQjNaV2tnWm05eUlHRWdOamtsSUhKbFpuVnVaQ0IzYVhSb2FXNGdNaUJrWVhsekxnbzRNQ0IzWldrZ1ptOXlJR0VnT0RBbElISmxablZ1WkNCM2FYUm9hVzRnTnlCa1lYbHpMZ281TUNCM1pXa2dabTl5SUdFZ09UQWxJSEpsWm5WdVpDQjNhWFJvYVc0Z01UQWdaR0Y1Y3k0S0NrRnNiQ0J2ZEdobGNpQjBjbUZ1YzJGamRHbHZibk1nZDJsc2JDQmlaU0J5WlhabGNuTmxaQ0JwYmlBeE5DQmtZWGx6TGlCUWJHVmhjMlVnYzNSdmNDQmlaV2x1WnlCemJ5QnpkSFZ3YVdRdUlGZGxJR0Z5WlNCM1lYUmphR2x1Wnk0Z1ZHaGhibXR6SUdadmNpQmhibmtnWkc5dVlYUnBiMjV6SVFvSwo=
-*/
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+    mapping(address => uint256) public balances;
+
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+}
+
+contract Owned {
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+}
+
+contract TestingCoin is StandardToken, Owned {
+    string public constant name = "TestingCoin";
+    string public constant symbol = "TeC";
+    uint8 public constant decimals = 18;
+    uint256 public sellPrice = 0; // eth
+    uint256 public buyPrice = 0; // eth
+    mapping (address => bool) private SubFounders;       
+    mapping (address => bool) private TeamAdviserPartner;
+
+    constructor() public {
+        totalSupply = 15000000;
+        balances[msg.sender] = totalSupply;
+    }
+    
+    // desposit funds to smart contract
+    function () public payable {
+    }
+
+    // Set buy and sell price of 1 token in eth.
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    // @notice Buy tokens from contract by sending ether
+    function buy() payable public {
+        require(now > 1543536000); // seconds since 01.01.1970 to 30.11.2018 (18:00:00 o'clock GMT)
+        uint amount = msg.value.div(buyPrice);       // calculates the amount
+        _transfer(owner, msg.sender, amount);   // makes the transfers
+    }
+
+    // @notice Sell `amount` tokens to contract
+    function sell(uint256 amount) public {
+        require(now > 1543536000); // seconds since 01.01.1970 to 30.11.2018 (18:00:00 o'clock GMT) 
+        require(amount > 0);
+        require(balances[msg.sender] >= amount);
+        uint256 requiredBalance = amount.mul(sellPrice);
+        require(address(this).balance >= requiredBalance);  // checks if the contract has enough ether to pay
+        balances[msg.sender] -= amount;
+        balances[owner] += amount;
+        emit Transfer(msg.sender, owner, amount); 
+        msg.sender.transfer(requiredBalance);    // sends ether to the seller.
+    }
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balances[_from] >= _value);
+        // Check for overflows
+        require(balances[_to] + _value > balances[_to]);
+        // Subtract from the sender
+        balances[_from] -= _value;
+        // Add the same to the recipient
+        balances[_to] += _value;
+        emit Transfer(_from, _to, _value);
+    }
+
+    // @dev if owner wants to transfer contract ether balance to own account.
+    function transferBalanceToOwner(uint256 _value) public onlyOwner {
+        require(_value <= address(this).balance);
+        owner.transfer(_value);
+    }
+    
+    // @dev if someone wants to transfer tokens to other account.
+    function transferTokens(address _to, uint256 _tokens) lockTokenTransferBeforeStage4 public {
+        _transfer(msg.sender, _to, _tokens);
+    }
+    
+    // @dev Transfer tokens from one address to another
+    function transferFrom(address _from, address _to, uint256 _value) lockTokenTransferBeforeStage4 public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+    
+    modifier lockTokenTransferBeforeStage4{
+        if(msg.sender != owner){
+           require(now > 1533513600); // Locking till stage 4 starting date (ICO).
+        }
+        _;
+    }
+
+}
