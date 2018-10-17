@@ -1,256 +1,321 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x36aea5bfa4785f5ea33a5e6fe03e506826a5aad8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x96695a4940d82dcf9bac7a8ef0b56c38d3261b8a
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
         if (a == 0) {
             return 0;
         }
-        uint256 c = a * b;
+        c = a * b;
         assert(c / a == b);
         return c;
     }
+
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+        return a / b;
     }
+
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
         assert(c >= a);
         return c;
     }
 }
 
-interface ERC20 {
-    function transfer (address _beneficiary, uint256 _tokenAmount) external returns (bool);
-    function mintFromICO(address _to, uint256 _amount) external  returns(bool);
-}
+    interface ERC20 {
+        function transfer(address _beneficiary, uint256 _tokenAmount) external returns (bool);
+        function transferFromICO(address _to, uint256 _value) external returns(bool);
+    }
 
 contract Ownable {
-    
-    address public owner;
-    
-    constructor() public {
-        owner = msg.sender;
-    }
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 contract MainSale is Ownable {
-    
+
+    using SafeMath for uint;
+
     ERC20 public token;
     
-    using SafeMath for uint;
+    address reserve = 0x611200beabeac749071b30db84d17ec205654463;
+    address promouters = 0x2632d043ac8bbbad07c7dabd326ade3ca4f6b53e;
+    address bounty = 0xff5a1984fade92bfb0e5fd7986186d432545b834;
+
+    uint256 public constant decimals = 18;
+    uint256 constant dec = 10**decimals;
+
+    mapping(address=>bool) whitelist;
+
+    uint256 public startCloseSale = now; // start // 1.07.2018 10:00 UTC
+    uint256 public endCloseSale = 1532987999; // Monday, 30-Jul-18 23:59:59 UTC-2
+
+    uint256 public startStage1 = 1532988001; // Tuesday, 31-Jul-18 00:00:01 UTC-2
+    uint256 public endStage1 = 1533074399; // Tuesday, 31-Jul-18 23:59:59 UTC-2
+
+    uint256 public startStage2 = 1533074400; // Wednesday, 01-Aug-18 00:00:00 UTC-2
+    uint256 public endStage2 = 1533679199; // Tuesday, 07-Aug-18 23:59:59 UTC-2
+
+    uint256 public startStage3 = 1533679200; // Wednesday, 08-Aug-18 00:00:00 UTC-2 
+    uint256 public endStage3 = 1535752799; // Friday, 31-Aug-18 23:59:59 UTC-2
+
+    uint256 public buyPrice = 920000000000000000; // 0.92 Ether
     
-    address public backEndOperator = msg.sender;
-    
-    address team = 0x7DDA135cDAa44Ad3D7D79AAbE562c4cEA9DEB41d; // 25% all
-    
-    address reserve = 0x34bef601666D7b2E719Ff919A04266dD07706a79; // 15% all
-    
-    mapping(address=>bool) public whitelist;
-    
-    mapping(address => uint256) public investedEther;
-    
-    uint256 public startSale = 1537228801; // Tuesday, 18-Sep-18 00:00:01 UTC
-    
-    uint256 public endSale = 1545177599; // Tuesday, 18-Dec-18 23:59:59 UTC
-    
-    uint256 public investors;
-    
-    uint256 public weisRaised;
-    
-    uint256 public dollarRaised; // collected USD
-    
-    uint256 public softCap = 2000000000*1e18; // 20,000,000 USD
-    
-    uint256 public hardCap = 7000000000*1e18; // 70,000,000 USD
-    
-    uint256 public buyPrice; //0.01 USD
-    
-    uint256 public dollarPrice;
-    
-    uint256 public soldTokens;
-    
-    uint256 step1Sum = 3000000*1e18; // 3 mln $
-    
-    uint256 step2Sum = 10000000*1e18; // 10 mln $
-    
-    uint256 step3Sum = 20000000*1e18; // 20 mln $
-    
-    uint256 step4Sum = 30000000*1e18; // 30 mln $
-    
+    uint256 public ethUSD;
+
+    uint256 public weisRaised = 0;
+
+    string public stageNow = "NoSale";
     
     event Authorized(address wlCandidate, uint timestamp);
-    
     event Revoked(address wlCandidate, uint timestamp);
-    
-    event Refund(uint rate, address investor);
-    
-    
-    modifier isUnderHardCap() {
-        require(weisRaised <= hardCap);
-        _;
-    }
-    
-    modifier backEnd() {
-        require(msg.sender == backEndOperator || msg.sender == owner);
-        _;
-    }
-    
-    
-    constructor(uint256 _dollareth) public {
-        dollarPrice = _dollareth;
-        buyPrice = 1e16/dollarPrice; // 16 decimals because 1 cent
-        hardCap = 7500000000*buyPrice;
-    }
-    
-    
+
+    constructor() public {}
+
     function setToken (ERC20 _token) public onlyOwner {
         token = _token;
     }
     
-    function setDollarRate(uint256 _usdether) public onlyOwner {
-        dollarPrice = _usdether;
-        buyPrice = 1e16/dollarPrice; // 16 decimals because 1 cent
-        hardCap = 7500000000*buyPrice;
-    }
-    
-    
-    function setPrice(uint256 newBuyPrice) public onlyOwner {
-        buyPrice = newBuyPrice;
-    }
-    
-    function setStartSale(uint256 newStartSale) public onlyOwner {
-        startSale = newStartSale;
-    }
-    
-    function setEndSale(uint256 newEndSaled) public onlyOwner {
-        endSale = newEndSaled;
-    }
-    
-    function setBackEndAddress(address newBackEndOperator) public onlyOwner {
-        backEndOperator = newBackEndOperator;
-    }
-    
     /*******************************************************************************
-     * Whitelist's section */
-    
-    function authorize(address wlCandidate) public backEnd {
+     * Whitelist's section
+     */
+    function authorize(address wlCandidate) public onlyOwner  {
         require(wlCandidate != address(0x0));
         require(!isWhitelisted(wlCandidate));
         whitelist[wlCandidate] = true;
-        investors++;
         emit Authorized(wlCandidate, now);
     }
-    
+
     function revoke(address wlCandidate) public  onlyOwner {
         whitelist[wlCandidate] = false;
-        investors--;
         emit Revoked(wlCandidate, now);
     }
-    
+
     function isWhitelisted(address wlCandidate) public view returns(bool) {
         return whitelist[wlCandidate];
     }
     
     /*******************************************************************************
-     * Payable's section */
-    
-    function isMainSale() public constant returns(bool) {
-        return now >= startSale && now <= endSale;
+     * Setter's Section
+     */
+
+    function setStartCloseSale(uint256 newStartSale) public onlyOwner {
+        startCloseSale = newStartSale;
+    }
+
+    function setEndCloseSale(uint256 newEndSale) public onlyOwner{
+        endCloseSale = newEndSale;
+    }
+
+    function setStartStage1(uint256 newsetStage2) public onlyOwner{
+        startStage1 = newsetStage2;
+    }
+
+    function setEndStage1(uint256 newsetStage3) public onlyOwner{
+        endStage1 = newsetStage3;
+    }
+
+    function setStartStage2(uint256 newsetStage4) public onlyOwner{
+        startStage2 = newsetStage4;
+    }
+
+    function setEndStage2(uint256 newsetStage5) public onlyOwner{
+        endStage2 = newsetStage5;
+    }
+
+    function setStartStage3(uint256 newsetStage5) public onlyOwner{
+        startStage3 = newsetStage5;
+    }
+
+    function setEndStage3(uint256 newsetStage5) public onlyOwner{
+        endStage3 = newsetStage5;
+    }
+
+    function setPrices(uint256 newPrice) public onlyOwner {
+        buyPrice = newPrice;
     }
     
-    function () public payable isUnderHardCap {
-        require(isMainSale());
-        require(isWhitelisted(msg.sender));
-        require(msg.value >= 10000000000000000);
-        mainSale(msg.sender, msg.value);
-        investedEther[msg.sender] = investedEther[msg.sender].add(msg.value);
+    function setETHUSD(uint256 _ethUSD) public onlyOwner { 
+        ethUSD = _ethUSD;
+    
+    
     }
     
-    function mainSale(address _investor, uint256 _value) internal {
-        uint256 tokens = _value.mul(1e18).div(buyPrice);
-        uint256 tokensSum = tokens.mul(discountSum(msg.value)).div(100);
-        uint256 tokensCollect = tokens.mul(discountCollect()).div(100);
-        tokens = tokens.add(tokensSum).add(tokensCollect);
-        token.mintFromICO(_investor, tokens);
-        uint256 tokensFounders = tokens.mul(5).div(12);
-        token.mintFromICO(team, tokensFounders);
-        uint256 tokensDevelopers = tokens.div(4);
-        token.mintFromICO(reserve, tokensDevelopers);
+    /*******************************************************************************
+     * Payable Section
+     */
+    function ()  public payable {
+        
+        require(msg.value >= (1*1e18/ethUSD*100));
+
+        if (now >= startCloseSale || now <= endCloseSale) {
+            require(isWhitelisted(msg.sender));
+            closeSale(msg.sender, msg.value);
+            stageNow = "Close Sale for Whitelist's members";
+            
+        } else if (now >= startStage1 || now <= endStage1) {
+            sale1(msg.sender, msg.value);
+            stageNow = "Stage 1";
+
+        } else if (now >= startStage2 || now <= endStage2) {
+            sale2(msg.sender, msg.value);
+             stageNow = "Stage 2";
+
+        } else if (now >= startStage3 || now <= endStage3) {
+            sale3(msg.sender, msg.value);
+             stageNow = "Stage 3";
+
+        } else {
+            stageNow = "No Sale";
+            revert();
+        } 
+    }
+    
+    // issue token in a period of closed sales
+    function closeSale(address _investor, uint256 _value) internal {
+
+        uint256 tokens = _value.mul(1e18).div(buyPrice); // 68%
+        uint256 bonusTokens = tokens.mul(30).div(100); // + 30% per stage
+        tokens = tokens.add(bonusTokens); 
+        token.transferFromICO(_investor, tokens);
         weisRaised = weisRaised.add(msg.value);
-        uint256 valueInUSD = msg.value.mul(dollarPrice);
-        dollarRaised = dollarRaised.add(valueInUSD);
-        soldTokens = soldTokens.add(tokens);
+
+        uint256 tokensReserve = tokens.mul(15).div(68); // 15 %
+        token.transferFromICO(reserve, tokensReserve);
+
+        uint256 tokensBoynty = tokens.div(34); // 2 %
+        token.transferFromICO(bounty, tokensBoynty);
+
+        uint256 tokensPromo = tokens.mul(15).div(68); // 15%
+        token.transferFromICO(promouters, tokensPromo);
     }
     
-    
-    function discountSum(uint256 _tokens) pure private returns(uint256) {
-        if(_tokens >= 10000000*1e18) { // > 100k$ = 10,000,000 TAL
-            return 7;
-        }
-        if(_tokens >= 5000000*1e18) { // 50-100k$ = 5,000,000 TAL
-            return 5;
-        }
-        if(_tokens >= 1000000*1e18) { // 10-50k$ = 1,000,000 TAL
-            return 3;
-        } else
-            return 0;
+    // the issue of tokens in period 1 sales
+    function sale1(address _investor, uint256 _value) internal {
+
+        uint256 tokens = _value.mul(1e18).div(buyPrice); // 66% 
+
+        uint256 bonusTokens = tokens.mul(10).div(100); // + 10% per stage
+        tokens = tokens.add(bonusTokens); // 66 %
+
+        token.transferFromICO(_investor, tokens);
+
+        uint256 tokensReserve = tokens.mul(5).div(22); // 15 %
+        token.transferFromICO(reserve, tokensReserve);
+
+        uint256 tokensBoynty = tokens.mul(2).div(33); // 4 %
+        token.transferFromICO(bounty, tokensBoynty);
+
+        uint256 tokensPromo = tokens.mul(5).div(22); // 15%
+        token.transferFromICO(promouters, tokensPromo);
+
+        weisRaised = weisRaised.add(msg.value);
     }
     
-    
-    function discountCollect() view private returns(uint256) {
-        // 20% bonus, if collected sum < 3 mln $
-        if(dollarRaised <= step1Sum) {
-            return 20;
-        } // 15% bonus, if collected sum < 10 mln $
-        if(dollarRaised <= step2Sum) {
-            return 15;
-        } // 10% bonus, if collected sum < 20 mln $
-        if(dollarRaised <= step3Sum) {
-            return 10;
-        } // 5% bonus, if collected sum < 30 mln $
-        if(dollarRaised <= step4Sum) {
-            return 5;
-        }
-        return 0;
+    // the issue of tokens in period 2 sales
+    function sale2(address _investor, uint256 _value) internal {
+
+        uint256 tokens = _value.mul(1e18).div(buyPrice); // 64 %
+
+        uint256 bonusTokens = tokens.mul(5).div(100); // + 5% 
+        tokens = tokens.add(bonusTokens);
+
+        token.transferFromICO(_investor, tokens);
+
+        uint256 tokensReserve = tokens.mul(15).div(64); // 15 %
+        token.transferFromICO(reserve, tokensReserve);
+
+        uint256 tokensBoynty = tokens.mul(3).div(32); // 6 %
+        token.transferFromICO(bounty, tokensBoynty);
+
+        uint256 tokensPromo = tokens.mul(15).div(64); // 15%
+        token.transferFromICO(promouters, tokensPromo);
+
+        weisRaised = weisRaised.add(msg.value);
     }
-    
-    
-    function mintManual(address _investor, uint256 _value) public onlyOwner {
-        token.mintFromICO(_investor, _value);
-        uint256 tokensFounders = _value.mul(5).div(12);
-        token.mintFromICO(team, tokensFounders);
-        uint256 tokensDevelopers = _value.div(4);
-        token.mintFromICO(reserve, tokensDevelopers);
+
+    // the issue of tokens in period 3 sales
+    function sale3(address _investor, uint256 _value) internal {
+
+        uint256 tokens = _value.mul(1e18).div(buyPrice); // 62 %
+        token.transferFromICO(_investor, tokens);
+
+        uint256 tokensReserve = tokens.mul(15).div(62); // 15 %
+        token.transferFromICO(reserve, tokensReserve);
+
+        uint256 tokensBoynty = tokens.mul(4).div(31); // 8 %
+        token.transferFromICO(bounty, tokensBoynty);
+
+        uint256 tokensPromo = tokens.mul(15).div(62); // 15%
+        token.transferFromICO(promouters, tokensPromo);
+
+        weisRaised = weisRaised.add(msg.value);
     }
-    
-    
+
+    /*******************************************************************************
+     * Manual Management
+     */
     function transferEthFromContract(address _to, uint256 amount) public onlyOwner {
-        require(amount != 0);
-        require(_to != 0x0);
         _to.transfer(amount);
-    }
-    
-    
-    function refundSale() public {
-        require(soldTokens < softCap && now > endSale);
-        uint256 rate = investedEther[msg.sender];
-        require(investedEther[msg.sender] >= 0);
-        investedEther[msg.sender] = 0;
-        msg.sender.transfer(rate);
-        weisRaised = weisRaised.sub(rate);
-        emit Refund(rate, msg.sender);
     }
 }
