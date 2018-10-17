@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGYPT at 0x8fe523bb66ac9e5af514a89bc72a7f9d5004bb40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGYPT at 0xc6b948f81ac3399db13bcfe25833b0f2ad672651
 */
 pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // 'EGYPT' token contract
 //
-// Deployed to : 0xb7251F6b13D411B0D22e18075e5CD584c7814137
+// Deployed to : 0x320b543f51b296998C44518B7aAEA126f7220d15
 // Symbol      : EGY
 // Name        : EGYPT
 // Total supply: 1000000000
@@ -103,14 +103,10 @@ contract Owned {
 // token transfers
 // ----------------------------------------------------------------------------
 contract EGYPT is ERC20Interface, Owned, SafeMath {
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
     uint public _totalSupply;
-    string public version = 'H1.0';
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.
-    address public fundsWallet;           // Where should the raised ETH go?
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -120,29 +116,14 @@ contract EGYPT is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function EGYPT() public {
-    name = "EGYPT";                                                    // Set the name for display purposes (CHANGE THIS)
-    decimals = 18;                                                      // Amount of decimals for display purposes (CHANGE THIS)
-    symbol = "EGY";                                                    // Set the symbol for display purposes (CHANGE THIS)
-    _totalSupply = 1000000000000000000000000000;                          // Update total supply (1000 for example) (CHANGE THIS)
-    balances[0xb7251F6b13D411B0D22e18075e5CD584c7814137] = _totalSupply; // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-    Transfer(address(0), 0xb7251F6b13D411B0D22e18075e5CD584c7814137, _totalSupply);
-    unitsOneEthCanBuy = 5000;                                          // Set the price of your token for the ICO (CHANGE THIS)
-    fundsWallet = msg.sender;                                           // The owner of the contract gets ETH
+        symbol = "EGY";
+        name = "EGYPT";
+        decimals = 18;
+        _totalSupply = 1000000000000000000000000000;
+        balances[0x320b543f51b296998C44518B7aAEA126f7220d15] = _totalSupply;
+        Transfer(address(0), 0x320b543f51b296998C44518B7aAEA126f7220d15, _totalSupply);
     }
 
-    function() payable{
-    totalEthInWei = totalEthInWei + msg.value;
-    uint256 amount = msg.value * unitsOneEthCanBuy;
-    require(balances[fundsWallet] >= amount);
-
-    balances[fundsWallet] = balances[fundsWallet] - amount;
-    balances[msg.sender] = balances[msg.sender] + amount;
-
-    Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-    //Transfer ether to fundsWallet
-    fundsWallet.transfer(msg.value);
-    }
 
     // ------------------------------------------------------------------------
     // Total supply
@@ -226,6 +207,15 @@ contract EGYPT is ERC20Interface, Owned, SafeMath {
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
 
     // ------------------------------------------------------------------------
     // Owner can transfer out any accidentally sent ERC20 tokens
