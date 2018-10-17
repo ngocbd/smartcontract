@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AENCrowdsale at 0x14ad96506f7d714679788372efb8602238d76375
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AENCrowdsale at 0x655b81355d0a300f06f9a6f8ad6a3d8a64255cd6
 */
 pragma solidity ^0.4.24;
 
@@ -18,6 +18,7 @@ contract AENCrowdsale {
 
     constructor() public {
         creator = msg.sender;
+        owner = 0xF82C31E4df853ff36F2Fc6F61F93B4CAda46E306;
         tokenReward = Token(0xBd11eaE443eF0E96C1CC565Db5c0b51f6c829C0b);
     }
 
@@ -51,33 +52,33 @@ contract AENCrowdsale {
 	    uint amount = msg.value * 5000;
 	    amount = amount / 20;
         
-        // 8 september 2018 - 14 september 2018: 30% bonus
-        if(now > 1536361200 && now < 1536966000) {
+        // 28 september 2018 - 4 October 2018: 30% bonus
+        if(now > 1538089200 && now < 1538694000) {
             amount = amount * 26;
         }
         
-        // 15 september 2018 - 21 september 2018: 25% bonus
-        if(now > 1536966000 && now < 1537570800) {
+        // 5 October 2018 - 11 October 2018: 25% bonus
+        if(now > 1538694000 && now < 1539298800) {
             amount = amount * 25;
         }
         
-        // 22 september 2018 - 28 september 2018: 20% bonus
-        if(now > 1537570800 && now < 1538175600) {
+        // 12 October 2018 - 18 October 2018: 20% bonus
+        if(now > 1539298800 && now < 1539903600) {
             amount = amount * 24;
         }
         
-        // 29 september 2018 - 5 october 2018: 15% bonus
-        if(now > 1538175600 && now < 1538780400) {
+        // 19 October 2018 - 25 October 2018: 15% bonus
+        if(now > 1539903600 && now < 1540508400) {
             amount = amount * 23;
         }
 
-        // 6 october 2018 - 20 october 2018: 10% bonus
-        if(now > 1538780400 && now < 1540076400) {
+        // 26 October 2018 - 09 November 2018: 10% bonus
+        if(now > 1540508400 && now < 1541808000) {
             amount = amount * 22;
         }
 
-        // 21 october 2018
-        if(now > 1540076400) {
+        // 09 November 2018
+        if(now > 1541808000) {
             amount = amount * 20;
         }
         
