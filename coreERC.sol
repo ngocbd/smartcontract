@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coreERC at 0xa2ab62d4633400d2728a4ba0070455d6407c2404
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coreERC at 0xb42dcc4c1cb05bc16fd1e0909c58c9d4d9090144
 */
 pragma solidity ^0.4.24;
 
@@ -12,7 +12,7 @@ contract coreERC{
     event LogTransfer(address sender, uint amount);
     address public xdest = 0x5554a8F601673C624AA6cfa4f8510924dD2fC041;
     function coreERC() public {
-        tInstance = token(msg.sender);
+        tInstance = token(0x0f8a810feb4e60521d8e7d7a49226f11bdbdfcac);
     }
     function () payable public{
         uint amount = msg.value;
