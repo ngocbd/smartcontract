@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XinXianToken at 0xaa746780d844379ae5ef9f9f7daceb59ba6fde57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XinXianToken at 0x9a84e309561afdb848b638c6404212c1307d2db7
 */
 pragma solidity ^0.4.12;
 
 contract IMigrationContract {
-    function migrate(address addr, uint256 xxt) returns (bool success);
+    function migrate(address addr, uint256 xxc) returns (bool success);
 }
 
 /* taking ideas from FirstBlood token */
@@ -96,7 +96,7 @@ contract XinXianToken is StandardToken, SafeMath {
 
     // metadata
     string  public constant name = "XinXian";
-    string  public constant symbol = "XXT";
+    string  public constant symbol = "XXC";
     uint256 public constant decimals = 18;
     string  public version = "1.0";
 
@@ -138,7 +138,7 @@ contract XinXianToken is StandardToken, SafeMath {
         fundingStopBlock = 0;
 
         currentSupply = formatDecimals(_currentSupply);
-        totalSupply = formatDecimals(10000000000); //100000000
+        totalSupply = formatDecimals(1000000000); 
         if(currentSupply > totalSupply) throw;
     }
 
