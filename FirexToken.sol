@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FirexToken at 0xdaab9013556f517addb8060e72f15142ec7dd375
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FireXToken at 0xbb005433b879c894a15cdd1c2e143ebfeccfa8dc
 */
 pragma solidity ^0.4.18;
 
@@ -115,13 +115,13 @@ contract StandardToken is ERC20 {
   }
 }
 
-contract FirexToken is StandardToken {
-    uint public totalSupply = 18*10**26;
+contract FireXToken is StandardToken {
+    uint public totalSupply = 1800000000;
     uint8 constant public decimals = 18;
-    string constant public name = "Firex Token";
+    string constant public name = "FireX Token";
     string constant public symbol = "FIT";
 
-    function FirexToken() public {
+    function FireXToken() public {
         balances[msg.sender] = totalSupply;
     }
 }
