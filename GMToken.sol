@@ -1,381 +1,337 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMToken at 0xb3bd49e28f8f832b8d1e246106991e546c323502
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMToken at 0x89b4d5f2cba55d08a8c31ed7c1fb4b0a882b16b8
 */
-pragma solidity 0.4.17;
+pragma solidity ^0.4.24;
 
-contract Token {
 
-    /* Total amount of tokens */
-    uint256 public totalSupply;
-
-    /*
-     * Events
-     */
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-
-    /*
-     * Public functions
-     */
-
-    /// @notice send `value` token to `to` from `msg.sender`
-    /// @param to The address of the recipient
-    /// @param value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address to, uint value) public returns (bool);
-
-    /// @notice send `value` token to `to` from `from` on the condition it is approved by `from`
-    /// @param from The address of the sender
-    /// @param to The address of the recipient
-    /// @param value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address from, address to, uint value) public returns (bool);
-
-    /// @notice `msg.sender` approves `spender` to spend `value` tokens
-    /// @param spender The address of the account able to transfer the tokens
-    /// @param value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address spender, uint value) public returns (bool);
-
-    /// @param owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address owner) public constant returns (uint);
-
-    /// @param owner The address of the account owning tokens
-    /// @param spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address owner, address spender) public constant returns (uint);
-}
-
-contract StandardToken is Token {
-    /*
-     *  Storage
-    */
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowances;
-
-    /*
-     *  Public functions
-    */
-
-    function transfer(address to, uint value) public returns (bool) {
-        // Do not allow transfer to 0x0 or the token contract itself
-        require((to != 0x0) && (to != address(this)));
-        if (balances[msg.sender] < value)
-            revert();  // Balance too low
-        balances[msg.sender] -= value;
-        balances[to] += value;
-        Transfer(msg.sender, to, value);
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint value) public returns (bool) {
-        // Do not allow transfer to 0x0 or the token contract itself
-        require((to != 0x0) && (to != address(this)));
-        if (balances[from] < value || allowances[from][msg.sender] < value)
-            revert(); // Balance or allowance too low
-        balances[to] += value;
-        balances[from] -= value;
-        allowances[from][msg.sender] -= value;
-        Transfer(from, to, value);
-        return true;
-    }
-
-    function approve(address spender, uint value) public returns (bool) {
-        allowances[msg.sender][spender] = value;
-        Approval(msg.sender, spender, value);
-        return true;
-    }
-
-    function allowance(address owner, address spender) public constant returns (uint) {
-        return allowances[owner][spender];
-    }
-
-    function balanceOf(address owner) public constant returns (uint) {
-        return balances[owner];
-    }
-}
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-      uint256 c = a * b;
-      assert(a == 0 || c / a == b);
-      return c;
-    }
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-      // assert(b > 0); // Solidity automatically throws when dividing by 0
-      uint256 c = a / b;
-      // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-      return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-      assert(b <= a);
-      return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-      uint256 c = a + b;
-      assert(c >= a);
-      return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract GMToken is StandardToken {
 
-    using SafeMath for uint256;
 
-    /*
-    *  Metadata
-    */
-    string public constant name = "Global Messaging Token";
-    string public constant symbol = "GMT";
-    uint8 public constant decimals = 18;
-    uint256 public constant tokenUnit = 10 ** uint256(decimals);
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-    /*
-    *  Contract owner (Radical App International)
-    */
-    address public owner;
 
-    /*
-    *  Hardware wallets
-    */
-    address public ethFundAddress;  // Address for ETH owned by Radical App International
-    address public gmtFundAddress;  // Address for GMT allocated to Radical App International
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    /*
-    *  List of registered participants
-    */
-    mapping (address => bool) public registered;
 
-    /*
-    *  List of token purchases per address
-    *  Same as balances[], except used for individual cap calculations, 
-    *  because users can transfer tokens out during sale and reset token count in balances.
-    */
-    mapping (address => uint) public purchases;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /*
-    *  Crowdsale parameters
-    */
-    bool public isFinalized;
-    bool public isStopped;
-    uint256 public startBlock;  // Block number when sale period begins
-    uint256 public endBlock;  // Block number when sale period ends
-    uint256 public firstCapEndingBlock;  // Block number when first individual user cap period ends
-    uint256 public secondCapEndingBlock;  // Block number when second individual user cap period ends
-    uint256 public assignedSupply;  // Total GMT tokens currently assigned
-    uint256 public tokenExchangeRate;  // Units of GMT per ETH
-    uint256 public baseTokenCapPerAddress;  // Base user cap in GMT tokens
-    uint256 public constant baseEthCapPerAddress = 7 ether;  // Base user cap in ETH
-    uint256 public constant blocksInFirstCapPeriod = 2105;  // Block length for first cap period
-    uint256 public constant blocksInSecondCapPeriod = 1052;  // Block length for second cap period
-    uint256 public constant gasLimitInWei = 51000000000 wei; //  Gas price limit during individual cap period 
-    uint256 public constant gmtFund = 500 * (10**6) * tokenUnit;  // 500M GMT reserved for development and user growth fund 
-    uint256 public constant minCap = 100 * (10**6) * tokenUnit;  // 100M min cap to be sold during sale
 
-    /*
-    *  Events
-    */
-    event RefundSent(address indexed _to, uint256 _value);
-    event ClaimGMT(address indexed _to, uint256 _value);
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
 
-    modifier onlyBy(address _account){
-        require(msg.sender == _account);  
-        _;
+}
+
+
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value)public  returns (bool) {
+    require(_to != address(0));
+
+    uint _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+  
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until 
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-    function changeOwner(address _newOwner) onlyBy(owner) external {
-        owner = _newOwner;
-    }
+}
 
-    modifier registeredUser() {
-        require(registered[msg.sender] == true);  
-        _;
-    }
+contract BurnableToken is StandardToken {
 
-    modifier minCapReached() {
-        require(assignedSupply >= minCap);
-        _;
-    }
-
-    modifier minCapNotReached() {
-        require(assignedSupply < minCap);
-        _;
-    }
-
-    modifier respectTimeFrame() {
-        require(block.number >= startBlock && block.number < endBlock);
-        _;
-    }
-
-    modifier salePeriodCompleted() {
-        require(block.number >= endBlock || assignedSupply.add(gmtFund) == totalSupply);
-        _;
-    }
-
-    modifier isValidState() {
-        require(!isFinalized && !isStopped);
-        _;
-    }
-
-    /*
-    *  Constructor
-    */
-    function GMToken(
-        address _ethFundAddress,
-        address _gmtFundAddress,
-        uint256 _startBlock,
-        uint256 _endBlock,
-        uint256 _tokenExchangeRate) 
-        public 
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint _value)
+        public
     {
-        require(_gmtFundAddress != 0x0);
-        require(_ethFundAddress != 0x0);
-        require(_startBlock < _endBlock && _startBlock > block.number);
+        require(_value > 0);
 
-        owner = msg.sender; // Creator of contract is owner
-        isFinalized = false; // Controls pre-sale state through crowdsale state
-        isStopped = false;  // Circuit breaker (only to be used by contract owner in case of emergency)
-        ethFundAddress = _ethFundAddress;
-        gmtFundAddress = _gmtFundAddress;
-        startBlock = _startBlock;
-        endBlock = _endBlock;
-        tokenExchangeRate = _tokenExchangeRate;
-        baseTokenCapPerAddress = baseEthCapPerAddress.mul(tokenExchangeRate);
-        firstCapEndingBlock = startBlock.add(blocksInFirstCapPeriod);
-        secondCapEndingBlock = firstCapEndingBlock.add(blocksInSecondCapPeriod);
-        totalSupply = 1000 * (10**6) * tokenUnit;  // 1B total GMT tokens
-        assignedSupply = 0;  // Set starting assigned supply to 0
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        emit Burn(burner, _value);
     }
 
-    /// @notice Stop sale in case of emergency (i.e. circuit breaker)
-    /// @dev Only allowed to be called by the owner
-    function stopSale() onlyBy(owner) external {
-        isStopped = true;
+    event Burn(address indexed burner, uint indexed value);
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(0x0, _to, _amount);
+    return true;
+  }
+
+    /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function move(address _from, address _to, uint256 _value) public onlyOwner returns (bool) {
+    require(_to != address(0));
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(_from, _to, _value);
+    
+    return true;
+  }
+  
+  
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() public onlyOwner returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+
+
+
+
+
+contract TokenRecipient {
+
+    function tokenFallback(address sender, uint256 _value, bytes _extraData) public constant returns (bool) {}
+
+}
+
+
+
+
+
+contract GMToken is MintableToken, BurnableToken {
+
+    string public constant name = "GameMax";
+    string public constant symbol = "GM";
+    uint8 public constant decimals = 3;
+
+
+
+    // --------------------------------------------------------
+
+    function transferFrom(address _from, address _to, uint256 _value) public  returns (bool) {
+        bool result = super.transferFrom(_from, _to, _value);
+        return result;
     }
 
-    /// @notice Restart sale in case of an emergency stop
-    /// @dev Only allowed to be called by the owner
-    function restartSale() onlyBy(owner) external {
-        isStopped = false;
-    }
+   
 
-    /// @dev Fallback function can be used to buy tokens
-    function () payable public {
-        claimTokens();
-    }
-
-    /// @notice Create `msg.value` ETH worth of GMT
-    /// @dev Only allowed to be called within the timeframe of the sale period
-    function claimTokens() respectTimeFrame registeredUser isValidState payable public {
-        require(msg.value > 0);
-
-        uint256 tokens = msg.value.mul(tokenExchangeRate);
-
-        require(isWithinCap(tokens));
-
-        // Check that we're not over totals
-        uint256 checkedSupply = assignedSupply.add(tokens);
-
-        // Return money if we're over total token supply
-        require(checkedSupply.add(gmtFund) <= totalSupply); 
-
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-        purchases[msg.sender] = purchases[msg.sender].add(tokens);
-
-        assignedSupply = checkedSupply;
-        ClaimGMT(msg.sender, tokens);  // Logs token creation for UI purposes
-        // As per ERC20 spec, a token contract which creates new tokens SHOULD trigger a Transfer event with the _from address
-        // set to 0x0 when tokens are created (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md)
-        Transfer(0x0, msg.sender, tokens);
-    }
-
-    /// @dev Checks if transaction meets individual cap requirements
-    function isWithinCap(uint256 tokens) internal view returns (bool) {
-        // Return true if we've passed the cap period
-        if (block.number >= secondCapEndingBlock) {
-            return true;
-        }
-
-        // Ensure user is under gas limit
-        require(tx.gasprice <= gasLimitInWei);
-        
-        // Ensure user is not purchasing more tokens than allowed
-        if (block.number < firstCapEndingBlock) {
-            return purchases[msg.sender].add(tokens) <= baseTokenCapPerAddress;
-        } else {
-            return purchases[msg.sender].add(tokens) <= baseTokenCapPerAddress.mul(4);
-        }
+    function transfer(address _to, uint256 _value) public  returns (bool) {
+        bool result = super.transfer(_to, _value);
+        return result;
     }
 
 
-    /// @notice Updates registration status of an address for sale participation
-    /// @param target Address that will be registered or deregistered
-    /// @param isRegistered New registration status of address
-    function changeRegistrationStatus(address target, bool isRegistered) public onlyBy(owner) {
-        registered[target] = isRegistered;
+    function mint(address _to, uint256 _amount)public  onlyOwner canMint returns (bool) {
+        bool result = super.mint(_to, _amount);
+        return result;
     }
 
-    /// @notice Updates registration status for multiple addresses for participation
-    /// @param targets Addresses that will be registered or deregistered
-    /// @param isRegistered New registration status of addresses
-    function changeRegistrationStatuses(address[] targets, bool isRegistered) public onlyBy(owner) {
-        for (uint i = 0; i < targets.length; i++) {
-            changeRegistrationStatus(targets[i], isRegistered);
-        }
+    function burn(uint256 _value) public {
+        super.burn(_value);
     }
 
-    /// @notice Sends the ETH to ETH fund wallet and finalizes the token sale
-    function finalize() minCapReached salePeriodCompleted isValidState onlyBy(owner) external {
-        // Upon successful completion of sale, send tokens to GMT fund
-        balances[gmtFundAddress] = balances[gmtFundAddress].add(gmtFund);
-        assignedSupply = assignedSupply.add(gmtFund);
-        ClaimGMT(gmtFundAddress, gmtFund);   // Log tokens claimed by Radical App International GMT fund
-        Transfer(0x0, gmtFundAddress, gmtFund);
-        
-        // In the case where not all 500M GMT allocated to crowdfund participants
-        // is sold, send the remaining unassigned supply to GMT fund address,
-        // which will then be used to fund the user growth pool.
-        if (assignedSupply < totalSupply) {
-            uint256 unassignedSupply = totalSupply.sub(assignedSupply);
-            balances[gmtFundAddress] = balances[gmtFundAddress].add(unassignedSupply);
-            assignedSupply = assignedSupply.add(unassignedSupply);
+    // --------------------------------------------------------
 
-            ClaimGMT(gmtFundAddress, unassignedSupply);  // Log tokens claimed by Radical App International GMT fund
-            Transfer(0x0, gmtFundAddress, unassignedSupply);
-        }
+    function transferAndCall(address _recipient, uint256 _amount, bytes _data) public {
+        require(_recipient != address(0));
+        require(_amount <= balances[msg.sender]);
 
-        ethFundAddress.transfer(this.balance);
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_recipient] = balances[_recipient].add(_amount);
 
-        isFinalized = true; // Finalize sale
+        require(TokenRecipient(_recipient).tokenFallback(msg.sender, _amount, _data));
+        emit Transfer(msg.sender, _recipient, _amount);
     }
 
-    /// @notice Allows contributors to recover their ETH in the case of a failed token sale
-    /// @dev Only allowed to be called once sale period is over IF the min cap is not reached
-    /// @return bool True if refund successfully sent, false otherwise
-    function refund() minCapNotReached salePeriodCompleted registeredUser isValidState external {
-        require(msg.sender != gmtFundAddress);  // Radical App International not entitled to a refund
-
-        uint256 gmtVal = balances[msg.sender];
-        require(gmtVal > 0); // Prevent refund if sender GMT balance is 0
-
-        balances[msg.sender] = balances[msg.sender].sub(gmtVal);
-        assignedSupply = assignedSupply.sub(gmtVal); // Adjust assigned supply to account for refunded amount
-        
-        uint256 ethVal = gmtVal.div(tokenExchangeRate); // Covert GMT to ETH
-
-        msg.sender.transfer(ethVal);
-        
-        RefundSent(msg.sender, ethVal);  // Log successful refund 
-    }
-
-    /*
-        NOTE: We explicitly do not define a fallback function, in order to prevent 
-        receiving Ether for no reason. As noted in Solidity documentation, contracts 
-        that receive Ether directly (without a function call, i.e. using send or transfer)
-        but do not define a fallback function throw an exception, sending back the Ether (this was different before Solidity v0.4.0).
-    */
 }
