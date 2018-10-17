@@ -1,57 +1,63 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0x62bbb9fffd33d70a39fed4e7874163e8b97ea41b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0x16c9c875ada685f931c8b3de34b3f01dab70d589
 */
-/*************************************************************************
- * This contract has been merged with solidify
- * https://github.com/tiesnetwork/solidify
- *************************************************************************/
- 
- pragma solidity ^0.4.18;
-
-/*************************************************************************
- * import "../math/SafeMath.sol" : start
- *************************************************************************/
-
+pragma solidity 0.4.24;
+/**
+ * @title RefundVault for Capital Technologies & Research Crowdsale
+ * @dev This contract is used for storing funds while a crowdsale
+ * is in progress. Supports refunding the money if crowdsale fails,
+ * and forwarding it if crowdsale is successful.
+ */
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+
+    c = a * b;
     assert(c / a == b);
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
-/*************************************************************************
- * import "../math/SafeMath.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../ownership/Ownable.sol" : start
- *************************************************************************/
-
 
 /**
  * @title Ownable
@@ -62,17 +68,20 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -82,28 +91,33 @@ contract Ownable {
     _;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param _newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
   }
 
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
-/*************************************************************************
- * import "../ownership/Ownable.sol" : end
- *************************************************************************/
 
-/**
- * @title RefundVault
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- */
 contract RefundVault is Ownable {
   using SafeMath for uint256;
 
@@ -117,12 +131,18 @@ contract RefundVault is Ownable {
   event RefundsEnabled();
   event Refunded(address indexed beneficiary, uint256 weiAmount);
 
-  function RefundVault(address _wallet) public {
+  /**
+   * @param _wallet Vault address
+   */
+  constructor(address _wallet) public {
     require(_wallet != address(0));
     wallet = _wallet;
     state = State.Active;
   }
 
+  /**
+   * @param investor Investor address
+   */
   function deposit(address investor) onlyOwner public payable {
     require(state == State.Active);
     deposited[investor] = deposited[investor].add(msg.value);
@@ -131,21 +151,24 @@ contract RefundVault is Ownable {
   function close() onlyOwner public {
     require(state == State.Active);
     state = State.Closed;
-    Closed();
-    wallet.transfer(this.balance);
+    emit Closed();
+    wallet.transfer(address(this).balance);
   }
 
   function enableRefunds() onlyOwner public {
     require(state == State.Active);
     state = State.Refunding;
-    RefundsEnabled();
+    emit RefundsEnabled();
   }
 
+  /**
+   * @param investor Investor address
+   */
   function refund(address investor) public {
     require(state == State.Refunding);
     uint256 depositedValue = deposited[investor];
     deposited[investor] = 0;
     investor.transfer(depositedValue);
-    Refunded(investor, depositedValue);
+    emit Refunded(investor, depositedValue);
   }
 }
