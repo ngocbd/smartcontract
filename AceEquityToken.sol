@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AceEquityToken at 0xeb2c552736b7526ff87a250e9fbbee0753beeb2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACEEquityToken at 0x7a6485a6c632c81088430a3b5e8065fda4b741ab
 */
 //Compatible Solidity Compiler Version
 
@@ -8,70 +8,65 @@ pragma solidity ^0.4.15;
 
 
 /*
-This Ace Equity Token contract is based on the ERC20 token contract standard. Additional
+This ACE Equity Token contract is based on the ERC20 token contract standard. Additional
 functionality has been integrated:
 
 */
 
 
-contract AceEquityToken  {
-    //AceEquityToken
+contract ACEEquityToken  {
+    //ACE Equity Official Token Name
     string public name;
     
-    //AceEquityToken Official Symbol
+    //ACE Equity Token Official Symbol
 	string public symbol;
 	
-	//AceEquityToken Decimals
+	//ACE Equity Token Decimals
 	uint8 public decimals; 
   
   //database to match user Accounts and their respective balances
   mapping(address => uint) _balances;
   mapping(address => mapping( address => uint )) _approvals;
   
+  //ACE Equity Token Hard cap 
+  uint public cap_ACE;
   
-
-  address public dev;
-  
-  //Number of AceEquityToken in existence
+  //Number of ACE Equity Tokens in existence
   uint public _supply;
   
-
-  event TokenSwapOver();
   
   event Transfer(address indexed from, address indexed to, uint value );
   event Approval(address indexed owner, address indexed spender, uint value );
- 
- 
+  
+address public dev;
 
-  //initialize AceEquityToken
-  //pass Ace Configurations to the Constructor
- function AceEquityToken(uint initial_balance, string tokenName, string tokenSymbol, uint8 decimalUnits) {
+
+  //pass ACE Equity Token Configurations to the Constructor
+ function ACEEquityToken(uint initial_balance, string tokenName, string tokenSymbol, uint8 decimalUnits) public {
     
-   
+    cap_ACE = initial_balance;
     _supply += initial_balance;
     _balances[msg.sender] = initial_balance;
     
     decimals = decimalUnits;
 	symbol = tokenSymbol;
 	name = tokenName;
-	
-	dev = msg.sender;
- 
+    dev = msg.sender;
     
   }
 
-//retrieve number of all AceEquityToken in existence
-function totalSupply() constant returns (uint supply) {
+//retrieve number of all ACE Equity Tokens in existence
+function totalSupply() public constant returns (uint supply) {
     return _supply;
   }
 
-//check Ace Token balance of an Ethereum account
-function balanceOf(address who) constant returns (uint value) {
+//check ACE Equity Tokens balance of an Ethereum account
+function balanceOf(address who) public constant returns (uint value) {
     return _balances[who];
   }
 
-//check how many Ace Tokens a spender is allowed to spend from an owner
-function allowance(address _owner, address spender) constant returns (uint _allowance) {
+//check how many ACE Equity Tokens a spender is allowed to spend from an owner
+function allowance(address _owner, address spender) public constant returns (uint _allowance) {
     return _approvals[_owner][spender];
   }
 
@@ -80,8 +75,8 @@ function safeToAdd(uint a, uint b) internal returns (bool) {
     return (a + b >= a && a + b >= b);
   }
 
-//transfer an amount of Ace Tokens to an Ethereum address
-function transfer(address to, uint value) returns (bool ok) {
+//transfer an amount of ACE Equity Tokens to an Ethereum address
+function transfer(address to, uint value) public returns (bool ok) {
 
     if(_balances[msg.sender] < value) revert();
     
@@ -94,8 +89,8 @@ function transfer(address to, uint value) returns (bool ok) {
     return true;
   }
 
-//spend Ace Tokens from another Ethereum account that approves you as spender
-function transferFrom(address from, address to, uint value) returns (bool ok) {
+//spend ACE Equity Tokens from another Ethereum account that approves you as spender
+function transferFrom(address from, address to, uint value) public returns (bool ok) {
     // if you don't have enough balance, throw
     if(_balances[from] < value) revert();
 
@@ -113,12 +108,13 @@ function transferFrom(address from, address to, uint value) returns (bool ok) {
   }
   
   
-//allow another Ethereum account to spend Ace Tokens from your Account
+//allow another Ethereum account to spend TMX Equity Tokens from your Account
 function approve(address spender, uint value)
-    
+    public
     returns (bool ok) {
     _approvals[msg.sender][spender] = value;
     Approval(msg.sender, spender, value);
     return true;
   }
+
 }
