@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0xb3cffdd6c66cff1442c126d08c570749e329f9e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x0982e408ba8a50199559d371860eeb61a6d84768
 */
 pragma solidity ^0.4.24;
 
@@ -43,8 +43,7 @@ contract StrongHand {
         payable
     {
         owner = _owner;
-        
-        purchase(msg.value, _referrer);
+        buy(_referrer);
     }
     
     function() public payable {}
@@ -54,13 +53,7 @@ contract StrongHand {
         payable
         onlyOwner
     {
-        purchase(msg.value, _referrer);
-    }
-    
-    function purchase(uint256 amount, address _referrer)
-        private
-    {
-        p3dContract.buy.value(amount)(_referrer);
+        p3dContract.buy.value(msg.value)(_referrer);
     }
 
     function withdraw()
