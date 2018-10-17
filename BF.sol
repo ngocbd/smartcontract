@@ -1,169 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BF at 0xdf70ed874e30bfb85602d02d75d7466011814246
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BF at 0x7efb64549cb306839feab1ce3a3e55f7eb655cd0
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.20;
 
-library SafeMath {
+contract BFCTOKEN
+{
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint public totalSupply;
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public returns (uint256 remaining);
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
 }
 
-contract Ownable {
-    address public owner;
-    address public manager;
-    address public behalfer;
+contract BF is BFCTOKEN
+{
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event SetManager(address indexed _manager);
+  mapping (address => uint256) public balanceOf;
 
-    constructor () public {
-        owner = msg.sender;
-    }
+  mapping (address => mapping (address => uint256)) internal allowed;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  //init
+  constructor(string _name,string _symbol,uint8 _decimals,uint _totalSupply) public
+  {
+     name = _name;
+     symbol = _symbol;
+     decimals = _decimals;
+     totalSupply = _totalSupply;
+     balanceOf[msg.sender] = _totalSupply;
+  }
+  
+  function transfer(address _to, uint256 _value) public returns (bool success)
+  {
+      require(_to != address(0));
+      require(balanceOf[msg.sender] >= _value);
+      require(balanceOf[_to] + _value >= balanceOf[_to]);
 
-    modifier onlyManager() {
-        require(msg.sender == manager);
-        _;
-    }
 
-    modifier onlyBehalfer() {
-        require(msg.sender == behalfer);
-        _;
-    }
+      balanceOf[msg.sender] -= _value;
+      balanceOf[_to] += _value;
 
-    function setManager(address _manager) public onlyOwner returns (bool) {
-        manager = _manager;
-        return true;
-    }
+      emit Transfer(msg.sender,_to,_value);
+      
+      success = true;
+  }
 
-    function setBehalfer(address _behalfer) public onlyOwner returns (bool) {
-        behalfer = _behalfer;
-        return true;
-    }
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)
+  {
+      require(_to != address(0));
+      require(balanceOf[_from] >= _value);
+      require(allowed[_from][msg.sender] >= _value);
+      require(balanceOf[_to] + _value >= balanceOf[_to]);
 
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
+      balanceOf[_from] -= _value;
+      balanceOf[_to] += _value;
 
-contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
+      emit Transfer(_from,_to,_value);
+      
+      success = true;
+  }
 
-    bool public paused = false;
+  function approve(address _spender, uint256 _value) public returns (bool success)
+  {
+     allowed[msg.sender][_spender] = _value;
 
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
+     emit Approval(msg.sender,_spender,_value);
 
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
 
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        emit Pause();
-    }
+     success = true;
+  }
 
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        emit Unpause();
-    }
-}
+  function allowance(address _owner, address _spender) public returns (uint256 remaining)
+  {
+     return allowed[_owner][_spender];
+  }
 
-contract BasicBF is Pausable {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) public balances;
-    // match -> team -> amount
-    mapping(uint256 => mapping(uint256 => uint256)) public betMatchBalances;
-    // match -> team -> user -> amount
-    mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public betMatchRecords;
-
-    event Withdraw(address indexed user, uint256 indexed amount);
-    event WithdrawOwner(address indexed user, uint256 indexed amount);
-    event Issue(uint256 indexed matchNo, uint256 indexed teamNo, address indexed user, uint256 amount);
-    event BetMatch(address indexed user, uint256 indexed matchNo, uint256 indexed teamNo, uint256 amount);
-    event BehalfBet(address indexed user, uint256 indexed matchNo, uint256 indexed teamNo, uint256 amount);
-}
-
-contract BF is BasicBF {
-    constructor () public {}
-
-    function betMatch(uint256 _matchNo, uint256 _teamNo) public whenNotPaused payable returns (bool) {
-        uint256 amount = msg.value;
-        betMatchRecords[_matchNo][_teamNo][msg.sender] = betMatchRecords[_matchNo][_teamNo][msg.sender].add(amount);
-        betMatchBalances[_matchNo][_teamNo] = betMatchBalances[_matchNo][_teamNo].add(amount);
-        balances[this] = balances[this].add(amount);
-        emit BetMatch(msg.sender, _matchNo, _teamNo, amount);
-        return true;
-    }
-
-    function behalfBet(address _user, uint256 _matchNo, uint256 _teamNo) public whenNotPaused onlyBehalfer payable returns (bool) {
-        uint256 amount = msg.value;
-        betMatchRecords[_matchNo][_teamNo][_user] = betMatchRecords[_matchNo][_teamNo][_user].add(amount);
-        betMatchBalances[_matchNo][_teamNo] = betMatchBalances[_matchNo][_teamNo].add(amount);
-        balances[this] = balances[this].add(amount);
-        emit BehalfBet(_user, _matchNo, _teamNo, amount);
-        return true;
-    }
-
-    function issue(uint256 _matchNo, uint256 _teamNo, address[] _addrLst, uint256[] _amtLst) public whenNotPaused onlyManager returns (bool) {
-        require(_addrLst.length == _amtLst.length);
-        for (uint i = 0; i < _addrLst.length; i++) {
-            balances[_addrLst[i]] = balances[_addrLst[i]].add(_amtLst[i]);
-            balances[this] = balances[this].sub(_amtLst[i]);
-            emit Issue(_matchNo, _teamNo, _addrLst[i], _amtLst[i]);
-        }
-        return true;
-    }
-
-    function withdraw(uint256 _value) public whenNotPaused returns (bool) {
-        require(_value <= balances[msg.sender]);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        msg.sender.transfer(_value);
-        emit Withdraw(msg.sender, _value);
-        return true;
-    }
-
-    function withdrawOwner(uint256 _value) public onlyManager returns (bool) {
-        require(_value <= balances[this]);
-        balances[this] = balances[this].sub(_value);
-        msg.sender.transfer(_value);
-        emit WithdrawOwner(msg.sender, _value);
-        return true;
-    }
-
-    function() public payable {}
 }
