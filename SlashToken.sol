@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SlashToken at 0x688eafe74b54c8673d41b825969808135c96d67b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SlashToken at 0xe222e2e3517f5af5e3abc667adf14320c848d6da
 */
 pragma solidity ^0.4.24;
 
@@ -267,11 +267,11 @@ contract Pausable is Ownable {
 
 /**
  * @title Slash Token
- * @dev ERC20 Slash Token (ST)
+ * @dev ERC20 Slash Token (SLASH)
  */
 contract SlashToken is StandardToken, Pausable {
   string public constant name = 'Slash Token';                       // Set the token name for display
-  string public constant symbol = 'ST';                                       // Set the token symbol for display
+  string public constant symbol = 'SLASH';                                       // Set the token symbol for display
   uint256 constant Thousand_Token = 1000 * ONE_TOKEN;
   uint256 constant Million_Token = 1000 * Thousand_Token;
   uint256 constant Billion_Token = 1000 * Million_Token;
