@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityMarket at 0xda648ee4c7eb7f4fc5093dda3cb2390949993d3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityMarket at 0x42cbcda4ecd633c2d8f88f5b2bfda11da8c508b6
 */
 pragma solidity ^0.4.23;
 
@@ -35,7 +35,6 @@ contract Token {
  
   function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
   function transfer(address to, uint256 tokens) public returns (bool success);
-  function balanceOf(address _owner) public returns (uint256 balance);      
 
 }
 
@@ -51,6 +50,7 @@ contract TokenLiquidityMarket {
   uint256 public traded_token_seed_amount;
   uint256 public commission_ratio;
   uint256 public eth_balance;
+  uint256 public traded_token_balance;
 
   bool public eth_is_seeded;
   bool public traded_token_is_seeded;
@@ -80,16 +80,23 @@ contract TokenLiquidityMarket {
     admin = _newAdmin;
   }
   
-  function withdraw_arbitrary_token(address _token) public only_admin() {
+  function withdraw_arbitrary_token(address _token, uint256 _amount) public only_admin() {
       require(_token != traded_token);
-      Token(_token).transfer(admin, Token(_token).balanceOf(address(this)));
+      require(Token(_token).transfer(admin, _amount));
+  }
+
+  function withdraw_excess_tokens(uint256 _excess) public only_admin() {
+    require(Token(traded_token).transfer(address(this), traded_token_balance.add(_excess)));
+    require(Token(traded_token).transfer(admin, _excess));
   }
 
   function transfer_tokens_through_proxy_to_contract(address _from, address _to, uint256 _amount) private {
+    traded_token_balance = traded_token_balance.add(_amount);
     require(Token(traded_token).transferFrom(_from,_to,_amount));
   }  
 
   function transfer_tokens_from_contract(address _to, uint256 _amount) private {
+    traded_token_balance = traded_token_balance.sub(_amount);
     require(Token(traded_token).transfer(_to,_amount));
   }
 
@@ -164,13 +171,13 @@ contract TokenLiquidityMarket {
   }
 
   function get_amount_sell(uint256 _amount) public view returns(uint256) {
-    uint256 traded_token_balance_plus_amount_ = Token(traded_token).balanceOf(address(this)).add(_amount);
+    uint256 traded_token_balance_plus_amount_ = traded_token_balance.add(_amount);
     return (eth_balance.mul(_amount)).div(traded_token_balance_plus_amount_);
   }
 
   function get_amount_buy(uint256 _amount) public view returns(uint256) {
     uint256 eth_balance_plus_amount_ = eth_balance.add(_amount);
-    return (Token(traded_token).balanceOf(address(this)).mul(_amount)).div(eth_balance_plus_amount_);
+    return ((traded_token_balance).mul(_amount)).div(eth_balance_plus_amount_);
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
