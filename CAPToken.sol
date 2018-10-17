@@ -1,86 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAPToken at 0xc9fd74b9fef8ee576e36259ad3f1f5950f19fdaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAPToken at 0x9A2D74eA6ee7904E277803a6fdf9Edea5e858E2c
 */
 pragma solidity ^0.4.18;
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-/**
- * CAPToken
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -90,9 +13,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -100,17 +20,11 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -118,35 +32,100 @@ library SafeMath {
   }
 }
 
+contract Ownable {
+  address public owner;
 
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
 
 /**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract BasicToken is ERC20Basic {
+contract ERC20 {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract CAPToken is ERC20, Ownable, Pausable {
+
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
-
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint256 initialSupply;
   uint256 totalSupply_;
 
-  /**
-  * @dev total number of tokens in existence
-  */
+  mapping(address => uint256) balances;
+  mapping(address => bool) internal locks;
+  mapping(address => mapping(address => uint256)) internal allowed;
+
+  function CAPToken() public {
+    name = "Cashierest Affiliate Program Token";
+    symbol = "CAP";
+    decimals = 18;
+    initialSupply = 5 * (10 ** 11);
+    totalSupply_ = initialSupply * (10 ** uint(decimals));
+    balances[owner] = totalSupply_;
+    Transfer(address(0), owner, totalSupply_);
+  }
+
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
-
+    require(locks[msg.sender] == false);
+    
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -154,58 +133,16 @@ contract BasicToken is ERC20Basic {
     return true;
   }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
   function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
-}
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
-
+    require(locks[_from] == false);
+    
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -213,125 +150,34 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    require(_value > 0);
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
   function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+  function lock(address _owner) public onlyOwner returns (bool) {
+    require(locks[_owner] == false);
+    locks[_owner] = true;
     return true;
   }
 
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+  function unlock(address _owner) public onlyOwner returns (bool) {
+    require(locks[_owner] == true);
+    locks[_owner] = false;
     return true;
   }
 
-}
-
-
-
-
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens. Allowed for owner only
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    Burn(burner, _value);
-  }
-}
-
-
-
-contract CAPToken is StandardToken, BurnableToken, Ownable {
-
-  // Constants
-  string  public constant name = "CapitaliseCrypto";
-  string  public constant symbol = "CAP";
-  uint8   public constant decimals = 18;
-  uint256 public constant INITIAL_SUPPLY = 250000000 * (10 ** uint256(decimals));
-
-  // Properties
-  address public creatorAddress;
-
-  /**
-   * Constructor - instantiates token supply and allocates balance of
-   * to the admin (msg.sender).
-  */
-  function CAPToken(address _creator) public {
-
-    // Mint all tokens to creator
-    balances[msg.sender] = INITIAL_SUPPLY;
-    totalSupply_ = INITIAL_SUPPLY;
-
-    // Set creator address
-    creatorAddress = _creator;
+  function showLockState(address _owner) public view returns (bool) {
+    return locks[_owner];
   }
 
+  function () public payable {
+    revert();
+  }
 }
