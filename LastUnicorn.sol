@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastUnicorn at 0xb73f8f75cc233ec7a451d44859e06167e47c1942
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LastUnicorn at 0xa2FdDd12B9a9fEf488e24D446b8Baf48A294a65c
 */
 pragma solidity ^0.4.24;
 
@@ -116,8 +116,8 @@ contract LastUnicorn is modularLastUnicorn {
     UnicornInterfaceForForwarder constant private TeamUnicorn = UnicornInterfaceForForwarder(0xBB14004A6f3D15945B3786012E00D9358c63c92a);
 	UnicornBookInterface constant private UnicornBook = UnicornBookInterface(0x98547788f328e1011065E4068A8D72bacA1DDB49);
 
-    string constant public name = "LastUnicorn Round #1";
-    string constant public symbol = "RS1";
+    string constant public name = "LastUnicorn Round #2";
+    string constant public symbol = "LUR2";
     uint256 private rndGap_ = 0;
 
     // TODO: check time
@@ -173,6 +173,8 @@ contract LastUnicorn is modularLastUnicorn {
      */
     modifier isHuman() {
         address _addr = msg.sender;
+        require (_addr == tx.origin);
+        
         uint256 _codeLength;
         
         assembly {_codeLength := extcodesize(_addr)}
