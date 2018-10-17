@@ -1,11 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x700757d6fa4d951e7786f6c34686cafdd9fce44a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xeed618b2d17b2d6bb5f7cccc737c3f216a4b5e7a
 */
-/*
-Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-.*/
-
-
 pragma solidity ^0.4.21;
 
 contract EIP20Interface {
@@ -53,32 +48,25 @@ contract EIP20Interface {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-contract EIP20 is EIP20Interface{
+
+contract EIP20 is EIP20Interface {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowed;
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name = "HackLabCoin";               //fancy name: eg Simon Bucks
-    uint8 public decimals = 18;                    //How many decimals to show.
-    string public symbol = "HackLab";                 //An identifier: eg SBX
 
-    constructor(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-    ) public {
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
+
+    constructor() public {
+        uint256 _initialAmount = 1 * 10**28;
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        name = "GameRoot Token";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "GR";                               // Set the symbol for display purposes
+        emit Transfer(address(0), msg.sender, _initialAmount); //solhint-disable-line indent, no-unused-vars
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -113,5 +101,9 @@ contract EIP20 is EIP20Interface{
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
+    }
+
+    function () public payable {
+        revert();
     }
 }
