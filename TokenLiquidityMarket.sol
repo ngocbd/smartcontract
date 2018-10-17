@@ -1,21 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityMarket at 0x42cbcda4ecd633c2d8f88f5b2bfda11da8c508b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityMarket at 0xffb17cf95479532727660e21b8c509ec5bde651e
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.21;
 
 library SafeMath {
-
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
   function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
     c = a + b;
     assert(c >= a);
     return c;
   }
-
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
@@ -24,22 +21,19 @@ library SafeMath {
     assert(c / a == b);
     return c;
   }
-
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     return a / b;
   }
-  
 }
 
 contract Token {
- 
-  function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
-  function transfer(address to, uint256 tokens) public returns (bool success);
-
+  function balanceOf(address _owner) public returns (uint256); 
+  function transfer(address to, uint256 tokens) public returns (bool);
+  function transferFrom(address from, address to, uint256 tokens) public returns(bool);
 }
 
 contract TokenLiquidityMarket { 
-
+    
   using SafeMath for uint256;  
 
   address public platform;
@@ -67,7 +61,7 @@ contract TokenLiquidityMarket {
       _;
   }
   
-  constructor(address _traded_token,uint256 _eth_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
+  function TokenLiquidityMarket(address _traded_token,uint256 _eth_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
     admin = tx.origin;
     platform = msg.sender; 
     traded_token = _traded_token;
@@ -85,9 +79,11 @@ contract TokenLiquidityMarket {
       require(Token(_token).transfer(admin, _amount));
   }
 
-  function withdraw_excess_tokens(uint256 _excess) public only_admin() {
-    require(Token(traded_token).transfer(address(this), traded_token_balance.add(_excess)));
-    require(Token(traded_token).transfer(admin, _excess));
+  function withdraw_excess_tokens() public only_admin() {
+    uint256 queried_traded_token_balance_ = Token(traded_token).balanceOf(this);
+    require(queried_traded_token_balance_ >= traded_token_balance);
+    uint256 excess_ = queried_traded_token_balance_.sub(traded_token_balance);
+    require(Token(traded_token).transfer(admin, excess_));
   }
 
   function transfer_tokens_through_proxy_to_contract(address _from, address _to, uint256 _amount) private {
@@ -181,7 +177,8 @@ contract TokenLiquidityMarket {
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
-    return (_amount*(1 ether - commission_ratio))/(1 ether);  
+    return (_amount.mul(uint256(1 ether).sub(commission_ratio))).div(1 ether);  
+
   }
 
   function activate_admin_commission() public only_admin() {
@@ -203,8 +200,8 @@ contract TokenLiquidityMarket {
   function complete_sell_exchange(uint256 _amount_give) private {
     uint256 amount_get_ = get_amount_sell(_amount_give);
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
-    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
+    uint256 platform_commission_ = (amount_get_.sub(amount_get_minus_commission_)).div(5);
+    uint256 admin_commission_ = ((amount_get_.sub(amount_get_minus_commission_)).mul(4)).div(5);
     transfer_tokens_through_proxy_to_contract(msg.sender,this,_amount_give);
     transfer_eth_from_contract(msg.sender,amount_get_minus_commission_);  
     transfer_eth_from_contract(platform, platform_commission_);     
@@ -214,11 +211,10 @@ contract TokenLiquidityMarket {
   }
   
   function complete_buy_exchange() private {
-    uint256 amount_give_ = msg.value;
-    uint256 amount_get_ = get_amount_buy(amount_give_);
+    uint256 amount_get_ = get_amount_buy(msg.value);
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
-    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
+    uint256 platform_commission_ = (amount_get_.sub(amount_get_minus_commission_)).div(5);
+    uint256 admin_commission_ = ((amount_get_.sub(amount_get_minus_commission_)).mul(4)).div(5);
     transfer_eth_to_contract();
     transfer_tokens_from_contract(msg.sender, amount_get_minus_commission_);
     transfer_tokens_from_contract(platform, platform_commission_);
