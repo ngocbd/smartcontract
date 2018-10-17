@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintAuthority at 0xb6a999025963ee80efc324eab09e7db72a989047
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintAuthority at 0x5cc12100e1337f0d2fc711d8e678778eca20dcad
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
 contract DSAuthority {
     function canCall(
         address src, address dst, bytes4 sig
-    ) constant returns (bool);
+    ) public view returns (bool);
 }
 
 contract DSAuthEvents {
@@ -18,23 +18,25 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
+        public
         auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
+        public
         auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -42,7 +44,7 @@ contract DSAuth is DSAuthEvents {
         _;
     }
 
-    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+    function isAuthorized(address src, bytes4 sig) internal view returns (bool) {
         if (src == address(this)) {
             return true;
         } else if (src == owner) {
@@ -74,7 +76,7 @@ contract DSNote {
             bar := calldataload(36)
         }
 
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+        emit LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
 
         _;
     }
@@ -88,69 +90,69 @@ contract DSStop is DSNote, DSAuth {
         require(!stopped);
         _;
     }
-    function stop() auth note {
+    function stop() public auth note {
         stopped = true;
     }
-    function start() auth note {
+    function start() public auth note {
         stopped = false;
     }
 
 }
 
-/// base.sol -- basic ERC20 implementation
-
-// Token standard API
-// https://github.com/ethereum/EIPs/issues/20
-
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf( address who ) constant returns (uint value);
-    function allowance( address owner, address spender ) constant returns (uint _allowance);
-
-    function transfer( address to, uint value) returns (bool ok);
-    function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve( address spender, uint value ) returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+contract ERC20Events {
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
 }
+
+contract ERC20 is ERC20Events {
+    function totalSupply() public view returns (uint);
+    function balanceOf(address guy) public view returns (uint);
+    function allowance(address src, address guy) public view returns (uint);
+
+    function approve(address guy, uint wad) public returns (bool);
+    function transfer(address dst, uint wad) public returns (bool);
+    function transferFrom(
+        address src, address dst, uint wad
+    ) public returns (bool);
+}
+
 contract DSMath {
-    function add(uint x, uint y) internal returns (uint z) {
+    function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x);
     }
-    function sub(uint x, uint y) internal returns (uint z) {
+    function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
     }
-    function mul(uint x, uint y) internal returns (uint z) {
+    function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x);
     }
 
-    function min(uint x, uint y) internal returns (uint z) {
+    function min(uint x, uint y) internal pure returns (uint z) {
         return x <= y ? x : y;
     }
-    function max(uint x, uint y) internal returns (uint z) {
+    function max(uint x, uint y) internal pure returns (uint z) {
         return x >= y ? x : y;
     }
-    function imin(int x, int y) internal returns (int z) {
+    function imin(int x, int y) internal pure returns (int z) {
         return x <= y ? x : y;
     }
-    function imax(int x, int y) internal returns (int z) {
+    function imax(int x, int y) internal pure returns (int z) {
         return x >= y ? x : y;
     }
 
     uint constant WAD = 10 ** 18;
     uint constant RAY = 10 ** 27;
 
-    function wmul(uint x, uint y) internal returns (uint z) {
+    function wmul(uint x, uint y) internal pure returns (uint z) {
         z = add(mul(x, y), WAD / 2) / WAD;
     }
-    function rmul(uint x, uint y) internal returns (uint z) {
+    function rmul(uint x, uint y) internal pure returns (uint z) {
         z = add(mul(x, y), RAY / 2) / RAY;
     }
-    function wdiv(uint x, uint y) internal returns (uint z) {
+    function wdiv(uint x, uint y) internal pure returns (uint z) {
         z = add(mul(x, WAD), y / 2) / y;
     }
-    function rdiv(uint x, uint y) internal returns (uint z) {
+    function rdiv(uint x, uint y) internal pure returns (uint z) {
         z = add(mul(x, RAY), y / 2) / y;
     }
 
@@ -169,7 +171,7 @@ contract DSMath {
     //  Also, EVM division is flooring and
     //    floor[(n-1) / 2] = floor[n / 2].
     //
-    function rpow(uint x, uint n) internal returns (uint z) {
+    function rpow(uint x, uint n) internal pure returns (uint z) {
         z = n % 2 != 0 ? x : RAY;
 
         for (n /= 2; n != 0; n /= 2) {
@@ -188,26 +190,29 @@ contract DSTokenBase is ERC20, DSMath {
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
 
-    function DSTokenBase(uint supply) {
+    constructor(uint supply) public {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
 
-    function totalSupply() constant returns (uint) {
+    function totalSupply() public view returns (uint) {
         return _supply;
     }
-    function balanceOf(address src) constant returns (uint) {
+    function balanceOf(address src) public view returns (uint) {
         return _balances[src];
     }
-    function allowance(address src, address guy) constant returns (uint) {
+    function allowance(address src, address guy) public view returns (uint) {
         return _approvals[src][guy];
     }
 
-    function transfer(address dst, uint wad) returns (bool) {
+    function transfer(address dst, uint wad) public returns (bool) {
         return transferFrom(msg.sender, dst, wad);
     }
 
-    function transferFrom(address src, address dst, uint wad) returns (bool) {
+    function transferFrom(address src, address dst, uint wad)
+        public
+        returns (bool)
+    {
         if (src != msg.sender) {
             _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         }
@@ -215,15 +220,15 @@ contract DSTokenBase is ERC20, DSMath {
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
 
-        Transfer(src, dst, wad);
+        emit Transfer(src, dst, wad);
 
         return true;
     }
 
-    function approve(address guy, uint wad) returns (bool) {
+    function approve(address guy, uint wad) public returns (bool) {
         _approvals[msg.sender][guy] = wad;
 
-        Approval(msg.sender, guy, wad);
+        emit Approval(msg.sender, guy, wad);
 
         return true;
     }
@@ -231,97 +236,94 @@ contract DSTokenBase is ERC20, DSMath {
 
 contract DSToken is DSTokenBase(0), DSStop {
 
-    mapping (address => mapping (address => bool)) _trusted;
-
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
 
-    function DSToken(bytes32 symbol_) {
+    constructor(bytes32 symbol_) public {
         symbol = symbol_;
     }
 
-    event Trust(address indexed src, address indexed guy, bool wat);
     event Mint(address indexed guy, uint wad);
     event Burn(address indexed guy, uint wad);
 
-    function trusted(address src, address guy) constant returns (bool) {
-        return _trusted[src][guy];
-    }
-    function trust(address guy, bool wat) stoppable {
-        _trusted[msg.sender][guy] = wat;
-        Trust(msg.sender, guy, wat);
+    function approve(address guy) public stoppable returns (bool) {
+        return super.approve(guy, uint(-1));
     }
 
-    function approve(address guy, uint wad) stoppable returns (bool) {
+    function approve(address guy, uint wad) public stoppable returns (bool) {
         return super.approve(guy, wad);
     }
+
     function transferFrom(address src, address dst, uint wad)
+        public
         stoppable
         returns (bool)
     {
-        if (src != msg.sender && !_trusted[src][msg.sender]) {
+        if (src != msg.sender && _approvals[src][msg.sender] != uint(-1)) {
             _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         }
 
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
 
-        Transfer(src, dst, wad);
+        emit Transfer(src, dst, wad);
 
         return true;
     }
 
-    function push(address dst, uint wad) {
+    function push(address dst, uint wad) public {
         transferFrom(msg.sender, dst, wad);
     }
-    function pull(address src, uint wad) {
+    function pull(address src, uint wad) public {
         transferFrom(src, msg.sender, wad);
     }
-    function move(address src, address dst, uint wad) {
+    function move(address src, address dst, uint wad) public {
         transferFrom(src, dst, wad);
     }
 
-    function mint(uint wad) {
+    function mint(uint wad) public {
         mint(msg.sender, wad);
     }
-    function burn(uint wad) {
+    function burn(uint wad) public {
         burn(msg.sender, wad);
     }
-    function mint(address guy, uint wad) auth stoppable {
+    function mint(address guy, uint wad) public auth stoppable {
         _balances[guy] = add(_balances[guy], wad);
         _supply = add(_supply, wad);
-        Mint(guy, wad);
+        emit Mint(guy, wad);
     }
-    function burn(address guy, uint wad) auth stoppable {
-        if (guy != msg.sender && !_trusted[guy][msg.sender]) {
+    function burn(address guy, uint wad) public auth stoppable {
+        if (guy != msg.sender && _approvals[guy][msg.sender] != uint(-1)) {
             _approvals[guy][msg.sender] = sub(_approvals[guy][msg.sender], wad);
         }
 
         _balances[guy] = sub(_balances[guy], wad);
         _supply = sub(_supply, wad);
-        Burn(guy, wad);
+        emit Burn(guy, wad);
     }
 
     // Optional token name
     bytes32   public  name = "";
 
-    function setName(bytes32 name_) auth {
+    function setName(bytes32 name_) public auth {
         name = name_;
     }
 }
 
 // For removing this authority, set by using setAuthority(DSAuthority(0));
 contract MintAuthority is DSAuthority {
-    address public miner;
+    address public multisig;
+    address public crowdsale;
 
-    function MintAuthority(address _miner)
+    constructor(address _multisig, address _crowdsale) public
     {
-        miner = _miner;
+        multisig = _multisig;
+        crowdsale = _crowdsale;
     }
 
     function canCall(
         address _src, address _dst, bytes4 _sig
     ) constant returns (bool) {
-        return ( _src == miner && _sig == bytes4(keccak256("mint(address,uint256)")) );
+        return ( (_src == multisig || _src == crowdsale) && _sig == bytes4(keccak256("mint(address,uint256)")) );
     }
 }
