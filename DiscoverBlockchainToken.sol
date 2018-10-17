@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscoverBlockchainToken at 0x62f0b86b08b859a178bd13e8b704239fcc7a9f20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscoverBlockchainToken at 0xb2720062356af177ea53a8bf2bd472d490d71cd1
 */
-pragma solidity ^0.4.23;
-
-// File: node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol
+pragma solidity ^0.4.24;
 
 /**
  * @title Ownable
@@ -13,13 +11,11 @@ pragma solidity ^0.4.23;
 contract Ownable {
   address public owner;
 
-
   event OwnershipRenounced(address indexed previousOwner);
   event OwnershipTransferred(
     address indexed previousOwner,
     address indexed newOwner
   );
-
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -63,8 +59,6 @@ contract Ownable {
     owner = _newOwner;
   }
 }
-
-// File: node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -116,8 +110,6 @@ library SafeMath {
   }
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -129,8 +121,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -176,8 +166,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
-
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
@@ -206,8 +194,6 @@ contract BurnableToken is BasicToken {
   }
 }
 
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -226,8 +212,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
-// File: node_modules/openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -351,23 +335,26 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: contracts/DiscoverBlockchainToken.sol
-
 /**
  * @title DiscoverBlockchainToken
+ * @author Aleksandar Djordjevic
  * @dev DiscoverBlockchainToken is ERC20 Ownable, BurnableToken & StandardToken
  * It is meant to be used in a DiscoverBlockchain Crowdsale contract
  */
 contract DiscoverBlockchainToken is Ownable, BurnableToken, StandardToken {
-    string public constant name = 'DiscoverBlockchain Token';
-    string public constant symbol = 'DSC';
-    uint8 public constant decimals = 18;
-    uint256 public constant TOTAL_SUPPLY = 500000000 * (10 ** uint256(decimals));
+    string public constant name = 'DiscoverBlockchain Token'; // DSC name
+    string public constant symbol = 'DSC'; // DSC symbol
+    uint8 public constant decimals = 18; // DSC decimal number
+    uint256 public constant TOTAL_SUPPLY = 500000000 * (10 ** uint256(decimals)); // total amount of all DSC tokens - 500 000 000 DSC
 
+    /**
+     * @dev DiscoverBlockchainToken constructor
+     * Sets total supply and assigns total supply to the owner
+     */
     constructor() public {
-        totalSupply_ = TOTAL_SUPPLY;
-        balances[owner] = TOTAL_SUPPLY;
+        totalSupply_ = TOTAL_SUPPLY; // set total amount of tokens
+        balances[owner] = TOTAL_SUPPLY; // transfer all tokens to smart contract owner
 
-        emit Transfer(address(0), owner, totalSupply_);
+        emit Transfer(address(0), owner, totalSupply_); // emit Transfer event and notify that transfer of tokens was made
     }
 }
