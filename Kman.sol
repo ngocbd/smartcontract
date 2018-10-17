@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kman at 0x2895dd8cbae7a2abff17f6bae664d3a1c3bc7628
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kman at 0xba09145b7427fc6de2142c53eca37e3f31d8d0d1
 */
 pragma solidity ^0.4.24;
 
@@ -49,10 +49,6 @@ contract Kman{
         address winner
     );
     
-    event StartGame
-    (
-        address player
-    );
 
     /*=====================================
     =            CONFIGURABLES            =
@@ -61,7 +57,7 @@ contract Kman{
     BIT BITcontract;  //a reference to the 8thereum contract
     address owner;
     bool openToPublic = false; 
-    mapping(address => uint256) paidPlayers;
+    uint256 devFee;
 
 
     /*=======================================
@@ -75,29 +71,6 @@ contract Kman{
         owner = msg.sender;
     }
 
-     function start()
-       isOpenToPublic()
-       onlyRealPeople()
-      public
-     {
-       
-        uint256 tokensTransferred = getTokensPaidToGame(msg.sender);
-
-        // When you transfer a token to the contract, there is a 1 coin difference until you enter the next if statement
-        if( tokensTransferred > paidPlayers[msg.sender]) //can't play if you don't pay
-        {
-            //check if player paid
-            paidPlayers[msg.sender] = tokensTransferred;
-            // pay dev fee
-            BITcontract.transfer(owner, 50000000000000000); //5% of 1 BIT
-            //start the game for the player
-            emit StartGame(msg.sender);
-        }
-        else
-        {
-            revert();
-        }
-    }
 
     function BITBalanceOf(address someAddress) public view returns(uint256)
     {
@@ -142,31 +115,28 @@ contract Kman{
     }
 
     //Pay tournament winners
-    function PayWinners(uint place, address winner) 
+    function PayWinners(address first, address second, address third) 
     public 
     isOpenToPublic()
     onlyRealPeople() 
     onlyOwner()
     {
-        uint256 awardAmount = 0;
-       if(place == 1)
-       {
-           awardAmount = firstPlacePot();
-           BITcontract.transfer(winner, awardAmount);
-           
-       }
-       else if(place == 2 )
-       {
-            awardAmount = secondPlacePot();
-            BITcontract.transfer(winner, awardAmount);
-       }
-       else if(place ==3)
-       {
-            awardAmount = thirdPlacePot();
-            BITcontract.transfer(winner, awardAmount);
-       }
-      
-      emit WinnerPaid(awardAmount, winner);
+        uint256 balance = BITBalanceOf(this);
+        devFee = balance / 20;
+        balance -= devFee;
+        uint256 firstPlace = balance / 4;
+        uint256 secondPlace = (balance * 15)/ 100;
+        uint256 thirdPlace = (balance / 10);
+        
+        BITcontract.transfer(first, firstPlace);
+        BITcontract.transfer(second, secondPlace); 
+        BITcontract.transfer(third, thirdPlace);
+        BITcontract.transfer(owner, devFee);
+        
+        
+        emit WinnerPaid(firstPlace, first);
+        emit WinnerPaid(secondPlace, second);
+        emit WinnerPaid(thirdPlace, third);
     }
     
     
