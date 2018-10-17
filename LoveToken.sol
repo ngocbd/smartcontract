@@ -1,93 +1,96 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveToken at 0x7e8e261e5b20a0936680baf7bdf6fd12403c8d7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveToken at 0x5a276aeb77bcfdac8ac6f31bbc7416ae1a85eef2
 */
-pragma solidity ^0.4.8;
-contract Token {
-    /// token???????public??????getter????????totalSupply().
-    uint256 public totalSupply=52013140;
+pragma solidity 0.4.24;
 
-    /// ????_owner??token???
-    function balanceOf(address _owner) constant returns (uint256 balance);
 
-    //??????????_to??????_value?token
-    function transfer(address _to, uint256 _value) returns (bool success);
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
 
-    //???_from????_to????_value?token??approve??????
-    function transferFrom(address _from, address _to, uint256 _value) returns  (bool success);
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256 balance);
 
-    //??????????_spender????????????_value?token
-    function approve(address _spender, uint256 _value) returns (bool success);
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-    //????_spender?????_owner???token???
-    function allowance(address _owner, address _spender) constant returns  (uint256 remaining);
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-    //????????????? 
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    // solhint-disable-next-line no-simple-event-func-name
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    //???approve(address _spender, uint256 _value)????????????
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-contract StandardToken is Token {
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //??totalSupply ??????? (2^256 - 1).
-        //??????????????token??????????????????
-        //require(balances[msg.sender] >= _value && balances[_to] + _value >balances[_to]);
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;//???????????token??_value
-        balances[_to] += _value;//???????token??_value
-        Transfer(msg.sender, _to, _value);//????????
-        return true;
-    }
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >=  _value);
-        balances[_to] += _value;//??????token??_value
-        balances[_from] -= _value;//????_from??token??_value
-        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
-        Transfer(_from, _to, _value);//????????
-        return true;
-    }
-    //????
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-    //????_spender???????????????_value?token
-    function approve(address _spender, uint256 _value) returns (bool success)   
-    {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];//??_spender?_owner????token?
+
+contract LoveToken is EIP20Interface {
+
+    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    
+    mapping (address => mapping (address => uint256)) public allowed;
+    
+    string public name = "Love";
+    uint8 public decimals = 0;
+    string public symbol = "LOVE";
+
+    constructor() public {
+        totalSupply = MAX_UINT256;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-contract LoveToken is StandardToken {
-    /* Public variables of the token */
-    string public name;                   //??: eg Simon Bucks
-    uint8 public decimals ;                //???????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //token??: eg SBX
-    string public version = 'H0.1';       //??
-
-    function LoveToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
-        balances[msg.sender] = _initialAmount; // ??token?????????
-        totalSupply = _initialAmount;         // ??????
-        name = _tokenName;                   // token??
-        decimals = _decimalUnits;           // ????
-        symbol = _tokenSymbol;             // token??
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        emit Transfer(msg.sender, _to, _value);
+        return true;
     }
-    /* ????????????????????? */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        uint256 allowance = allowed[_from][msg.sender];
         
-        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        
+        emit Transfer(_from, _to, _value);
         return true;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return MAX_UINT256;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 }
