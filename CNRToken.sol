@@ -1,292 +1,416 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNRToken at 0x732af39305d46ec65897b1867d5ac5d331b0f433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNRToken at 0x3baa300530b7104b8fd4ee82ea155d26476de164
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
 
-contract Owned {
 
-    // The address of the account that is the current owner 
-    address public owner;
+contract Platform
+{
+    address public platform = 0x709a0A8deB88A2d19DAB2492F669ef26Fd176f6C;
 
-    // The publiser is the inital owner
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    /**
-     * Access is restricted to the current owner
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-
+    modifier onlyPlatform() {
+        require(msg.sender == platform);
         _;
     }
 
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner 
-     */
-    function transferOwnership(address _newOwner) onlyOwner {
-        owner = _newOwner;
+    function isPlatform() public view returns (bool) {
+        return platform == msg.sender;
     }
 }
 
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
- * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
- *
- * Modified version of https://github.com/ConsenSys/Tokens that implements the 
- * original Token contract, an abstract contract for the full ERC 20 Token standard
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract StandardToken is Token {
-    
-    // Token starts if the locked state restricting transfers
-    bool public locked;
-
-    // DCORP token balances
-    mapping (address => uint256) balances;
-
-    // DCORP token allowances
-    mapping (address => mapping (address => uint256)) allowed;
-
-
-    /**
-     * ERC20 Short Address Attack fix
-     */
-    modifier onlyPayloadSize(uint numArgs) {
-        assert(msg.data.length >= numArgs * 32 + 4);
-        _;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-    
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    /** 
-     * Get balance of `_owner` 
-     * 
-     * @param _owner The address from which the balance will be retrieved
-     * @return The balance
-     */
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
+contract BeneficiaryInterface
+{
+    function getAvailableWithdrawInvestmentsForBeneficiary() public view returns (uint);
+    function withdrawInvestmentsBeneficiary(address withdraw_address) public returns (bool);
+}
+
+
+//????????? ??? ICO ??????????, ????? ?? ????? ???????? CNRToken-?
+//? ??? ??? ??? ???????? ?????
+contract CNRAddBalanceInterface
+{
+    function addTokenBalance(address, uint) public;
+}
+
+
+//????????? ??? ???????, ????? ??? ????? ????????? ??????
+contract CNRAddTokenInterface
+{
+    function addTokenAddress(address) public;
+}
+
+//TODO: ????? ??????? ????? TokensCollection, ???? ??????? ??? ???????????????? ??  tokens_map, tokens_arr ???
+contract CNRToken is ERC20, CNRAddBalanceInterface, CNRAddTokenInterface, Platform
+{
+    using SafeMath for uint256;
+
+
+    //?????  ERC20
+    string public constant name = "ICO Constructor token";
+    string public constant symbol = "CNR";
+    uint256 public constant decimals = 18;
+
+
+    //-------------------------ERC20 interface----------------------------------
+    mapping(address => mapping(address => uint256)) internal allowed;
+    mapping(address => uint256) balances;
+    ////////////////////////////ERC20 interface/////////////////////////////////
+
+    //????? ????? ???????
+    address public grand_factory = address(0);
+
+    //???? ? ?????? ?????????? ???????. ??????? ???????  ?????????????? ???
+    //?????. ????????? ??? ???????
+    mapping(address => uint256) public  tokens_map;
+    TokenInfo[] public                  tokens_arr;
+
+    //???? ? ?????????? ?????????? (??????, ????????). (????? ???????? ??????? => (?????? ?????? => ??????? ??? ??????))
+    //?? ??????? 0 - ?????? ????.
+    mapping(address => mapping(uint => uint)) withdrawns;
+
+    function CNRToken() public
+    {
+        totalSupply = 10*1000*1000*(10**decimals); // 10 mln
+        balances[msg.sender] = totalSupply;
+
+        //?? ??????? ??????? ????????? ????
+        tokens_arr.push(
+            TokenInfo(
+                address(0),
+                0));
+    }
+
+
+    //??????? ????????? ??????? ???? ??????????? ???????
+    function getRegisteredTokens()
+    public view
+    returns (address[])
+    {
+        // ????????, ????? ?? ????????? ??????. <= ????? ?????? ???? mythril,
+        // ??????? ?? ???????? ??? ? ???????????? ????? ?????? ???????
+        if (tokens_arr.length <= 1)
+            return;
+
+        address[] memory token_addresses = new address[](tokens_arr.length-1);
+        for (uint i = 1; i < tokens_arr.length; i++)
+        {
+            token_addresses[i-1] = tokens_arr[i].contract_address;
+        }
+
+        return token_addresses;
+    }
+
+    //??????? ????????? ?????? ? ???? ????????? ??????? ? ether ?? ????
+    //?????????????????? ?????????? ???????. ????? ??????????????? ?????
+    //???????? ????? ??? ??????? ?????? ??????? takeICOInvestmentsEtherCommission
+    function getAvailableEtherCommissions()
+    public view
+    returns(
+        address[],
+        uint[]
+    )
+    {
+        // ????????, ????? ?? ????????? ??????. <= ????? ?????? ???? mythril,
+        // ??????? ?? ???????? ??? ? ???????????? ????? ?????? ???????
+        if (tokens_arr.length <= 1)
+            return;
+
+        address[] memory token_addresses = new address[](tokens_arr.length-1);
+        uint[] memory available_withdraws = new uint[](tokens_arr.length-1);
+        //????? ?????? ???? ?? 1-??, ?????? ??? ?? 0-?? - ????
+        for (uint i = 1; i < tokens_arr.length; i++)
+        {
+            token_addresses[i-1] = tokens_arr[i].contract_address;
+            available_withdraws[i-1] =
+                BeneficiaryInterface(tokens_arr[i].contract_address).getAvailableWithdrawInvestmentsForBeneficiary();
+        }
+
+        return (token_addresses, available_withdraws);
+    }
+
+
+    //???????, ??????? ????? ???????? ??? ??????, ????? ?? ??????  ???????? ???? ?????????
+    //???????? ? ?????????? ? ?????
+    function takeICOInvestmentsEtherCommission(address ico_token_address)
+    public
+    {
+        //????????? ??? ????? ???! ???????? ????? ?????
+        require(tokens_map[ico_token_address] != 0);
+
+        //?????? ??????? ?? ????? ??????? ?????
+        uint available_investments_commission =
+            BeneficiaryInterface(ico_token_address).getAvailableWithdrawInvestmentsForBeneficiary();
+
+        //?????????? ??? ????? ???????
+        //?????????? ?? ????????, ??? ??? ????? ??????? external contract method
+        tokens_arr[0].ever_added = tokens_arr[0].ever_added.add(available_investments_commission);
+
+        //????????? ????? ?? ????? ????? ?????????
+        BeneficiaryInterface(ico_token_address).withdrawInvestmentsBeneficiary(
+            address(this));
+    }
+
+
+    //?????????? ????????? ????????? ?????
+    function()
+    public payable
+    {
+
+    }
+
+
+    //????? ????????? ?????? grandFactory, ??????? ????? ???????????
+    function setGrandFactory(address _grand_factory)
+    public
+        onlyPlatform
+    {
+        //????????? ????? ????? ??? ??????? ??????????
+        require(_grand_factory != address(0));
+
+        grand_factory = _grand_factory;
+    }
+
+    // ?????? ?????????????? ?? ???????:
+    // ????? ?????????? ??????? ????????? _token_address, ??????? ??????? ???????? CNR
+    // ???????? ?? ?????????? ??????? CNR ? _owner, ????? ?? totalSupply (???????? ????)
+    // ? ???????? ??? ?????????? _owner'?? ????? ???????
+    //????????? ? ?????? ?????? ? ??????? ?????????? ICO
+    function balanceOfToken(address _owner, address _token_address)
+    public view
+    returns (uint256 balance)
+    {
+        //???????? ??????? ?????? ??????
+        require(tokens_map[_token_address] != 0);
+
+        uint idx = tokens_map[_token_address];
+        balance =
+            tokens_arr[idx].ever_added
+            .mul(balances[_owner])
+            .div(totalSupply)
+            .sub(withdrawns[_owner][idx]);
+        }
+
+    // ??? ??? ? ? balanceOfToken, ?????? ?????????? 0 ??????? ? tokens_arr ? withdrawns[_owner]
+    //????????? ? ?????? ?????? ? ??????
+    function balanceOfETH(address _owner)
+    public view
+    returns (uint256 balance)
+    {
+        balance =
+            tokens_arr[0].ever_added
+            .mul(balances[_owner])
+            .div(totalSupply)
+            .sub(withdrawns[_owner][0]);
+    }
+
+    //??????? ???????? ????????? ??????? ?????????? ICO ?? ????????? ???????
+    function withdrawTokens(address _token_address, address _destination_address)
+    public
+    {
+        //???????? ??????? ?????? ??????
+        require(tokens_map[_token_address] != 0);
+
+        uint token_balance = balanceOfToken(msg.sender, _token_address);
+        uint token_idx = tokens_map[_token_address];
+        withdrawns[msg.sender][token_idx] = withdrawns[msg.sender][token_idx].add(token_balance);
+        ERC20Basic(_token_address).transfer(_destination_address, token_balance);
+    }
+
+    //??????? ????????? ?????????? ????? ?? ????????? ???????
+    function withdrawETH(address _destination_address)
+    public
+    {
+        uint value_in_wei = balanceOfETH(msg.sender);
+        withdrawns[msg.sender][0] = withdrawns[msg.sender][0].add(value_in_wei);
+        _destination_address.transfer(value_in_wei);
+    }
+
+
+    //?????? ??????? ?????? ?????????? ?? ??????????-???????, ? ??? ?????? ????? ???????????
+    //(?? ???????? ???????????) ??????????? ??????
+    function addTokenBalance(address _token_contract, uint amount)
+    public
+    {
+        //????????? ??? ??????? ?????????? ?? ????? ????????????! ????????? ??????
+        require(tokens_map[msg.sender] != 0);
+
+        //?????????? ?????? ??? ???? ???????, ???????????? ???????????
+        tokens_arr[tokens_map[_token_contract]].ever_added = tokens_arr[tokens_map[_token_contract]].ever_added.add(amount);
+    }
+
+    //??????? ?????????? ?????? ??????. ?????? ??????? ?????? ??????????
+    //?????? GrandFactory ??? ???????? ?????? ICO ??????
+    function addTokenAddress(address ico_token_address)
+    public
+    {
+        //????????? ????? ??? ??? ????? ?? grand_factory
+        require(grand_factory == msg.sender);
+
+        //????????? ??? ????? ?? ??? ??????? ????? ?????
+        require(tokens_map[ico_token_address] == 0);
+
+        tokens_arr.push(
+            TokenInfo(
+                ico_token_address,
+                0));
+        tokens_map[ico_token_address] = tokens_arr.length - 1;
+    }
+
+
+
+    //------------------------------ERC20---------------------------------------
+
+    //?????? ? ???????
+    function balanceOf(address _owner)
+    public view
+    returns (uint256 balance)
+    {
         return balances[_owner];
     }
 
 
-    /** 
-     * Send `_value` token to `_to` from `msg.sender`
-     * 
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2) returns (bool success) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-        // Unable to transfer while still locked
-        require(!locked);
+        //        uint withdraw_to_transfer = withdrawn[msg.sender] *  _value / balances[msg.sender];
 
-        // Check if the sender has enough tokens
-        require(balances[msg.sender] >= _value);   
+        for (uint i = 0; i < tokens_arr.length; i++)
+        {
+            //??????? ????????? ????????? ??????????? ?? ?????? ???????
+            uint withdraw_to_transfer = withdrawns[msg.sender][i].mul(_value).div(balances[msg.sender]);
 
-        // Check for overflows
-        require(balances[_to] + _value > balances[_to]);
+            //???????? ????????? ?????
+            withdrawns[msg.sender][i] = withdrawns[msg.sender][i].sub(withdraw_to_transfer);
+            withdrawns[_to][i] = withdrawns[_to][i].add(withdraw_to_transfer);
+        }
 
-        // Transfer tokens
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
 
-        // Notify listners
-        Transfer(msg.sender, _to, _value);
+        //????????? ??????
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+
+
+        //??????? ???????
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
 
-    /** 
-     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     * 
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3) returns (bool success) {
-
-        // Unable to transfer while still locked
-        require(!locked);
-
-        // Check if the sender has enough
-        require(balances[_from] >= _value);
-
-        // Check for overflows
-        require(balances[_to] + _value > balances[_to]);
-
-        // Check allowance
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
 
-        // Transfer tokens
-        balances[_to] += _value;
-        balances[_from] -= _value;
+        for (uint i = 0; i < tokens_arr.length; i++)
+        {
+            //??????? ????????? ????????? ??????????? ?? ?????? ???????
+            uint withdraw_to_transfer = withdrawns[_from][i].mul(_value).div(balances[_from]);
 
-        // Update allowance
-        allowed[_from][msg.sender] -= _value;
+            //???????? ????????? ?????
+            withdrawns[_from][i] = withdrawns[_from][i].sub(withdraw_to_transfer);
+            withdrawns[_to][i] = withdrawns[_to][i].add(withdraw_to_transfer);
+        }
 
-        // Notify listners
-        Transfer(_from, _to, _value);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+
+
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
 
-    /** 
-     * `msg.sender` approves `_spender` to spend `_value` tokens
-     * 
-     * @param _spender The address of the account able to transfer the tokens
-     * @param _value The amount of tokens to be approved for transfer
-     * @return Whether the approval was successful or not
-     */
-    function approve(address _spender, uint256 _value) onlyPayloadSize(2) returns (bool success) {
-
-        // Unable to approve while still locked
-        require(!locked);
-
-        // Update allowance
+    function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-
-        // Notify listners
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
 
-    /** 
-     * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     * 
-     * @param _owner The address of the account owning tokens
-     * @param _spender The address of the account able to transfer the tokens
-     * @return Amount of remaining tokens allowed to spent
-     */
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-}
-
-/**
- * @title CNR (Coinoor) token
- *
- * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20 with the addition 
- * of ownership, a lock and issuing.
- *
- * #created 13/09/2017
- * #author Frank Bonnet
- */
-contract CNRToken is Owned, StandardToken {
-
-    // Ethereum token standard
-    string public standard = "Token 0.2";
-
-    // Full name
-    string public name = "Coinoor";        
-    
-    // Symbol
-    string public symbol = "CNR";
-
-    // No decimal points
-    uint8 public decimals = 8;
-
-
-    /**
-     * Starts with a total supply of zero and the creator starts with 
-     * zero tokens (just like everyone else)
-     */
-    function CNRToken() {  
-        balances[msg.sender] = 0;
-        totalSupply = 0;
-        locked = true;
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
 
-    /**
-     * Unlocks the token irreversibly so that the transfering of value is enabled 
-     *
-     * @return Whether the unlocking was successful or not
-     */
-    function unlock() onlyOwner returns (bool success)  {
-        locked = false;
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
-
-     /**
-     * Issues `_value` new tokens to `_recipient` (_value < 0 guarantees that tokens are never removed)
-     *
-     * @param _recipient The address to which the tokens will be issued
-     * @param _value The amount of new tokens to issue
-     * @return Whether the approval was successful or not
-     */
-    function issue(address _recipient, uint256 _value) onlyOwner onlyPayloadSize(2) returns (bool success) {
-
-        // Guarantee positive 
-        require(_value > 0);
-
-        // Create tokens
-        balances[_recipient] += _value;
-        totalSupply += _value;
-
-        // Notify listners 
-        Transfer(0, owner, _value);
-        Transfer(owner, _recipient, _value);
-
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
+    ///////////////////////////////////ERC20////////////////////////////////////
 
+    struct TokenInfo
+    {
+        //????? ????????? ?????? (????? ??????? ??????)
+        address contract_address;
 
-    /**
-     * Prevents accidental sending of ether
-     */
-    function () payable {
-        revert();
+        //???? ?????, ???????????? ?? ????? ??????? ????????? ???????
+        //??????? addTokenBalance
+        uint256 ever_added;
     }
 }
