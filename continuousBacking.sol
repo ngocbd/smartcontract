@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract continuousBacking at 0x28f272fb35039753be682dc9a0f416c487c0bc89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract continuousBacking at 0x711256406c2e9072fbaee5b67d5a893f66a3e707
 */
 /**
  * @title SafeMath
@@ -47,14 +47,16 @@ library SafeMath {
   }
 }
 
-// Continuous backing with Ether
+// Continuous backing with ELIX
 
 contract continuousBacking	{
 
+// For events, creator and claimee are stored in the events themselves.
 event CreatedReward(uint256 index,uint256 numAvailable);
 event ClaimedReward(uint256 index,uint256 totalAmount,uint256 numUnitsDesired,uint256 hostCut,uint256 creatorCut,address backer);
 event ModifiedNumAvailable(uint256 index,uint256 newNumAvailable);
 
+address public ELIX_ADDRESS;
 uint256 public MAX_HOST_PERCENT;
 uint256 public HOST_CUT;
 uint256 public MAX_NUM_AVAIL;
@@ -69,35 +71,34 @@ struct Reward 	{
 }
 
 function continuousBacking() {
-	MAX_HOST_PERCENT=100000000000000000000;
+    MAX_HOST_PERCENT=100000000000000000000;
     HOST_CUT=5000000000000000000;
+    ELIX_ADDRESS=0xc8C6A31A4A806d3710A7B38b7B296D2fABCCDBA8; 
+    MAX_NUM_AVAIL=10000000;
 }
 
 Reward[] public rewards;
 
 function defineReward(string title,address creator,uint256 numAvailable,uint256 minBacking) public	{
     address host=msg.sender;
+    if (numAvailable>MAX_NUM_AVAIL) revert();
 	Reward memory newReward=Reward(title,host,creator,0,numAvailable,minBacking);
 	rewards.push(newReward);
 	emit CreatedReward(rewards.length-1,numAvailable);
 }
 
-function backAtIndex(uint256 index,uint256 numUnitsDesired) public payable	{
-        uint256 totalAmount=msg.value;
-		if (msg.sender==rewards[index].host || msg.sender==rewards[index].creator) revert();
-		if (totalAmount<rewards[index].spmPreventionAmt) revert();
+function backAtIndex(uint256 index,uint256 totalAmount,uint256 numUnitsDesired) public	{
+        if (msg.sender==rewards[index].host || msg.sender==rewards[index].creator) revert();
+        if (totalAmount<rewards[index].spmPreventionAmt) revert();
         if (totalAmount==0) revert();
         if (rewards[index].numTaken==rewards[index].numAvailable) revert();
         rewards[index].numTaken+=1;
-        address host=rewards[index].host;
-        address creator=rewards[index].creator;
-        
-    	uint256 hostCut;
+        uint256 hostCut;
 	    uint256 creatorCut;
         (hostCut, creatorCut) = returnHostAndCreatorCut(totalAmount);
         
-        host.transfer(hostCut);
-        creator.transfer(creatorCut);
+        if (!token(ELIX_ADDRESS).transferFrom(msg.sender,rewards[index].host,hostCut)) revert(); 
+        if (!token(ELIX_ADDRESS).transferFrom(msg.sender,rewards[index].creator,creatorCut)) revert(); 
         
         emit ClaimedReward(index,totalAmount,numUnitsDesired,hostCut,creatorCut,msg.sender);
 }
@@ -105,7 +106,7 @@ function backAtIndex(uint256 index,uint256 numUnitsDesired) public payable	{
 function reviseNumAvailable(uint256 index,uint256 newNumAvailable) public	{
 	if (newNumAvailable>MAX_NUM_AVAIL) revert();
 	if (newNumAvailable<rewards[index].numTaken) revert();
-	if (msg.sender==rewards[index].host || msg.sender==rewards[index].creator)	{
+	if (msg.sender==rewards[index].creator || msg.sender==rewards[index].host)	{
 		rewards[index].numAvailable=newNumAvailable;
 		emit ModifiedNumAvailable(index,newNumAvailable);
 	}
@@ -116,4 +117,9 @@ function returnHostAndCreatorCut(uint256 totalAmount) private returns(uint256, u
 	uint256 creatorCut = SafeMath.sub(totalAmount, hostCut );
 	return ( hostCut, creatorCut );
 }
+
+}
+
+contract token	{
+	function transferFrom(address _from,address _to,uint256 _amount) returns (bool success);
 }
