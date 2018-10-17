@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0xe2ca8e9eea579da2276be4267320fd9069645431
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleWPTByRounds at 0x38a0d00ddb1269795c0055691d8b88eb4dfa80dd
 */
 pragma solidity ^0.4.24;
 
@@ -252,9 +252,6 @@ contract CrowdsaleWPTByRounds is Ownable {
   //Flags to on/off checks for buy Token
   bool public checksOn;
 
-  //Amount of gas for internal transactions
-  uint256 public gasAmount;
-
   /**
    * @dev Allows the owner to set the minter contract.
    * @param _minterAddr the minter address
@@ -286,20 +283,6 @@ contract CrowdsaleWPTByRounds is Ownable {
     uint256 amount
     );
 
-  /**
-   * Event for token transfer
-   * @param _from who paid for the tokens
-   * @param _to who got the tokens
-   * @param amount amount of tokens purchased
-   * @param isDone flag of success of transfer
-   */
-  event TokensTransfer(
-    address indexed _from,
-    address indexed _to,
-    uint256 amount,
-    bool isDone
-    );
-
 constructor () public {
     rate = 400;
     wallet = 0xeA9cbceD36a092C596e9c18313536D0EEFacff46;
@@ -310,7 +293,6 @@ constructor () public {
     minInvestmentValue = 0.02 ether;
     
     checksOn = true;
-    gasAmount = 25000;
   }
 
    /**
@@ -361,13 +343,6 @@ constructor () public {
    */
   function setChecksOn(bool _checksOn) public onlyOwner {
     checksOn = _checksOn;
-  }
-
-   /**
-   * @dev Set amount of gas for internal transactions.
-   */
-  function setGasAmount(uint256 _gasAmount) public onlyOwner {
-    gasAmount = _gasAmount;
   }
 
    /**
@@ -494,12 +469,6 @@ constructor () public {
    * @dev Determines how ETH is stored/forwarded on purchases.
    */
   function _forwardFunds() internal {
-    bool isTransferDone = wallet.call.value(msg.value).gas(gasAmount)();
-    emit TokensTransfer (
-        msg.sender,
-        wallet,
-        msg.value,
-        isTransferDone
-        );
+    wallet.transfer(msg.value);
   }
 }
