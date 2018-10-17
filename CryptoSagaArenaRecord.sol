@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x67e72299beaf3f59f365bb4a43e8d02bff61e176
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x5802adcae69b4d6b751171bcc6e92cb3bbfc9c36
 */
 pragma solidity ^0.4.18;
 
@@ -1492,8 +1492,7 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
   // @dev Constructor.
   function CryptoSagaArenaRecord(
-    address _firstPlayerAddress,
-    uint32 _firstPlayerElo, 
+    address _previousSeasonRecord,
     uint8 _numberOfLeaderboardPlayers, 
     uint8 _numberOfRecentPlayers)
     public
@@ -1502,15 +1501,19 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
     numberOfLeaderboardPlayers = _numberOfLeaderboardPlayers;
     numberOfRecentPlayers = _numberOfRecentPlayers;
 
-    // The initial player gets into leaderboard.
-    leaderBoardPlayers.push(_firstPlayerAddress);
-    addressToIsInLeaderboard[_firstPlayerAddress] = true;
+    // Get instance of previous season.
+    CryptoSagaArenaRecord _previous = CryptoSagaArenaRecord(_previousSeasonRecord);
 
-    // The initial player pushed into the recent players queue. 
-    pushPlayer(_firstPlayerAddress);
-    
-    // The initial player's Elo.
-    addressToElo[_firstPlayerAddress] = _firstPlayerElo;
+    for (uint256 i = _previous.recentPlayersFront(); i < _previous.recentPlayersBack(); i++) {
+      var _player = _previous.recentPlayers(i);
+      // The initial player gets into leaderboard.
+      leaderBoardPlayers.push(_player);
+      addressToIsInLeaderboard[_player] = true;
+      // The initial player pushed into the recent players queue. 
+      pushPlayer(_player);
+      // The initial player's Elo.
+      addressToElo[_player] = _previous.getEloRating(_player);
+    }
   }
 
   // @dev Update record.
@@ -1611,9 +1614,9 @@ contract CryptoSagaArenaRecord is Pausable, AccessDeploy {
 
         // Second, if the minimum elo value is smaller than the player's elo value, then replace the entity.
         if (_minimumElo <= addressToElo[_addressToUpdate]) {
+          addressToIsInLeaderboard[leaderBoardPlayers[_minimumEloPlayerIndex]] = false;
           leaderBoardPlayers[_minimumEloPlayerIndex] = _addressToUpdate;
           addressToIsInLeaderboard[_addressToUpdate] = true;
-          addressToIsInLeaderboard[leaderBoardPlayers[_minimumEloPlayerIndex]] = false;
           isChanged = true;
         }
       } else {
