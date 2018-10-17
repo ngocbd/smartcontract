@@ -1,16 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RightAndRoles at 0x8e1fce2d23afcde3c7db6b3b1df33e48e370fe74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RightAndRoles at 0x1b3d9eaf7df2afd3841e9848a593554e93edf29c
 */
-// Project: AleHub
-// v1, 2018-05-24
+pragma solidity ^0.4.21;
+
+// Project: imigize.io (original)
+// v13, 2018-06-19
 // This code is the property of CryptoB2B.io
 // Copying in whole or in part is prohibited.
 // Authors: Ivan Fedorov and Dmitry Borodin
 // Do you want the same TokenSale platform? www.cryptob2b.io
-
-// *.sol in 1 file - https://cryptob2b.io/solidity/alehub/
-
-pragma solidity ^0.4.21;
 
 contract IRightAndRoles {
     address[][] public wallets;
@@ -68,7 +66,7 @@ contract RightAndRoles is IRightAndRoles {
     // @ When it is launched automatically  -
     // @ Who can call the function          staff (all 7+ roles)
     function changeWallet(address _wallet, uint8 _role) external {
-        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && managerPowerful /* && _role != 0*/));
+        require(wallets[_role][0] == msg.sender || wallets[0][0] == msg.sender || (wallets[1][0] == msg.sender && managerPowerful));
         emit WalletChanged(wallets[_role][0],_wallet,_role);
         uint16 roleMask = uint16(2)**_role;
         address[] storage tmp = wallets[_role];
