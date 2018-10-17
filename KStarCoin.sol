@@ -1,46 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KStarCoin at 0x4823429dbda52f05f66a2670852b28bd7999e810
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KStarCoin at 0xB29Adf6CB1AF1d66507e7077dc2DF30F7138FDe5
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-
-//>> Reference to https://github.com/Arachnid/solidity-stringutils
-
-library strings {
-    struct slice {
-        uint _len;
-        uint _ptr;
-    }
-    
-    /*
-     * @dev Returns a slice containing the entire string.
-     * @param self The string to make a slice from.
-     * @return A newly allocated slice containing the entire string.
-     */
-    function toSlice(string self) internal pure returns (slice) {
-        uint ptr;
-        assembly {
-            ptr := add(self, 0x20)
-        }
-        return slice(bytes(self).length, ptr);
-    }
-    
-    /*
-     * @dev Returns true if the slice is empty (has a length of 0).
-     * @param self The slice to operate on.
-     * @return True if the slice is empty, False otherwise.
-     */
-    function empty(slice self) internal pure returns (bool) {
-        return self._len == 0;
-    }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * See https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-//<< Reference to https://github.com/Arachnid/solidity-stringutils
-
-
-
-
-//>> Reference to https://github.com/OpenZeppelin/zeppelin-solidity
 
 /**
  * @title SafeMath
@@ -51,11 +24,15 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -65,13 +42,13 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -81,59 +58,12 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
 
 /**
  * @title Basic token
@@ -147,14 +77,14 @@ contract BasicToken is ERC20Basic {
   uint256 totalSupply_;
 
   /**
-  * @dev total number of tokens in existence
+  * @dev Total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
 
   /**
-  * @dev transfer token for a specified address
+  * @dev Transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
@@ -162,10 +92,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -174,19 +103,37 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
 
 /**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
@@ -199,7 +146,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -207,13 +161,12 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
   /**
    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
    * Beware that changing an allowance with this method brings the risk that someone may use both the old
    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
@@ -223,7 +176,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -233,13 +186,19 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -247,15 +206,21 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+  function increaseApproval(
+    address _spender,
+    uint256 _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
   /**
    * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To decrement
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
@@ -263,503 +228,457 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
+  function decreaseApproval(
+    address _spender,
+    uint256 _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint256 oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
-
 
 /**
-   @title ERC827 interface, an extension of ERC20 token standard
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
+ * Utility library of inline functions on addresses
  */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
-
-/**
-   @title ERC827, an extension of ERC20 token standard
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
+library AddressUtils {
 
   /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-     @return true if the call function was executed successfully
+   * Returns whether the target address is a contract
+   * @dev This function will return false if invoked during the constructor of a contract,
+   * as the code is not actually created until after the constructor finishes.
+   * @param addr address to check
+   * @return whether the target address is a contract
    */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
+  function isContract(address addr) internal view returns (bool) {
+    uint256 size;
+    // XXX Currently there is no better way to check if there is a contract in an address
+    // than to check the size of the code at that address.
+    // See https://ethereum.stackexchange.com/a/14016/36603
+    // for more details about how this works.
+    // TODO Check this again before the Serenity release, because all addresses will be
+    // contracts then.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly { size := extcodesize(addr) }
+    return size > 0;
   }
 
 }
-
-//<< Reference to https://github.com/OpenZeppelin/zeppelin-solidity
-
-
-
 
 /**
  * @title MultiOwnable
+ * @dev 
  */
 contract MultiOwnable {
     address public root;
-    mapping (address => address) public owners; // owner => parent of owner
+    mapping (address => bool) public owners;
     
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function MultiOwnable() public {
-        root= msg.sender;
-        owners[root]= root;
+    constructor() public {
+        root = msg.sender;
+        owners[root] = true;
     }
     
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
     modifier onlyOwner() {
-        require(owners[msg.sender] != 0);
+        require(owners[msg.sender]);
         _;
     }
     
-    /**
-    * @dev Adding new owners
-    */
-    function newOwner(address _owner) onlyOwner public returns (bool) {
-        require(_owner != 0);
-        owners[_owner]= msg.sender;
+    modifier onlyRoot() {
+        require(msg.sender == root);
+        _;
+    }
+    
+    function newOwner(address owner) onlyRoot public returns (bool) {
+        require(owner != address(0));
+        
+        owners[owner] = true;
         return true;
     }
     
-    /**
-     * @dev Deleting owners
-     */
-    function deleteOwner(address _owner) onlyOwner public returns (bool) {
-        require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
-        owners[_owner]= 0;
+    function deleteOwner(address owner) onlyRoot public returns (bool) {
+        require(owner != root);
+        
+        delete owners[owner];
         return true;
+    }
+}
+
+/**
+ * @title Lockable token
+ **/
+contract LockableToken is StandardToken, MultiOwnable {
+    bool public locked = true;
+    uint256 public constant LOCK_MAX = uint256(-1);
+    
+    /**
+     * @dev ? ????? ?? ??? ?? ??
+     */
+    mapping(address => bool) public unlockAddrs;
+    
+    /**
+     * @dev ?? ?? lock value ?? ??? ??
+     * @dev - ?? 0 ? ? : ??? 0 ??? ??? ??? ?? ??.
+     * @dev - ?? LOCK_MAX ? ? : ??? uint256 ? ?????? ?? ?? ??.
+     */
+    mapping(address => uint256) public lockValues;
+    
+    event Locked(bool locked, string note);
+    event LockedTo(address indexed addr, bool locked, string note);
+    event SetLockValue(address indexed addr, uint256 value, string note);
+    
+    constructor() public {
+        unlockTo(msg.sender, "");
+    }
+    
+    modifier checkUnlock (address addr, uint256 value) {
+        require(!locked || unlockAddrs[addr]);
+        require(balances[addr].sub(value) >= lockValues[addr]);
+        _;
+    }
+    
+    function lock(string note) onlyOwner public {
+        locked = true;  
+        emit Locked(locked, note);
+    }
+    
+    function unlock(string note) onlyOwner public {
+        locked = false;
+        emit Locked(locked, note);
+    }
+    
+    function lockTo(address addr, string note) onlyOwner public {
+        require(addr != root);
+        
+        setLockValue(addr, LOCK_MAX, note);
+        unlockAddrs[addr] = false;
+        
+        emit LockedTo(addr, true, note);
+    }
+    
+    function unlockTo(address addr, string note) onlyOwner public {
+        if (lockValues[addr] == LOCK_MAX)
+            setLockValue(addr, 0, note);
+        unlockAddrs[addr] = true;
+        
+        emit LockedTo(addr, false, note);
+    }
+    
+    function setLockValue(address addr, uint256 value, string note) onlyOwner public {
+        lockValues[addr] = value;
+        emit SetLockValue(addr, value, note);
+    }
+    
+    /**
+     * @dev ?? ?? ??? ????.
+     */ 
+    function getMyUnlockValue() public view returns (uint256) {
+        address addr = msg.sender;
+        if ((!locked || unlockAddrs[addr]) && balances[addr] >= lockValues[addr])
+            return balances[addr].sub(lockValues[addr]);
+        else
+            return 0;
+    }
+    
+    function transfer(address to, uint256 value) checkUnlock(msg.sender, value) public returns (bool) {
+        return super.transfer(to, value);
+    }
+    
+    function transferFrom(address from, address to, uint256 value) checkUnlock(from, value) public returns (bool) {
+        return super.transferFrom(from, to, value);
+    }
+}
+
+/**
+ * @title KSCBaseToken
+ * @dev ???? ?? ? ??? ?? ? ??? ???.
+ */
+contract KSCBaseToken is LockableToken {
+    using AddressUtils for address;
+    
+    event KSCTransfer(address indexed from, address indexed to, uint256 value, string note);
+    event KSCTransferFrom(address indexed owner, address indexed spender, address indexed to, uint256 value, string note);
+    event KSCApproval(address indexed owner, address indexed spender, uint256 value, string note);
+
+    event KSCMintTo(address indexed controller, address indexed to, uint256 amount, string note);
+    event KSCBurnFrom(address indexed controller, address indexed from, uint256 value, string note);
+
+    event KSCBurnWhenMoveToMainnet(address indexed controller, address indexed from, uint256 value, string note);
+    event KSCBurnWhenUseInSidechain(address indexed controller, address indexed from, uint256 value, string note);
+
+    event KSCSell(address indexed owner, address indexed spender, address indexed to, uint256 value, string note);
+    event KSCSellByOtherCoin(address indexed owner, address indexed spender, address indexed to, uint256 value,  uint256 processIdHash, uint256 userIdHash, string note);
+
+    event KSCTransferToEcosystem(address indexed owner, address indexed spender, address indexed to, uint256 value, uint256 processIdHash, uint256 userIdHash, string note);
+    event KSCTransferToBounty(address indexed owner, address indexed spender, address indexed to, uint256 value, uint256 processIdHash, uint256 userIdHash, string note);
+
+    // ERC20 ???? ??????? super ? ???? ?? ??? ksc~ ??? ???? ??.
+    function transfer(address to, uint256 value) public returns (bool ret) {
+        return kscTransfer(to, value, "");
+    }
+    
+    function kscTransfer(address to, uint256 value, string note) public returns (bool ret) {
+        require(to != address(this));
+        
+        ret = super.transfer(to, value);
+        emit KSCTransfer(msg.sender, to, value, note);
+    }
+    
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
+        return kscTransferFrom(from, to, value, "");
+    }
+    
+    function kscTransferFrom(address from, address to, uint256 value, string note) public returns (bool ret) {
+        require(to != address(this));
+        
+        ret = super.transferFrom(from, to, value);
+        emit KSCTransferFrom(from, msg.sender, to, value, note);
+    }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        return kscApprove(spender, value, "");
+    }
+    
+    function kscApprove(address spender, uint256 value, string note) public returns (bool ret) {
+        ret = super.approve(spender, value);
+        emit KSCApproval(msg.sender, spender, value, note);
+    }
+
+    function increaseApproval(address spender, uint256 addedValue) public returns (bool) {
+        return kscIncreaseApproval(spender, addedValue, "");
+    }
+
+    function kscIncreaseApproval(address spender, uint256 addedValue, string note) public returns (bool ret) {
+        ret = super.increaseApproval(spender, addedValue);
+        emit KSCApproval(msg.sender, spender, allowed[msg.sender][spender], note);
+    }
+
+    function decreaseApproval(address spender, uint256 subtractedValue) public returns (bool) {
+        return kscDecreaseApproval(spender, subtractedValue, "");
+    }
+
+    function kscDecreaseApproval(address spender, uint256 subtractedValue, string note) public returns (bool ret) {
+        ret = super.decreaseApproval(spender, subtractedValue);
+        emit KSCApproval(msg.sender, spender, allowed[msg.sender][spender], note);
+    }
+
+    /**
+     * @dev ?? ?? ??. ??? ??? ??? ???.
+     */
+    function mintTo(address to, uint256 amount) internal returns (bool) {
+        require(to != address(0x0));
+
+        totalSupply_ = totalSupply_.add(amount);
+        balances[to] = balances[to].add(amount);
+        
+        emit Transfer(address(0), to, amount);
+        return true;
+    }
+    
+    function kscMintTo(address to, uint256 amount, string note) onlyOwner public returns (bool ret) {
+        ret = mintTo(to, amount);
+        emit KSCMintTo(msg.sender, to, amount, note);
+    }
+
+    /**
+     * @dev ?? ??. ??? ??? ??? ???.
+     */
+    function burnFrom(address from, uint256 value) internal returns (bool) {
+        require(value <= balances[from]);
+        
+        balances[from] = balances[from].sub(value);
+        totalSupply_ = totalSupply_.sub(value);
+        
+        emit Transfer(from, address(0), value);
+        return true;        
+    }
+    
+    function kscBurnFrom(address from, uint256 value, string note) onlyOwner public returns (bool ret) {
+        ret = burnFrom(from, value);
+        emit KSCBurnFrom(msg.sender, from, value, note);
+    }
+
+    /**
+     * @dev ????? ???? ?? ??.
+     */
+    function kscBurnWhenMoveToMainnet(address burner, uint256 value, string note) onlyOwner public returns (bool ret) {
+        ret = burnFrom(burner, value);
+        emit KSCBurnWhenMoveToMainnet(msg.sender, burner, value, note);
+    }
+    
+    function kscBatchBurnWhenMoveToMainnet(address[] burners, uint256[] values, string note) onlyOwner public returns (bool ret) {
+        uint256 length = burners.length;
+        require(length == values.length);
+        
+        ret = true;
+        for (uint256 i = 0; i < length; i++) {
+            ret = ret && kscBurnWhenMoveToMainnet(burners[i], values[i], note);
+        }
+    }
+
+    /**
+     * @dev ??????? ???? ?? ??.
+     */
+    function kscBurnWhenUseInSidechain(address burner, uint256 value, string note) onlyOwner public returns (bool ret) {
+        ret = burnFrom(burner, value);
+        emit KSCBurnWhenUseInSidechain(msg.sender, burner, value, note);
+    }
+
+    function kscBatchBurnWhenUseInSidechain(address[] burners, uint256[] values, string note) onlyOwner public returns (bool ret) {
+        uint256 length = burners.length;
+        require(length == values.length);
+        
+        ret = true;
+        for (uint256 i = 0; i < length; i++) {
+            ret = ret && kscBurnWhenUseInSidechain(burners[i], values[i], note);
+        }
+    }
+
+    /**
+     * @dev ??? KSC ? ???? ??
+     */
+    function kscSell(address from, address to, uint256 value, string note) onlyOwner public returns (bool ret) {
+        require(to != address(this));        
+
+        ret = super.transferFrom(from, to, value);
+        emit KSCSell(from, msg.sender, to, value, note);
+    }
+    
+    /**
+     * @dev ???? ?? ?? ???? KSC ? ???? ??
+     * @dev EOA ? ????? ???? ???? ?? ??? ???? ???? ??. (??? ??? ??)
+     */
+    function kscBatchSellByOtherCoin(address from, address[] to, uint256[] values, uint256 processIdHash, uint256[] userIdHash, string note) onlyOwner public returns (bool ret) {
+        uint256 length = to.length;
+        require(length == values.length);
+        require(length == userIdHash.length);
+        
+        ret = true;
+        for (uint256 i = 0; i < length; i++) {
+            require(to[i] != address(this));            
+            
+            ret = ret && super.transferFrom(from, to[i], values[i]);
+            emit KSCSellByOtherCoin(from, msg.sender, to[i], values[i], processIdHash, userIdHash[i], note);
+        }
+    }
+    
+    /**
+     * @dev ?????(???? ??? ?? ?? ?)?? KSC ??
+     * @dev EOA ? ????? ???? ???? ?? ??? ???? ???? ??. (??? ??? ??)
+     */
+    function kscBatchTransferToEcosystem(address from, address[] to, uint256[] values, uint256 processIdHash, uint256[] userIdHash, string note) onlyOwner public returns (bool ret) {
+        uint256 length = to.length;
+        require(length == values.length);
+        require(length == userIdHash.length);
+
+        ret = true;
+        for (uint256 i = 0; i < length; i++) {
+            require(to[i] != address(this));            
+            
+            ret = ret && super.transferFrom(from, to[i], values[i]);
+            emit KSCTransferToEcosystem(from, msg.sender, to[i], values[i], processIdHash, userIdHash[i], note);
+        }
+    }
+
+    /**
+     * @dev ??? ????? KSC ??
+     * @dev EOA ? ????? ???? ???? ?? ??? ???? ???? ??. (??? ??? ??)
+     */
+    function kscBatchTransferToBounty(address from, address[] to, uint256[] values, uint256 processIdHash, uint256[] userIdHash, string note) onlyOwner public returns (bool ret) {
+        uint256 length = to.length;
+        require(to.length == values.length);
+
+        ret = true;
+        for (uint256 i = 0; i < length; i++) {
+            require(to[i] != address(this));            
+            
+            ret = ret && super.transferFrom(from, to[i], values[i]);
+            emit KSCTransferToBounty(from, msg.sender, to[i], values[i], processIdHash, userIdHash[i], note);
+        }
+    }
+
+    function destroy() onlyRoot public {
+        selfdestruct(root);
+    }
+}
+
+/**
+ * @title KStarCoin
+ */
+contract KStarCoin is KSCBaseToken {
+    using AddressUtils for address;
+    
+    string public constant name = "KStarCoin";
+    string public constant symbol = "KSC";
+    uint8 public constant decimals = 18;
+    
+    uint256 public constant INITIAL_SUPPLY = 1e9 * (10 ** uint256(decimals));
+    
+    bytes4 internal constant KSC_RECEIVED = 0xe6947547; // KSCReceiver.onKSCReceived.selector
+    
+    constructor() public {
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    }
+    
+    function kscTransfer(address to, uint256 value, string note) public returns (bool ret) {
+        ret = super.kscTransfer(to, value, note);
+        require(postTransfer(msg.sender, msg.sender, to, value, KSCReceiver.KSCReceiveType.KSC_TRANSFER));
+    }
+    
+    function kscTransferFrom(address from, address to, uint256 value, string note) public returns (bool ret) {
+        ret = super.kscTransferFrom(from, to, value, note);
+        require(postTransfer(from, msg.sender, to, value, KSCReceiver.KSCReceiveType.KSC_TRANSFER));
+    }
+    
+    function postTransfer(address owner, address spender, address to, uint256 value, KSCReceiver.KSCReceiveType receiveType) internal returns (bool) {
+        if (!to.isContract())
+            return true;
+        
+        bytes4 retval = KSCReceiver(to).onKSCReceived(owner, spender, value, receiveType);
+        return (retval == KSC_RECEIVED);
+    }
+    
+    function kscMintTo(address to, uint256 amount, string note) onlyOwner public returns (bool ret) {
+        ret = super.kscMintTo(to, amount, note);
+        require(postTransfer(0x0, msg.sender, to, amount, KSCReceiver.KSCReceiveType.KSC_MINT));
+    }
+    
+    function kscBurnFrom(address from, uint256 value, string note) onlyOwner public returns (bool ret) {
+        ret = super.kscBurnFrom(from, value, note);
+        require(postTransfer(0x0, msg.sender, from, value, KSCReceiver.KSCReceiveType.KSC_BURN));
     }
 }
 
 
 /**
- * @title KStarCoinBasic
- */
-contract KStarCoinBasic is ERC827Token, MultiOwnable {
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20Basic;
-    using strings for *;
-
-    // KStarCoin Distribution
-    // - Crowdsale : 9%(softcap) ~ 45%(hardcap)
-    // - Reserve: 15%
-    // - Team: 10%
-    // - Advisors & Partners: 5%
-    // - Bounty Program + Ecosystem : 25% ~ 61%
-    uint256 public capOfTotalSupply;
-    uint256 public constant INITIAL_SUPPLY= 30e6 * 1 ether; // Reserve(15) + Team(10) + Advisors&Patners(5)
-
-    uint256 public crowdsaleRaised;
-    uint256 public constant CROWDSALE_HARDCAP= 45e6 * 1 ether; // Crowdsale(Max 45)
-
-    /**
-     * @dev Function to increase capOfTotalSupply in the next phase of KStarCoin's ecosystem
-     */
-    function increaseCap(uint256 _addedValue) onlyOwner public returns (bool) {
-        require(_addedValue >= 100e6 * 1 ether);
-        capOfTotalSupply = capOfTotalSupply.add(_addedValue);
-        return true;
-    }
+ * @title KStarCoin Receiver
+ */ 
+contract KSCReceiver {
+    bytes4 internal constant KSC_RECEIVED = 0xe6947547; // this.onKSCReceived.selector
+    enum KSCReceiveType { KSC_TRANSFER, KSC_MINT, KSC_BURN }
     
-    /**
-     * @dev Function to check whether the current supply exceeds capOfTotalSupply
-     */
-    function checkCap(uint256 _amount) public view returns (bool) {
-        return (totalSupply_.add(_amount) <= capOfTotalSupply);
-    }
-    
-    //> for ERC20
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(super.transfer(_to, _value));
-        KSC_Send(msg.sender, _to, _value, "");
-        KSC_Receive(_to, msg.sender, _value, "");
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(super.transferFrom(_from, _to, _value));
-        KSC_SendTo(_from, _to, _value, "");
-        KSC_ReceiveFrom(_to, _from, _value, "");
-        return true;
-    }
-    
-    function approve(address _to, uint256 _value) public returns (bool) {
-        require(super.approve(_to, _value));
-        KSC_Approve(msg.sender, _to, _value, "");
-        return true;
-    }
-    
-    // additional StandardToken method of zeppelin-solidity
-    function increaseApproval(address _to, uint _addedValue) public returns (bool) {
-        require(super.increaseApproval(_to, _addedValue));
-        KSC_ApprovalInc(msg.sender, _to, _addedValue, "");
-        return true;
-    }
-    
-    // additional StandardToken method of zeppelin-solidity
-    function decreaseApproval(address _to, uint _subtractedValue) public returns (bool) {
-        require(super.decreaseApproval(_to, _subtractedValue));
-        KSC_ApprovalDec(msg.sender, _to, _subtractedValue, "");
-        return true;
-    }
-	//<
-    
-    //> for ERC827
-    function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-        return transfer(_to, _value, _data, "");
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-        return transferFrom(_from, _to, _value, _data, "");
-    }
-    
-    function approve(address _to, uint256 _value, bytes _data) public returns (bool) {
-        return approve(_to, _value, _data, "");
-    }
-    
-    // additional StandardToken method of zeppelin-solidity
-    function increaseApproval(address _to, uint _addedValue, bytes _data) public returns (bool) {
-        return increaseApproval(_to, _addedValue, _data, "");
-    }
-    
-    // additional StandardToken method of zeppelin-solidity
-    function decreaseApproval(address _to, uint _subtractedValue, bytes _data) public returns (bool) {
-        return decreaseApproval(_to, _subtractedValue, _data, "");
-    }
-	//<
-    
-    //> notation for ERC827
-    function transfer(address _to, uint256 _value, bytes _data, string _note) public returns (bool) {
-        require(super.transfer(_to, _value, _data));
-        KSC_Send(msg.sender, _to, _value, _note);
-        KSC_Receive(_to, msg.sender, _value, _note);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value, bytes _data, string _note) public returns (bool) {
-        require(super.transferFrom(_from, _to, _value, _data));
-        KSC_SendTo(_from, _to, _value, _note);
-        KSC_ReceiveFrom(_to, _from, _value, _note);
-        return true;
-    }
-    
-    function approve(address _to, uint256 _value, bytes _data, string _note) public returns (bool) {
-        require(super.approve(_to, _value, _data));
-        KSC_Approve(msg.sender, _to, _value, _note);
-        return true;
-    }
-    
-    function increaseApproval(address _to, uint _addedValue, bytes _data, string _note) public returns (bool) {
-        require(super.increaseApproval(_to, _addedValue, _data));
-        KSC_ApprovalInc(msg.sender, _to, _addedValue, _note);
-        return true;
-    }
-    
-    function decreaseApproval(address _to, uint _subtractedValue, bytes _data, string _note) public returns (bool) {
-        require(super.decreaseApproval(_to, _subtractedValue, _data));
-        KSC_ApprovalDec(msg.sender, _to, _subtractedValue, _note);
-        return true;
-    }
-	//<
-      
-    /**
-     * @dev Function to mint coins
-     * @param _to The address that will receive the minted coins.
-     * @param _amount The amount of coins to mint.
-     * @return A boolean that indicates if the operation was successful.
-     * @dev reference : https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/MintableToken.sol
-     */
-    function mint(address _to, uint256 _amount) onlyOwner internal returns (bool) {
-        require(_to != address(0));
-        require(checkCap(_amount));
-
-        totalSupply_= totalSupply_.add(_amount);
-        balances[_to]= balances[_to].add(_amount);
-
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-    
-    /**
-     * @dev Function to mint coins
-     * @param _to The address that will receive the minted coins.
-     * @param _amount The amount of coins to mint.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     * @dev reference : https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/MintableToken.sol
-     */
-    function mint(address _to, uint256 _amount, string _note) onlyOwner public returns (bool) {
-        require(mint(_to, _amount));
-        KSC_Mint(_to, msg.sender, _amount, _note);
-        return true;
-    }
-
-    /**
-     * @dev Burns a specific amount of coins.
-     * @param _to The address that will be burned the coins.
-     * @param _amount The amount of coins to be burned.
-     * @return A boolean that indicates if the operation was successful.
-     * @dev reference : https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/BurnableToken.sol
-     */
-    function burn(address _to, uint256 _amount) onlyOwner internal returns (bool) {
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-
-        balances[_to]= balances[_to].sub(_amount);
-        totalSupply_= totalSupply_.sub(_amount);
-        
-        return true;
-    }
-    
-    /**
-     * @dev Burns a specific amount of coins.
-     * @param _to The address that will be burned the coins.
-     * @param _amount The amount of coins to be burned.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     * @dev reference : https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/BurnableToken.sol
-     */
-    function burn(address _to, uint256 _amount, string _note) onlyOwner public returns (bool) {
-        require(burn(_to, _amount));
-        KSC_Burn(_to, msg.sender, _amount, _note);
-        return true;
-    }
-    
-    // for crowdsale
-    /**
-     * @dev Function which allows users to buy KStarCoin during the crowdsale period
-     * @param _to The address that will receive the coins.
-     * @param _value The amount of coins to sell.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function sell(address _to, uint256 _value, string _note) onlyOwner public returns (bool) {
-        require(crowdsaleRaised.add(_value) <= CROWDSALE_HARDCAP);
-        require(mint(_to, _value));
-        
-        crowdsaleRaised= crowdsaleRaised.add(_value);
-        KSC_Buy(_to, msg.sender, _value, _note);
-        return true;
-    }
-    
-    // for buyer with cryptocurrency other than ETH
-    /**
-     * @dev This function is occured when owner mint coins to users as they buy with cryptocurrency other than ETH.
-     * @param _to The address that will receive the coins.
-     * @param _value The amount of coins to mint.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mintToOtherCoinBuyer(address _to, uint256 _value, string _note) onlyOwner public returns (bool) {
-        require(mint(_to, _value));
-        KSC_BuyOtherCoin(_to, msg.sender, _value, _note);
-        return true;
-    }
-  
-    // for bounty program
-    /**
-     * @dev Function to reward influencers with KStarCoin
-     * @param _to The address that will receive the coins.
-     * @param _value The amount of coins to mint.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mintToInfluencer(address _to, uint256 _value, string _note) onlyOwner public returns (bool) {
-        require(mint(_to, _value));
-        KSC_GetAsInfluencer(_to, msg.sender, _value, _note);
-        return true;
-    }
-    
-    // for KSCPoint (KStarLive ecosystem point)
-    /**
-     * @dev Function to exchange KSCPoint to KStarCoin
-     * @param _to The address that will receive the coins.
-     * @param _value The amount of coins to mint.
-     * @param _note The notation for ethereum blockchain event log system
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function exchangePointToCoin(address _to, uint256 _value, string _note) onlyOwner public returns (bool) {
-        require(mint(_to, _value));
-        KSC_ExchangePointToCoin(_to, msg.sender, _value, _note);
-        return true;
-    }
-    
-    // Event functions to log the notation for ethereum blockchain 
-    // for initializing
-    event KSC_Initialize(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for transfer()
-    event KSC_Send(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    event KSC_Receive(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for approve(), increaseApproval(), decreaseApproval()
-    event KSC_Approve(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    event KSC_ApprovalInc(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    event KSC_ApprovalDec(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for transferFrom()
-    event KSC_SendTo(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    event KSC_ReceiveFrom(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for mint(), burn()
-    event KSC_Mint(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    event KSC_Burn(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for crowdsale
-    event KSC_Buy(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for buyer with cryptocurrency other than ETH
-    event KSC_BuyOtherCoin(address indexed _src, address indexed _desc, uint256 _value, string _note);
-    
-    // for bounty program
-    event KSC_GetAsInfluencer(address indexed _src, address indexed _desc, uint256 _value, string _note);
-
-    // for KSCPoint (KStarLive ecosystem point)
-    event KSC_ExchangePointToCoin(address indexed _src, address indexed _desc, uint256 _value, string _note);
+    function onKSCReceived(address owner, address spender, uint256 value, KSCReceiveType receiveType) public returns (bytes4);
 }
 
-
 /**
- * @title KStarCoin v1.0
- * @author Tae Kim
- * @notice KStarCoin is an ERC20 (with an alternative of ERC827) Ethereum based token, which will be integrated in KStarLive platform.
+ * @title KSCDappSample 
  */
-contract KStarCoin is KStarCoinBasic {
-    string public constant name= "KStarCoin";
-    string public constant symbol= "KSC";
-    uint8 public constant decimals= 18;
+contract KSCDappSample is KSCReceiver {
+    event LogOnReceiveKSC(string message, address indexed owner, address indexed spender, uint256 value, KSCReceiveType receiveType);
     
-    // Constructure
-    function KStarCoin() public {
-        totalSupply_= INITIAL_SUPPLY;
-        balances[msg.sender]= INITIAL_SUPPLY;
-	    capOfTotalSupply = 100e6 * 1 ether;
-        crowdsaleRaised= 0;
+    function onKSCReceived(address owner, address spender, uint256 value, KSCReceiveType receiveType) public returns (bytes4) {
+        emit LogOnReceiveKSC("I receive KstarCoin.", owner, spender, value, receiveType);
         
-        Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-        KSC_Initialize(msg.sender, 0x0, INITIAL_SUPPLY, "");
+        return KSC_RECEIVED; // must return this value if successful
     }
 }
