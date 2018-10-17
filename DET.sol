@@ -1,203 +1,270 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DET at 0xF72DA6E99b864e26e3a386F2Cc6022882eCB1125
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DET at 0x92ccac0fa81d538d280755e30746aa0e21cb2da8
 */
+/*
+Implements DET token standard ERC20
+POWER BY DET
+.*/
+
 pragma solidity ^0.4.21;
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    // solhint-disable-next-line no-simple-event-func-name
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+// ERC2.0 ??
+contract DET is EIP20Interface {
+    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    //???
+    address public god;
+    // ????
+    mapping (address => uint256) public balances;
+    // ??????
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    //????
+    struct ServiceStat {
+        address user;
+        uint64 serviceId;
+        string serviceName;
+        uint256 timestamp; 
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-  mapping(address => uint256) balances;
-  uint256 totalSupply_;
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-  mapping (address => mapping (address => uint256)) internal allowed;
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
-    return true;
-  }
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
-    return true;
-  }
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+
+    //????????
+    mapping (address => mapping (uint64 => ServiceStat)) public serviceStatMap;
+
+    //????
+    struct ServiceConfig{
+        uint64 serviceId;
+        string serviceName;
+        uint256 price;
+        uint256 discount;
+        address fitAddr;
+        string detail;
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-}
-contract DET is StandardToken {
-    string  public name = "Decentralized Ecosystem Token";
-    string  public symbol = "DET";
-    uint8   public decimals = 18;
-    uint    public totalSupply = 10 ** 27;
-    function ()
-        payable
-        public
-    {
-        revert();
+    //??????
+    mapping (uint64 => ServiceConfig) public serviceConfgMap;
+    mapping (uint64 => uint256) public serviceWin;
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
+    //????
+    uint256 public tokenPrice;
+    
+    //???ERC20???
+    constructor(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+    ) public {
+        god = msg.sender;
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
-    function DET() public {
-        balances[msg.sender] = totalSupply;
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value); //solhint-disable-line indent, no-unused-vars
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        emit Transfer(_from, _to, _value); //solhint-disable-line indent, no-unused-vars
+        return true;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value); //solhint-disable-line indent, no-unused-vars
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    //???????
+    function getMsgSender() public view returns(address sender){
+        return msg.sender;
+    }
+
+    //????????
+    function setConfig(uint64 _serviceId, string _serviceName, uint256 _price, uint256 _discount, address _fitAddr, string _desc) public returns (bool success){
+        require(msg.sender==god);
+        serviceConfgMap[_serviceId].serviceId = _serviceId;
+        serviceConfgMap[_serviceId].serviceName = _serviceName;
+        serviceConfgMap[_serviceId].price = _price;
+        serviceConfgMap[_serviceId].discount = _discount;
+        serviceConfgMap[_serviceId].fitAddr = _fitAddr;
+        serviceConfgMap[_serviceId].detail = _desc;
+        return true;
+    }
+
+    //??????
+    function configOf(uint64 _serviceId) public view returns (string serviceName, uint256 price, uint256 discount, address addr, string desc){
+        serviceName = serviceConfgMap[_serviceId].serviceName;
+        price = serviceConfgMap[_serviceId].price;
+        discount = serviceConfgMap[_serviceId].discount;
+        addr = serviceConfgMap[_serviceId].fitAddr;
+        desc = serviceConfgMap[_serviceId].detail;
+    }
+
+    //????
+    function buyService(uint64 _serviceId,uint64 _count) public returns (uint256 cost, uint256 timestamp){
+        require(_count >= 1);
+        //??????
+        //ServiceConfig storage config = serviceConfgMap[_serviceId];
+        cost = serviceConfgMap[_serviceId].price * serviceConfgMap[_serviceId].discount * _count / 100;
+        address fitAddr = serviceConfgMap[_serviceId].fitAddr;
+        //require(balances[msg.sender]>need);
+        if( transfer(fitAddr,cost ) == true ){
+            uint256 timeEx = serviceStatMap[msg.sender][_serviceId].timestamp;
+            if(timeEx == 0){
+                serviceStatMap[msg.sender][_serviceId].serviceId = _serviceId;
+                serviceStatMap[msg.sender][_serviceId].serviceName = serviceConfgMap[_serviceId].serviceName;
+                serviceStatMap[msg.sender][_serviceId].user = msg.sender;
+                serviceStatMap[msg.sender][_serviceId].timestamp = now + (_count * 86400);
+                serviceWin[_serviceId] += cost;
+                timestamp = serviceStatMap[msg.sender][_serviceId].timestamp;
+            }else{
+                if(timeEx < now){
+                    timeEx = now;
+                }
+                timeEx += (_count * 86400);
+                serviceStatMap[msg.sender][_serviceId].timestamp = timeEx;
+                timestamp = timeEx;
+            }
+        }else{
+            timestamp = 0;
+        }
+        
+    }
+
+    //????
+    function buyServiceByAdmin(uint64 _serviceId,uint64 _count,address addr) public returns (uint256 cost, uint256 timestamp){
+        require(msg.sender==god);
+        require(_count >= 1);
+        //??????
+        //ServiceConfig storage config = serviceConfgMap[_serviceId];
+        cost = serviceConfgMap[_serviceId].price * serviceConfgMap[_serviceId].discount * _count / 100;
+        address fitAddr = serviceConfgMap[_serviceId].fitAddr;
+        timestamp = 0;
+        require(balances[addr] >= cost);
+        balances[fitAddr] += cost;
+        balances[addr] -= cost;
+        emit Transfer(addr, fitAddr, cost); 
+
+        uint256 timeEx = serviceStatMap[addr][_serviceId].timestamp;
+        if(timeEx == 0){
+            serviceStatMap[addr][_serviceId].serviceId = _serviceId;
+            serviceStatMap[addr][_serviceId].serviceName = serviceConfgMap[_serviceId].serviceName;
+            serviceStatMap[addr][_serviceId].user = addr;
+            serviceStatMap[addr][_serviceId].timestamp = now + (_count * 86400); 
+            serviceWin[_serviceId] += cost;
+            timestamp = serviceStatMap[addr][_serviceId].timestamp;
+        }else{
+            if(timeEx < now){
+                timeEx = now;
+            }
+            timeEx += (_count * 86400);
+            serviceStatMap[addr][_serviceId].timestamp = timeEx;
+            timestamp = timeEx;
+        }    
+    }
+
+    //??????
+    function getServiceStat(uint64 _serviceId) public view returns (uint256 timestamp){
+        timestamp = serviceStatMap[msg.sender][_serviceId].timestamp;
+    }
+    
+    //??????
+    function getServiceStatByAddr(uint64 _serviceId,address addr) public view returns (uint256 timestamp){
+        require(msg.sender==god);
+        timestamp = serviceStatMap[addr][_serviceId].timestamp;
+    }
+
+    //admin
+    function getWin(uint64 _serviceId) public view returns (uint256 win){
+        require(msg.sender==god);
+        win = serviceWin[_serviceId];
+        return win;
+    }
+    //??token price
+    function setPrice(uint256 _price) public returns (bool success){
+        require(msg.sender==god);
+        tokenPrice = _price;
+        return true;
+    }
+
+    //get token price
+    function getPrice() public view returns (uint256 _price){
+        require(msg.sender==god);
+        _price = tokenPrice;
+        return tokenPrice;
     }
 }
