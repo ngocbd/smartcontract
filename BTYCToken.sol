@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCToken at 0xda9236944915d5247ba72c9973fbe1486b9bb7f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCToken at 0x37125f50f2e30d7e6ad0affa5a85f0572c7344ca
 */
 pragma solidity ^ 0.4 .24;
 
@@ -101,15 +101,20 @@ contract BTYCToken is ERC20Interface, Owned {
 	uint8 public decimals;
 	uint _totalSupply;
 
-	uint256 public sellPrice; //???? 1???????? /1000
-	uint256 public buyPrice; //???? ???????1??? /1000
-	uint256 public sysPrice; //??????
-	uint256 public sysPer; //???????? /100
+	uint public sellPrice; //???? 1???????? /1000
+	uint public buyPrice; //???? ???????1??? /1000
+	uint public sysPrice; //??????
+	uint8 public sysPer; //???????? /100
+	uint public givecandyto; //???? 
+	uint public givecandyfrom; //?????
+	uint public candyper; //???????
+	//uint sysPricetrue;
 
-	uint256 public onceOuttime; //????? ??  
-	uint256 public onceAddTime; //????? ??
+	uint public onceOuttime; //????? ??  
+	uint public onceAddTime; //????? ??
 
 	mapping(address => uint) balances;
+	mapping(address => uint) used;
 	mapping(address => mapping(address => uint)) allowed;
 
 	/* ???? */
@@ -118,12 +123,17 @@ contract BTYCToken is ERC20Interface, Owned {
 	//mapping(address => uint256) public freezeOf;
 	// ???????????
 	//mapping(address => uint256) public canOf;
+	/*
 	struct roundsOwn {
 		uint256 addtime; // ????
 		uint256 addmoney; // ??
-	}
-	mapping(address => roundsOwn[]) public mycan;
-    mapping(address => uint256) public tradenum;
+	}*/
+	//?? 
+	mapping(address => uint[]) public mycantime;
+	mapping(address => uint[]) public mycanmoney;
+	
+	mapping(address => address) public fromaddr;
+    //mapping(address => uint256) public tradenum;
 	// ???????????
 	//mapping(address => uint) public cronoutOf;
 	// ???????????
@@ -139,18 +149,21 @@ contract BTYCToken is ERC20Interface, Owned {
 		symbol = "BTYC";
 		name = "BTYC Coin";
 		decimals = 18;
-		_totalSupply = 84000000 * 10 ** uint(decimals);
+		_totalSupply = 86400000 ether;
 
-		sellPrice = 510; //???? 1???????? /1000000
-		buyPrice = 526; //???? ???????1??? /1000000
-		sysPrice = 766; //??????
+		sellPrice = 510 szabo; //???? 1???????? /1000000
+		buyPrice = 526 szabo; //???? ???????1??? /1000000
+		sysPrice = 766 ether; //??????
 		sysPer = 225; //???????? /100
+		candyper = 1 ether;
+		givecandyfrom = 10 ether;
+		givecandyto = 40 ether;
 
-		onceOuttime = 86400; //????? ?? 
-		onceAddTime = 864000; //????? ??
+		onceOuttime = 1 days; //????? ?? 
+		onceAddTime = 10 days; //????? ??
 
-		//onceOuttime = 10; //????? ??  
-		//onceAddTime = 10; //????? ??
+		//onceOuttime = 10 seconds; //????? ??  
+		//onceAddTime = 20 seconds; //????? ??
 		balances[owner] = _totalSupply;
 		emit Transfer(address(0), owner, _totalSupply);
 
@@ -165,22 +178,40 @@ contract BTYCToken is ERC20Interface, Owned {
 	}
 
 	function addmoney(address _addr, uint256 _money) private{
-	    roundsOwn stateVar;
+	    uint256 _now = now;
+	    mycanmoney[_addr].push(_money);
+	    mycantime[_addr].push(_now);
+	    /*
+	    roundsOwn storage stateVar;
 	    uint256 _now = now;
 	    stateVar.addtime = _now;
 	    stateVar.addmoney = _money;
-		mycan[_addr].push(stateVar);
-		tradenum[_addr] = tradenum[_addr] + 1;
+		mycan[_addr].push(stateVar);*/
+		if(balances[_addr] >= sysPrice && cronaddOf[_addr] < 1) {
+			cronaddOf[_addr] = now + onceAddTime;
+		}
+		//tradenum[_addr] = tradenum[_addr] + 1;
 	}
-
+	function reducemoney(address _addr, uint256 _money) private{
+	    used[_addr] += _money;
+	    if(balances[_addr] < sysPrice){
+	        cronaddOf[_addr] = 0;
+	    }
+	}
+    function getaddtime(address _addr) public view returns(uint) {
+        if(cronaddOf[_addr] < 1) {
+			return(now + onceAddTime);
+		}
+		return(cronaddOf[_addr]);
+    }
 
 	function getcanuse(address tokenOwner) public view returns(uint balance) {
 	    uint256 _now = now;
 	    uint256 _left = 0;
-	    for(uint256 i = 0; i < tradenum[tokenOwner]; i++) {
-	        roundsOwn mydata = mycan[tokenOwner][i];
-	        uint256 stime = mydata.addtime;
-	        uint256 smoney = mydata.addmoney;
+	    for(uint256 i = 0; i < mycantime[tokenOwner].length; i++) {
+	        //roundsOwn mydata = mycan[tokenOwner][i];
+	        uint256 stime = mycantime[tokenOwner][i];
+	        uint256 smoney = mycanmoney[tokenOwner][i];
 	        uint256 lefttimes = _now - stime;
 	        if(lefttimes >= onceOuttime) {
 	            uint256 leftpers = lefttimes / onceOuttime;
@@ -189,6 +220,13 @@ contract BTYCToken is ERC20Interface, Owned {
 	            }
 	            _left = smoney*leftpers/100 + _left;
 	        }
+	    }
+	    _left = _left - used[tokenOwner];
+	    if(_left < 0){
+	        return(0);
+	    }
+	    if(_left > balances[tokenOwner]){
+	        return(balances[tokenOwner]);
 	    }
 	    return(_left);
 	}
@@ -203,13 +241,56 @@ contract BTYCToken is ERC20Interface, Owned {
 		require(!frozenAccount[to]);
 		uint256 canuse = getcanuse(msg.sender);
 		require(canuse >= tokens);
-		//canOf[msg.sender] = myuseOf(msg.sender);
-		//canOf[msg.sender] = canOf[msg.sender].sub(tokens);
-		balances[msg.sender] = balances[msg.sender].sub(tokens);
-		balances[to] = balances[to].add(tokens);
-		addmoney(to, tokens);
+
+		if(fromaddr[to] == address(0)){
+		    fromaddr[to] = msg.sender;
+		    
+    		if(tokens >= candyper) {
+    		    if(givecandyfrom > 0) {
+    		        balances[msg.sender] = balances[msg.sender].sub(tokens).add(givecandyfrom);
+    		        reducemoney(msg.sender, tokens);
+    		        addmoney(msg.sender, givecandyfrom);
+    		    }
+    		    if(givecandyto > 0) {
+    		        tokens += givecandyto;
+    		    }
+    		}else{
+    		    reducemoney(msg.sender, tokens);
+    		    balances[msg.sender] = balances[msg.sender].sub(tokens);
+    		}
+    		balances[to] = balances[to].add(tokens);
+    		addmoney(to, tokens);
+		    //tokens = candyuser(msg.sender, to, tokens);
+		}else{
+		    reducemoney(msg.sender, tokens);
+    		balances[msg.sender] = balances[msg.sender].sub(tokens);
+    		balances[to] = balances[to].add(tokens);
+    		addmoney(to, tokens);
+		}
 		emit Transfer(msg.sender, to, tokens);
 		return true;
+	}
+	/*
+	function candyuser(address from, address to, uint tokens) private returns(uint money){
+	     money = tokens;
+	    if(tokens >= candyper) {
+		        if(givecandyto > 0) {
+    		        balances[to] = balances[to].add(givecandyto);
+    		        addmoney(to, givecandyto);
+    		        money = tokens + givecandyto;
+    		    }
+    		    if(givecandyfrom > 0) {
+    		        balances[from] = balances[from].add(givecandyfrom);
+    		        addmoney(from, givecandyfrom);
+    		    }
+		    }
+	}*/
+	function getnum(uint num) public view returns(uint){
+	    return(num* 10 ** uint(decimals));
+	}
+	function getfrom(address _addr) public view returns(address) {
+	    return(fromaddr[_addr]);
+	    //return(address(0));
 	}
 	/*
 	function buytoken(address user, uint256 amount) public{
@@ -243,8 +324,10 @@ contract BTYCToken is ERC20Interface, Owned {
 	// ------------------------------------------------------------------------
 	function transferFrom(address from, address to, uint tokens) public returns(bool success) {
 		balances[from] = balances[from].sub(tokens);
+		reducemoney(from, tokens);
 		allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
 		balances[to] = balances[to].add(tokens);
+		addmoney(to, tokens);
 		emit Transfer(from, to, tokens);
 		return true;
 	}
@@ -258,9 +341,7 @@ contract BTYCToken is ERC20Interface, Owned {
 	}
 
 	// ------------------------------------------------------------------------
-	// Token owner can approve for `spender` to transferFrom(...) `tokens`
-	// from the token owner's account. The `spender` contract function
-	// `receiveApproval(...)` is then executed
+	// ??
 	// ------------------------------------------------------------------------
 	function approveAndCall(address spender, uint tokens, bytes data) public returns(bool success) {
 		allowed[msg.sender][spender] = tokens;
@@ -275,18 +356,24 @@ contract BTYCToken is ERC20Interface, Owned {
 		emit FrozenFunds(target, freeze);
 	}
 	// ????????
-	function setPrices(uint256 newBuyPrice, uint256 newSellPrice, uint256 systyPrice, uint256 sysPermit) onlyOwner public {
+	function setPrices(uint newBuyPrice, uint newSellPrice, uint systyPrice, uint8 sysPermit, uint sysgivefrom, uint sysgiveto, uint sysgiveper) onlyOwner public {
 		buyPrice = newBuyPrice;
 		sellPrice = newSellPrice;
 		sysPrice = systyPrice;
 		sysPer = sysPermit;
+		givecandyfrom = sysgivefrom;
+		givecandyto = sysgiveto;
+		candyper = sysgiveper;
 	}
 	// ???? 
-	function getprice() public view returns(uint256 bprice, uint256 spice, uint256 sprice, uint256 sper) {
+	function getprice() public view returns(uint bprice, uint spice, uint sprice, uint8 sper, uint givefrom, uint giveto, uint giveper) {
 		bprice = buyPrice;
 		spice = sellPrice;
 		sprice = sysPrice;
 		sper = sysPer;
+		givefrom = givecandyfrom;
+		giveto = givecandyto;
+		giveper = candyper;
 	}
 
 	// ------------------------------------------------------------------------
@@ -298,9 +385,7 @@ contract BTYCToken is ERC20Interface, Owned {
 	/// ?????????
 	function mintToken(address target, uint256 mintedAmount) onlyOwner public {
 		require(!frozenAccount[target]);
-        if(cronaddOf[msg.sender] < 1) {
-			cronaddOf[msg.sender] = now + onceAddTime;
-		}
+        
 		balances[target] += mintedAmount;
 		//_totalSupply -= mintedAmount;
 		addmoney(target, mintedAmount);
@@ -309,9 +394,11 @@ contract BTYCToken is ERC20Interface, Owned {
 
 	}
 	//????10?????
-	function mintme() public {
+	function mint() public {
 		require(!frozenAccount[msg.sender]);
+		require(cronaddOf[msg.sender] > 0);
 		require(now > cronaddOf[msg.sender]);
+		require(balances[msg.sender] >= getnum(sysPrice));
 		uint256 mintAmount = balances[msg.sender] * sysPer / 10000;
 		balances[msg.sender] += mintAmount;
 		//_totalSupply -= mintAmount;
@@ -322,46 +409,44 @@ contract BTYCToken is ERC20Interface, Owned {
 
 	}
     
-	function buy(uint256 money) public payable returns(uint256 amount) {
+	function buy() public payable returns(uint256 amount) {
 		require(!frozenAccount[msg.sender]);
-		amount = money * buyPrice;
+		require(msg.value > 0);
+		amount = msg.value * buyPrice;
+		require(balances[owner] > amount);
 		balances[msg.sender] += amount;
-		balances[this] -= amount;  
+		balances[owner] -= amount;  
 		//_totalSupply -= amount;
 		addmoney(msg.sender, amount);
-		//msg.sender.transfer(money);
-		emit Transfer(this, msg.sender, amount); 
+		owner.transfer(msg.value);
+		emit Transfer(owner, msg.sender, amount); 
 		return(amount);
 	}
 
 	function() payable public {
-		buy(msg.value);
+		buy();
 	}
-	/*
-	function selleth(uint amount) public payable {
-	    //address user = msg.sender;
-	    //canOf[user] = myuseOf(user);
-	    //require(balances[user] >= amount );
-	    //uint money = amount * sellPrice;
-	   // balances[msg.sender] += money;
-	    owner.transfer(amount);
-	}*/
-
+	
+    function withdrawEther(address _to) public  onlyOwner {
+        _to.transfer(address(this).balance);
+    }
 	function sell(uint256 amount) public returns(bool success) {
 		//address user = msg.sender;
 		//canOf[msg.sender] = myuseOf(msg.sender);
 		//require(!frozenAccount[msg.sender]);
 		uint256 canuse = getcanuse(msg.sender);
 		require(canuse >= amount);
+		require(balances[msg.sender] > amount);
 		uint moneys = amount / sellPrice;
 		require(msg.sender.send(moneys));
+		reducemoney(msg.sender, amount);
 		balances[msg.sender] -= amount;
-		balances[this] += amount;
+		balances[owner] += amount;
 		//_totalSupply += amount;
 		//canOf[msg.sender] -= amount;
 		
 		//this.transfer(moneys);Transfer(this, msg.sender, revenue);  
-		emit Transfer(this, msg.sender, moneys);
+		emit Transfer(owner, msg.sender, moneys);
 		//canOf[user] -= amount;
 		return(true);
 	}
