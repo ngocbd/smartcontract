@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AfeliCoin at 0x34e8288c40fb0af2508fee686f5faea3082ff792
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AfeliCoin at 0x39feffe63ff27f277b4d3fbd03064d479b5a85f1
 */
 pragma solidity ^0.4.18;
 
