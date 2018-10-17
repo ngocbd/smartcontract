@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLRCoin at 0x0ebfc505548c6504b0577853a7fd5133c48205bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CLRCoin at 0x30e50fe99118c34e8aaede6454ef7b08475b1c0a
 */
 pragma solidity ^0.4.4;
 
@@ -101,11 +101,11 @@ contract CLRCoin is StandardToken {
 
     //constructor function 
     function CLRCoin() {
-        balances[msg.sender] = 16000000000000000000000000;
-        totalSupply = 16000000000000000000000000;
+        balances[msg.sender] = 17000000000000000000000000;
+        totalSupply = 17000000000000000000000000;
         name = "CLRCoin";
         decimals = 18;
-        symbol = "CLR";
+        symbol = "CLRC";
         unitsOneEthCanBuy = 587;
         fundsWallet = msg.sender;
     }
