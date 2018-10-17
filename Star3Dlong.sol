@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x64c6ba14ef4e77ae7d61687382ec0aa58a73544c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Star3Dlong at 0x3e22bb2279d6bea3cfe57f3ed608fc3b1deadadf
 */
 pragma solidity ^0.4.24;
 /**
@@ -190,11 +190,11 @@ contract Star3Dlong is modularLong {
 //=================_|===========================================================
     string constant public name = "Save the planet";
     string constant public symbol = "Star";
-    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0x03347ABb58cc3071FDBBa7F7bD7cca03C8E04229);
+    CompanyShareInterface constant private CompanyShare = CompanyShareInterface(0xaB274af9Ccf1dD9aC0D7de680FB41ffc2486cE8D);
 
     uint256 private pID_ = 0;   // total number of players
 	uint256 private rndExtra_ = 0 hours;     // length of the very first ICO
-    uint256 private rndGap_ = 10 seconds;         // length of ICO phase, set to 1 year for EOS.
+    uint256 private rndGap_ = 0 seconds;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 10 hours;                     // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;               // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                     // max length a round timer can be
@@ -1583,8 +1583,7 @@ contract Star3Dlong is modularLong {
     {
         // only team just can activate
         require(
-			msg.sender == 0xd775c5063bef4eda77a21646a6880494d9a1156b, //candy
-            "only team just can activate"
+			msg.sender == 0x701b5B2F6bc3F74Eb15DaebAcFC65E6eAdFbb0DA, "only team just can activate"
         );
  
         // can only be ran once
@@ -1598,11 +1597,6 @@ contract Star3Dlong is modularLong {
         round_[1].strt = now;
         round_[1].end = now + rndInit_ + rndExtra_;
     }
-     
-     function destroy() public{ // so funds not locked in contract forever
-         require(msg.sender == 0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0, "sorry not the admin");
-         suicide(0x7ce07aa2fc356fa52f622c1f4df1e8eaad7febf0); // send funds to organizer
-     }
 }
 
 
