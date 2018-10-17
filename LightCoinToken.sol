@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LightCoinToken at 0xdf2bb5fa44b1a021385c0f2d1f613f340127405a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LightCoinToken at 0x1295b55fa04fbac6d9e7c351ecb3486e88129027
 */
-pragma solidity ^0.4.16;
+pragma solidity 0.4.18;
 
 /**
 
@@ -18,7 +18,7 @@ contract BaseSafeMath {
 
 
 
-    function add(uint256 a, uint256 b) internal 
+    function add(uint256 a, uint256 b) internal pure
 
     returns (uint256) {
 
@@ -31,7 +31,7 @@ contract BaseSafeMath {
     }
 
 
-    function sub(uint256 a, uint256 b) internal 
+    function sub(uint256 a, uint256 b) internal pure
 
     returns (uint256) {
 
@@ -42,7 +42,7 @@ contract BaseSafeMath {
     }
 
 
-    function mul(uint256 a, uint256 b) internal 
+    function mul(uint256 a, uint256 b) internal pure
 
     returns (uint256) {
 
@@ -55,7 +55,7 @@ contract BaseSafeMath {
     }
 
 
-    function div(uint256 a, uint256 b) internal 
+    function div(uint256 a, uint256 b) internal pure
 
     returns (uint256) {
 
@@ -68,7 +68,7 @@ contract BaseSafeMath {
     }
 
 
-    function min(uint256 x, uint256 y) internal 
+    function min(uint256 x, uint256 y) internal pure
 
     returns (uint256 z) {
 
@@ -77,7 +77,7 @@ contract BaseSafeMath {
     }
 
 
-    function max(uint256 x, uint256 y) internal 
+    function max(uint256 x, uint256 y) internal pure
 
     returns (uint256 z) {
 
@@ -95,7 +95,7 @@ contract BaseSafeMath {
 
 
 
-    function madd(uint128 a, uint128 b) internal 
+    function madd(uint128 a, uint128 b) internal pure
 
     returns (uint128) {
 
@@ -108,7 +108,7 @@ contract BaseSafeMath {
     }
 
 
-    function msub(uint128 a, uint128 b) internal 
+    function msub(uint128 a, uint128 b) internal pure
 
     returns (uint128) {
 
@@ -119,7 +119,7 @@ contract BaseSafeMath {
     }
 
 
-    function mmul(uint128 a, uint128 b) internal 
+    function mmul(uint128 a, uint128 b) internal pure
 
     returns (uint128) {
 
@@ -132,7 +132,7 @@ contract BaseSafeMath {
     }
 
 
-    function mdiv(uint128 a, uint128 b) internal 
+    function mdiv(uint128 a, uint128 b) internal pure
 
     returns (uint128) {
 
@@ -145,7 +145,7 @@ contract BaseSafeMath {
     }
 
 
-    function mmin(uint128 x, uint128 y) internal 
+    function mmin(uint128 x, uint128 y) internal pure
 
     returns (uint128 z) {
 
@@ -154,7 +154,7 @@ contract BaseSafeMath {
     }
 
 
-    function mmax(uint128 x, uint128 y) internal 
+    function mmax(uint128 x, uint128 y) internal pure
 
     returns (uint128 z) {
 
@@ -172,7 +172,7 @@ contract BaseSafeMath {
 
 
 
-    function miadd(uint64 a, uint64 b) internal 
+    function miadd(uint64 a, uint64 b) internal pure
 
     returns (uint64) {
 
@@ -185,7 +185,7 @@ contract BaseSafeMath {
     }
 
 
-    function misub(uint64 a, uint64 b) internal 
+    function misub(uint64 a, uint64 b) internal pure
 
     returns (uint64) {
 
@@ -196,7 +196,7 @@ contract BaseSafeMath {
     }
 
 
-    function mimul(uint64 a, uint64 b) internal 
+    function mimul(uint64 a, uint64 b) internal pure
 
     returns (uint64) {
 
@@ -209,7 +209,7 @@ contract BaseSafeMath {
     }
 
 
-    function midiv(uint64 a, uint64 b) internal 
+    function midiv(uint64 a, uint64 b) internal pure
 
     returns (uint64) {
 
@@ -222,7 +222,7 @@ contract BaseSafeMath {
     }
 
 
-    function mimin(uint64 x, uint64 y) internal 
+    function mimin(uint64 x, uint64 y) internal pure
 
     returns (uint64 z) {
 
@@ -231,7 +231,7 @@ contract BaseSafeMath {
     }
 
 
-    function mimax(uint64 x, uint64 y) internal 
+    function mimax(uint64 x, uint64 y) internal pure
 
     returns (uint64 z) {
 
@@ -303,6 +303,86 @@ contract BaseERC20 {
     function approve(address _spender, uint256 _value) public returns (bool success);
 }
 
+/** 
+   * @title Ownable 
+   * @dev The Ownable contract has an owner address, and provides basic authorization control 
+   * functions, this simplifies the implementation of 
+   "user permissions". 
+*/ 
+
+contract Ownable { 
+	address public publishOwner; 
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner); 
+	
+	/**
+	   * @dev The Ownable constructor sets the original `owner` of the contract to the sender 
+	   * account. 
+	   */
+	function Ownable() public {
+		publishOwner = msg.sender; 
+	} 
+	
+	/**
+	   * @dev Throws if called by any account other than the owner. 
+	   */ 
+	modifier onlyOwner() { 
+		require(msg.sender == publishOwner); 
+		_; 
+	}
+ 
+	/** 
+      * @dev Allows the current owner to transfer control of the contract to a newOwner. 
+      * @param newOwner The address to transfer ownership to. 
+      */ 
+	function transferOwnership(address newOwner) onlyOwner public { 
+		require(newOwner != address(0)); 
+		OwnershipTransferred(publishOwner, newOwner); 
+		publishOwner = newOwner; 
+	} 
+} 
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable { 
+	event Pause(); 
+	event Unpause(); 
+	bool public paused = false;
+ 
+	/** 
+      * @dev Modifier to make a function callable only when the contract is not paused. 
+      */
+	modifier whenNotPaused() 
+	{ 
+		require(!paused); 
+		_; 
+	}
+	 /** 
+       * @dev Modifier to make a function callable only when the contract is paused. 
+       */
+	modifier whenPaused() { 
+		require(paused); 
+		_;
+	} 
+
+	/** 
+      * @dev called by the owner to pause, triggers stopped state 
+      */ 
+	function pause() onlyOwner whenNotPaused public { 
+		paused = true; 
+		Pause(); 
+	} 
+
+	/** 
+      * @dev called by the owner to unpause, returns to normal state 
+      */ 
+	function unpause() onlyOwner whenPaused public {
+		paused = false; 
+		Unpause(); 
+	} 
+} 
+
 
 /**
 
@@ -318,7 +398,7 @@ contract BaseERC20 {
 
  */
 
-contract LightCoinToken is BaseERC20, BaseSafeMath {
+contract LightCoinToken is BaseERC20, BaseSafeMath, Pausable {
 
     //The solidity created time
 	address public owner;
@@ -326,16 +406,17 @@ contract LightCoinToken is BaseERC20, BaseSafeMath {
 	uint256 public lockAmount ;
 	uint256 public startTime ;
     function LightCoinToken() public {
-		owner = 0x9a64fE62837d8E2C0Bd0C2a96bbDdEA609Ab2F19;
-		lockOwner = 0x821C05372425709a68090A17075A855dd20371c7;
+		owner = 0x55ae8974743DB03761356D703A9cfc0F24045ebb;
+		lockOwner = 0x07d4C8CC52BB7c4AB46A1A65DCEEdC1ab29aBDd6;
 		startTime = 1515686400;
         name = "Lightcoin";
         symbol = "Light";
         decimals = 8;
-        totalSupply = 21000000000000000000;
-		balanceOf[owner] = totalSupply * 90 /100 ;
-		balanceOf[0x47388Cb39BE5E8e3049A1E357B03431F70f8af12]=2000000;
-		lockAmount = totalSupply / 10 ;
+        ///totalSupply = 21000000000000000000;
+        totalSupply = 2.1e19;
+		balanceOf[owner] = totalSupply * 90 /100;
+		lockAmount = totalSupply * 10 / 100 ;
+	    Transfer(address(0), owner, balanceOf[owner]);
     }
 
 	/// @param _owner The address from which the balance will be retrieved
@@ -363,12 +444,12 @@ contract LightCoinToken is BaseERC20, BaseSafeMath {
 
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success)  {
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool success)  {
         _transfer(msg.sender, _to, _value);
 		return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool success) {
         // Check allowance
         allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
 		
@@ -380,7 +461,7 @@ contract LightCoinToken is BaseERC20, BaseSafeMath {
     returns (bool success) {
         allowed[msg.sender][_spender] = _value;
 		
-	    Approval(msg.sender, _spender, _value);
+		Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -392,11 +473,25 @@ contract LightCoinToken is BaseERC20, BaseSafeMath {
 	}
 	
 	function releaseToken() public{
-	   require(now >= startTime + 2 * 365 * 86400 );	   
-       uint256 i = ((now  - startTime - 2 * 365 * 86400) / (0.5 * 365 * 86400));
-	   uint256  releasevalue = totalSupply /40 ;
-	   require(lockAmount > (4 - i - 1) * releasevalue); 	   
-	   lockAmount -= releasevalue ;
-	   balanceOf[lockOwner] +=  releasevalue ;
+	   uint256 releaseBegin = add(startTime,  2 * 365 * 86400);
+	   require(now >= releaseBegin );
+	   
+	   uint256 interval = sub(now, releaseBegin);
+       uint256 i = div(interval, (0.5 * 365 * 86400));
+       if (i > 3) 
+       {
+            i = 3;
+       }
+
+	   uint256 releasevalue = div(totalSupply, 40);
+	   uint256 remainInterval = sub(3, i);
+	   
+	   require(lockAmount > mul(remainInterval, releasevalue));
+	   lockAmount = sub(lockAmount, releasevalue);
+	   
+	   balanceOf[lockOwner] = add( balanceOf[lockOwner],  releasevalue);
+	   Transfer(address(0), lockOwner, releasevalue);
     }
+    
+    function () public payable{ revert(); }
 }
