@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0x49db6ee4507132d1fdac92318e0e6150bf786728
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0x516f02475acf19bad0352ce3759c42adaac0000f
 */
 pragma solidity ^0.4.21;
 
@@ -224,12 +224,6 @@ contract DateTime {
 
 interface ISimpleCrowdsale {
     function getSoftCap() external view returns(uint256);
-    function isContributorInLists(address contributorAddress) external view returns(bool);
-    function processReservationFundContribution(
-        address contributor,
-        uint256 tokenAmount,
-        uint256 tokenBonusAmount
-    ) external payable;
 }
 
 // File: contracts/fund/ICrowdsaleFund.sol
@@ -604,11 +598,10 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     address public teamWallet;
     uint256 public crowdsaleEndDate;
 
-    address public referralTokenWallet;
+    address public mainSaleTokenWallet;
     address public foundationTokenWallet;
-    address public reserveTokenWallet;
-    address public bountyTokenWallet;
-    address public companyTokenWallet;
+    address public marketingTokenWallet;
+    address public teamTokenWallet;
     address public advisorTokenWallet;
     address public lockedTokenAddress;
     address public refundManager;
@@ -628,31 +621,28 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     /**
      * @dev Fund constructor
      * @param _teamWallet Withdraw functions transfers ether to this address
-     * @param _referralTokenWallet Referral wallet address
-     * @param _companyTokenWallet Company wallet address
-     * @param _reserveTokenWallet Reserve wallet address
-     * @param _bountyTokenWallet Bounty wallet address
+     * @param _mainSaleTokenWallet Main sale wallet address
+     * @param _teamTokenWallet Team wallet address
+     * @param _marketingTokenWallet Bounty wallet address
      * @param _advisorTokenWallet Advisor wallet address
      * @param _owners Contract owners
      */
     function Fund(
         address _teamWallet,
-        address _referralTokenWallet,
+        address _mainSaleTokenWallet,
         address _foundationTokenWallet,
-        address _companyTokenWallet,
-        address _reserveTokenWallet,
-        address _bountyTokenWallet,
+        address _teamTokenWallet,
+        address _marketingTokenWallet,
         address _advisorTokenWallet,
         address _refundManager,
         address[] _owners
     ) public
     {
         teamWallet = _teamWallet;
-        referralTokenWallet = _referralTokenWallet;
+        mainSaleTokenWallet = _mainSaleTokenWallet;
         foundationTokenWallet = _foundationTokenWallet;
-        companyTokenWallet = _companyTokenWallet;
-        reserveTokenWallet = _reserveTokenWallet;
-        bountyTokenWallet = _bountyTokenWallet;
+        teamTokenWallet = _teamTokenWallet;
+        marketingTokenWallet = _marketingTokenWallet;
         advisorTokenWallet = _advisorTokenWallet;
         refundManager = _refundManager;
         _setOwners(_owners);
@@ -700,7 +690,7 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
     function onCrowdsaleEnd() external onlyCrowdsale {
         state = FundState.TeamWithdraw;
         ISimpleCrowdsale crowdsale = ISimpleCrowdsale(crowdsaleAddress);
-        firstWithdrawAmount = safeDiv(crowdsale.getSoftCap(), 2);
+        firstWithdrawAmount = crowdsale.getSoftCap();
         lastWithdrawTime = now;
         tap = INITIAL_TAP;
         crowdsaleEndDate = now;
@@ -795,11 +785,10 @@ contract Fund is ICrowdsaleFund, SafeMath, MultiOwnable {
         require(state == FundState.TeamWithdraw);
         state = FundState.Refund;
         token.destroy(lockedTokenAddress, token.balanceOf(lockedTokenAddress));
-        token.destroy(companyTokenWallet, token.balanceOf(companyTokenWallet));
-        token.destroy(reserveTokenWallet, token.balanceOf(reserveTokenWallet));
+        token.destroy(teamTokenWallet, token.balanceOf(teamTokenWallet));
         token.destroy(foundationTokenWallet, token.balanceOf(foundationTokenWallet));
-        token.destroy(bountyTokenWallet, token.balanceOf(bountyTokenWallet));
-        token.destroy(referralTokenWallet, token.balanceOf(referralTokenWallet));
+        token.destroy(marketingTokenWallet, token.balanceOf(marketingTokenWallet));
+        token.destroy(mainSaleTokenWallet, token.balanceOf(mainSaleTokenWallet));
         token.destroy(advisorTokenWallet, token.balanceOf(advisorTokenWallet));
         RefundEnabled(msg.sender);
     }
@@ -1123,14 +1112,9 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     bool public isWithdrawEnabled = true;
 
     uint256[] public refundPollDates = [
-        1530403200, // 01.07.2018
-        1538352000, // 01.10.2018
-        1546300800, // 01.01.2019
-        1554076800, // 01.04.2019
-        1561939200, // 01.07.2019
-        1569888000, // 01.10.2019
-        1577836800, // 01.01.2020
-        1585699200  // 01.04.2020
+        1543651200, // 01.12.2018
+        1551427200, // 01.03.2019
+        1559376000 // 01.06.2019
     ];
 
     modifier onlyTokenHolder() {
@@ -1149,16 +1133,15 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
      */
     function PollManagedFund(
         address _teamWallet,
-        address _referralTokenWallet,
+        address _mainSaleTokenWallet,
         address _foundationTokenWallet,
-        address _companyTokenWallet,
-        address _reserveTokenWallet,
-        address _bountyTokenWallet,
+        address _teamTokenWallet,
+        address _marketingTokenWallet,
         address _advisorTokenWallet,
         address _refundManager,
         address[] _owners
         ) public
-    Fund(_teamWallet, _referralTokenWallet, _foundationTokenWallet, _companyTokenWallet, _reserveTokenWallet, _bountyTokenWallet, _advisorTokenWallet, _refundManager, _owners)
+    Fund(_teamWallet, _mainSaleTokenWallet, _foundationTokenWallet, _teamTokenWallet, _marketingTokenWallet, _advisorTokenWallet, _refundManager, _owners)
     {
     }
 
