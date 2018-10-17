@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0x69126f7fa0f53ef95c241b48cf3ac0dc88461bb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaskRegister at 0xeb897ad24189a911cad00c071fc7182f5753a3d3
 */
 pragma solidity ^0.4.24;
 
@@ -367,13 +367,16 @@ contract Upgradable is Ownable {
 contract VanityLib {
     uint constant m = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
 
-    function lengthOfCommonPrefix(bytes32 a, bytes32 b) public pure returns(uint) {
+    function haveCommonPrefixUntilZero(bytes32 a, bytes32 b) public pure returns(bool) {
         for (uint i = 0; i < 32; i++) {
-            if (a[i] != b[i] || a[i] == 0) {
-                return i;
+            if (a[i] == 0 || b[i] == 0) {
+                return true;
+            }
+            if (a[i] != b[i]) {
+                return false;
             }
         }
-        return 0;
+        return true;
     }
     
     function bytesToBytes32(bytes source) public pure returns(bytes32 result) {
@@ -446,72 +449,72 @@ contract VanityLib {
         return toBase58Checked(createBtcAddressHex(publicXPoint, publicYPoint), "1");
     }
 
-    function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
-        return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
-    }
+    // function complexityForBtcAddressPrefix(bytes prefix) public pure returns(uint) {
+    //     return complexityForBtcAddressPrefixWithLength(prefix, prefix.length);
+    // }
 
-    // https://bitcoin.stackexchange.com/questions/48586
-    function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
-        require(prefix.length >= length);
+    // // https://bitcoin.stackexchange.com/questions/48586
+    // function complexityForBtcAddressPrefixWithLength(bytes prefix, uint length) public pure returns(uint) {
+    //     require(prefix.length >= length);
         
-        uint8[128] memory unbase58 = [
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
-            255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
-            255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
-            22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
-            255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
-            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
-        ];
+    //     uint8[128] memory unbase58 = [
+    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    //         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+    //         255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 255, 255, 255, 255, 255, 255, 
+    //         255, 9, 10, 11, 12, 13, 14, 15, 16, 255, 17, 18, 19, 20, 21, 255, 
+    //         22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 255, 255, 255, 255, 255,
+    //         255, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 255, 44, 45, 46,
+    //         47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 255, 255, 255, 255, 255
+    //     ];
 
-        uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
+    //     uint leadingOnes = countBtcAddressLeadingOnes(prefix, length);
 
-        uint256 prefixValue = 0;
-        uint256 prefix1 = 1;
-        for (uint i = 0; i < length; i++) {
-            uint index = uint(prefix[i]);
-            require(index != 255);
-            prefixValue = prefixValue * 58 + unbase58[index];
-            prefix1 *= 58;
-        }
+    //     uint256 prefixValue = 0;
+    //     uint256 prefix1 = 1;
+    //     for (uint i = 0; i < length; i++) {
+    //         uint index = uint(prefix[i]);
+    //         require(index != 255);
+    //         prefixValue = prefixValue * 58 + unbase58[index];
+    //         prefix1 *= 58;
+    //     }
 
-        uint256 top = (uint256(1) << (200 - 8*leadingOnes));
-        uint256 total = 0;
-        uint256 prefixMin = prefixValue;
-        uint256 diff = 0;
-        for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
-            prefix1 *= 58;
-            prefixMin *= 58;
-            prefixValue = prefixValue * 58 + 57;
+    //     uint256 top = (uint256(1) << (200 - 8*leadingOnes));
+    //     uint256 total = 0;
+    //     uint256 prefixMin = prefixValue;
+    //     uint256 diff = 0;
+    //     for (uint digits = 1; prefix1/58 < (1 << 192); digits++) {
+    //         prefix1 *= 58;
+    //         prefixMin *= 58;
+    //         prefixValue = prefixValue * 58 + 57;
 
-            diff = 0;
-            if (prefixValue >= top) {
-                diff += prefixValue - top;
-            }
-            if (prefixMin < (top >> 8)) {
-                diff += (top >> 8) - prefixMin;
-            }
+    //         diff = 0;
+    //         if (prefixValue >= top) {
+    //             diff += prefixValue - top;
+    //         }
+    //         if (prefixMin < (top >> 8)) {
+    //             diff += (top >> 8) - prefixMin;
+    //         }
             
-            if ((58 ** digits) >= diff) {
-                total += (58 ** digits) - diff;
-            }
-        }
+    //         if ((58 ** digits) >= diff) {
+    //             total += (58 ** digits) - diff;
+    //         }
+    //     }
 
-        if (prefixMin == 0) { // if prefix is contains only ones: 111111
-            total = (58 ** (digits - 1)) - diff;
-        }
+    //     if (prefixMin == 0) { // if prefix is contains only ones: 111111
+    //         total = (58 ** (digits - 1)) - diff;
+    //     }
 
-        return (1 << 192) / total;
-    }
+    //     return (1 << 192) / total;
+    // }
 
-    function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
-        uint leadingOnes = 1;
-        for (uint j = 0; j < length && prefix[j] == 49; j++) {
-            leadingOnes = j + 1;
-        }
-        return leadingOnes;
-    }
+    // function countBtcAddressLeadingOnes(bytes prefix, uint length) public pure returns(uint) {
+    //     uint leadingOnes = 1;
+    //     for (uint j = 0; j < length && prefix[j] == 49; j++) {
+    //         leadingOnes = j + 1;
+    //     }
+    //     return leadingOnes;
+    // }
 
     function isValidBicoinAddressPrefix(bytes prefixArg) public pure returns(bool) {
         if (prefixArg.length < 5) {
@@ -643,7 +646,6 @@ contract TaskRegister is Upgradable, VanityLib {
         address referrer;
         uint256 reward;
         bytes32 data;
-        uint256 dataLength;
         uint256 requestPublicXPoint;
         uint256 requestPublicYPoint;
         uint256 answerPrivateKey;
@@ -655,10 +657,13 @@ contract TaskRegister is Upgradable, VanityLib {
     uint256 constant public MAX_PERCENT = 1000000;
     uint256 public serviceFee; // 1% == 10000, 100% == 1000000
     uint256 public referrerFee; // Calculated from service fee, 50% == 500000
-    
-    Task[] public tasks;
-    Task[] public completedTasks;
+
+    Task[] public allTasks;
+    uint256[] public taskIds;
+    uint256[] public completedTaskIds;
     mapping(uint256 => uint) public indexOfTaskId; // Starting from 1
+    mapping(uint256 => uint) public indexOfActiveTaskId; // Starting from 1
+    mapping(uint256 => uint) public indexOfCompletedTaskId; // Starting from 1
 
     event TaskCreated(uint256 indexed taskId);
     event TaskSolved(uint256 indexed taskId, uint256 reward);
@@ -668,13 +673,135 @@ contract TaskRegister is Upgradable, VanityLib {
         ec = EC(_ec);
     }
 
+    function allTasksCount() public view returns(uint) {
+        return allTasks.length;
+    }
+
+    function tasksCount() public view returns(uint) {
+        return taskIds.length;
+    }
+
+    // function tasks(uint i) public view returns(Task) {
+    //     return allTasks[indexOfTaskId[taskIds[i]].sub(1)];
+    // }
+
+    function completedTasksCount() public view returns(uint) {
+        return completedTaskIds.length;
+    }
+
+    // function completedTasks(uint i) public view returns(Task) {
+    //     return allTasks[indexOfTaskId[completedTaskIds[i]].sub(1)];
+    // }
+
+    function getActiveTasks()
+        external
+        view
+        returns (
+            //TaskType[] t_taskTypes,
+            uint256[] t_taskIds, // + t_taskTypes
+            address[] t_creators,
+            //address[] t_referrers,
+            uint256[] t_rewards,
+            bytes32[] t_datas,
+            uint256[] t_requestPublicXPoints,
+            uint256[] t_requestPublicYPoints,
+            uint256[] t_answerPrivateKeys
+        )
+    {
+        //t_taskTypes = new TaskType[](allTasks.length);
+        t_taskIds = new uint256[](allTasks.length);
+        t_creators = new address[](allTasks.length);
+        //t_referrers = new address[](allTasks.length);
+        t_rewards = new uint256[](allTasks.length);
+        t_datas = new bytes32[](allTasks.length);
+        t_requestPublicXPoints = new uint256[](allTasks.length);
+        t_requestPublicYPoints = new uint256[](allTasks.length);
+        t_answerPrivateKeys = new uint256[](allTasks.length);
+
+        for (uint i = 0; i < taskIds.length; i++) {
+            uint index = indexOfActiveTaskId[taskIds[i]];
+            (
+                //t_taskTypes[i],
+                t_taskIds[i],
+                t_creators[i],
+                //t_referrers[i],
+                t_rewards[i],
+                t_datas[i],
+                t_requestPublicXPoints[i],
+                t_requestPublicYPoints[i],
+                t_answerPrivateKeys[i]
+            ) = (
+                //allTasks[i].taskType,
+                (uint(allTasks[index].taskType) << 128) | allTasks[index].taskId,
+                allTasks[index].creator,
+                //allTasks[index].referrer,
+                allTasks[index].reward,
+                allTasks[index].data,
+                allTasks[index].requestPublicXPoint,
+                allTasks[index].requestPublicYPoint,
+                allTasks[index].answerPrivateKey
+            );
+        }
+    }
+
+    function getCompletedTasks()
+        external
+        view
+        returns (
+            //TaskType[] t_taskTypes,
+            uint256[] t_taskIds, // + t_taskTypes
+            address[] t_creators,
+            //address[] t_referrers,
+            uint256[] t_rewards,
+            bytes32[] t_datas,
+            uint256[] t_requestPublicXPoints,
+            uint256[] t_requestPublicYPoints,
+            uint256[] t_answerPrivateKeys
+        )
+    {
+        //t_taskTypes = new TaskType[](allTasks.length);
+        t_taskIds = new uint256[](allTasks.length);
+        t_creators = new address[](allTasks.length);
+        //t_referrers = new address[](allTasks.length);
+        t_rewards = new uint256[](allTasks.length);
+        t_datas = new bytes32[](allTasks.length);
+        t_requestPublicXPoints = new uint256[](allTasks.length);
+        t_requestPublicYPoints = new uint256[](allTasks.length);
+        t_answerPrivateKeys = new uint256[](allTasks.length);
+
+        for (uint i = 0; i < completedTaskIds.length; i++) {
+            uint index = indexOfCompletedTaskId[completedTaskIds[i]];
+            (
+                //t_taskTypes[i],
+                t_taskIds[i],
+                t_creators[i],
+                //t_referrers[i],
+                t_rewards[i],
+                t_datas[i],
+                t_requestPublicXPoints[i],
+                t_requestPublicYPoints[i],
+                t_answerPrivateKeys[i]
+            ) = (
+                //allTasks[i].taskType,
+                (uint(allTasks[index].taskType) << 128) | allTasks[index].taskId,
+                allTasks[index].creator,
+                //allTasks[index].referrer,
+                allTasks[index].reward,
+                allTasks[index].data,
+                allTasks[index].requestPublicXPoint,
+                allTasks[index].requestPublicYPoint,
+                allTasks[index].answerPrivateKey
+            );
+        }
+    }
+
     function setServiceFee(uint256 _serviceFee) public onlyOwner {
-        require(_serviceFee < 20000); // 2% of reward
+        require(_serviceFee <= 20000, "setServiceFee: value should be less than 20000, which means 2% of miner reward");
         serviceFee = _serviceFee;
     }
 
     function setReferrerFee(uint256 _referrerFee) public onlyOwner {
-        require(_referrerFee < 50000); // 50% of serviceFee
+        require(_referrerFee <= 500000, "setReferrerFee: value should be less than 500000, which means 50% of service fee");
         referrerFee = _referrerFee;
     }
 
@@ -683,101 +810,97 @@ contract TaskRegister is Upgradable, VanityLib {
         require(upgradableState.prevVersion != 0);
 
         // Migrate some vars
-        nextTaskId = TaskRegister(upgradableState.prevVersion).nextTaskId();
-        totalReward = TaskRegister(upgradableState.prevVersion).totalReward();
-        //TODO: uncomment for the next version
-        //serviceFee = TaskRegister(upgradableState.prevVersion).serviceFee();
-        //referrerFee = TaskRegister(upgradableState.prevVersion).referrerFee();
-        
-        uint index = tasks.length;
-        uint tasksCount = TaskRegister(upgradableState.prevVersion).tasksCount();
+        TaskRegister prev = TaskRegister(upgradableState.prevVersion);
+        nextTaskId = prev.nextTaskId();
+        totalReward = prev.totalReward();
+        serviceFee = prev.serviceFee();
+        referrerFee = prev.referrerFee();
 
+        uint index = allTasks.length;
+        uint tasksLength = prev.tasksCount();
+        
         // Migrate tasks
 
-        for (uint i = index; i < index + _size && i < tasksCount; i++) {
-            tasks.push(Task(TaskType.BITCOIN_ADDRESS_PREFIX,0,0,0,0,bytes32(0),0,0,0,0));
+        for (uint i = index; i < index + _size && i < tasksLength; i++) {
+            allTasks.push(Task(TaskType.BITCOIN_ADDRESS_PREFIX,0,0,0,0,bytes32(0),0,0,0));
+            uint j = prev.indexOfActiveTaskId(prev.taskIds(i));
+            (
+                allTasks[i].taskType,
+                allTasks[i].taskId,
+                allTasks[i].creator,
+                ,//allTasks[i].referrer,
+                ,//allTasks[i].reward,
+                ,//allTasks[i].data,
+                ,//allTasks[i].requestPublicXPoint,
+                ,//allTasks[i].requestPublicYPoint,
+                 //allTasks[i].answerPrivateKey
+            ) = prev.allTasks(j);
+            indexOfTaskId[allTasks[i].taskId] = i + 1;
         }
 
-        for (uint j = index; j < index + _size && j < tasksCount; j++) {
+        for (i = index; i < index + _size && i < tasksLength; i++) {
+            j = prev.indexOfActiveTaskId(prev.taskIds(i));
             (
-                tasks[j].taskType,
-                tasks[j].taskId,
-                tasks[j].creator,
-                tasks[j].referrer,
-                ,//tasks[j].reward,
-                ,//tasks[j].data,
-                ,//tasks[j].dataLength, 
-                ,//tasks[j].requestPublicXPoint, 
-                ,//tasks[j].requestPublicYPoint,
-                 //tasks[j].answerPrivateKey
-            ) = TaskRegister(upgradableState.prevVersion).tasks(j);
-            indexOfTaskId[tasks[j].taskId] = j + 1;
+                ,//allTasks[i].taskType,
+                ,//allTasks[i].taskId,
+                ,//allTasks[i].creator,
+                allTasks[i].referrer,
+                allTasks[i].reward,
+                allTasks[i].data,
+                ,//allTasks[i].requestPublicXPoint,
+                ,//allTasks[i].requestPublicYPoint,
+                 //allTasks[i].answerPrivateKey
+            ) = prev.allTasks(j);
         }
 
-        for (j = index; j < index + _size && j < tasksCount; j++) {
+        for (i = index; i < index + _size && i < tasksLength; i++) {
+            j = prev.indexOfActiveTaskId(prev.taskIds(i));
             (
-                ,//tasks[j].taskType,
-                ,//tasks[j].taskId,
-                ,//tasks[j].creator,
-                ,//tasks[j].referrer,
-                tasks[j].reward,
-                tasks[j].data,
-                tasks[j].dataLength, 
-                tasks[j].requestPublicXPoint, 
-                ,//tasks[j].requestPublicYPoint,
-                 //tasks[j].answerPrivateKey
-            ) = TaskRegister(upgradableState.prevVersion).tasks(j);
+                ,//allTasks[i].taskType,
+                ,//allTasks[i].taskId,
+                ,//allTasks[i].creator,
+                ,//allTasks[i].referrer,
+                ,//allTasks[i].reward,
+                ,//allTasks[i].data,
+                allTasks[i].requestPublicXPoint,
+                allTasks[i].requestPublicYPoint,
+                allTasks[i].answerPrivateKey
+            ) = prev.allTasks(j);
         }
 
-        for (j = index; j < index + _size && j < tasksCount; j++) {
-            (
-                ,//tasks[j].taskType,
-                ,//tasks[j].taskId,
-                ,//tasks[j].creator,
-                ,//tasks[j].referrer,
-                ,//tasks[j].reward,
-                ,//tasks[j].data,
-                ,//tasks[j].dataLength, 
-                ,//tasks[j].requestPublicXPoint, 
-                tasks[j].requestPublicYPoint,
-                tasks[j].answerPrivateKey
-            ) = TaskRegister(upgradableState.prevVersion).tasks(j);
+        for (i = index; i < index + _size && i < tasksLength; i++) {
+            taskIds.push(prev.taskIds(i));
         }
+
+        _removeAllActiveTasksWithHoles(index, index + _size);
     }
-    
+
     function endUpgrade() public {
         super.endUpgrade();
+
+        if (upgradableState.nextVersion != 0) {
+            upgradableState.nextVersion.transfer(address(this).balance);
+        }
     }
 
-    function tasksCount() public view returns(uint) {
-        return tasks.length;
-    }
-
-    function completedTasksCount() public view returns(uint) {
-        return completedTasks.length;
-    }
-
-    function payForTask(uint256 _taskId) payable public isLastestVersion {
+    function payForTask(uint256 _taskId) public payable isLastestVersion {
         if (msg.value > 0) {
-            Task storage task = tasks[safeIndexOfTaskId(_taskId)];
+            Task storage task = allTasks[indexOfTaskId[_taskId].sub(1)];
+            require(task.answerPrivateKey == 0, "payForTask: you can't pay for the solved task");
             task.reward = task.reward.add(msg.value);
             totalReward = totalReward.add(msg.value);
             emit TaskPayed(_taskId, msg.value);
         }
     }
 
-    function safeIndexOfTaskId(uint _taskId) public view returns(uint) {
-        return indexOfTaskId[_taskId].sub(1);
-    }
-    
     function createBitcoinAddressPrefixTask(
         bytes prefix,
         uint256 requestPublicXPoint,
         uint256 requestPublicYPoint,
         address referrer
     )
-        payable
         public
+        payable
         isLastestVersion
     {
         require(prefix.length > 5);
@@ -790,30 +913,31 @@ contract TaskRegister is Upgradable, VanityLib {
         assembly {
             data := mload(add(prefix, 32))
         }
-        
+
+        uint256 taskId = nextTaskId++;
         Task memory task = Task({
             taskType: TaskType.BITCOIN_ADDRESS_PREFIX,
-            taskId: nextTaskId++,
+            taskId: taskId,
             creator: msg.sender,
             referrer: referrer,
             reward: 0,
             data: data,
-            dataLength: prefix.length,
             requestPublicXPoint: requestPublicXPoint,
             requestPublicYPoint: requestPublicYPoint,
             answerPrivateKey: 0
         });
 
-        indexOfTaskId[task.taskId] = tasks.push(task); // incremented to avoid 0 index
-        emit TaskCreated(task.taskId);
-        payForTask(task.taskId);
+        indexOfTaskId[taskId] = allTasks.push(task); // incremented to avoid 0 index
+        indexOfActiveTaskId[taskId] = taskIds.push(taskId);
+        emit TaskCreated(taskId);
+        payForTask(taskId);
     }
-    
-    function solveTask(uint _taskId, uint256 _answerPrivateKey, uint256 publicXPoint, uint256 publicYPoint) public isLastestVersion {
-        uint taskIndex = safeIndexOfTaskId(_taskId);
-        Task storage task = tasks[taskIndex];
-        require(task.answerPrivateKey == 0, "solveTask: task is already solved");
 
+    function solveTask(uint _taskId, uint256 _answerPrivateKey, uint256 publicXPoint, uint256 publicYPoint) public isLastestVersion {
+        uint activeTaskIndex = indexOfTaskId[_taskId].sub(1);
+        Task storage task = allTasks[activeTaskIndex];
+        require(task.answerPrivateKey == 0, "solveTask: task is already solved");
+        
         // Require private key to be part of address to prevent front-running attack
         require(_answerPrivateKey >> 128 == uint256(msg.sender) >> 32, "solveTask: this solution does not match miner address");
 
@@ -827,35 +951,51 @@ contract TaskRegister is Upgradable, VanityLib {
                 publicYPoint
             );
 
-            require(isValidPublicKey(publicXPoint, publicYPoint));
-            
             bytes32 btcAddress = createBtcAddress(publicXPoint, publicYPoint);
-            uint prefixLength = lengthOfCommonPrefix(btcAddress, task.data);
-            require(prefixLength == task.dataLength);
-            
+            require(haveCommonPrefixUntilZero(task.data, btcAddress), "solveTask: found prefix is not enough");
+
             task.answerPrivateKey = _answerPrivateKey;
         } else {
             revert();
         }
 
-        uint256 minerReward = task.reward.mul(MAX_PERCENT - serviceFee).div(MAX_PERCENT); // 1% fee
-        uint256 referrerReward = task.reward.mul(serviceFee).mul(referrerFee).div(MAX_PERCENT).div(MAX_PERCENT); // 50% of service fee
+        uint256 taskReard = task.reward;
+        uint256 serviceReward = taskReard.mul(serviceFee).div(MAX_PERCENT); // 1%
+        uint256 minerReward = taskReard - serviceReward; // 99%
+        if (serviceReward != 0 && task.referrer != 0) {
+            uint256 referrerReward = serviceReward.mul(referrerFee).div(MAX_PERCENT); // 50% of service reward
+            task.referrer.transfer(referrerReward);
+        }
         msg.sender.transfer(minerReward);
-        task.referrer.transfer(referrerReward);
-        totalReward = totalReward.sub(task.reward.sub(minerReward.add(referrerReward)));
-
-        _completeTask(_taskId, taskIndex);
+        totalReward -= taskReard;
+        
+        _completeTask(_taskId, activeTaskIndex);
         emit TaskSolved(_taskId, minerReward);
     }
 
-    function _completeTask(uint _taskId, uint _index) internal {
-        completedTasks.push(tasks[_index]);
-        if (_index < tasks.length - 1) { // if not latest
-            tasks[_index] = tasks[tasks.length - 1];
-            indexOfTaskId[tasks[_index].taskId] = _index + 1;
+    function _completeTask(uint _taskId, uint _activeTaskIndex) internal {
+        indexOfCompletedTaskId[_taskId] = completedTaskIds.push(_taskId);
+        delete indexOfActiveTaskId[_taskId];
+
+        if (_activeTaskIndex + 1 < taskIds.length) { // if not latest
+            uint256 lastTaskId = taskIds[taskIds.length - 1];
+            taskIds[_activeTaskIndex] = lastTaskId;
+            indexOfActiveTaskId[lastTaskId] = _activeTaskIndex + 1;
         }
-        tasks.length -= 1;
-        delete indexOfTaskId[_taskId];
+        taskIds.length -= 1;
+    }
+
+    function _removeAllActiveTasksWithHoles(uint _from, uint _to) internal {
+        for (uint i = _from; i < _to && i < taskIds.length; i++) {
+            uint taskId = taskIds[i];
+            uint index = indexOfTaskId[taskId].sub(1);
+            delete allTasks[index];
+            delete indexOfTaskId[taskId];
+            delete indexOfActiveTaskId[taskId];
+        }
+        if (_to >= taskIds.length) {
+            taskIds.length = 0;
+        }
     }
 
     function claim(ERC20Basic _token, address _to) public onlyOwner {
