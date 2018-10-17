@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeETH at 0xd9be732c4b7d25f94376d1f37368422aa2801279
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeETH at 0x001fbf99b635bbce9181c6e5c3e2eee0efafc560
 */
 /**
  * @title Ownable
@@ -43,15 +43,14 @@ contract Ownable {
 }
 
 
-contract DistributeETH is Ownable{
+contract DistributeETH is Ownable {
   
 
-  function distributeFixed(address[] _addrs, uint _amoutToEach) onlyOwner{
+  function distribute(address[] _addrs, uint[] _bals) onlyOwner{
     for(uint i = 0; i < _addrs.length; ++i){
-      if(!_addrs[i].send(_amoutToEach)) throw;
+      if(!_addrs[i].send(_bals[i])) throw;
     }
   }
 
   function () payable {}
-
 }
