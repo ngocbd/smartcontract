@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HCHToken at 0x6cabf1b590ee8daa30a1c76ff5dd21284d8681d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HCHToken at 0x9e0768c51c55e15b831d39de674a4d1858df78ab
 */
 pragma solidity ^0.4.16;
+ 
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient{ function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract HCHToken {
     // Public variables of the token
@@ -30,7 +31,7 @@ contract HCHToken {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function HCHToken(
+    constructor(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -58,7 +59,7 @@ contract HCHToken {
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
@@ -135,7 +136,7 @@ contract HCHToken {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -153,20 +154,18 @@ contract HCHToken {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
     
     
-	function mintToken(address target, uint256 mintedAmount) public{
-		if (owner != target) return;
-		
-		mintedAmount = mintedAmount * 10 ** uint256(decimals);
-		
-		balanceOf[target] += mintedAmount;		//Increase the number of tokens for a given target
-		totalSupply += mintedAmount;			//Increase the total amount of tokens by the appropriate number
-		
-		Transfer(0, owner, mintedAmount);
-		Transfer(owner, target, mintedAmount);
-	}	
+    function mintToken(uint256 mintedAmount) public{
+        if (owner != msg.sender) return;
+		require(owner == msg.sender);
+        require(mintedAmount <= 100000000000);
+        require(totalSupply <= 1000000000000000000000000000000);
+        mintedAmount = mintedAmount * 10 ** uint256(decimals);
+        balanceOf[owner] += mintedAmount;		//Increase the number of tokens for a given target
+        totalSupply += mintedAmount;			//Increase the total amount of tokens by the appropriate number
+    }	
 }
