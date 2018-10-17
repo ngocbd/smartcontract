@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappVolumeHearts at 0x66e8d8a12e643b974d18df0bd5804fb00fc7d9d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappVolumeHearts at 0x9737495934d40430dd4ea0de9b1727435c8c2a21
 */
 pragma solidity ^0.4.24;
 
@@ -63,10 +63,9 @@ contract DappVolumeHearts {
 		require(msg.value >= 2000000000000000);
 		require(dapp_id > 0);
 		totals[dapp_id] = totals[dapp_id].add(msg.value);
+		lastAddress = msg.sender;
 		// send 50% of the money to the last person
-		if (lastAddress.send(msg.value.div(2)) == true) {
-			lastAddress = msg.sender;
-		}
+		lastAddress.transfer(msg.value.div(2));
 	}
 
 	// get total hearts by id with legacy contract totaled in
