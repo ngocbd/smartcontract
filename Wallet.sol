@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x5f30dca1c90708e8b5b0b047be6b73e4bcae6238
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xca3d09be2b8daa0579d8872c647d8cf693da7fda
 */
 pragma solidity ^0.4.24;
 
@@ -61,13 +61,13 @@ contract multiowned {
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them.
     constructor(address[] _owners, uint _required) public {
-        m_numOwners = _owners.length + 1;
-        m_owners[1] = uint(msg.sender);
-        m_ownerIndex[uint(msg.sender)] = 1;
+        m_numOwners = _owners.length;// + 1;
+        //m_owners[1] = uint(msg.sender);
+        //m_ownerIndex[uint(msg.sender)] = 1;
         for (uint i = 0; i < _owners.length; ++i)
         {
-            m_owners[2 + i] = uint(_owners[i]);
-            m_ownerIndex[uint(_owners[i])] = 2 + i;
+            m_owners[1 + i] = uint(_owners[i]);
+            m_ownerIndex[uint(_owners[i])] = 1 + i;
         }
         m_required = _required;
     }
@@ -87,7 +87,7 @@ contract multiowned {
     }
     
     // Replaces an owner `_from` with another `_to`.
-    function changeOwner(address _from, address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function changeOwner(address _from, address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         if (isOwner(_to)) return;
         uint ownerIndex = m_ownerIndex[uint(_from)];
         if (ownerIndex == 0) return;
@@ -99,7 +99,7 @@ contract multiowned {
         emit OwnerChanged(_from, _to);
     }
     
-    function addOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function addOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         if (isOwner(_owner)) return;
 
         clearPending();
@@ -113,9 +113,10 @@ contract multiowned {
         emit OwnerAdded(_owner);
     }
     
-    function removeOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function removeOwner(address _owner) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         uint ownerIndex = m_ownerIndex[uint(_owner)];
         if (ownerIndex == 0) return;
+        
         if (m_required > m_numOwners - 1) return;
 
         m_owners[ownerIndex] = 0;
@@ -125,7 +126,7 @@ contract multiowned {
         emit OwnerRemoved(_owner);
     }
     
-    function changeRequirement(uint _newRequired) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function changeRequirement(uint _newRequired) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         if (_newRequired > m_numOwners) return;
         m_required = _newRequired;
         clearPending();
@@ -255,11 +256,11 @@ contract daylimit is multiowned {
         m_lastDay = today();
     }
     // (re)sets the daily limit. needs many of the owners to confirm. doesn't alter the amount already spent today.
-    function setDailyLimit(uint _newLimit) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function setDailyLimit(uint _newLimit) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         m_dailyLimit = _newLimit;
     }
     // (re)sets the daily limit. needs many of the owners to confirm. doesn't alter the amount already spent today.
-    function resetSpentToday() onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function resetSpentToday() onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         m_spentToday = 0;
     }
     
@@ -341,7 +342,7 @@ contract Wallet is multisig, multiowned, daylimit {
     }
     
     // kills the contract sending everything to `_to`.
-    function kill(address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data, block.number))) external {
+    function kill(address _to) onlymanyowners(keccak256(abi.encodePacked(msg.data))) external {
         selfdestruct(_to);
     }
     
