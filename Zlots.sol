@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x69e92cbd8f1b870ad2612c0b9f2b49324526cb4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zlots at 0x9b43c5d9fd0314a02dd1816fab7a2876f1eacc51
 */
 pragma solidity ^0.4.24;
 
@@ -261,6 +261,9 @@ contract Zlots is ZethrShell {
     uint  public totalSpins;
     uint  public totalZTHWagered;
     mapping (uint => uint) public contractBalance;
+
+    // How many ZTH are in the contract?
+    mapping(uint => uint) public maxBet;
     
     // Is betting allowed? (Administrative function, in the event of unforeseen bugs)
     bool public gameActive;
@@ -319,7 +322,8 @@ contract Zlots is ZethrShell {
 
         require(gameActive);
         require(1e18 <= _tkn.value); // Must send at least one ZTH per spin.
-
+        
+        require(_tkn.value < ((2 ** 200) - 1));   // Smaller than the storage of 1 uint200;
         require(block.number < ((2 ** 56) - 1));  // Current block number smaller than storage of 1 uint56
 
         address _customerAddress = _tkn.sender;
@@ -355,6 +359,7 @@ contract Zlots is ZethrShell {
         totalZTHWagered += _wagered;
 
         emit TokensWagered(_customerAddress, _wagered);
+
     }
 
     // Finish the current spin of a player, if they have one
@@ -362,7 +367,7 @@ contract Zlots is ZethrShell {
         gameIsActive
         returns (uint)
     {
-        return _finishSpin(msg.sender);
+      return _finishSpin(msg.sender);
     }
 
     // Pay winners, update contract balance, send rewards where applicable.
