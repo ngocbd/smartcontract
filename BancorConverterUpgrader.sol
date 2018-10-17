@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0xfae75ba2bb591a74cbca330174e9736403984bd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterUpgrader at 0xaebf1085dd9a0fa403a75399c956595e3a7c3d5c
 */
 pragma solidity ^0.4.21;
 
@@ -99,16 +99,17 @@ contract IBancorConverterExtended is IBancorConverter, IOwned {
     function reserveTokenCount() public view returns (uint16);
     function connectorTokens(uint256 _index) public view returns (IERC20Token) { _index; }
     function reserveTokens(uint256 _index) public view returns (IERC20Token) { _index; }
-    function setConversionWhitelist(IWhitelist _whitelist) public view;
+    function setConversionWhitelist(IWhitelist _whitelist) public;
     function getQuickBuyPathLength() public view returns (uint256);
-    function transferTokenOwnership(address _newOwner) public view;
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public view;
-    function acceptTokenOwnership() public view;
-    function transferManagement(address _newManager) public view;
+    function transferTokenOwnership(address _newOwner) public;
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+    function acceptTokenOwnership() public;
+    function transferManagement(address _newManager) public;
     function acceptManagement() public;
-    function setConversionFee(uint32 _conversionFee) public view;
-    function setQuickBuyPath(IERC20Token[] _path) public view;
-    function addConnector(IERC20Token _token, uint32 _weight, bool _enableVirtualBalance) public view;
+    function setConversionFee(uint32 _conversionFee) public;
+    function setQuickBuyPath(IERC20Token[] _path) public;
+    function addConnector(IERC20Token _token, uint32 _weight, bool _enableVirtualBalance) public;
+    function updateConnector(IERC20Token _connectorToken, uint32 _weight, bool _enableVirtualBalance, uint256 _virtualBalance) public;
     function getConnectorBalance(IERC20Token _connectorToken) public view returns (uint256);
     function getReserveBalance(IERC20Token _reserveToken) public view returns (uint256);
     function connectors(address _address) public view returns (
@@ -178,9 +179,19 @@ contract Owned is IOwned {
     Can be used in conjunction with the contract registry to get contract addresses
 */
 contract ContractIds {
+    // generic
+    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
+
+    // bancor logic
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
     bytes32 public constant BANCOR_FORMULA = "BancorFormula";
-    bytes32 public constant CONTRACT_FEATURES = "ContractFeatures";
+    bytes32 public constant BANCOR_GAS_PRICE_LIMIT = "BancorGasPriceLimit";
+
+    bytes32 public constant BANCOR_CONVERTER_FACTORY = "BancorConverterFactory";
+    bytes32 public constant BANCOR_CONVERTER_UPGRADER = "BancorConverterUpgrader";
+
+    // tokens
+    bytes32 public constant BNT_TOKEN = "BNTToken";
 }
 
 /**
@@ -353,6 +364,9 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
 
             IERC20Token connectorToken = IERC20Token(connectorAddress);
             _newConverter.addConnector(connectorToken, weight, isVirtualBalanceEnabled);
+
+            if (isVirtualBalanceEnabled)
+                _newConverter.updateConnector(connectorToken, weight, isVirtualBalanceEnabled, virtualBalance);
         }
     }
 
@@ -404,7 +418,7 @@ contract BancorConverterUpgrader is Owned, ContractIds, FeatureIds {
         for (uint16 i = 0; i < connectorTokenCount; i++) {
             address connectorAddress = _isLegacyVersion ? _oldConverter.reserveTokens(i) : _oldConverter.connectorTokens(i);
             IERC20Token connector = IERC20Token(connectorAddress);
-            connectorBalance = _isLegacyVersion ? _oldConverter.getReserveBalance(connector) : _oldConverter.getConnectorBalance(connector);
+            connectorBalance = connector.balanceOf(_oldConverter);
             _oldConverter.withdrawTokens(connector, address(_newConverter), connectorBalance);
         }
     }
