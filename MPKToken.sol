@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MPKToken at 0x0626f2d6a9cc991546992dbded6882cd88bf99a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MPKToken at 0xc2701403c4415fa55a3487b571da63f5092fb9cb
 */
 pragma solidity ^0.4.11;
 
@@ -168,8 +168,9 @@ contract MPKToken is StandardToken {
     * @dev Creates a new MPKToken instance
     */
   function MPKToken()public {
-    totalSupply = 5 * (10 ** 8) * (10 ** 18);
+    totalSupply = 5 * (10 ** 7) * (10 ** 18);
     balances[0xc47fe4093c90b4480f8c84928d262207Fc0aDeEB] = totalSupply;
+	emit Transfer(0, 0xc47fe4093c90b4480f8c84928d262207Fc0aDeEB, totalSupply );
   }
 
 }
