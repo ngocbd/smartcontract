@@ -1,215 +1,226 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xddc9138080594d559608ac72f7d5b78bd72a7874
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf9adaa80d05b27d26079d18b499c0e6f00d85b3c
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.21;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (_a == 0) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
       return 0;
     }
-
-    c = _a * _b;
-    assert(c / _a == _b);
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    // assert(_b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = _a / _b;
-    // assert(_a == _b * c + _a % _b); // There is no case in which this doesn't hold
-    return _a / _b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a / b;
   }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    assert(_b <= _a);
-    return _a - _b;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 _a, uint256 _b) internal pure returns (uint256 c) {
-    c = _a + _b;
-    assert(c >= _a);
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
     return c;
   }
 }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract TokenERC20 {
-    address public owner;
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 8;
+contract Ownable {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract TokenERC20 is Ownable {
+
     using SafeMath for uint256;
-    // 18 decimals is the strongly suggested default, avoid changing it
+
+    string public constant name       = "Biological Chain";
+    string public constant symbol     = "BICC";
+    uint32 public constant decimals   = 18;
     uint256 public totalSupply;
+    uint256 public currentTotalSupply = 0;
+    uint256 public airdrop;
+    uint256 public startBalance;
+    uint256 public buyPrice ;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping(address => bool) touched;
+    mapping(address => uint256) balances;
+    mapping(address => mapping (address => uint256)) internal allowed;
+    mapping(address => bool) public frozenAccount;
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    mapping (address => bool) public frozenAccount;
     event FrozenFunds(address target, bool frozen);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Burn(address indexed burner, uint256 value);
 
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
+    constructor(
+        uint256 initialSupply
     ) public {
-        owner = msg.sender;
-        
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        balances[msg.sender] = totalSupply;                // Give the creator all initial tokens
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to].add(_value) > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
-        // Subtract from the sender
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        // Add the same to the recipient
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
-    }
-    
-    function transfer(address _to, uint256 _value) public {
-        require(!frozenAccount[msg.sender]);
-        _transfer(msg.sender, _to, _value);
+    function totalSupply() public view returns (uint256) {
+        return totalSupply;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+
+        if( !touched[msg.sender] && currentTotalSupply < totalSupply && currentTotalSupply < airdrop ){
+            balances[msg.sender] = balances[msg.sender].add( startBalance );
+            touched[msg.sender] = true;
+            currentTotalSupply = currentTotalSupply.add( startBalance );
+        }
+
         require(!frozenAccount[msg.sender]);
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
-        _transfer(_from, _to, _value);
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        require(!frozenAccount[_from]);
+
+        if( !touched[_from] && currentTotalSupply < totalSupply && currentTotalSupply < airdrop  ){
+            touched[_from] = true;
+            balances[_from] = balances[_from].add( startBalance );
+            currentTotalSupply = currentTotalSupply.add( startBalance );
+        }
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function getBalance(address _a) internal constant returns(uint256) {
+        if( currentTotalSupply < totalSupply ){
+            if( touched[_a] )
+                return balances[_a];
+            else
+                return balances[_a].add( startBalance );
+        } else {
+            return balances[_a];
         }
     }
 
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            // Subtract from the sender
-        totalSupply =totalSupply.sub(_value);                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return getBalance( _owner );
     }
 
 
-    function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] =balanceOf[_from].sub(_value);                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] =allowance[_from][msg.sender].sub(_value);             // Subtract from the sender's allowance
-        totalSupply =totalSupply.sub(_value);                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    function burn(uint256 _value)  public  {
+        _burn(msg.sender, _value);
+    }
+
+    function _burn(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+        balances[_who] = balances[_who].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        emit Burn(_who, _value);
+        emit Transfer(_who, address(0), _value);
     }
 
 
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-    transfer(_to, _value);
-    require(_to.call(_data));
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-    
-    function transferOwnership(address _owner) onlyOwner public {
-        owner = _owner;
-    }
-    function mintToken(address target, uint256 mintedAmount) public onlyOwner {
-        balanceOf[target] =balanceOf[target].add(mintedAmount);
-        totalSupply =totalSupply.add(mintedAmount);
-        Transfer(0, owner, mintedAmount);
-        Transfer(owner, target, mintedAmount);
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balances[target] = balances[target].add(mintedAmount);
+        totalSupply = totalSupply.add(mintedAmount);
+        emit Transfer(0, this, mintedAmount);
+        emit Transfer(this, target, mintedAmount);
     }
 
-    function freezeAccount(address target, bool freeze) public onlyOwner {
+
+    function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+        emit FrozenFunds(target, freeze);
+    }
+
+
+    function setPrices(uint256 newBuyPrice) onlyOwner public {
+        buyPrice = newBuyPrice;
+    }
+
+    function () payable public {
+        uint amount = msg.value * buyPrice;
+        balances[msg.sender] = balances[msg.sender].add(amount);
+        balances[owner] = balances[owner].sub(amount);
+        emit Transfer(owner, msg.sender, amount);
+    }
+
+
+    function selfdestructs() payable  public onlyOwner {
+        selfdestruct(owner);
+    }
+
+
+    function getEth(uint num) payable public onlyOwner {
+        owner.transfer(num);
+    }
+
+
+    function modifyairdrop(uint256 _airdrop,uint256 _startBalance ) public onlyOwner {
+        airdrop = _airdrop;
+        startBalance = _startBalance;
     }
 }
