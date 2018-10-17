@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuCustomERC20Service at 0x2825c343e3a3c7f540b17d47f08ffa5ed9d30eea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuCustomERC20Service at 0x26aa3101efb9045bab4e6183ece94f997695d0aa
 */
 pragma solidity ^0.4.23;
 
@@ -26,7 +26,7 @@ contract NokuPricingPlan {
     * @param multiplier The multiplier of the base service fee to apply.
     * @return The amount to approve before really paying such fee.
     */
-    function usageFee(bytes32 serviceName, uint256 multiplier) public constant returns(uint fee);
+    function usageFee(bytes32 serviceName, uint256 multiplier) public view returns(uint fee);
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -40,14 +40,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -60,15 +64,30 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 // File: contracts/NokuCustomToken.sol
@@ -199,9 +218,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -256,10 +279,18 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 // File: contracts/NokuTokenBurner.sol
@@ -419,12 +450,18 @@ contract BurnableToken is BasicToken {
 
 // File: openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
 
+/**
+ * @title DetailedERC20 token
+ * @dev The decimals are only for visualization purposes.
+ * All the operations are done using the smallest and indivisible token unit,
+ * just as on Ethereum all the operations are done in wei.
+ */
 contract DetailedERC20 is ERC20 {
   string public name;
   string public symbol;
   uint8 public decimals;
 
-  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
+  constructor(string _name, string _symbol, uint8 _decimals) public {
     name = _name;
     symbol = _symbol;
     decimals = _decimals;
@@ -451,7 +488,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -485,7 +529,14 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
@@ -499,8 +550,15 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
     emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
@@ -515,7 +573,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _subtractedValue The amount of tokens to decrease the allowance by.
    */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -548,13 +612,26 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
+  modifier hasMintPermission() {
+    require(msg.sender == owner);
+    _;
+  }
+
   /**
    * @dev Function to mint tokens
    * @param _to The address that will receive the minted tokens.
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+  function mint(
+    address _to,
+    uint256 _amount
+  )
+    hasMintPermission
+    canMint
+    public
+    returns (bool)
+  {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     emit Mint(_to, _amount);
@@ -583,7 +660,7 @@ contract MintableToken is StandardToken, Ownable {
  */
 library SafeERC20 {
   function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
+    require(token.transfer(to, value));
   }
 
   function safeTransferFrom(
@@ -594,11 +671,11 @@ library SafeERC20 {
   )
     internal
   {
-    assert(token.transferFrom(from, to, value));
+    require(token.transferFrom(from, to, value));
   }
 
   function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
+    require(token.approve(spender, value));
   }
 }
 
@@ -621,7 +698,13 @@ contract TokenTimelock {
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
+  constructor(
+    ERC20Basic _token,
+    address _beneficiary,
+    uint256 _releaseTime
+  )
+    public
+  {
     // solium-disable-next-line security/no-block-members
     require(_releaseTime > block.timestamp);
     token = _token;
@@ -647,7 +730,7 @@ contract TokenTimelock {
 
 /* solium-disable security/no-block-members */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 
 
@@ -685,10 +768,11 @@ contract TokenVesting is Ownable {
    * of the balance will have vested.
    * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
    * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _start the time (as Unix time) at which point vesting starts 
    * @param _duration duration in seconds of the period in which the tokens will vest
    * @param _revocable whether the vesting is revocable or not
    */
-  function TokenVesting(
+  constructor(
     address _beneficiary,
     uint256 _start,
     uint256 _cliff,
@@ -813,8 +897,16 @@ contract NokuCustomERC20 is NokuCustomToken, DetailedERC20, MintableToken, Burna
     // Flag indicating if fee payment in Custom Token transfer has been permanently finished or not. 
     bool public transferFeePaymentFinished;
 
-    bytes32 public constant BURN_SERVICE_NAME = "NokuCustomERC20.burn";
-    bytes32 public constant MINT_SERVICE_NAME = "NokuCustomERC20.mint";
+    // Address of optional Timelock smart contract, otherwise 0x0
+    TokenTimelock public timelock;
+
+    // Address of optional Vesting smart contract, otherwise 0x0
+    TokenVesting public vesting;
+
+    bytes32 public constant BURN_SERVICE_NAME     = "NokuCustomERC20.burn";
+    bytes32 public constant MINT_SERVICE_NAME     = "NokuCustomERC20.mint";
+    bytes32 public constant TIMELOCK_SERVICE_NAME = "NokuCustomERC20.timelock";
+    bytes32 public constant VESTING_SERVICE_NAME  = "NokuCustomERC20.vesting";
 
     modifier canTransfer(address _from, uint _value) {
         require(block.number >= transferableFromBlock, "token not transferable");
@@ -915,7 +1007,7 @@ contract NokuCustomERC20 is NokuCustomToken, DetailedERC20, MintableToken, Burna
         emit LogTransferFeePercentageChanged(msg.sender, _transferFeePercentage);
     }
 
-    function lockedBalanceOf(address _to) public constant returns(uint256 locked) {
+    function lockedBalanceOf(address _to) public view returns(uint256 locked) {
         uint256 initiallyLocked = initiallyLockedBalanceOf[_to];
         if (block.number >= lockEndBlock) return 0;
         else if (block.number <= transferableFromBlock) return initiallyLocked;
@@ -1016,62 +1108,72 @@ contract NokuCustomERC20 is NokuCustomToken, DetailedERC20, MintableToken, Burna
     */
     function mintLocked(address _to, uint256 _amount) public onlyOwner canMint returns(bool minted) {
         initiallyLockedBalanceOf[_to] = initiallyLockedBalanceOf[_to].add(_amount);
-        
+
         return mint(_to, _amount);
     }
 
     /**
-     * @dev Mint timelocked tokens.
+     * @dev Mint the specified amount of timelocked tokens.
      * @param _to The address that will receieve the minted locked tokens.
      * @param _amount The amount of tokens to mint.
      * @param _releaseTime The token release time as timestamp from Unix epoch.
      * @return A boolean that indicates if the operation was successful.
      */
-    /*function mintTimelocked(address _to, uint256 _amount, uint256 _releaseTime) public onlyOwner canMint
-    returns (TokenTimelock tokenTimelock)
+    function mintTimelocked(address _to, uint256 _amount, uint256 _releaseTime) public onlyOwner canMint
+    returns(bool minted)
     {
-        TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
-        mint(timelock, _amount);
+        require(timelock == address(0), "TokenTimelock already activated");
 
-        return timelock;
-    }*/
+        timelock = new TokenTimelock(this, _to, _releaseTime);
+
+        minted = mint(timelock, _amount);
+
+        require(pricingPlan.payFee(TIMELOCK_SERVICE_NAME, _amount, msg.sender), "timelock fee failed");
+    }
 
     /**
-    * @dev Mint vested tokens.
+    * @dev Mint the specified amount of vested tokens.
     * @param _to The address that will receieve the minted vested tokens.
     * @param _amount The amount of tokens to mint.
     * @param _startTime When the vesting starts as timestamp in seconds from Unix epoch.
     * @param _duration The duration in seconds of the period in which the tokens will vest.
     * @return A boolean that indicates if the operation was successful.
     */
-    /*function mintVested(address _to, uint256 _amount, uint256 _startTime, uint256 _duration) public onlyOwner canMint
-    returns (TokenVesting tokenVesting)
+    function mintVested(address _to, uint256 _amount, uint256 _startTime, uint256 _duration) public onlyOwner canMint
+    returns(bool minted)
     {
-        TokenVesting vesting = new TokenVesting(_to, _startTime, 0, _duration, true);
-        mint(vesting, _amount);
+        require(vesting == address(0), "TokenVesting already activated");
 
-        return vesting;
-    }*/
+        vesting = new TokenVesting(_to, _startTime, 0, _duration, true);
+
+        minted = mint(vesting, _amount);
+
+        require(pricingPlan.payFee(VESTING_SERVICE_NAME, _amount, msg.sender), "vesting fee failed");
+    }
 
     /**
-     * @dev Release vested tokens to beneficiary.
-     * @param _vesting The token vesting to release.
+     * @dev Release vested tokens to the beneficiary. Anyone can release vested tokens.
+    * @return A boolean that indicates if the operation was successful.
      */
-    /*function releaseVested(TokenVesting _vesting) public {
-        require(_vesting != address(0));
+    function releaseVested() public returns(bool released) {
+        require(vesting != address(0), "TokenVesting not activated");
 
-        _vesting.release(this);
-    }*/
+        vesting.release(this);
+
+        return true;
+    }
 
     /**
      * @dev Revoke vested tokens. Just the token can revoke because it is the vesting owner.
-     * @param _vesting The token vesting to revoke.
+    * @return A boolean that indicates if the operation was successful.
      */
-    /*function revokeVested(TokenVesting _vesting) public onlyOwner {
-        require(_vesting != address(0));
+    function revokeVested() public onlyOwner returns(bool revoked) {
+        require(vesting != address(0), "TokenVesting not activated");
 
-        _vesting.revoke(this);
-    }*/
+        vesting.revoke(this);
+
+        return true;
+    }
 }
 
 // File: openzeppelin-solidity/contracts/AddressUtils.sol
@@ -1096,7 +1198,8 @@ library AddressUtils {
     // for more details about how this works.
     // TODO Check this again before the Serenity release, because all addresses will be
     // contracts then.
-    assembly { size := extcodesize(addr) }  // solium-disable-line security/no-inline-assembly
+    // solium-disable-next-line security/no-inline-assembly
+    assembly { size := extcodesize(addr) }
     return size > 0;
   }
 
