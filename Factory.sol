@@ -1,124 +1,100 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xee7f6f97857cb098624e3fb50008311d34ae15ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x907240eade494397e0721bb7c4de67bd1205d236
 */
-pragma solidity ^0.4.15;
-
-contract Factory{
-    
-    //Adress of creator
-    address private creator;
-
-    // Addresses of owners
-    address private owner1 = 0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555;
-    address private owner2 = 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121;
-    address private owner3 = 0x680d821fFE703762E7755c52C2a5E8556519EEDc;
-  
-    //List of deployed Forwarders
-    address[] public deployed_forwarders;
-    
-    //Get number of forwarders created
-    uint public forwarders_count = 0;
-    
-    //Last forwarder create
-    address public last_forwarder_created;
-  
-    //Only owners can generate a forwarder
-    modifier onlyOwnerOrCreator {
-      require(msg.sender == owner1 || msg.sender == owner2 || msg.sender == owner3 || msg.sender == creator);
-      _;
-    }
-  
-    //Constructor
-    constructor() public {
-        creator = msg.sender;
-    }
-  
-    //Create new Forwarder
-    function create_forwarder() public onlyOwnerOrCreator {
-        address new_forwarder = new Forwarder();
-        deployed_forwarders.push(new_forwarder);
-        last_forwarder_created = new_forwarder;
-        forwarders_count += 1;
-    }
-    
-    //Get deployed forwarders
-    function get_deployed_forwarders() public view returns (address[]) {
-        return deployed_forwarders;
-    }
-
+contract Registry {
+    function owner(bytes32 node) public view returns (address) {}
 }
 
-contract Forwarder {
-    
-  // Address to which any funds sent to this contract will be forwarded
-  address private parentAddress = 0x7aeCf441966CA8486F4cBAa62fa9eF2D557f9ba7;
-  
-  // Addresses of people who can flush ethers and tokenContractAddress
-  address private owner1 = 0x6CAa636cFFbCbb2043A3322c04dE3f26b1fa6555;
-  address private owner2 = 0xbc2d90C2D3A87ba3fC8B23aA951A9936A6D68121;
-  address private owner3 = 0x680d821fFE703762E7755c52C2a5E8556519EEDc;
-  
-  event ForwarderDeposited(address from, uint value, bytes data);
-
-  /**
-   * Create the contract.
-   */
-  constructor() public {
-  }
-
-  /**
-   * Modifier that will execute internal code block only if the sender is among owners.
-   */
-  modifier onlyOwner {
-    require(msg.sender == owner1 || msg.sender == owner2 || msg.sender == owner3);
-    _;
-  }
-
-  /**
-   * Default function; Gets called when Ether is deposited, and forwards it to the parent address
-   */
-  function() public payable {
-    // throws on failure
-    parentAddress.transfer(msg.value);
-    // Fire off the deposited event if we can forward it
-    emit ForwarderDeposited(msg.sender, msg.value, msg.data);
-  }
-
-
-  /**
-   * Execute a token transfer of the full balance from the forwarder token to the parent address
-   * @param tokenContractAddress the address of the erc20 token contract
-   */
-  function flushTokens(address tokenContractAddress) public onlyOwner {
-    ERC20Interface instance = ERC20Interface(tokenContractAddress);
-    address forwarderAddress = address(this);
-    uint forwarderBalance = instance.balanceOf(forwarderAddress);
-    if (forwarderBalance == 0) {
-      return;
-    }
-    if (!instance.transfer(parentAddress, forwarderBalance)) {
-      revert();
-    }
-  }
-
-  /**
-   * It is possible that funds were sent to this address before the contract was deployed.
-   * We can flush those funds to the parent address.
-   */
-  function flush() public onlyOwner {
-    // throws on failure
-    uint my_balance = address(this).balance;
-    if (my_balance == 0){
-        return;
-    } else {
-        parentAddress.transfer(address(this).balance);
-    }
-  }
+contract Registrar { 
+    modifier onlyOwner(bytes32 _hash) { _; }
+    function transfer(bytes32 _hash, address newOwner) onlyOwner(_hash) {}
 }
 
-contract ERC20Interface {
-  // Send _value amount of tokens to address _to
-  function transfer(address _to, uint256 _value) public returns (bool success);
-  // Get the account balance of another account with address _owner
-  function balanceOf(address _owner) public constant returns (uint256 balance);
+contract PublicResolver {
+    modifier only_owner(bytes32 node) { _; }
+    function setAddr(bytes32 node, address addr) only_owner(node) {}
+    function setContent(bytes32 node, bytes32 hash) only_owner(node) {}
+    function setName(bytes32 node, string name) only_owner(node) {}
+    function setABI(bytes32 node, uint256 contentType, bytes data) only_owner(node) {}
+    function setPubkey(bytes32 node, bytes32 x, bytes32 y) only_owner(node) {}
+    function setText(bytes32 node, string key, string value) only_owner(node) {}
+}
+
+contract ENS_Permissions {
+
+    Registry registry = Registry(0x314159265dD8dbb310642f98f50C066173C1259b);
+    Registrar registrar = Registrar(0x6090A6e47849629b7245Dfa1Ca21D94cd15878Ef);
+    PublicResolver publicResolver = PublicResolver(0x5FfC014343cd971B7eb70732021E26C35B744cc4);
+
+    address owner;
+    bytes32 labelhash;
+    bytes32 namehash;
+
+    constructor(address _owner) {
+        owner = _owner;
+    }
+
+    modifier only_owner {
+        require(owner == msg.sender);
+        _;
+    }
+
+    struct Permissions {
+        uint ownerMutability;
+        uint addressMutability;
+        mapping(string => uint) textKeyMutability;
+    }
+
+    Permissions permissions;
+
+    function setOwner(address _newOwner) only_owner {
+        owner = _newOwner;
+    }
+
+    function activatePermissionsBot(bytes32 _namehash, bytes32 _labelhash) only_owner {
+        require(registry.owner(_namehash) == address(this));
+        require(labelhash == 0 && namehash == 0);
+        labelhash = _labelhash;
+        namehash = _namehash;
+    }
+
+    function lockOwnership(uint _date) only_owner {
+        require(permissions.ownerMutability < block.timestamp);
+        require(_date > block.timestamp);
+        permissions.ownerMutability == _date;
+    }
+    function lockAddress(uint _date) only_owner {
+        require(permissions.ownerMutability > _date);
+        require(permissions.addressMutability < block.timestamp);
+        require(_date > block.timestamp);
+        permissions.addressMutability == _date;
+    }
+    function lockTextKey(string _key, uint _date) only_owner {
+        require(permissions.ownerMutability > _date);
+        require(permissions.textKeyMutability[_key] < block.timestamp);
+        require(_date > block.timestamp);
+        permissions.textKeyMutability[_key] == _date;
+    }
+    
+    // Transferring ownership from this contract also destroys the contract
+    function transfer(address _newOwner) only_owner {
+        require(permissions.ownerMutability < block.timestamp);
+        registrar.transfer(labelhash, _newOwner);
+        selfdestruct(msg.sender);
+    }
+    function setAddr(address _addr) only_owner {
+        require(permissions.addressMutability < block.timestamp);
+        publicResolver.setAddr(namehash, _addr);
+    }
+    function setText(string _key, string _value) only_owner {
+        require(permissions.textKeyMutability[_key] < block.timestamp);
+        publicResolver.setText(namehash, _key, _value);
+    }    
+}
+
+contract Factory {
+    function createPermissionsBot(address _owner) returns (address) {
+        ENS_Permissions permissionsBot = new ENS_Permissions(_owner);
+        return permissionsBot;
+    }
 }
