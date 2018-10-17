@@ -1,46 +1,32 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Relay at 0x03d8ca77a89372afb920fa483e4544ad02f3a15a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Relay at 0x26a572eeb6036ae1af510d561f59520f626857b9
 */
-/**
- *  Relay.sol v1.0.0
- * 
- *  Bilal Arif - https://twitter.com/furusiyya_
- *  Notary Platform
- */
-
-pragma solidity ^0.4.16;
-
-// Used for accepting small contributions without whitelist
+pragma solidity 0.4.24;
+// produced by the Solididy File Flattener (c) David Appleton 2018
+// contact : dave@akomba.com
+// released under Apache 2.0 licence
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 contract Ownable {
-     /*
-      @title Ownable
-      @dev The Ownable contract has an owner address, and provides basic authorization control
-      functions, this simplifies the implementation of "user permissions".
-    */
-
   address public owner;
 
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable(address _owner){
-    owner = _owner;
+  function Ownable() public {
+    owner = msg.sender;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-  
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -49,61 +35,75 @@ contract Ownable {
     _;
   }
 
-}
-contract Pausable is Ownable {
-  
-  event Pause(bool indexed state);
-
-  bool private paused = false;
-
   /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
    */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev return the current state of contract
-   */
-  function Paused() external constant returns(bool){ return paused; }
-
-  /**
-   * @dev called by the owner to pause or unpause, triggers stopped state
-   * on first call and returns to normal state on second call
-   */
-  function tweakState() external onlyOwner {
-    paused = !paused;
-    Pause(paused);
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
 }
 
-contract Relay is Pausable{
-  
-    address private crowdfunding;
-    
-    function Relay() 
-        Ownable(0x0587e235a5906ed8143d026de530d77ad82f8a92){
-        crowdfunding = 0x34a3DeB32b4705018F1e543A5867cF01AFf3F15B;
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract Relay is Ownable {
+    address public licenseSalesContractAddress;
+    address public registryContractAddress;
+    address public apiRegistryContractAddress;
+    address public apiCallsContractAddress;
+    uint public version;
+
+    // ------------------------------------------------------------------------
+    // Constructor, establishes ownership because contract is owned
+    // ------------------------------------------------------------------------
+    constructor() public {
+        version = 4;
     }
-    
-    function () payable isMinimum whenNotPaused{
-        crowdfunding.transfer(msg.value);
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens (just in case)
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20(tokenAddress).transfer(owner, tokens);
     }
-    
-    /** Modifier allowing execution only if received value is greater than zero */
-    modifier isMinimum(){
-        require(msg.value <= 2 ether);
-        _;
+
+    // ------------------------------------------------------------------------
+    // Sets the license sales contract address
+    // ------------------------------------------------------------------------
+    function setLicenseSalesContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        licenseSalesContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the registry contract address
+    // ------------------------------------------------------------------------
+    function setRegistryContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        registryContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the api registry contract address
+    // ------------------------------------------------------------------------
+    function setApiRegistryContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        apiRegistryContractAddress = newAddress;
+    }
+
+    // ------------------------------------------------------------------------
+    // Sets the api calls contract address
+    // ------------------------------------------------------------------------
+    function setApiCallsContractAddress(address newAddress) public onlyOwner {
+        require(newAddress != address(0));
+        apiCallsContractAddress = newAddress;
     }
 }
