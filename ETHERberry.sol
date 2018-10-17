@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERberry at 0x1140af17e9dc1b10eb973b148b128dcaf2cc9ecc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHERberry at 0x9e670cb00951d8b573e77db8a5a3109f1e282237
 */
 /*
 etherberry - ethereum strawberry
@@ -34,7 +34,7 @@ contract ETHERberry
         _
     }
     
-    function ETHERanate() 
+    function ETHERberry() 
     {
         owner = msg.sender;
     }
