@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0xf4db7690bb4f617ac0f4c29d627722deef093340
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHandsManager at 0x69c127731fcaeb5c2f9c0841f64714ad15799298
 */
 pragma solidity ^0.4.24;
 
@@ -27,12 +27,13 @@ contract StrongHandsManager {
     
     uint256 internal tokenSupply = 0;
 
-    function getStrong()
+    function getStrong(address _referrer)
         public
+        payable
     {
         require(strongHands[msg.sender] == address(0), "you already became a Stronghand");
         
-        strongHands[msg.sender] = new StrongHand(msg.sender);
+        strongHands[msg.sender] = (new StrongHand).value(msg.value)(msg.sender, _referrer);
         
         emit CreateStrongHand(msg.sender, strongHands[msg.sender]);
     }
@@ -79,11 +80,14 @@ contract StrongHand {
         _;
     }
     
-    constructor(address _owner)
+    constructor(address _owner, address _referrer)
         public
+        payable
     {
         owner = _owner;
         strongHandManager = StrongHandsManagerInterface(msg.sender);
+        
+        purchase(msg.value, _referrer);
     }
     
     function() public payable {}
@@ -99,8 +103,8 @@ contract StrongHand {
     function purchase(uint256 _amount, address _referrer)
         private
     {
-         uint256 amountPurchased = p3dContract.buy.value(_amount)(_referrer);
-         strongHandManager.mint(owner, amountPurchased);
+        uint256 amountPurchased = p3dContract.buy.value(_amount)(_referrer);
+        strongHandManager.mint(owner, amountPurchased);
     }
 
     function withdraw()
