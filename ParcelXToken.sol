@@ -1,50 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXToken at 0xf6a9f4a172fd6812049ac022c3a35a29b9f25ed7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParcelXToken at 0x5d90ef8a83a9bbae19bbd92c73634df0a7294039
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
-/**
-* Standard SafeMath Library: zeppelin-solidity/contracts/math/SafeMath.sol
-*/
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-/**
- * Buy GPX automatically when Ethers are received
- */
-contract Buyable {
-
-    function buy() payable public returns (uint256);
-
-}
-
-
+// File: contracts\Convertible.sol
 
 /**
  * Exchange all my ParcelX token to mainchain GPX
@@ -58,6 +17,8 @@ contract Convertible {
     event Converted(address indexed who, string destinationAccount, uint256 amount, string extra);
 }
 
+// File: contracts\ERC20.sol
+
 /**
  * Starndard ERC20 interface: https://github.com/ethereum/EIPs/issues/20
  */
@@ -66,16 +27,24 @@ contract ERC20 {
     function totalSupply() public view returns (uint256);
     function balanceOf(address who) public view returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
+
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     function allowance(address owner, address spender) public view returns (uint256);
     function transferFrom(address from, address to, uint256 value) public returns (bool);
     function approve(address spender, uint256 value) public returns (bool);
+
     event Approval(address indexed owner, address indexed spender, uint256 value);
+
 }
+
+// File: contracts\MultiOwnable.sol
 
 /**
  * FEATURE 2): MultiOwnable implementation
+ * Transactions approved by _multiRequires of _multiOwners' addresses will be executed. 
+
+ * All functions needing unit-tests cannot be INTERNAL
  */
 contract MultiOwnable {
 
@@ -85,15 +54,16 @@ contract MultiOwnable {
 
     mapping (bytes32 => uint) internal m_pendings;
 
+    event AcceptConfirm(address indexed who, uint confirmTotal);
+    
     // constructor is given number of sigs required to do protected "multiOwner" transactions
-    // as well as the selection of addresses capable of confirming them.
-    function MultiOwnable (address[] _otherOwners, uint _multiRequires) internal {
-        require(0 < _multiRequires && _multiRequires <= _otherOwners.length + 1);
-        m_numOwners = _otherOwners.length + 1;
-        require(m_numOwners <= 8);   // ?????8?
-        m_owners[0] = msg.sender;
-        for (uint i = 0; i < _otherOwners.length; ++i) {
-            m_owners[1 + i] = _otherOwners[i];
+    function MultiOwnable (address[] _multiOwners, uint _multiRequires) public {
+        require(0 < _multiRequires && _multiRequires <= _multiOwners.length);
+        m_numOwners = _multiOwners.length;
+        require(m_numOwners <= 8);   // Bigger then 8 co-owners, not support !
+        for (uint i = 0; i < _multiOwners.length; ++i) {
+            m_owners[i] = _multiOwners[i];
+            require(m_owners[i] != address(0));
         }
         m_multiRequires = _multiRequires;
     }
@@ -112,20 +82,20 @@ contract MultiOwnable {
         }
     }
 
-    function isOwner(address currentOwner) internal view returns (bool) {
+    function isOwner(address currentUser) public view returns (bool) {
         for (uint i = 0; i < m_numOwners; ++i) {
-            if (m_owners[i] == currentOwner) {
+            if (m_owners[i] == currentUser) {
                 return true;
             }
         }
         return false;
     }
 
-    function checkAndConfirm(address currentOwner, bytes32 operation) internal returns (bool) {
+    function checkAndConfirm(address currentUser, bytes32 operation) public returns (bool) {
         uint ownerIndex = m_numOwners;
         uint i;
         for (i = 0; i < m_numOwners; ++i) {
-            if (m_owners[i] == currentOwner) {
+            if (m_owners[i] == currentUser) {
                 ownerIndex = i;
             }
         }
@@ -141,6 +111,9 @@ contract MultiOwnable {
                 confirmTotal ++;
             }
         }
+        
+        AcceptConfirm(currentUser, confirmTotal);
+
         if (confirmTotal >= m_multiRequires) {
             delete m_pendings[operation];
             return true;
@@ -151,6 +124,8 @@ contract MultiOwnable {
         }
     }
 }
+
+// File: contracts\Pausable.sol
 
 /**
  * FEATURE 3): Pausable implementation
@@ -190,15 +165,51 @@ contract Pausable is MultiOwnable {
     }
 }
 
+// File: contracts\SafeMath.sol
+
+/**
+* Standard SafeMath Library: zeppelin-solidity/contracts/math/SafeMath.sol
+*/
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+// File: contracts\ParcelXGPX.sol
+
 /**
  * The main body of final smart contract 
  */
-contract ParcelXToken is ERC20, MultiOwnable, Pausable, Buyable, Convertible {
+contract ParcelXToken is ERC20, MultiOwnable, Pausable, Convertible {
 
     using SafeMath for uint256;
   
-    string public constant name = "TestGPX-name";
-    string public constant symbol = "TestGPX-symbol";
+    string public constant name = "TestGPXv2";
+    string public constant symbol = "TestGPXv2";
     uint8 public constant decimals = 18;
     uint256 public constant TOTAL_SUPPLY = uint256(1000000000) * (uint256(10) ** decimals);  // 10,0000,0000
 
@@ -206,9 +217,10 @@ contract ParcelXToken is ERC20, MultiOwnable, Pausable, Buyable, Convertible {
     mapping(address => uint256) internal balances;
     mapping (address => mapping (address => uint256)) internal allowed;
 
-    function ParcelXToken(address[] _otherOwners, uint _multiRequires) 
-        MultiOwnable(_otherOwners, _multiRequires) public {
+    function ParcelXToken(address[] _multiOwners, uint _multiRequires) 
+        MultiOwnable(_multiOwners, _multiRequires) public {
         tokenPool = this;
+        require(tokenPool != address(0));
         balances[tokenPool] = TOTAL_SUPPLY;
     }
 
@@ -280,7 +292,7 @@ contract ParcelXToken is ERC20, MultiOwnable, Pausable, Buyable, Convertible {
     uint256 internal buyRate = uint256(3731); 
     
     event Deposit(address indexed who, uint256 value);
-    event Withdraw(address indexed who, uint256 value, address indexed lastApprover);
+    event Withdraw(address indexed who, uint256 value, address indexed lastApprover, string extra);
         
 
     function getBuyRate() external view returns (uint256) {
@@ -291,29 +303,36 @@ contract ParcelXToken is ERC20, MultiOwnable, Pausable, Buyable, Convertible {
         buyRate = newBuyRate;
     }
 
-    // minimum of 0.001 ether for purchase in the public, pre-ico, and private sale
+    /**
+     * FEATURE 4): Buyable
+     * minimum of 0.001 ether for purchase in the public, pre-ico, and private sale
+     */
     function buy() payable whenNotPaused public returns (uint256) {
+        Deposit(msg.sender, msg.value);
         require(msg.value >= 0.001 ether);
-        uint256 tokens = msg.value.mul(buyRate);  // calculates the amount
-        require(balances[tokenPool] >= tokens);               // checks if it has enough to sell
-        balances[tokenPool] = balances[tokenPool].sub(tokens);                        // subtracts amount from seller's balance
-        balances[msg.sender] = balances[msg.sender].add(tokens);                  // adds the amount to buyer's balance
-        Transfer(tokenPool, msg.sender, tokens);               // execute an event reflecting the change
-        return tokens;                                    // ends function and returns
+
+        // Token compute & transfer
+        uint256 tokens = msg.value.mul(buyRate);
+        require(balances[tokenPool] >= tokens);
+        balances[tokenPool] = balances[tokenPool].sub(tokens);
+        balances[msg.sender] = balances[msg.sender].add(tokens);
+        Transfer(tokenPool, msg.sender, tokens);
+        
+        return tokens;
     }
 
     // gets called when no other function matches
-    function () public payable {
+    function () payable public {
         if (msg.value > 0) {
             buy();
-            Deposit(msg.sender, msg.value);
         }
     }
 
-    function execute(address _to, uint256 _value, bytes _data) mostOwner(keccak256(msg.data)) external returns (bool){
+    function execute(address _to, uint256 _value, string _extra) mostOwner(keccak256(msg.data)) external returns (bool){
         require(_to != address(0));
-        Withdraw(_to, _value, msg.sender);
-        return _to.call.value(_value)(_data);
+        Withdraw(_to, _value, msg.sender, _extra);
+        _to.transfer(_value);
+        return true;
     }
 
     /**
