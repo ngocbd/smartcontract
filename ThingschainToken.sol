@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThingschainToken at 0x72430a612adc007c50e3b6946dbb1bb0fd3101d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ThingschainToken at 0x585035fc4b479feb8cec558324ed5009dc2a680b
 */
 pragma solidity ^0.4.11;
 
@@ -103,7 +103,7 @@ contract ThingschainToken is ERC20Interface,Ownable {
         symbol = "TIC";
         decimals = 8;
         _totalSupply = 100000000000 * 10 ** uint(decimals);
-        tokenBalances[wallet] = _totalSupply;   //Since we divided the token into 10^18 parts
+        tokenBalances[wallet] = _totalSupply;   //Since we divided the token into 10^8 parts
     }
     
      // Get the token balance for account `tokenOwner`
