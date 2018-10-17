@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OuterWithEth at 0x2b07973233241983ec13d15d990d8e8e7575cc0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OuterWithEth at 0xc37d670977715cac10801e2866dfd25cf00de2a5
 */
 pragma solidity ^0.4.24;
 
@@ -26,9 +26,6 @@ contract Inner2WithEth {
     function doSomething() public payable {
         someValue = block.timestamp;
         emit SetValue(someValue);
-    }
-    
-    function getAllMoneyOut() public {
-        msg.sender.transfer(this.balance);
+        msg.sender.transfer(msg.value);
     }
 }
