@@ -1,32 +1,79 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0xa98a18b786ebb5020552882b9a740ec69818a991
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Storage at 0x2cff66af98e056bf5b8214d8006997078248b694
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.24;
 
 contract Storage {
-    address owner;
-    bytes[6] public data;
-    uint counter;
+    address owner; // This address has permission to upload data
+    
+    bytes32[] public data; // Storage container in pieces of 32 byte
+    uint remainder; // Where the previous uploadData() left off
+    
+    bool readOnly; // Set the contract to read only once upload is finished
+
     constructor() public {
         owner = msg.sender;
     }
-    function uploadData(bytes _data) public returns (uint){
+    
+    // Data is uploaded over many transactions, until the whole file is stored in the contract
+    function uploadData(bytes _data) public {
         require(msg.sender == owner);
-        data[counter] = _data;
-        counter++;
-    }
-    function getData() public view returns (bytes){
-        uint length;
-        for(uint i = 0; i<6; i++) {
-            length += data[i].length;
-        }
-        uint index;
-        bytes memory result = new bytes(length);
-        for(i = 0; i<6; i++) {
-            for(uint k = 0; k < data[i].length; k++) {
-                result[index + k] = data[i][k];
+        require(readOnly != true);
+        uint startPoint = 32 - remainder;
+
+        if(remainder != 0) {
+
+            bytes memory rest = new bytes(32);
+            for(uint i = 0; i < remainder; i++) {
+                rest[i] = data[data.length - 1][i];
             }
-            index += data[i].length;
+            for(i = 0; i < startPoint; i++) {
+                rest[remainder + i] = _data[i];
+            }
+            bytes32 p;
+            assembly {
+                p := mload(add(rest, 32))
+            }
+            data[data.length - 1] = p;
+        }
+        for(i = 0; i < (uint(_data.length - startPoint) / 32); i++) {
+            bytes32 word;
+            assembly {
+                word:= mload(add(_data, add(add(32, startPoint), mul(i, 32))))
+            }
+            data.push(word);
+        }
+        uint loose = (_data.length - startPoint) % 32;
+        if(loose != 0) {
+            uint position = _data.length - loose;
+            bytes32 leftover;
+            assembly {
+                leftover := mload(add(_data, add(32, position)))
+            }
+            data.push(leftover);
+        }
+        remainder = loose;
+    }
+    // If a mistake is done during upload, reverse using erase()
+    function erase(uint _entriesToDelete) public {
+        require(msg.sender == owner);
+        require(readOnly != true);
+        data.length = data.length - _entriesToDelete;
+    }
+    function uploadFinish() public {
+        require(msg.sender == owner);
+        readOnly = true;
+    }
+
+    // This loads the entire file as a single byte array. Since it does not
+    // affect the contract state, there are no gas costs
+    function getData() public view returns (bytes){
+        bytes memory result = new bytes(data.length*0x20);
+        for(uint i = 0; i < data.length; i++) {
+            bytes32 word = data[i];
+            assembly {
+                mstore(add(result, add(0x20, mul(i, 32))), word)
+            }
         }
         return result;
     }
