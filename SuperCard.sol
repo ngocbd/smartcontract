@@ -1,20 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0xa8a259af6ad5e8662a1b0be91e721de8a26c91d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuperCard at 0x29488e24cfdaa52a0b837217926c0c0853db7962
 */
 pragma solidity ^0.4.24;
+/**
+ * @title -SuperCard v0.0.1
+ *
+ * WARNING:  THIS PRODUCT IS HIGHLY ADDICTIVE.  IF YOU HAVE AN ADDICTIVE NATURE.  DO NOT PLAY.
+ */
 
-/*--------------------------------------------------
- ____                           ____              _ 
-/ ___| _   _ _ __   ___ _ __   / ___|__ _ _ __ __| |
-\___ \| | | | '_ \ / _ \ '__| | |   / _` | '__/ _` |
- ___) | |_| | |_) |  __/ |    | |__| (_| | | | (_| |
-|____/ \__,_| .__/ \___|_|     \____\__,_|_|  \__,_|
-            |_|                                   
-
-                                    2018-08-08 V0.8
----------------------------------------------------*/
-
-contract SPCevents {
+//==============================================================================
+//     _    _  _ _|_ _  .
+//    (/_\/(/_| | | _\  .
+//==============================================================================
+contract F3Devents {
     // fired whenever a player registers a name
     event onNewName
     (
@@ -48,7 +46,7 @@ contract SPCevents {
         uint256 airDropPot
     );
 
-  // fired whenever theres a withdraw
+	// fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -74,7 +72,7 @@ contract SPCevents {
         uint256 genAmount
     );
 
-    // fired whenever a player tries a buy after round timer
+    // (SuperCard short only) fired whenever a player tries a buy after round timer
     // hit zero, and causes end round to be ran.
     event onBuyAndDistribute
     (
@@ -91,7 +89,7 @@ contract SPCevents {
         uint256 genAmount
     );
 
-    // fired whenever a player tries a reload after round timer
+    // (SuperCard short only) fired whenever a player tries a reload after round timer
     // hit zero, and causes end round to be ran.
     event onReLoadAndDistribute
     (
@@ -119,7 +117,7 @@ contract SPCevents {
         uint256 timeStamp
     );
 
-    // received pot swap deposit, add pot directly by admin to next round
+    // received pot swap deposit
     event onPotSwapDeposit
     (
         uint256 roundID,
@@ -132,52 +130,52 @@ contract SPCevents {
 //  (_(_)| | | | (_|(_ |   _\(/_ | |_||_)  .
 //====================================|=========================================
 
-contract SuperCard is SPCevents {
+contract modularShort is F3Devents {}
+
+contract SuperCard is modularShort {
     using SafeMath for *;
     using NameFilter for string;
+    using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xbac825cdb506dcf917a7715a4bf3fa1b06abe3e4);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xb838c100EB1a1d08B215FBbCC06698e9c181358C);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    string constant public name   = "SuperCard";
-    string constant public symbol = "SPC";
-    uint256 private rndExtra_     = 0;     // length of the very first ICO
-    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 6 hours;           // round timer starts at this
-    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
+    string constant public name = "SuperCard";
+    string constant public symbol = "SuperCard";
+    uint256 private rndExtra_ = 0;     // length of the very first ICO
+    uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 4637 seconds;            // round timer starts at this  1H17m17s
+    uint256 constant private rndInc_ = 15 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 3 hours;             // max length a round timer can be  ?3Hours
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
 //=============================|================================================
     uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
     uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
-    uint256 public rID_;    // last rID
-    uint256 public pID_;    // last pID 
+    uint256 public rID_;    // round id number / total rounds that have happened
 //****************
 // PLAYER DATA
 //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
-    mapping (uint256 => SPCdatasets.Player) public plyr_;   // (pID => data) player data
-    mapping (uint256 => mapping (uint256 => SPCdatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
+    mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
 //****************
 // ROUND DATA
 //****************
-    mapping (uint256 => SPCdatasets.Round) public round_;   // (rID => data) round data
+    mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-
-    mapping (uint256 => uint256) public attend;   // (index => pID) player ID attend current round
 //****************
 // TEAM FEE DATA
 //****************
-    mapping (uint256 => SPCdatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
-    mapping (uint256 => SPCdatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+    mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
+    mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
 //==============================================================================
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
@@ -185,26 +183,34 @@ contract SuperCard is SPCevents {
     constructor()
         public
     {
-        fees_[0] = SPCdatasets.TeamFee(80,2);
-        fees_[1] = SPCdatasets.TeamFee(80,2);
-        fees_[2] = SPCdatasets.TeamFee(80,2);
-        fees_[3] = SPCdatasets.TeamFee(80,2);
+		// Team allocation structures
+        // 0 = whales
+        // 1 = bears
+        // 2 = sneks
+        // 3 = bulls
+
+		// Team allocation percentages
+        // (F3D, P3D) + (Pot , Referrals, Community)
+            // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
+        fees_[0] = F3Ddatasets.TeamFee(19,4);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(37,6);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(67,7);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+
 
         // how to split up the final pot based on which team was picked
-        potSplit_[0] = SPCdatasets.PotSplit(20,10);
-        potSplit_[1] = SPCdatasets.PotSplit(20,10);
-        potSplit_[2] = SPCdatasets.PotSplit(20,10);
-        potSplit_[3] = SPCdatasets.PotSplit(20,10);
+        // (F3D, P3D)
+        potSplit_[0] = F3Ddatasets.PotSplit(15,30);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(25,25);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
 
-    /*
-        activated_ = true;
+        /* activated_ = true; */
 
         // lets start first round
-        rID_ = 1;
+        /* rID_ = 1;
         round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
-    */
-  }
+        round_[1].end = now + rndInit_ + rndExtra_; */
+
+}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -213,23 +219,13 @@ contract SuperCard is SPCevents {
      * @dev used to make sure no one can interact with contract until it has
      * been activated.
      */
-  modifier isActivated() {
-        if ( activated_ == false ){
-          if ( (now >= pre_active_time) &&  (pre_active_time > 0) ){
-            activated_ = true;
-
-            // lets start first round
-            rID_ = 1;
-            round_[1].strt = now + rndExtra_ - rndGap_;
-            round_[1].end = now + rndInit_ + rndExtra_;
-          }
-        }
-        require(activated_ == true, "its not ready yet.");
+    modifier isActivated() {
+        require(activated_ == true, "its not ready yet.  check ?eta in discord");
         _;
     }
 
     /**
-     * @dev prevents contracts from interacting with SuperCard
+     * @dev prevents contracts from interacting with fomo3d
      */
     modifier isHuman() {
         address _addr = msg.sender;
@@ -264,7 +260,7 @@ contract SuperCard is SPCevents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -272,7 +268,7 @@ contract SuperCard is SPCevents {
         // buy core
         buyCore(_pID, plyr_[_pID].laff, 2, _eventData_);
     }
-	
+
     /**
      * @dev converts all incoming ethereum to keys.
      * -functionhash- 0x8f38f309 (using ID for affiliate)
@@ -289,7 +285,7 @@ contract SuperCard is SPCevents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -307,8 +303,11 @@ contract SuperCard is SPCevents {
             plyr_[_pID].laff = _affCode;
         }
 
-        // buy core, team set to 2, snake
-        buyCore(_pID, _affCode, 2, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // buy core
+        buyCore(_pID, _affCode, _team, _eventData_);
     }
 
     function buyXaddr(address _affCode, uint256 _team)
@@ -319,7 +318,7 @@ contract SuperCard is SPCevents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -345,8 +344,11 @@ contract SuperCard is SPCevents {
             }
         }
 
-        // buy core, team set to 2, snake
-        buyCore(_pID, _affID, 2, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // buy core
+        buyCore(_pID, _affID, _team, _eventData_);
     }
 
     function buyXname(bytes32 _affCode, uint256 _team)
@@ -357,7 +359,7 @@ contract SuperCard is SPCevents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        SPCdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -383,8 +385,11 @@ contract SuperCard is SPCevents {
             }
         }
 
-        // buy core, team set to 2, snake
-        buyCore(_pID, _affID, 2, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // buy core
+        buyCore(_pID, _affID, _team, _eventData_);
     }
 
     /**
@@ -404,7 +409,7 @@ contract SuperCard is SPCevents {
         public
     {
         // set up our tx event data
-        SPCdatasets.EventReturns memory _eventData_;
+        F3Ddatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -422,8 +427,11 @@ contract SuperCard is SPCevents {
             plyr_[_pID].laff = _affCode;
         }
 
-        // reload core, team set to 2, snake
-        reLoadCore(_pID, _affCode, _eth, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // reload core
+        reLoadCore(_pID, _affCode, _team, _eth, _eventData_);
     }
 
     function reLoadXaddr(address _affCode, uint256 _team, uint256 _eth)
@@ -433,7 +441,7 @@ contract SuperCard is SPCevents {
         public
     {
         // set up our tx event data
-        SPCdatasets.EventReturns memory _eventData_;
+        F3Ddatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -459,8 +467,11 @@ contract SuperCard is SPCevents {
             }
         }
 
-        // reload core, team set to 2, snake
-        reLoadCore(_pID, _affID, _eth, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // reload core
+        reLoadCore(_pID, _affID, _team, _eth, _eventData_);
     }
 
     function reLoadXname(bytes32 _affCode, uint256 _team, uint256 _eth)
@@ -470,7 +481,7 @@ contract SuperCard is SPCevents {
         public
     {
         // set up our tx event data
-        SPCdatasets.EventReturns memory _eventData_;
+        F3Ddatasets.EventReturns memory _eventData_;
 
         // fetch player ID
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -496,8 +507,11 @@ contract SuperCard is SPCevents {
             }
         }
 
-        // reload core, team set to 2, snake
-        reLoadCore(_pID, _affID, _eth, _eventData_);
+        // verify a valid team was selected
+        _team = verifyTeam(_team);
+
+        // reload core
+        reLoadCore(_pID, _affID, _team, _eth, _eventData_);
     }
 
     /**
@@ -510,6 +524,7 @@ contract SuperCard is SPCevents {
         public
     {
         // setup local rID
+        uint256 _rID = rID_;
 
         // grab time
         uint256 _now = now;
@@ -518,70 +533,35 @@ contract SuperCard is SPCevents {
         uint256 _pID = pIDxAddr_[msg.sender];
 
         // setup temp var for player eth
-        uint256 upperLimit = 0;
-        uint256 usedGen = 0;
-
-        // eth send to player
-        uint256 ethout = 0;   
-        
-        uint256 over_gen = 0;
-
-        updateGenVault(_pID, plyr_[_pID].lrnd);
-
-        if (plyr_[_pID].gen > 0)
-        {
-          upperLimit = (calceth(plyrRnds_[_pID][rID_].keys).mul(105))/100;
-          if(plyr_[_pID].gen >= upperLimit)
-          {
-            over_gen = (plyr_[_pID].gen).sub(upperLimit);
-
-            round_[rID_].keys = (round_[rID_].keys).sub(plyrRnds_[_pID][rID_].keys);
-            plyrRnds_[_pID][rID_].keys = 0;
-
-            round_[rID_].pot = (round_[rID_].pot).add(over_gen);
-              
-            usedGen = upperLimit;       
-          }
-          else
-          {
-            plyrRnds_[_pID][rID_].keys = (plyrRnds_[_pID][rID_].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
-            round_[rID_].keys = (round_[rID_].keys).sub(calckeys(((plyr_[_pID].gen).mul(100))/105));
-            usedGen = plyr_[_pID].gen;
-          }
-
-          ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
-        }
-        else
-        {
-          ethout = ((plyr_[_pID].win).add(plyr_[_pID].aff));
-        }
-
-        plyr_[_pID].win = 0;
-        plyr_[_pID].gen = 0;
-        plyr_[_pID].aff = 0;
-
-        plyr_[_pID].addr.transfer(ethout);
+        uint256 _eth;
 
         // check to see if round has ended and no one has run round end yet
-        if (_now > round_[rID_].end && round_[rID_].ended == false && round_[rID_].plyr != 0)
+        if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // set up our tx event data
-            SPCdatasets.EventReturns memory _eventData_;
+            F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-            round_[rID_].ended = true;
+			round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
+
+			// get their earnings
+            _eth = withdrawEarnings(_pID);
+
+            // gib moni
+            if (_eth > 0)
+                plyr_[_pID].addr.transfer(_eth);
 
             // build event data
             _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
             // fire withdraw and distribute event
-            emit SPCevents.onWithdrawAndDistribute
+            emit F3Devents.onWithdrawAndDistribute
             (
                 msg.sender,
                 plyr_[_pID].name,
-                ethout,
+                _eth,
                 _eventData_.compressedData,
                 _eventData_.compressedIDs,
                 _eventData_.winnerAddr,
@@ -594,8 +574,15 @@ contract SuperCard is SPCevents {
 
         // in any other situation
         } else {
+            // get their earnings
+            _eth = withdrawEarnings(_pID);
+
+            // gib moni
+            if (_eth > 0)
+                plyr_[_pID].addr.transfer(_eth);
+
             // fire withdraw event
-            emit SPCevents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, ethout, _now);
+            emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
         }
     }
 
@@ -636,7 +623,7 @@ contract SuperCard is SPCevents {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit SPCevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
     function registerNameXaddr(string _nameString, address _affCode, bool _all)
@@ -652,7 +639,7 @@ contract SuperCard is SPCevents {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit SPCevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
     function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
@@ -668,7 +655,7 @@ contract SuperCard is SPCevents {
         uint256 _pID = pIDxAddr_[_addr];
 
         // fire event
-        emit SPCevents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+        emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 //==============================================================================
 //     _  _ _|__|_ _  _ _  .
@@ -684,8 +671,17 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-        // price 0.01 ETH
-        return(10000000000000000);
+        // setup local rID
+        uint256 _rID = rID_;
+
+        // grab time
+        uint256 _now = now;
+
+        // are we in a round?
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+            return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
+        else // rounds over.  need price for new round
+            return ( 75000000000000 ); // init
     }
 
     /**
@@ -730,15 +726,50 @@ contract SuperCard is SPCevents {
         uint256 _rID = rID_;
 
         // if round has ended.  but round end has not been run (so contract has not distributed winnings)
-        return
-        (
-            plyr_[_pID].win,
-            (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),
-            plyr_[_pID].aff
-        );
+        if (now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
+        {
+            // if player is winner
+            if (round_[_rID].plyr == _pID)
+            {
+                return
+                (
+                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(48)) / 100 ),
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)   ),
+                    plyr_[_pID].aff
+                );
+            // if player is not the winner
+            } else {
+                return
+                (
+                    plyr_[_pID].win,
+                    (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)  ),
+                    plyr_[_pID].aff
+                );
+            }
+
+        // if round is still going on, or round has ended and round end has been ran
+        } else {
+            return
+            (
+                plyr_[_pID].win,
+                (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),
+                plyr_[_pID].aff
+            );
+        }
     }
 
-     /**
+    /**
+     * solidity hates stack limits.  this lets us avoid that hate
+     */
+    function getPlayerVaultsHelper(uint256 _pID, uint256 _rID)
+        private
+        view
+        returns(uint256)
+    {
+        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit_[round_[_rID].team].gen)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
+    }
+
+    /**
      * @dev returns all current round info needed for front end
      * -functionhash- 0x747dff42
      * @return eth invested during ICO phase
@@ -794,7 +825,7 @@ contract SuperCard is SPCevents {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-   * @return player round eth
+	 * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -830,7 +861,7 @@ contract SuperCard is SPCevents {
      * @dev logic runs whenever a buy order is executed.  determines how to handle
      * incoming eth depending on if we are in an active round or not
      */
-    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, SPCdatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -843,7 +874,7 @@ contract SuperCard is SPCevents {
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
         {
             // call core
-            core(_rID, _pID, msg.value, _affID, 2, _eventData_);
+            core(_rID, _pID, msg.value, _affID, _team, _eventData_);
 
         // if round is not active
         } else {
@@ -851,7 +882,7 @@ contract SuperCard is SPCevents {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-                round_[_rID].ended = true;
+			    round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -859,7 +890,7 @@ contract SuperCard is SPCevents {
                 _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
                 // fire buy and distribute event
-                emit SPCevents.onBuyAndDistribute
+                emit F3Devents.onBuyAndDistribute
                 (
                     msg.sender,
                     plyr_[_pID].name,
@@ -875,100 +906,39 @@ contract SuperCard is SPCevents {
                 );
             }
 
-            // put eth in players vault, to win vault
-            plyr_[_pID].win = plyr_[_pID].win.add(msg.value);
+            // put eth in players vault
+            plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
         }
     }
 
     /**
-     * @dev gen limit handle
-     */
-    function genLimit(uint256 _pID) 
-    private 
-    returns(uint256)
-    {
-      uint256 upperLimit = 0;
-      uint256 usedGen = 0;
-      
-      uint256 over_gen = 0;
-      uint256 eth_can_use = 0;
-
-      uint256 tempnum = 0;
-
-      updateGenVault(_pID, plyr_[_pID].lrnd);
-
-      if (plyr_[_pID].gen > 0)
-      {
-        upperLimit = ((plyrRnds_[_pID][rID_].keys).mul(105))/10000;
-        if(plyr_[_pID].gen >= upperLimit)
-        {
-          over_gen = (plyr_[_pID].gen).sub(upperLimit);
-
-          round_[rID_].keys = (round_[rID_].keys).sub(plyrRnds_[_pID][rID_].keys);
-          plyrRnds_[_pID][rID_].keys = 0;
-
-          round_[rID_].pot = (round_[rID_].pot).add(over_gen);
-            
-          usedGen = upperLimit;
-        }
-        else
-        {
-          tempnum = ((plyr_[_pID].gen).mul(10000))/105;
-
-          plyrRnds_[_pID][rID_].keys = (plyrRnds_[_pID][rID_].keys).sub(tempnum);
-          round_[rID_].keys = (round_[rID_].keys).sub(tempnum);
-
-          usedGen = plyr_[_pID].gen;
-        }
-
-        eth_can_use = ((plyr_[_pID].win).add(plyr_[_pID].aff)).add(usedGen);
-
-        plyr_[_pID].win = 0;
-        plyr_[_pID].gen = 0;
-        plyr_[_pID].aff = 0;
-      }
-      else
-      {
-        eth_can_use = (plyr_[_pID].win).add(plyr_[_pID].aff);
-        plyr_[_pID].win = 0;
-        plyr_[_pID].aff = 0;
-      }
-
-      return(eth_can_use);
-  }
-
-  /**
      * @dev logic runs whenever a reload order is executed.  determines how to handle
      * incoming eth depending on if we are in an active round or not
      */
-    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _eth, SPCdatasets.EventReturns memory _eventData_)
+    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _team, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
+        uint256 _rID = rID_;
 
         // grab time
         uint256 _now = now;
 
-        uint256 eth_can_use = 0;
-
         // if round is active
-        if (_now > round_[rID_].strt + rndGap_ && (_now <= round_[rID_].end || (_now > round_[rID_].end && round_[rID_].plyr == 0)))
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player
             // tried to spend more eth than they have.
+            plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
 
-            eth_can_use = genLimit(_pID);
-            if(eth_can_use > 0)
-            {
-              // call core
-              core(rID_, _pID, eth_can_use, _affID, 2, _eventData_);
-            }
+            // call core
+            core(_rID, _pID, _eth, _affID, _team, _eventData_);
 
         // if round is not active and end round needs to be ran
-        } else if (_now > round_[rID_].end && round_[rID_].ended == false) {
+        } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
             // end the round (distributes pot) & start new round
-            round_[rID_].ended = true;
+            round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
             // build event data
@@ -976,7 +946,7 @@ contract SuperCard is SPCevents {
             _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
 
             // fire buy and distribute event
-            emit SPCevents.onReLoadAndDistribute
+            emit F3Devents.onReLoadAndDistribute
             (
                 msg.sender,
                 plyr_[_pID].name,
@@ -996,39 +966,96 @@ contract SuperCard is SPCevents {
      * @dev this is the core logic for any buy/reload that happens while a round
      * is live.
      */
-    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, SPCdatasets.EventReturns memory _eventData_)
+    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
-        // if player is new to round?
-        if (plyrRnds_[_pID][_rID].jionflag != 1)
-        {
-          _eventData_ = managePlayer(_pID, _eventData_);
-          plyrRnds_[_pID][_rID].jionflag = 1;
+        // if player is new to round
+        if (plyrRnds_[_pID][_rID].keys == 0)
+            _eventData_ = managePlayer(_pID, _eventData_);
 
-          attend[round_[_rID].attendNum] = _pID;
-          round_[_rID].attendNum  = (round_[_rID].attendNum).add(1);
+        // early round eth limiter
+        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
+        {
+            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+            uint256 _refund = _eth.sub(_availableLimit);
+            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
+            _eth = _availableLimit;
         }
 
-        if (_eth > 10000000000000000)
+        // if eth left is greater than min eth allowed (sorry no pocket lint)
+        if (_eth > 1000000000)
         {
 
             // mint the new keys
-            uint256 _keys = calckeys(_eth);
+            uint256 _keys = (round_[_rID].eth).keysRec(_eth);
 
             // if they bought at least 1 whole key
             if (_keys >= 1000000000000000000)
             {
-              updateTimer(_keys, _rID);
+            updateTimer(_keys, _rID);
 
-              // set new leaders
-              if (round_[_rID].plyr != _pID)
+            // set new leaders
+            if (round_[_rID].plyr != _pID)
                 round_[_rID].plyr = _pID;
+            if (round_[_rID].team != _team)
+                round_[_rID].team = _team;
 
-              round_[_rID].team = 2;
+            // set the new leader bool to true
+            _eventData_.compressedData = _eventData_.compressedData + 100;
+        }
 
-              // set the new leader bool to true
-              _eventData_.compressedData = _eventData_.compressedData + 100;
+            // manage airdrops
+            if (_eth >= 100000000000000000)
+            {
+            airDropTracker_++;
+            if (airdrop() == true)
+            {
+                // gib muni
+                uint256 _prize;
+                if (_eth >= 10000000000000000000)
+                {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(75)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 3 prize was won
+                    _eventData_.compressedData += 300000000000000000000000000000000;
+                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(50)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 2 prize was won
+                    _eventData_.compressedData += 200000000000000000000000000000000;
+                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
+                    // calculate prize and give it to winner
+                    _prize = ((airDropPot_).mul(25)) / 100;
+                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
+
+                    // adjust airDropPot
+                    airDropPot_ = (airDropPot_).sub(_prize);
+
+                    // let event know a tier 3 prize was won
+                    _eventData_.compressedData += 300000000000000000000000000000000;
+                }
+                // set airdrop happened bool to true
+                _eventData_.compressedData += 10000000000000000000000000000000;
+                // let event know how much was won
+                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
+
+                // reset air drop tracker
+                airDropTracker_ = 0;
             }
+        }
+
+            // store the air drop tracker number (number of buys since last airdrop)
+            _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
 
             // update player
             plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
@@ -1037,14 +1064,14 @@ contract SuperCard is SPCevents {
             // update round
             round_[_rID].keys = _keys.add(round_[_rID].keys);
             round_[_rID].eth = _eth.add(round_[_rID].eth);
-            rndTmEth_[_rID][2] = _eth.add(rndTmEth_[_rID][2]);
+            rndTmEth_[_rID][_team] = _eth.add(rndTmEth_[_rID][_team]);
 
             // distribute eth
-            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, 2, _eventData_);
-            _eventData_ = distributeInternal(_rID, _pID, _eth, 2, _keys, _eventData_);
+            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _team, _eventData_);
+            _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-            endTx(_pID, 2, _eth, _keys, _eventData_);
+		    endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1060,16 +1087,7 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-        uint256 temp;
-        temp = (round_[_rIDlast].mask).mul((plyrRnds_[_pID][_rIDlast].keys)/1000000000000000000);
-        if(temp > plyrRnds_[_pID][_rIDlast].mask)
-        {
-          return( temp.sub(plyrRnds_[_pID][_rIDlast].mask) );
-        }
-        else
-        {
-          return( 0 );
-        }
+        return(  (((round_[_rIDlast].mask).mul(plyrRnds_[_pID][_rIDlast].keys)) / (1000000000000000000)).sub(plyrRnds_[_pID][_rIDlast].mask)  );
     }
 
     /**
@@ -1084,7 +1102,14 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-        return ( calckeys(_eth) );
+        // grab time
+        uint256 _now = now;
+
+        // are we in a round?
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+            return ( (round_[_rID].eth).keysRec(_eth) );
+        else // rounds over.  need keys for new round
+            return ( (_eth).keys() );
     }
 
     /**
@@ -1098,14 +1123,24 @@ contract SuperCard is SPCevents {
         view
         returns(uint256)
     {
-        return ( _keys/100 );
+        // setup local rID
+        uint256 _rID = rID_;
+
+        // grab time
+        uint256 _now = now;
+
+        // are we in a round?
+        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+            return ( (round_[_rID].keys.add(_keys)).ethRec(_keys) );
+        else // rounds over.  need price for new round
+            return ( (_keys).eth() );
     }
 //==============================================================================
 //    _|_ _  _ | _  .
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-   * @dev receives name/player info from names contract
+	 * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
@@ -1140,18 +1175,16 @@ contract SuperCard is SPCevents {
      * @dev gets existing or registers new pID.  use this when a player may be new
      * @return pID
      */
-    function determinePID(SPCdatasets.EventReturns memory _eventData_)
+    function determinePID(F3Ddatasets.EventReturns memory _eventData_)
         private
-        returns (SPCdatasets.EventReturns)
+        returns (F3Ddatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        // if player is new to this version of SuperCard
+        // if player is new to this version of fomo3d
         if (_pID == 0)
         {
             // grab their player ID, name and last aff ID, from player names contract
             _pID = PlayerBook.getPlayerID(msg.sender);
-            pID_ = _pID; // save Last pID
-            
             bytes32 _name = PlayerBook.getPlayerName(_pID);
             uint256 _laff = PlayerBook.getPlayerLAff(_pID);
 
@@ -1176,25 +1209,32 @@ contract SuperCard is SPCevents {
     }
 
     /**
+     * @dev checks to make sure user picked a valid team.  if not sets team
+     * to default (sneks)
+     */
+    function verifyTeam(uint256 _team)
+        private
+        pure
+        returns (uint256)
+    {
+        if (_team < 0 || _team > 3)
+            return(2);
+        else
+            return(_team);
+    }
+
+    /**
      * @dev decides if round end needs to be run & new round started.  and if
      * player unmasked earnings from previously played rounds need to be moved.
      */
-    function managePlayer(uint256 _pID, SPCdatasets.EventReturns memory _eventData_)
+    function managePlayer(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
         private
-        returns (SPCdatasets.EventReturns)
+        returns (F3Ddatasets.EventReturns)
     {
-        uint256 temp_eth = 0;
         // if player has played a previous round, move their unmasked earnings
-        // from that round to win vault. 
+        // from that round to gen vault.
         if (plyr_[_pID].lrnd != 0)
-        {
-          updateGenVault(_pID, plyr_[_pID].lrnd);
-          temp_eth = ((plyr_[_pID].win).add((plyr_[_pID].gen))).add(plyr_[_pID].aff);
-
-          plyr_[_pID].gen = 0;
-          plyr_[_pID].aff = 0;
-          plyr_[_pID].win = temp_eth;
-        }
+            updateGenVault(_pID, plyr_[_pID].lrnd);
 
         // update player's last round played
         plyr_[_pID].lrnd = rID_;
@@ -1208,9 +1248,9 @@ contract SuperCard is SPCevents {
     /**
      * @dev ends the round. manages paying out winner/splitting up pot
      */
-    function endRound(SPCdatasets.EventReturns memory _eventData_)
+    function endRound(F3Ddatasets.EventReturns memory _eventData_)
         private
-        returns (SPCdatasets.EventReturns)
+        returns (F3Ddatasets.EventReturns)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -1224,8 +1264,8 @@ contract SuperCard is SPCevents {
 
         // calculate our winner share, community rewards, gen share,
         // p3d share, and amount reserved for next pot
-        uint256 _win = (_pot.mul(30)) / 100;
-        uint256 _com = (_pot / 10);
+        uint256 _win = (_pot.mul(48)) / 100;
+        uint256 _com = (_pot / 50);
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
         uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
         uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
@@ -1236,6 +1276,7 @@ contract SuperCard is SPCevents {
         if (_dust > 0)
         {
             _gen = _gen.sub(_dust);
+            _res = _res.add(_dust);
         }
 
         // pay our winner
@@ -1270,7 +1311,7 @@ contract SuperCard is SPCevents {
         return(_eventData_);
     }
 
-  /**
+    /**
      * @dev moves any unmasked earnings to gen vault.  updates earnings mask
      */
     function updateGenVault(uint256 _pID, uint256 _rIDlast)
@@ -1310,67 +1351,84 @@ contract SuperCard is SPCevents {
     }
 
     /**
+     * @dev generates a random number between 0-99 and checks to see if thats
+     * resulted in an airdrop win
+     * @return do we have a winner?
+     */
+    function airdrop()
+        private
+        view
+        returns(bool)
+    {
+        uint256 seed = uint256(keccak256(abi.encodePacked(
+
+            (block.timestamp).add
+            (block.difficulty).add
+            ((uint256(keccak256(abi.encodePacked(block.coinbase)))) / (now)).add
+            (block.gaslimit).add
+            ((uint256(keccak256(abi.encodePacked(msg.sender)))) / (now)).add
+            (block.number)
+
+        )));
+        if((seed - ((seed / 1000) * 1000)) < airDropTracker_)
+            return(true);
+        else
+            return(false);
+    }
+
+    /**
      * @dev distributes eth based on fees to com, aff, and p3d
      */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, SPCdatasets.EventReturns memory _eventData_)
+    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
         private
-        returns(SPCdatasets.EventReturns)
+        returns(F3Ddatasets.EventReturns)
     {
         // pay 3% out to community rewards
-        uint256 _p3d = (_eth/100).mul(3);
-              
+        uint256 _p1 = _eth / 50;
+        uint256 _com = _eth / 50;
+        _com = _com.add(_p1);
+
+        uint256 _p3d;
+        if (!address(admin).call.value(_com)())
+        {
+            // This ensures Team Just cannot influence the outcome of FoMo3D with
+            // bank migrations by breaking outgoing transactions.
+            // Something we would never do. But that's not the point.
+            // We spent 2000$ in eth re-deploying just to patch this, we hold the
+            // highest belief that everything we create should be trustless.
+            // Team JUST, The name you shouldn't have to trust.
+            _p3d = _com;
+            _com = 0;
+        }
+
+
         // distribute share to affiliate
-        // 5%:3%:2%
-        uint256 _aff_cent = (_eth) / 100;
-        
-        uint256 tempID  = _affID;
+        //uint256 _aff = _eth / 10;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
-        
-        // 5%
-        if (tempID != _pID && plyr_[tempID].name != '') 
-        { 
-            plyr_[tempID].aff = (_aff_cent.mul(5)).add(plyr_[tempID].aff);
-            emit SPCevents.onAffiliatePayout(tempID, plyr_[tempID].addr, plyr_[tempID].name, _rID, _pID, _aff_cent.mul(5), now);
-        } 
-        else 
-        {
-            _p3d = _p3d.add(_aff_cent.mul(5));
-        }
+        /*if (_affID != _pID && plyr_[_affID].name != '') {
+            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+        } else {
+            _p3d = _p3d.add(_aff);
+        }*/
+        uint256 _invest_return = 0;
+        _invest_return = distributeInvest(_pID, _eth, _affID);
 
-        tempID = PlayerBook.getPlayerID(plyr_[tempID].addr);
-        tempID = PlayerBook.getPlayerLAff(tempID);
-
-        if (tempID != _pID && plyr_[tempID].name != '') 
-        { 
-            plyr_[tempID].aff = (_aff_cent.mul(3)).add(plyr_[tempID].aff);
-            emit SPCevents.onAffiliatePayout(tempID, plyr_[tempID].addr, plyr_[tempID].name, _rID, _pID, _aff_cent.mul(3), now);
-        } 
-        else 
-        {
-            _p3d = _p3d.add(_aff_cent.mul(3));
-        }
-        
-        tempID = PlayerBook.getPlayerID(plyr_[tempID].addr);
-        tempID = PlayerBook.getPlayerLAff(tempID);
-
-        if (tempID != _pID && plyr_[tempID].name != '') 
-        { 
-            plyr_[tempID].aff = (_aff_cent.mul(2)).add(plyr_[tempID].aff);
-            emit SPCevents.onAffiliatePayout(tempID, plyr_[tempID].addr, plyr_[tempID].name, _rID, _pID, _aff_cent.mul(2), now);
-        } 
-        else 
-        {
-            _p3d = _p3d.add(_aff_cent.mul(2));
-        }
-
+        _p3d = _p3d.add(_invest_return);
 
         // pay out p3d
-        _p3d = _p3d.add((_eth.mul(fees_[2].p3d)) / (100));
+        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
         if (_p3d > 0)
         {
-            admin.transfer(_p3d);
+            // deposit to divies contract
+            uint256 _potAmount = _p3d / 2;
+
+            admin.transfer(_p3d.sub(_potAmount));
+
+            round_[_rID].pot = round_[_rID].pot.add(_potAmount);
+
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
         }
@@ -1378,9 +1436,59 @@ contract SuperCard is SPCevents {
         return(_eventData_);
     }
 
-  /**
-     * @dev 
+    /**
+     * @dev distributes eth based on fees to com, aff, and p3d
      */
+    function distributeInvest(uint256 _pID, uint256 _aff_eth, uint256 _affID)
+        private
+        returns(uint256)
+    {
+
+        uint256 _p3d;
+        uint256 _aff;
+        uint256 _aff_2;
+        uint256 _aff_3;
+        uint256 _affID_1;
+        uint256 _affID_2;
+        uint256 _affID_3;
+
+        _p3d = 0;
+
+        // distribute share to affiliate
+        _aff = _aff_eth / 10;
+        _aff_2 = _aff_eth * 3 / 100;
+        _aff_3 = _aff_eth / 100;
+
+        _affID_1 = _affID;// up one member
+        _affID_2 = plyr_[_affID_1].laff;// up two member
+        _affID_3 = plyr_[_affID_2].laff;// up three member
+
+        // decide what to do with affiliate share of fees
+        // affiliate must not be self, and must have a name registered
+        if (_affID != _pID && plyr_[_affID].name != '') {
+            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+            //emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+        } else {
+            _p3d = _p3d.add(_aff);
+        }
+
+        if (_affID_2 != _pID && _affID_2 != _affID && plyr_[_affID_2].name != '') {
+            plyr_[_affID_2].aff = _aff_2.add(plyr_[_affID_2].aff);
+        } else {
+            _p3d = _p3d.add(_aff_2);
+        }
+
+        if (_affID_3 != _pID &&  _affID_3 != _affID && plyr_[_affID_3].name != '') {
+            plyr_[_affID_3].aff = _aff_3.add(plyr_[_affID_3].aff);
+        } else {
+            _p3d = _p3d.add(_aff_3);
+        }
+
+
+
+        return _p3d;
+    }
+
     function potSwap()
         external
         payable
@@ -1389,21 +1497,28 @@ contract SuperCard is SPCevents {
         uint256 _rID = rID_ + 1;
 
         round_[_rID].pot = round_[_rID].pot.add(msg.value);
-        emit SPCevents.onPotSwapDeposit(_rID, msg.value);
+        emit F3Devents.onPotSwapDeposit(_rID, msg.value);
     }
 
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, SPCdatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
         private
-        returns(SPCdatasets.EventReturns)
+        returns(F3Ddatasets.EventReturns)
     {
-        // calculate gen share?80%
-        uint256 _gen = (_eth.mul(fees_[2].gen)) / 100;
+        // calculate gen share
+        uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
 
-        // pot 5%
-        uint256 _pot = (_eth.mul(5)) / 100;
+        // toss 2% into airdrop pot
+        uint256 _air = (_eth / 50);
+        airDropPot_ = airDropPot_.add(_air);
+
+        // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
+        _eth = _eth.sub(((_eth.mul(20)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
+
+        // calculate pot
+        uint256 _pot = _eth.sub(_gen);
 
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
@@ -1412,7 +1527,7 @@ contract SuperCard is SPCevents {
             _gen = _gen.sub(_dust);
 
         // add eth to pot
-        round_[_rID].pot = _pot.add(round_[_rID].pot);
+        round_[_rID].pot = _pot.add(_dust).add(round_[_rID].pot);
 
         // set up event data
         _eventData_.genAmount = _gen.add(_eventData_.genAmount);
@@ -1475,17 +1590,17 @@ contract SuperCard is SPCevents {
 
         return(_earnings);
     }
-  
-  /**
+
+    /**
      * @dev prepares compression data and fires event for buy or reload tx's
      */
-    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, SPCdatasets.EventReturns memory _eventData_)
+    function endTx(uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
-    _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (2 * 100000000000000000000000000000);
+        _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
 
-        emit SPCevents.onEndTx
+        emit F3Devents.onEndTx
         (
             _eventData_.compressedData,
             _eventData_.compressedIDs,
@@ -1511,83 +1626,31 @@ contract SuperCard is SPCevents {
      * use function that will activate the contract.  we do this so devs
      * have time to set things up on the web end                            **/
     bool public activated_ = false;
-
-    //uint256 public pre_active_time = 0;
-    uint256 public pre_active_time = 1534412700;
-    
-    /**
-     * @dev return active flag ?time
-     * @return active flag
-     * @return active time
-     * @return system time
-     */
-    function getRunInfo() public view returns(bool, uint256, uint256)
-    {
-        return
-        (
-            activated_,      //0
-            pre_active_time, //1
-            now          //2      
-        );
-    }
-
-    function setPreActiveTime(uint256 _pre_time) public
-    {
-        // only team just can activate
-        require(msg.sender == admin, "only admin can activate"); 
-        pre_active_time = _pre_time;
-    }
-
     function activate()
         public
     {
         // only team just can activate
-        require(msg.sender == admin, "only admin can activate"); 
+        require(msg.sender == admin, "only admin can activate"); // erik
+
 
         // can only be ran once
         require(activated_ == false, "SuperCard already activated");
 
         // activate the contract
         activated_ = true;
-        //activated_ = false;
 
         // lets start first round
         rID_ = 1;
-        round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
+            round_[1].strt = now + rndExtra_ - rndGap_;
+            round_[1].end = now + rndInit_ + rndExtra_;
     }
-
-//==============================================================================
-//  |  _      _ _ | _  .
-//  |<(/_\/  (_(_||(_  .
-//=======/======================================================================
-  function calckeys(uint256 _eth)
-        pure
-    public
-        returns(uint256)
-    {
-        return ( (_eth).mul(100) );
-    }
-
-    /**
-     * @dev calculates how much eth would be in contract given a number of keys
-     * @param _keys number of keys "in contract"
-     * @return eth that would exists
-     */
-    function calceth(uint256 _keys)
-        pure
-    public
-        returns(uint256)
-    {
-        return( (_keys)/100 );
-    } 
 }
 
 //==============================================================================
 //   __|_ _    __|_ _  .
 //  _\ | | |_|(_ | _\  .
 //==============================================================================
-library SPCdatasets {
+library F3Ddatasets {
     //compressedData key
     // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
         // 0 - new player (bool)
@@ -1623,16 +1686,14 @@ library SPCdatasets {
         bytes32 name;   // player name
         uint256 win;    // winnings vault
         uint256 gen;    // general vault
-		uint256 aff;    // affiliate vault
+        uint256 aff;    // affiliate vault
         uint256 lrnd;   // last round played
         uint256 laff;   // last affiliate id used
-		uint256 gen2;   // general for clear keys
     }
     struct PlayerRounds {
         uint256 eth;    // eth player has added to round (used for eth limiter)
         uint256 keys;   // keys
         uint256 mask;   // player mask
-    uint256 jionflag;   // player not jion round
         uint256 ico;    // ICO phase investment
     }
     struct Round {
@@ -1648,7 +1709,6 @@ library SPCdatasets {
         uint256 ico;    // total eth sent in during ICO phase
         uint256 icoGen; // total eth for gen during ICO phase
         uint256 icoAvg; // average key price for ICO phase
-    uint256 attendNum; // number of players attend
     }
     struct TeamFee {
         uint256 gen;    // % of buy in thats paid to key holders of current round
@@ -1657,6 +1717,67 @@ library SPCdatasets {
     struct PotSplit {
         uint256 gen;    // % of pot thats paid to key holders of current round
         uint256 p3d;    // % of pot thats paid to p3d holders
+    }
+}
+
+//==============================================================================
+//  |  _      _ _ | _  .
+//  |<(/_\/  (_(_||(_  .
+//=======/======================================================================
+library F3DKeysCalcShort {
+    using SafeMath for *;
+    /**
+     * @dev calculates number of keys received given X eth
+     * @param _curEth current amount of eth in contract
+     * @param _newEth eth being spent
+     * @return amount of ticket purchased
+     */
+    function keysRec(uint256 _curEth, uint256 _newEth)
+        internal
+        pure
+        returns (uint256)
+    {
+        return(keys((_curEth).add(_newEth)).sub(keys(_curEth)));
+    }
+
+    /**
+     * @dev calculates amount of eth received if you sold X keys
+     * @param _curKeys current amount of keys that exist
+     * @param _sellKeys amount of keys you wish to sell
+     * @return amount of eth received
+     */
+    function ethRec(uint256 _curKeys, uint256 _sellKeys)
+        internal
+        pure
+        returns (uint256)
+    {
+        return((eth(_curKeys)).sub(eth(_curKeys.sub(_sellKeys))));
+    }
+
+    /**
+     * @dev calculates how many keys would exist with given an amount of eth
+     * @param _eth eth "in contract"
+     * @return number of keys that would exist
+     */
+    function keys(uint256 _eth)
+        internal
+        pure
+        returns(uint256)
+    {
+        return ((((((_eth).mul(1000000000000000000)).mul(312500000000000000000000000)).add(5624988281256103515625000000000000000000000000000000000000000000)).sqrt()).sub(74999921875000000000000000000000)) / (156250000);
+    }
+
+    /**
+     * @dev calculates how much eth would be in contract given a number of keys
+     * @param _keys number of keys "in contract"
+     * @return eth that would exists
+     */
+    function eth(uint256 _keys)
+        internal
+        pure
+        returns(uint256)
+    {
+        return ((78125000).mul(_keys.sq()).add(((149999843750000).mul(_keys.mul(1000000000000000000))) / (2))) / ((1000000000000000000).sq());
     }
 }
 
@@ -1678,6 +1799,26 @@ interface PlayerBookInterface {
 
 /**
 * @title -Name Filter- v0.1.9
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /
+*                            (__ /          (_/ (, /                                      /)™
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*              _       __    _      ____      ____  _   _    _____  ____  ___
+*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
+*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
 */
 
 library NameFilter {
@@ -1807,5 +1948,54 @@ library SafeMath {
         c = a + b;
         require(c >= a, "SafeMath add failed");
         return c;
+    }
+
+    /**
+     * @dev gives square root of given x.
+     */
+    function sqrt(uint256 x)
+        internal
+        pure
+        returns (uint256 y)
+    {
+        uint256 z = ((add(x,1)) / 2);
+        y = x;
+        while (z < y)
+        {
+            y = z;
+            z = ((add((x / z),z)) / 2);
+        }
+    }
+
+    /**
+     * @dev gives square. multiplies x by x
+     */
+    function sq(uint256 x)
+        internal
+        pure
+        returns (uint256)
+    {
+        return (mul(x,x));
+    }
+
+    /**
+     * @dev x to the power of y
+     */
+    function pwr(uint256 x, uint256 y)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (x==0)
+            return (0);
+        else if (y==0)
+            return (1);
+        else
+        {
+            uint256 z = x;
+            for (uint256 i=1; i < y; i++)
+                z = mul(z,x);
+            return (z);
+        }
     }
 }
