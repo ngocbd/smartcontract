@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xb066135b92a122225bf786c38bc5d2284be7a27e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x9d937dc68ed3604954d5ea8433563df6526b1687
 */
 pragma solidity ^0.4.24;
 
@@ -35,7 +35,7 @@ contract PlayerBook {
 
     address constant private team = 0xBd01103c36f400344b427Cb51934B765007e16f6;
     
-    uint256 public registrationFee_ = 1 finney;            // price to register a name
+    uint256 public registrationFee_ = 10 finney;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
     mapping(address => uint256) public gameIDs_;            // lokup a games ID
