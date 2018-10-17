@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SociBit at 0x2d3dfd15b98b4291564294ca9cebd8484b3c3775
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SociBit at 0xff389bb7b7547646b702a426fef9b4632974124b
 */
 pragma solidity ^0.4.4;
 
@@ -156,7 +156,7 @@ contract SociBit is owned,StandardToken { // CHANGE THIS. Update the contract na
         name = "SociBit";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "SOB";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 100000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 10000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
