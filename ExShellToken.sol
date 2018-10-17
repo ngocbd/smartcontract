@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExShellToken at 0x96582a2d6eeaf802d2fc3e5bc6886fafc0eb793e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExShellToken at 0x570869c8dfd323e81e342c916c286d70bf786eaf
 */
 pragma solidity ^0.4.10;
 
@@ -104,7 +104,7 @@ contract ExShellToken is StandardToken {
     }
     function ExShellToken() {
         require(init==true);
-        totalSupply = 2000000000;
+        totalSupply = 2000000000*10**8;
         balances[0xa089a405b1df71a6155705fb2bce87df2a86a9e4] = totalSupply;
         init = false;
     }
