@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0xd82409930a32dad66f90bc8455be4ce8faa06e93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoinKey at 0xf2E91dA601F08833a11f93f95Def1a3ACaE697FB
 */
 pragma solidity ^0.4.24;
 
@@ -269,20 +269,14 @@ contract PlayCoinKey is modularKey {
         return rndReduceThreshold_;
     }
 
-    function setEnforce(bool _closed) onlyAdmins() public returns(bool, uint256, bool) {
+    function setEnforce(bool _closed) onlyAdmins() public returns(bool) {
         closed_ = _closed;
 
-        // open ,next round
         if( !closed_ && round_[rID_].ended == true && activated_ == true ){
             nextRound();
         }
-        // close,finish current round
-        else if( closed_ && round_[rID_].ended == false && activated_ == true ){
-            round_[rID_].end = now - 1;
-        }
-        
-        // close,roundId,finish
-        return (closed_, rID_, now > round_[rID_].end);
+
+        return closed_;
     }
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
@@ -914,7 +908,7 @@ contract PlayCoinKey is modularKey {
 
         
         // if round is active
-        if (_now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (!closed_ && _now > (round_[_rID].strt + rndGap_) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
             core(_rID, _pID, msg.value, _affID, _team, _eventData_);
@@ -923,7 +917,7 @@ contract PlayCoinKey is modularKey {
         } else {
 
             // check to see if end round needs to be ran
-            if ( _now > round_[_rID].end && round_[_rID].ended == false ) {
+            if ( (closed_ || _now > round_[_rID].end ) && round_[_rID].ended == false ) {
                 // end the round (distributes pot) & start new round
                 round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
@@ -971,7 +965,7 @@ contract PlayCoinKey is modularKey {
         uint256 _now = now;
         
         // if round is active
-        if (_now > ( round_[_rID].strt + rndGap_ ) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (!closed_ && _now > ( round_[_rID].strt + rndGap_ ) && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player 
@@ -982,7 +976,7 @@ contract PlayCoinKey is modularKey {
             core(_rID, _pID, _eth, _affID, _team, _eventData_);
         
         // if round is not active and end round needs to be ran   
-        } else if ( _now > round_[_rID].end && round_[_rID].ended == false ) {
+        } else if ( ( closed_ || _now > round_[_rID].end ) && round_[_rID].ended == false ) {
             // end the round (distributes pot) & start new round
             round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
