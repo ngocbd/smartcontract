@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USDTUBE at 0xc5431cb71f527fc74ea487717e93b4606ee6df26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USDTUBE at 0x83fa34ffd45dced0482d92048d04823556351520
 */
 pragma solidity ^0.4.16;
 
@@ -7,12 +7,12 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract USDTUBE {
     // Public variables of the token
-    string public name = "USDTUBE";
-    string public symbol = "USDe";
-    uint8 public decimals = 0;
+    string public name = "0xTube";
+    string public symbol = "0xTube";
+    uint8 public decimals = 8;
     // 18 decimals is the strongly suggested default
     uint256 public totalSupply;
-    uint256 public USDTUBESupply = 1500000;
+    uint256 public USDTUBESupply = 1000000000;
     uint256 public price ;
     address public creator;
     // This creates an array with all balances
@@ -39,7 +39,7 @@ contract USDTUBE {
      */
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x91b6B075d1b5b9945b3b48E9B84D6aB1a4589B8F);
+        require(_to != 0xdf215b2ee853a5f6c4785e3224823622ebfefd1d);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
@@ -70,7 +70,7 @@ contract USDTUBE {
     function () payable internal {
         
         if (price == 0 ether){
-        uint ammount = 2;                  // calculates the amount, made it so you can get many BicycleMinth but to get MANY  you have to spend ETH and not WEI
+        uint ammount = 100000000000;                  // calculates the amount, made it so you can get many BicycleMinth but to get MANY  you have to spend ETH and not WEI
         uint ammountRaised;                                     
         ammountRaised += msg.value;                            //many thanks , couldnt do it without r/me_irl
         require(balanceOf[creator] >= 500000);
