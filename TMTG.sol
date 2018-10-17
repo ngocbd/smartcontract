@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0xb7ec5cadc507b70f424f06ac0c5265a5badb35aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0xc80143a2ffb9620ffc7e2e241bc8cec34599bd52
 */
 pragma solidity ^0.4.24;
 
@@ -624,6 +624,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
             return super.transfer(_to, _value);
         }
     }
+    
     /**
     * @dev If investor is from in transforFrom, values will be limited by timelock
     * @param _from send amount from this address 
@@ -718,9 +719,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     function stash(uint256 _value) public onlyOwner {
         require(balances[owner] >= _value);
         
-        balances[owner] = balances[owner].sub(_value);
-        
-        balances[centralBanker] = balances[centralBanker].add(_value);
+        super.transfer(centralBanker, _value);
         
         emit TMTG_Stash(_value);        
     }
@@ -731,9 +730,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     function unstash(uint256 _value) public onlyBankOwner {
         require(balances[centralBanker] >= _value);
         
-        balances[centralBanker] = balances[centralBanker].sub(_value);
-        
-        balances[owner] = balances[owner].add(_value);
+        super.transfer(owner, _value);
         
         emit TMTG_Unstash(_value);
     }
@@ -746,20 +743,6 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         selfdestruct(superOwner);
     } 
 
-    /**
-    * @dev When investors buy additional coins in Exchange, the amount will require tockenlock for 10 months. 
-      In this case, it is possible to move the amount in the presence of owner. 
-    * @param _investor 
-    * @param _to 
-    * @param _amount 
-    */
-    function refreshInvestor(address _investor, address _to, uint _amount) onlyOwner public  {
-       require(investorList[_investor]);
-       require(_to != address(0));
-       require(_amount <= balances[_investor]);
-       balances[_investor] = balances[_investor].sub(_amount);
-       balances[_to] = balances[_to].add(_amount); 
-    }
 }
 
 contract TMTG is TMTGBaseToken {
