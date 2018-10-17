@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndexToken at 0x2860685847546b39f8c75a6dfb7d8d40d34b75f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndexToken at 0xa56a4e82d89db2d2a433dfdc94404a7dfe8d7b44
 */
 pragma solidity 0.4.24;
 
@@ -357,8 +357,8 @@ contract PausableToken is StandardToken, Pausable
 
 contract IndexToken is BurnableToken, MintableToken, PausableToken
 {
-    string constant public name = "DQR 10";
-    string constant public symbol = "dqr10";
+    string constant public name = "DQR 30";
+    string constant public symbol = "dqr30";
 
     uint public decimals = 18;
 }
