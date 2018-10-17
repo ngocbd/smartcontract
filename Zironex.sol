@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zironex at 0x2b2b84882e598427f196C170C88BBcA42b2a8f0B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zironex at 0x1dcc1f30f0724b2d53dccf432b658ca1ac26901a
 */
 pragma solidity 0.4.24;
 
@@ -148,8 +148,8 @@ contract ZironexERC20 is Ownable {
   mapping (address => mapping (address => uint256)) internal allowed;
 
   /* Public variables for the ERC20 token */
-  string public constant STANDARD = "ERC20 Zironex";
-  uint8 public constant DECIMALS = 18; // hardcoded to be a constant
+  string public constant standard = "ERC20 Zironex";
+  uint8 public constant decimals = 18; // hardcoded to be a constant
   uint256 public totalSupply = 10000000000000000000000000;
   string public name = "Ziron";
   string public symbol = "ZNX";
@@ -235,7 +235,7 @@ interface tokenRecipient {
 contract Zironex is ZironexERC20 {
 
   // Constant to simplify conversion of token amounts into integer form
-    uint256 public tokenUnit = uint256(10)**DECIMALS;
+    uint256 public tokenUnit = uint256(10)**decimals;
 
   //Declare logging events
     event LogDeposit(address sender, uint amount);
