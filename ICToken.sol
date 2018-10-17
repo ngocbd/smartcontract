@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICToken at 0x6e76b701e3905a7193358c203c669dca9cd0b61a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICToken at 0xe42e73c2c705ab07e134433092bb4ac28aeae635
 */
 pragma solidity 0.4.24;
 
@@ -116,7 +116,7 @@ contract ICToken is UnboundedRegularToken {
 
     uint public totalSupply = 1*10**27;
     uint8 constant public decimals = 18;
-    string constant public name = "IIIBTC";
+    string constant public name = "IIIBTC Coin";
     string constant public symbol = "IC";
 
     function ICToken() {
