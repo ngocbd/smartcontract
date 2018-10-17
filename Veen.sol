@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veen at 0x54F0E3b0d7CcBB65E56D166350aa86F7E71cE20b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Veen at 0xfea8a63a0fbce2bd115d3c20a4c825c225ed35d4
 */
 pragma solidity ^0.4.18;
 
@@ -163,7 +163,7 @@ contract Pausable is Ownable {
    *
    */
   function set_lock_list(address lock_address, uint period) onlyOwner external {
-      _lock_list_period[lock_address] = startdate + (period * 1 days);
+      _lock_list_period[lock_address] = startdate + (period * 1 minutes);
       _lock_list[lock_address]  = true;
       _tokenSupply = _tokenSupply.sub(_balances[lock_address]);
   }
