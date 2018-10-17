@@ -1,37 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0x751365a52f39e87ea91c23f3211f5abd77e1f02f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Test at 0x70808d21bb92547380977db83541e03564373f0a
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
-
-contract Test
-{
-    address Poppins_address = address(0xd022969da8A1aCe11E2974b3e7EE476c3f9F99c6);
-    Test1 poppins=Test1(Poppins_address);
+contract Test {
+    event testLog(address indexed account, uint amount);
     
-    
-    function depositAndWithdraw(uint256 withdrawAmount) payable{
-        poppins.Invest.value(msg.value)();
-        poppins.Divest(withdrawAmount);
-        if(!(this.balance > 1 ether)){
-            revert();
-        }
-        msg.sender.transfer(this.balance);
-    }
-    function () payable{
-        
+    constructor() public {
+        emit testLog(msg.sender, block.number);
     }
     
-    function withdraw (){
-        msg.sender.transfer(this.balance);
+    function execute(uint number) public returns (bool) {
+        emit testLog(msg.sender, number);
+        return true;
     }
 }
-
-contract Test1
-    {
-       function Invest() 
-    public 
-    payable ;
-    function Divest(uint amount) 
-    public ;
-    }
