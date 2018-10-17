@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuMain at 0x6731560e455537c9f088ea02a47a0ecfa28a9231
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuMain at 0xe264d16bcba50925d0e1a90398596ec010306e14
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /******************************************************************************\
-*..................................SU.SQUARES..................................*
-*.......................Blockchain.rentable.advertising........................*
+*..................................SU SQUARES..................................*
+*.......................Blockchain rentable advertising........................*
 *..............................................................................*
 * First, I just want to say we are so excited and humbled to get this far and  *
 * that you're even reading this. So thank you!                                 *
@@ -16,12 +16,12 @@ pragma solidity ^0.4.21;
 *                                                                              *
 *  - ERC165, ERC721: These interfaces follow the official EIPs                 *
 *  - AccessControl: A reusable CEO/CFO/COO access model                        *
-*  - PublishInterfaces: An implementation of ERC165                            *
+*  - SupportsInterface: An implementation of ERC165                            *
 *  - SuNFT: An implementation of ERC721                                        *
 *  - SuOperation: The actual square data and the personalize function          *
-*  - SuPromo, SuVending: How we sell or grant squares                          *
+*  - SuPromo, SuVending: How we grant or sell squares                          *
 *..............................................................................*
-*............................Su.&.William.Entriken.............................*
+*............................Su & William Entriken.............................*
 *...................................(c) 2018...................................*
 \******************************************************************************/
 
@@ -29,7 +29,7 @@ pragma solidity ^0.4.21;
 
 /// @title Reusable three-role access control inspired by CryptoKitties
 /// @author William Entriken (https://phor.net)
-/// @dev Keep the CEO wallet stored offline, I warned you
+/// @dev Keep the CEO wallet stored offline, I warned you.
 contract AccessControl {
     /// @notice The account that can only reassign executive accounts
     address public executiveOfficerAddress;
@@ -40,7 +40,7 @@ contract AccessControl {
     /// @notice The account with administrative control of this contract
     address public operatingOfficerAddress;
 
-    function AccessControl() internal {
+    constructor() internal {
         executiveOfficerAddress = msg.sender;
     }
 
@@ -101,7 +101,7 @@ contract AccessControl {
 /* ERC165.sol *****************************************************************/
 
 /// @title ERC-165 Standard Interface Detection
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-165.md
+/// @dev Reference https://eips.ethereum.org/EIPS/eip-165
 interface ERC165 {
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
@@ -109,10 +109,10 @@ interface ERC165 {
 /* ERC721.sol *****************************************************************/
 
 /// @title ERC-721 Non-Fungible Token Standard
-/// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-contract ERC721 is ERC165 {
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+/// @dev Reference https://eips.ethereum.org/EIPS/eip-721
+interface ERC721 /* is ERC165 */ {
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
     event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
     function balanceOf(address _owner) external view returns (uint256);
     function ownerOf(uint256 _tokenId) external view returns (address);
@@ -127,7 +127,7 @@ contract ERC721 is ERC165 {
 
 /// @title ERC-721 Non-Fungible Token Standard
 interface ERC721TokenReceiver {
-	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
+    function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes _data) external returns(bytes4);
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -144,15 +144,15 @@ interface ERC721Enumerable /* is ERC721 */ {
     function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
 }
 
-/* PublishInterfaces.sol ******************************************************/
+/* SupportsInterface.sol ******************************************************/
 
 /// @title A reusable contract to comply with ERC-165
 /// @author William Entriken (https://phor.net)
-contract PublishInterfaces is ERC165 {
-    /// @dev Every interface that we support
+contract SupportsInterface is ERC165 {
+    /// @dev Every interface that we support, do not set 0xffffffff to true
     mapping(bytes4 => bool) internal supportedInterfaces;
 
-    function PublishInterfaces() internal {
+    constructor() internal {
         supportedInterfaces[0x01ffc9a7] = true; // ERC165
     }
 
@@ -176,7 +176,7 @@ contract PublishInterfaces is ERC165 {
 ///  - NFTs are initially assigned to this contract
 ///  - This contract does not externally call its own functions
 /// @author William Entriken (https://phor.net)
-contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInterfaces {
+contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, SupportsInterface {
     /// @dev The authorized address for each NFT
     mapping (uint256 => address) internal tokenApprovals;
 
@@ -225,13 +225,13 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
     ///  (`to` == 0). Exception: during contract creation, any number of NFTs
     ///  may be created and assigned without emitting Transfer. At the time of
     ///  any transfer, the approved address for that NFT (if any) is reset to none.
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+    event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
 
     /// @dev This emits when the approved address for an NFT is changed or
     ///  reaffirmed. The zero address indicates there is no approved address.
     ///  When a Transfer event emits, this also indicates that the approved
     ///  address for that NFT (if any) is reset to none.
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
 
     /// @dev This emits when an operator is enabled or disabled for an owner.
     ///  The operator can manage all NFTs of the owner.
@@ -272,7 +272,7 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
     ///  `_tokenId` is not a valid NFT. When transfer is complete, this function
     ///  checks if `_to` is a smart contract (code size > 0). If so, it calls
     ///  `onERC721Received` on `_to` and throws if the return value is not
-    ///  `bytes4(keccak256("onERC721Received(address,uint256,bytes)"))`.
+    ///  `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`.
     /// @param _from The current owner of the NFT
     /// @param _to The new owner
     /// @param _tokenId The NFT to transfer
@@ -284,7 +284,7 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
 
     /// @notice Transfers the ownership of an NFT from one address to another address
     /// @dev This works identically to the other function with an extra data parameter,
-    ///  except this function just sets data to ""
+    ///  except this function just sets data to "".
     /// @param _from The current owner of the NFT
     /// @param _to The new owner
     /// @param _tokenId The NFT to transfer
@@ -319,9 +319,9 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
         _transfer(_tokenId, _to);
     }
 
-    /// @notice Set or reaffirm the approved address for an NFT
+    /// @notice Change or reaffirm the approved address for an NFT
     /// @dev The zero address indicates there is no approved address.
-    /// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
+    ///  Throws unless `msg.sender` is the current NFT owner, or an authorized
     ///  operator of the current owner.
     /// @param _approved The new approved NFT controller
     /// @param _tokenId The NFT to approve
@@ -340,18 +340,19 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
         emit Approval(_owner, _approved, _tokenId);
     }
 
-    /// @notice Enable or disable approval for a third party ("operator") to manage
-    ///  all your asset.
-    /// @dev Emits the ApprovalForAll event
-    /// @param _operator Address to add to the set of authorized operators.
-    /// @param _approved True if the operators is approved, false to revoke approval
+    /// @notice Enable or disable approval for a third party ("operator") to
+    ///  manage all of `msg.sender`'s assets
+    /// @dev Emits the ApprovalForAll event. The contract MUST allow
+    ///  multiple operators per owner.
+    /// @param _operator Address to add to the set of authorized operators
+    /// @param _approved True if operator is approved, false to revoke approval
     function setApprovalForAll(address _operator, bool _approved) external {
         operatorApprovals[msg.sender][_operator] = _approved;
         emit ApprovalForAll(msg.sender, _operator, _approved);
     }
 
     /// @notice Get the approved address for a single NFT
-    /// @dev Throws if `_tokenId` is not a valid NFT
+    /// @dev Throws if `_tokenId` is not a valid NFT.
     /// @param _tokenId The NFT to find the approved address for
     /// @return The approved address for this NFT, or the zero address if there is none
     function getApproved(uint256 _tokenId)
@@ -406,8 +407,8 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
     // COMPLIANCE WITH ERC721Enumerable ////////////////////////////////////////
 
     /// @notice Count NFTs tracked by this contract
-    /// @return A count of valid NFTs tracked by this contract, where each one of
-    ///  them has an assigned and queryable owner not equal to the zero address
+    /// @return A count of valid NFTs tracked by this contract, where each one
+    ///  has an assigned and queryable owner not equal to the zero address
     function totalSupply() external view returns (uint256) {
         return TOTAL_SUPPLY;
     }
@@ -492,9 +493,10 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
 
     // PRIVATE STORAGE AND FUNCTIONS ///////////////////////////////////////////
 
-    uint256 private constant TOTAL_SUPPLY = 10000; // SOLIDITY ISSUE #3356 make this immutable
+    // See Solidity issue #3356, it would be clearer to initialize in SuMain
+    uint256 private constant TOTAL_SUPPLY = 10000;
 
-    bytes4 private constant ERC721_RECEIVED = bytes4(keccak256("onERC721Received(address,uint256,bytes)"));
+    bytes4 private constant ERC721_RECEIVED = bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
 
     /// @dev The owner of each NFT
     ///  If value == address(0), NFT is owned by address(this)
@@ -525,7 +527,7 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
     // address[] private nftIds;
     // mapping (uint256 => uint256) private nftIndexOfId;
 
-    function SuNFT() internal {
+    constructor() internal {
         // Publish interfaces with ERC-165
         supportedInterfaces[0x80ac58cd] = true; // ERC721
         supportedInterfaces[0x5b5e139f] = true; // ERC721Metadata
@@ -571,7 +573,7 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
         if (codeSize == 0) {
             return;
         }
-        bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(_from, _tokenId, data);
+        bytes4 retval = ERC721TokenReceiver(_to).onERC721Received(msg.sender, _from, _tokenId, data);
         require(retval == ERC721_RECEIVED);
     }
 }
@@ -580,12 +582,11 @@ contract SuNFT is ERC165, ERC721, ERC721Metadata, ERC721Enumerable, PublishInter
 
 /// @title The features that square owners can use
 /// @author William Entriken (https://phor.net)
-/// @dev See SuMain contract documentation for detail on how contracts interact.
 contract SuOperation is SuNFT {
     /// @dev The personalization of a square has changed
     event Personalized(uint256 _nftId);
 
-    /// @dev The main SuSquare struct. The owner may set these properties, subject
+    /// @dev The main SuSquare struct. The owner may set these properties,
     ///  subject to certain rules. The actual 10x10 image is rendered on our
     ///  website using this data.
     struct SuSquare {
@@ -617,7 +618,7 @@ contract SuOperation is SuNFT {
     SuSquare[10001] public suSquares;
 
     /// @notice Update the contents of your square, the first 3 personalizations
-    ///  for a square are free then cost 10 finney (0.01 ether) each
+    ///  for a square are free then cost 100 finney (0.01 ether) each
     /// @param _squareId The top-left is 1, to its right is 2, ..., top-right is
     ///  100 and then 101 is below 1... the last one at bottom-right is 10000
     /// @param _squareId A 10x10 image for your square, in 8-bit RGB words
@@ -651,9 +652,8 @@ contract SuOperation is SuNFT {
 
 /* SuPromo.sol ****************************************************************/
 
-/// @title A limited pre-sale and promotional giveaway.
+/// @title A limited pre-sale and promotional giveaway
 /// @author William Entriken (https://phor.net)
-/// @dev See SuMain contract documentation for detail on how contracts interact.
 contract SuPromo is AccessControl, SuNFT {
     uint256 constant PROMO_CREATION_LIMIT = 5000;
 
@@ -678,7 +678,6 @@ contract SuPromo is AccessControl, SuNFT {
 
 /// @title A token vending machine
 /// @author William Entriken (https://phor.net)
-/// @dev See SuMain contract documentation for detail on how contracts interact.
 contract SuVending is SuNFT {
     uint256 constant SALE_PRICE = 500 finney; // 0.5 ether
 
@@ -701,8 +700,7 @@ contract SuVending is SuNFT {
 
 /// @title The features that deed owners can use
 /// @author William Entriken (https://phor.net)
-/// @dev See SuMain contract documentation for detail on how contracts interact.
 contract SuMain is AccessControl, SuNFT, SuOperation, SuVending, SuPromo {
-    function SuMain() public {
+    constructor() public {
     }
 }
