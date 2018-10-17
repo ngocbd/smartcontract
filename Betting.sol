@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x996486aeb4a61627a4695479dae1c85286513d51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xe75a60da4bad89b84d10a7ab8e28f9ed7ba22401
 */
-pragma solidity ^0.4.20;
-
 pragma solidity ^0.4.21;
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -30,12 +28,16 @@ library SafeMath {
   }
 }
 
+interface P3DTakeout {
+    function buyTokens() external payable;
+}
 
-contract Betting{
+contract Betting {
     using SafeMath for uint256; //using safemath
 
     address public owner; //owner address
     address house_takeout = 0xf783A81F046448c38f3c863885D9e99D10209779;
+    P3DTakeout P3DContract_;
 
     uint public winnerPoolTotal;
     string public constant version = "0.2.3";
@@ -100,6 +102,7 @@ contract Betting{
         horses.ETH = bytes32("ETH");
         horses.LTC = bytes32("LTC");
         
+        P3DContract_ = P3DTakeout(0x72b2670e55139934D6445348DC6EaB4089B12576);
     }
 
     // data access structures
@@ -207,10 +210,17 @@ contract Betting{
             emit RefundEnabled("Not enough participants");
             forceVoidRace();
         } else {
+            // house takeout
             uint house_fee = total_reward.mul(5).div(100);
             require(house_fee < address(this).balance);
             total_reward = total_reward.sub(house_fee);
             house_takeout.transfer(house_fee);
+            
+            // p3d takeout
+            uint p3d_fee = house_fee/2;
+            require(p3d_fee < address(this).balance);
+            total_reward = total_reward.sub(p3d_fee);
+            P3DContract_.buyTokens.value(p3d_fee)();
         }
 
         if (horses.BTC_delta > horses.ETH_delta) {
