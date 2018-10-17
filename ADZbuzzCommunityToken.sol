@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x601576380052371a52e100c3b0cab41560b8347e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xac43645f75a28722b15ab6fbd8376c7a08c744c8
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'ACT222349' token contract
+// 'ACT256005' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT222349
-// Name        : ADZbuzz Allroadsleadtothe.kitchen Community Token
+// Symbol      : ACT256005
+// Name        : ADZbuzz Allaboutbirds.org Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT222349";
-        name = "ADZbuzz Allroadsleadtothe.kitchen Community Token";
+        symbol = "ACT256005";
+        name = "ADZbuzz Allaboutbirds.org Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
