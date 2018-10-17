@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NPToken at 0x7954a912b4e6954f183b5cded9a573f16b22a759
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NPToken at 0xfa42cb7d01e6f8dc0b69baaa7b24fe66ebf5f25b
 */
 pragma solidity ^0.4.21;
 
@@ -234,5 +234,5 @@ contract NPToken is ERC20 {
 	
 	// can accept ether
 	function() public payable {
-    }
+    }	
 }
