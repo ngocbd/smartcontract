@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x36351289a2263902189515f83138528f2382b12f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFTOKEN at 0x3546598711afb59db4b72aec8f29d35294c5d2ed
 */
 pragma solidity ^0.4.21;
 
@@ -275,8 +275,8 @@ contract StandardToken is ERC20, BasicToken {
 
 contract TFTOKEN is StandardToken, Ownable {
     // Constants
-    string  public constant name = "GSG";
-    string  public constant symbol = "JLG";
+    string  public constant name = "JLG";
+    string  public constant symbol = "GSG";
     uint8   public constant decimals = 4;
     uint256 public constant INITIAL_SUPPLY     =  1000000000 * (10 ** uint256(decimals));
    
