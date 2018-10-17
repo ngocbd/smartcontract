@@ -1,7 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetWithWhitelist at 0x6642bf72723839785418a5d2a2ed5b5dfe0cb354
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetWithWhitelist at 0x9e6D0F3CDEdAb391483B234E6c06BC35AaBa75C7
 */
-pragma solidity 0.4.11;
+// This software is a subject to Ambisafe License Agreement.
+// No use or distribution is allowed without written permission from Ambisafe.
+// https://www.ambisafe.co/terms-of-use/
+
+pragma solidity 0.4.15;
+
+contract Ambi2 {
+    function claimFor(address _address, address _owner) returns(bool);
+    function hasRole(address _from, bytes32 _role, address _to) constant returns(bool);
+    function isOwner(address _node, address _owner) constant returns(bool);
+}
+
+contract Ambi2Enabled {
+    Ambi2 ambi2;
+
+    modifier onlyRole(bytes32 _role) {
+        if (address(ambi2) != 0x0 && ambi2.hasRole(this, _role, msg.sender)) {
+            _;
+        }
+    }
+
+    // Perform only after claiming the node, or claim in the same tx.
+    function setupAmbi2(Ambi2 _ambi2) returns(bool) {
+        if (address(ambi2) != 0x0) {
+            return false;
+        }
+
+        ambi2 = _ambi2;
+        return true;
+    }
+}
+
+contract Ambi2EnabledFull is Ambi2Enabled {
+    // Setup and claim atomically.
+    function setupAmbi2(Ambi2 _ambi2) returns(bool) {
+        if (address(ambi2) != 0x0) {
+            return false;
+        }
+        if (!_ambi2.claimFor(this, msg.sender) && !_ambi2.isOwner(this, msg.sender)) {
+            return false;
+        }
+
+        ambi2 = _ambi2;
+        return true;
+    }
+}
+
+contract ReturnData {
+    function _returnReturnData(bool _success) internal {
+        assembly {
+            let returndatastart := msize()
+            mstore(0x40, add(returndatastart, returndatasize))
+            returndatacopy(returndatastart, 0, returndatasize)
+            switch _success case 0 { revert(returndatastart, returndatasize) } default { return(returndatastart, returndatasize) }
+        }
+    }
+
+    function _assemblyCall(address _destination, uint _value, bytes _data) internal returns(bool success) {
+        assembly {
+            success := call(div(mul(gas, 63), 64), _destination, _value, add(_data, 32), mload(_data), 0, 0)
+        }
+    }
+}
+
+contract Bytes32 {
+    function _bytes32(string _input) internal constant returns(bytes32 result) {
+        assembly {
+            result := mload(add(_input, 32))
+        }
+    }
+}
 
 contract AssetInterface {
     function _performTransferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
@@ -9,8 +79,8 @@ contract AssetInterface {
     function _performApprove(address _spender, uint _value, address _sender) returns(bool);    
     function _performTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function _performTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performGeneric(bytes _data, address _sender) payable returns(bytes32) {
-        throw;
+    function _performGeneric(bytes, address) payable {
+        revert();
     }
 }
 
@@ -24,7 +94,7 @@ contract AssetInterface {
  * Note: all the non constant functions return false instead of throwing in case if state change
  * didn't happen yet.
  */
-contract Asset is AssetInterface {
+contract Asset is AssetInterface, Bytes32, ReturnData {
     // Assigned asset proxy contract, immutable.
     AssetProxy public proxy;
 
@@ -64,6 +134,9 @@ contract Asset is AssetInterface {
      * @dev function is final, and must not be overridden.
      */
     function _performTransferWithReference(address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
+        if (isICAP(_to)) {
+            return _transferToICAPWithReference(bytes32(_to) << 96, _value, _reference, _sender);
+        }
         return _transferWithReference(_to, _value, _reference, _sender);
     }
 
@@ -108,6 +181,9 @@ contract Asset is AssetInterface {
      * @dev function is final, and must not be overridden.
      */
     function _performTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
+        if (isICAP(_to)) {
+            return _transferFromToICAPWithReference(_from, bytes32(_to) << 96, _value, _reference, _sender);
+        }
         return _transferFromWithReference(_from, _to, _value, _reference, _sender);
     }
 
@@ -173,8 +249,8 @@ contract Asset is AssetInterface {
      * @return bytes32 result.
      * @dev function is final, and must not be overridden.
      */
-    function _performGeneric(bytes _data, address _sender) payable onlyProxy() returns(bytes32) {
-        return _generic(_data, _sender);
+    function _performGeneric(bytes _data, address _sender) payable onlyProxy() {
+        _generic(_data, msg.value, _sender);
     }
 
     modifier onlyMe() {
@@ -185,71 +261,51 @@ contract Asset is AssetInterface {
 
     // Most probably the following should never be redefined in child contracts.
     address genericSender;
-    function _generic(bytes _data, address _sender) internal returns(bytes32) {
+    function _generic(bytes _data, uint _value, address _msgSender) internal {
         // Restrict reentrancy.
-        if (genericSender != 0x0) {
-            throw;
-        }
-        genericSender = _sender;
-        bytes32 result = _callReturn(this, _data, msg.value);
+        require(genericSender == 0x0);
+        genericSender = _msgSender;
+        bool success = _assemblyCall(address(this), _value, _data);
         delete genericSender;
-        return result;
-    }
-
-    function _callReturn(address _target, bytes _data, uint _value) internal returns(bytes32 result) {
-        bool success;
-        assembly {
-            success := call(div(mul(gas, 63), 64), _target, _value, add(_data, 32), mload(_data), 0, 32)
-            result := mload(0)
-        }
-        if (!success) {
-            throw;
-        }
+        _returnReturnData(success);
     }
 
     // Decsendants should use _sender() instead of msg.sender to properly process proxied calls.
     function _sender() constant internal returns(address) {
         return this == msg.sender ? genericSender : msg.sender;
     }
-}
 
-contract Ambi2 {
-    function claimFor(address _address, address _owner) returns(bool);
-    function hasRole(address _from, bytes32 _role, address _to) constant returns(bool);
-    function isOwner(address _node, address _owner) constant returns(bool);
-}
-
-contract Ambi2Enabled {
-    Ambi2 ambi2;
-
-    modifier onlyRole(bytes32 _role) {
-        if (address(ambi2) != 0x0 && ambi2.hasRole(this, _role, msg.sender)) {
-            _;
-        }
+    // Interface functions to allow specifying ICAP addresses as strings.
+    function transferToICAP(string _icap, uint _value) returns(bool) {
+        return transferToICAPWithReference(_icap, _value, '');
     }
 
-    // Perform only after claiming the node, or claim in the same tx.
-    function setupAmbi2(Ambi2 _ambi2) returns(bool) {
-        if (address(ambi2) != 0x0) {
-            return false;
-        }
-
-        ambi2 = _ambi2;
-        return true;
+    function transferToICAPWithReference(string _icap, uint _value, string _reference) returns(bool) {
+        return _transferToICAPWithReference(_bytes32(_icap), _value, _reference, _sender());
     }
-}
 
-contract Ambi2EnabledFull is Ambi2Enabled {
-    // Setup and claim atomically.
-    function setupAmbi2(Ambi2 _ambi2) returns(bool) {
-        if (address(ambi2) != 0x0) {
+    function transferFromToICAP(address _from, string _icap, uint _value) returns(bool) {
+        return transferFromToICAPWithReference(_from, _icap, _value, '');
+    }
+
+    function transferFromToICAPWithReference(address _from, string _icap, uint _value, string _reference) returns(bool) {
+        return _transferFromToICAPWithReference(_from, _bytes32(_icap), _value, _reference, _sender());
+    }
+
+    function isICAP(address _address) constant returns(bool) {
+        bytes32 a = bytes32(_address) << 96;
+        if (a[0] != 'X' || a[1] != 'E') {
             return false;
         }
-        if (!_ambi2.claimFor(this, msg.sender) && !_ambi2.isOwner(this, msg.sender)) {
+        if (a[2] < 48 || a[2] > 57 || a[3] < 48 || a[3] > 57) {
             return false;
         }
-
-        ambi2 = _ambi2;
+        for (uint i = 4; i < 20; i++) {
+            uint char = uint(a[i]);
+            if (char < 48 || char > 90 || (char > 57 && char < 65)) {
+                return false;
+            }
+        }
         return true;
     }
 }
