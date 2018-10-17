@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bevium at 0x04b602c678efac6023d64faa53879fb3fbdfb236
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bevium at 0xc14498696428aed9af55430958df3c30e2f5815a
 */
 pragma solidity ^0.4.23;
 /**
@@ -297,6 +297,14 @@ contract Bevium is Ownable, MintableToken {
   string public constant name = "Bevium";
   string public constant symbol = "BVI";
   uint32 public constant decimals = 18;
+  address public addressFounders;
+  uint256 public summFounders;
+  function Bevium() public {
+    addressFounders = 0x6e69307fe1fc55B2fffF680C5080774D117f1154;  
+    summFounders = 26400000 * (10 ** uint256(decimals));  
+    mint(addressFounders, summFounders);      
+  }      
+      
 }
 
 /**
@@ -312,13 +320,23 @@ contract Bevium is Ownable, MintableToken {
 contract Crowdsale is Ownable {
   using SafeMath for uint256;
   Bevium public token;
-  // start timestamps where investments are allowed
+  //Start timestamps where investments are allowed
+  uint256 public startPreICO;
+  uint256 public endPreICO;  
   uint256 public startICO;
+  uint256 public endICO;
   //Hard cap
-  uint256 public hardCap;
-  uint256 public totalSoldTokens;
-  //how many token units a Contributor gets per wei
-  uint256 public rateICO;  
+  uint256 public sumHardCapPreICO;
+  uint256 public sumHardCapICO;
+  uint256 public sumPreICO;
+  uint256 public sumICO;
+  //Min Max Investment
+  uint256 public minInvestmentPreICO;
+  uint256 public minInvestmentICO;
+  uint256 public maxInvestmentICO;
+  //rate
+  uint256 public ratePreICO; 
+  uint256 public rateICO;
   // address where funds are collected
   address public wallet;
   
@@ -332,25 +350,56 @@ contract Crowdsale is Ownable {
   event TokenProcurement(address indexed contributor, address indexed beneficiary, uint256 value, uint256 amount);
   
   function Crowdsale() public {
-    
     token = createTokenContract();
-    // rate;
-    rateICO = 1000;	
     // start timestamps where investments are allowed
-    startICO = 1531612800;  // July 15 2018 00:00:00 +0000
-    hardCap = 55000000 * 1 ether;
+    startPreICO = 1535587200;  // Aug 30 2018 00:00:00 +0000
+    endPreICO = 1543536000;  // Nov 30 2018 00:00:00 +0000    
+    startICO = 1543536000;  // Nov 30 2018 00:00:00 +0000
+    endICO = 1577664000;  // Dec 30 2019 00:00:00 +0000
+    //Hard cap
+    sumHardCapPreICO = 22000000 * 1 ether;
+    sumHardCapICO = 6600000 * 1 ether;
+    //Min Max Investment
+    minInvestmentPreICO = 10 * 1 ether;
+    minInvestmentICO = 100000000000000000; //0.1 ether
+    maxInvestmentICO = 5 * 1 ether;
+    //rate;
+    ratePreICO = 1500;
+    rateICO = 1000;    
     // address where funds are collected
     wallet = 0x86a639e5587117Fc95517D13168F767226DA6107;
   }
 
-  function setRateICO(uint _rateICO) public onlyOwner  {
-    rateICO = _rateICO;
+  function setRatePreICO(uint _ratePreICO) public onlyOwner  {
+    ratePreICO = _ratePreICO;
   } 
   
-  function setStartICO(uint _startICO) public onlyOwner  {
-    startICO = _startICO;
+  function setRateICO(uint _rateICO) public onlyOwner  {
+    rateICO = _rateICO;
+  }  
+  
+  function setStartPreICO(uint _startPreICO) public onlyOwner  {
+    //require(_startPreICO < endPreICO);  
+    startPreICO = _startPreICO;
   }   
 
+  function setEndPreICO(uint _endPreICO) public onlyOwner  {
+    //require(_endPreICO > startPreICO);
+    //require(_endPreICO < startICO);
+    endPreICO = _endPreICO;
+  }
+
+  function setStartICO(uint _startICO) public onlyOwner  {
+    //require(_startICO > endPreICO); 
+    //require(_startICO < endICO);  
+    startICO = _startICO;
+  }
+
+  function setEndICO(uint _endICO) public onlyOwner  {
+    //require(_endICO > startICO); 
+    endICO = _endICO;
+  }
+  
   // fallback function can be used to Procure tokens
   function () external payable {
     procureTokens(msg.sender);
@@ -360,19 +409,66 @@ contract Crowdsale is Ownable {
     return new Bevium();
   }
 
-  function checkHardCap(uint256 _value) public {
-      require(_value.add(totalSoldTokens) <= hardCap);
-      totalSoldTokens = totalSoldTokens.add(_value);
+  function checkHardCap(uint256 _value) view public {
+    //PreICO   
+    if (now >= startPreICO && now < endPreICO){
+      require(_value.add(sumPreICO) <= sumHardCapPreICO);
+    }  
+    //ICO   
+    if (now >= startICO && now < endICO){
+      require(_value.add(sumICO) <= sumHardCapICO);
+    }       
   } 
+  
+  function adjustHardCap(uint256 _value) public {
+    //PreICO   
+    if (now >= startPreICO && now < endPreICO){
+      sumPreICO = sumPreICO.add(_value);
+    }  
+    //ICO   
+    if (now >= startICO && now < endICO){
+      sumICO = sumICO.add(_value);
+    }       
+  }   
+  
+  function checkMinMaxInvestment(uint256 _value) view public {
+    //PreICO   
+    if (now >= startPreICO && now < endPreICO){
+      require(_value >= minInvestmentPreICO);
+    }  
+    //ICO   
+    if (now >= startICO && now < endICO){
+      require(_value >= minInvestmentICO);
+      require(_value <= maxInvestmentICO);
+    }       
+  }   
+  
+  function getRate() public view returns (uint256) {
+    uint256 rate;
+    //PreICO   
+    if (now >= startPreICO && now < endPreICO){
+      rate = ratePreICO;
+    }  
+    //ICO   
+    if (now >= startICO && now < endICO){
+      rate = rateICO;
+    }      
+    return rate;
+  }  
   
   function procureTokens(address _beneficiary) public payable {
     uint256 tokens;
     uint256 weiAmount = msg.value;
     address _this = this;
-    require(now >= startICO);
+    uint256 rate;
+    require(now >= startPreICO);
+    require(now <= endICO);
     require(_beneficiary != address(0));
-    tokens = weiAmount.mul(rateICO);
+    checkMinMaxInvestment(weiAmount);
+    rate = getRate();
+    tokens = weiAmount.mul(rate);
     checkHardCap(tokens);
+    adjustHardCap(tokens);
     wallet.transfer(_this.balance);
     token.mint(_beneficiary, tokens);
     emit TokenProcurement(msg.sender, _beneficiary, weiAmount, tokens);
