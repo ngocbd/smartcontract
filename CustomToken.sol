@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf5261541b64ac002fce8de01a6684abefd622592
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd0679f8c568ed7ffd67e2447e31a4a906c036796
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000000;
-        name = 'Global contract payment';
-        symbol = 'GCT(QC)';
-        decimals = 10;
-        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
-        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
+        totalSupply = 1000000000000000000000000000;
+        name = 'VGDChain';
+        symbol = 'VGD';
+        decimals = 18;
+        balanceOf[0xfb2555c0d788c0583b5f5a3a31744c73b0370fc6] = totalSupply;
+        Transfer(address(0), 0xfb2555c0d788c0583b5f5a3a31744c73b0370fc6, totalSupply);
     }
 }
