@@ -1,119 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0x5284d8993e8549a577834667ffe2f8f2ccdb90f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MuzikaCoin at 0x1f35a281036be57e64e7e7a2a556b4f888a1b829
 */
 pragma solidity ^0.4.24;
 
-// File: zeppelin-solidity\contracts\ownership\Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipRenounced(address indexed previousOwner);
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to relinquish control of the contract.
-   * @notice Renouncing to ownership will leave the contract without an owner.
-   * It will not be possible to call the functions with the `onlyOwner`
-   * modifier anymore.
-   */
-  function renounceOwnership() public onlyOwner {
-    emit OwnershipRenounced(owner);
-    owner = address(0);
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address _newOwner) public onlyOwner {
-    _transferOwnership(_newOwner);
-  }
-
-  /**
-   * @dev Transfers control of the contract to a newOwner.
-   * @param _newOwner The address to transfer ownership to.
-   */
-  function _transferOwnership(address _newOwner) internal {
-    require(_newOwner != address(0));
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
-  }
-}
-
-// File: zeppelin-solidity\contracts\lifecycle\Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
-
-// File: zeppelin-solidity\contracts\token\ERC20\ERC20Basic.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -127,28 +17,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity\contracts\token\ERC20\ERC20.sol
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-// File: zeppelin-solidity\contracts\math\SafeMath.sol
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -200,7 +69,7 @@ library SafeMath {
   }
 }
 
-// File: zeppelin-solidity\contracts\token\ERC20\BasicToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -246,7 +115,28 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: zeppelin-solidity\contracts\token\ERC20\StandardToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -367,7 +257,71 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: zeppelin-solidity\contracts\token\ERC20\MintableToken.sol
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
  * @title Mintable token
@@ -424,13 +378,65 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-// File: contracts\lib\ApprovalAndCallFallBack.sol
+// File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+// File: contracts/lib/ApprovalAndCallFallBack.sol
 
 contract ApprovalAndCallFallBack {
   function receiveApproval(address _owner, uint256 _amount, address _token, bytes _data) public returns (bool);
 }
 
-// File: contracts\token\MuzikaCoin.sol
+// File: contracts/lib/TransferAndCallFallBack.sol
+
+contract TransferAndCallFallBack {
+  function receiveToken(address _owner, uint256 _amount, address _token, bytes _data) public returns (bool);
+}
+
+// File: contracts/token/MuzikaCoin.sol
 
 contract MuzikaCoin is MintableToken, Pausable {
   string public name = 'Muzika';
@@ -480,7 +486,24 @@ contract MuzikaCoin is MintableToken, Pausable {
     require(
       ApprovalAndCallFallBack(_spender).receiveApproval(
         msg.sender,
-        allowed[msg.sender][_spender],
+        _addedValue,
+        address(this),
+        _data
+      )
+    );
+
+    return true;
+  }
+
+  function transferAndCall(address _to, uint _value, bytes _data) public returns (bool) {
+    require(_to != address(this));
+
+    transfer(_to, _value);
+
+    require(
+      TransferAndCallFallBack(_to).receiveToken(
+        msg.sender,
+        _value,
         address(this),
         _data
       )
