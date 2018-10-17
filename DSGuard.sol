@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSGuard at 0xb5d0b4ba08a68819c8010cc44d343f737511c82e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSGuard at 0xe30edf94f43ea5bc04441ab9e899cfdeb25ec850
 */
-// hevm: flattened sources of src/guard.sol
-pragma solidity ^0.4.13;
+// hevm: flattened sources of src/burner.sol
+pragma solidity ^0.4.24;
 
-////// lib/ds-auth/src/auth.sol
+////// lib/ds-guard/lib/ds-auth/src/auth.sol
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +18,7 @@ pragma solidity ^0.4.13;
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 contract DSAuthority {
     function canCall(
@@ -35,9 +35,9 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    function DSAuth() public {
+    constructor() public {
         owner = msg.sender;
-        LogSetOwner(msg.sender);
+        emit LogSetOwner(msg.sender);
     }
 
     function setOwner(address owner_)
@@ -45,7 +45,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         owner = owner_;
-        LogSetOwner(owner);
+        emit LogSetOwner(owner);
     }
 
     function setAuthority(DSAuthority authority_)
@@ -53,7 +53,7 @@ contract DSAuth is DSAuthEvents {
         auth
     {
         authority = authority_;
-        LogSetAuthority(authority);
+        emit LogSetAuthority(authority);
     }
 
     modifier auth {
@@ -74,7 +74,7 @@ contract DSAuth is DSAuthEvents {
     }
 }
 
-////// src/guard.sol
+////// lib/ds-guard/src/guard.sol
 // guard.sol -- simple whitelist implementation of DSAuthority
 
 // Copyright (C) 2017  DappHub, LLC
@@ -92,7 +92,7 @@ contract DSAuth is DSAuthEvents {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/* pragma solidity ^0.4.13; */
+/* pragma solidity ^0.4.23; */
 
 /* import "ds-auth/auth.sol"; */
 
@@ -118,8 +118,8 @@ contract DSGuard is DSAuth, DSAuthority, DSGuardEvents {
     function canCall(
         address src_, address dst_, bytes4 sig
     ) public view returns (bool) {
-        var src = bytes32(src_);
-        var dst = bytes32(dst_);
+        bytes32 src = bytes32(src_);
+        bytes32 dst = bytes32(dst_);
 
         return acl[src][dst][sig]
             || acl[src][dst][ANY]
@@ -133,12 +133,12 @@ contract DSGuard is DSAuth, DSAuthority, DSGuardEvents {
 
     function permit(bytes32 src, bytes32 dst, bytes32 sig) public auth {
         acl[src][dst][sig] = true;
-        LogPermit(src, dst, sig);
+        emit LogPermit(src, dst, sig);
     }
 
     function forbid(bytes32 src, bytes32 dst, bytes32 sig) public auth {
         acl[src][dst][sig] = false;
-        LogForbid(src, dst, sig);
+        emit LogForbid(src, dst, sig);
     }
 
     function permit(address src, address dst, bytes32 sig) public {
