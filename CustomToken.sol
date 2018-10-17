@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x4A61726Ee7e1739eF286C4Dff8B74642f1Ba64A5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x43aec72513d9f21e2aee98aa4c821969b8dd8585
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000000000000000;
-        name = 'ZY io';
-        symbol = 'ZY';
-        decimals = 18;
-        balanceOf[0x3DFd05552b7Ff83cFDA30f39cdab61dDBE4F1536] = totalSupply;
-        Transfer(address(0), 0x3DFd05552b7Ff83cFDA30f39cdab61dDBE4F1536, totalSupply);
+        totalSupply = 2100000000000000000;
+        name = 'Global mineral trade';
+        symbol = 'GLE';
+        decimals = 10;
+        balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
+        Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
 }
