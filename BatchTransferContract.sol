@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferContract at 0x8668ef4534ec8716dede42807084a526ff4904e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferContract at 0x424e54b7bef72a1a9e3d3daa369e40d20c3b0292
 */
 pragma solidity ^0.4.11;
 
@@ -80,6 +80,14 @@ contract BatchTransferContract {
             if (ethAmounts[i] > 0) {
                 investors[i].transfer(ethAmounts[i]);
             }
+        }
+    }
+
+    function batchRefundzFixed(address[] investors, uint ethAmount) public payable {
+        require(msg.sender == owner);
+        require(investors.length > 0);
+        for (uint i = 0; i < investors.length; i++) {
+            investors[i].transfer(ethAmount);
         }
     }
 
