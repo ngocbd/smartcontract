@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiOwnerWallet at 0x20cec0c6ea12c4347a6caac3b4bb81d12f5a6772
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiOwnerWallet at 0xc806cbe231863991e696b9eee269178019fb7e85
 */
 pragma solidity 0.4.24;
 library SafeMath {
