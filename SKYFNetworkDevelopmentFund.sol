@@ -1,6 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SKYFNetworkDevelopmentFund at 0xb1592fc67b66f4af8e65c21de8d9e00ff90a394f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SKYFNetworkDevelopmentFund at 0x73981535a4c589fdef072d18aabd66bbe0a97be9
 */
+pragma solidity 0.4.24;
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -43,6 +50,13 @@ library SafeMath {
   }
 }
 
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -78,11 +92,13 @@ contract Ownable {
 
 }
 
+
 contract SKYFTokenInterface {
     function balanceOf(address _owner) public view returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
 }
+
 
 contract SKYFNetworkDevelopmentFund is Ownable{
     using SafeMath for uint256;
