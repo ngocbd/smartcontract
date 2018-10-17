@@ -1,42 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x76f48aa7411437d3b81bea31525b30e707d60ae9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xedebe7749b91a475918750842256f23fbe8e3029
 */
 pragma solidity ^0.4.24;
-/*
- * -PlayerBook - v0.3.14
-    
- */
 
-interface H4DPlayerBook {
-    function deposit() external payable;
-}
 
 interface PlayerBookReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
-interface TeamJustInterface {
-    function requiredSignatures() external view returns(uint256);
-    function requiredDevSignatures() external view returns(uint256);
-    function adminCount() external view returns(uint256);
-    function devCount() external view returns(uint256);
-    function adminName(address _who) external view returns(bytes32);
-    function isAdmin(address _who) external view returns(bool);
-    function isDev(address _who) external view returns(bool);
-}
 
 contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
-    // CHANGEME
-    // this is now the HoDL4D Playerbook
-    address constant private Jekyll_Island_Inc = address(0xb184945aC08277Da4fbe61cf9B88d0A3D8a36088);
-    //TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
     
-
-
-
+    address private admin = msg.sender;
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
@@ -52,9 +30,6 @@ contract PlayerBook {
     mapping (uint256 => Player) public plyr_;               // (pID => data) player data
     mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amoungst any name you own)
     mapping (uint256 => mapping (uint256 => bytes32)) public plyrNameList_; // (pID => nameNum => name) list of names a player owns
-    
-    mapping(address => bool) devs;
-
     struct Player {
         address addr;
         bytes32 name;
@@ -65,32 +40,49 @@ contract PlayerBook {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================    
-    constructor()
-        public
+    constructor() 
+    public 
     {
-        devs[msg.sender] = true;
+       
+         // No keys are purchased with this method, it's simply locking our addresses,
+        // PID's and names for referral codes.
+        plyr_[1].addr = 0x7e474fe5Cfb720804860215f407111183cbc2f85;
+        plyr_[1].name = "kenny";
+        plyr_[1].names = 1;
+        pIDxAddr_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = 1;
+        pIDxName_["kenny"] = 1;
+        plyrNames_[1]["kenny"] = true;
+        plyrNameList_[1][1] = "kenny";
+        
+        pID_ = 1;
     }
+   
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
 //==============================================================================    
     /**
-     * @dev prevents contracts from interacting with fomo3d 
+     * @dev prevents contracts from interacting
      */
     modifier isHuman() {
-        require(msg.sender==tx.origin);
+        address _addr = msg.sender;
+        uint256 _codeLength;
+        
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0);
+        require(_addr == tx.origin);
         _;
     }
-    
-    modifier onlyDevs() 
+   
+    modifier onlyAdmin()
     {
-        require(devs[msg.sender]); //require(TeamJust.isDev(msg.sender) == true, "msg sender is not a dev");
+        require(msg.sender == admin);
         _;
     }
     
     modifier isRegisteredGame()
     {
-        //require(gameIDs_[msg.sender] != 0);
+        require(gameIDs_[msg.sender] != 0);
         _;
     }
 //==============================================================================
@@ -157,7 +149,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -173,7 +165,7 @@ contract PlayerBook {
         
         // manage affiliate residuals
         // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code, lolz
+        // player tried to use their own pID as an affiliate code
         if (_affCode != 0 && _affCode != plyr_[_pID].laff && _affCode != _pID) 
         {
             // update last affiliate 
@@ -192,7 +184,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -232,7 +224,7 @@ contract PlayerBook {
         payable 
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // filter name + condition checks
         bytes32 _name = NameFilter.nameFilter(_nameString);
@@ -278,10 +270,10 @@ contract PlayerBook {
         isHuman()
         public
     {
-        require(_gameID <= gID_, "silly player, that game doesn't exist yet");
+        require(_gameID <= gID_);
         address _addr = msg.sender;
         uint256 _pID = pIDxAddr_[_addr];
-        require(_pID != 0, "hey there buddy, you dont even have an account");
+        require(_pID != 0);
         uint256 _totalNames = plyr_[_pID].names;
         
         // add players profile and most recent name
@@ -293,34 +285,10 @@ contract PlayerBook {
                 games_[_gameID].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
     }
     
-    /**
-     * @dev players, use this to push your player profile to all registered games.
-     * -functionhash- 0x0c6940ea
-     */
-    function addMeToAllGames()
-        isHuman()
-        public
-    {
-        address _addr = msg.sender;
-        uint256 _pID = pIDxAddr_[_addr];
-        require(_pID != 0, "hey there buddy, you dont even have an account");
-        uint256 _laff = plyr_[_pID].laff;
-        uint256 _totalNames = plyr_[_pID].names;
-        bytes32 _name = plyr_[_pID].name;
-        
-        for (uint256 i = 1; i <= gID_; i++)
-        {
-            games_[i].receivePlayerInfo(_pID, _addr, _name, _laff);
-            if (_totalNames > 1)
-                for (uint256 ii = 1; ii <= _totalNames; ii++)
-                    games_[i].receivePlayerNameList(_pID, plyrNameList_[_pID][ii]);
-        }
-                
-    }
+    
     
     /**
-     * @dev players use this to change back to one of your old names.  tip, you'll
-     * still need to push that info to existing games.
+     * @dev players use this to change back to one of your old names.  
      * -functionhash- 0xb9291296
      * @param _nameString the name you want to use 
      */
@@ -333,7 +301,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[msg.sender];
         
         // make sure they own the name 
-        require(plyrNames_[_pID][_name] == true, "umm... thats not a name you own");
+        require(plyrNames_[_pID][_name] == true);
         
         // update their current name 
         plyr_[_pID].name = _name;
@@ -348,7 +316,7 @@ contract PlayerBook {
     {
         // if names already has been used, require that current msg sender owns the name
         if (pIDxName_[_name] != 0)
-            require(plyrNames_[_pID][_name] == true, "sorry that names already taken");
+            require(plyrNames_[_pID][_name] == true);
         
         // add name to player profile, registry, and name book
         plyr_[_pID].name = _name;
@@ -360,8 +328,7 @@ contract PlayerBook {
             plyrNameList_[_pID][plyr_[_pID].names] = _name;
         }
         
-        // registration fee goes directly to community rewards
-        Jekyll_Island_Inc.transfer(address(this).balance);
+        admin.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -438,7 +405,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -448,7 +415,7 @@ contract PlayerBook {
         
         // manage affiliate residuals
         // if no affiliate code was given, no new affiliate code was given, or the 
-        // player tried to use their own pID as an affiliate code, lolz
+        // player tried to use their own pID as an affiliate code
         uint256 _affID = _affCode;
         if (_affID != 0 && _affID != plyr_[_pID].laff && _affID != _pID) 
         {
@@ -470,7 +437,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -479,7 +446,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[_addr];
         
         // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
+        // if no affiliate code was given or player tried to use their own
         uint256 _affID;
         if (_affCode != address(0) && _affCode != _addr)
         {
@@ -506,7 +473,7 @@ contract PlayerBook {
         returns(bool, uint256)
     {
         // make sure name fees paid
-        require (msg.value >= registrationFee_, "umm.....  you have to pay the name fee");
+        require (msg.value >= registrationFee_);
         
         // set up our tx event data and determine if player is new or not
         bool _isNewPlayer = determinePID(_addr);
@@ -515,7 +482,7 @@ contract PlayerBook {
         uint256 _pID = pIDxAddr_[_addr];
         
         // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
+        // if no affiliate code was given or player tried to use their own
         uint256 _affID;
         if (_affCode != "" && _affCode != _name)
         {
@@ -541,59 +508,28 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-        onlyDevs()
+        onlyAdmin()
         public
     {
-        require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
-        
-
+        require(gameIDs_[_gameAddress] == 0);
             gID_++;
             bytes32 _name = _gameNameStr.nameFilter();
             gameIDs_[_gameAddress] = gID_;
             gameNames_[_gameAddress] = _name;
             games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
-        
-            games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
-        
     }
     
     function setRegistrationFee(uint256 _fee)
-        onlyDevs()
+        onlyAdmin()
         public
-    {
 
-            registrationFee_ = _fee;
-        
+    {
+      registrationFee_ = _fee;
     }
         
 } 
 
-/**
-* @title -Name Filter- v0.1.9
-* ????????????   ?? ???????  ????????????????????????
-*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
-*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ?  ??????????????? ?                                        (_/
-*              _       __    _      ____      ____  _   _    _____  ____  ___  
-*=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
-*=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
-*
-* ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
-* ????????? ? ???? ???? ?   ???????????? ????????????
-*/
+
 library NameFilter {
     
     /**
@@ -615,14 +551,14 @@ library NameFilter {
         uint256 _length = _temp.length;
         
         //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+        require (_length <= 32 && _length > 0);
         // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20);
         // make sure first two characters are not 0x
         if (_temp[0] == 0x30)
         {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
+            require(_temp[1] != 0x78);
+            require(_temp[1] != 0x58);
         }
         
         // create a bool to track if we have a non number character
@@ -648,12 +584,10 @@ library NameFilter {
                     // OR lowercase a-z
                     (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
                     // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
+                    (_temp[i] > 0x2f && _temp[i] < 0x3a));
                 // make sure theres not 2x spaces in a row
                 if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
+                    require( _temp[i+1] != 0x20);
                 
                 // see if we have a character other than a number
                 if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
@@ -661,7 +595,7 @@ library NameFilter {
             }
         }
         
-        require(_hasNonNumber == true, "string cannot be only numbers");
+        require(_hasNonNumber == true);
         
         bytes32 _ret;
         assembly {
