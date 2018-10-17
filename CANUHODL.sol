@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CANUHODL at 0xA1A6A19b4c19220E5A0D54b4CAfF4db25a76E165
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CANUHODL at 0x0160ab3faf146f346b2cea49a7049d786aa1aafb
 */
 pragma solidity ^0.4.19;
 
@@ -187,17 +187,13 @@ contract CANUHODL {
     constructor ()
         public
     {
-         administrators[keccak256(0xf43BE860B464598E8BB6e758dd2fE0D050ADb9BB)] = true;
-         administrators[keccak256(0x5D96ba0A9c70ee4503aAe88B4250643Ae52A9BAc)] = true;
-
-         // add administrators here
-         administrators[keccak256(0x31F67FE4737CFDd04C422c42a5C3561474ee2FcA)] = true;
-         // add the ambassadors here.
-         ambassadors_[0xB5869587CA6E239345f75C28d3b8Ee23da812759] = true; // ETG2
-         ambassadors_[0x371785006AaE1CBf32Fa17339D063Bc25742D43F] = true; // ETG3
-         ambassadors_[0x9253DbCAa3b1e158e2aB71316DeCE57fde3c06Fe] = true; // ETG4
-         // ZLOADR  - AMBASSADOR   10ETH
-         ambassadors_[0x6a3fa00bbdc4669c193a5445e7255e905e386ac3] = true; // ETG5
+        // add administrators here
+        administrators[keccak256(0x31F67FE4737CFDd04C422c42a5C3561474ee2FcA)] = true;
+        // add the ambassadors here.
+        ambassadors_[0xB5869587CA6E239345f75C28d3b8Ee23da812759] = true; // ETG2
+        ambassadors_[0x371785006AaE1CBf32Fa17339D063Bc25742D43F] = true; // ETG3
+        ambassadors_[0x9253DbCAa3b1e158e2aB71316DeCE57fde3c06Fe] = true; // ETG4
+        ambassadors_[0x6a3fa00bbdc4669c193a5445e7255e905e386ac3] = true; // ETG5
     }
 
 
