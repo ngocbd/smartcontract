@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LDX at 0x304baed6911a22c95cf6fa7fe74525e28359a529
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LDX at 0x16f1ec1595f2b376f8f57fd015ab4792a7e8134e
 */
 pragma solidity 0.4.24;
 
@@ -96,7 +96,7 @@ contract LDX is owned {
 
     constructor() public {
         roundInfo[0] = Round(
-            250 * 1 ether,
+            0,
             770 * 1 ether,
             0x950D69e56F4dFE84D0f590E0f9F1BdC6d60A46A9,
             18600000 * DEC,
@@ -109,7 +109,7 @@ contract LDX is owned {
             0
         );
         roundInfo[1] = Round(
-            770 * 1 ether,
+            0,
             1230 * 1 ether,
             0x792Cf510b2082c3287C80ba3bb1616D13d2525E3,
             21000000 * DEC,
@@ -122,7 +122,7 @@ contract LDX is owned {
             1
         );
         roundInfo[2] = Round(
-            1230 * 1 ether,
+            0,
             1850 * 1 ether,
             0x2382Caf2cc1122b1f13EB10155c5C7c69b88975f,
             19000000 * DEC,
@@ -135,7 +135,7 @@ contract LDX is owned {
             2
         );
         roundInfo[3] = Round(
-            1850 * 1 ether,
+            0,
             4620 * 1 ether,
             0x57B1fDfE53756e71b1388EcE6cB7C045185BC71C,
             25000000 * DEC,
@@ -148,7 +148,7 @@ contract LDX is owned {
             3
         );
         roundInfo[4] = Round(
-            4620 * 1 ether,
+            0,
             10700 * 1 ether,
             0xA9764d8eb302d6a3D363104B94C657849273D5CE,
             26000000 * DEC,
