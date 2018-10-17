@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Diamond at 0x081ccb801474476a9f2bd0f9316e900cdd33fdb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Diamond at 0x950e87e04c71a43c4425eb310f3a04e63e9a1ab8
 */
 pragma solidity ^0.4.16;
 
@@ -24,7 +24,7 @@ contract Diamond {
         event Burn(address indexed from, uint256 value);
 
 
-        function Diamond( ) public {
+        function Mino( ) public {
 
                 totalSupply = total * 10 ** uint256(decimals);
 
