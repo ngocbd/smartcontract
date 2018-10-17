@@ -1,74 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x5266618848a646316b9c11e0e990dd2096ca755c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0xb15fdc05fd34480e865d1999a6264ef7ecd67249
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.17;
 
-interface token {
-    function transfer(address receiver, uint amount) external;
-}
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
+  address public owner;
 
-    address public owner;
 
-    constructor() public {
-        owner = msg.sender;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-}
 
-contract ZenswapDistributionTest is Ownable {
-    
-    token public tokenReward;
-    
-    /**
-     * Constructor function
-     *
-     * Set the token smart contract address
-     */
-    constructor() public {
-        
-        tokenReward = token(0xbaD16E6bACaF330D3615539dbf3884836071f279);
-        
-    }
-    
-    /**
-     * Distribute token to multiple address
-     * 
-     */
-    function distributeToken(address[] _addresses, uint256[] _amount) public onlyOwner {
-    
-    uint256 addressCount = _addresses.length;
-    uint256 amountCount = _amount.length;
-    require(addressCount == amountCount);
-    
-    for (uint256 i = 0; i < addressCount; i++) {
-        uint256 _tokensAmount = _amount[i] * 10 ** uint256(18);
-        tokenReward.transfer(_addresses[i], _tokensAmount);
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
 
-    /**
-     * Withdraw an "amount" of available tokens in the contract
-     * 
-     */
-    function withdrawToken(address _address, uint256 _amount) public onlyOwner {
-        
-        uint256 _tokensAmount = _amount * 10 ** uint256(18); 
-        tokenReward.transfer(_address, _tokensAmount);
-    }
-    
-    /**
-     * Set a token contract address
-     * 
-     */
-    function setTokenReward(address _address) public onlyOwner {
-        
-        tokenReward = token(_address);
-    }
-    
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
