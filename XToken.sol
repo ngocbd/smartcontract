@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0xdb1f3030532a593a733f8ae6fce310aa91ac3a17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XToken at 0x2029fdb81d226e0e45a620c47314b3ab1f78bf46
 */
 pragma solidity ^0.4.20;
 
@@ -119,8 +119,8 @@ contract XToken {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 0.3 ether;
-    uint256 constant internal ambassadorQuota_ = 3 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 3 ether;
+    uint256 constant internal ambassadorQuota_ = 20 ether;
     
     
     
@@ -158,10 +158,6 @@ contract XToken {
         // add the ambassadors here.
         // 
        ambassadors_[0xEc31176d4df0509115abC8065A8a3F8275aafF2b] = true;
-       // 
-       ambassadors_[0xd5fa3017a6af76b31eb093dfa527ee1d939f05ea] = true;
-       // 
-       ambassadors_[0x6629c7199ecc6764383dfb98b229ac8c540fc76f] = true;
         
         // 
         ambassadors_[0x2De78Fbc7e1D1c93aa5091aE28dd836CC71e8d4c] = true;
