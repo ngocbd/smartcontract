@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x1d5f86ceb200d399fd59250a9419ecfca2ff83d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x30589d7c60490c72c2452a04f4d1a95653ba056f
 */
 pragma solidity ^0.4.16;
 
@@ -20,7 +20,7 @@ contract owned {
     }
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
     // Public variables of the token
@@ -72,7 +72,7 @@ contract TokenERC20 {
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
@@ -85,8 +85,9 @@ contract TokenERC20 {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) public {
-		_transfer(msg.sender, _to, _value);
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
+        return true;
     }
 
     /**
@@ -107,7 +108,7 @@ contract TokenERC20 {
 
     /**
      * Set allowance for other address
-     * ?? 
+     *
      * Allows `_spender` to spend no more than `_value` tokens in your behalf
      *
      * @param _spender The address authorized to spend
@@ -123,7 +124,7 @@ contract TokenERC20 {
      * Set allowance for other address and notify
      *
      * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     * ?? 
+     *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
@@ -140,7 +141,7 @@ contract TokenERC20 {
 
     /**
      * Destroy tokens
-     * ?????????????
+     *
      * Remove `_value` tokens from the system irreversibly
      *
      * @param _value the amount of money to burn
@@ -149,13 +150,13 @@ contract TokenERC20 {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
     /**
      * Destroy tokens from other account
-     *	????
+     *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
      * @param _from the address of the sender
@@ -167,11 +168,14 @@ contract TokenERC20 {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
 }
 
+/******************************************/
+/*       ADVANCED TOKEN STARTS HERE       */
+/******************************************/
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
@@ -194,62 +198,70 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
-		if(_to.balance<minBalanceForAccounts)
-		    sell((minBalanceForAccounts-_to.balance)/sellPrice);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
-    /// @param target Address to receive the tokens  ??
+    /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
+        emit Transfer(0, this, mintedAmount);
+        emit Transfer(this, target, mintedAmount);
+    }
+
+    /// @notice Burn `burnAmount` tokens for `target`
+    /// @param target Address
+    /// @param burnAmount the amount of tokens it will burn
+    function burnToken(address target, uint256 burnAmount) onlyOwner public {
+        require(balanceOf[target] >= burnAmount);
+        balanceOf[target] -= burnAmount;
+        totalSupply -= burnAmount;
+        emit Burn(target, burnAmount);
+    }
+
+    /// @notice Withdraw `amount` ether to owner
+    /// @param amount amount of ether
+    function withdrawEther(uint256 amount) onlyOwner public {
+        msg.sender.transfer(amount);
     }
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be frozen   ????
+    /// @param target Address to be frozen
     /// @param freeze either to freeze it or not
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+        emit FrozenFunds(target, freeze);
     }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract??????
+    /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
-    /// @notice Buy tokens from contract by sending ether??
+    /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
+        require(buyPrice > 0);
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
-    /// @notice Sell `amount` tokens to contract??
+    /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        require(sellPrice > 0);
+        address myAddress = this;
+        require(myAddress.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
-	
-	uint minBalanceForAccounts;
-
-    /* ??????gas????? */
-    function setMinBalance(uint minimumBalanceInFinney) onlyOwner public{
-        minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
-    }
-	
-	
 }
