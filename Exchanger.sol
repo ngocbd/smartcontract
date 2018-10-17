@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0xb42ce9d2a22061b7d5e569753f92edbaa2dad37b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchanger at 0x335c949c06fa1ba8744d98e3aa2c2a2deaa9255c
 */
+pragma solidity ^0.4.18;
 interface IYeekFormula {
     function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) external view returns (uint256);
     function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) external view returns (uint256);
@@ -15,11 +16,13 @@ interface ITradeableAsset {
     function balanceOf(address _address) external view returns (uint256);
 }
 
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
 /* A basic permissions hierarchy (Owner -> Admin -> Everyone else). One owner may appoint and remove any number of admins
    and may transfer ownership to another individual address */
 contract Administered {
     address public creator;
-    uint public commission = 1;
+
     mapping (address => bool) public admins;
     
     constructor()  public {
@@ -65,7 +68,7 @@ contract Administered {
 /* A liqudity pool that executes buy and sell orders for an ETH / Token Pair */
 /* The owner deploys it and then adds tokens / ethereum in the desired ratio */
 
-contract Exchanger is Administered {
+contract Exchanger is Administered, tokenRecipient {
     bool public enabled = false;    //Owner can turn off and on
 
     //The token which is being bought and sold
@@ -74,6 +77,13 @@ contract Exchanger is Administered {
     IYeekFormula public formulaContract;
     //The reserve pct of this exchanger, expressed in ppm
     uint32 public weight;
+    //The fee, in ppm
+    uint32 public fee=5000; //0.5%
+    //Price multiplier - for use when the total supply is not in circulation
+    //Lets you use a higher weight with a lower reserve
+    uint32 public multiplier=1;
+    //Accounting for the fees
+    uint32 public collectedFees=0;
 
     /** 
         @dev Deploys an exchanger contract for a given token / Ether pairing
@@ -99,9 +109,6 @@ contract Exchanger is Administered {
     event Buy(address indexed purchaser, uint256 amountInWei, uint256 amountInToken);
     event Sell(address indexed seller, uint256 amountInToken, uint256 amountInWei);
 
-
-    // The following methods are for the owner and admins to manage the Exchanger
-    
     /**
      @dev Deposit tokens to the reserve.
      */
@@ -110,11 +117,11 @@ contract Exchanger is Administered {
     }
         
     /**
-     @dev Deposit ether to the reserve
-     */
-     function depositEther() onlyOwner public payable {
-        //return getQuotePrice(); 
-     }
+    @dev Deposit ether to the reserve
+    */
+    function depositEther() onlyOwner public payable {
+    //return getQuotePrice(); 
+    }
 
     /**  
      @dev Withdraw tokens from the reserve
@@ -133,26 +140,37 @@ contract Exchanger is Administered {
     /**
      @dev Enable trading
      */
-     function enable() onlyAdmin public {
-         enabled = true;
-     }
+    function enable() onlyAdmin public {
+        enabled = true;
+    }
 
      /**
       @dev Disable trading
      */
-     function disable() onlyAdmin public {
-         enabled = false;
-     }
+    function disable() onlyAdmin public {
+        enabled = false;
+    }
 
      /**
       @dev Play central banker and set the fractional reserve ratio, from 1 to 1000000 ppm.
-      It is highly disrecommended to do this while trading is enabled! If you don't know what 
-      a fractional reserve is, please put this contract away and go work for your local government.
+      It is highly disrecommended to do this while trading is enabled! Obviously this should 
+      only be done in combination with a matching deposit or withdrawal of ether, 
+      and I'll enforce it at a later point.
      */
-     function setReserveWeight(uint32 ppm) onlyAdmin public {
-         require (ppm>0 && ppm<=1000000);
-         weight = ppm;
-     }
+    function setReserveWeight(uint ppm) onlyAdmin public {
+        require (ppm>0 && ppm<=1000000);
+        weight = uint32(ppm);
+    }
+
+    function setFee(uint ppm) onlyAdmin public {
+        require (ppm >= 0 && ppm <= 1000000);
+        fee = uint32(ppm);
+    }
+
+    function setMultiplier(uint newValue) onlyAdmin public {
+        require (newValue > 0);
+        multiplier = uint32(newValue);
+    }
 
     //These methods return information about the exchanger, and the buy / sell rates offered on the Token / ETH pairing.
     //They can be called without gas from any client.
@@ -168,44 +186,53 @@ contract Exchanger is Administered {
     /**
      @dev Gets price based on a sample 1 ether BUY order
      */
+     /*
     function getQuotePrice() public view returns(uint) {
         uint tokensPerEther = 
         formulaContract.calculatePurchaseReturn(
-            tokenContract.totalSupply(),
+            (tokenContract.totalSupply() - tokenContract.balanceOf(this)) * multiplier,
             address(this).balance,
             weight,
             1 ether 
         ); 
 
         return tokensPerEther;
-    }
+    }*/
 
     /**
      @dev Get the BUY price based on the order size. Returned as the number of tokens that the amountInWei will buy.
      */
     function getPurchasePrice(uint256 amountInWei) public view returns(uint) {
-        uint tokensPerEther =  formulaContract.calculatePurchaseReturn(
-            tokenContract.totalSupply(),
+        uint256 purchaseReturn = formulaContract.calculatePurchaseReturn(
+            (tokenContract.totalSupply() / multiplier) - tokenContract.balanceOf(this),
             address(this).balance,
             weight,
             amountInWei 
         ); 
-        
-        return tokensPerEther - (tokensPerEther * commission / 100);
+
+        purchaseReturn = (purchaseReturn - (purchaseReturn * (fee / 1000000)));
+
+        if (purchaseReturn > tokenContract.balanceOf(this)){
+            return tokenContract.balanceOf(this);
+        }
+        return purchaseReturn;
     }
 
     /**
      @dev Get the SELL price based on the order size. Returned as amount (in wei) that you'll get for your tokens.
      */
     function getSalePrice(uint256 tokensToSell) public view returns(uint) {
-        uint weiRaw= formulaContract.calculateSaleReturn(
-            tokenContract.totalSupply(),
+        uint256 saleReturn = formulaContract.calculateSaleReturn(
+            (tokenContract.totalSupply() / multiplier) - tokenContract.balanceOf(this),
             address(this).balance,
             weight,
             tokensToSell 
         ); 
-        
-        return weiRaw - (weiRaw * commission / 100);
+        saleReturn = (saleReturn - (saleReturn * (fee/1000000)));
+        if (saleReturn > address(this).balance) {
+            return address(this).balance;
+        }
+        return saleReturn;
     }
 
     //buy and sell execute live trades against the exchanger. For either method, 
@@ -230,11 +257,12 @@ contract Exchanger is Administered {
      */
     function buy(uint minPurchaseReturn) public payable {
         uint amount = formulaContract.calculatePurchaseReturn(
-            tokenContract.totalSupply(),
+            (tokenContract.totalSupply() / multiplier) - tokenContract.balanceOf(this),
             address(this).balance - msg.value,
             weight,
             msg.value);
-        require (enabled);
+        amount = (amount - (amount * (fee / 1000000)));
+        require (enabled); // ADDED SEMICOLON    
         require (amount >= minPurchaseReturn);
         require (tokenContract.balanceOf(this) >= amount);
         emit Buy(msg.sender, msg.value, amount);
@@ -245,18 +273,50 @@ contract Exchanger is Administered {
      @param quantity Number of tokens to sell
      @param minSaleReturn Minimum amount of ether (in wei) you will accept for your tokens
      */
-     function sell(uint quantity, uint minSaleReturn) public {
-         uint amountInWei = formulaContract.calculateSaleReturn(
-             tokenContract.totalSupply(),
+    function sell(uint quantity, uint minSaleReturn) public {
+        uint amountInWei = formulaContract.calculateSaleReturn(
+            (tokenContract.totalSupply() / multiplier) - tokenContract.balanceOf(this),
              address(this).balance,
              weight,
              quantity
-         );
-         require (enabled);
-         require (amountInWei >= minSaleReturn);
-         require (amountInWei <= address(this).balance);
-         require (tokenContract.transferFrom(msg.sender, this, quantity));
-         emit Sell(msg.sender, quantity, amountInWei);
-         msg.sender.transfer(amountInWei); //Always send ether last
-     }
+        );
+        amountInWei = (amountInWei - (amountInWei * (fee / 1000000)));
+
+        require (enabled); // ADDED SEMICOLON
+        require (amountInWei >= minSaleReturn);
+        require (amountInWei <= address(this).balance);
+        require (tokenContract.transferFrom(msg.sender, this, quantity));
+
+        emit Sell(msg.sender, quantity, amountInWei);
+        msg.sender.transfer(amountInWei); //Always send ether last
+    }
+
+
+    //approveAndCall flow for selling entry point
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external {
+        //not needed: if it was the wrong token, the tx fails anyways require(_token == address(tokenContract));
+        sellOneStep(_value, 0, _from);
+    }
+    
+
+    //Variant of sell for one step ordering. The seller calls approveAndCall on the token
+    //which calls receiveApproval above, which calls this funciton
+    function sellOneStep(uint quantity, uint minSaleReturn, address seller) public {
+        uint amountInWei = formulaContract.calculateSaleReturn(
+            (tokenContract.totalSupply() / multiplier) - tokenContract.balanceOf(this),
+             address(this).balance,
+             weight,
+             quantity
+        );
+        amountInWei = (amountInWei - (amountInWei * (fee / 1000000)));
+        
+        require (enabled); // ADDED SEMICOLON
+        require (amountInWei >= minSaleReturn);
+        require (amountInWei <= address(this).balance);
+        require (tokenContract.transferFrom(seller, this, quantity));
+
+        emit Sell(seller, quantity, amountInWei);
+        seller.transfer(amountInWei); //Always send ether last
+    }
+
 }
