@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GB at 0xaaea45fff047255efab25668e43d242bbbee0b46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GB at 0x9dbb6867ceaf0650a00a2ae1aa331eb5d793f1dd
 */
 pragma solidity 0.4.22;
 
@@ -117,10 +117,10 @@ contract GB is ERC20Interface, Pausable {
     }
 
     constructor() public{
-        symbol = 'GB';
+        symbol = 'GalaxyBlock';
         name = 'Galaxy Block ';
         decimals = 18;
-        _totalSupply = 1000000000*10**uint(decimals);
+        _totalSupply = 100000000*10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
