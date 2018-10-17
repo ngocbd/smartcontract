@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x037c51c8756A217a74e25A4F40fC7641452bc57c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3710a5b7e3ba010436afe504b4ca28bb06d1a63b
 */
 pragma solidity 0.4.21;
 
@@ -163,13 +163,13 @@ contract Crowdsale {
     }
 
     /**
-    * Burn unsold tokens after ICO deadline
-    * Note: This function is designed to be used after Final-ICO period to burn unsold tokens
-    */
-    function burnUnsoldTokens()  onlyOwner afterIcoDeadline public {  
+    * Transfer unsold tokens after ICO deadline
+    * Note: This function is designed to transfer unsold Pre-ICO tokens into Final-ICO contract.
+    */ 
+    function transferUnsoldTokens(address toAddress) onlyOwner afterIcoDeadline public {
         uint256 tokensUnclaimed = SafeMath.sub(tokensSold, tokensClaimed);
         uint256 unsoldTokens = SafeMath.sub(tokenReward.balanceOf(this), tokensUnclaimed);
-        tokenReward.burn(unsoldTokens);
+        tokenReward.transfer(toAddress, unsoldTokens);
     }
 
     // ----------- After Tokens Claimable Duration ------------
