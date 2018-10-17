@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarnEnoughMoney at 0x5d48aca3954d288a5fea9fc374ac48a5dbf5fa6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarnEnoughMoney at 0x6b6ba7a1bbcbb5d0af5ecaf0a77eabdec899bcd4
 */
 pragma solidity ^0.4.18;
 
@@ -78,7 +78,7 @@ contract EarnEnoughMoney is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 1680000000e8;
-    uint256 public totalDistributed = 168000000e8;
+    uint256 public totalDistributed = 680000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value;
 
@@ -232,29 +232,7 @@ contract EarnEnoughMoney is ERC20 {
         assert(msg.data.length >= size + 4);
         _;
     }
-    bool public mintingFinished = false;
-    event Mint(address indexed to, uint amount);
-    event MintFinished();
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
-
-    function mint(address _to, uint _amount) onlyOwner canMint public returns (bool) {
-
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-
+    
     function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
 
         require(_to != address(0));
