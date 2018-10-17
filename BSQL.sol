@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BSQL at 0xdf06ae8f5998cbbda56bef1849a3e54dac4c98b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BSQL at 0x1df69234f02450e55f244d95871763905a78318f
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -99,7 +99,7 @@ contract Controlled is Owned{
     bool public transferEnabled = true;
 
     // flag that makes locked address effect
-    bool public lockFlag=true;
+    bool public lockFlag = false;
     mapping(address => bool) public locked;
     mapping(address => bool) public exclude;
 
@@ -197,7 +197,7 @@ contract BSQL is StandardToken {
     }
 
     using SafeMath for uint256;
-    string public name = "Bitsquirrel Token";
+    string public name = "Btcsquirrel Token";
     uint8 public decimals = 18;
     string public symbol = "BSQL";
 
