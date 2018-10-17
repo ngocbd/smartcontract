@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x36241c6035e2cd9caecca3efb162ab4e6f0a2fb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa3ec4988adfa6b240a23095adb4bbc24d7efb94a
 */
-/*! cuto.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+/*! depo.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
 pragma solidity 0.4.24;
 
@@ -326,7 +326,7 @@ contract Manageable is Ownable {
 
 
 contract Token is CappedToken, BurnableToken, Withdrawable {
-    constructor() CappedToken(6000000 * 1e8) StandardToken("Cuprum Token", "CUPRUM", 8) public {
+    constructor() CappedToken(1000000 * 1e8) StandardToken("DEPO", "DEPO", 8) public {
     }
 }
 
