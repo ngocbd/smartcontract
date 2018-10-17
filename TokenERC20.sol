@@ -1,62 +1,109 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x039dbff00f2b4b0da89c60a1870cbfbd726b6cb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x5412ad3082c9e0a7aa0aa274eb86bedf002aedd9
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient {
+    function receiveApproval(address _from, uint _value, address _token, bytes _extraData) external;
+}
 
-contract TokenERC20 {
-    string public name;         //????? WORLD FOFU BLOCKCHAIN
-    string public symbol;
-    uint8 public decimals = 18;  
-    uint256 public totalSupply;  
+contract owned {
+    address public owner;
+    address public newOwner;
 
-    mapping (address => uint256) public balanceOf; 
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Burn(address indexed from, uint256 value);
-
-
-    function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
-        name = tokenName;
-        symbol = tokenSymbol;
+    constructor() owned() public {
+        owner = msg.sender;
     }
 
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) onlyOwner public returns (bool success) {
+        newOwner = _newOwner;
+        return true;
+    }
+
+    function acceptOwnership() public returns (bool success) {
+        require(msg.sender == newOwner);
+        owner = newOwner;
+        emit OwnershipTransferred(owner, newOwner);
+        newOwner = address(0);
+        return true;
+    }
+}
+
+contract TokenERC20 is owned {
+    string public name = 'Telex';
+    string public symbol = 'TLX';
+    uint8 public decimals = 8;
+    uint public totalSupply = 2000000000000000;
+
+    mapping (address => uint) public balanceOf;
+    mapping (address => mapping (address => uint)) public allowance;
+    mapping (address => bool) public frozenAccount;
+
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+    event FrozenFunds(address indexed target, bool frozen);
+
+    constructor() TokenERC20() public {
+        balanceOf[msg.sender] = totalSupply;
+    }
 
     function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value > balanceOf[_to]);
+        if (msg.sender != owner) {
+          require(!frozenAccount[msg.sender]);
+          require(!frozenAccount[_from]);
+          require(!frozenAccount[_to]);
+        }
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    function _multipleTransfer(address _from, address[] addresses, uint[] amounts) internal {
+        for (uint i=0; i<addresses.length; i++) {
+            address _to = addresses[i];
+            uint _value = amounts[i];
+            _transfer(_from, _to, _value);
+        }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+    function transfer(address _to, uint _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function multipleTransfer(address[] addresses, uint[] amounts) public returns (bool success) {
+        _multipleTransfer(msg.sender, addresses, amounts);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        if (msg.sender != owner) {
+            require(allowance[_from][msg.sender] >= _value);
+            allowance[_from][msg.sender] -= _value;
+        }
         _transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
@@ -64,21 +111,9 @@ contract TokenERC20 {
         }
     }
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
+    function freezeAccount(address target, bool freeze) onlyOwner public returns (bool success) {
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
         return true;
     }
 }
