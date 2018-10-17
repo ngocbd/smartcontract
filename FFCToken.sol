@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFCToken at 0xaf97e7bf84ee0ddca7070c2a600484e9f21c4024
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFCToken at 0xeebb05e96b042002812e5ad63325adce431e6a34
 */
 pragma solidity ^0.4.11;
 
@@ -264,7 +264,7 @@ contract FFCToken is StandardToken, Pausable {
     */
   constructor() public {
     totalSupply = 10 * (10 ** 8) * (10 ** 18);
-    balances[msg.sender] = totalSupply;
+    balances[0xC0FF6587381Ed1690baC9954f9Ace2768738BaDa] = totalSupply;
   }
   
   function transfer(address _to, uint256 _value)public whenNotPaused returns (bool) {
