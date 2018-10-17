@@ -1,43 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe1a66dc6a2f457864e50142a20197afd186c0cc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9280d547b88549a9e810ef9765881b17e680ba41
 */
 pragma solidity ^0.4.19;
 
-contract BaseToken{    
-    string public name;      
-    string public symbol;     
-    uint8 public decimals;   
-    uint256 public totalSupply;     
+contract BaseToken {
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) public allowance;   
-    
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-    event FrozenFunds(address target, bool frozen);  
 
-    address public owner;
-    modifier onlyOwner {        
-        require(msg.sender == owner);       
-        _;
-    } 
-    mapping (address => bool) public frozenAccount;
-    function freezeAccount(address target, bool freeze) public onlyOwner {
-        frozenAccount[target] = freeze;        
-        FrozenFunds(target, freeze);
-    }
-
-    function balanceOf(address _owner) public view returns (uint256 balance) {        
-        return balances[_owner];
-    }   
-
-    function _transfer(address _from, address _to, uint _value) internal {        
-        require(!frozenAccount[_from]); 
+    function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
-        require(balances[_from] >= _value);
-        require(balances[_to] + _value > balances[_to]);
-        balances[_from] -= _value;
-        balances[_to] += _value;
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
         Transfer(_from, _to, _value);
     }
 
@@ -47,9 +32,9 @@ contract BaseToken{
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);        
-        _transfer(_from, _to, _value);
+        require(_value <= allowance[_from][msg.sender]);
         allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
 
@@ -57,17 +42,16 @@ contract BaseToken{
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
-    }
+    }   
 }
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 2.6 * 100000000 * 1000000;           
-        owner = 0x690Ae62C7b56F08d0d712c6e4Ef1103a5A0B38F9;      
-        balances[owner] = totalSupply; 
-        name = 'Garlic Chain'; 
-        symbol = 'GLC';                    
-        decimals = 6; 
-        Transfer(address(0), owner, totalSupply);
-    }    
+        totalSupply = 800000000000000000000000000;
+        name = 'Ambrer chain coin';
+        symbol = 'AMCC';
+        decimals = 18;
+        balanceOf[0x7F3224B57CBdD3fB2848896F1c31c8aFe91A9aBc] = totalSupply;
+        Transfer(address(0), 0x7F3224B57CBdD3fB2848896F1c31c8aFe91A9aBc, totalSupply);
+    }
 }
