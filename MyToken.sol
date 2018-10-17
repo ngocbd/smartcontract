@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x21918034da97410e2c99a4c3552cea5444baec3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x902c41eb652ebc3d6c8515f48ff6abf52a8961a5
 */
 pragma solidity ^0.4.23;
 
@@ -111,11 +111,11 @@ contract MyToken is ERC223 {
     uint public totalSupply;
 
  
-    constructor(string _name, string _symbol,  uint _totalSupply) public {
+    constructor(string _name, string _symbol, uint8 _decimals, uint _totalSupply) public {
 		name = _name;
 		symbol = _symbol;
-		decimals = 18;
-		totalSupply = _totalSupply * (10 ** uint256(decimals));
+		decimals = _decimals;
+		totalSupply = _totalSupply;
 		balances[msg.sender] = _totalSupply;
 	}
 
