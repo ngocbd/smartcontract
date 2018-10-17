@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetCenter at 0x35bab7165a301e99c75c3e59b48817856b4d5e5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetCenter at 0xf70e44e803e66c40890ac4875e5036fdb55b5e81
 */
 pragma solidity ^0.4.18;
 
-// zeppelin-solidity: 1.8.0
+// zeppelin-solidity@1.8.0 from NPM
 
 contract DataCenterInterface {
   function getResult(bytes32 gameId) view public returns (uint16, uint16, uint8);
@@ -164,12 +164,12 @@ library SafeMath {
 contract Bet is Ownable, DataCenterBridge {
   using SafeMath for uint;
 
-  event LogDistributeReward(address addr, uint reward, uint index);
+  event LogDistributeReward(address indexed addr, uint reward, uint index);
   event LogGameResult(bytes32 indexed category, bytes32 indexed gameId, uint leftPts, uint rightPts);
-  event LogParticipant(address addr, uint choice, uint betAmount);
-  event LogRefund(address addr, uint betAmount);
+  event LogParticipant(address indexed addr, uint choice, uint betAmount);
+  event LogRefund(address indexed addr, uint betAmount);
   event LogBetClosed(bool isRefund, uint timestamp);
-  event LogDealerWithdraw(address addr, uint withdrawAmount);
+  event LogDealerWithdraw(address indexed addr, uint withdrawAmount);
 
   /** 
    * @desc
@@ -520,10 +520,7 @@ contract Bet is Ownable, DataCenterBridge {
 
 contract BetCenter is Ownable {
 
-  mapping(bytes32 => Bet[]) public bets;
-  mapping(bytes32 => bytes32[]) public gameIds;
-
-  event LogCreateBet(address indexed dealerAddr, address betAddr, bytes32 indexed category, uint indexed startTime);
+  event LogCreateBet(uint indexed startTime, uint indexed spreadTag, bytes32 indexed category, uint deposit, address bet, bytes32 gameId);
 
   function() payable public {}
 
@@ -532,21 +529,10 @@ contract BetCenter is Ownable {
                   uint startTime, uint8 confirmations) payable public {
     Bet bet = (new Bet).value(msg.value)(msg.sender, category, gameId, minimumBet, 
                   spread, leftOdds, middleOdds, rightOdds , flag, startTime, confirmations, owner);
-    bets[category].push(bet);
-    gameIds[category].push(gameId);
-    LogCreateBet(msg.sender, bet, category, startTime);
+    if (spread == 0) {
+      LogCreateBet(startTime, 0, category, msg.value, bet, gameId);
+    } else {
+      LogCreateBet(startTime, 1, category, msg.value, bet, gameId);
+    }
   }
-
-  /**
-   * @dev fetch bets use category
-   * @param category Indicate the sports events type
-   */
-  function getBetsByCategory(bytes32 category) view public returns (Bet[]) {
-    return bets[category];
-  }
-
-  function getGameIdsByCategory(bytes32 category) view public returns (bytes32 []) {
-    return gameIds[category];
-  }
-
 }
