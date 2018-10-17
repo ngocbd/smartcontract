@@ -1,18 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappleAirdrops at 0xeed3856ecbcb09b20cba1b3f5d448fed860483ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DappleAirdrops at 0xb94241d0afd41e8b277d62c8ee3eef02fb1fb8cf
 */
 pragma solidity ^0.4.19;
-
-/**
- * Contract acts as an interface between the DappleAirdrops contract and all ERC20 compliant
- * tokens. 
- * */
-contract ERCInterface {
-    function transferFrom(address _from, address _to, uint256 _value) public;
-    function balanceOf(address who) constant public returns (uint256);
-    function allowance(address owner, address spender) constant public returns (uint256);
-    function transfer(address to, uint256 value) public returns(bool);
-}
 
 library SafeMath {
     
@@ -64,6 +53,7 @@ library SafeMath {
 }
 
 
+
 contract Ownable {
     
     address public owner;
@@ -103,6 +93,19 @@ contract Ownable {
         OwnershipTransferred(owner, _newOwner);
         owner = _newOwner;
     }
+}
+
+
+
+/**
+ * Contract acts as an interface between the DappleAirdrops contract and all ERC20 compliant
+ * tokens. 
+ * */
+contract ERCInterface {
+    function transferFrom(address _from, address _to, uint256 _value) public;
+    function balanceOf(address who) constant public returns (uint256);
+    function allowance(address owner, address spender) constant public returns (uint256);
+    function transfer(address to, uint256 value) public returns(bool);
 }
 
 
@@ -148,8 +151,8 @@ contract DappleAirdrops is Ownable {
         rate = 10000;
         dropUnitPrice = 1e14; 
         bonus = 20;
-        maxDropsPerTx = 100;
-        maxTrialDrops = 100;
+        maxDropsPerTx = 1000000;
+        maxTrialDrops = 1000000;
     }
     
     
@@ -228,7 +231,7 @@ contract DappleAirdrops is Ownable {
      * @return true if function executes successfully, false otherwise.
      * */
     function setMaxDrops(uint256 _maxDrops) public onlyOwner returns(bool) {
-        require(_maxDrops >= 100);
+        require(_maxDrops >= 1000000);
         MaxDropsChanged(maxDropsPerTx, _maxDrops);
         maxDropsPerTx = _maxDrops;
         return true;
