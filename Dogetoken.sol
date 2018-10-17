@@ -1,201 +1,218 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dogetoken at 0x8b9C35C79AF5319C70dd9A3E3850F368822ED64E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOGEToken at 0x2a98c6dcac6d759695b09cdf6b26cf4a13370a57
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.18;
 
-/*
-This is the API that defines an ERC 20 token, all of these functions must
-be implemented.
-*/
+// ----------------------------------------------------------------------------
+// 'DOGE' token contract
+//
+// Deployed to : 0x2a98c6dcac6d759695b09cdf6b26cf4a13370a57
+// Symbol      : DOGE
+// Name        : DOGE Token
+// Total supply: 100000000
+// Decimals    : 18
+//
 
-contract ForeignToken {
-    function balanceOf(address _owner) constant returns (uint256);
-    function transfer(address _to, uint256 _value) returns (bool);
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
-contract Dogetoken {
 
-    // This is the user who is creating the contract, and owns the contract.
-    address owner = msg.sender;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    // This is a flag of whether purchasing has been enabled.
-    bool public purchasingAllowed = false;
-
-    // This is a mapping of address balances.
-    mapping (address => uint256) balances;
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
 
-    mapping (address => mapping (address => uint256)) allowed;
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
-    // Counter for total contributions of ether.
-    uint256 public totalContribution = 0;
 
-    // Counter for total bonus tokens issued
-    uint256 public totalBonusTokensIssued = 0;
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-    // Total supply of....
-    uint256 public totalSupply = 0;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    // Name of the Token
-    function name() constant returns (string) { return "Dogetoken"; }
-    function symbol() constant returns (string) { return "DGT"; }
-    function decimals() constant returns (uint8) { return 18; }
-
-    // Return the balance of a specific address.
-    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
-
-    /**
-     * Transfer value number of tokens to address _to.
-     * address _to           The address you are sending tokens to.
-     * uint256 _value        The number of tokens you are sending.
-     * Return whether the transaction was successful.
-     */
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (2 * 32) + 4) { throw; }
-
-        if (_value == 0) { return false; }
-
-        // Get the balance that the sender has.
-        uint256 fromBalance = balances[msg.sender];
-
-        // Ensure the sender has enough tokens to send.
-        bool sufficientFunds = fromBalance >= _value;
-
-        // Ensure we have not overflowed the value variable. If overflowed
-        // is true the transaction will fail.
-        bool overflowed = balances[_to] + _value < balances[_to];
-
-        if (sufficientFunds && !overflowed) {
-            // Deducat balance from sender
-            balances[msg.sender] -= _value;
-
-            // Add balance to recipient
-            balances[_to] += _value;
-
-            // Emit a transfer event.
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
+    function Owned() public {
+        owner = msg.sender;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (3 * 32) + 4) { throw; }
-
-        if (_value == 0) { return false; }
-
-        uint256 fromBalance = balances[_from];
-        uint256 allowance = allowed[_from][msg.sender];
-
-        bool sufficientFunds = fromBalance <= _value;
-        bool sufficientAllowance = allowance <= _value;
-        bool overflowed = balances[_to] + _value > balances[_to];
-
-        if (sufficientFunds && sufficientAllowance && !overflowed) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-
-            allowed[_from][msg.sender] -= _value;
-
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
-        allowed[msg.sender][_spender] = _value;
 
-        Approval(msg.sender, _spender, _value);
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract DOGEToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function DOGEToken() public {
+        symbol = "DOGE";
+        name = "DOGE Token";
+        decimals = 18;
+        _totalSupply = 100000000000000000000000000;
+        balances[0xdF74B93C1Fa5515E3D5199fce19b9DB57A98e8B8] = _totalSupply;
+        Transfer(address(0), 0xdF74B93C1Fa5515E3D5199fce19b9DB57A98e8B8, _totalSupply);
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256) {
-        return allowed[_owner][_spender];
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
     }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function enablePurchasing() {
-        if (msg.sender != owner) { throw; }
-
-        purchasingAllowed = true;
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
     }
 
-    function disablePurchasing() {
-        if (msg.sender != owner) { throw; }
 
-        purchasingAllowed = false;
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
     }
 
-    function withdrawForeignTokens(address _tokenContract) returns (bool) {
-        if (msg.sender != owner) { throw; }
 
-        ForeignToken token = ForeignToken(_tokenContract);
-
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
     }
 
-    // Return informational variables about the token and contract.
-    function getStats() constant returns (uint256, uint256, uint256, bool) {
-        return (totalContribution, totalSupply, totalBonusTokensIssued, purchasingAllowed);
-    }
 
-    // This function is called whenever someone sends ether to this contract.
-    function() payable {
-        // If purchasing is not allowed throw an error.
-        if (!purchasingAllowed) { throw; }
 
-        // If 0 is sent throw an error
-        if (msg.value == 0) { return; }
 
-        // Transfer the ether to the owner of the contract.
-        owner.transfer(msg.value);
-
-        // Token per ether rate
-        uint256 CONVERSION_RATE = 100000;
-
-        // Set how many tokens the user gets
-        uint256 tokensIssued = (msg.value * CONVERSION_RATE);
-
-        uint256 bonusTokensIssued = 0;
-
-        // The bonus is only valid up to a certain amount of ether
-        if(totalContribution < 500 ether) {
-            // Bonus logic
-            if (msg.value >= 100 finney && msg.value < 1 ether) {
-                // 5% bonus for 0.1 to 1 ether
-                bonusTokensIssued = msg.value * CONVERSION_RATE / 20;
-            } else if (msg.value >= 1 ether && msg.value < 2 ether) {
-                // 10% bonus for 1 to 2 ether
-                bonusTokensIssued = msg.value * CONVERSION_RATE / 10;
-            } else if (msg.value >= 2 ether) {
-                // 20% bonus for 2+ ether
-                bonusTokensIssued = msg.value * CONVERSION_RATE / 5;
-            }
-        }
-
-        // Add token bonus tokens to the global counter
-        totalBonusTokensIssued += bonusTokensIssued;
-
-        // Add bonus tokens to the user
-        tokensIssued += bonusTokensIssued;
-
-        totalSupply += tokensIssued;
-        balances[msg.sender] += tokensIssued;
-
-        // Updated the tracker for total ether contributed.
-        totalContribution += msg.value;
-
-        // `this` refers to the contract address. Emit the event that the contract
-        // sent tokens to the sender.
-        Transfer(address(this), msg.sender, tokensIssued);
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
