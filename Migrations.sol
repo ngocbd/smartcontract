@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x965b5fb5907697ddf4afea99295ef37e1db88591
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x55bc55e7bf833747a8f278a631617fa51d09d9eb
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
+// File: contracts/Migrations.sol
 
-// Provided by Truffle.
 contract Migrations {
-
     address public owner;
     uint public last_completed_migration;
 
@@ -14,7 +13,7 @@ contract Migrations {
         if (msg.sender == owner) _;
     }
 
-    function Migrations() public {
+    constructor() public {
         owner = msg.sender;
     }
 
