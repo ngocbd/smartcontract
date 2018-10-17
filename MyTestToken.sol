@@ -1,129 +1,108 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0x9d8ccb797d92296104f9c1d5676e4de843726462
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0x1E5165777542368fa870baD4DeAd1fccBDc592aD
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.19;
 
-    contract owned {
-        address public owner;
 
-        function owned() public {
-            owner = msg.sender;
-        }
+/** test
+*/
+ 
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-        modifier onlyOwner {
-            require(msg.sender == owner);
-            _;
-        }
+  function div(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b > 0);
+    uint256 c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
 
-        function transferOwnership(address newOwner) onlyOwner public {
-            owner = newOwner;
-        }
+  function sub(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+contract Token {
+
+    function totalSupply() constant returns (uint256 supply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract RegularToken is Token, SafeMath {
+
+    function transfer(address _to, uint256 _value) returns (bool) {
+        require(balances[msg.sender] >= _value);
+        require(balances[_to] + _value >= balances[_to]);
+        balances[msg.sender] = sub(balances[msg.sender], _value);
+        balances[_to] = add(balances[_to], _value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
     }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+        require(balances[_from] >= _value);
+        require(balances[_to] + _value >= balances[_to]);
+        require(allowed[_from][msg.sender] >= _value);
+        balances[_from] = sub(balances[_from], _value);
+        balances[_to] = add(balances[_to], _value);
+        allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
 
-contract MyTestToken is owned {
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    bool private b_enableTransfer = true;
-    uint256 public creationDate;
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;    
+    function balanceOf(address _owner) constant returns (uint256) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
-    uint8 public tipoCongelamento = 0;
-        // 0 = unfreeze; 1 = frozen by 10 minutes; 2 = frozen by 30 minutes; 3 = frozen by 1 hour
-        // 4 = frozen by 2 hours; 5 = frozen by 1 day; 6 = frozen by 2 days
+}
 
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyTestToken (
-                           uint256 initialSupply,
-                           string tokenName,
-                           string tokenSymbol
-        ) owned() public 
-    {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;              // Give the creator all initial tokens
-        creationDate = now;
-        name = tokenName;
-        symbol = tokenSymbol;
-    }
 
-    /* Send coins */
-    function transfer2(address _to, uint256 _value) public
-    {
-        require(b_enableTransfer); 
-        
-        
-        _transfer(_to, _value);
-    }
+contract MyTestToken is RegularToken {
 
-    function transfer(address _to, uint256 _value) public
-    {
-        // testa periodos de congelamento
-        // 0 = unfreeze; 1 = frozen by 10 minutes; 2 = frozen by 30 minutes; 3 = frozen by 1 hour
-        // 4 = frozen by 2 hours; 5 = frozen by 1 day; 6 = frozen by 2 days
-        if(tipoCongelamento == 0) // unfrozen
-        {
-            _transfer(_to, _value);
-        }
-        if(tipoCongelamento == 1) // 10 minutes
-        {
-            if(now >= creationDate + 10 * 1 minutes) _transfer(_to, _value);
-        }
-        if(tipoCongelamento == 2) // 30 minutes
-        {
-            if(now >= creationDate + 30 * 1 minutes) _transfer(_to, _value);
-        }        
-        if(tipoCongelamento == 3) // 1 hour
-        {
-            if(now >= creationDate + 1 * 1 hours) _transfer(_to, _value);
-        }        
-        if(tipoCongelamento == 4) // 2 hours
-        {
-            if(now >= creationDate + 2 * 1 hours) _transfer(_to, _value);
-        }        
-        if(tipoCongelamento == 5) // 1 day
-        {
-            if(now >= creationDate + 1 * 1 days) _transfer(_to, _value);
-        }        
-        if(tipoCongelamento == 6) // 2 days
-        {
-            if(now >= creationDate + 2 * 1 days) _transfer(_to, _value);
-        }        
-    }
+    uint256 public totalSupply = 100*10**(18+8);
+    uint8 constant public decimals = 18;
+    string constant public name = "Mytest";
+    string constant public symbol = "MT";
 
-    function freezingStatus() view public returns (string)
-    {
-        // 0 = unfreeze; 1 = frozen by 10 minutes; 2 = frozen by 30 minutes; 3 = frozen by 1 hour
-        // 4 = frozen by 2 hours; 5 = frozen by 1 day; 6 = frozen by 2 days
-        
-        if(tipoCongelamento == 0) return ( "Tokens free to transfer!");
-        if(tipoCongelamento == 1) return ( "Tokens frozen by 10 minutes.");
-        if(tipoCongelamento == 2) return ( "Tokens frozen by 30 minutes.");
-        if(tipoCongelamento == 3) return ( "Tokens frozen by 1 hour.");
-        if(tipoCongelamento == 4) return ( "Tokens frozen by 2 hours.");        
-        if(tipoCongelamento == 5) return ( "Tokens frozen by 1 day.");        
-        if(tipoCongelamento == 6) return ( "Tokens frozen by 2 days.");                
-
-    }
-
-    function setFreezingStatus(uint8 _mode) onlyOwner public
-    {
-        require(_mode>=0 && _mode <=6);
-        tipoCongelamento = _mode;
-    }
-
-    function _transfer(address _to, uint256 _value) private 
-    {
-        require(balanceOf[msg.sender] >= _value);           // Check if the sender has enough
-        require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        balanceOf[msg.sender] -= _value;                    // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-    }
-    
-    function enableTransfer(bool _enableTransfer) onlyOwner public
-    {
-        b_enableTransfer = _enableTransfer;
+    function MyTestToken() {
+        balances[msg.sender] = totalSupply;
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 }
