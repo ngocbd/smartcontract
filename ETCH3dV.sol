@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETCH3dV at 0x88aaeca6ee155d5cd48c747571ddf31ab41ce681
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETCH3dV at 0x117a36055bf56b0157bd1df3cf45bfd7e01e1663
 */
 pragma solidity ^0.4.20;
 
@@ -118,9 +118,9 @@ contract ETCH3dV {
     string public name = "ETCH3dV";
     string public symbol = "ETCH3dV";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 20; //20% Fee on buys and sells
-    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
+    uint8 constant internal dividendFee_ = 5; //20% Fee on buys and sells
+    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens). Can be changed later in the game, when the contract moons
