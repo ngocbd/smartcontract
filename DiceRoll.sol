@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0x00edca4652f6e117c0c1f04f2280a86ae08bdd0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0xed846c2962df064b6fecc7029bc5cd366699cc7f
 */
 pragma solidity ^0.4.18;
 
@@ -1237,6 +1237,7 @@ contract DiceRoll is SafeMath,usingOraclize {
     bool public jackpotPaused = false;
     bool public refundPaused = false;
 
+    uint256 public contractBalance;
     uint16 public houseEdge;
     uint256 public maxProfit;
     uint16 public maxProfitAsPercentOfHouse;
@@ -1246,9 +1247,9 @@ contract DiceRoll is SafeMath,usingOraclize {
     uint256 public minJackpotBet;
     
     uint256 public jackpotBlance;
-    address[] jackpotPlayer;
-    uint256 JackpotPeriods = 1;
-    uint64 nextJackpotTime;
+    address[] public jackpotPlayer;
+    uint256 public JackpotPeriods = 1;
+    uint64 public nextJackpotTime;
     uint16 public jackpotPersent = 100;
     
     uint256 public totalWeiWon;
@@ -1302,6 +1303,7 @@ contract DiceRoll is SafeMath,usingOraclize {
     
 
     function() public payable{
+        contractBalance = safeAdd(contractBalance, msg.value);
         setMaxProfit();
     }
 
@@ -1329,6 +1331,7 @@ contract DiceRoll is SafeMath,usingOraclize {
         playerBetAmount[queryId] = msg.value;
         playerNumberStart[queryId] = start;
         playerNumberEnd[queryId] = end;
+        contractBalance = safeSub(contractBalance,oraclizeFee);
     }
 
     function oddEven(uint8 oddeven) public payable gameIsActive oddEvenBetIsValid(msg.value, oddeven) {
@@ -1338,6 +1341,7 @@ contract DiceRoll is SafeMath,usingOraclize {
         playerBetAmount[queryId] = msg.value;
         playerNumberStart[queryId] = oddeven;
         playerNumberEnd[queryId] = 0;
+        contractBalance = safeSub(contractBalance,oraclizeFee);
     }
 
 
@@ -1347,6 +1351,8 @@ contract DiceRoll is SafeMath,usingOraclize {
             if(!refundPaused){
                 playerAddress[queryId].transfer(playerBetAmount[queryId]);
                 LogRefund(queryId, playerBetAmount[queryId]);
+            }else{
+                contractBalance = safeAdd(contractBalance,playerBetAmount[queryId]);
             }
         }else{
             uint8 tempStart = playerNumberStart[queryId];
@@ -1369,6 +1375,7 @@ contract DiceRoll is SafeMath,usingOraclize {
                     probability = 50;
                     playerProfit = getProfit(probability,tempAmount);
                     totalWeiWon = safeAdd(totalWeiWon, playerProfit);
+                    contractBalance = safeSub(contractBalance, playerProfit);
                     setMaxProfit();
                     LogResult(queryId, tempAddress, random, playerProfit, 1, 0, 0, tempStart, tempAmount);
                     
@@ -1377,6 +1384,7 @@ contract DiceRoll is SafeMath,usingOraclize {
                     tempAddress.transfer(safeAdd(playerProfit, tempAmount));  
                 }else{
                     LogResult(queryId, tempAddress, random, 0, 0, 0, 0, tempEnd, tempAmount); 
+                    contractBalance = safeAdd(contractBalance, (tempAmount - 1));
                     setMaxProfit();
                     tempAddress.transfer(1);
                 }
@@ -1386,6 +1394,7 @@ contract DiceRoll is SafeMath,usingOraclize {
                     probability = tempEnd - tempStart + 1;
                     playerProfit = getProfit(probability,tempAmount);
                     totalWeiWon = safeAdd(totalWeiWon, playerProfit);
+                    contractBalance = safeSub(contractBalance, playerProfit);
                     setMaxProfit();
                     LogResult(queryId, tempAddress, random, playerProfit, 1, tempStart, tempEnd, 2, tempAmount);
                     
@@ -1394,6 +1403,7 @@ contract DiceRoll is SafeMath,usingOraclize {
                     tempAddress.transfer(safeAdd(playerProfit, tempAmount));   
                 }else{
                     LogResult(queryId, tempAddress, random, 0, 0, tempStart, tempEnd, 2, tempAmount); 
+                    contractBalance = safeAdd(contractBalance, (tempAmount - 1));
                     setMaxProfit();
                     tempAddress.transfer(1);
                 }
@@ -1406,6 +1416,7 @@ contract DiceRoll is SafeMath,usingOraclize {
     function increaseJackpot(uint256 increaseAmount, bytes32 _queryId, address _address, uint256 _amount) internal {
         require(increaseAmount < maxProfit);
         LogJackpot(_queryId, _address, increaseAmount);
+        contractBalance = safeSub(contractBalance, increaseAmount);
         jackpotBlance = safeAdd(jackpotBlance, increaseAmount);
         if(_amount >= minJackpotBet){
             jackpotPlayer.push(_address);
@@ -1418,16 +1429,19 @@ contract DiceRoll is SafeMath,usingOraclize {
         require(jackpotPlayer.length > 0);
         uint random = rand() % jackpotPlayer.length;
         address winner = jackpotPlayer[random - 1];
+        sendJackpot(winner);
+    }
+    
+    function sendJackpot(address winner) internal jackpotAreActive {
         uint256 amount = jackpotBlance * jackpotPersent / 1000;
         require(jackpotBlance > amount);
-        winner.transfer(amount);
-        SendJackpotSuccesss(winner, amount, JackpotPeriods);
         jackpotBlance = safeSub(jackpotBlance, amount);
         jackpotPlayer.length = 0;
         nextJackpotTime = uint64(block.timestamp) + 72000;
+        winner.transfer(amount);
+        SendJackpotSuccesss(winner, amount, JackpotPeriods);
         JackpotPeriods += 1;
     }
-    
     
     function sendValueToJackpot() payable public jackpotAreActive {
         jackpotBlance = safeAdd(jackpotBlance, msg.value);
@@ -1451,7 +1465,7 @@ contract DiceRoll is SafeMath,usingOraclize {
     }
 
     function setMaxProfit() internal {
-        maxProfit = (address(this).balance - jackpotBlance) * maxProfitAsPercentOfHouse / 1000;  
+        maxProfit = contractBalance * maxProfitAsPercentOfHouse / 1000;  
     }
     
     function ownerSetOraclizeGas(uint newPrice, uint newGasLimit) public onlyOwner{
@@ -1501,6 +1515,7 @@ contract DiceRoll is SafeMath,usingOraclize {
     }
 
     function ownerTransferEther(address sendTo, uint256 amount) public onlyOwner{	
+        contractBalance = safeSub(contractBalance, amount);
         sendTo.transfer(amount);
         setMaxProfit();
         LogOwnerTransfer(sendTo, amount);
