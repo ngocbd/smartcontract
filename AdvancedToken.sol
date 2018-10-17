@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0x55812b72767b58a80a2d0a8d4c8d1e1c029421bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xd24e56f02ee723a443575836b9668587ffd6204f
 */
 pragma solidity 0.4.16;
 
@@ -301,8 +301,8 @@ contract AdvancedToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "TokenBookCoin";
-    string public symbol = "TBCoin";
+    string public name = "bc.game Token";
+    string public symbol = "BCG";
     string public version = '3.0.0';
     uint8 public decimals = 18;
 
@@ -310,7 +310,7 @@ contract AdvancedToken is PausableToken {
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
     function AdvancedToken() {
-      totalSupply = 1600000000 * (10**(uint256(decimals)));
+      totalSupply = 2000000000 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
     }
 
