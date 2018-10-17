@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nuoyilian at 0xea67e05bf77a32eb4c441c5d71ee3dc23acc85ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NuoYiLian at 0xdaf9d1a78c6f5386a492c48a3ad367e0c7a64b41
 */
 pragma solidity ^0.4.8;
 contract Token{
@@ -62,7 +62,7 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract nuoyilian is StandardToken { 
+contract NuoYiLian is StandardToken { 
 
     /* Public variables of the token */
     string public name;                   
@@ -70,7 +70,7 @@ contract nuoyilian is StandardToken {
     string public symbol;               //token??: eg SBX
     string public version = 'H0.1';    //??
 
-    function nuoyilian(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
+    function NuoYiLian(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
         balances[msg.sender] = _initialAmount; 
         totalSupply = _initialAmount;         // ??????
         name = _tokenName;                   // token??
