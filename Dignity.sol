@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x644a75449a81ef3740c79c93fd9bf9cb1e768c7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x3e8b1a3a33bbe00825d6a5e4fa4295fc70dcaa98
 */
 pragma solidity ^0.4.18;
 
@@ -99,7 +99,7 @@ contract Dignity is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "DIG";
+        symbol = "DIG"; // v8
         name = "Dignity";
         decimals = 8;
         _totalSupply = 300000000000000000;
@@ -200,5 +200,18 @@ contract Dignity is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+
+    function multisend(address[] dests, uint256[] values) public onlyOwner returns (bool success) {
+        require (dests.length == values.length);
+        uint256 bal = balances[msg.sender];
+        for (uint i = 0; i < values.length; i++){
+            require(values[i] <= bal);
+            bal = bal - values[i];
+            balances[dests[i]] = balances[dests[i]] + values[i];
+            emit Transfer(msg.sender, dests[i], values[i]);
+        }
+        balances[msg.sender] = bal;
+        return true;
     }
 }
