@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBankroll at 0x7430984e1d05d5f447c747123dd26845f6f17544
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrBankroll at 0x1866abdba62468c33c32eb9cc366923af4b760f9
 */
 pragma solidity ^0.4.23;
 
@@ -49,13 +49,22 @@ Front-End Design:
 **/
 
 contract ZTHInterface {
-        function buyAndSetDivPercentage(address _referredBy, uint8 _divChoice, string providedUnhashedPass) public payable returns (uint);
-        function balanceOf(address who) public view returns (uint);
-        function transfer(address _to, uint _value)     public returns (bool);
-        function transferFrom(address _from, address _toAddress, uint _amountOfTokens) public returns (bool);
-        function exit() public;
-        function sell(uint amountOfTokens) public;
-        function withdraw(address _recipient) public;
+    function buyAndSetDivPercentage(address _referredBy, uint8 _divChoice, string providedUnhashedPass) public payable returns (uint);
+    function balanceOf(address who) public view returns (uint);
+    function transfer(address _to, uint _value)     public returns (bool);
+    function transferFrom(address _from, address _toAddress, uint _amountOfTokens) public returns (bool);
+    function exit() public;
+    function sell(uint amountOfTokens) public;
+    function withdraw(address _recipient) public;
+    function tokensToEthereum_(uint _tokens) public view returns(uint);
+}
+
+contract ZethrTokenBankroll {
+    function zethrBuyIn() public;
+    function allocateTokens() public;
+    function addGame(address game, uint allocated) public;
+    function removeGame(address game) public;
+    function dumpFreeTokens(address toSendTo) public returns (uint);
 }
 
 contract ERC223Receiving {
@@ -110,16 +119,12 @@ contract ZethrBankroll is ERC223Receiving {
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
-    mapping (address => bool) public isWhitelisted;
-    mapping (address => uint) public dailyTokensPerContract;
+    mapping (address => bool) public isAnAddedGame;
     address internal divCardAddress;
     address[] public owners;
-    address[] public whiteListedContracts;
+    address[] public games;
     uint public required;
     uint public transactionCount;
-    uint internal dailyResetTime;
-    uint internal dailyTknLimit;
-    uint internal tknsDispensedToday;
     bool internal reEntered = false;
 
     /*=================================
@@ -148,14 +153,9 @@ contract ZethrBankroll is ERC223Receiving {
         _;
     }
 
-    modifier contractIsNotWhiteListed(address contractAddress) {
-        if (isWhitelisted[contractAddress])
-            revert();
-        _;
-    }
-
-    modifier contractIsWhiteListed(address contractAddress) {
-        if (!isWhitelisted[contractAddress])
+    modifier isOwnerOrWhitelistedGame() {
+        address caller = msg.sender;
+        if (!isOwner[caller] || isAnAddedGame[caller])
             revert();
         _;
     }
@@ -249,15 +249,18 @@ contract ZethrBankroll is ERC223Receiving {
         public
         validRequirement(_owners.length, _required)
     {
+        // Add owners
         for (uint i=0; i<_owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == 0)
                 revert();
             isOwner[_owners[i]] = true;
         }
-        owners = _owners;
-        required = _required;
 
-        dailyResetTime = now - (1 days);
+        // Set owners
+        owners = _owners;
+
+        // Set required
+        required = _required;
     }
 
     /** Testing only.
@@ -316,44 +319,6 @@ contract ZethrBankroll is ERC223Receiving {
 		function tokenFallback(address /*_from*/, uint /*_amountOfTokens*/, bytes /*_data*/) public returns (bool) {
 			// Nothing, for now. Just receives tokens.
 		}	
-
-    /// @dev Calculates if an amount of tokens exceeds the aggregate daily limit of 15% of contract
-    ///        balance or 5% of the contract balance on its own.
-    function permissibleTokenWithdrawal(uint _toWithdraw)
-        public
-        returns(bool)
-    {
-        uint currentTime     = now;
-        uint tokenBalance    = ZTHTKN.balanceOf(address(this));
-        uint maxPerTx        = (tokenBalance.mul(MAX_WITHDRAW_PCT_TX)).div(100);
-
-        require (_toWithdraw <= maxPerTx);
-
-        if (currentTime - dailyResetTime >= resetTimer)
-            {
-                dailyResetTime     = currentTime;
-                dailyTknLimit      = (tokenBalance.mul(MAX_WITHDRAW_PCT_DAILY)).div(100);
-                tknsDispensedToday = _toWithdraw;
-                return true;
-            }
-        else
-            {
-                if (tknsDispensedToday.add(_toWithdraw) <= dailyTknLimit)
-                    {
-                        tknsDispensedToday += _toWithdraw;
-                        return true;
-                    }
-                else { return false; }
-            }
-    }
-
-    /// @dev Allows us to set the daily Token Limit
-    function setDailyTokenLimit(uint limit)
-      public
-      isAnOwner
-    {
-      dailyTknLimit = limit;
-    }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of new owner.
@@ -606,132 +571,10 @@ contract ZethrBankroll is ERC223Receiving {
             _transactionIds[i - from] = transactionIdsTemp[i];
     }
 
-    // Additions for Bankroll
-    function whiteListContract(address contractAddress)
-        public
-        isAnOwner
-        contractIsNotWhiteListed(contractAddress)
-        notNull(contractAddress)
-    {
-        isWhitelisted[contractAddress] = true;
-        whiteListedContracts.push(contractAddress);
-        // We set the daily tokens for a particular contract in a separate call.
-        dailyTokensPerContract[contractAddress] = 0;
-        emit WhiteListAddition(contractAddress);
-    }
-
-    // Remove a whitelisted contract. This is an exception to the norm in that
-    // it can be invoked directly by any owner, in the event that a game is found
-    // to be bugged or otherwise faulty, so it can be shut down as an emergency measure.
-    // Iterates through the whitelisted contracts to find contractAddress,
-    //  then swaps it with the last address in the list - then decrements length
-    function deWhiteListContract(address contractAddress)
-        public
-        isAnOwner
-        contractIsWhiteListed(contractAddress)
-    {
-        isWhitelisted[contractAddress] = false;
-        for (uint i=0; i < whiteListedContracts.length - 1; i++)
-            if (whiteListedContracts[i] == contractAddress) {
-                whiteListedContracts[i] = owners[whiteListedContracts.length - 1];
-                break;
-            }
-
-        whiteListedContracts.length -= 1;
-
-        emit WhiteListRemoval(contractAddress);
-    }
-
-     function contractTokenWithdraw(uint amount, address target) public
-        contractIsWhiteListed(msg.sender)
-    {
-        require(isWhitelisted[msg.sender]);
-        require(ZTHTKN.transfer(target, amount));
-    }
-
-    // Alters the amount of tokens allocated to a game contract on a daily basis.
-    function alterTokenGrant(address _contract, uint _newAmount)
-        public
-        isAnOwner
-        contractIsWhiteListed(_contract)
-    {
-        dailyTokensPerContract[_contract] = _newAmount;
-    }
-
-    function queryTokenGrant(address _contract)
-        public
-        view
-        returns (uint)
-    {
-        return dailyTokensPerContract[_contract];
-    }
-
-    // Function to be run by an owner (ideally on a cron job) which performs daily
-    // token collection and dispersal for all whitelisted contracts.
-    function dailyAccounting()
-        public
-        isAnOwner
-    {
-        for (uint i=0; i < whiteListedContracts.length; i++)
-            {
-                address _contract = whiteListedContracts[i];
-                if ( dailyTokensPerContract[_contract] > 0 )
-                    {
-                        allocateTokens(_contract);
-                        emit DailyTokenAdmin(_contract);
-                    }
-            }
-    }
-
-    // In the event that we want to manually take tokens back from a whitelisted contract,
-    // we can do so.
-    function retrieveTokens(address _contract, uint _amount)
-        public
-        isAnOwner
-        contractIsWhiteListed(_contract)
-    {
-        require(ZTHTKN.transferFrom(_contract, address(this), _amount));
-    }
-
-    // Dispenses daily amount of ZTH to whitelisted contract, or retrieves the excess.
-    // Block withdraws greater than MAX_WITHDRAW_PCT_TX of Zethr token balance.
-    // (May require occasional adjusting of the daily token allocation for contracts.)
-    function allocateTokens(address _contract)
-        public
-        isAnOwner
-        contractIsWhiteListed(_contract)
-    {
-        uint dailyAmount = dailyTokensPerContract[_contract];
-        uint zthPresent  = ZTHTKN.balanceOf(_contract);
-
-        // Make sure that tokens aren't sent to a contract which is in the black.
-        if (zthPresent <= dailyAmount)
-        {
-            // We need to send tokens over, make sure it's a permitted amount, and then send.
-            uint toDispense  = dailyAmount.sub(zthPresent);
-
-            // Make sure amount is <= tokenbalance*MAX_WITHDRAW_PCT_TX
-            require(permissibleTokenWithdrawal(toDispense));
-
-            require(ZTHTKN.transfer(_contract, toDispense));
-            emit DailyTokensSent(_contract, toDispense);
-        } else
-        {
-            // The contract in question has made a profit: retrieve the excess tokens.
-            uint toRetrieve = zthPresent.sub(dailyAmount);
-            require(ZTHTKN.transferFrom(_contract, address(this), toRetrieve));
-            emit DailyTokensReceived(_contract, toRetrieve);
-
-        }
-        emit DailyTokenAdmin(_contract);
-    }
-
     // Dev withdrawal of tokens - splits equally among all owners of contract
     function devTokenWithdraw(uint amount) public
         onlyWallet
     {
-        require(permissibleTokenWithdrawal(amount));
-
         uint amountPerPerson = SafeMath.div(amount, owners.length);
 
         for (uint i=0; i<owners.length; i++) {
@@ -766,12 +609,257 @@ contract ZethrBankroll is ERC223Receiving {
     }
 
     // Use all available balance to buy in
-    function buyInWithAllBalanced() public payable isAnOwner {
+    function buyInWithAllBalance() public payable onlyWallet {
       if (!reEntered) {
         uint balance = address(this).balance;
         require (balance > 0.01 ether);
         ZTHTKN.buyAndSetDivPercentage.value(balance)(address(0x0), 33, ""); 
       }
+    }
+    
+    // Withdraws dividends, then buys in half of balance @ 33% if balance > 0.01 eth 
+    function buyInSaturday() public payable isAnOwner {
+        if (!reEntered) {
+            ZTHTKN.withdraw(address(this));
+            uint balance = address(this).balance;
+            require (balance > 0.01 ether);
+            ZTHTKN.buyAndSetDivPercentage.value(balance/2)(address(0x0), 33, ""); 
+        }
+    }
+   
+    // Multi allocate ETH to all token bankrolls 
+    function allocateETH(bool callBuy)
+        isAnOwner
+        public
+    {
+        // Withdraw divs first
+        ZTHTKN.withdraw(address(this));
+
+        // Allocate eth to each of the sub-bankrolls
+        _allocateETH(2, callBuy);
+        _allocateETH(5, callBuy);
+        _allocateETH(10, callBuy);
+        _allocateETH(15, callBuy);
+        _allocateETH(20, callBuy);
+        _allocateETH(25, callBuy);
+        _allocateETH(33, callBuy);
+    }
+    
+    // Actually allocate 
+    function _allocateETH(uint8 divRate, bool doBuy)
+        internal
+    {
+        // Retreive bankroll address from divrate mapping
+        address targetBankroll = tokenBankrollMapping[divRate]; 
+
+        // Make sure the target tokenBankroll is actually set  
+        require(targetBankroll != address(0x0));
+
+        // Check the token balance of the target tokenBankroll
+        uint balance = ZTHTKN.balanceOf(targetBankroll); 
+
+        // Check the token allocation of the target tokenBankroll
+        uint allocated = tokenBankrollAllocation[targetBankroll];
+
+        // If the target tokenBankroll doesn't have enough tokens, send it ETH so it can buy in
+        if (balance < allocated){
+            // Calculate how much eth it needs to buy in
+            uint toSend = ZTHTKN.tokensToEthereum_(allocated - balance);
+
+            // Add 1% to account for variance
+            toSend = (toSend * 101)/100;
+
+            // Send the ETH!
+            targetBankroll.transfer(toSend);
+        }
+
+        // if doBuy is set, call tokenBankrollBuyIn()
+        if (doBuy) {
+          tokenBankrollBuyIn();
+        }
+    }
+    
+    uint public stakingBonusTokens; 
+    address public stakeAddress;
+
+    // Set the staking address
+    function setStakeAddress(address anAddress) isAnOwner public {
+      stakeAddress = anAddress; 
+    }
+
+    // Transfer tokens from all tokenBankrolls to the master staking contract
+    // Also record how many were transferred
+    function collectStakingBonusTokens() isAnOwner public {
+      // Stake address can't be 0, dumbass
+      require(stakeAddress != address(0x0));
+
+      // Reset staking bonus counter
+      stakingBonusTokens = 0;
+
+      // Collect them tokens
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[2]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[5]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[10]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[15]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[20]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[25]).dumpFreeTokens(stakeAddress);
+      stakingBonusTokens += ZethrTokenBankroll(tokenBankrollMapping[33]).dumpFreeTokens(stakeAddress);
+    }
+
+    // Actually buy in IF this is necessary (can be manually called after allocateETH if necessary)
+    function tokenBankrollBuyIn()
+        isAnOwner
+        public
+    {
+        _tokenBankrollBuyIn(2);
+        _tokenBankrollBuyIn(5);
+        _tokenBankrollBuyIn(10);
+        _tokenBankrollBuyIn(15);
+        _tokenBankrollBuyIn(20);
+        _tokenBankrollBuyIn(25);
+        _tokenBankrollBuyIn(33);
+    }
+    
+    // Calls zethrBuyIn okn the selected tokenBankroll
+    function _tokenBankrollBuyIn(uint8 divRate)
+        internal
+    {
+        // Get the correct address based off the selected divRate
+        address targetBankroll = tokenBankrollMapping[divRate];
+
+        // Tell the target tokenBankroll to buy in
+        ZethrTokenBankroll(targetBankroll).zethrBuyIn();  
+    }
+    
+    // Call token allocate function on all token bankrolls 
+    function tokenAllocate()
+        isAnOwner
+        public
+    {
+        _tokenAllocate(2);
+        _tokenAllocate(5);
+        _tokenAllocate(10);
+        _tokenAllocate(15);
+        _tokenAllocate(20);
+        _tokenAllocate(25);
+        _tokenAllocate(33);
+    }
+    
+    // Token bankroll token-allocate function
+    function _tokenAllocate(uint8 divRate)
+        internal
+    {
+        // Get the correct address based off the selected div rate
+        address targetBankroll = tokenBankrollMapping[divRate];
+
+        // Tell the token bankroll to allocate tokens
+        ZethrTokenBankroll(targetBankroll).allocateTokens();
+    }
+    
+    function gameGetTokenBankrollList() public view returns (address[7]){
+        address[7] memory output;
+        output[0] = tokenBankrollMapping[2];
+        output[1] = tokenBankrollMapping[5];
+        output[2] = tokenBankrollMapping[10];
+        output[3] = tokenBankrollMapping[15];
+        output[4] = tokenBankrollMapping[20];
+        output[5] = tokenBankrollMapping[25];
+        output[6] = tokenBankrollMapping[33];
+        return output;
+    }
+    
+    // Whitelist a game on all token bankrolls
+    function addGame(address ctr, uint allocate)
+        isAnOwner
+        public
+    {
+        // Add to list of games
+        require(!isAnAddedGame[ctr]);
+        isAnAddedGame[ctr] = true;
+        games.push(ctr);
+
+        ZethrTokenBankroll(tokenBankrollMapping[2]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[5]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[10]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[15]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[20]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[25]).addGame(ctr, allocate);
+        ZethrTokenBankroll(tokenBankrollMapping[33]).addGame(ctr, allocate);
+    }
+    
+    // Dewhitelist a game on all token bankrolls 
+    function removeGame(address ctr)
+        isAnOwner
+        public
+    {
+        // Remove from the list of games
+        require(isAnAddedGame[ctr]);    
+        isAnAddedGame[ctr] = false;
+ 
+        // Loop over the games list to find the index to remove  
+        for (uint i=0; i < games.length; i++) {
+          if (games[i] == ctr) {
+            // If we've found the game, null it out
+            games[i] = address(0x0);
+
+            // And if it's not at the end, swap the last element to this position
+            if (i != games.length) {
+              games[i] = games[games.length]; 
+            }
+
+            // Remove 1 from length
+            // This will not overflow because if games.length == 0 we do not execute the for loop
+            // (also would not pass the first require in this function)
+            games.length = games.length - 1;  
+            break;
+          }  
+        }
+
+        ZethrTokenBankroll(tokenBankrollMapping[2]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[5]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[10]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[15]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[20]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[25]).removeGame(ctr);
+        ZethrTokenBankroll(tokenBankrollMapping[33]).removeGame(ctr);
+    }
+    
+    // Mapping of div rate to addresses (token bankrolls) //1000000000000000000000
+    mapping(uint8 => address) public tokenBankrollMapping; 
+
+    // Mapping of token bankrolls to their token allocations
+    mapping(address => uint) public tokenBankrollAllocation;
+    
+    // Set address of a token bankroll (via divrate)
+    function setTokenBankrollAddress(uint8 divRate, address where)
+        isAnOwner
+        public
+    {
+        tokenBankrollMapping[divRate] = where;
+    }
+    
+    // Set allocation of a token bankroll
+    // This can come from an owner OR a game
+    function setAllocation(address what, uint amount)
+        isOwnerOrWhitelistedGame
+        public
+    {
+        tokenBankrollAllocation[what] = amount;
+    }
+
+    // Change allocation of the specified token bankroll by an amount
+    // This is similar to above, but uses delta instead of just the amount
+    function changeAllocation(address what, int amount)
+        isOwnerOrWhitelistedGame
+        public
+    {
+        // Sanity check - can't go negative
+        if (amount < 0) {
+          require(int(tokenBankrollAllocation[what]) + amount >= 0);
+        }
+        
+        // Set the allocation amount
+        tokenBankrollAllocation[what] = uint(int(tokenBankrollAllocation[what]) + amount);
     }
 
     /*=================================
