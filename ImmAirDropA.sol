@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0x015ccd5ad83e95b5cb91b920f689ea329d096190
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0x5379bfa28446714ba0476841292f9368b8e9572b
 */
 pragma solidity ^0.4.21;
 
@@ -45,33 +45,18 @@ contract ERC20 is ERC20Basic {
 
 contract ImmAirDropA{
     using SafeMath for uint256;
-	
-    struct User{
-		address user_address;
-		uint signup_time;
-		uint256 reward_amount;
-		bool blacklisted;
-		uint paid_time;
-		uint256 paid_token;
-		bool status;
-	}
-	
-    uint256 fixamt = 100000000000000000000;
+    uint256 public decimals = 18;
     address public owner;
-	
-    /* @dev Assigned wallet where the remaining unclaim tokens to be return */
     address public wallet;
-	
-    /* @dev The token being distribute */
     ERC20 public token;
-
-    /* @dev To record the different reward amount for each bounty  */
-    mapping(address => User) public bounties;
-	
-    /* @dev Admin with permission to manage the signed up bounty */
     mapping (address => bool) public admins;
 	
-    function ImmAirDropA(ERC20 _token, address _wallet) public {
+    modifier onlyOwner {
+       require(msg.sender == owner);
+       _;
+    }
+	
+     function ImmAirDropA(ERC20 _token, address _wallet) public {
         require(_token != address(0));
         token = _token;
         admins[msg.sender] = true;
@@ -79,12 +64,7 @@ contract ImmAirDropA{
         wallet = _wallet;
     }
 
-    modifier onlyOwner {
-       require(msg.sender == owner);
-       _;
-    }
-	
-    modifier onlyAdmin {
+   modifier onlyAdmin {
         require(admins[msg.sender]);
         _;
     }
@@ -105,15 +85,17 @@ contract ImmAirDropA{
 		wallet = _wallet;
 	}
 
-    function signupUserWhitelist(address[] _userlist) public onlyAdmin{
+	function adminUpdateToken(ERC20 _token) public onlyOwner{
+		require(_token != address(0));
+		token = _token;
+	}
+
+    function signupUserWhitelist(address[] _userlist, uint256 _amttype) public onlyAdmin{
     	require(_userlist.length > 0);
+    	uint256 useamt = _amttype * (10 ** uint256(decimals));
     	for (uint256 i = 0; i < _userlist.length; i++) {
-    		address baddr = _userlist[i];
-    		if(baddr != address(0)){
-    			if(bounties[baddr].user_address != baddr){
-					bounties[baddr] = User(baddr,now,0,false,now,fixamt,true);
-					token.transfer(baddr, fixamt);
-    			}
+    		if(_userlist[i] != address(0)){
+    			token.transfer(_userlist[i], useamt);
     		}
     	}
     }
