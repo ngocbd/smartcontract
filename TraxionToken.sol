@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionToken at 0x9c8e7b22b5379b9dcb9cd26c0eb35658a8e6afb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionToken at 0x6ddf77654768edab156fda08b2e3afb74ff0630b
 */
 pragma solidity ^0.4.21;
 
+// zeppelin v1.8.0
 
 
 
@@ -339,182 +340,52 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+contract TraxionToken is PausableToken {
 
+  string public constant name = "Traxion Token";
+  string public constant symbol = "TXN";
+  uint8 public constant decimals = 18;
+  uint public constant INITIAL_SUPPLY = 5e8 * 10**uint(decimals);
 
+  event TransferData(bytes);
+  event TransferFromData(bytes);
+  event ApproveData(bytes);
+  event IncreaseApprovalData(bytes);
+  event DecreaseApprovalData(bytes);
 
-
-/**
-   @title ERC827 interface, an extension of ERC20 token standard
-
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
- */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
-/**
-   @title ERC827, an extension of ERC20 token standard
-
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
+  constructor()  public {
+    totalSupply_ = INITIAL_SUPPLY;
+    transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
+    balances[0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c] = INITIAL_SUPPLY;
+    emit Transfer(0x0, 0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c, INITIAL_SUPPLY);
   }
 
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
+  // The following functions cannot be executed when the contract is paused,
+  // given that they call functions from PausableToken.
 
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
+  function transferWithData(address to, uint value, bytes data) public returns (bool) {
+    emit TransferData(data);
+    return super.transfer(to, value);
   }
 
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
 
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
+  function transferFromWithData(address from, address to, uint value, bytes data) public returns (bool) {
+    emit TransferFromData(data);
+    return super.transferFrom(from, to, value);
   }
 
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
+  function approveWithData(address spender, uint value, bytes data) public returns (bool) {
+    emit ApproveData(data);
+    return super.approve(spender, value);
   }
 
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
+  function increaseApprovalWithData(address spender, uint addedValue, bytes data) public returns (bool) {
+    emit IncreaseApprovalData(data);
+    return super.increaseApproval(spender, addedValue);
   }
 
-}
-
-
-contract TraxionToken is ERC827Token, PausableToken {
-  
-    string public constant name = "Traxion Token";
-    string public constant symbol = "TXN";
-    uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 5e8 * 10**uint256(decimals);
-
-    constructor()  public {
-        totalSupply_ = INITIAL_SUPPLY;
-        transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
-        balances[0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c] = INITIAL_SUPPLY;
-        emit Transfer(0x0, 0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c, INITIAL_SUPPLY);
-    }
-    /** @dev erc827 extension will be used by the TraxionWallet system which spawns a dynamic "Traxion Contract" in ethereum blockchain
-             through Hyperledger Fabric SDK. This bridge the communication with the hyperledger fabric API from ethereum network and vice versa. 
-             Traxion Token will be used in our system  wherein the ABI will be written for its specific transaction through out Traxion Wallet App.
-    **/
-    function approve(address spender, uint256 value, bytes data) public whenNotPaused returns (bool) {
-        return super.approve(spender, value, data);
-    }
-
-    function transfer(address to, uint256 value, bytes data) public whenNotPaused returns (bool) {
-        return super.transfer(to, value, data);
-    }
-
-    function increaseApproval(address spender, uint256 addedValue, bytes data) public whenNotPaused returns (bool) {
-        return super.increaseApproval(spender, addedValue, data);
-    }
-    
-    function decreaseApproval(address spender, uint256 subtractedValue, bytes data) public whenNotPaused returns (bool) {
-        return super.decreaseApproval(spender, subtractedValue, data);
-    }
-
-    function transferFrom(address from, address to, uint256 value, bytes data) public whenNotPaused returns (bool) {
-        return super.transferFrom(from, to, value, data);
-    }
+  function decreaseApprovalWithData(address spender, uint subtractedValue, bytes data) public returns (bool) {
+    emit DecreaseApprovalData(data);
+    return super.decreaseApproval(spender, subtractedValue);
+  }
 }
