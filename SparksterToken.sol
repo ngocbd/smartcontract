@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0xD4c304F688049c70226CBE54878e9582ec14d506
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SparksterToken at 0x1e6d9c0dac7c0d0006139c401525efc1e97d55c1
 */
 pragma solidity 0.4.24;
 
@@ -1038,20 +1038,16 @@ contract SparksterToken is StandardToken, Ownable{
 	using strings for *;
 	using SafeMath for uint256;
 	struct Member {
-		address walletAddress;
-		mapping(uint256 => bool) groupMemberships; // What groups does this member belong to?
-		mapping(uint256 => uint256) ethBalance; // How much eth has this member contributed for this group?
+		mapping(uint256 => uint256) weiBalance; // How much eth has this member contributed for this group?
 		mapping(uint256 => uint256) tokenBalance; // The member's token balance in a specific group.
-		uint256 max1; // Maximum amount this user can contribute for phase1.
 		int256 transferred; // The amount of tokens the member has transferred out or been transferred in. Sending tokens out will increase this value and accepting tokens in will decrease it. In other words, the more negative this value is, the more unlocked tokens the member holds.
-		bool exists; // A flag to see if we have a record of this member or not. If we don't, they won't be allowed to purchase.
+		bool exists; // A flag to see if we have a record of this member or not.
 	}
 
 	struct Group {
 		bool distributed; // Whether or not tokens in this group have been distributed.
 		bool distributing; // This flag is set when we first enter the distribute function and is there to prevent race conditions, since distribution might take a long time.
 		bool unlocked; // Whether or not tokens in this group have been unlocked.
-		uint256 groupNumber; // This group's number
 		uint256 ratio; // 1 eth:ratio tokens. This amount represents the decimal amount. ratio*10**decimal = ratio sparks.
 		uint256 startTime; // Epoch of crowdsale start time.
 		uint256 phase1endTime; // Epoch of phase1 end time.
@@ -1059,17 +1055,20 @@ contract SparksterToken is StandardToken, Ownable{
 		uint256 deadline; // No contributions allowed after this epoch.
 		uint256 max2; // cap of phase2
 		uint256 max3; // Total ether this group can collect in phase 3.
-		uint256 ethTotal; // How much ether has this group collected?
+		uint256 weiTotal; // How much ether has this group collected?
 		uint256 cap; // The hard ether cap.
 		uint256 howManyDistributed;
+		uint256 howManyTotal; // Total people in this group, set when distributing.
 	}
 
+	address oracleAddress = 0xCb3405Fd5212C8B6a16DeFf9eBa49E69478A61b8;
 	bool public transferLock = true; // A Global transfer lock. Set to lock down all tokens from all groups.
 	bool public allowedToSell = false;
 	bool public allowedToPurchase = false;
 	string public name;									 // name for display
 	string public symbol;								 //An identifier
 	uint8 public decimals;							//How many decimals to show.
+	uint256 public penalty;
 	uint256 public maxGasPrice; // The maximum allowed gas for the purchase function.
 	uint256 internal nextGroupNumber;
 	uint256 public sellPrice; // sellPrice wei:1 spark token; we won't allow to sell back parts of a token.
@@ -1078,21 +1077,26 @@ contract SparksterToken is StandardToken, Ownable{
 	mapping(address => bool) internal nonMemberTransfers;
 	mapping(address => Member) internal members;
 	mapping(uint256 => Group) internal groups;
-	mapping(uint256 => address[]) internal associations; // Will hold a record of which addresses belong to which group.
 	uint256 public openGroupNumber;
-	event PurchaseSuccess(address indexed _addr, uint256 _groupNumber, uint256 _weiAmount,uint256 _totalEthBalance,uint256 _totalTokenBalance);
+	event WantsToPurchase(address walletAddress, uint256 weiAmount, uint256 groupNumber, bool inPhase1);
+	event WantsToDistribute(uint256 groupNumber, uint256 startIndex, uint256 endIndex);
 	event NearingHardCap(uint256 groupNumber, uint256 remainder);
 	event ReachedHardCap(uint256 groupNumber);
 	event DistributeDone(uint256 groupNumber);
 	event UnlockDone(uint256 groupNumber);
 	event GroupCreated(uint256 groupNumber, uint256 startTime, uint256 phase1endTime, uint256 phase2endTime, uint256 deadline, uint256 phase2cap, uint256 phase3cap, uint256 cap, uint256 ratio);
+	event AddToGroup(address walletAddress, uint256 groupNumber);
 	event ChangedAllowedToSell(bool allowedToSell);
 	event ChangedAllowedToPurchase(bool allowedToPurchase);
 	event ChangedTransferLock(bool transferLock);
 	event SetSellPrice(uint256 sellPrice);
-	event Added(address walletAddress, uint256 group, uint256 tokens, uint256 maxContribution1);
 	event SplitTokens(uint256 splitFactor);
 	event ReverseSplitTokens(uint256 splitFactor);
+	
+	modifier onlyOracleBackend() {
+		require(msg.sender == oracleAddress);
+		_;
+	}
 	
 	// Fix for the ERC20 short address attack http://vessenes.com/the-erc20-short-address-attack-explained/
 	modifier onlyPayloadSize(uint size) {	 
@@ -1126,6 +1130,11 @@ contract SparksterToken is StandardToken, Ownable{
 		setMaximumGasPrice(40);
 		// Give all the tokens to the owner to start with.
 		mintTokens(435000000);
+	}
+	
+	function setOracleAddress(address newAddress) public onlyOwner returns(bool success) {
+		oracleAddress = newAddress;
+		return true;
 	}
 	
 	function setMaximumGasPrice(uint256 gweiPrice) public onlyOwner returns(bool success) {
@@ -1176,50 +1185,107 @@ contract SparksterToken is StandardToken, Ownable{
 		emit Transfer(address(0), msg.sender, decimalAmount); // Per erc20 standards-compliance.
 	}
 	
-	function purchase() public canPurchase payable{
+	function purchase() public canPurchase payable returns(bool success) {
 		require(msg.sender != address(0)); // Don't allow the 0 address.
 		Member storage memberRecord = members[msg.sender];
 		Group storage openGroup = groups[openGroupNumber];
 		require(openGroup.ratio > 0); // Group must be initialized.
-		require(memberRecord.exists && memberRecord.groupMemberships[openGroup.groupNumber] && !openGroup.distributing && !openGroup.distributed && !openGroup.unlocked); // member must exist; Don't allow to purchase if we're in the middle of distributing this group; Don't let someone buy tokens on the current group if that group is already distributed, unlocked or both; don't allow member to purchase if they're not part of the open group.
 		uint256 currentTimestamp = block.timestamp;
 		require(currentTimestamp >= openGroup.startTime && currentTimestamp <= openGroup.deadline);																 //the timestamp must be greater than or equal to the start time and less than or equal to the deadline time
+		require(!openGroup.distributing && !openGroup.distributed); // member must exist; Don't allow to purchase if we're in the middle of distributing this group; Don't let someone buy tokens on the current group if that group is already distributed, unlocked or both; don't allow member to purchase if they're not part of the open group.
 		require(tx.gasprice <= maxGasPrice); // Restrict maximum gas this transaction is allowed to consume.
 		uint256 weiAmount = msg.value;																		// The amount purchased by the current member
 		require(weiAmount >= 0.1 ether);
-		uint256 ethTotal = openGroup.ethTotal.add(weiAmount); // Calculate total contribution of all members in this group.
-		require(ethTotal <= openGroup.cap);														// Check to see if accepting these funds will put us above the hard ether cap.
-		uint256 userETHTotal = memberRecord.ethBalance[openGroup.groupNumber].add(weiAmount);	// Calculate the total amount purchased by the current member
+		uint256 weiTotal = openGroup.weiTotal.add(weiAmount); // Calculate total contribution of all members in this group.
+		require(weiTotal <= openGroup.cap);														// Check to see if accepting these funds will put us above the hard ether cap.
+		uint256 userWeiTotal = memberRecord.weiBalance[openGroupNumber].add(weiAmount);	// Calculate the total amount purchased by the current member
 		if(currentTimestamp <= openGroup.phase1endTime){																			 // whether the current timestamp is in the first phase
-			require(userETHTotal <= memberRecord.max1);														 // Will these new funds put the member over their first phase contribution limit?
+			emit WantsToPurchase(msg.sender, weiAmount, openGroupNumber, true);
+			return true;
 		} else if (currentTimestamp <= openGroup.phase2endTime) { // Are we in phase 2?
-			require(userETHTotal <= openGroup.max2); // Allow to contribute no more than max2 in phase 2.
+			require(userWeiTotal <= openGroup.max2); // Allow to contribute no more than max2 in phase 2.
+			emit WantsToPurchase(msg.sender, weiAmount, openGroupNumber, false);
+			return true;
 		} else { // We've passed both phases 1 and 2.
-			require(userETHTotal <= openGroup.max3); // Don't allow to contribute more than max3 in phase 3.
+			require(userWeiTotal <= openGroup.max3); // Don't allow to contribute more than max3 in phase 3.
+			emit WantsToPurchase(msg.sender, weiAmount, openGroupNumber, false);
+			return true;
 		}
-		uint256 tokenAmount = weiAmount.mul(openGroup.ratio);						 //calculate member token amount.
-		uint256 newLeftOver = balances[owner].sub(tokenAmount); // Won't pass if result is < 0.
-		openGroup.ethTotal = ethTotal;								 // Calculate the total amount purchased by all members in this group.
-		memberRecord.ethBalance[openGroup.groupNumber] = userETHTotal;														 // Record the total amount purchased by the current member
-		memberRecord.tokenBalance[openGroup.groupNumber] = memberRecord.tokenBalance[openGroup.groupNumber].add(tokenAmount); // Update the member's token amount.
-		balances[owner] = newLeftOver; // Update the available number of tokens.
-		owner.transfer(weiAmount); // Transfer to owner, don't keep funds in the contract.
-		emit PurchaseSuccess(msg.sender,openGroupNumber,weiAmount,memberRecord.ethBalance[openGroup.groupNumber],memberRecord.tokenBalance[openGroup.groupNumber]); 
-		if (getHowMuchUntilHardCap() <= 100 ether) {
-			emit NearingHardCap(openGroupNumber, getHowMuchUntilHardCap());
+	}
+	
+	function purchaseCallback(string uploadedData) public onlyOracleBackend returns(bool success) {
+		// We'll separate records by a | and individual entries in the record by a :.
+		strings.slice memory uploadedSlice = uploadedData.toSlice();
+		strings.slice memory nextRecord = "".toSlice();
+		strings.slice memory nextDatum = "".toSlice();
+		strings.slice memory recordSeparator = "|".toSlice();
+		strings.slice memory datumSeparator = ":".toSlice();
+		uint256 amountForOwner = 0;
+		while (!uploadedSlice.empty()) {
+			nextRecord = uploadedSlice.split(recordSeparator);
+			nextDatum = nextRecord.split(datumSeparator);
+			uint256 accepted = parseInt(nextDatum.toString(), 0);
+			nextDatum = nextRecord.split(datumSeparator);
+			address theAddress = parseAddr(nextDatum.toString());
+			if (accepted > 0) {
+				Member storage memberRecord = members[theAddress];
+				nextDatum = nextRecord.split(datumSeparator);
+				uint256 weiAmount = parseInt(nextDatum.toString(), 0);
+				amountForOwner = amountForOwner.add(weiAmount);
+				nextDatum = nextRecord.split(datumSeparator);
+				uint256 groupNumber = parseInt(nextDatum.toString(), 0);
+				Group storage theGroup = groups[groupNumber];
+				uint256 tokenAmount = weiAmount.mul(theGroup.ratio);						 //calculate member token amount.
+				theGroup.weiTotal = theGroup.weiTotal.add(weiAmount);								 // Calculate the total amount purchased by all members in this group.
+				memberRecord.weiBalance[groupNumber] = memberRecord.weiBalance[groupNumber].add(weiAmount);														 // Record the total amount purchased by the current member
+				memberRecord.tokenBalance[groupNumber] = memberRecord.tokenBalance[groupNumber].add(tokenAmount); // Update the member's token amount.
+				balances[owner] = balances[owner].sub(tokenAmount); // Update the available number of tokens.
+				if (!memberRecord.exists) { // We're seeing this one for the first time.
+					allMembers.push(theAddress);
+					memberRecord.exists = true;
+					if (balances[theAddress] > 0) { // Don't inadvertently lock their previously held tokens before they became a member.
+						memberRecord.transferred = -int(balances[theAddress]);
+					}
+				}
+			} else {
+				if (penalty >= weiAmount) {
+					amountForOwner = amountForOwner.add(penalty);
+					weiAmount = weiAmount.sub(penalty);
+				}
+				if (address(this).balance >= weiAmount) {
+					theAddress.transfer(weiAmount);
+				}
+			}
+			if (internalGetHowMuchUntilHardCap(groupNumber) <= 100 ether) {
+				emit NearingHardCap(groupNumber, internalGetHowMuchUntilHardCap(groupNumber));
+			}
+			if (theGroup.weiTotal == theGroup.cap) {
+				emit ReachedHardCap(groupNumber);
+			}
 		}
-		if (openGroup.ethTotal == openGroup.cap) {
-			emit ReachedHardCap(openGroupNumber);
+		if (address(this).balance >= amountForOwner) {
+			owner.transfer(amountForOwner);
 		}
+		return true;
+	}
+	
+	function drain() public onlyOwner {
+		owner.transfer(address(this).balance);
+	}
+	
+	function setPenalty(uint256 newPenalty) public onlyOwner returns(bool success) {
+		penalty = newPenalty;
+		return true;
 	}
 	
 	function sell(uint256 amount) public canSell { // Can't sell unless owner has allowed it.
 		uint256 decimalAmount = amount.mul(uint(10)**decimals); // convert the full token value to the smallest unit possible.
-		if (members[msg.sender].exists) { // If this seller exists, they have an unlocked balance we need to take care of.
-			int256 sellValue = members[msg.sender].transferred + int(decimalAmount);
-			require(sellValue >= members[msg.sender].transferred); // Check for overflow.
+		Member storage theMember = members[msg.sender];
+		if (theMember.exists) { // If this seller exists, they have an unlocked balance we need to take care of.
+			int256 sellValue = theMember.transferred + int(decimalAmount);
+			require(sellValue >= theMember.transferred); // Check for overflow.
 			require(sellValue <= int(getUnlockedBalanceLimit(msg.sender))); // Make sure they're not selling more than their unlocked amount.
-			members[msg.sender].transferred = sellValue;
+			theMember.transferred = sellValue;
 		}
 		balances[msg.sender] = balances[msg.sender].sub(decimalAmount); // Do this before transferring to avoid re-entrance attacks; will throw if result < 0.
 		// Amount is considered to be how many full tokens the user wants to sell.
@@ -1250,7 +1316,6 @@ contract SparksterToken is StandardToken, Ownable{
 	
 	function createGroup(uint256 startEpoch, uint256 phase1endEpoch, uint256 phase2endEpoch, uint256 deadlineEpoch, uint256 phase2cap, uint256 phase3cap, uint256 etherCap, uint256 ratio) public onlyOwner returns (bool success, uint256 createdGroupNumber) {
 		Group storage theGroup = groups[nextGroupNumber];
-		theGroup.groupNumber = nextGroupNumber;
 		theGroup.startTime = startEpoch;
 		theGroup.phase1endTime = phase1endEpoch;
 		theGroup.phase2endTime = phase2endEpoch;
@@ -1282,99 +1347,51 @@ contract SparksterToken is StandardToken, Ownable{
 		phase1endTime = theGroup.phase1endTime;
 		phase2endTime = theGroup.phase2endTime;
 		deadline = theGroup.deadline;
-		weiTotal = theGroup.ethTotal;
+		weiTotal = theGroup.weiTotal;
 		howManyDistributed = theGroup.howManyDistributed;
 	}
 	
+	function internalGetHowMuchUntilHardCap(uint256 groupNumber) internal view returns(uint256 remainder) {
+		return groups[groupNumber].cap.sub(groups[groupNumber].weiTotal);
+	}
+	
 	function getHowMuchUntilHardCap() public view returns(uint256 remainder) {
-		return groups[openGroupNumber].cap - groups[openGroupNumber].ethTotal;
+		return internalGetHowMuchUntilHardCap(openGroupNumber);
 	}
 
 	function getHowManyLeftToDistribute(uint256 groupNumber) public view returns(uint256 howManyLeftToDistribute) {
 		require(groupNumber < nextGroupNumber);
 		Group storage theGroup = groups[groupNumber];
-		howManyLeftToDistribute = associations[groupNumber].length - theGroup.howManyDistributed; // No need to use SafeMath here since we're guaranteed to not underflow on this line.
+		howManyLeftToDistribute = theGroup.howManyTotal - theGroup.howManyDistributed; // No need to use SafeMath here since we're guaranteed to not underflow on this line.
 	}
 	
-	function getMembersInGroup(uint256 groupNumber) public view returns (address[]) {
-		require(groupNumber < nextGroupNumber); // Check for nonexistent group
-		return associations[groupNumber];
-	}
-
-	function addMember(address walletAddress, uint256 groupNumber, uint256 tokens, uint256 maxContribution1) public onlyOwner returns (bool success) {
-		Member storage theMember = members[walletAddress];
-		Group storage theGroup = groups[groupNumber];
-		require(groupNumber < nextGroupNumber); // Don't let the owner assign to a group that doesn't exist, protect against mistypes.
-		require(!theGroup.distributed && !theGroup.distributing && !theGroup.unlocked); // Don't let us add to a distributed group, a group that's distributing right now, or a group that's already been unlocked.
-		require(!theMember.exists); // Don't let the owner re-add a member.
-		theMember.walletAddress = walletAddress;
-		theMember.groupMemberships[groupNumber] = true;
-		balances[owner] = balances[owner].sub(tokens);
-		theMember.tokenBalance[groupNumber] = tokens;
-		theMember.max1 = maxContribution1;
-		if (balances[walletAddress] > 0) {
-		theMember.transferred = -int(balances[walletAddress]); // Don't lock the tokens they come in with if they already hold a balance.
-	}
-		theMember.exists = true;
-		associations[groupNumber].push(walletAddress); // Push this user's address to the associations array so we can easily keep track of which users belong to which group...
-		// ... Solidity doesn't allow to iterate over a map.
-		allMembers.push(walletAddress); // Push this address to allMembers array so we can easily loop through all addresses...
-		// Used for splitTokens and reverseSplitTokens.
-		emit Added(walletAddress, groupNumber, tokens, maxContribution1);
-		return true;
-	}
-
 	function addMemberToGroup(address walletAddress, uint256 groupNumber) public onlyOwner returns(bool success) {
-		Member storage memberRecord = members[walletAddress];
-		require(memberRecord.exists && groupNumber < nextGroupNumber && !memberRecord.groupMemberships[groupNumber]); // Don't add this user to a group if they already exist in that group.
-		memberRecord.groupMemberships[groupNumber] = true;
-		associations[groupNumber].push(walletAddress);
-		return true;
-	}
-	function upload(string uploadedData) public onlyOwner returns (bool success) {
-		// We'll separate records by a | and individual entries in the record by a :.
-		strings.slice memory uploadedSlice = uploadedData.toSlice();
-		strings.slice memory nextRecord = "".toSlice();
-		strings.slice memory nextDatum = "".toSlice();
-		strings.slice memory recordSeparator = "|".toSlice();
-		strings.slice memory datumSeparator = ":".toSlice();
-		while (!uploadedSlice.empty()) {
-			nextRecord = uploadedSlice.split(recordSeparator);
-			nextDatum = nextRecord.split(datumSeparator);
-			address memberAddress = parseAddr(nextDatum.toString());
-			nextDatum = nextRecord.split(datumSeparator);
-			uint256 memberGroup = parseInt(nextDatum.toString(), 0);
-			nextDatum = nextRecord.split(datumSeparator);
-			uint256 memberTokens = parseInt(nextDatum.toString(), 0);
-			nextDatum = nextRecord.split(datumSeparator);
-			uint256 memberMaxContribution1 = parseInt(nextDatum.toString(), 0);
-			addMember(memberAddress, memberGroup, memberTokens, memberMaxContribution1);
-		}
+		emit AddToGroup(walletAddress, groupNumber);
 		return true;
 	}
 	
-	function distribute(uint256 groupNumber, uint256 howMany) public onlyOwner returns (bool success) {
+	function distribute(uint256 groupNumber, uint256 howMany) public onlyOwner {
 		Group storage theGroup = groups[groupNumber];
-		require(groupNumber < nextGroupNumber && !theGroup.distributed ); // can't have already distributed
-		uint256 inclusiveStartIndex = theGroup.howManyDistributed;
-		uint256 exclusiveEndIndex = inclusiveStartIndex.add(howMany);
+		require(groupNumber < nextGroupNumber && !theGroup.distributed); // can't have already distributed
+		emit WantsToDistribute(groupNumber, theGroup.howManyDistributed, theGroup.howManyDistributed + howMany);
+	}
+	
+	function distributeCallback(uint256 groupNumber, uint256 totalInGroup, address[] addresses) public onlyOracleBackend returns (bool success) {
+		Group storage theGroup = groups[groupNumber];
 		theGroup.distributing = true;
-		uint256 n = associations[groupNumber].length;
-		require(n > 0 ); // We must have more than 0 members in this group
-		if (exclusiveEndIndex > n) { // This batch will overrun the array.
-			exclusiveEndIndex = n;
-		}
-		for (uint256 i = inclusiveStartIndex; i < exclusiveEndIndex; i++) { // This section might be expensive in terms of gas cost!
-			address memberAddress = associations[groupNumber][i];
+		uint256 n = addresses.length;
+		theGroup.howManyTotal = totalInGroup;
+		for (uint256 i = 0; i < n; i++) { // This section might be expensive in terms of gas cost!
+			address memberAddress = addresses[i];
 			Member storage currentMember = members[memberAddress];
 			uint256 balance = currentMember.tokenBalance[groupNumber];
 			if (balance > 0) { // No need to waste ticks if they have no tokens to distribute
 				balances[memberAddress] = balances[memberAddress].add(balance);
 				emit Transfer(owner, memberAddress, balance); // Notify exchanges of the distribution.
 			}
-			theGroup.howManyDistributed++;
 		}
-		if (theGroup.howManyDistributed == n) { // Done distributing all members.
+		theGroup.howManyDistributed = theGroup.howManyDistributed.add(n);
+		if (theGroup.howManyDistributed == theGroup.howManyTotal) { // Done distributing all members.
 			theGroup.distributed = true;
 			theGroup.distributing = false;
 			emit DistributeDone(groupNumber);
@@ -1405,7 +1422,7 @@ contract SparksterToken is StandardToken, Ownable{
 
 	function unlock(uint256 groupNumber) public onlyOwner returns (bool success) {
 		Group storage theGroup = groups[groupNumber];
-		require(theGroup.distributed && !theGroup.unlocked); // Distribution must have occurred first.
+		require(theGroup.distributed); // Distribution must have occurred first.
 		theGroup.unlocked = true;
 		emit UnlockDone(groupNumber);
 		return true;
@@ -1549,13 +1566,6 @@ contract SparksterToken is StandardToken, Ownable{
 		return true;
 	}
 
-	function changeMaxContribution(address memberAddress, uint256 newMax1) public onlyOwner {
-		// Allows to change a member's maximum contribution for phase 1.
-		Member storage theMember = members[memberAddress];
-		require(theMember.exists); // Don't allow to change for a nonexistent member.
-		theMember.max1 = newMax1;
-	}
-	
 	function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) canTransfer returns (bool success) {		
 		// If the transferrer has purchased tokens, they must be unlocked before they can be used.
 		Member storage fromMember = members[msg.sender];
