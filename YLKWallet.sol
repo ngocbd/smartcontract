@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YLKWallet at 0xd9bf94f54322b0b9c7de0c1242b2a56b6954f04d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YLKWallet at 0x8148d0479d78d2eef025877ffbbeb37d72034d3c
 */
 pragma solidity ^0.4.24;
 
@@ -115,7 +115,7 @@ contract YLKWallet is Ownable {
     using SafeMath for uint256;
 
     // Address where funds are collected
-    address public wallet = 0xd238dB886c3F4981D80270270Db85861B358E004;
+    address public wallet = 0xe3de74151CbDFB47d214F7E6Bcb8F5EfDCf99636;
   
     // How many token units a buyer gets per wei
     uint256 public rate = 1500;
