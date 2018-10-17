@@ -1,227 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0xc011a72400e58ecd99ee497cf89e3775d4bd732f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x47d4cc3d331525976553baff7c9e4d410087804a
 */
-/* 
- * Havven Token Contract Proxy
- * ========================
- * 
- * This contract points to an underlying target which implements its
- * actual functionality, while allowing that functionality to be upgraded.
- */
+pragma solidity ^0.4.23;
 
-pragma solidity 0.4.24;
-
-/**
- * @title A contract with an owner.
- * @notice Contract ownership can be transferred by first nominating the new owner,
- * who must then accept the ownership, which prevents accidental incorrect ownership transfers.
- */
-contract Owned {
-    address public owner;
-    address public nominatedOwner;
-
-    /**
-     * @dev Owned Constructor
-     */
-    constructor(address _owner)
-        public
-    {
-        require(_owner != address(0));
-        owner = _owner;
-        emit OwnerChanged(address(0), _owner);
-    }
-
-    /**
-     * @notice Nominate a new owner of this contract.
-     * @dev Only the current owner may nominate a new owner.
-     */
-    function nominateNewOwner(address _owner)
-        external
-        onlyOwner
-    {
-        nominatedOwner = _owner;
-        emit OwnerNominated(_owner);
-    }
-
-    /**
-     * @notice Accept the nomination to be owner.
-     */
-    function acceptOwnership()
-        external
-    {
-        require(msg.sender == nominatedOwner);
-        emit OwnerChanged(owner, nominatedOwner);
-        owner = nominatedOwner;
-        nominatedOwner = address(0);
-    }
-
-    modifier onlyOwner
-    {
-        require(msg.sender == owner);
-        _;
-    }
-
-    event OwnerNominated(address newOwner);
-    event OwnerChanged(address oldOwner, address newOwner);
+contract Contract {
+  mapping (address => uint256) public balances_bonus;
+  uint256 public contract_eth_value_bonus;
 }
 
-// This contract should be treated like an abstract contract
-contract Proxyable is Owned {
-    /* The proxy this contract exists behind. */
-    Proxy public proxy;
-
-    /* The caller of the proxy, passed through to this contract.
-     * Note that every function using this member must apply the onlyProxy or
-     * optionalProxy modifiers, otherwise their invocations can use stale values. */ 
-    address messageSender; 
-
-    constructor(address _proxy, address _owner)
-        Owned(_owner)
-        public
-    {
-        proxy = Proxy(_proxy);
-        emit ProxyUpdated(_proxy);
-    }
-
-    function setProxy(address _proxy)
-        external
-        onlyOwner
-    {
-        proxy = Proxy(_proxy);
-        emit ProxyUpdated(_proxy);
-    }
-
-    function setMessageSender(address sender)
-        external
-        onlyProxy
-    {
-        messageSender = sender;
-    }
-
-    modifier onlyProxy {
-        require(Proxy(msg.sender) == proxy);
-        _;
-    }
-
-    modifier optionalProxy
-    {
-        if (Proxy(msg.sender) != proxy) {
-            messageSender = msg.sender;
-        }
-        _;
-    }
-
-    modifier optionalProxy_onlyOwner
-    {
-        if (Proxy(msg.sender) != proxy) {
-            messageSender = msg.sender;
-        }
-        require(messageSender == owner);
-        _;
-    }
-
-    event ProxyUpdated(address proxyAddress);
+contract ERC20 {
+  function transfer(address _to, uint256 _value) public returns (bool success);
+  function balanceOf(address _owner) public constant returns (uint256 balance);
 }
 
-contract Proxy is Owned {
+contract Proxy {
 
-    Proxyable public target;
-    bool public useDELEGATECALL;
+  Contract contr;
+  uint256 public eth_balance;
+  ERC20 public token;
+  mapping (address => bool) public withdrew;
+  address owner;
 
-    constructor(address _owner)
-        Owned(_owner)
-        public
-    {}
+  constructor(address _contract, address _token) {
+      owner = msg.sender;
+      contr = Contract(_contract);
+      token = ERC20(_token);
+      eth_balance = contr.contract_eth_value_bonus();
+  }
 
-    function setTarget(Proxyable _target)
-        external
-        onlyOwner
-    {
-        target = _target;
-        emit TargetUpdated(_target);
-    }
+  function withdraw()  {
+      require(withdrew[msg.sender] == false);
+      withdrew[msg.sender] = true;
+      uint256 balance = contr.balances_bonus(msg.sender);
+      uint256 contract_token_balance = token.balanceOf(address(this));
+      uint256 tokens_to_withdraw = (balance*contract_token_balance)/eth_balance;
+      eth_balance -= balance;
+      require(token.transfer(msg.sender, tokens_to_withdraw));
 
-    function setUseDELEGATECALL(bool value) 
-        external
-        onlyOwner
-    {
-        useDELEGATECALL = value;
-    }
+  }
 
-    function _emit(bytes callData, uint numTopics,
-                   bytes32 topic1, bytes32 topic2,
-                   bytes32 topic3, bytes32 topic4)
-        external
-        onlyTarget
-    {
-        uint size = callData.length;
-        bytes memory _callData = callData;
+  function emergency_withdraw(address _token) {
+      require(msg.sender == owner);
+      require(ERC20(_token).transfer(owner, ERC20(_token).balanceOf(this)));
+  }
 
-        assembly {
-            /* The first 32 bytes of callData contain its length (as specified by the abi). 
-             * Length is assumed to be a uint256 and therefore maximum of 32 bytes
-             * in length. It is also leftpadded to be a multiple of 32 bytes.
-             * This means moving call_data across 32 bytes guarantees we correctly access
-             * the data itself. */
-            switch numTopics
-            case 0 {
-                log0(add(_callData, 32), size)
-            } 
-            case 1 {
-                log1(add(_callData, 32), size, topic1)
-            }
-            case 2 {
-                log2(add(_callData, 32), size, topic1, topic2)
-            }
-            case 3 {
-                log3(add(_callData, 32), size, topic1, topic2, topic3)
-            }
-            case 4 {
-                log4(add(_callData, 32), size, topic1, topic2, topic3, topic4)
-            }
-        }
-    }
-
-    function()
-        external
-        payable
-    {
-        if (useDELEGATECALL) {
-            assembly {
-                /* Copy call data into free memory region. */
-                let free_ptr := mload(0x40)
-                calldatacopy(free_ptr, 0, calldatasize)
-
-                /* Forward all gas and call data to the target contract. */
-                let result := delegatecall(gas, sload(target_slot), free_ptr, calldatasize, 0, 0)
-                returndatacopy(free_ptr, 0, returndatasize)
-
-                /* Revert if the call failed, otherwise return the result. */
-                if iszero(result) { revert(free_ptr, returndatasize) }
-                return(free_ptr, returndatasize)
-            }
-        } else {
-            /* Here we are as above, but must send the messageSender explicitly 
-             * since we are using CALL rather than DELEGATECALL. */
-            target.setMessageSender(msg.sender);
-            assembly {
-                let free_ptr := mload(0x40)
-                calldatacopy(free_ptr, 0, calldatasize)
-
-                /* We must explicitly forward ether to the underlying contract as well. */
-                let result := call(gas, sload(target_slot), callvalue, free_ptr, calldatasize, 0, 0)
-                returndatacopy(free_ptr, 0, returndatasize)
-
-                if iszero(result) { revert(free_ptr, returndatasize) }
-                return(free_ptr, returndatasize)
-            }
-        }
-    }
-
-    modifier onlyTarget {
-        require(Proxyable(msg.sender) == target);
-        _;
-    }
-
-    event TargetUpdated(Proxyable newTarget);
 }
