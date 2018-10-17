@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G12Coin at 0xbb1820f419abee8b730fafe0e91ce7f7f1e3a37b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G12Coin at 0xf7976d163470fb6ca7c866ab245ac2081f3700eb
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 /*
  * Math operations with safety checks
  */
