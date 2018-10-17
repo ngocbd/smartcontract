@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinDiamond at 0x2fa5a79bb3606b26db51896ec98ae898a5ae15b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinDiamond at 0x78477a3683980a31f86fa09e176f90b80fffda00
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.24;
 
 contract Token {
 
@@ -38,10 +38,8 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
 }
-
-
 
 contract StandardToken is Token {
 
@@ -89,14 +87,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-
-//name this contract whatever you'd like
-contract BitcoinDiamond is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+contract BitcoinDiamond is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
@@ -106,24 +97,38 @@ contract BitcoinDiamond is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Bitcoin Diamond
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;                   
+    uint8 public decimals;                
+    string public symbol;                 
+    string public version = 'H1.0';
+    uint256 public unitsOneEthCanBuy;     
+    uint256 public totalEthInWei;         
+    address public fundsWallet;           
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
+    // This is a constructor function
+    // which means the following function name has to match the contract name declared above
+    function BitcoinDiamond() {
+        balances[msg.sender] = 30000000000000000000000000000;      
+        totalSupply = 30000000000000000000000000000;
+        name = "BitcoinDiamond";                                   
+        decimals = 18;                                        
+        symbol = "BTCD";                                       
+        unitsOneEthCanBuy = 10000000;
+        fundsWallet = msg.sender;                             
+    }
 
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+    function() public payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
 
-    function BitcoinDiamond(
-        ) {
-        balances[msg.sender] = 300000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 300000000;                        // Update total supply (100000 for example)
-        name = "Bitcoin Diamond";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "BCD";                               // Set the symbol for display purposes
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                             
     }
 
     /* Approves and then calls the receiving contract */
