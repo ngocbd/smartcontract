@@ -1,419 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FBToken at 0x2f25c1e277d4f0a37de6b0ca4365eafebae0b759
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FBToken at 0x1b35806945ac1f02fe4fe68eba0d55b8104aa603
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
-library SafeMath {
+/*
+ * Creator: FB (Facebucks) 
+ */
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
+/*
+ * Abstract Token Smart Contract
+ *
+ */
+
+ 
+ /*
+ * Safe Math Smart Contract. 
+ * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+ */
+
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-library DateTime {
-    /*
-     *  Date and Time utilities for ethereum contracts
-     *
-     */
-    struct MyDateTime {
-        uint16 year;
-        uint8 month;
-        uint8 day;
-        uint8 hour;
-        uint8 minute;
-        uint8 second;
-        uint8 weekday;
-    }
 
-    uint constant DAY_IN_SECONDS = 86400;
-    uint constant YEAR_IN_SECONDS = 31536000;
-    uint constant LEAP_YEAR_IN_SECONDS = 31622400;
-    uint constant HOUR_IN_SECONDS = 3600;
-    uint constant MINUTE_IN_SECONDS = 60;
-    uint16 constant ORIGIN_YEAR = 1970;
 
-    function isLeapYear(uint16 year) constant returns (bool) {
-        if (year % 4 != 0) {
-            return false;
-        }
-        if (year % 100 != 0) {
-            return true;
-        }
-        if (year % 400 != 0) {
-            return false;
-        }
-        return true;
-    }
 
-    function leapYearsBefore(uint year) constant returns (uint) {
-        year -= 1;
-        return year / 4 - year / 100 + year / 400;
-    }
-
-    function getDaysInMonth(uint8 month, uint16 year) constant returns (uint8) {
-        if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) {
-            return 31;
-        }
-        else if (month == 4 || month == 6 || month == 9 || month == 11) {
-            return 30;
-        }
-        else if (isLeapYear(year)) {
-            return 29;
-        }
-        else {
-            return 28;
-        }
-    }
-
-    function parseTimestamp(uint timestamp) internal returns (MyDateTime dt) {
-        uint secondsAccountedFor = 0;
-        uint buf;
-        uint8 i;
-        // Year
-        dt.year = getYear(timestamp);
-        buf = leapYearsBefore(dt.year) - leapYearsBefore(ORIGIN_YEAR);
-        secondsAccountedFor += LEAP_YEAR_IN_SECONDS * buf;
-        secondsAccountedFor += YEAR_IN_SECONDS * (dt.year - ORIGIN_YEAR - buf);
-        // Month
-        uint secondsInMonth;
-        for (i = 1; i <= 12; i++) {
-            secondsInMonth = DAY_IN_SECONDS * getDaysInMonth(i, dt.year);
-            if (secondsInMonth + secondsAccountedFor > timestamp) {
-                dt.month = i;
-                break;
-            }
-            secondsAccountedFor += secondsInMonth;
-        }
-        // Day
-        for (i = 1; i <= getDaysInMonth(dt.month, dt.year); i++) {
-            if (DAY_IN_SECONDS + secondsAccountedFor > timestamp) {
-                dt.day = i;
-                break;
-            }
-            secondsAccountedFor += DAY_IN_SECONDS;
-        }
-        // Hour
-        dt.hour = 0;
-        //getHour(timestamp);
-        // Minute
-        dt.minute = 0;
-        //getMinute(timestamp);
-        // Second
-        dt.second = 0;
-        //getSecond(timestamp);
-        // Day of week.
-        dt.weekday = 0;
-        //getWeekday(timestamp);
-    }
-
-    function getYear(uint timestamp) constant returns (uint16) {
-        uint secondsAccountedFor = 0;
-        uint16 year;
-        uint numLeapYears;
-        // Year
-        year = uint16(ORIGIN_YEAR + timestamp / YEAR_IN_SECONDS);
-        numLeapYears = leapYearsBefore(year) - leapYearsBefore(ORIGIN_YEAR);
-        secondsAccountedFor += LEAP_YEAR_IN_SECONDS * numLeapYears;
-        secondsAccountedFor += YEAR_IN_SECONDS * (year - ORIGIN_YEAR - numLeapYears);
-        while (secondsAccountedFor > timestamp) {
-            if (isLeapYear(uint16(year - 1))) {
-                secondsAccountedFor -= LEAP_YEAR_IN_SECONDS;
-            }
-            else {
-                secondsAccountedFor -= YEAR_IN_SECONDS;
-            }
-            year -= 1;
-        }
-        return year;
-    }
-
-    function getMonth(uint timestamp) constant returns (uint8) {
-        return parseTimestamp(timestamp).month;
-    }
-
-    function getDay(uint timestamp) constant returns (uint8) {
-        return parseTimestamp(timestamp).day;
-    }
-
-    function getHour(uint timestamp) constant returns (uint8) {
-        return uint8((timestamp / 60 / 60) % 24);
-    }
-
-    function getMinute(uint timestamp) constant returns (uint8) {
-        return uint8((timestamp / 60) % 60);
-    }
-
-    function getSecond(uint timestamp) constant returns (uint8) {
-        return uint8(timestamp % 60);
-    }
-
-    function toTimestamp(uint16 year, uint8 month, uint8 day) constant returns (uint timestamp) {
-        return toTimestamp(year, month, day, 0, 0, 0);
-    }
-
-    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second) constant returns (uint timestamp) {
-        uint16 i;
-        // Year
-        for (i = ORIGIN_YEAR; i < year; i++) {
-            if (isLeapYear(i)) {
-                timestamp += LEAP_YEAR_IN_SECONDS;
-            }
-            else {
-                timestamp += YEAR_IN_SECONDS;
-            }
-        }
-        // Month
-        uint8[12] memory monthDayCounts;
-        monthDayCounts[0] = 31;
-        if (isLeapYear(year)) {
-            monthDayCounts[1] = 29;
-        }
-        else {
-            monthDayCounts[1] = 28;
-        }
-        monthDayCounts[2] = 31;
-        monthDayCounts[3] = 30;
-        monthDayCounts[4] = 31;
-        monthDayCounts[5] = 30;
-        monthDayCounts[6] = 31;
-        monthDayCounts[7] = 31;
-        monthDayCounts[8] = 30;
-        monthDayCounts[9] = 31;
-        monthDayCounts[10] = 30;
-        monthDayCounts[11] = 31;
-        for (i = 1; i < month; i++) {
-            timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
-        }
-        // Day
-        timestamp += DAY_IN_SECONDS * (day - 1);
-        // Hour
-        timestamp += HOUR_IN_SECONDS * (hour);
-        // Minute
-        timestamp += MINUTE_IN_SECONDS * (minute);
-        // Second
-        timestamp += second;
-        return timestamp;
-    }
+/**
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
+ */
+contract Token {
+  
+  function totalSupply() constant returns (uint256 supply);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
 
-    function balanceOf(address who) public view returns (uint256);
 
-    function transfer(address to, uint256 value) public returns (bool);
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () {
+    // Do nothing
+  }
+  
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(_to != address(0));
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    emit Transfer (msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+  returns (bool success) {
+    require(_to != address(0));
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false; 
+
+    if (_value > 0 && _from != _to) {
+	  allowances [_from][msg.sender] = safeSub (allowances [_from][msg.sender], _value);
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   * @param _spender address to allow the owner of to transfer tokens from message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+   function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    emit Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance(address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+  
 }
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
 
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
+/**
+ * Facebucks smart contract.
+ */
+contract FBToken is AbstractToken {
+  /**
+   * Maximum allowed number of tokens in circulation.
+   * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
+   */
+   
+   
+  uint256 constant MAX_TOKEN_COUNT = 1000000000 * (10**18);
+   
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+  
+  /**
+   * Frozen account list holder
+   */
+  mapping (address => bool) private frozenAccount;
 
-    function approve(address spender, uint256 value) public returns (bool);
+  /**
+   * Current number of tokens in circulation.
+   */
+  uint256 tokenCount = 0;
+  
+ 
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+  
+ 
+  /**
+   * Create new token smart contract and make msg.sender the
+   * owner of this smart contract.
+   */
+  function FBToken () {
+    owner = msg.sender;
+  }
 
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply() constant returns (uint256 supply) {
+    return tokenCount;
+  }
 
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
+  string constant public name = "Facebucks";
+  string constant public symbol = "FB";
+  uint8 constant public decimals = 18;
+  
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(!frozenAccount[msg.sender]);
+	if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
+  }
 
-    mapping(address => uint256) balances;
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+    returns (bool success) {
+	require(!frozenAccount[_from]);
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
 
-    uint8 public decimals = 18;
-    uint public allSupply = 12600000; // 21000000 * 0.6
-    uint public freezeSupply = 8400000 * 10 ** uint256(decimals);   // 21000000 * 0.4
-    uint256 totalSupply_ = freezeSupply; 
+   /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance,
+   * To change the approve amount you first have to reduce the addresses`
+   * allowance to zero by calling `approve(_spender, 0)` if it is not
+   * already 0 to mitigate the race condition described here:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+    returns (bool success) {
+	require(allowance (msg.sender, _spender) == 0 || _value == 0);
+    return AbstractToken.approve (_spender, _value);
+  }
 
-    constructor() public {
-        balances[msg.sender] = 0;
-        balances[0x0] = freezeSupply;
+  /**
+   * Create _value new tokens and give new created tokens to msg.sender.
+   * May only be called by smart contract owner.
+   *
+   * @param _value number of tokens to create
+   * @return true if tokens were created successfully, false otherwise
+   */
+  function createTokens(uint256 _value)
+    returns (bool success) {
+    require (msg.sender == owner);
+
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+	  
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+	  
+	  // adding transfer event and _from address as null address
+	  emit Transfer(0x0, msg.sender, _value);
+	  
+	  return true;
     }
-
-
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
-    }
-
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-
-    function balanceOf(address _owner) public view returns (uint256) {
-        return balances[_owner];
-    }
-
-}
-
-contract FBToken is ERC20, BasicToken {
-
-    using DateTime for uint256;
-
-    string public name = "FABI";
-    string public symbol = "FB";
-
-    address owner;
-
-
-    uint public lastRelease = 15 * 10000000;   
-    uint public lastMonth = 1;                
-    uint public divBase = 100 * 10000000;
-    uint256 public award = 0;    
-
-    event ReleaseSupply(address indexed receiver, uint256 value, uint256 releaseTime);
-
-    uint256 public createTime;
-
-    struct ReleaseRecord {
-        uint256 amount; // release amount
-        uint256 releasedTime; // release time
-    }
-
-    mapping(uint => ReleaseRecord) public releasedRecords;
-    uint public releasedRecordsCount = 0;
-
-    constructor() public {
-        owner = msg.sender;
-        createTime = now;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-
-
-    function transferOwnership(address newOwner) onlyOwner {
-        require(newOwner != address(0));
-        owner = newOwner;
-    }
-
-
-    mapping(address => mapping(address => uint256)) internal allowed;
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
+	
+	  return false;
     
-    function releaseToday() public onlyOwner returns (uint256 _actualRelease) {
-        return releaseSupply(now);
+  }
+  
+
+  /**
+   * Set new owner for the smart contract.
+   * May only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner(address _newOwner) {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  /**
+   * Freeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      emit Freeze ();
     }
-    
-    function releaseSupply(uint256 timestamp) public onlyOwner returns (uint256 _actualRelease) {
-        require(timestamp >= createTime && timestamp <= now);
-        require(!judgeReleaseRecordExist(timestamp));
+  }
 
-        updateAward(timestamp);
+  /**
+   * Unfreeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
 
-        balances[owner] = balances[owner].add(award);
-        totalSupply_ = totalSupply_.add(award);
-        releasedRecords[releasedRecordsCount] = ReleaseRecord(award, timestamp);
-        releasedRecordsCount++;
-        emit ReleaseSupply(owner, award, timestamp);
-        return award;
+    if (frozen) {
+      frozen = false;
+      emit Unfreeze ();
     }
+  }
+  
+  
+  /*A user is able to unintentionally send tokens to a contract 
+  * and if the contract is not prepared to refund them they will get stuck in the contract. 
+  * The same issue used to happen for Ether too but new Solidity versions added the payable modifier to
+  * prevent unintended Ether transfers. However, there’s no such mechanism for token transfers.
+  * so the below function is created
+  */
+  
+  function refundTokens(address _token, address _refund, uint256 _value) {
+    require (msg.sender == owner);
+    require(_token != address(this));
+    AbstractToken token = AbstractToken(_token);
+    token.transfer(_refund, _value);
+    emit RefundTokens(_token, _refund, _value);
+  }
+  
+  /**
+   * Freeze specific account
+   * May only be called by smart contract owner.
+   */
+  function freezeAccount(address _target, bool freeze) {
+      require (msg.sender == owner);
+	  require (msg.sender != _target);
+      frozenAccount[_target] = freeze;
+      emit FrozenFunds(_target, freeze);
+ }
 
-    function judgeReleaseRecordExist(uint256 timestamp) internal returns (bool _exist) {
-        bool exist = false;
-        if (releasedRecordsCount > 0) {
-            for (uint index = 0; index < releasedRecordsCount; index++) {
-                if ((releasedRecords[index].releasedTime.parseTimestamp().year == timestamp.parseTimestamp().year)
-                && (releasedRecords[index].releasedTime.parseTimestamp().month == timestamp.parseTimestamp().month)
-                    && (releasedRecords[index].releasedTime.parseTimestamp().day == timestamp.parseTimestamp().day)) {
-                    exist = true;
-                }
-            }
-        }
-        return exist;
-    }
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
 
-    function updateAward(uint256 timestamp) internal {
-        uint passMonth = now.sub(createTime) / 30 days + 1;
-        if (passMonth == lastMonth + 1) {
-            lastRelease = lastRelease - lastRelease.mul(10).div(100);
-            lastMonth = passMonth;
-        }
-        award = lastRelease.mul(10 ** uint256(decimals)).mul(allSupply).div(30).div(divBase);
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+  
+  /**
+   * Logged when a particular account is frozen.
+   */
+  
+  event FrozenFunds(address target, bool frozen);
 
-    }
 
+  
+  /**
+   * when accidentally send other tokens are refunded
+   */
+  
+  event RefundTokens(address _token, address _refund, uint256 _value);
 }
