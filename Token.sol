@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x78021abd9b06f0456cb9db95a846c302c34f8b8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xdac324a72f774a614da500240f2786f2ec06c10d
 */
 pragma solidity ^0.4.23;
 
@@ -30,7 +30,7 @@ contract TokenBase is Owned {
     uint8 public decimals = 18;
     uint public totalSupply;
     uint public tokenUnit = 10 ** uint(decimals);
-    uint public kUnit = 1000 * tokenUnit;
+    uint public wanUnit = 10000 * tokenUnit;
     uint public foundingTime;
 
     mapping (address => uint) public balanceOf;
@@ -81,8 +81,8 @@ contract TokenBase is Owned {
 
 
 contract Token is TokenBase {
-    uint public initialSupply = 0;
-    uint public reserveSupply = 60000000 * kUnit;
+    uint public initialSupply = 0 * wanUnit;
+    uint public reserveSupply = 500000 * wanUnit;
 
     constructor() public {
         totalSupply = initialSupply;
