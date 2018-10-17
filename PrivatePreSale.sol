@@ -1,179 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0xbffafb9efcee04ce93553bcec7f5599488923c83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivatePreSale at 0x26b4b55f4d4eea666dfd72998466d3523afc3258
 */
 pragma solidity ^0.4.21;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
- * @title TokenlessCrowdsale
- * @dev Crowdsale based on OpenZeppelin's Crowdsale but without token-related logic
- * @author U-Zyn Chua <uzyn@zynesis.com>
- *
- * Largely similar to OpenZeppelin except the following irrelevant token-related hooks removed:
- * - function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal
- * - function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal
- * - function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256)
- * - event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount)
- *
- * Added hooks:
- * - function _processPurchaseInWei(address _beneficiary, uint256 _weiAmount) internal
- * - event SaleContribution(address indexed purchaser, address indexed beneficiary, uint256 value)
- */
-contract TokenlessCrowdsale {
-  using SafeMath for uint256;
-
-  // Address where funds are collected
-  address public wallet;
-
-  // Amount of wei raised
-  uint256 public weiRaised;
-
-  /**
-   * Event for token purchase logging
-   * similar to TokenPurchase without the token amount
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   */
-  event SaleContribution(address indexed purchaser, address indexed beneficiary, uint256 value);
-
-  /**
-   * @param _wallet Address where collected funds will be forwarded to
-   */
-  constructor (address _wallet) public {
-    require(_wallet != address(0));
-    wallet = _wallet;
-  }
-
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
-
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-
-    uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    _processPurchaseInWei(_beneficiary, weiAmount);
-    emit SaleContribution(
-      msg.sender,
-      _beneficiary,
-      weiAmount
-    );
-
-    _updatePurchasingState(_beneficiary, weiAmount);
-
-    _forwardFunds();
-    _postValidatePurchase(_beneficiary, weiAmount);
-  }
-
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
-  }
-
-  /**
-   * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    // optional override
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _weiAmount Number of wei contributed
-   */
-  function _processPurchaseInWei(address _beneficiary, uint256 _weiAmount) internal {
-    // override with logic on tokens delivery
-  }
-
-  /**
-   * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
-   * @param _beneficiary Address receiving the tokens
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-    // optional override
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-}
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -191,7 +21,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -215,239 +45,192 @@ contract Ownable {
 
 }
 
+// File: zeppelin-solidity/contracts/ownership/Claimable.sol
 
 /**
- * @title WhitelistedAICrowdsale
- * @dev Crowdsale in which only whitelisted users can contribute,
- * with a defined individual cap in wei,
- * and a bool flag on whether a user is an accredited investor (AI)
- * Based on OpenZeppelin's WhitelistedCrowdsale and IndividuallyCappedCrowdsale
- * @author U-Zyn Chua <uzyn@zynesis.com>
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
  */
-contract WhitelistedAICrowdsale is TokenlessCrowdsale, Ownable {
-  using SafeMath for uint256;
+contract Claimable is Ownable {
+  address public pendingOwner;
 
-  mapping(address => bool) public accredited;
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
 
-  // Individual cap
-  mapping(address => uint256) public contributions;
-  mapping(address => uint256) public caps;
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
 
- /**
-  * @dev Returns if a beneficiary is whitelisted
-  * @return bool
-  */
-  function isWhitelisted(address _beneficiary) public view returns (bool) {
-    if (caps[_beneficiary] != 0) {
-      return true;
-    }
-    return false;
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+// File: contracts/external/KYCWhitelist.sol
+
+/**
+ * @title KYCWhitelist
+ * @dev Crowdsale in which only whitelisted users can contribute.
+ */
+contract KYCWhitelist is Claimable {
+
+   mapping(address => bool) public whitelist;
+
+  /**
+   * @dev Reverts if beneficiary is not whitelisted. Can be used when extending this contract.
+   */
+  modifier isWhitelisted(address _beneficiary) {
+    require(whitelist[_beneficiary]);
+    _;
+  }
+
+  /**
+   * @dev Does a "require" check if _beneficiary address is approved
+   * @param _beneficiary Token beneficiary
+   */
+  function validateWhitelisted(address _beneficiary) internal view {
+    require(whitelist[_beneficiary]);
   }
 
   /**
    * @dev Adds single address to whitelist.
-   * Use this also to update
    * @param _beneficiary Address to be added to the whitelist
    */
-  function addToWhitelist(address _beneficiary, uint256 _cap, bool _accredited) external onlyOwner {
-    caps[_beneficiary] = _cap;
-    accredited[_beneficiary] = _accredited;
+  function addToWhitelist(address _beneficiary) external onlyOwner {
+    whitelist[_beneficiary] = true;
+  }
+  
+  /**
+   * @dev Adds list of addresses to whitelist. Not overloaded due to limitations with truffle testing. 
+   * @param _beneficiaries Addresses to be added to the whitelist
+   */
+  function addManyToWhitelist(address[] _beneficiaries) external onlyOwner {
+    for (uint256 i = 0; i < _beneficiaries.length; i++) {
+      whitelist[_beneficiaries[i]] = true;
+    }
   }
 
   /**
-   * @dev Removes single address from whitelist.
+   * @dev Removes single address from whitelist. 
    * @param _beneficiary Address to be removed to the whitelist
    */
   function removeFromWhitelist(address _beneficiary) external onlyOwner {
-    caps[_beneficiary] = 0;
-    accredited[_beneficiary] = false;
+    whitelist[_beneficiary] = false;
   }
 
-  /**
-   * @dev Extend parent behavior requiring beneficiary to be in whitelist.
-   * @param _beneficiary Token beneficiary
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(contributions[_beneficiary].add(_weiAmount) <= caps[_beneficiary]);
-  }
-
-  /**
-   * @dev Extend parent behavior to update user contributions
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {
-    super._updatePurchasingState(_beneficiary, _weiAmount);
-    contributions[_beneficiary] = contributions[_beneficiary].add(_weiAmount);
-  }
-
+  
 }
 
+// File: contracts/external/Pausable.sol
 
 /**
- * @title FiatCappedCrowdsale
- * @dev Crowdsale with a limit for total contributions defined in fiat (USD).
- * Based on OpenZeppelin's CappedCrowdsale
- * Handles fiat rates, but does not handle token awarding.
- * @author U-Zyn Chua <uzyn@zynesis.com>
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
-contract FiatCappedCrowdsale is TokenlessCrowdsale, Ownable {
-  using SafeMath for uint256;
+contract Pausable is Claimable {
+  event Pause();
+  event Unpause();
 
-  // 1 USD = 1000 mill (1 mill is USD 0.001)
-  // 1 ETH = 1e18 wei
-  // 1 SPX = 1e18 leconte
+  bool public paused = false;
 
-  uint256 public millCap; // cap defined in USD mill
-  uint256 public millRaised; // amount of USD mill raised
-
-  // Minimum fiat value purchase per transaction
-  uint256 public minMillPurchase;
-
-  // How many ETH wei per USD 0.001
-  uint256 public millWeiRate;
-
-  // How many SPX leconte per USD 0.001, without bonus
-  uint256 public millLeconteRate;
-
-  // Sanity checks
-  // 1 ETH is between USD 100 and USD 5,000
-  uint256 constant minMillWeiRate = (10 ** 18) / (5000 * (10 ** 3)); // USD 5,000
-  uint256 constant maxMillWeiRate = (10 ** 18) / (100 * (10 ** 3)); // USD 100
-
-  // 1 SPX is between USD 0.01 and USD 1
-  uint256 constant minMillLeconteRate = (10 ** 18) / 1000; // USD 1
-  uint256 constant maxMillLeconteRate = (10 ** 18) / 10; // USD 0.01
 
   /**
-   * @dev Throws if mill rate for ETH wei is not sane
+   * @dev Modifier to make a function callable only when the contract is not paused.
    */
-  modifier isSaneETHRate(uint256 _millWeiRate) {
-    require(_millWeiRate >= minMillWeiRate);
-    require(_millWeiRate <= maxMillWeiRate);
+  modifier whenNotPaused() {
+    require(!paused);
     _;
   }
 
   /**
-   * @dev Throws if mill rate for SPX wei is not sane
+   * @dev Modifier to make a function callable only when the contract is paused.
    */
-  modifier isSaneSPXRate(uint256 _millLeconteRate) {
-    require(_millLeconteRate >= minMillLeconteRate);
-    require(_millLeconteRate <= maxMillLeconteRate);
+  modifier whenPaused() {
+    require(paused);
     _;
   }
 
   /**
-   * @dev Constructor
-   * @param _millCap Max amount of mill to be contributed
-   * @param _millLeconteRate How many SPX leconte per mill
-   * @param _millWeiRate How many ETH wei per mill, this is updateable with setWeiRate()
+   * @dev called by the owner to pause, triggers stopped state
    */
-  constructor (
-    uint256 _millCap,
-    uint256 _minMillPurchase,
-    uint256 _millLeconteRate,
-    uint256 _millWeiRate
-  ) public isSaneSPXRate(_millLeconteRate) isSaneETHRate(_millWeiRate) {
-    require(_millCap > 0);
-    require(_minMillPurchase > 0);
-
-    millCap = _millCap;
-    minMillPurchase = _minMillPurchase;
-    millLeconteRate = _millLeconteRate;
-    millWeiRate = _millWeiRate;
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
   }
 
   /**
-   * @dev Checks whether the cap has been reached.
-   * @return Whether the cap was reached
+   * @dev called by the owner to unpause, returns to normal state
    */
-  function capReached() public view returns (bool) {
-    return millRaised >= millCap;
-  }
-
-  /**
-   * @dev Sets the current ETH wei rate - How many ETH wei per mill
-   */
-  function setWeiRate(uint256 _millWeiRate) external onlyOwner isSaneETHRate(_millWeiRate) {
-    millWeiRate = _millWeiRate;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap,
-   * and that contribution should be >= minMillPurchase
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-
-    // Check for minimum contribution
-    uint256 _millAmount = _toMill(_weiAmount);
-    require(_millAmount >= minMillPurchase);
-
-    // Check for funding cap
-    uint256 _millRaised = millRaised.add(_millAmount);
-    require(_millRaised <= millCap);
-    millRaised = _millRaised;
-  }
-
-  /**
-   * @dev Returns the amount in USD mill given ETH wei
-   * @param _weiAmount Amount in ETH wei
-   * @return amount in mill
-   */
-  function _toMill(uint256 _weiAmount) internal returns (uint256) {
-    return _weiAmount.div(millWeiRate);
-  }
-
-  /**
-   * @dev Returns the amount in SPX leconte given ETH wei
-   * @param _weiAmount Amount in ETH wei
-   * @return amount in leconte
-   */
-  function _toLeconte(uint256 _weiAmount) internal returns (uint256) {
-    return _toMill(_weiAmount).mul(millLeconteRate);
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
   }
 }
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
- * @title PausableCrowdsale
- * @dev Crowdsale allowing owner to halt sale process
- * Based on OpenZeppelin's TimedCrowdsale
- * @author U-Zyn Chua <uzyn@zynesis.com>
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract PausableCrowdsale is TokenlessCrowdsale, Ownable {
+library SafeMath {
+
   /**
-   * Owner controllable switch to open or halt sale
-   * This is independent from other checks such as cap, no other processes except owner should alter this value. This also means that even if hardCap is reached, this variable does not set to false on its own.
-   * This variable is revocable, hence behaving more like a pause than close when turned to off.
-   */
-  bool public open = true;
-
-  modifier saleIsOpen() {
-    require(open);
-    _;
-  }
-
-  function unpauseSale() external onlyOwner {
-    require(!open);
-    open = true;
-  }
-
-  function pauseSale() external onlyOwner saleIsOpen {
-    open = false;
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   * @dev Extend parent behavior requiring sale to be opened
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal saleIsOpen {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
+
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -461,221 +244,177 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
 /**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract BasicToken is ERC20Basic {
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/PrivatePreSale.sol
+
+/**
+ * @title PrivatePreSale
+ * 
+ * Private Pre-sale contract for Energis tokens
+ *
+ * (c) Philip Louw / Zero Carbon Project 2018. The MIT Licence.
+ */
+contract PrivatePreSale is Claimable, KYCWhitelist, Pausable {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  
+  // Wallet Address for funds
+  address public constant FUNDS_WALLET = 0xDc17D222Bc3f28ecE7FCef42EDe0037C739cf28f;
+  // Token Wallet Address
+  address public constant TOKEN_WALLET = 0x1EF91464240BB6E0FdE7a73E0a6f3843D3E07601;
+  // Token adderss being sold
+  address public constant TOKEN_ADDRESS = 0x14121EEe7995FFDF47ED23cfFD0B5da49cbD6EB3;
+  // Lockup Address
+  address public constant LOCKUP_WALLET = 0xaB18B66F75D13a38158f9946662646105C3bC45D;
+  // Token being sold
+  ERC20 public constant TOKEN = ERC20(TOKEN_ADDRESS);
+  // Conversion Rate (Eth cost of 1 NRG)
+  uint256 public constant TOKENS_PER_ETH = 4970;
+  // Max NRG tokens to sell
+  uint256 public constant MAX_TOKENS = 20000000 * (10**18) - 119545639989300000000000;
+  // Min investment in Tokens
+  uint256 public constant MIN_TOKEN_INVEST = 4970 * (10**18);
+  // Token sale start date
+  uint256 public START_DATE = 1531915200;
 
-  uint256 totalSupply_;
+  // -----------------------------------------
+  // State Variables
+  // -----------------------------------------
 
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
+  // Amount of wei raised
+  uint256 public weiRaised;
+  // Amount of tokens issued
+  uint256 public tokensIssued;
+  // If the pre-sale has ended
+  bool public closed;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256) {
-    return balances[_owner];
-  }
-}
-
-/**
- * @title ERC223 Token Receiver Interface
- * based on https://github.com/Dexaran/ERC223-token-standard/blob/Recommended/Receiver_Interface.sol but much simplified
- */
-contract BasicERC223Receiver {
-  function tokenFallback(address _from, uint256 _value, bytes _data) public pure;
-}
-
-
-/**
- * @title RestrictedToken
- * @dev Standard Mintable ERC20 Token that can only be sent to an authorized address
- * Based on Consensys' TokenFoundry's ControllableToken
- * @author U-Zyn Chua <uzyn@zynesis.com>
- */
-contract RestrictedToken is BasicToken, Ownable {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-
-  // Authorized senders are able to transfer tokens freely, usu. Sale contract
-  address public issuer;
-
-  // Vesting period for exchanging of RestrictedToken to non-restricted token
-  // This is for reference by exchange contract and no inherit use for this contract
-  uint256 public vestingPeriod;
-
-  // Holders of RestrictedToken are only able to transfer token to authorizedRecipients, usu. Exchange contract
-  mapping(address => bool) public authorizedRecipients;
-
-  // Whether recipients are ERC223-compliant
-  mapping(address => bool) public erc223Recipients;
-
-  // Last issued time of token per recipient
-  mapping(address => uint256) public lastIssuedTime;
-
-  event Issue(address indexed to, uint256 value);
+  // -----------------------------------------
+  // Events
+  // -----------------------------------------
 
   /**
-   * @dev Throws if called by any account other than the issuer.
+   * Event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
    */
-  modifier onlyIssuer() {
-    require(msg.sender == issuer);
-    _;
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  // -----------------------------------------
+  // Constructor
+  // -----------------------------------------
+
+
+  constructor() public {
+    require(TOKENS_PER_ETH > 0);
+    require(FUNDS_WALLET != address(0));
+    require(TOKEN_WALLET != address(0));
+    require(TOKEN_ADDRESS != address(0));
+    require(MAX_TOKENS > 0);
+    require(MIN_TOKEN_INVEST >= 0);
+  }
+
+  // -----------------------------------------
+  // Private PreSale external Interface
+  // -----------------------------------------
+
+  /**
+   * @dev Checks whether the cap has been reached. 
+   * @return Whether the cap was reached
+   */
+  function capReached() public view returns (bool) {
+    return tokensIssued >= MAX_TOKENS;
   }
 
   /**
-   * @dev Modifier to check if a transfer is allowed
+   * @dev Closes the sale, can only be called once. Once closed can not be opened again.
    */
-  modifier isAuthorizedRecipient(address _recipient) {
-    require(authorizedRecipients[_recipient]);
-    _;
-  }
-
-  constructor (
-    uint256 _supply,
-    string _name,
-    string _symbol,
-    uint8 _decimals,
-    uint256 _vestingPeriod,
-    address _owner, // usu. human
-    address _issuer // usu. sale contract
-  ) public {
-    require(_supply != 0);
-    require(_owner != address(0));
-    require(_issuer != address(0));
-
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-    vestingPeriod = _vestingPeriod;
-    owner = _owner;
-    issuer = _issuer;
-    totalSupply_ = _supply;
-    balances[_issuer] = _supply;
-    emit Transfer(address(0), _issuer, _supply);
+  function closeSale() public onlyOwner {
+    require(!closed);
+    closed = true;
   }
 
   /**
-   * @dev Allows owner to authorize or deauthorize recipients
+   * @dev Returns the amount of tokens given for the amount in Wei
+   * @param _weiAmount Value in wei
    */
-  function authorize(address _recipient, bool _isERC223) public onlyOwner {
-    require(_recipient != address(0));
-    authorizedRecipients[_recipient] = true;
-    erc223Recipients[_recipient] = _isERC223;
-  }
-
-  function deauthorize(address _recipient) public onlyOwner isAuthorizedRecipient(_recipient) {
-    authorizedRecipients[_recipient] = false;
-    erc223Recipients[_recipient] = false;
+  function getTokenAmount(uint256 _weiAmount) public pure returns (uint256) {
+    // Amount in wei (10**18 wei == 1 eth) and the token is 18 decimal places
+    return _weiAmount.mul(TOKENS_PER_ETH);
   }
 
   /**
-   * @dev Only allow transfer to authorized recipients
+   * @dev fallback function ***DO NOT OVERRIDE***
    */
-  function transfer(address _to, uint256 _value) public isAuthorizedRecipient(_to) returns (bool) {
-    if (erc223Recipients[_to]) {
-      BasicERC223Receiver receiver = BasicERC223Receiver(_to);
-      bytes memory empty;
-      receiver.tokenFallback(msg.sender, _value, empty);
-    }
-    return super.transfer(_to, _value);
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  // -----------------------------------------
+  // Private PreSale internal
+  // -----------------------------------------
+
+   /**
+   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @param _beneficiary Address performing the token purchase
+   */
+  function buyTokens(address _beneficiary) internal whenNotPaused {
+    
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokenAmount = getTokenAmount(weiAmount);
+
+    // Validation Checks
+    preValidateChecks(_beneficiary, weiAmount, tokenAmount);
+    
+    // update state
+    tokensIssued = tokensIssued.add(tokenAmount);
+    weiRaised = weiRaised.add(weiAmount);
+
+    // Send tokens from token wallet
+    TOKEN.transferFrom(TOKEN_WALLET, LOCKUP_WALLET, tokenAmount);
+
+    // Forward the funds to wallet
+    FUNDS_WALLET.transfer(msg.value);
+
+    // Event trigger
+    emit TokenPurchase(msg.sender, _beneficiary, weiAmount, tokenAmount);
   }
 
   /**
-   * Issue token
-   * @dev also records the token issued time
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
+   * @param _beneficiary Address performing the token purchase
+   * @param _weiAmount Value in wei involved in the purchase
+   * @param _tokenAmount Amount of token to purchase
    */
-  function issue(address _to, uint256 _value) public onlyIssuer returns (bool) {
-    lastIssuedTime[_to] = block.timestamp;
+  function preValidateChecks(address _beneficiary, uint256 _weiAmount, uint256 _tokenAmount) internal view {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0);
+    require(now >= START_DATE);
+    require(!closed);
 
-    emit Issue(_to, _value);
-    return super.transfer(_to, _value);
-  }
-}
+    // KYC Check
+    validateWhitelisted(_beneficiary);
 
-/**
- * @title Sparrow Token private sale
- */
-contract PrivatePreSale is TokenlessCrowdsale, WhitelistedAICrowdsale, FiatCappedCrowdsale, PausableCrowdsale {
-  using SafeMath for uint256;
+    // Test Min Investment
+    require(_tokenAmount >= MIN_TOKEN_INVEST);
 
-  // The 2 tokens being sold
-  RestrictedToken public tokenR0; // SPX-R0 - restricted token with no vesting
-  RestrictedToken public tokenR6; // SPX-R6 - restricted token with 6-month vesting
-
-  uint8 constant bonusPct = 15;
-
-  constructor (address _wallet, uint256 _millWeiRate) TokenlessCrowdsale(_wallet)
-    FiatCappedCrowdsale(
-      5000000 * (10 ** 3), // millCap: USD 5 million
-      500 * (10 ** 3), // minMillPurchase: USD 500
-      (10 ** 18) / 50, // millLeconteRate: 1 SPX = USD 0.05
-      _millWeiRate
-    )
-  public {
-    tokenR0 = new RestrictedToken(
-      2 * 100000000 * (10 ** 18), // supply: 100 million (* 2 for edge safety)
-      'Sparrow Token (Restricted)', // name
-      'SPX-R0', // symbol
-      18, // decimals
-      0, // no vesting
-      msg.sender, // owner
-      this // issuer
-    );
-
-    // SPX-R6: Only 15 mil needed if all contributors are AI, 115 mil needed if all contributors are non-AIs
-    tokenR6 = new RestrictedToken(
-      2 * 115000000 * (10 ** 18), // supply: 115 million (* 2 for edge safety)
-      'Sparrow Token (Restricted with 6-month vesting)', // name
-      'SPX-R6', // symbol
-      18, // decimals
-      6 * 30 * 86400, // vesting: 6 months
-      msg.sender, // owner
-      this // issuer
-    );
-  }
-
-  // If accredited, non-bonus tokens are given as tokenR0, bonus tokens are given as tokenR6
-  // If non-accredited, non-bonus and bonus tokens are given as tokenR6
-  function _processPurchaseInWei(address _beneficiary, uint256 _weiAmount) internal {
-    super._processPurchaseInWei(_beneficiary, _weiAmount);
-
-    uint256 tokens = _toLeconte(_weiAmount);
-    uint256 bonus = tokens.mul(bonusPct).div(100);
-
-    // Accredited
-    if (accredited[_beneficiary]) {
-      tokenR0.issue(_beneficiary, tokens);
-      tokenR6.issue(_beneficiary, bonus);
-    } else {
-      tokenR6.issue(_beneficiary, tokens.add(bonus));
-    }
+    // Test hard cap
+    require(tokensIssued.add(_tokenAmount) <= MAX_TOKENS);
   }
 }
