@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0x66bbe26673c760f9a7637baffea4d63d6e89fd75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RatScam at 0xb49ac92bf6a4505951e154a4949acd1765fbb476
 */
 pragma solidity ^0.4.24;
 
@@ -112,7 +112,7 @@ contract RatScam is modularRatScam {
     using NameFilter for string;
     using RSKeysCalc for uint256;
 
-    RatBookInterface constant private RatBook = RatBookInterface(0xA50A1d26f7F9FBf24EF1a41B2870E317f9c4BC93);
+    RatBookInterface constant private RatBook = RatBookInterface(0x3257d637B8977781B4f8178365858A474b2A6195);
 
     string constant public name = "RatScam In One Hour";
     string constant public symbol = "RS";
