@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingXChainToken at 0x0b8fcfa1da442457f146d0530c2d5d12eb8b979c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingXChainToken at 0x016396044709eb3edc69c44f4d5fa6996917e4e8
 */
 pragma solidity ^0.4.4;
 
@@ -121,7 +121,7 @@ contract KingXChainToken is ERC20 {
     
     function KingXChainToken () public {
         owner = msg.sender;
-        uint256 devTokens = 20000000000e18;
+        uint256 devTokens = 10000000000e18;
         distr(owner, devTokens);
     }
     
