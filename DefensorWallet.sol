@@ -1,7 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefensorWallet at 0x70E29C7124585a20EDe4E78B615d3a3B2b4DAd5C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DefensorWallet at 0xc32e282fb013e3aced3e4490a3c93234abfd4187
 */
 pragma solidity ^0.4.18;
+
+library SafeMath {
+
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b); 
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b; 
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+}
+
 
 contract Owner {
     address public owner;
@@ -26,8 +58,9 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract DefensorWallet is ERC20, Owner {
+contract DefensorWallet is ERC20, Owner{
 
+  using SafeMath for uint;
   string public name;
   string public symbol;
   uint8 public decimals;
@@ -88,8 +121,8 @@ contract DefensorWallet is ERC20, Owner {
         require(balances[msg.sender] - value >= frozenTokens[msg.sender].amount);
     }
 
-    balances[msg.sender] -= value;
-    balances[to] += value;
+    balances[msg.sender] = balances[msg.sender].sub(value);
+    balances[to] = balances[to].add(value);
     Transfer(msg.sender,to,value);
 
     return true;
@@ -108,9 +141,9 @@ contract DefensorWallet is ERC20, Owner {
     var _allowance = allowed[from][msg.sender];
     require (_allowance >= value);
     
-    balances[to] += value;
-    balances[from] -= value;
-    allowed[from][msg.sender] -= value;
+    balances[to] = balances[to].add(value);
+    balances[from] = balances[from].sub(value);
+    allowed[from][msg.sender] = allowed[from][msg.sender].sub(value);
     Transfer(from, to, value);
     return true;
   }
