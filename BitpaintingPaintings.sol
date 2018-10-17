@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitpaintingPaintings at 0x97fdfa48126205cfc24a3da42965fd623cc5e035
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitpaintingPaintings at 0x615e3583390a6c118887494e0ea7ce3a24f8cecc
 */
 pragma solidity ^0.4.15;
 
@@ -629,7 +629,18 @@ contract PaintingOwnership is BitpaintingBase, ERC721 {
 
 contract BitpaintingPaintings is PaintingOwnership, IPaintings {
 
-    uint version = 2;
+    event CommissionPaidSuccessfully(
+        address _to,
+        uint _fromBlock,
+        uint _toBlock);
+
+    uint version = 3;
+
+    modifier canPayCommission() {
+        require(bitpaintingStorage.isOwner(msg.sender)
+            || bitpaintingStorage.isAdmin(msg.sender));
+        _;
+    }
 
     function release(
         uint _tokenId,
@@ -811,6 +822,16 @@ contract BitpaintingPaintings is PaintingOwnership, IPaintings {
         }
 
     }
+
+    function payCommission(address _to, uint _fromBlock, uint _toBlock)
+        public payable canPayCommission {
+        require(_toBlock < block.number);
+        require(_fromBlock <= _toBlock);
+
+        _to.transfer(msg.value);
+        CommissionPaidSuccessfully(_to, _fromBlock, _toBlock);
+    }
+
 
     function signature() external constant returns (uint _signature) {
         return uint(keccak256("paintings"));
