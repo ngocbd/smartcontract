@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xb09da55bb414b16f9aeea382d2a0347ae0d3de4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x7cf16404761dfce519789b1f93e15f552c5e3190
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 200000000;
-        name = 'HarborCoin';
-        symbol = 'HBC';
-        decimals = 0;
-        balanceOf[0x0de088f9e6991b7651450e564debcf702a4eb2ff] = totalSupply;
-        Transfer(address(0), 0x0de088f9e6991b7651450e564debcf702a4eb2ff, totalSupply);
+        totalSupply = 1000000000000000000000000000;
+        name = 'NANOProcessingUnit';
+        symbol = 'NPU';
+        decimals = 18;
+        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
+        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
     }
 }
