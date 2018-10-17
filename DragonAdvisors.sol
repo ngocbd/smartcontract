@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonAdvisors at 0x1d5606b083d6c0262fdd1a482a23f250a03000ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonAdvisors at 0xce85ae4a642b9f4727578fbd6a414b0bf8b2bf36
 */
 pragma solidity ^0.4.24;
 
@@ -119,7 +119,7 @@ contract DragonAdvisors is Ownable{
     token = ERC20Basic(0x814F67fA286f7572B041D041b1D99b432c9155Ee);
     owner = address(0xA5101498679Fa973c5cF4c391BfF991249934E73);      // overriding owner
 
-    advisor = address(0x050bb8D9Fc423227A49AD8B4F14f844Db3E52f31);
+    advisor = address(0x4768f69DD6a786284FD28FB5E5ec70419C02Bf5E);
     
     releasedTokens = 0;
   }
