@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTToken at 0x93e13c068ec84986477fb2551222b814a684e0c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CSTToken at 0xd758645ac26aceb71f4ae8f08bc298a38f0640b0
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /*
- * Creator: CST (CryptoServices Token) 
+ * Creator: CST (Cogniscance) 
  */
 
 /*
@@ -107,7 +107,7 @@ contract AbstractToken is Token, SafeMath {
       accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
       accounts [_to] = safeAdd (accounts [_to], _value);
     }
-    Transfer (msg.sender, _to, _value);
+    emit Transfer (msg.sender, _to, _value);
     return true;
   }
 
@@ -133,7 +133,7 @@ contract AbstractToken is Token, SafeMath {
       accounts [_from] = safeSub (accounts [_from], _value);
       accounts [_to] = safeAdd (accounts [_to], _value);
     }
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -145,7 +145,7 @@ contract AbstractToken is Token, SafeMath {
    */
    function approve (address _spender, uint256 _value) returns (bool success) {
     allowances [msg.sender][_spender] = _value;
-    Approval (msg.sender, _spender, _value);
+    emit Approval (msg.sender, _spender, _value);
     return true;
   }
 
@@ -181,7 +181,7 @@ contract AbstractToken is Token, SafeMath {
 
 
 /**
- * CST token smart contract.
+ * Cogniscance smart contract.
  */
 contract CSTToken is AbstractToken {
   /**
@@ -190,8 +190,7 @@ contract CSTToken is AbstractToken {
    */
    
    
-   
-  uint256 constant MAX_TOKEN_COUNT = 100000000000 * (10**18);
+  uint256 constant MAX_TOKEN_COUNT = 250000000 * (10**0);
    
   /**
    * Address of the owner of this smart contract.
@@ -232,9 +231,9 @@ contract CSTToken is AbstractToken {
     return tokenCount;
   }
 
-  string constant public name = "CryptoServices Token";
+  string constant public name = "Cogniscance";
   string constant public symbol = "CST";
-  uint8 constant public decimals = 18;
+  uint8 constant public decimals = 0;
   
   /**
    * Transfer given number of tokens from message sender to given recipient.
@@ -300,7 +299,7 @@ contract CSTToken is AbstractToken {
       tokenCount = safeAdd (tokenCount, _value);
 	  
 	  // adding transfer event and _from address as null address
-	  Transfer(0x0, msg.sender, _value);
+	  emit Transfer(0x0, msg.sender, _value);
 	  
 	  return true;
     }
@@ -331,7 +330,7 @@ contract CSTToken is AbstractToken {
 
     if (!frozen) {
       frozen = true;
-      Freeze ();
+      emit Freeze ();
     }
   }
 
@@ -344,7 +343,7 @@ contract CSTToken is AbstractToken {
 
     if (frozen) {
       frozen = false;
-      Unfreeze ();
+      emit Unfreeze ();
     }
   }
   
@@ -361,7 +360,7 @@ contract CSTToken is AbstractToken {
     require(_token != address(this));
     AbstractToken token = AbstractToken(_token);
     token.transfer(_refund, _value);
-    RefundTokens(_token, _refund, _value);
+    emit RefundTokens(_token, _refund, _value);
   }
   
   /**
@@ -372,7 +371,7 @@ contract CSTToken is AbstractToken {
       require (msg.sender == owner);
 	  require (msg.sender != _target);
       frozenAccount[_target] = freeze;
-      FrozenFunds(_target, freeze);
+      emit FrozenFunds(_target, freeze);
  }
 
   /**
