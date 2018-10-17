@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RMMakeOrders at 0x562fc9fc8c7284ea01645dd0629020bcc7220fd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RMMakeOrders at 0xa1285Eec7ED4e1D65e55F50F564dCFF40237105a
 */
 pragma solidity ^0.4.13;
 
@@ -71,50 +71,25 @@ contract DSMath {
     }
 }
 
-interface AssetInterface {
-    /*
-     * Implements ERC 20 standard.
-     * https://github.com/ethereum/EIPs/blob/f90864a3d2b2b45c4decf95efd26b3f0c276051a/EIPS/eip-20-token-standard.md
-     * https://github.com/ethereum/EIPs/issues/20
-     *
-     *  Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
-     *  https://github.com/ethereum/EIPs/issues/223
-     */
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    // Events
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    // There is no ERC223 compatible Transfer event, with `_data` included.
-
-    //ERC 223
-    // PUBLIC METHODS
-    function transfer(address _to, uint _value, bytes _data) public returns (bool success);
-
-    // ERC 20
-    // PUBLIC METHODS
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    // PUBLIC VIEW METHODS
-    function balanceOf(address _owner) view public returns (uint balance);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-interface ERC223Interface {
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value) returns (bool);
-    function transfer(address to, uint value, bytes data) returns (bool);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-}
-
-contract Asset is DSMath, AssetInterface, ERC223Interface {
+contract Asset is DSMath, ERC20Interface {
 
     // DATA STRUCTURES
 
     mapping (address => uint) balances;
     mapping (address => mapping (address => uint)) allowed;
-    uint public totalSupply;
+    uint public _totalSupply;
 
     // PUBLIC METHODS
 
@@ -130,59 +105,14 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
         public
         returns (bool success)
     {
-        uint codeLength;
-        bytes memory empty;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly.
-            codeLength := extcodesize(_to)
-        }
- 
         require(balances[msg.sender] >= _value); // sanity checks
         require(balances[_to] + _value >= balances[_to]);
 
         balances[msg.sender] = sub(balances[msg.sender], _value);
         balances[_to] = add(balances[_to], _value);
-        // if (codeLength > 0) {
-        //     ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-        //     receiver.tokenFallback(msg.sender, _value, empty);
-        // }
-        Transfer(msg.sender, _to, _value, empty);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
-
-    /**
-     * @notice Send `_value` tokens to `_to` from `msg.sender` and trigger tokenFallback if sender is a contract
-     * @dev Function that is called when a user or contract wants to transfer funds
-     * @param _to Address of token receiver
-     * @param _value Number of tokens to transfer
-     * @param _data Data to be sent to tokenFallback
-     * @return Returns success of function call
-     */
-    function transfer(address _to, uint _value, bytes _data)
-        public
-        returns (bool success)
-    {
-        uint codeLength;
-
-        assembly {
-            // Retrieve the size of the code on target address, this needs assembly.
-            codeLength := extcodesize(_to)
-        }
-
-        require(balances[msg.sender] >= _value); // sanity checks
-        require(balances[_to] + _value >= balances[_to]);
-
-        balances[msg.sender] = sub(balances[msg.sender], _value);
-        balances[_to] = add(balances[_to], _value);
-        // if (codeLength > 0) {
-        //     ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-        //     receiver.tokenFallback(msg.sender, _value, _data);
-        // }
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
     /// @notice Transfer `_value` tokens from `_from` to `_to` if `msg.sender` is allowed.
     /// @notice Restriction: An account can only use this function to send to itself
     /// @dev Allows for an approved third party to transfer tokens from one
@@ -195,8 +125,8 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
         public
         returns (bool)
     {
-        require(_from != 0x0);
-        require(_to != 0x0);
+        require(_from != address(0));
+        require(_to != address(0));
         require(_to != address(this));
         require(balances[_from] >= _value);
         require(allowed[_from][msg.sender] >= _value);
@@ -207,7 +137,7 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
         balances[_from] -= _value;
         allowed[_from][msg.sender] -= _value;
 
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -217,16 +147,10 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
     /// @param _value Number of approved tokens.
     /// @return Returns success of function call.
     function approve(address _spender, uint _value) public returns (bool) {
-        require(_spender != 0x0);
-
-        // To change the approve amount you first have to reduce the addresses`
-        // allowance to zero by calling `approve(_spender, 0)` if it is not
-        // already 0 to mitigate the race condition described here:
-        // https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        // require(_value == 0 || allowed[msg.sender][_spender] == 0);
+        require(_spender != address(0));
 
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -252,15 +176,9 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
         return balances[_owner];
     }
 
-}
-
-interface ERC223ReceivingContract {
-
-    /// @dev Function that is called when a user or another contract wants to transfer funds.
-    /// @param _from Transaction initiator, analogue of msg.sender
-    /// @param _value Number of tokens to transfer.
-    /// @param _data Data containing a function signature and/or parameters
-    function tokenFallback(address _from, uint256 _value, bytes _data) public;
+    function totalSupply() view public returns (uint) {
+        return _totalSupply;
+    }
 }
 
 interface RiskMgmtInterface {
