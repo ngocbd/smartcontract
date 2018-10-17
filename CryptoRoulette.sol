@@ -1,20 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xc57fc2c9fd3130933bd29f01ff940dc52bc4115b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xfb6e71e0800bccc0db8a9cf326fe3213ca1a0ea0
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-// CryptoRoulette
-//
-// Guess the number secretly stored in the blockchain and win the whole contract balance!
-// A new number is randomly chosen after each try.
-//
-// To play, call the play() method with the guessed number (1-16).  Bet price: 0.2 ether
+// To play, call the play() method with the guessed number.  Bet price: 0.1 ether
 
 contract CryptoRoulette {
 
-    uint256 private secretNumber;
+    uint256 public secretNumber;
     uint256 public lastPlayed;
-    uint256 public betPrice = 0.001 ether;
+    uint256 public betPrice = 0.1 ether;
     address public ownerAddr;
 
     struct Game {
@@ -23,36 +18,40 @@ contract CryptoRoulette {
     }
     Game[] public gamesPlayed;
 
-    constructor() public {
+    function CryptoRoulette() public {
         ownerAddr = msg.sender;
-        shuffle();
+        generateNewRandom();
     }
 
-    function shuffle() internal {
-        // randomly set secretNumber with a value between 1 and 10
-        secretNumber = 6;
+    function generateNewRandom() internal {
+        // initialize secretNumber with a value between 0 and 15
+        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 16;
     }
 
     function play(uint256 number) payable public {
-        require(msg.value >= betPrice && number <= 10);
+        require(msg.value >= betPrice && number < 16);
 
         Game game;
         game.player = msg.sender;
         game.number = number;
         gamesPlayed.push(game);
 
-        msg.sender.transfer(this.balance);
-        // if (number == secretNumber) {
-        //     // win!
-        //     msg.sender.transfer(this.balance);
-        // }
+        if (number == secretNumber) {
+            // win!
+            if(msg.value*15>this.balance){
+                msg.sender.transfer(this.balance);
+            }
+            else{
+                msg.sender.transfer(msg.value*15);
+            }
+        }
 
-        //shuffle();
+        generateNewRandom();
         lastPlayed = now;
     }
 
     function kill() public {
-        if (msg.sender == ownerAddr && now > lastPlayed + 6 hours) {
+        if (msg.sender == ownerAddr && now > lastPlayed + 1 days) {
             suicide(msg.sender);
         }
     }
