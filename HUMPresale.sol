@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0xa8d8ce50ee73f38411db73c2c994a26c840c25d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0x33Fe572b3faa875B760D3bb48FA0E9BADa9008b6
 */
 pragma solidity ^0.4.23;
-
-
-
 
 /**
  * @title SafeMath
