@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0xa8f9c7ff9f605f401bde6659fd18d9a0d0a802c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RpsGame at 0xcdbaa1f3cc1113284e13a1a4a658f7564c7d6ed7
 */
 pragma solidity ^0.4.24;
 
@@ -39,7 +39,7 @@ contract AccessControl is SafeMath{
     address newContractAddress;
 
     uint public tip_total = 0;
-    uint public tip_rate = 10000000000000000;
+    uint public tip_rate = 20000000000000000;
 
     // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
     bool public paused = false;
