@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCNToken at 0x854bac258c39ba4fe23ab1730bddb15d9f5e3ccd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SCNToken at 0xc1235960b5ef26f9ea0d17445542a59324af1e20
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 /**
  * Math operations with safety checks
@@ -33,7 +33,6 @@ contract SafeMath {
 }
 
 contract TokenERC20 {
-     function totalSupply() constant returns (uint256  totalSupply);
      function balanceOf(address _owner) constant returns (uint256  balance);
      function transfer(address _to, uint256  _value) returns (bool success);
      function transferFrom(address _from, address _to, uint256  _value) returns (bool success);
@@ -51,11 +50,10 @@ contract SCNToken is SafeMath, TokenERC20{
 	address public owner = 0x0;
 	string  public version = "1.0";	
 	
-    bool public stopped = false;	
     bool public locked = false;	
     uint256 public currentSupply;           
     uint256 public tokenRaised = 0;    
-    uint256 public tokenExchangeRate = 146700; 
+    uint256 public tokenExchangeRate = 84000; 
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
@@ -93,11 +91,6 @@ contract SCNToken is SafeMath, TokenERC20{
 	modifier validAddress()  {
         require(address(0) != msg.sender);
         _;
-    }	
-
-    modifier isRunning() {
-        assert (!stopped);
-        _;
     }
 	
     modifier unlocked() {
@@ -109,16 +102,12 @@ contract SCNToken is SafeMath, TokenERC20{
         return _value * 10 ** uint256(decimals);
     }
 	
-	function totalSupply() constant returns (uint256  totalSupply){
-        return totalSupply;
-    }
-	
 	function balanceOf(address _owner) constant returns (uint256 balance) {
         return balanceOf[_owner];
     }
 
     /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) isRunning validAddress unlocked returns (bool success) {
+    function approve(address _spender, uint256 _value) validAddress unlocked returns (bool success) {
         require(_value > 0);
         allowance[msg.sender][_spender] = _value;
 		Approval(msg.sender, _spender, _value);
@@ -131,7 +120,7 @@ contract SCNToken is SafeMath, TokenERC20{
 	}
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) isRunning validAddress unlocked returns (bool success) {	
+    function transfer(address _to, uint256 _value) validAddress unlocked returns (bool success) {	
         _transfer(msg.sender, _to, _value);
     }
 	
@@ -156,7 +145,7 @@ contract SCNToken is SafeMath, TokenERC20{
     }
 
     /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress unlocked returns (bool success) {	
+    function transferFrom(address _from, address _to, uint256 _value) validAddress unlocked returns (bool success) {	
         require(_value <= allowance[_from][msg.sender]);     		// Check allowance
         require(_value > 0);
         allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);
@@ -164,7 +153,7 @@ contract SCNToken is SafeMath, TokenERC20{
         return true;
     }
 
-    function burn(uint256 _value) isRunning validAddress unlocked returns (bool success) {
+    function burn(uint256 _value) validAddress unlocked returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   							  // Check if the sender has enough
         require(_value > 0);   
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);  // Subtract from the sender
@@ -174,7 +163,7 @@ contract SCNToken is SafeMath, TokenERC20{
         return true;
     }
 	
-	function freeze(uint256 _value) isRunning validAddress unlocked returns (bool success) {	
+	function freeze(uint256 _value) validAddress unlocked returns (bool success) {	
         require(balanceOf[msg.sender] >= _value);   		 					 // Check if the sender has enough
         require(_value > 0);   
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value); // Subtract from the sender
@@ -183,7 +172,7 @@ contract SCNToken is SafeMath, TokenERC20{
         return true;
     }
 	
-	function unfreeze(uint256 _value) isRunning validAddress unlocked returns (bool success) {
+	function unfreeze(uint256 _value) validAddress unlocked returns (bool success) {
         require(freezeOf[msg.sender] >= _value);   		 						   // Check if the sender has enough
         require(_value > 0);   
         freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);     // Subtract from the sender
