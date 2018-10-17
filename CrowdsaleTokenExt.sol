@@ -1,10 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xf81f079d550a6a55bdca4a9ac8d3bbe8b877fe73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x75423628a5f0e66911354ac432be417e11c4d062
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
-pragma solidity ^0.4.11;
-
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
