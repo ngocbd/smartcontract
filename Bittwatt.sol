@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bittwatt at 0xca3ea3061d638e02113aa960340c98343b5acd62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bittwatt at 0xf53c580bc4065405bc649cc077ff4f2f28528f4b
 */
 pragma solidity ^0.4.18;
 
@@ -138,6 +138,7 @@ library SafeMath {
  */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
+  function availableSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -155,12 +156,17 @@ contract BasicToken is ERC20Basic {
   mapping(address => uint256) balances;
 
   uint256 totalSupply_;
+  uint256 availableSupply_;
 
   /**
   * @dev total number of tokens in existence
   */
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
+  }
+
+  function availableSupply() public view returns (uint256) {
+    return availableSupply_;
   }
 
   /**
@@ -327,7 +333,6 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
     Transfer(address(0), _to, _amount);
@@ -351,13 +356,10 @@ contract MintableToken is StandardToken, Ownable {
  * @title Capped token
  * @dev Mintable token with a token cap.
  */
-contract CappedToken is MintableToken {
+contract Token is MintableToken {
 
-  uint256 public cap;
 
-  function CappedToken(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
+  function Token() public {
   }
 
   /**
@@ -367,8 +369,6 @@ contract CappedToken is MintableToken {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    require(totalSupply_.add(_amount) <= cap);
-
     return super.mint(_to, _amount);
   }
 
@@ -451,24 +451,48 @@ contract PausableToken is StandardToken, Pausable {
 
 // File: contracts/Bittwatt.sol
 
-contract Bittwatt is CappedToken,Claimable, PausableToken {
+contract EscrowContract is BasicToken {
+    address public creator_;
+    address public beneficiary_;
+    uint public date_;
+    address public token_;
+
+    function EscrowContract (address creator,address beneficiary,uint date, address token) {
+        creator_ = creator;
+        beneficiary_ = beneficiary;
+        date_ = date;
+        token_ = token;
+    }
+
+    function executeBeneficiary(uint amount_) public onlyBeneficiary onlyMatureEscrow {
+        ERC20(token_).transfer(beneficiary_,amount_);
+    }
+
+    function executeCreator(uint amount_) public onlyBeneficiary onlyMatureEscrow {
+        ERC20(token_).transfer(creator_,amount_);
+    }
+
+    modifier onlyBeneficiary() {
+        require (msg.sender == beneficiary_);
+        _;
+    }
+
+    modifier onlyMatureEscrow() {
+        require (date_ < block.timestamp);
+        _;
+    }
+
+}
+
+contract Bittwatt is Token,Claimable, PausableToken {
 
     string public constant name = "Bittwatt";
     string public constant symbol = "BWT";
     uint8 public constant decimals = 18;
 
-    address public delayedTokenAllocator;
+    address public _tokenAllocator;
 
-    struct DelayedTokens {
-        uint amount;
-        uint dueDate;
-        bool claimed;
-    }
-
-    mapping (address => DelayedTokens) public delayedTokens;
-
-
-    function Bittwatt(uint _cap) public CappedToken(_cap) {
+    function Bittwatt() public Token() { // For testing purpose
         pause();
     }
 
@@ -476,42 +500,57 @@ contract Bittwatt is CappedToken,Claimable, PausableToken {
         unpause();
     }
 
-    function setDelayedTokenAllocator(address _delayedTokenAllocator) public onlyOwner nonZero(_delayedTokenAllocator) {
-        delayedTokenAllocator = _delayedTokenAllocator;
-    } 
-
-    function allocateTokens(address _beneficiary, uint _amount, uint _dueDate) public onlyOnwerOrDelayedTokenAllocator nonZero(_beneficiary){
-        mint(address(this), _amount);
-        delayedTokens[_beneficiary] = DelayedTokens(_amount, _dueDate, false);
+    function disableTransfers() public onlyOwner {
+        pause();
     }
 
-    function claimTokens() public whenNotPaused {
-        require(!delayedTokens[msg.sender].claimed && delayedTokens[msg.sender].dueDate <= now);
-        uint amount = delayedTokens[msg.sender].amount;
-  
-        require(amount <= balances[this]);
-        delayedTokens[msg.sender].claimed = true;
-
-        balances[this] = balances[this].sub(amount);
-        balances[msg.sender] = balances[msg.sender].add(amount);
-        Transfer(this, msg.sender, amount);
+    function setTokenAllocator(address _tokenAllocator) public onlyOwner {
+        _tokenAllocator = _tokenAllocator;
     }
-    
-    function allocateDelayedTokens(address _beneficiary, uint _amount) public onlyOnwerOrDelayedTokenAllocator nonZero(_beneficiary){
+
+    function allocateTokens(address _beneficiary, uint _amount) public onlyOnwerOrTokenAllocator {
         balances[_beneficiary] = _amount;
     }
 
-    function getStatus() public view returns (uint, uint, bool, bool,address) {
-        return(cap,totalSupply_, mintingFinished, paused, owner);
+    function allocateBulkTokens(address[] _destinations, uint[] _amounts) public onlyOnwerOrTokenAllocator {
+        uint256 addressCount = _destinations.length;
+        for (uint256 i = 0; i < addressCount; i++) {
+            address currentAddress = _destinations[i];
+            uint256 balance = _amounts[i];
+            balances[currentAddress] = balance;
+            Transfer(0x0000000000000000000000000000000000000000, currentAddress, balance);
+        }
     }
 
-    modifier onlyOnwerOrDelayedTokenAllocator() {
-        require (msg.sender == owner || msg.sender == delayedTokenAllocator);
-        _;
+    function getStatus() public view returns (uint,uint, bool,address) {
+        return(totalSupply_,availableSupply_, paused, owner);
     }
 
-    modifier nonZero(address _notZeroAddress) {
-        require(_notZeroAddress !=  address(0));
+    function setTotalSupply(uint totalSupply) onlyOwner {
+        totalSupply_ = totalSupply;
+    }
+
+    function setAvailableSupply(uint availableSupply) onlyOwner {
+        availableSupply_ = availableSupply;
+    }
+
+    address[] public escrowContracts;
+    function createEscrow(address _beneficiary, uint _date, address _tokenAddress) public {
+        address escrowContract = new EscrowContract(msg.sender, _beneficiary, _date, _tokenAddress);
+        escrowContracts.push(escrowContract);
+    }
+
+    function createDate(uint _days, uint _hours, uint _minutes, uint _seconds) public view returns (uint) {
+        uint currentTimestamp = block.timestamp;
+        currentTimestamp += _seconds;
+        currentTimestamp += 60 * _minutes;
+        currentTimestamp += 3600 * _hours;
+        currentTimestamp += 86400 * _days;
+        return currentTimestamp;
+    }
+
+    modifier onlyOnwerOrTokenAllocator() {
+        require (msg.sender == owner || msg.sender == _tokenAllocator);
         _;
     }
 
