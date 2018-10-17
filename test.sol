@@ -1,36 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x66357bf7b40b3d17f2e740e0b7446509d167c8b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test at 0x657a6b7e2529225fdb6a3b9de2abdc181d4ecfba
 */
 pragma solidity ^0.4.24;
 
-contract wordbot { function getWords(uint _wordcount) public view returns (bytes6[]) {} }
-
 contract test {
-    wordbot wordbot_contract = wordbot(0xA95E23ac202ad91204DA8C1A24B55684CDcC19B3);
-    
-    uint wordcount = 12;
-    string[12] public human_readable_blockhash;
-    
-    modifier one_time_use {
-        require(keccak256(human_readable_blockhash[0]) == keccak256(""));
+
+    modifier notzero1(address _addr) {
+        require(_addr != address(0x0));
         _;
     }
-    
-    function record_human_readable_blockhash() 
-        one_time_use public
-    {
-        bytes6[] memory word_sequence = new bytes6[](wordcount);
-        word_sequence = wordbot_contract.getWords(wordcount);
-        
-        for(uint i = 0; i<wordcount; i++) {
-            bytes6 word = word_sequence[i];
-            bytes memory toBytes = new bytes(6);
-            assembly {
-                toBytes := mload(word)
-            }
-            human_readable_blockhash[i] = string(toBytes);
-        }
-        
+
+    modifier notzero2(address _addr) {
+        require(_addr != address(0x0), "something is wrong");
+        _;
     }
-    
+
+    function viewa1(address _addr) notzero1(_addr) public pure returns (uint256) 
+    {
+        return 100;
+    }
+
+    function viewa2(address _addr) notzero2(_addr) public pure returns (uint256) 
+    {
+        return 200;
+    }
+
 }
