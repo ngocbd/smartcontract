@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LemoCoin at 0xB5AE848EdB296C21259b7467331467d2647eEcDf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LemoCoin at 0x60c24407d01782c2175d32fe7c8921ed732371d1
 */
-pragma solidity ^0.4.23;
+pragma solidity 0.4.23;
 
 contract DSAuthority {
     function canCall(
@@ -56,14 +56,15 @@ contract DSAuth is DSAuthEvents {
         }
     }
 }
+
 contract DSNote {
     event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-        uint              wad,
-        bytes             fax
+        bytes4   indexed sig,
+        address  indexed guy,
+        bytes32  indexed foo,
+        bytes32  indexed bar,
+        uint wad,
+        bytes fax
     ) anonymous;
 
     modifier note {
@@ -80,6 +81,7 @@ contract DSNote {
         _;
     }
 }
+
 contract DSStop is DSNote, DSAuth {
     bool public stopped;
 
@@ -90,18 +92,21 @@ contract DSStop is DSNote, DSAuth {
     function stop() public auth note {
         stopped = true;
     }
+
     function start() public auth note {
         stopped = false;
     }
-
 }
+
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x);
     }
+
     function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
     }
+
     function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x);
     }
@@ -176,6 +181,8 @@ contract Coin is ERC20, DSStop {
     }
 
     function approve(address _spender, uint256 _value) public stoppable returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
+        require(_value == 0 || c_approvals[msg.sender][_spender] == 0);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
 
@@ -198,7 +205,7 @@ contract FreezerAuthority is DSAuthority {
 
     function canCall(address caller, address, bytes4 sig) public view returns (bool) {
         // freezer can call setFreezing, transferAndFreezing
-        if (isFreezer(caller) && sig == setFreezingSig || sig == transferAndFreezingSig) {
+        if (isFreezer(caller) && (sig == setFreezingSig || sig == transferAndFreezingSig)) {
             return true;
         } else {
             return false;
@@ -345,6 +352,7 @@ contract LemoCoin is Coin, DSMath {
     }
 
     function transfer(address _to, uint256 _value) stoppable public returns (bool) {
+        require(msg.data.length >= (2 * 32) + 4);
         // uint never less than 0. The negative number will become to a big positive number
         require(_value < c_totalSupply);
         clearExpiredFreezing(msg.sender);
