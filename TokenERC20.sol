@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x9a4aadeaf120b082961aaea38e3d779148ee4ace
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x61bc0a3c3aec1e81dd5cad8caaa92d6f01f7787f
 */
 pragma solidity ^0.4.18;
 
@@ -11,10 +11,9 @@ contract TokenERC20 {
     string public symbol ;
     uint8 public decimals = 18;  // 18 ???????
     uint256 public totalSupply; // ???
-    address public owner;
 
     // ???? ????? uint' ??????
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public balanceOf;   
     // ??????
     mapping (address => mapping (address => uint256)) public allowance;
 
@@ -24,10 +23,6 @@ contract TokenERC20 {
      // ???????????????(???????, ?token?????)
     event Burn(address indexed from, uint256 value);
 
-      // ???????????????
-    event AddSupply(address indexed from, uint256 value);
-
-
     // ???????, ????????
     function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // ?????????
@@ -36,7 +31,6 @@ contract TokenERC20 {
 
         name = tokenName;
         symbol = tokenSymbol;
-        owner = msg.sender;
     }
 
     // token?????
@@ -76,7 +70,7 @@ contract TokenERC20 {
             return true;
         }
     }
-    // ????, ?????(SB)?.. ,??????? token ??
+    // ????, ??????.. ,??????? token ??
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // ???????
         balanceOf[msg.sender] -= _value;
@@ -87,20 +81,11 @@ contract TokenERC20 {
     // ???????token.....
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);        // ???????
-        require(_value <= allowance[_from][msg.sender]);    //
+        require(_value <= allowance[_from][msg.sender]);    // 
         balanceOf[_from] -= _value;
         allowance[_from][msg.sender] -= _value;
         totalSupply -= _value;
         emit Burn(_from, _value);
-        return true;
-    }
-
-     // ????, ?????gas??..
-    function addSupply(uint256 _value) public returns (bool success) {
-        require(owner == msg.sender);
-        balanceOf[msg.sender] += _value;
-        totalSupply += _value;
-        emit AddSupply(msg.sender, _value);
         return true;
     }
 }
