@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KillerWhale at 0x0ecdc69ca6e2e7e12bb344a67b04ff471b6089e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KillerWhale at 0xcee0f5a96592bd3a72b0a1b1f5fc53e90053386c
 */
 pragma solidity ^0.4.20;
 
@@ -186,7 +186,7 @@ contract KillerWhale is StandardToken { // CHANGE THIS. Update the contract name
         symbol = "KWT";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 100;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = 0x3f17dE50F2D1CA4209c2028677B328E34581d4Dc;                                    // The owner of the contract gets ETH
-        totalSupply = 88000000 * 10 ** uint256(decimals);                        // Update total supply (1000 for example) (CHANGE THIS)
+        totalSupply = 888000000 * 10 ** uint256(decimals);                        // Update total supply (1000 for example) (CHANGE THIS)
         balances[0x3f17dE50F2D1CA4209c2028677B328E34581d4Dc] = totalSupply;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         
         emit Transfer(address(0),0x3f17dE50F2D1CA4209c2028677B328E34581d4Dc,totalSupply);
