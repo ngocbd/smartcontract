@@ -1,58 +1,76 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxyFactory at 0x9b014ab119a8aa81722a4cfab39827b523cc4a4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxyFactory at 0x43b205d57c9cbcb0439068be277a48a9ad834cd5
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.24;
 
-/* solhint-disable no-inline-assembly, indent, state-visibility, avoid-low-level-calls */
+/// @title Proxy - Generic proxy contract allows to execute all transactions applying the code of a master contract.
+/// @author Stefan George - <stefan@gnosis.pm>
+contract Proxy {
 
-contract ProxyFactory {
-    event ProxyDeployed(address proxyAddress, address targetAddress);
-    event ProxiesDeployed(address[] proxyAddresses, address targetAddress);
+    // masterCopy always needs to be first declared variable, to ensure that it is at the same location in the contracts to which calls are delegated.
+    address masterCopy;
 
-    function createManyProxies(uint256 _count, address _target, bytes _data)
-    public
+    /// @dev Constructor function sets address of master copy contract.
+    /// @param _masterCopy Master copy address.
+    constructor(address _masterCopy)
+        public
     {
-        address[] memory proxyAddresses = new address[](_count);
-
-        for (uint256 i = 0; i < _count; ++i) {
-            proxyAddresses[i] = createProxyImpl(_target, _data);
-        }
-
-        ProxiesDeployed(proxyAddresses, _target);
+        require(_masterCopy != 0, "Invalid master copy address provided");
+        masterCopy = _masterCopy;
     }
 
-    function createProxy(address _target, bytes _data)
-    public
-    returns (address proxyContract)
+    /// @dev Fallback function forwards all transactions and returns all received return data.
+    function ()
+        external
+        payable
     {
-        proxyContract = createProxyImpl(_target, _data);
-
-        ProxyDeployed(proxyContract, _target);
-    }
-
-    function createProxyImpl(address _target, bytes _data)
-    internal
-    returns (address proxyContract)
-    {
+        // solium-disable-next-line security/no-inline-assembly
         assembly {
-            let contractCode := mload(0x40) // Find empty storage location using "free memory pointer"
-
-            mstore(add(contractCode, 0x0b), _target) // Add target address, with a 11 bytes [i.e. 23 - (32 - 20)] offset to later accomodate first part of the bytecode
-            mstore(sub(contractCode, 0x09), 0x000000000000000000603160008181600b9039f3600080808080368092803773) // First part of the bytecode, shifted left by 9 bytes, overwrites left padding of target address
-            mstore(add(contractCode, 0x2b), 0x5af43d828181803e808314602f57f35bfd000000000000000000000000000000) // Final part of bytecode, offset by 43 bytes
-
-            proxyContract := create(0, contractCode, 60) // total length 60 bytes
-            if iszero(extcodesize(proxyContract)) {
-                revert(0, 0)
-            }
-
-        // check if the _data.length > 0 and if it is forward it to the newly created contract
-            let dataLength := mload(_data)
-            if iszero(iszero(dataLength)) {
-                if iszero(call(gas, proxyContract, 0, add(_data, 0x20), dataLength, 0, 0)) {
-                    revert(0, 0)
-                }
-            }
+            let masterCopy := and(sload(0), 0xffffffffffffffffffffffffffffffffffffffff)
+            calldatacopy(0, 0, calldatasize())
+            let success := delegatecall(gas, masterCopy, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            if eq(success, 0) { revert(0, returndatasize()) }
+            return(0, returndatasize())
         }
+    }
+
+    function implementation()
+        public
+        view
+        returns (address)
+    {
+        return masterCopy;
+    }
+
+    function proxyType()
+        public
+        pure
+        returns (uint256)
+    {
+        return 2;
+    }
+}
+
+/// @title Proxy Factory - Allows to create new proxy contact and execute a message call to the new proxy within one transaction.
+/// @author Stefan George - <stefan@gnosis.pm>
+contract ProxyFactory {
+
+    event ProxyCreation(Proxy proxy);
+
+    /// @dev Allows to create new proxy contact and execute a message call to the new proxy within one transaction.
+    /// @param masterCopy Address of master copy.
+    /// @param data Payload for message call sent to new proxy contract.
+    function createProxy(address masterCopy, bytes data)
+        public
+        returns (Proxy proxy)
+    {
+        proxy = new Proxy(masterCopy);
+        if (data.length > 0)
+            // solium-disable-next-line security/no-inline-assembly
+            assembly {
+                if eq(call(gas, proxy, 0, add(data, 0x20), mload(data), 0, 0), 0) { revert(0, 0) }
+            }
+        emit ProxyCreation(proxy);
     }
 }
