@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0x61e581fcf793590cb5d6d8ac82a3f2541d400bad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POOHMO at 0xc71346323dd42721b8a987942868e7f0dd97a29f
 */
 pragma solidity ^0.4.24;
-/////////////////////////////////////THATS ONLY FOR TEST///////////////////////////////////////////
+/////////////////////////////////////THATS ONLY FOR TEST////////////////////////////////////////
 contract POOHMOevents {
     // fired whenever a player registers a name
     event onNewName
