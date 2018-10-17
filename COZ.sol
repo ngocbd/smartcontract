@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COZ at 0x4a4051c17c9424cbe9609ff443ea465e747107e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COZ at 0x65c9f3bc25370cd91fd7a1badc7352cae2d8031b
 */
 pragma solidity ^0.4.18;
 
@@ -44,7 +44,7 @@ contract COZ is StandToken {
     constructor() public {
         name = "COZ";
         decimals = 18;
-        symbol = "CZ";
+        symbol = "COZ";
         dec_multiple = 10 ** uint256(decimals);
 
         totalSupply = 3 * 1000 * 1000 * 1000 * dec_multiple;
