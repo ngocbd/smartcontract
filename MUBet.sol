@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MUBet at 0x7920126f82e0f21ba2fbd9ad418fbf498c70a851
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MUBet at 0x517be460e08a7ecce448f54b41658c0bfb0d8674
 */
 pragma solidity ^0.4.24;
 
@@ -144,7 +144,7 @@ contract Game is ExchangeAdmin {
             uint contribAmount = sideData[winByte].contribDb[recip].contribAmount;
             uint winAddition = (950*1000*contribAmount*(totalGameContrib-totalSideContrib))/(1000000*totalSideContrib);
             recip.transfer(contribAmount+winAddition);
-        }        
+        }
         profit.transfer(2*(address(this).balance/5));
         gameMaker.transfer(address(this).balance);
     }
@@ -182,7 +182,7 @@ contract MUBet is ExchangeAdmin {
     function getContractBal() public view returns (uint invalidBalanceETH) {
         return address(this).balance;
     }
-    
+
     function () public payable {    }
     function emergency(uint amount, address recipient) public onlyAdmin payable {
         recipient.transfer(amount);
