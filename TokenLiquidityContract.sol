@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityContract at 0xc9a7760e8fd8cc8bd5f39bf6e5e55ad1c5141c13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityContract at 0x14880209ebf5929ce73f9a2d5c92d73f64c106a7
 */
 pragma solidity ^0.4.23;
 
@@ -28,13 +28,13 @@ contract Token {
 
 contract TokenLiquidityContract { 
 
-  using SafeMath for uint256;
-  
+  using SafeMath for uint256;  
+
 
   address public admin;
 
   address public traded_token;
-  
+
   
   uint256 public eth_seed_amount;
 
@@ -53,6 +53,8 @@ contract TokenLiquidityContract {
   
   bool public trading_deactivated;
 
+  bool public admin_commission_activated;
+
 
   modifier only_admin() {
       require(msg.sender == admin);
@@ -63,7 +65,7 @@ contract TokenLiquidityContract {
       require(trading_deactivated == false);
       _;
   }
-  
+
   
   constructor(address _traded_token,uint256 _eth_seed_amount, uint256 _traded_token_seed_amount, uint256 _commission_ratio) public {
       
@@ -227,19 +229,48 @@ contract TokenLiquidityContract {
     
   }
 
+  function activate_admin_commission() public only_admin {
+
+    require(!admin_commission_activated);
+
+    admin_commission_activated = true;
+
+  }
+
+  function deactivate_admin_comission() public only_admin {
+
+    require(admin_commission_activated);
+
+    admin_commission_activated = false;
+
+  }
+
+  function change_admin_commission(uint256 _new_commission_ratio) public only_admin {
+  
+     require(_new_commission_ratio != commission_ratio);
+
+     commission_ratio = _new_commission_ratio;
+
+  }
+
+
   function complete_sell_exchange(uint256 _amount_give) private {
 
     uint256 amount_get_ = get_amount_sell(_amount_give);
 
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-
-    uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
     
     transferTokensThroughProxyToContract(msg.sender,this,_amount_give);
 
     transferETHFromContract(msg.sender,amount_get_minus_commission_);  
 
-    transferETHFromContract(admin, admin_commission_);     
+    if(admin_commission_activated) {
+
+      uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
+
+      transferETHFromContract(admin, admin_commission_);     
+
+    }
     
   }
   
@@ -251,13 +282,17 @@ contract TokenLiquidityContract {
 
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
 
-    uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
-
     transferETHToContract();
 
     transferTokensFromContract(msg.sender, amount_get_minus_commission_);
 
-    transferTokensFromContract(admin, admin_commission_);
+    if(admin_commission_activated) {
+
+      uint256 admin_commission_ = amount_get_ - amount_get_minus_commission_;
+
+      transferTokensFromContract(admin, admin_commission_);
+
+    }
     
   }
   
