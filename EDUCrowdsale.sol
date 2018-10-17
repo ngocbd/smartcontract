@@ -1,13 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDUCrowdsale at 0x94d313feaee495466a23d97c87690ae33c0f0af6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EDUCrowdsale at 0x2f55045439c0361ac971686e06d5b698952f89c1
 */
 pragma solidity ^0.4.13;
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract Certifiable is Ownable {
+    Certifier public certifier;
+    event CertifierChanged(address indexed newCertifier);
+
+    constructor(address _certifier) public {
+        certifier = Certifier(_certifier);
+    }
+
+    function updateCertifier(address _address) public onlyOwner returns (bool success) {
+        require(_address != address(0));
+        emit CertifierChanged(_address);
+        certifier = Certifier(_address);
+        return true;
+    }
+}
+
+contract KYCToken is Certifiable {
+    mapping(address => bool) public kycPending;
+    mapping(address => bool) public managers;
+
+    event ManagerAdded(address indexed newManager);
+    event ManagerRemoved(address indexed removedManager);
+
+    modifier onlyManager() {
+        require(managers[msg.sender] == true);
+        _;
+    }
+
+    modifier isKnownCustomer(address _address) {
+        require(!kycPending[_address] || certifier.certified(_address));
+        if (kycPending[_address]) {
+            kycPending[_address] = false;
+        }
+        _;
+    }
+
+    constructor(address _certifier) public Certifiable(_certifier)
+    {
+
+    }
+
+    function addManager(address _address) external onlyOwner {
+        managers[_address] = true;
+        emit ManagerAdded(_address);
+    }
+
+    function removeManager(address _address) external onlyOwner {
+        managers[_address] = false;
+        emit ManagerRemoved(_address);
+    }
+
+}
+
+contract Certifier {
+    event Confirmed(address indexed who);
+    event Revoked(address indexed who);
+    function certified(address) public constant returns (bool);
+    function get(address, string) public constant returns (bytes32);
+    function getAddress(address, string) public constant returns (address);
+    function getUint(address, string) public constant returns (uint);
 }
 
 contract Crowdsale {
@@ -156,197 +288,52 @@ contract Crowdsale {
   }
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract TimedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
 
-contract ERC827 is ERC20 {
-  function approveAndCall( address _spender, uint256 _value, bytes _data) public payable returns (bool);
-  function transferAndCall( address _to, uint256 _value, bytes _data) public payable returns (bool);
-  function transferFromAndCall(
-    address _from,
-    address _to,
-    uint256 _value,
-    bytes _data
-  )
-    public
-    payable
-    returns (bool);
-}
-
-library SafeMath {
+  uint256 public openingTime;
+  uint256 public closingTime;
 
   /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
+   * @dev Reverts if not in crowdsale time range.
    */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  modifier onlyWhileOpen {
+    // solium-disable-next-line security/no-block-members
+    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
     _;
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Constructor, takes crowdsale opening and closing times.
+   * @param _openingTime Crowdsale opening time
+   * @param _closingTime Crowdsale closing time
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+  function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
+    // solium-disable-next-line security/no-block-members
+    require(_openingTime >= block.timestamp);
+    require(_closingTime >= _openingTime);
 
-}
-
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  /**
-   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
-   * @param _cap Max amount of wei to be contributed
-   */
-  function CappedCrowdsale(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
+    openingTime = _openingTime;
+    closingTime = _closingTime;
   }
 
   /**
-   * @dev Checks whether the cap has been reached. 
-   * @return Whether the cap was reached
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
    */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
+  function hasClosed() public view returns (bool) {
+    // solium-disable-next-line security/no-block-members
+    return block.timestamp > closingTime;
   }
 
   /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap.
+   * @dev Extend parent behavior requiring to be within contributing period
    * @param _beneficiary Token purchaser
    * @param _weiAmount Amount of wei contributed
    */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
     super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(weiRaised.add(_weiAmount) <= cap);
   }
-
-}
-
-contract Certifier {
-    event Confirmed(address indexed who);
-    event Revoked(address indexed who);
-    function certified(address) public constant returns (bool);
-    function get(address, string) public constant returns (bytes32);
-    function getAddress(address, string) public constant returns (address);
-    function getUint(address, string) public constant returns (uint);
-}
-
-contract Certifiable is Ownable {
-    Certifier public certifier;
-    event CertifierChanged(address indexed newCertifier);
-
-    constructor(address _certifier) public {
-        certifier = Certifier(_certifier);
-    }
-
-    function updateCertifier(address _address) public onlyOwner returns (bool success) {
-        require(_address != address(0));
-        emit CertifierChanged(_address);
-        certifier = Certifier(_address);
-        return true;
-    }
-}
-
-contract KYCToken is Certifiable {
-    mapping(address => bool) public kycPending;
-    mapping(address => bool) public managers;
-
-    event ManagerAdded(address indexed newManager);
-    event ManagerRemoved(address indexed removedManager);
-
-    modifier onlyManager() {
-        require(managers[msg.sender] == true);
-        _;
-    }
-
-    modifier isKnownCustomer(address _address) {
-        require(!kycPending[_address] || certifier.certified(_address));
-        if (kycPending[_address]) {
-            kycPending[_address] = false;
-        }
-        _;
-    }
-
-    constructor(address _certifier) public Certifiable(_certifier)
-    {
-
-    }
-
-    function addManager(address _address) external onlyOwner {
-        managers[_address] = true;
-        emit ManagerAdded(_address);
-    }
-
-    function removeManager(address _address) external onlyOwner {
-        managers[_address] = false;
-        emit ManagerRemoved(_address);
-    }
 
 }
 
@@ -380,6 +367,34 @@ contract AllowanceCrowdsale is Crowdsale {
   function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
     token.transferFrom(tokenWallet, _beneficiary, _tokenAmount);
   }
+}
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract ERC827 is ERC20 {
+  function approveAndCall( address _spender, uint256 _value, bytes _data) public payable returns (bool);
+  function transferAndCall( address _to, uint256 _value, bytes _data) public payable returns (bool);
+  function transferFromAndCall(
+    address _from,
+    address _to,
+    uint256 _value,
+    bytes _data
+  )
+    public
+    payable
+    returns (bool);
 }
 
 contract BasicToken is ERC20Basic {
@@ -420,30 +435,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 
-}
-
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
 }
 
 contract StandardToken is ERC20, BasicToken {
@@ -662,51 +653,102 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract TimedCrowdsale is Crowdsale {
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+contract EDUToken is BurnableToken, KYCToken, ERC827Token {
+    using SafeMath for uint256;
+
+    string public constant name = "EDU Token";
+    string public constant symbol = "EDU";
+    uint8 public constant decimals = 18;
+
+    uint256 public constant INITIAL_SUPPLY = 48000000 * (10 ** uint256(decimals));
+
+    constructor(address _certifier) public KYCToken(_certifier) {
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    }
+
+    function transfer(address _to, uint256 _value) public isKnownCustomer(msg.sender) returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public isKnownCustomer(_from) returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public isKnownCustomer(_spender) returns (bool) {
+        return super.approve(_spender, _value);
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public isKnownCustomer(_spender) returns (bool success) {
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public isKnownCustomer(_spender) returns (bool success) {
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+
+    function delayedTransferFrom(address _tokenWallet, address _to, uint256 _value) public onlyManager returns (bool) {
+        transferFrom(_tokenWallet, _to, _value);
+        kycPending[_to] = true;
+    }
+
+}
+
+contract CappedCrowdsale is Crowdsale {
   using SafeMath for uint256;
 
-  uint256 public openingTime;
-  uint256 public closingTime;
+  uint256 public cap;
 
   /**
-   * @dev Reverts if not in crowdsale time range.
+   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
+   * @param _cap Max amount of wei to be contributed
    */
-  modifier onlyWhileOpen {
-    // solium-disable-next-line security/no-block-members
-    require(block.timestamp >= openingTime && block.timestamp <= closingTime);
-    _;
+  function CappedCrowdsale(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
   }
 
   /**
-   * @dev Constructor, takes crowdsale opening and closing times.
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
+   * @dev Checks whether the cap has been reached. 
+   * @return Whether the cap was reached
    */
-  function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
-    // solium-disable-next-line security/no-block-members
-    require(_openingTime >= block.timestamp);
-    require(_closingTime >= _openingTime);
-
-    openingTime = _openingTime;
-    closingTime = _closingTime;
+  function capReached() public view returns (bool) {
+    return weiRaised >= cap;
   }
 
   /**
-   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-   * @return Whether crowdsale period has elapsed
-   */
-  function hasClosed() public view returns (bool) {
-    // solium-disable-next-line security/no-block-members
-    return block.timestamp > closingTime;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring to be within contributing period
+   * @dev Extend parent behavior requiring purchase to respect the funding cap.
    * @param _beneficiary Token purchaser
    * @param _weiAmount Amount of wei contributed
    */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
     super._preValidatePurchase(_beneficiary, _weiAmount);
+    require(weiRaised.add(_weiAmount) <= cap);
   }
 
 }
@@ -717,6 +759,7 @@ contract EDUCrowdsale is AllowanceCrowdsale, CappedCrowdsale, TimedCrowdsale, Ow
     uint256 constant FIFTY_ETH = 50 * (10 ** 18);
     uint256 constant HUNDRED_AND_FIFTY_ETH = 150 * (10 ** 18);
     uint256 constant TWO_HUNDRED_AND_FIFTY_ETH = 250 * (10 ** 18);
+    uint256 constant TEN_ETH = 10 * (10 ** 18);
 
     EDUToken public token;
     event TokenWalletChanged(address indexed newTokenWallet);
@@ -780,14 +823,8 @@ contract EDUCrowdsale is AllowanceCrowdsale, CappedCrowdsale, TimedCrowdsale, Ow
     }
 
     function _getVolumeBonus(uint256 _currentRate, uint256 _weiAmount) internal view returns (uint256) {
-        if (_weiAmount >= FIFTY_ETH) {
-            if (_weiAmount >= HUNDRED_AND_FIFTY_ETH) {
-                if (_weiAmount >= TWO_HUNDRED_AND_FIFTY_ETH) {
-                    return _currentRate.mul(_weiAmount).mul(15).div(100);
-                }
-                return _currentRate.mul(_weiAmount).mul(10).div(100);
-            }
-            return _currentRate.mul(_weiAmount).mul(5).div(100);
+        if (_weiAmount >= TEN_ETH) {
+            return _currentRate.mul(_weiAmount).mul(20).div(100);
         }
         return 0;
     }
@@ -802,48 +839,6 @@ contract EDUCrowdsale is AllowanceCrowdsale, CappedCrowdsale, TimedCrowdsale, Ow
         require(_wallet != address(0x0));
         wallet = _wallet;
         emit WalletChanged(_wallet);
-    }
-
-}
-
-contract EDUToken is BurnableToken, KYCToken, ERC827Token {
-    using SafeMath for uint256;
-
-    string public constant name = "EDU Token";
-    string public constant symbol = "EDU";
-    uint8 public constant decimals = 18;
-
-    uint256 public constant INITIAL_SUPPLY = 48000000 * (10 ** uint256(decimals));
-
-    constructor(address _certifier) public KYCToken(_certifier) {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-    }
-
-    function transfer(address _to, uint256 _value) public isKnownCustomer(msg.sender) returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public isKnownCustomer(_from) returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public isKnownCustomer(_spender) returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public isKnownCustomer(_spender) returns (bool success) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public isKnownCustomer(_spender) returns (bool success) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
-
-    function delayedTransferFrom(address _tokenWallet, address _to, uint256 _value) public onlyManager returns (bool) {
-        transferFrom(_tokenWallet, _to, _value);
-        kycPending[_to] = true;
     }
 
 }
