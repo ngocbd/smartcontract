@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureClaim at 0x47c788e683b60781602531ebe6e70104438b43af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureClaim at 0x41f3d85e9b8497fca552523047bf4dac7beea64a
 */
 pragma solidity ^0.4.23;
 
@@ -96,11 +96,11 @@ contract EtheremonAdventureClaim is BasicAccessControl {
     }
     
     function claimSiteToken(uint8 _siteId, uint _index) isActive requireAdventureItem requireAdventurePresale public {
-        if (_siteId < MIN_SITE_ID || _siteId > MAX_SITE_ID || _index > 10) revert();
+        if (_siteId < MIN_SITE_ID || _siteId > MAX_SITE_ID || _index >= 10) revert();
         BiddingInfo memory bidInfo;
         (bidInfo.bidder, bidInfo.bidId, bidInfo.siteId, bidInfo.amount, bidInfo.time) = EtheremonAdventurePresale(adventurePresale).getBidBySiteIndex(_siteId, _index);
         if (bidInfo.bidId == 0 || bidTokens[bidInfo.bidId] > 0) revert();
-        uint tokenId = (_siteId - 1) * 10 + _index + 1;
+        uint tokenId = (uint(_siteId) - 1) * 10 + _index + 1;
         bidTokens[bidInfo.bidId] = tokenId;
         EtheremonAdventureItem(adventureItem).spawnSite(_siteId, tokenId, bidInfo.bidder);
     }
