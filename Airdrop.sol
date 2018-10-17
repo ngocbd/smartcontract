@@ -1,100 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xf2b89f45cc4ebbf11a36bdb4a4b24eada8dd30a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x254c74fb3b84fe71a60a8c1be6c0c0fc84004a3a
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.17;
 
-/**
- * @title Token
- * @dev Simpler version of ERC20 interface
- */
-contract Token {
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
 contract Ownable {
-  address public owner;
+    
+    address public owner;
 
+    function Ownable() public {
+        owner = 0x969c3EdB43b7b191E248B3E65400Cd9dd079Ed80;
+    }
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 
+    event OwnershipTransferred(address indexed from, address indexed to);
+    
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+    function transferOwnership(address _newOwner) public onlyOwner {
+        require(_newOwner != 0x0);
+        OwnershipTransferred(owner, _newOwner);
+        owner = _newOwner;
+    }
 }
+
+
+contract TokenTransferInterface {
+    function transfer(address _to, uint256 _value) public;
+}
+
 
 contract AirDrop is Ownable {
 
-  // This declares a state variable that would store the contract address
-  Token public tokenInstance;
+    TokenTransferInterface public constant token = TokenTransferInterface(0x9D1784746A161a3252D61D0A1e254944ec357B63);
 
-  /*
-    constructor function to set token address
-   */
-  function AirDrop(address _tokenAddress){
-    tokenInstance = Token(_tokenAddress);
-  }
-
-  /*
-    Airdrop function which take up a array of address,token amount and eth amount and call the
-    transfer function to send the token plus send eth to the address is balance is 0
-   */
-  function doAirDrop(address[] _address, uint256[] _amount, uint256 _ethAmount) onlyOwner public returns (bool) {
-    uint256 count = _address.length;
-    for (uint256 i = 0; i < count; i++)
-    {
-      /* calling transfer function from contract */
-      tokenInstance.transfer(_address [i],_amount [i]);
-      if((_address [i].balance == 0) && (this.balance >= _ethAmount))
-      {
-        require(_address [i].send(_ethAmount));
-      }
+    function multiValueAirDrop(address[] _addrs, uint256[] _values) public onlyOwner {
+	    require(_addrs.length == _values.length && _addrs.length <= 100);
+        for (uint i = 0; i < _addrs.length; i++) {
+            if (_addrs[i] != 0x0 && _values[i] > 0) {
+                token.transfer(_addrs[i], _values[i] * (10 ** 18));  
+            }
+        }
     }
-  }
 
-
-  function transferEthToOnwer() onlyOwner public returns (bool) {
-    require(owner.send(this.balance));
-  }
-
-  /*
-    function to add eth to the contract
-   */
-  function() payable {
-
-  }
-
-  /*
-    function to kill contract
-  */
-
-  function kill() onlyOwner {
-    selfdestruct(owner);
-  }
+    function singleValueAirDrop(address[] _addrs, uint256 _value) public onlyOwner {
+	    require(_addrs.length <= 100 && _value > 0);
+        for (uint i = 0; i < _addrs.length; i++) {
+            if (_addrs[i] != 0x0) {
+                token.transfer(_addrs[i], _value * (10 ** 18));
+            }
+        }
+    }
 }
