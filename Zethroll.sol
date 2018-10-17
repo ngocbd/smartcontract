@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xe066145a0d20b09835111b40667aa6c498eb1911
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0xa9887ca8db0aaee060acf1dac0f62c14274fa11e
 */
 pragma solidity ^0.4.23;
 
@@ -249,10 +249,10 @@ contract Zethroll is ZTHReceivingContract {
       // Update maximum profit
       setMaxProfit();
 
-
+      if (delete_it){
         // Prevent re-entracy memes
         delete playerRolls[target];
-
+      }
 
       // Transfer profit plus original bet
       ZTHTKN.transfer(target, profit + roll.tokenValue);
