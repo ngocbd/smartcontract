@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KTOCrowdsale at 0x62f6bb2ba75b13f67d993492fc14afbb6c4584c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KTOCrowdsale at 0xed440a72e5213b85ef960b5fb2b3f0312cf8d0dc
 */
 pragma solidity ^0.4.18;
 
@@ -247,84 +247,26 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- */
-contract MintableToken is StandardToken, Ownable {
-
-    uint256 public hardCap;
-
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    bool public mintingFinished = false;
-
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishMinting() onlyOwner canMint public returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-}
-
-
-
 /**
  * @title KryptoroToken
  * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
  */
-contract KryptoroToken is MintableToken, Destructible {
+contract KryptoroToken is StandardToken, Destructible {
 
     string public constant name = "KRYPTORO Coin";
     string public constant symbol = "KTO";
     uint8 public constant decimals = 18;
 
+    uint256 public constant INITIAL_SUPPLY = 100 * 1000000 * (10 ** uint256(decimals));
+
     /**
-     * @dev Constructor that gives msg.sender all of existing tokens.
-     */
+    * @dev Constructor that gives msg.sender all of existing tokens.
+    */
     function KryptoroToken() public {
-        hardCap = 100 * 1000000 * (10 ** uint256(decimals));
-    }
-
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-        require(totalSupply.add(_amount) <= hardCap);
-
-        return super.mint(_to, _amount);
+        totalSupply = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
     }
 }
 
@@ -352,9 +294,6 @@ contract KTOCrowdsale is Ownable{
 
   // how many token units a buyer gets per wei
   uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
 
   /**
    * event for token purchase logging
@@ -399,10 +338,7 @@ contract KTOCrowdsale is Ownable{
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
 
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
+    token.transfer(beneficiary, tokens);
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
     forwardFunds();
@@ -443,5 +379,12 @@ contract KTOCrowdsale is Ownable{
       wallet = _newWallet;
 
       WalletAddressUpdated(true);
+  }
+  
+  // transfer tokens
+  function transferTokens(address _to, uint256 _amount) onlyOwner {
+      require(_to != address(0));
+      
+      token.transfer(_to, _amount);
   }
 }
