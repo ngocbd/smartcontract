@@ -1,143 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DARK at 0xff6e9731c3ebc5c5ec4b6fbdb3f8c71a110c603d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DARK at 0x6cc74d03203021c4f463a6737af2afb06968fecb
 */
-pragma solidity ^0.4.18;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+// $Dark Tours 
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
+pragma solidity ^0.4.4;
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+contract Token {
 
-    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
+    function totalSupply() constant returns (uint256 supply) {}
 
-    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a < b ? a : b;
-    }
 
-    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a >= b ? a : b;
-    }
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+
+ 
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+   
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 }
-contract Ownable {
-    address public owner;
-    function Ownable() public {
-        owner = msg.sender;
+
+contract StandardToken is Token {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {return false;}
     }
 
-    modifier onlyOwner() {
-        if (msg.sender != owner) {
-            revert();
-        }
-        _;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else {return false;}
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-
-    function destruct() public onlyOwner {
-        selfdestruct(owner);
-    }
-}
-contract ERC20Basic {
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public;
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public;
-    function approve(address spender, uint256 value) public;
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-    uint256 public totalSupply;
-
-    modifier onlyPayloadSize(uint256 size) {
-        if(msg.data.length < size + 4) {
-            revert();
-        }
-        _;
-    }
-
-    function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-    }
-
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
 
-}
-contract StandardToken is BasicToken, ERC20 {
-
-    mapping (address => mapping (address => uint256)) allowed;
-
-    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(3 * 32) {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public {
-        if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
-
+    function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 }
-contract DARK is StandardToken, Ownable {
 
-    string public constant name = "??";
-    string public constant symbol = "DARK";
-    uint256 public constant decimals = 8;
+contract DARK is StandardToken { 
 
-    function DARK() public {
-        owner = msg.sender;
-        totalSupply=10000000000000000;
-        balances[owner]=totalSupply;
+
+    string public name;                
+    uint8 public decimals;           
+    string public symbol;                
+    string public version = "1.0"; 
+    uint256 public unitsOneEthCanBuy;    
+    uint256 public totalEthInWei;         
+    address public fundsWallet;           
+
+ 
+    function DARK() {
+        balances[msg.sender] = 100000000000000000000000000;               
+        totalSupply = 100000000000000000000000000;                        
+        name = "Dark Tours";                                              
+        decimals = 18;                                               
+        symbol = "DARK";                                            
+                                            
+        fundsWallet = msg.sender;                                   
+                          
     }
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
 
-    function () public {
-        revert();
+        if (!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) {throw;}
+        return true;
     }
 }
