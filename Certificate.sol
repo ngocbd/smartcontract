@@ -1,20 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certificate at 0x41bcc93474f837ac311466b6cd782c38c47bd18b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Certificate at 0x45e28eaee379604e7c58428c37ff90f7b5f5155d
 */
-pragma solidity ^0.4.13;
+/**
+ * @title Certificate Library
+ *  ?V?e?r?i?f?i?e?d? ?O?n? ?C?h?a?i?n?
+ * Visit https://verifiedonchain.com/
+ */
 
+pragma solidity 0.4.24;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -27,190 +42,212 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
+}
+
+library CertificateLibrary {
+    struct Document {
+        bytes ipfsHash;
+        bytes32 transcriptHash;
+        bytes32 contentHash;
+    }
+    
+    /**
+     * @notice Add Certification to a student
+     * @param _contentHash - Hash of the document
+     * @param _ipfsHash - IPFS Hash of the document
+     * @param _transcriptHash - Transcript Hash of the document
+     **/
+    function addCertification(Document storage self, bytes32 _contentHash, bytes _ipfsHash, bytes32 _transcriptHash) public {
+        self.ipfsHash = _ipfsHash;
+        self.contentHash= _contentHash;
+        self.transcriptHash = _transcriptHash;
+    }
+    
+    /**
+     * @notice Validate Certification to a student
+     * @param _ipfsHash - IPFS Hash of the document
+     * @param _contentHash - Content Hash of the document
+     * @param _transcriptHash - Transcript Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validate(Document storage self, bytes _ipfsHash, bytes32 _contentHash, bytes32 _transcriptHash) public view returns(bool) {
+        bytes storage ipfsHash = self.ipfsHash;
+        bytes32 contentHash = self.contentHash;
+        bytes32 transcriptHash = self.transcriptHash;
+        return contentHash == _contentHash && keccak256(ipfsHash) == keccak256(_ipfsHash) && transcriptHash == _transcriptHash;
+    }
+    
+    /**
+     * @notice Validate IPFS Hash alone of a student
+     * @param _ipfsHash - IPFS Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validateIpfsDoc(Document storage self, bytes _ipfsHash) public view returns(bool) {
+        bytes storage ipfsHash = self.ipfsHash;
+        return keccak256(ipfsHash) == keccak256(_ipfsHash);
+    }
+    
+    /**
+     * @notice Validate Content Hash alone of a student
+     * @param _contentHash - Content Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validateContentHash(Document storage self, bytes32 _contentHash) public view returns(bool) {
+        bytes32 contentHash = self.contentHash;
+        return contentHash == _contentHash;
+    }
+    
+    /**
+     * @notice Validate Content Hash alone of a student
+     * @param _transcriptHash - Transcript Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validateTranscriptHash(Document storage self, bytes32 _transcriptHash) public view returns(bool) {
+        bytes32 transcriptHash = self.transcriptHash;
+        return transcriptHash == _transcriptHash;
+    }
 }
 
 contract Certificate is Ownable {
-
-  event LogAddCertificateAuthority(address indexed ca_address);
-  event LogRemoveCertificateAuthority(address indexed ca_address);
-  event LogAddCertificate(address indexed ca_address, bytes32 certificate_hash);
-  event LogRevokeCertificate(address indexed ca_address, bytes32 certificate_hash);
-  event LogBindCertificate2Wallet(address indexed ca_address, bytes32 certificate_hash, address indexed wallet);
-
-  struct CertificateAuthority {
-    string lookup_api;
-    string organization;
-    string common_name;
-    string country;
-    string province;
-    string locality;
-  }
-
-  struct CertificateMeta {
-    address ca_address;
-    uint256 expires;
-    bytes32 sealed_hash;
-    bytes32 certificate_hash;
-  }
-
-  // Mapping of certificate authority address to the certificate authority
-  mapping(address => CertificateAuthority) private certificate_authority;
-
-  // Mapping of Ethereum wallet address to mapping of certificate authority address to wallet certificate hash
-  mapping(address => mapping(address => bytes32)) private wallet_authority_certificate;
-
-  // Mapping of wallet certificate hash to wallet certificate meta data
-  mapping(bytes32 => CertificateMeta) private certificates;
-
-  modifier onlyCA() {
-    require(bytes(certificate_authority[msg.sender].lookup_api).length != 0);
-    _;
-  }
-
-  /// @dev Adds a new approved certificate authority
-  /// @param ca_address Address of certificate authority to add
-  /// @param lookup_api certificate lookup API for the given authority
-  /// @param organization Name of the organization this certificate authority represents
-  /// @param common_name Common name of this certificate authority
-  /// @param country Certificate authority jurisdiction country
-  /// @param province Certificate authority jurisdiction state/province
-  /// @param locality Certificate authority jurisdiction locality
-  function addCA(
-    address ca_address,
-    string lookup_api,
-    string organization,
-    string common_name,
-    string country,
-    string province,
-    string locality
-  ) public onlyOwner {
-    require (ca_address != 0x0);
-    require (ca_address != msg.sender);
-    require (bytes(lookup_api).length != 0);
-    require (bytes(organization).length > 3);
-    require (bytes(common_name).length > 3);
-    require (bytes(country).length > 1);
-
-    certificate_authority[ca_address] = CertificateAuthority(
-      lookup_api,
-      organization,
-      common_name,
-      country,
-      province,
-      locality
-    );
-    LogAddCertificateAuthority(ca_address);
-  }
-
-  /// @dev Removes an existing certificate authority, preventing it from issuing new certificates
-  /// @param ca_address Address of certificate authority to remove
-  function removeCA(address ca_address) public onlyOwner {
-    delete certificate_authority[ca_address];
-    LogRemoveCertificateAuthority(ca_address);
-  }
-
-  /// @dev Checks whether an address represents a certificate authority
-  /// @param ca_address Address to check
-  /// @return true if the address is a valid certificate authority; false otherwise
-  function isCA(address ca_address) public view returns (bool) {
-    return bytes(certificate_authority[ca_address].lookup_api).length != 0;
-  }
-
-  /// @dev Returns the certificate lookup API for the certificate authority
-  /// @param ca_address Address of certificate authority
-  /// @return lookup api, organization name, common name, country, state/province, and locality of the certificate authority
-  function getCA(address ca_address) public view returns (string, string, string, string, string, string) {
-    CertificateAuthority storage ca = certificate_authority[ca_address];
-    return (ca.lookup_api, ca.organization, ca.common_name, ca.country, ca.province, ca.locality);
-  }
-
-  /// @dev Adds a new certificate by the calling certificate authority
-  /// @param expires seconds from epoch until certificate expires
-  /// @param sealed_hash hash of sealed portion of the certificate
-  /// @param certificate_hash hash of public portion of the certificate
-  function addNewCertificate(uint256 expires, bytes32 sealed_hash, bytes32 certificate_hash) public onlyCA {
-    require(expires > now);
-
-    CertificateMeta storage cert = certificates[certificate_hash];
-    require(cert.expires == 0);
-
-    certificates[certificate_hash] = CertificateMeta(msg.sender, expires, sealed_hash, certificate_hash);
-    LogAddCertificate(msg.sender, certificate_hash);
-  }
-
-  /// @dev Adds a new certificate by the calling certificate authority and binds to given wallet
-  /// @param wallet Wallet to which the certificate is being bound to
-  /// @param expires seconds from epoch until certificate expires
-  /// @param sealed_hash hash of sealed portion of the certificate
-  /// @param certificate_hash hash of public portion of the certificate
-  function addCertificateAndBind2Wallet(address wallet, uint256 expires, bytes32 sealed_hash, bytes32 certificate_hash) public onlyCA {
-    require(expires > now);
-
-    CertificateMeta storage cert = certificates[certificate_hash];
-    require(cert.expires == 0);
-
-    certificates[certificate_hash] = CertificateMeta(msg.sender, expires, sealed_hash, certificate_hash);
-    LogAddCertificate(msg.sender, certificate_hash);
-    wallet_authority_certificate[wallet][msg.sender] = certificate_hash;
-    LogBindCertificate2Wallet(msg.sender, certificate_hash, wallet);
-  }
-
-  /// @dev Bind an existing certificate to a wallet - can be called by certificate authority that issued the certificate or a wallet already bound to the certificate
-  /// @param wallet Wallet to which the certificate is being bound to
-  /// @param certificate_hash hash of public portion of the certificate
-  function bindCertificate2Wallet(address wallet, bytes32 certificate_hash) public {
-    CertificateMeta storage cert = certificates[certificate_hash];
-    require(cert.expires > now);
-
-    bytes32 sender_certificate_hash = wallet_authority_certificate[msg.sender][cert.ca_address];
-
-    require(cert.ca_address == msg.sender || cert.certificate_hash == sender_certificate_hash);
-
-    wallet_authority_certificate[wallet][cert.ca_address] = certificate_hash;
-    LogBindCertificate2Wallet(msg.sender, certificate_hash, wallet);
-  }
-
-  /// @dev Revokes an existing certificate - can be called by certificate authority that issued the certificate
-  /// @param certificate_hash hash of public portion of the certificate
-  function revokeCertificate(bytes32 certificate_hash) public onlyCA {
-    CertificateMeta storage cert = certificates[certificate_hash];
-    require(cert.ca_address == msg.sender);
-    cert.expires = 0;
-    LogRevokeCertificate(msg.sender, certificate_hash);
-  }
-
-  /// @dev returns certificate metadata given the certificate hash
-  /// @param certificate_hash hash of public portion of the certificate
-  /// @return certificate authority address, certificate expiration time, hash of sealed portion of the certificate, hash of public portion of the certificate
-  function getCertificate(bytes32 certificate_hash) public view returns (address, uint256, bytes32, bytes32) {
-    CertificateMeta storage cert = certificates[certificate_hash];
-    if (isCA(cert.ca_address)) {
-      return (cert.ca_address, cert.expires, cert.sealed_hash, cert.certificate_hash);
-    } else {
-      return (0x0, 0, 0x0, 0x0);
+    
+    using CertificateLibrary for CertificateLibrary.Document;
+    
+    struct Certification {
+        mapping (uint => CertificateLibrary.Document) documents;
+        uint16 indx;
     }
-  }
-
-  /// @dev returns certificate metadata for a given wallet from a particular certificate authority
-  /// @param wallet Wallet for which the certificate is being looked up
-  /// @param ca_address Address of certificate authority
-  /// @return certificate expiration time, hash of sealed portion of the certificate, hash of public portion of the certificate
-  function getCertificateForWallet(address wallet, address ca_address) public view returns (uint256, bytes32, bytes32) {
-    bytes32 certificate_hash = wallet_authority_certificate[wallet][ca_address];
-    CertificateMeta storage cert = certificates[certificate_hash];
-    if (isCA(cert.ca_address)) {
-      return (cert.expires, cert.sealed_hash, cert.certificate_hash);
-    } else {
-      return (0, 0x0, 0x0);
+    
+    mapping (address => Certification) studentCertifications;
+    
+    event CertificationAdded(address userAddress, uint docIndx);
+    
+    /**
+     * @notice Add Certification to a student
+     * @param _student - Address of student
+     * @param _contentHash - Hash of the document
+     * @param _ipfsHash - IPFS Hash of the document
+     * @param _transcriptHash - Transcript Hash of the document
+     **/
+    function addCertification(address _student, bytes32 _contentHash, bytes _ipfsHash, bytes32 _transcriptHash) public onlyOwner {
+        uint currIndx = studentCertifications[_student].indx;
+        (studentCertifications[_student].documents[currIndx]).addCertification(_contentHash, _ipfsHash, _transcriptHash);
+        studentCertifications[_student].indx++;
+        emit CertificationAdded(_student, currIndx);
     }
-  }
+    
+    /**
+     * @notice Validate Certification to a student
+     * @param _student - Address of student
+     * @param _docIndx - Index of the document to be validated
+     * @param _contentHash - Content Hash of the document
+     * @param _ipfsHash - IPFS Hash of the document
+     * @param _transcriptHash - Transcript Hash of the GradeSheet
+     * @return Returns true if validation is successful
+     **/
+    function validate(address _student, uint _docIndx, bytes32 _contentHash, bytes _ipfsHash, bytes32 _transcriptHash) public view returns(bool) {
+        Certification storage certification  = studentCertifications[_student];
+        return (certification.documents[_docIndx]).validate(_ipfsHash, _contentHash, _transcriptHash);
+    }
+    
+    /**
+     * @notice Validate IPFS Hash alone of a student
+     * @param _student - Address of student
+     * @param _docIndx - Index of the document to be validated
+     * @param _ipfsHash - IPFS Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validateIpfsDoc(address _student, uint _docIndx, bytes _ipfsHash) public view returns(bool) {
+        Certification storage certification  = studentCertifications[_student];
+        return (certification.documents[_docIndx]).validateIpfsDoc(_ipfsHash);
+    }
+    
+    /**
+     * @notice Validate Content Hash alone of a student
+     * @param _student - Address of student
+     * @param _docIndx - Index of the document to be validated
+     * @param _contentHash - Content Hash of the document
+     * @return Returns true if validation is successful
+     **/
+    function validateContentHash(address _student, uint _docIndx, bytes32 _contentHash) public view returns(bool) {
+        Certification storage certification  = studentCertifications[_student];
+        return (certification.documents[_docIndx]).validateContentHash(_contentHash);
+    }
+    
+    /**
+     * @notice Validate Transcript Hash alone of a student
+     * @param _student - Address of student
+     * @param _transcriptHash - Transcript Hash of the GradeSheet
+     * @return Returns true if validation is successful
+     **/
+    function validateTranscriptHash(address _student, uint _docIndx, bytes32 _transcriptHash) public view returns(bool) {
+        Certification storage certification  = studentCertifications[_student];
+        return (certification.documents[_docIndx]).validateTranscriptHash(_transcriptHash);
+    }
+    
+    /**
+     * @notice Get Certification Document Count
+     * @param _student - Address of student
+     * @return Returns the total number of certifications for a student
+     **/
+    function getCertifiedDocCount(address _student) public view returns(uint256) {
+        return studentCertifications[_student].indx;
+    }
+    
+    /**
+     * @notice Get Certification Document from DocType
+     * @param _student - Address of student
+     * @param _docIndx - Index of the document to be validated
+     * @return Returns IPFSHash, ContentHash, TranscriptHash of the document
+     **/
+    function getCertificationDocument(address _student, uint _docIndx) public view onlyOwner returns (bytes, bytes32, bytes32) {
+        return ((studentCertifications[_student].documents[_docIndx]).ipfsHash, (studentCertifications[_student].documents[_docIndx]).contentHash, (studentCertifications[_student].documents[_docIndx]).transcriptHash);
+    }
+    
+    /**
+     * @param _studentAddrOld - Address of student old
+     * @param _studentAddrNew - Address of student new
+     * May fail due to gas exceptions
+     * ADVICE:
+     * Check gas and then send
+     **/
+    function transferAll(address _studentAddrOld, address _studentAddrNew) public onlyOwner {
+        studentCertifications[_studentAddrNew] = studentCertifications[_studentAddrOld];
+        delete studentCertifications[_studentAddrOld];
+    }
+    
+    /**
+     * @param _studentAddrOld - Address of student old
+     * @param _studentAddrNew - Address of student new
+     **/
+    function transferDoc(uint docIndx, address _studentAddrOld, address _studentAddrNew) public onlyOwner {
+        studentCertifications[_studentAddrNew].documents[docIndx] = studentCertifications[_studentAddrOld].documents[docIndx];
+        delete studentCertifications[_studentAddrOld].documents[docIndx];
+    }
 }
