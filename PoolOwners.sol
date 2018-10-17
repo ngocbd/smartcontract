@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x18824bcda34ad2f4e4209521d9e49bd216fda6a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x3e39a0c976866d9c3347c69191bed3386037be12
 */
 pragma solidity ^0.4.3;
 
@@ -189,7 +189,6 @@ contract PoolOwners is Ownable {
     }
     mapping(uint256 => Distribution) public distributions;
 
-    mapping(address => bool)    public tokenWhitelist;
     mapping(address => uint256) public tokenBalance;
     mapping(address => uint256) public totalReturned;
     mapping(address => bool)    public whitelist;
@@ -287,7 +286,7 @@ contract PoolOwners is Ownable {
      */
     function whitelistWallet(address _owner) external onlyOwner() {
         require(!locked, "Can't whitelist when the contract is locked");
-        require(_owner != address(0), "Blackhole address");
+        require(_owner != address(0), "Empty address");
         whitelist[_owner] = true;
     }
 
@@ -341,7 +340,6 @@ contract PoolOwners is Ownable {
         } else {
             o.percentage = percent(o.shareTokens, valuation, 5);
         }
-        
         if (r.shareTokens == 0) {
             if (!allOwners[_receiver]) {
                 r.key = totalOwners;
@@ -369,7 +367,6 @@ contract PoolOwners is Ownable {
         @param _token The token address to start the distribution of
      */
     function distributeTokens(address _token) public onlyPoolOwner() {
-        require(tokenWhitelist[_token], "Token is not whitelisted to be distributed");
         require(!distributionActive, "Distribution is already active");
         distributionActive = true;
 
@@ -393,7 +390,7 @@ contract PoolOwners is Ownable {
         @dev Claim tokens by a owner address to add them to their balance
         @param _owner The address of the owner to claim tokens for
      */
-    function claimTokens(address _owner) public onlyPoolOwner() {
+    function claimTokens(address _owner) public {
         Owner storage o = owners[_owner];
         Distribution storage d = distributions[totalDistributions]; 
 
@@ -422,7 +419,7 @@ contract PoolOwners is Ownable {
         @param _token The token address for token claiming
         @param _amount The amount of tokens to withdraw
      */
-    function withdrawTokens(address _token, uint256 _amount) public onlyPoolOwner() {
+    function withdrawTokens(address _token, uint256 _amount) public {
         require(_amount > 0, "You have requested for 0 tokens to be withdrawn");
 
         Owner storage o = owners[msg.sender];
@@ -443,20 +440,19 @@ contract PoolOwners is Ownable {
     }
 
     /**
-        @dev Whitelist a token so it can be distributed
-        @dev Token whitelist is due to the potential of minting tokens and constantly lock this contract in distribution
-     */
-    function whitelistToken(address _token) public onlyOwner() {
-        require(!tokenWhitelist[_token], "Token is already whitelisted");
-        tokenWhitelist[_token] = true;
-    }
-
-    /**
         @dev Set the minimum amount to be of transfered in this contract to start distribution
         @param _minimum The minimum amount
      */
     function setDistributionMinimum(uint256 _minimum) public onlyOwner() {
         distributionMinimum = _minimum;
+    }
+
+    /**
+        @dev Set the wallet address to receive the crowdsale contributions
+        @param _wallet The wallet address
+     */
+    function setEthWallet(address _wallet) public onlyOwner() {
+        wallet = _wallet;
     }
 
     /**
