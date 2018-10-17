@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuFlatPlan at 0x176cdd6b7dd4419105e999e0e6ca643384741fb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NokuFlatPlan at 0xef728575176486063dfD6c82D22BfDb69eEA35cb
 */
 pragma solidity ^0.4.23;
 
@@ -26,7 +26,7 @@ contract NokuPricingPlan {
     * @param multiplier The multiplier of the base service fee to apply.
     * @return The amount to approve before really paying such fee.
     */
-    function usageFee(bytes32 serviceName, uint256 multiplier) public constant returns(uint fee);
+    function usageFee(bytes32 serviceName, uint256 multiplier) public view returns(uint fee);
 }
 
 // File: openzeppelin-solidity/contracts/ownership/Ownable.sol
@@ -40,14 +40,18 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -60,15 +64,30 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
 // File: openzeppelin-solidity/contracts/lifecycle/Pausable.sol
@@ -129,9 +148,13 @@ library SafeMath {
   * @dev Multiplies two numbers, throws on overflow.
   */
   function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
     if (a == 0) {
       return 0;
     }
+
     c = a * b;
     assert(c / a == b);
     return c;
@@ -186,10 +209,18 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 // File: contracts/NokuTokenBurner.sol
@@ -368,10 +399,7 @@ contract NokuFlatPlan is NokuPricingPlan, Ownable {
         return true;
     }
 
-    function usageFee(bytes32 _serviceName, uint256 _multiplier) public constant returns(uint fee) {
-        require(isValidService(_serviceName), "_serviceName in invalid");
-        require(_multiplier != 0, "_multiplier is zero");
-        
+    function usageFee(bytes32 /*_serviceName*/, uint256 /*_multiplier*/) public view returns(uint fee) {
         return 0;
     }
 
