@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract West at 0x623dbcb14e4f6f9d74fe987a6c0718467722062c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract West at 0x4e71b5e47a7e4f8eaccff4ade0e3292f80780cf0
 */
 pragma solidity ^0.4.24;
 
@@ -130,7 +130,7 @@ contract West is modularShort {
 	
     address community_addr = 0xfd76dB2AF819978d43e07737771c8D9E8bd8cbbF;
     address activate_addr = 0x6C7DFE3c255a098Ea031f334436DD50345cFC737;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xe9d1153e644edab768ed27602a963d01405570d3);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x19e6d24885d69ecd0beac5f5de5825ad61a73673);
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
@@ -139,8 +139,8 @@ contract West is modularShort {
     string constant public symbol = "West";
     uint256 private rndExtra_ = 0;     // length of the very first ICO
     uint256 private rndGap_ = 0;         // length of ICO phase, set to 1 year for EOS.
-    uint256 constant private rndInit_ = 5 minutes;                // round timer starts at this
-    uint256 constant private rndInc_ = 1 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndInit_ = 1440 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be             // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
