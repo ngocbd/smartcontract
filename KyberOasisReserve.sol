@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0xaF343c416E4b7172F51133cd3C0438c195603B60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x8bf5C569ECFD167f96FaE6d9610e17571568A6A1
 */
 pragma solidity 0.4.18;
 
@@ -306,8 +306,9 @@ contract Withdrawable is PermissionGroups {
 // File: contracts/oasisContracts/KyberOasisReserve.sol
 
 contract OtcInterface {
-    function getBuyAmount(ERC20 buyGem, ERC20 payGem, uint payAmt) public constant returns (uint fillAmt);
+    function getOffer(uint id) public constant returns (uint, ERC20, uint, ERC20);
     function sellAllAmount(ERC20 payGem, uint payAmt, ERC20 buyGem, uint minFillAmount) public returns (uint fillAmt);
+    function getBestOffer(ERC20 sellGem, ERC20 buyGem) public constant returns(uint);
 }
 
 
@@ -454,10 +455,12 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils2 {
 
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
         uint  rate;
-        uint  destQty;
         uint  actualSrcQty;
         ERC20 wrappedSrc;
         ERC20 wrappedDest;
+        uint  bestOfferId;
+        uint  offerPayAmt;
+        uint  offerBuyAmt;
 
         blockNumber;
 
@@ -482,10 +485,15 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils2 {
             return 0;
         }
 
-        destQty = otc.getBuyAmount(wrappedDest, wrappedSrc, actualSrcQty);
-        rate = calcRateFromQty(actualSrcQty, valueAfterReducingFee(destQty), COMMON_DECIMALS, COMMON_DECIMALS);
+        // getBestOffer's terminology is of offer maker, so their sellGem is our (the taker's) dest token.
+        bestOfferId = otc.getBestOffer(wrappedDest, wrappedSrc);
+        (offerPayAmt, , offerBuyAmt,) = otc.getOffer(bestOfferId);
 
-        return rate;
+        // make sure to take only first level of order book to avoid gas inflation.
+        if (actualSrcQty > offerBuyAmt) return 0;
+
+        rate = calcRateFromQty(offerBuyAmt, offerPayAmt, COMMON_DECIMALS, COMMON_DECIMALS);
+        return valueAfterReducingFee(rate);
     }
 
     function doTrade(
