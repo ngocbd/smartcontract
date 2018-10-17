@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x78e0b3698fcc75092e71862185dea4f4318bf855
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xe4a1c9ee156692e98f5637dcd64c0937cdf42fd9
 */
 pragma solidity ^0.4.21;
 
@@ -72,11 +72,11 @@ contract EIP20 is EIP20Interface {
 
     function EIP20() public {
         owner = msg.sender;               // Update total supply
-        name = "BUSINESSCOIN";                                   // Set the name for display purposes
+        name = "TECHTRADECOIN";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "BNC";                               // Set the symbol for display purposes
-        balances[msg.sender] = 100000000*10**uint256(decimals);               // Give the creator all initial tokens
-        totalSupply = 100000000*10**uint256(decimals);  
+        symbol = "TEC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 63000000*10**uint256(decimals);               // Give the creator all initial tokens
+        totalSupply = 63000000*10**uint256(decimals);  
     }
 
     function setOwner(address _newOwner) public returns (bool success) {
