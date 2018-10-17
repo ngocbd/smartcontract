@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRCPreSaleContract at 0x173566176a1deebb47569c8366e84ba7b10b3b8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRCPreSaleContract at 0xac4bf53936aedacbfd02c334be90bf2c79f063b9
 */
 pragma solidity 0.4.24;
 
@@ -118,7 +118,7 @@ interface TokenInterface {
   
   bool isCrowdsalePaused = false;
   
-  uint256 totalDurationInDays = 30 days;
+  uint256 totalDurationInDays = 23 days;
   
   uint256 LongTermFoundationBudgetAccumulated;
   uint256 LegalContingencyFundsAccumulated;
@@ -190,7 +190,7 @@ interface TokenInterface {
     bonusInPhase2 = 5;
     minimumContribution = 5e17;
     maximumContribution = 150e18;
-    ratePerWei = 10000e18;
+    ratePerWei = 100e18;
     token = TokenInterface(_tokenAddress);
     
     LongTermFoundationBudgetAccumulated = 0;
