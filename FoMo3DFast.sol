@@ -1,9 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0xc3bd383ed5b4f682f5848e63079df9e5b5261253
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DFast at 0x3fcb2db94f0b953cef1357d588d425c485313fd2
 */
 pragma solidity ^0.4.24;
 
+library NameFilter {
+    /**
+     * @dev filters name strings
+     * -converts uppercase to lower case.
+     * -makes sure it does not start/end with a space
+     * -makes sure it does not contain multiple spaces in a row
+     * -cannot be only numbers
+     * -cannot start with 0x
+     * -restricts characters to A-Z, a-z, 0-9, and space.
+     * @return reprocessed string in bytes32 format
+     */
+    function nameFilter(string _input)
+        internal
+        pure
+        returns(bytes32)
+    {
+        bytes memory _temp = bytes(_input);
+        uint256 _length = _temp.length;
 
+        //sorry limited to 32 characters
+        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
+        // make sure it doesnt start with or end with space
+        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
+        // make sure first two characters are not 0x
+        if (_temp[0] == 0x30)
+        {
+            require(_temp[1] != 0x78, "string cannot start with 0x");
+            require(_temp[1] != 0x58, "string cannot start with 0X");
+        }
+
+        // create a bool to track if we have a non number character
+        bool _hasNonNumber;
+
+        // convert & check
+        for (uint256 i = 0; i < _length; i++)
+        {
+            // if its uppercase A-Z
+            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
+            {
+                // convert to lower case a-z
+                _temp[i] = byte(uint(_temp[i]) + 32);
+
+                // we have a non number
+                if (_hasNonNumber == false)
+                    _hasNonNumber = true;
+            } else {
+                require
+                (
+                    // require character is a space
+                    _temp[i] == 0x20 ||
+                    // OR lowercase a-z
+                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
+                    // or 0-9
+                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
+                    "string contains invalid characters"
+                );
+                // make sure theres not 2x spaces in a row
+                if (_temp[i] == 0x20)
+                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
+
+                // see if we have a character other than a number
+                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
+                    _hasNonNumber = true;
+            }
+        }
+
+        require(_hasNonNumber == true, "string cannot be only numbers");
+
+        bytes32 _ret;
+        assembly {
+            _ret := mload(add(_temp, 32))
+        }
+        return (_ret);
+    }
+}
 
 /**
  * @title SafeMath v0.1.9
@@ -107,83 +181,6 @@ library SafeMath {
         }
     }
 }
-
-library NameFilter {
-    /**
-     * @dev filters name strings
-     * -converts uppercase to lower case.
-     * -makes sure it does not start/end with a space
-     * -makes sure it does not contain multiple spaces in a row
-     * -cannot be only numbers
-     * -cannot start with 0x
-     * -restricts characters to A-Z, a-z, 0-9, and space.
-     * @return reprocessed string in bytes32 format
-     */
-    function nameFilter(string _input)
-        internal
-        pure
-        returns(bytes32)
-    {
-        bytes memory _temp = bytes(_input);
-        uint256 _length = _temp.length;
-
-        //sorry limited to 32 characters
-        require (_length <= 32 && _length > 0, "string must be between 1 and 32 characters");
-        // make sure it doesnt start with or end with space
-        require(_temp[0] != 0x20 && _temp[_length-1] != 0x20, "string cannot start or end with space");
-        // make sure first two characters are not 0x
-        if (_temp[0] == 0x30)
-        {
-            require(_temp[1] != 0x78, "string cannot start with 0x");
-            require(_temp[1] != 0x58, "string cannot start with 0X");
-        }
-
-        // create a bool to track if we have a non number character
-        bool _hasNonNumber;
-
-        // convert & check
-        for (uint256 i = 0; i < _length; i++)
-        {
-            // if its uppercase A-Z
-            if (_temp[i] > 0x40 && _temp[i] < 0x5b)
-            {
-                // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
-
-                // we have a non number
-                if (_hasNonNumber == false)
-                    _hasNonNumber = true;
-            } else {
-                require
-                (
-                    // require character is a space
-                    _temp[i] == 0x20 ||
-                    // OR lowercase a-z
-                    (_temp[i] > 0x60 && _temp[i] < 0x7b) ||
-                    // or 0-9
-                    (_temp[i] > 0x2f && _temp[i] < 0x3a),
-                    "string contains invalid characters"
-                );
-                // make sure theres not 2x spaces in a row
-                if (_temp[i] == 0x20)
-                    require( _temp[i+1] != 0x20, "string cannot contain consecutive spaces");
-
-                // see if we have a character other than a number
-                if (_hasNonNumber == false && (_temp[i] < 0x30 || _temp[i] > 0x39))
-                    _hasNonNumber = true;
-            }
-        }
-
-        require(_hasNonNumber == true, "string cannot be only numbers");
-
-        bytes32 _ret;
-        assembly {
-            _ret := mload(add(_temp, 32))
-        }
-        return (_ret);
-    }
-}
-
 
 
 
@@ -454,69 +451,71 @@ interface PlayerBookInterface {
 }
 
 
+
 contract modularFast is F3Devents {}
 
+
 contract FoMo3DFast is modularFast {
-      using SafeMath for *;
-      using NameFilter for string;
-      using F3DKeysCalcShort for uint256;
+    using SafeMath for *;
+    using NameFilter for string;
+    using F3DKeysCalcShort for uint256;
 
-      PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x27D5C0C175C1Ba67986319ac297d2F4D3bC2b7b2);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xea07723857747Ae8b92Df3bCA6A67Fb85e586c6d);
 
-      address private admin = msg.sender;
-      bool public activated_ = false;
-      string constant public name = "FOMO Test";
-      string constant public symbol = "Test";
-      uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
-      uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
-      uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
-      uint256 constant private rndInc_ = 20 seconds;              // every full key purchased adds this much to the timer
-      uint256 constant private rndMax_ = 8 hours;                // max length a round timer can be
-      uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
-      uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
-      uint256 public rID_;    // round id number / total rounds that have happened
+    address private admin = msg.sender;
+    string constant public name = "FOMO Fast";
+    string constant public symbol = "FAST";
+    uint256 private rndExtra_ = 3 minutes;     // length of the very first ICO
+    uint256 private rndGap_ = 3 minutes;         // length of ICO phase, set to 1 year for EOS.
+    uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
+    uint256 constant private rndInc_ = 20 seconds;              // every full key purchased adds this much to the timer
+    uint256 constant private rndMax_ = 8 hours;                // max length a round timer can be
+    uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
+    uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
+    uint256 public rID_;    // round id number / total rounds that have happened
   //****************
   // PLAYER DATA
   //****************
-      mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
-      mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
-      mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
-      mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
-      mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
+    mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
+    mapping (bytes32 => uint256) public pIDxName_;          // (name => pID) returns player id by name
+    mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
+    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;
+    mapping (uint256 => mapping (bytes32 => bool)) public plyrNames_; // (pID => name => bool) list of names a player owns.  (used so you can change your display name amongst any name you own)
   //****************
   // ROUND DATA
   //****************
-      mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
-      mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
+    mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
+    mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
   //****************
   // TEAM FEE DATA
   //****************
-      mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
-      mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+    mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
+    mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
 
-      constructor()
-          public
-      {
-  		// Team allocation structures
-          // 0 = whales
-          // 1 = bears
-          // 2 = sneks
-          // 3 = bulls
+    constructor()
+        public
+    {
+    // Team allocation structures
+        // 0 = whales
+        // 1 = bears
+        // 2 = sneks
+        // 3 = bulls
 
-  		// Team allocation percentages
-          // (F3D, P3D) + (Pot , Referrals, Community)  
-              // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-          fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-          fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-          fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-          fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+    // Team allocation percentages
+        // (F3D, P3D) + (Pot , Referrals, Community)  ??:TeamFee, PotSplit ???????????key holder???, ?????Pow3D???
+            // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
+        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
 
-          // how to split up the final pot based on which team was picked
-          // (F3D, P3D)
-          potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-          potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-          potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-          potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
+        // how to split up the final pot based on which team was picked
+        // (F3D, P3D)
+        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
   	}
   //==============================================================================
   //     _ _  _  _|. |`. _  _ _  .
@@ -619,7 +618,6 @@ contract FoMo3DFast is modularFast {
 
       function buyXaddr(address _affCode, uint256 _team)
           isActivated()
-          isHuman()
           isWithinLimits(msg.value)
           public
           payable
@@ -698,8 +696,9 @@ contract FoMo3DFast is modularFast {
           // buy core
           buyCore(_pID, _affID, _team, _eventData_);
       }
-      
-     function buyXnameQR(address _realSender,bytes32 _affCode, uint256 _team)
+
+
+       function buyXnameQR(address _realSender,bytes32 _affCode, uint256 _team)
           isActivated()
           isWithinLimits(msg.value)
           public
@@ -932,9 +931,8 @@ contract FoMo3DFast is modularFast {
               emit F3Devents.onWithdraw(_pID, msg.sender, plyr_[_pID].name, _eth, _now);
           }
       }
-      
-      
-          /**
+
+    /**
        * @dev withdraws all of your earnings.
        * -functionhash- 0x3ccfd60b
        */
@@ -1005,7 +1003,6 @@ contract FoMo3DFast is modularFast {
               emit F3Devents.onWithdraw(_pID, _realSender, plyr_[_pID].name, _eth, _now);
           }
       }
-      
 
       /**
        * @dev use these to register names.  they are just wrappers that will send the
@@ -1032,55 +1029,55 @@ contract FoMo3DFast is modularFast {
        * (this might cost a lot of gas)
        */
 
-    //   function registerNameXID(string _nameString, uint256 _affCode, bool _all)
-    //       isHuman()
-    //       public
-    //       payable
-    //   {
-    //       bytes32 _name = _nameString.nameFilter();
-    //       address _addr = msg.sender;
-    //       uint256 _paid = msg.value;
-    //       (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
+      function registerNameXID(string _nameString, uint256 _affCode, bool _all)
+          isHuman()
+          public
+          payable
+      {
+          bytes32 _name = _nameString.nameFilter();
+          address _addr = msg.sender;
+          uint256 _paid = msg.value;
+          (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXIDFromDapp.value(_paid)(_addr, _name, _affCode, _all);
 
-    //       uint256 _pID = pIDxAddr_[_addr];
+          uint256 _pID = pIDxAddr_[_addr];
 
-    //       // fire event
-    //       emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
-    //   }
+          // fire event
+          emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+      }
 
-    //   function registerNameXaddr(string _nameString, address _affCode, bool _all)
-    //       isHuman()
-    //       public
-    //       payable
-    //   {
-    //       bytes32 _name = _nameString.nameFilter();
-    //       address _addr = msg.sender;
-    //       uint256 _paid = msg.value;
-    //       (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+      function registerNameXaddr(string _nameString, address _affCode, bool _all)
+          isHuman()
+          public
+          payable
+      {
+          bytes32 _name = _nameString.nameFilter();
+          address _addr = msg.sender;
+          uint256 _paid = msg.value;
+          (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXaddrFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
 
-    //       uint256 _pID = pIDxAddr_[_addr];
+          uint256 _pID = pIDxAddr_[_addr];
 
-    //       // fire event
-    //       emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
-    //   }
+          // fire event
+          emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+      }
 
-    //   function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
-    //       isHuman()
-    //       public
-    //       payable
-    //   {
-    //       bytes32 _name = _nameString.nameFilter();
-    //       address _addr = msg.sender;
-    //       uint256 _paid = msg.value;
-    //       (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXnameFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
+      function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
+          isHuman()
+          public
+          payable
+      {
+          bytes32 _name = _nameString.nameFilter();
+          address _addr = msg.sender;
+          uint256 _paid = msg.value;
+          (bool _isNewPlayer, uint256 _affID) = PlayerBook.registerNameXnameFromDapp.value(msg.value)(msg.sender, _name, _affCode, _all);
 
-    //       uint256 _pID = pIDxAddr_[_addr];
+          uint256 _pID = pIDxAddr_[_addr];
 
-    //       // fire event
-    //       emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
-    //   }
-      
-      
+          // fire event
+          emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
+      }
+
+
   //==============================================================================
   //     _  _ _|__|_ _  _ _  .
   //    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
@@ -1298,7 +1295,7 @@ contract FoMo3DFast is modularFast {
           if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
           {
               // call core
-              core(_rID, _pID, msg.value, _affID, _team, _eventData_);
+              core(address(0), _rID, _pID, msg.value, _affID, _team, _eventData_);
 
           // if round is not active
           } else {
@@ -1334,9 +1331,8 @@ contract FoMo3DFast is modularFast {
               plyr_[_pID].gen = plyr_[_pID].gen.add(msg.value);
           }
       }
-      
-      
-      /**
+
+       /**
        * @dev logic runs whenever a buy order is executed.  determines how to handle
        * incoming eth depending on if we are in an active round or not
        */
@@ -1353,7 +1349,7 @@ contract FoMo3DFast is modularFast {
           if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
           {
               // call core
-              coreQR(_realSender,_rID, _pID, msg.value, _affID, _team, _eventData_);
+              core(_realSender,_rID, _pID, msg.value, _affID, _team, _eventData_);
 
           // if round is not active
           } else {
@@ -1412,7 +1408,7 @@ contract FoMo3DFast is modularFast {
               plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
 
               // call core
-              core(_rID, _pID, _eth, _affID, _team, _eventData_);
+              core(address(0), _rID, _pID, _eth, _affID, _team, _eventData_);
 
           // if round is not active and end round needs to be ran
           } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
@@ -1445,7 +1441,7 @@ contract FoMo3DFast is modularFast {
        * @dev this is the core logic for any buy/reload that happens while a round
        * is live.
        */
-      function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+      function core(address _realSender, uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
           private
       {
           // if player is new to round
@@ -1453,9 +1449,9 @@ contract FoMo3DFast is modularFast {
               _eventData_ = managePlayer(_pID, _eventData_);
 
           // early round eth limiter
-          if (round_[_rID].eth < 400000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 4000000000000000000)
+          if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
           {
-              uint256 _availableLimit = (4000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+              uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
               uint256 _refund = _eth.sub(_availableLimit);
               plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
               _eth = _availableLimit;
@@ -1550,15 +1546,21 @@ contract FoMo3DFast is modularFast {
               _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
               // call end tx function to fire end tx event.
-  		    endTx(_pID, _team, _eth, _keys, _eventData_);
+              if (_realSender==address(0)) {
+	              endTx(_pID, _team, _eth, _keys, _eventData_);
+	            } else {
+	              endTxQR(_realSender,_pID, _team, _eth, _keys, _eventData_);
+              }
           }
       }
-      
-      /**
+
+
+
+            /**
        * @dev this is the core logic for any buy/reload that happens while a round
        * is live.
        */
-      function coreQR(address _realSender,uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
+      /* function coreQR(address _realSender,uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
           private
       {
           // if player is new to round
@@ -1566,9 +1568,9 @@ contract FoMo3DFast is modularFast {
               _eventData_ = managePlayer(_pID, _eventData_);
 
           // early round eth limiter
-          if (round_[_rID].eth < 400000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 4000000000000000000)
+          if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
           {
-              uint256 _availableLimit = (4000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
+              uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
               uint256 _refund = _eth.sub(_availableLimit);
               plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
               _eth = _availableLimit;
@@ -1665,8 +1667,7 @@ contract FoMo3DFast is modularFast {
               // call end tx function to fire end tx event.
   		    endTxQR(_realSender,_pID, _team, _eth, _keys, _eventData_);
           }
-      }
-      
+      } */
   //==============================================================================
   //     _ _ | _   | _ _|_ _  _ _  .
   //    (_(_||(_|_||(_| | (_)| _\  .
@@ -1800,9 +1801,9 @@ contract FoMo3DFast is modularFast {
           }
           return (_eventData_);
       }
-      
-      
-      /**
+
+
+            /**
        * @dev gets existing or registers new pID.  use this when a player may be new
        * @return pID
        */
@@ -1838,8 +1839,6 @@ contract FoMo3DFast is modularFast {
           }
           return (_eventData_);
       }
-      
-      
 
       /**
        * @dev checks to make sure user picked a valid team.  if not sets team
@@ -1919,10 +1918,9 @@ contract FoMo3DFast is modularFast {
 
           admin.transfer(_com);
 
-          admin.transfer(_p3d);
-          //admin.transfer(_p3d.sub(_p3d / 2));
+          admin.transfer(_p3d.sub(_p3d / 2));
 
-          //round_[_rID].pot = _pot.add(_p3d / 2);
+          round_[_rID].pot = _pot.add(_p3d / 2);
 
           // distribute gen portion to key holders
           round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -2055,11 +2053,11 @@ contract FoMo3DFast is modularFast {
           if (_p3d > 0)
           {
               // deposit to divies contract
-              //uint256 _potAmount = _p3d / 2;
+              uint256 _potAmount = _p3d / 2;
 
-              admin.transfer(_p3d);
+              admin.transfer(_p3d.sub(_potAmount));
 
-              //round_[_rID].pot = round_[_rID].pot.add(_potAmount);
+              round_[_rID].pot = round_[_rID].pot.add(_potAmount);
 
               // set up event data
               _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
@@ -2197,8 +2195,8 @@ contract FoMo3DFast is modularFast {
               airDropPot_
           );
       }
-      
-       /**
+
+            /**
        * @dev prepares compression data and fires event for buy or reload tx's
        */
       function endTxQR(address _realSender,uint256 _pID, uint256 _team, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
@@ -2232,6 +2230,7 @@ contract FoMo3DFast is modularFast {
       /** upon contract deploy, it will be deactivated.  this is a one time
        * use function that will activate the contract.  we do this so devs
        * have time to set things up on the web end                            **/
+      bool public activated_ = false;
       function activate()
           public
       {
