@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x3feab40ae0ff64c8cdfaba8a3a805c78cbdf4109
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLiquidityPlatform at 0x88d18e490a3fa5bde7ba0dbf81741237cbe0c798
 */
 pragma solidity ^0.4.21;
 
@@ -177,7 +177,7 @@ contract TokenLiquidityMarket {
   }
   
   function get_amount_minus_commission(uint256 _amount) private view returns(uint256) {
-    return ((_amount.mul(1 ether)).sub(commission_ratio)).div(1 ether);  
+    return (_amount*(1 ether - commission_ratio))/(1 ether);  
   }
 
   function activate_admin_commission() public only_admin() {
@@ -199,8 +199,8 @@ contract TokenLiquidityMarket {
   function complete_sell_exchange(uint256 _amount_give) private {
     uint256 amount_get_ = get_amount_sell(_amount_give);
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-    uint256 platform_commission_ = (amount_get_.sub(amount_get_minus_commission_)).div(5);
-    uint256 admin_commission_ = ((amount_get_.sub(amount_get_minus_commission_)).mul(4)).div(5);
+    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
+    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
     transfer_tokens_through_proxy_to_contract(msg.sender,this,_amount_give);
     transfer_eth_from_contract(msg.sender,amount_get_minus_commission_);  
     transfer_eth_from_contract(platform, platform_commission_);     
@@ -212,8 +212,8 @@ contract TokenLiquidityMarket {
   function complete_buy_exchange() private {
     uint256 amount_get_ = get_amount_buy(msg.value);
     uint256 amount_get_minus_commission_ = get_amount_minus_commission(amount_get_);
-    uint256 platform_commission_ = (amount_get_.sub(amount_get_minus_commission_)).div(5);
-    uint256 admin_commission_ = ((amount_get_.sub(amount_get_minus_commission_)).mul(4)).div(5);
+    uint256 platform_commission_ = (amount_get_ - amount_get_minus_commission_) / 5;
+    uint256 admin_commission_ = ((amount_get_ - amount_get_minus_commission_) * 4) / 5;
     transfer_eth_to_contract();
     transfer_tokens_from_contract(msg.sender, amount_get_minus_commission_);
     transfer_tokens_from_contract(platform, platform_commission_);
