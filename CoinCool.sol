@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinCool at 0xf99d61379e3d41eFDFDc905A57336aa1737Ae7b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinCool at 0x7a86E636f12067D2d99f1F041195DE3E671EEC2F
 */
 pragma solidity ^0.4.21;
 /**
@@ -512,6 +512,7 @@ contract Frozenable is Operational, StandardBurnableToken, ReentrancyGuard {
 contract Releaseable is Frozenable {
     using SafeMath for uint;
     uint256 public createTime;
+    uint256 public releaseCount = 1;
     uint256 public standardReleaseAmount = mulDecimals.mul(512000); //
     uint256 public releaseAmountPerDay = mulDecimals.mul(512000);
     uint256 public releasedSupply = 0;
@@ -524,21 +525,23 @@ contract Releaseable is Frozenable {
     function Releaseable(
                     address _operator, uint256 _initialSupply
                 ) Frozenable(_operator) public {
-        createTime = 1529078400;
+        createTime = 1533607200;//2018.08.07
         releasedSupply = _initialSupply;
         balances[owner] = _initialSupply;
-        totalSupply_ = mulDecimals.mul(187140000);
+        systemFreeze(mulDecimals.mul(20000000), createTime.add(180 days));
+        totalSupply_ = mulDecimals.mul(216280000);
     }
     function release(uint256 timestamp, uint256 sysAmount) public onlyOperator returns(uint256 _actualRelease) {
         require(timestamp >= createTime && timestamp <= block.timestamp);
         require(!checkIsReleaseRecordExist(timestamp));
-        updateReleaseAmount(timestamp);
-        require(sysAmount <= releaseAmountPerDay.mul(4).div(5));
+        updateReleaseAmount();
+        require(sysAmount <= releaseAmountPerDay.mul(3).div(5));
         require(totalSupply_ >= releasedSupply.add(releaseAmountPerDay));
         balances[owner] = balances[owner].add(releaseAmountPerDay);
         releasedSupply = releasedSupply.add(releaseAmountPerDay);
         uint256 _releaseIndex = uint256(timestamp.parseTimestamp().year) * 10000 + uint256(timestamp.parseTimestamp().month) * 100 + uint256(timestamp.parseTimestamp().day);
         releaseRecords[_releaseIndex] = ReleaseRecord(releaseAmountPerDay, _releaseIndex);
+        releaseCount = releaseCount.add(1);
         emit Release(owner, releaseAmountPerDay, sysAmount, timestamp);
         systemFreeze(sysAmount.div(5), timestamp.add(180 days));
         systemFreeze(sysAmount.mul(6).div(10), timestamp.add(200 years));
@@ -556,25 +559,22 @@ contract Releaseable is Frozenable {
     }
     // update release amount for single day
     // according to dividend rule in https://coincoolotc.com
-    function updateReleaseAmount(uint256 timestamp) internal {
-        uint256 timeElapse = timestamp.sub(createTime);
-        uint256 cycles = timeElapse.div(180 days);
-        if (cycles > 0) {
-            if (cycles <= 10) {
-                releaseAmountPerDay = standardReleaseAmount;
-                for (uint index = 0; index < cycles; index++) {
-                    releaseAmountPerDay = releaseAmountPerDay.div(2);
-                }
-            } else {
-                releaseAmountPerDay = 0;
-            }
+    function updateReleaseAmount() internal {
+    	if (releaseCount <= 180) {
+            releaseAmountPerDay = standardReleaseAmount;
+        } else if (releaseCount <= 360) {
+            releaseAmountPerDay = standardReleaseAmount.div(2);
         }
+        else if (releaseCount <= 540) {
+            releaseAmountPerDay = standardReleaseAmount.div(4);
+        }
+        
     }
 }
 contract CoinCool is Releaseable {
-    string public standard = '2018061610';
+    string public standard = '2018080710';
     string public name = 'CoinCoolToken';
     string public symbol = 'CCT';
     uint8 public decimals = 8;
-    function CoinCool() Releaseable(0xe8358AfA9Bc309c4A106dc41782340b91817BC64, mulDecimals.mul(3000000)) public {}
+    function CoinCool() Releaseable(0x4068D7c2e286Cb1E72Cef90B74C823E990FaB9C2, mulDecimals.mul(55000000)) public {}
 }
