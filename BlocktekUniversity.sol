@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlocktekUniversity at 0x67503c1ed0c10747b98274b8a9bf38e070a5299d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlocktekUniversity at 0x60b5aa3334185d72eed79ac5ffc9870e98f502eb
 */
 pragma solidity ^0.4.11;
  
@@ -21,7 +21,7 @@ contract BlocktekUniversity {
     function BlocktekUniversity(address adr) {
         owner = adr;        
         symbol = "BKU";
-        name = "Blocktek University Credits";
+        name = "Blocktek University";
         _totalSupply = 150000000 * 10**18;
         balances[owner] = _totalSupply;
 
