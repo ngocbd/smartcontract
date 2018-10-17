@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrandTheftFOMO at 0x08e726dd4b6dbeeeb15ec26d04ac952b8bcea480
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GrandTheftFOMO at 0x72e179ebf1313bf062531a4a8928c42a86896c59
 */
 pragma solidity ^0.4.24;
 
@@ -124,7 +124,7 @@ contract GrandTheftFOMO is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x16eFB10FBf0CD487B37BC8f179A8CB76fF3B7Dae);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xAc8460b58757a0C7E2299a610FE18Bdc096709f5);
 
     address private admin = msg.sender;
     string constant public name = "Grand Theft FOMO";
