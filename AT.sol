@@ -1,142 +1,163 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AT at 0xea134f45e30a4cf39644a3b5bcc1cead13966e89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AT at 0x9b2e9d05509727d2d91dfcb90e776bc3b125c2f0
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
+
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
+contract AT is ERC20,Ownable{
+	using SafeMath for uint256;
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
+	string public constant name="AT";
+	string public symbol="AT";
+	string public constant version = "1.0";
+	uint256 public constant decimals = 18;
+	uint256 public totalSupply;
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+	uint256 public constant MAX_SUPPLY=680000000*10**decimals;
 
-contract AT is ERC20 {
-    
-    using SafeMath for uint256;
-    address owner = msg.sender;
+	
+    mapping(address => uint256) balances;
+	mapping (address => mapping (address => uint256)) allowed;
+	event GetETH(address indexed _from, uint256 _value);
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+	//owner???????
+	function AT(){
+		totalSupply=MAX_SUPPLY;
+		balances[msg.sender] = MAX_SUPPLY;
+		Transfer(0x0, msg.sender, MAX_SUPPLY);
+	}
 
-    string public constant name = "AT";
-    string public constant symbol = "AT";
-    uint public constant decimals = 8;
-    uint256 public totalSupply = 17900000000e8;
+	//???????????
+	function () payable external
+	{
+		GetETH(msg.sender,msg.value);
+	}
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burn(address indexed burner, uint256 value);
+	function etherProceeds() external
+		onlyOwner
+	{
+		if(!msg.sender.send(this.balance)) revert();
+	}
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  	function transfer(address _to, uint256 _value) public  returns (bool)
+ 	{
+		require(_to != address(0));
+		// SafeMath.sub will throw if there is not enough balance.
+		balances[msg.sender] = balances[msg.sender].sub(_value);
+		balances[_to] = balances[_to].add(_value);
+		Transfer(msg.sender, _to, _value);
+		return true;
+  	}
 
-    function AT () public {
-        owner = msg.sender;
-		balances[msg.sender] = totalSupply;
-    }
-    
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
+  	function balanceOf(address _owner) public constant returns (uint256 balance) 
+  	{
+		return balances[_owner];
+  	}
 
-    function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
-    }
+  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
+  	{
+		require(_to != address(0));
+		uint256 _allowance = allowed[_from][msg.sender];
 
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-    
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+		balances[_from] = balances[_from].sub(_value);
+		balances[_to] = balances[_to].add(_value);
+		allowed[_from][msg.sender] = _allowance.sub(_value);
+		Transfer(_from, _to, _value);
+		return true;
+  	}
 
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+  	function approve(address _spender, uint256 _value) public returns (bool) 
+  	{
+		allowed[msg.sender][_spender] = _value;
+		Approval(msg.sender, _spender, _value);
+		return true;
+  	}
 
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-    
-    function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
-        owner.transfer(etherBalance);
-    }
-    
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
+  	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
+  	{
+		return allowed[_owner][_spender];
+  	}
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
-    
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        
-        require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
-    }
+	  
 }
