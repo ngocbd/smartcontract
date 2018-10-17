@@ -1,45 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDividendCards at 0x5a1dbff1a772bc35f53c77509b4dc1624c65e6ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZethrDividendCards at 0x30699ca0288c96b5bd4f2b633b097889d59086d9
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
 /**
 
-                                  ????????????????????????????  ??????????
-                                  ????????????????????????????  ???????????
-                                    ????? ??????     ???   ????????????????
-                                   ?????  ??????     ???   ????????????????
-                                  ????????????????   ???   ???  ??????  ???
-                                  ????????????????   ???   ???  ??????  ???
+https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com https://fortisgames.com
+                                                                                                    
+FFFFFFFFFFFFFFFFFFFFFF                                           tttt            iiii                   
+F::::::::::::::::::::F                                        ttt:::t           i::::i                  
+F::::::::::::::::::::F                                        t:::::t            iiii                   
+FF::::::FFFFFFFFF::::F                                        t:::::t                                   
+  F:::::F       FFFFFFooooooooooo   rrrrr   rrrrrrrrr   ttttttt:::::ttttttt    iiiiiii     ssssssssss   
+  F:::::F           oo:::::::::::oo r::::rrr:::::::::r  t:::::::::::::::::t    i:::::i   ss::::::::::s  
+  F::::::FFFFFFFFFFo:::::::::::::::or:::::::::::::::::r t:::::::::::::::::t     i::::i ss:::::::::::::s 
+  F:::::::::::::::Fo:::::ooooo:::::orr::::::rrrrr::::::rtttttt:::::::tttttt     i::::i s::::::ssss:::::s
+  F:::::::::::::::Fo::::o     o::::o r:::::r     r:::::r      t:::::t           i::::i  s:::::s  ssssss 
+  F::::::FFFFFFFFFFo::::o     o::::o r:::::r     rrrrrrr      t:::::t           i::::i    s::::::s      
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t           i::::i       s::::::s   
+  F:::::F          o::::o     o::::o r:::::r                  t:::::t    tttttt i::::i ssssss   s:::::s 
+FF:::::::FF        o:::::ooooo:::::o r:::::r                  t::::::tttt:::::ti::::::is:::::ssss::::::s
+F::::::::FF        o:::::::::::::::o r:::::r                  tt::::::::::::::ti::::::is::::::::::::::s 
+F::::::::FF         oo:::::::::::oo  r:::::r                    tt:::::::::::tti::::::i s:::::::::::ss  
+FFFFFFFFFFF           ooooooooooo    rrrrrrr                      ttttttttttt  iiiiiiii  sssssssssss    
 
-.------..------..------..------..------..------..------..------.     .------..------..------..------..------.
-|D.--. ||I.--. ||V.--. ||I.--. ||D.--. ||E.--. ||N.--. ||D.--. |.-.  |C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
-| :/\: || (\/) || :(): || (\/) || :/\: || (\/) || :(): || :/\: ((5)) | :/\: || (\/) || :(): || :/\: || :/\: |
-| (__) || :\/: || ()() || :\/: || (__) || :\/: || ()() || (__) |'-.-.| :\/: || :\/: || ()() || (__) || :\/: |
-| '--'D|| '--'I|| '--'V|| '--'I|| '--'D|| '--'E|| '--'N|| '--'D| ((1)) '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
-`------'`------'`------'`------'`------'`------'`------'`------'  '-'`------'`------'`------'`------'`------'
+
+Discord:   https://discord.gg/gDtTX62                                                                              
 
 An interactive, variable-dividend rate contract with an ICO-capped price floor and collectibles.
 This contract describes those collectibles. Don't get left with a hot potato!
 
-Launched at 00:00 GMT on 12th May 2018.
-
-Credits
-=======
-
-Analysis:
-    blurr
-    Randall
-
-Contract Developers:
-    Etherguy
-    klob
-    Norsefire
-
-Front-End Design:
-    cryptodude
-    oguzhanox
-    TropicalRogue
 
 **/
 
