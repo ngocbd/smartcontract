@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCT at 0x51cfb4c420da4849d420a4b0d8827a654b30f3e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTYCT at 0xc3ffc207f484ccf15cef1e2e52c8340dc801965e
 */
 pragma solidity ^ 0.4 .16;
 /* ???????????? */
@@ -163,9 +163,9 @@ contract BTYCT is owned, TokenERC20 {
 	//uint256 public onceAddTime = 864000; //????? ??
 	//uint256 public onceoutTimePer = 8640000; //?????? ??
 	
-	uint256 public onceOuttime = 120; //????? ??  
-	uint256 public onceAddTime = 600; //????? ??
-	uint256 public onceoutTimePer = 12000; //?????? ??
+	uint256 public onceOuttime = 600; //????? ??  
+	uint256 public onceAddTime = 1800; //????? ??
+	uint256 public onceoutTimePer = 60000; //?????? ??
 
 	/* ???? */
 	mapping(address => bool) public frozenAccount;
@@ -237,17 +237,13 @@ contract BTYCT is owned, TokenERC20 {
 			cronoutOf[_to] = now + onceOuttime;
 		}
 	
-
+        require(canOf[_from] >= _value);
 		balanceOf[_from] -= _value; // Subtract from the sender
 		balanceOf[_to] += _value;
 		//????
-
 		canOf[_from] -= _value;
-		freezeOf[_from] = balanceOf[_from] - canOf[_from];
-
 		//???? 
 		freezeOf[_to] += _value;
-		canOf[_to] = balanceOf[_to] - freezeOf[_to];
 
 		emit Transfer(_from, _to, _value);
 	}
@@ -269,13 +265,23 @@ contract BTYCT is owned, TokenERC20 {
 	/// ?????????
 	function mintToken(address target, uint256 mintedAmount) onlyOwner public {
 		require(!frozenAccount[target]);
+		require(balanceOf[target] >= freezeOf[target]);
+		if(cronoutOf[target] < 1) {
+		    cronoutOf[target] = now + onceOuttime;
+		}
+		if(cronaddOf[target] < 1) {
+		    cronaddOf[target] = now + onceAddTime;
+		}
+		
+		//unit aount = unit(mintedAmount);
+		uint256 amounts = mintedAmount * 99 / 100;
+		freezeOf[target] = freezeOf[target] + amounts;
 		balanceOf[target] += mintedAmount;
+		//require(balanceOf[target] >= freezeOf[target]);
+		canOf[target] = balanceOf[target] - freezeOf[target];
+		require(canOf[target] >= 0);
+		
 		balanceOf[this] -= mintedAmount;
-		
-		cronoutOf[target] = now + onceOuttime;
-		cronaddOf[target] = now + onceAddTime;
-		freezeOf[target] = balanceOf[target] + mintedAmount;
-		
 		emit Transfer(0, this, mintedAmount);
 		emit Transfer(this, target, mintedAmount);
 
@@ -288,7 +294,8 @@ contract BTYCT is owned, TokenERC20 {
 		balanceOf[msg.sender] += mintAmount;
 		balanceOf[this] -= mintAmount;
 		
-		freezeOf[msg.sender] = balanceOf[msg.sender] + mintAmount;
+		freezeOf[msg.sender] = freezeOf[msg.sender] + mintAmount;
+		require(balanceOf[msg.sender] >= freezeOf[msg.sender]);
 		cronaddOf[msg.sender] = now + onceAddTime;
 		
 		emit Transfer(0, this, mintAmount);
@@ -302,27 +309,30 @@ contract BTYCT is owned, TokenERC20 {
 		emit FrozenFunds(target, freeze);
 	}
 	// ????????
-	function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-		sellPrice = newSellPrice;
+	function setPrices( uint256 newBuyPrice, uint256 newSellPrice, uint256 systyPrice, uint256 sysPermit) onlyOwner public {
 		buyPrice = newBuyPrice;
-
-	}
-	//??????
-	function setmyPrice(uint256 systyPrice, uint256 sysPermit) onlyOwner public {
-		sysPrice = systyPrice;
+		sellPrice = newSellPrice;
+		sysPrice = systyPrice * 10 ** uint256(decimals);
 		sysPer = sysPermit;
 	}
+	function getprice() constant public returns (uint256 bprice,uint256 spice,uint256 sprice,uint256 sper) {
+          bprice = buyPrice * 10 ** uint256(decimals);
+          spice = sellPrice * 10 ** uint256(decimals);
+          sprice = sysPrice;
+          sper = sysPer * 10 ** uint256(decimals);
+   }
 	// ??
-	function buy() payable public returns(uint256 amount) {
+	function buy(uint256 amountbuy) payable public returns(uint256 amount) {
 	    require(!frozenAccount[msg.sender]);
-		require(buyPrice > 0 && msg.value > buyPrice); // Avoid dividing 0, sending small amounts and spam
-		amount = msg.value / (buyPrice/1000); // Calculate the amount of Dentacoins
+		require(buyPrice > 0 && amountbuy > buyPrice); // Avoid dividing 0, sending small amounts and spam
+		amount = amountbuy / (buyPrice/1000); // Calculate the amount of Dentacoins
 		require(balanceOf[this] >= amount); // checks if it has enough to sell
 		balanceOf[msg.sender] += amount; // adds the amount to buyer's balance
 		balanceOf[this] -= amount; // subtracts amount from seller's balance
 		emit Transfer(this, msg.sender, amount); // execute an event reflecting the change
 		return amount; // ends function and returns
 	}
+	
 
 	// ??
 	function sell(uint256 amount) public returns(uint revenue) {
@@ -332,6 +342,7 @@ contract BTYCT is owned, TokenERC20 {
 		if(cronoutOf[msg.sender] < 1) {
 			cronoutOf[msg.sender] = now + onceOuttime;
 		}
+		
 		uint lefttime = now - cronoutOf[msg.sender];
 		if(lefttime > onceOuttime) {
 			uint leftper = lefttime / onceoutTimePer;
@@ -343,6 +354,7 @@ contract BTYCT is owned, TokenERC20 {
 			cronoutOf[msg.sender] = now + onceOuttime;
 		}
 		require(canOf[msg.sender] >= amount);
+		canOf[msg.sender] -= amount;
 		balanceOf[this] += amount; // adds the amount to owner's balance
 		balanceOf[msg.sender] -= amount; // subtracts the amount from seller's balance
 		revenue = amount * sellPrice/1000;
