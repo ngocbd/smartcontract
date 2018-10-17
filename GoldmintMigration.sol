@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintMigration at 0x30fd8b33553beb5428b38c6e4fa3fb0b9a9a3273
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintMigration at 0x5d8c108b2cb4797fa8d0efd4d7c54132ab0e66e0
 */
 pragma solidity ^0.4.19;
 
@@ -124,6 +124,8 @@ contract GoldFee is CreatorEnabled {
 
     function calculateFee(address _sender, bool _isMigrationStarted, bool _isMigrationFinished, uint _mntpBalance, uint _value) public constant returns(uint)
     {
+        return 0;
+
        //if this is an excaptional address
        if (exceptAddresses[_sender]) {
             return 0;
@@ -273,6 +275,7 @@ contract Gold is StdToken, CreatorEnabled {
 
         // you can transfer if fee is ZERO
         uint fee = goldFee.calculateFee(msg.sender, migrationStarted, migrationFinished, yourCurrentMntpBalance, _value);
+        
         uint sendThis = _value;
         if (0 != fee) {
              sendThis = safeSub(_value,fee);
@@ -289,7 +292,7 @@ contract Gold is StdToken, CreatorEnabled {
                   super.transfer(migrationAddress, fee);
              }
         }
-
+        
         // 2.Transfer
         // A -> B
         return super.transfer(_to, sendThis);
@@ -360,72 +363,32 @@ contract IMNTP is StdToken {
 }
 
 contract GoldmintMigration is CreatorEnabled {
-    // Fields:
+    
     IMNTP public mntpToken;
     Gold public goldToken;
 
-    enum State {
-        Init,
-        MigrationStarted,
-        MigrationPaused,
-        MigrationFinished
-    }
+    address public managerAddress = 0x0;
 
-    State public state = State.Init;
+    event MntpHold(address _ethAddress, string _gmAddress, uint256 _amount);
+    event MntpUnhold(address _ethAddress, uint256 _amount);
+    event GoldHold(address _ethAddress, string _gmAddress, uint256 _amount);
+    event GoldUnhold(address _ethAddress, uint256 _amount);
 
-    // this is total collected GOLD rewards (launch to migration start)
-    uint public mntpToMigrateTotal = 0;
-    uint public migrationRewardTotal = 0;
-    uint64 public migrationStartedTime = 0;
-    uint64 public migrationFinishedTime = 0;
+    modifier onlyManagerOrCreator() { require(msg.sender == managerAddress || msg.sender == creator); _; }
 
-    struct Migration {
-        address ethAddress;
-        string gmAddress;
-        uint tokensCount;
-        bool migrated;
-        uint64 date;
-        string comment;
-    }
 
-    mapping (uint=>Migration) public mntpMigrations;
-    mapping (address=>uint) public mntpMigrationIndexes;
-    uint public mntpMigrationsCount = 0;
-
-    mapping (uint=>Migration) public goldMigrations;
-    mapping (address=>uint) public goldMigrationIndexes;
-    uint public goldMigrationsCount = 0;
-
-    event MntpMigrateWanted(address _ethAddress, string _gmAddress, uint256 _value);
-    event MntpMigrated(address _ethAddress, string _gmAddress, uint256 _value);
-
-    event GoldMigrateWanted(address _ethAddress, string _gmAddress, uint256 _value);
-    event GoldMigrated(address _ethAddress, string _gmAddress, uint256 _value);
-
-    // Access methods
-    function getMntpMigration(uint index) public constant returns(address,string,uint,bool,uint64,string){
-        Migration memory mig = mntpMigrations[index];
-        return (mig.ethAddress, mig.gmAddress, mig.tokensCount, mig.migrated, mig.date, mig.comment);
-    }
-
-    function getGoldMigration(uint index) public constant returns(address,string,uint,bool,uint64,string){
-        Migration memory mig = goldMigrations[index];
-        return (mig.ethAddress, mig.gmAddress, mig.tokensCount, mig.migrated, mig.date, mig.comment);
-    }
-
-    // Functions:
-    // Constructor
     function GoldmintMigration(address _mntpContractAddress, address _goldContractAddress) public {
         creator = msg.sender;
 
         require(_mntpContractAddress != 0);
         require(_goldContractAddress != 0);
 
-        mntpMigrationIndexes[address(0x0)] = 0;
-        goldMigrationIndexes[address(0x0)] = 0;
-
         mntpToken = IMNTP(_mntpContractAddress);
         goldToken = Gold(_goldContractAddress);
+    }
+
+    function setManagerAddress(address _address) public onlyCreator {
+       managerAddress = _address;
     }
 
     function lockMntpTransfers(bool _lock) public onlyCreator {
@@ -436,206 +399,22 @@ contract GoldmintMigration is CreatorEnabled {
         goldToken.lockTransfer(_lock);
     }
 
-    // This method is called when migration to Goldmint's blockchain
-    // process is started...
-    function startMigration() public onlyCreator {
-        require((State.Init == state) || (State.MigrationPaused == state));
+    function unholdMntp(address _ethAddress, uint _amount) public onlyManagerOrCreator {
+        uint balance = mntpToken.balanceOf(address(this));
+        require(balance >= _amount);
 
-        if (State.Init == state) {
-             // 1 - change fees
-             goldToken.startMigration();
+        mntpToken.transfer(_ethAddress, _amount);
 
-             // 2 - store the current values
-             migrationRewardTotal = goldToken.balanceOf(this);
-             migrationStartedTime = uint64(now);
-             mntpToMigrateTotal = mntpToken.totalSupply();
-        }
-
-        state = State.MigrationStarted;
+        MntpUnhold(_ethAddress, _amount);
     }
 
-    function pauseMigration() public onlyCreator {
-        require((state == State.MigrationStarted) || (state == State.MigrationFinished));
+    function unholdGold(address _ethAddress, uint _amount) public onlyManagerOrCreator {
+        uint balance = goldToken.balanceOf(address(this));
+        require(balance >= _amount);
 
-        state = State.MigrationPaused;
-    }
+        goldToken.transfer(_ethAddress, _amount);
 
-    // that doesn't mean that you cant migrate from Ethereum -> Goldmint blockchain
-    // that means that you will get no reward
-    function finishMigration() public onlyCreator {
-        require((State.MigrationStarted == state) || (State.MigrationPaused == state));
-
-        if (State.MigrationStarted == state) {
-             goldToken.finishMigration();
-             migrationFinishedTime = uint64(now);
-        }
-
-        state = State.MigrationFinished;
-    }
-
-    function destroyMe() public onlyCreator {
-        selfdestruct(msg.sender);
-    }
-
-    // MNTP
-    // Call this to migrate your MNTP tokens to Goldmint MNT
-    // (this is one-way only)
-    // _gmAddress is something like that - "BTS7yRXCkBjKxho57RCbqYE3nEiprWXXESw3Hxs5CKRnft8x7mdGi"
-    //
-    // !!! WARNING: will not allow anyone to migrate tokens partly
-    // !!! DISCLAIMER: check goldmint blockchain address format. You will not be able to change that!
-    function migrateMntp(string _gmAddress) public {
-        require((state==State.MigrationStarted) || (state==State.MigrationFinished));
-
-        // 1 - calculate current reward
-        uint myBalance = mntpToken.balanceOf(msg.sender);
-        require(0!=myBalance);
-
-        uint myRewardMax = calculateMyRewardMax(msg.sender);
-        uint myReward = calculateMyReward(myRewardMax);
-
-        // 2 - pay the reward to our user
-        goldToken.transferRewardWithoutFee(msg.sender, myReward);
-
-        // 3 - burn tokens
-        // WARNING: burn will reduce totalSupply
-        //
-        // WARNING: creator must call
-        // setIcoContractAddress(migrationContractAddress)
-        // of the mntpToken
-        mntpToken.burnTokens(msg.sender,myBalance);
-
-        // save tuple
-        Migration memory mig;
-        mig.ethAddress = msg.sender;
-        mig.gmAddress = _gmAddress;
-        mig.tokensCount = myBalance;
-        mig.migrated = false;
-        mig.date = uint64(now);
-        mig.comment = '';
-
-        mntpMigrations[mntpMigrationsCount + 1] = mig;
-        mntpMigrationIndexes[msg.sender] = mntpMigrationsCount + 1;
-        mntpMigrationsCount++;
-
-        // send an event
-        MntpMigrateWanted(msg.sender, _gmAddress, myBalance);
-    }
-
-    function isMntpMigrated(address _who) public constant returns(bool) {
-        uint index = mntpMigrationIndexes[_who];
-
-        Migration memory mig = mntpMigrations[index];
-        return mig.migrated;
-    }
-
-    function setMntpMigrated(address _who, bool _isMigrated, string _comment) public onlyCreator {
-        uint index = mntpMigrationIndexes[_who];
-        require(index > 0);
-
-        mntpMigrations[index].migrated = _isMigrated;
-        mntpMigrations[index].comment = _comment;
-
-        // send an event
-        if (_isMigrated) {
-             MntpMigrated(  mntpMigrations[index].ethAddress,
-                            mntpMigrations[index].gmAddress,
-                            mntpMigrations[index].tokensCount);
-        }
-    }
-
-    // GOLD
-    function migrateGold(string _gmAddress) public {
-        require((state==State.MigrationStarted) || (state==State.MigrationFinished));
-
-        // 1 - get balance
-        uint myBalance = goldToken.balanceOf(msg.sender);
-        require(0!=myBalance);
-
-        // 2 - burn tokens
-        // WARNING: burn will reduce totalSupply
-        //
-        goldToken.burnTokens(msg.sender,myBalance);
-
-        // save tuple
-        Migration memory mig;
-        mig.ethAddress = msg.sender;
-        mig.gmAddress = _gmAddress;
-        mig.tokensCount = myBalance;
-        mig.migrated = false;
-        mig.date = uint64(now);
-        mig.comment = '';
-
-        goldMigrations[goldMigrationsCount + 1] = mig;
-        goldMigrationIndexes[msg.sender] = goldMigrationsCount + 1;
-        goldMigrationsCount++;
-
-        // send an event
-        GoldMigrateWanted(msg.sender, _gmAddress, myBalance);
-    }
-
-    function isGoldMigrated(address _who) public constant returns(bool) {
-        uint index = goldMigrationIndexes[_who];
-
-        Migration memory mig = goldMigrations[index];
-        return mig.migrated;
-    }
-
-    function setGoldMigrated(address _who, bool _isMigrated, string _comment) public onlyCreator {
-        uint index = goldMigrationIndexes[_who];
-        require(index > 0);
-
-        goldMigrations[index].migrated = _isMigrated;
-        goldMigrations[index].comment = _comment;
-
-        // send an event
-        if (_isMigrated) {
-             GoldMigrated(  goldMigrations[index].ethAddress,
-                            goldMigrations[index].gmAddress,
-                            goldMigrations[index].tokensCount);
-        }
-    }
-
-    // Each MNTP token holder gets a GOLD reward as a percent of all rewards
-    // proportional to his MNTP token stake
-    function calculateMyRewardMax(address _of) public constant returns(uint){
-        if (0 == mntpToMigrateTotal) {
-             return 0;
-        }
-
-        uint myCurrentMntpBalance = mntpToken.balanceOf(_of);
-        if (0 == myCurrentMntpBalance) {
-             return 0;
-        }
-
-        return (migrationRewardTotal * myCurrentMntpBalance) / mntpToMigrateTotal;
-    }
-
-    //emergency function. used in case of a mistake to transfer all the reward to a new migraiton smart contract.
-    function transferReward(address _newContractAddress) public onlyCreator {
-      goldToken.transferRewardWithoutFee(_newContractAddress, goldToken.balanceOf(this));
-    }
-
-    // Migration rewards decreased linearly.
-    //
-    // The formula is: rewardPercents = max(100 - 100 * day / 365, 0)
-    //
-    // On 1st day of migration, you will get: 100 - 100 * 0/365 = 100% of your rewards
-    // On 2nd day of migration, you will get: 100 - 100 * 1/365 = 99.7261% of your rewards
-    // On 365th day of migration, you will get: 100 - 100 * 364/365 = 0.274%
-    function calculateMyRewardDecreased(uint _day, uint _myRewardMax) public constant returns(uint){
-        if (_day >= 365) {
-             return 0;
-        }
-
-        uint x = ((100 * 1000000000 * _day) / 365);
-        return (_myRewardMax * ((100 * 1000000000) - x)) / (100 * 1000000000);
-    }
-
-    function calculateMyReward(uint _myRewardMax) public constant returns(uint){
-        // day starts from 0
-        uint day = (uint64(now) - migrationStartedTime) / uint64(1 days);
-        return calculateMyRewardDecreased(day, _myRewardMax);
+        GoldUnhold(_ethAddress, _amount);
     }
 
     // do not allow to send money to this contract...
