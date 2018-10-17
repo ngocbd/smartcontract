@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NonOperationalWithdrawManager at 0xeadeb1c53e7411b667582ac51671164fecb4a219
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NonOperationalWithdrawManager at 0xdf8b91e902fb81d6c37cc2e1fa47b5f3ed02157b
 */
 pragma solidity ^0.4.18;
-
 
 /// @title Provides possibility manage holders? country limits and limits for holders.
 contract DataControllerInterface {
@@ -16,6 +15,7 @@ contract DataControllerInterface {
 
     function changeAllowance(address _holder, uint _value) public returns (uint);
 }
+
 
 contract ERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -55,7 +55,6 @@ contract ServiceControllerInterface {
     /// @return `true` when an address is a service, `false` otherwise
     function isService(address _address) public view returns (bool);
 }
-
 
 contract ATxAssetInterface {
 
@@ -145,7 +144,6 @@ contract Owned {
     }
 }
 
-
 contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed from, address indexed spender, uint256 value);
@@ -158,7 +156,6 @@ contract ERC20Interface {
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
-
 
 /**
  * @title Generic owned destroyable contract
@@ -188,7 +185,6 @@ contract Object is Owned {
         return OWNED_ACCESS_DENIED_ONLY_CONTRACT_OWNER;
     }
 }
-
 
 /**
 * @title SafeMath
@@ -229,9 +225,14 @@ contract GroupsAccessManagerEmitter {
     event GroupDeactivated(bytes32 groupName);
     event UserToGroupAdded(address user, bytes32 groupName);
     event UserFromGroupRemoved(address user, bytes32 groupName);
+
+    event Error(uint errorCode);
+
+    function _emitError(uint _errorCode) internal returns (uint) {
+        Error(_errorCode);
+        return _errorCode;
+    }
 }
-
-
 
 /// @title Group Access Manager
 ///
@@ -268,13 +269,13 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
     }
 
     uint public membersCount;
-    mapping(uint => address) index2memberAddress;
-    mapping(address => uint) memberAddress2index;
+    mapping(uint => address) public index2memberAddress;
+    mapping(address => uint) public memberAddress2index;
     mapping(address => Member) address2member;
 
     uint public groupsCount;
-    mapping(uint => bytes32) index2groupName;
-    mapping(bytes32 => uint) groupName2index;
+    mapping(uint => bytes32) public index2groupName;
+    mapping(bytes32 => uint) public groupName2index;
     mapping(bytes32 => Group) groupName2group;
     mapping(bytes32 => bool) public groupsBlocked; // if groupName => true, then couldn't be used for confirmation
 
@@ -292,7 +293,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         require(_user != 0x0);
 
         if (isRegisteredUser(_user)) {
-            return USER_MANAGER_MEMBER_ALREADY_EXIST;
+            return _emitError(USER_MANAGER_MEMBER_ALREADY_EXIST);
         }
 
         uint _membersCount = membersCount.add(1);
@@ -316,7 +317,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
 
         uint _memberIndex = memberAddress2index[_user];
         if (_memberIndex == 0 || address2member[_user].groupsCount != 0) {
-            return USER_MANAGER_INVALID_INVOCATION;
+            return _emitError(USER_MANAGER_INVALID_INVOCATION);
         }
 
         uint _membersCount = membersCount;
@@ -346,7 +347,7 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         require(_groupName != bytes32(0));
 
         if (isGroupExists(_groupName)) {
-            return USER_MANAGER_GROUP_ALREADY_EXIST;
+            return _emitError(USER_MANAGER_GROUP_ALREADY_EXIST);
         }
 
         uint _groupsCount = groupsCount.add(1);
@@ -487,6 +488,53 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         }
     }
 
+    /// @notice Gets group members
+    function getGroupMembers(bytes32 _groupName) 
+    public 
+    view 
+    returns (address[] _members) 
+    {
+        if (!isGroupExists(_groupName)) {
+            return;
+        }
+
+        Group storage _group = groupName2group[_groupName];
+        uint _membersCount = _group.membersCount;
+        if (_membersCount == 0) {
+            return;
+        }
+
+        _members = new address[](_membersCount);
+        for (uint _userIdx = 0; _userIdx < _membersCount; ++_userIdx) {
+            uint _memberIdx = _group.index2globalIndex[_userIdx + 1];
+            _members[_userIdx] = index2memberAddress[_memberIdx];
+        }
+    }
+
+    /// @notice Gets a list of groups where passed user is a member
+    function getUserGroups(address _user)
+    public
+    view
+    returns (bytes32[] _groups)
+    {
+        if (!isRegisteredUser(_user)) {
+            return;
+        }
+
+        Member storage _member = address2member[_user];
+        uint _groupsCount = _member.groupsCount;
+        if (_groupsCount == 0) {
+            return;
+        }
+
+        _groups = new bytes32[](_groupsCount);
+        for (uint _groupIdx = 0; _groupIdx < _groupsCount; ++_groupIdx) {
+            uint _groupNameIdx = _member.index2globalIndex[_groupIdx + 1];
+            _groups[_groupIdx] = index2groupName[_groupNameIdx];
+        }
+
+    }
+
     // PRIVATE
 
     function _removeGroupFromMember(address _user, bytes32 _groupName) private {
@@ -512,7 +560,6 @@ contract GroupsAccessManager is Object, GroupsAccessManagerEmitter {
         _member.groupsCount = _memberGroupsCount;
     }
 }
-
 
 contract PendingManagerEmitter {
 
@@ -573,7 +620,6 @@ contract PendingManagerInterface {
         );
 }
 
-
 /// @title PendingManager
 ///
 /// Base implementation
@@ -614,6 +660,9 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
         uint totalAcceptedLimit;
         uint totalDeclinedLimit;
 
+        bytes4 sig;
+        address contractAddress;
+
         uint securesCount;
         mapping(uint => uint) index2txIndex;
         mapping(uint => uint) txIndex2index;
@@ -641,13 +690,13 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
     mapping(address => bool) public authorized;
 
     uint public policiesCount;
-    mapping(uint => bytes32) index2PolicyId; // index => policy hash
-    mapping(bytes32 => uint) policyId2Index; // policy hash => index
+    mapping(uint => bytes32) public index2PolicyId; // index => policy hash
+    mapping(bytes32 => uint) public policyId2Index; // policy hash => index
     mapping(bytes32 => Policy) policyId2policy; // policy hash => policy struct
 
     uint public txCount;
-    mapping(uint => bytes32) index2txKey;
-    mapping(bytes32 => uint) txKey2index; // tx key => index
+    mapping(uint => bytes32) public index2txKey;
+    mapping(bytes32 => uint) public txKey2index; // tx key => index
     mapping(bytes32 => Guard) txKey2guard;
 
     /// @dev Execution is allowed only by authorized contract
@@ -740,6 +789,8 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
             _policy.groupName2index[_groupName] = _policyGroupsCount;
             _policy.participatedGroups[_policyGroupsCount].groupName = _groupName;
             _policy.groupsCount = _policyGroupsCount;
+            _policy.sig = _sig;
+            _policy.contractAddress = _contract;
         }
 
         uint _previousAcceptLimit = _policy.participatedGroups[_policyGroupsCount].acceptLimit;
@@ -1028,6 +1079,22 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
         require(_contract != 0x0);
         
         bytes32 _policyHash = keccak256(_sig, _contract);
+        (_groupNames, _acceptLimits, _declineLimits, _totalAcceptedLimit, _totalDeclinedLimit, ) = getPolicyDetailsByHash(_policyHash);
+    }
+
+    /// @notice Check policy details
+    function getPolicyDetailsByHash(bytes32 _policyHash)
+    public 
+    view 
+    returns (
+        bytes32[] _groupNames,
+        uint[] _acceptLimits,
+        uint[] _declineLimits,
+        uint _totalAcceptedLimit,
+        uint _totalDeclinedLimit,
+        bytes4 _sig,
+        address _contract
+    ) {
         uint _policyIdx = policyId2Index[_policyHash];
         if (_policyIdx == 0) {
             return;
@@ -1047,6 +1114,7 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
         }
 
         (_totalAcceptedLimit, _totalDeclinedLimit) = (_policy.totalAcceptedLimit, _policy.totalDeclinedLimit);
+        (_sig, _contract) = (_policy.sig, _policy.contractAddress);
     }
 
     /// @notice Check policy include target group
@@ -1063,6 +1131,94 @@ contract PendingManager is Object, PendingManagerEmitter, PendingManagerInterfac
     /// @return bool
     function isPolicyExist(bytes32 _policyHash) public view returns (bool) {
         return policyId2Index[_policyHash] != 0;
+    }
+
+    /// @notice Gets list of txs (paginated)
+    function getTxs(uint _fromIdx, uint _maxLen) 
+    public 
+    view 
+    returns (
+        bytes32[] _txKeys,
+        bytes32[] _policyHashes,
+        uint[] _alreadyAccepted,
+        uint[] _alreadyDeclined,
+        uint[] _states
+    ) {
+        uint _count = txCount;
+        require(_fromIdx < _count);
+        _maxLen = (_fromIdx + _maxLen <= _count) ? _maxLen : (_count - _fromIdx);
+
+        _txKeys = new bytes32[](_maxLen);
+        _policyHashes = new bytes32[](_maxLen);
+        _alreadyAccepted = new uint[](_maxLen);
+        _alreadyDeclined = new uint[](_maxLen);
+        _states = new uint[](_maxLen);
+        uint _pointer = 0;
+        for (uint _txIdx = _fromIdx; _txIdx < _fromIdx + _maxLen; ++_fromIdx) {
+            bytes32 _txKey = index2txKey[_txIdx + 1];
+            _txKeys[_pointer] = _txKey;
+
+            Guard storage _guard = txKey2guard[_txKey];
+            _policyHashes[_pointer] = index2PolicyId[_guard.basePolicyIndex];
+            _alreadyAccepted[_pointer] = _guard.alreadyAccepted;
+            _alreadyDeclined[_pointer] = _guard.alreadyDeclined;
+            _states[_pointer] = uint(_guard.state);
+            _pointer += 1;
+        }
+    }
+
+    /// @notice Gets details about voting for a tx
+    function getTxVoteDetails(bytes32 _txKey)
+    public
+    view 
+    returns (
+        bytes32[] _groupNames,
+        uint[] _acceptedCount,
+        uint[] _acceptLimit,
+        uint[] _declinedCount,
+        uint[] _declineLimit,
+        uint _state
+    ) {
+        if (txKey2index[_txKey] == 0) {
+            return;
+        }
+
+        Guard storage _guard = txKey2guard[_txKey];
+        Policy storage _policy = policyId2policy[index2PolicyId[_guard.basePolicyIndex]];
+        uint _groupsCount = _policy.groupsCount;
+        _groupNames = new bytes32[](_groupsCount);
+        _acceptedCount = new uint[](_groupsCount);
+        _acceptLimit = new uint[](_groupsCount);
+        _declinedCount = new uint[](_groupsCount);
+        _declineLimit = new uint[](_groupsCount);
+        for (uint _groupIdx = 0; _groupIdx < _groupsCount; ++_groupIdx) {
+            Requirements storage _requirement = _policy.participatedGroups[_groupIdx];
+            bytes32 _groupName = _requirement.groupName;
+            _groupNames[_groupIdx] = _groupName;
+            _acceptedCount[_groupIdx] = _guard.acceptedCount[_groupName];
+            _acceptLimit[_groupIdx] = _requirement.acceptLimit;
+            _declinedCount[_groupIdx] = _guard.declinedCount[_groupName];
+            _declineLimit[_groupIdx] = _requirement.declineLimit;
+        }
+
+        _state = uint(_guard.state);
+    }
+
+    /// @notice Get singe decision vote of a user for a tx
+    function getVoteAtTxForUser(bytes32 _txKey, address _user)
+    public
+    view
+    returns (
+        bytes32 _groupName,
+        bool _accepted
+    ) {
+        if (txKey2index[_txKey] == 0) {
+            return;
+        }
+
+        Guard storage _guard = txKey2guard[_txKey];
+        Vote memory _vote = _guard.votes[_user];
+        (_groupName, _accepted) = (_vote.groupName, _vote.accepted);
     }
 
     /// @notice Check is transaction exist
@@ -1169,11 +1325,9 @@ contract MultiSigAdapter is Object {
     }
 }
 
-
 contract NonOperationalWithdrawManagerEmitter {
     event TokensWithdraw(address from, uint amount, uint timestamp);
 }
-
 
 contract NonOperationalWithdrawManager is MultiSigAdapter, NonOperationalWithdrawManagerEmitter {
 
