@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dgram at 0xaf71e8dcf607d9a6bb4930ab7fb8803063c6af28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dgram at 0x40e7f7d55939332c60074529ed2a0da77278083c
 */
 pragma solidity ^0.4.24;
 
@@ -254,7 +254,7 @@ contract CappedMintableBurnableToken is TokenCore {
 contract Dgram is CappedMintableBurnableToken {
 
     constructor() public {
-        symbol = "DGM";
+        symbol = "BGM";
         name = "Dgram Token";
         decimals = 18;
         _totalSupply = 1000000 * 10**uint(decimals);
