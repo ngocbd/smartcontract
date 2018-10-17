@@ -1,89 +1,111 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCTOKEN at 0x51a1421116f4d35d2952343b9dd66b3371e48b64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCToken at 0x0dc09ffca9c0cb49913fae2e9c1193c921a714e1
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.4;
 
-contract Token {
+/**
+*
+* ERC20 token
+*
+* doc https://github.com/ethereum/EIPs/issues/20
+*
+*/
+contract ERC20Token {
 
     function totalSupply() constant returns (uint256 supply) {}
+
     function balanceOf(address _owner) constant returns (uint256 balance) {}
+
     function transfer(address _to, uint256 _value) returns (bool success) {}
+
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
     function approve(address _spender, uint256 _value) returns (bool success) {}
+
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract StandardToken is Token {
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-     
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+/**
+*
+* Master Coin Token
+*
+* author luc
+* date 2018/6/14
+*
+*/
+contract MCToken is ERC20Token {
+
+    string private _name = "Master Coin";
+    string private _symbol = "MC";
+    uint8 private _decimals = 18;
+
+    uint256 private _totalSupply = 210000000 * (10 ** uint256(_decimals));
+
+    mapping(address=>uint256) private _balances;
+    mapping(address=>mapping(address=>uint256)) private _allowances;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function MCToken() {
+        _balances[msg.sender] = _totalSupply;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    function name() public view returns (string name){
+        name = _name;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    function symbol() public view returns (string symbol){
+        symbol = _symbol;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
+    function decimals() public view returns (uint8 decimals){
+        decimals = _decimals;
+    }
+
+    function totalSupply() public view returns (uint256 totalSupply){
+        totalSupply = _totalSupply;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance){
+        balance = _balances[_owner];
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success){
+        require(_balances[msg.sender] >= _value);
+        _balances[msg.sender] -= _value;
+        _balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        success = true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
+        require(_balances[_from] >= _value);
+        require(_allowances[_from][msg.sender] >= _value);
+
+        uint256 previousBalances = _balances[_from] + _balances[_to];
+
+        _balances[_from] -= _value;
+        _allowances[_from][msg.sender] -= _value;
+        _balances[_to] += _value;
+        Transfer(_from, _to, _value);
+
+        assert(_balances[_from] + _balances[_to] == previousBalances);
+
+        success = true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success){
+        _allowances[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-        return true;
+        success = true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-}
-
-contract MCTOKEN is StandardToken {
-
-    function () {
-        throw;
-    }
-
-
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-
-    function MCTOKEN(
-        ) {
-        balances[msg.sender] = 40000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 40000000000000000;                        // Update total supply (100000 for example)
-        name = "Minecraft Token";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "MC?";                               // Set the symbol for display purposes
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining){
+        remaining = _allowances[_owner][_spender];
     }
 }
