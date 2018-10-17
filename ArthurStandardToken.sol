@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArthurStandardToken at 0xb9469430eabcbfa77005cd3ad4276ce96bd221e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArthurStandardToken at 0x1ebd8d3ca115451b9b6bbaa7ee2f7b0f96e49fd8
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 contract Token {
     /// total amount of tokens
@@ -102,7 +102,7 @@ contract ArthurStandardToken is StandardToken {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { return false; }
+        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
 }
