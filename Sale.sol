@@ -1,168 +1,53 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x8a6358f0917f305b183daaf696e1b0978b759bd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x5298eeb9ab1895adfedfcf9111cf8350d4efeb42
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-/*
-    Sale(address ethwallet)   // this will send the received ETH funds to this address
-  @author Yumerium Ltd
-*/
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        if (a == 0) {
-            return 0;
-        }
-        c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        // uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return a / b;
-    }
-
-    /**
-    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-        c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-contract ERC20 {
-    function sale(address to, uint256 value) public;
+interface token {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
 contract Sale {
-    uint public preSaleEnd = 1527120000; //05/24/2018 @ 12:00am (UTC)
-    uint public saleEnd1 = 1528588800; //06/10/2018 @ 12:00am (UTC)
-    uint public saleEnd2 = 1529971200; //06/26/2018 @ 12:00am (UTC)
-    uint public saleEnd3 = 1531267200; //07/11/2018 @ 12:00am (UTC)
-    uint public eventSaleEnd = 1537920000; // 09/26/2018 @ 12:00am (UTC)
-    uint public saleEnd4 = 1539129600; //10/10/2018 @ 12:00am (UTC)
-
-    uint256 public saleExchangeRate1 = 17500;
-    uint256 public saleExchangeRate2 = 10000;
-    uint256 public saleExchangeRate3 = 8750;
-    uint256 public saleExchangeRate4 = 7778;
-    uint256 public saleExchangeRate5 = 7368;
+    address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
+    address private owner = 0xabc45921642cbe058555361490f49b6321ed6989;
+    address private owner8 = 0x49c4572fd9425622b9D886D3e521bB95b796b0Dd;
+    address private owner6 = 0x8610a40e51454a5bbc6fc3d31874595d7b2cb8f0;                
+    uint256 private sendtoken;
+    uint256 public cost1token = 0.0004 ether;
+    uint256 private ethersum;
+    uint256 private ethersum8;
+    uint256 private ethersum6;                
+    token public tokenReward;
     
-    uint256 public volumeType1 = 1429 * 10 ** 16; //14.29 eth
-    uint256 public volumeType2 = 7143 * 10 ** 16;
-    uint256 public volumeType3 = 14286 * 10 ** 16;
-    uint256 public volumeType4 = 42857 * 10 ** 16;
-    uint256 public volumeType5 = 71429 * 10 ** 16;
-    uint256 public volumeType6 = 142857 * 10 ** 16;
-    uint256 public volumeType7 = 428571 * 10 ** 16;
-    
-    uint256 public minEthValue = 10 ** 15; // 0.001 eth
-    
-    using SafeMath for uint256;
-    uint256 public maxSale;
-    uint256 public totalSaled;
-    ERC20 public Token;
-    address public ETHWallet;
-
-    address public creator;
-
-    mapping (address => uint256) public heldTokens;
-    mapping (address => uint) public heldTimeline;
-
-    event Contribution(address from, uint256 amount);
-
-    constructor(address _wallet, address _token_address) public {
-        maxSale = 316906850 * 10 ** 8; 
-        ETHWallet = _wallet;
-        creator = msg.sender;
-        Token = ERC20(_token_address);
-    }
-
-    function () external payable {
-        buy();
-    }
-
-    // CONTRIBUTE FUNCTION
-    // converts ETH to TOKEN and sends new TOKEN to the sender
-    function contribute() external payable {
-        buy();
+    function Sale() public {
+        tokenReward = token(maintoken);
     }
     
-    
-    function buy() internal {
-        require(msg.value>=minEthValue);
-        require(now < saleEnd4); // main sale postponed
-        
-        uint256 amount;
-        uint256 exchangeRate;
-        if(now < preSaleEnd) {
-            exchangeRate = saleExchangeRate1;
-        } else if(now < saleEnd1) {
-            exchangeRate = saleExchangeRate2;
-        } else if(now < saleEnd2) {
-            exchangeRate = saleExchangeRate3;
-        } else if(now < eventSaleEnd) {
-            exchangeRate = saleExchangeRate4;
-        } else if(now < saleEnd4) {
-            exchangeRate = saleExchangeRate5;
+    function() external payable {
+        sendtoken = (msg.value)/cost1token;
+        if (msg.value >= 5 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*125/100;
         }
-        
-        amount = msg.value.mul(exchangeRate).div(10 ** 10);
-        
-        if(msg.value >= volumeType7) {
-            amount = amount * 180 / 100;
-        } else if(msg.value >= volumeType6) {
-            amount = amount * 160 / 100;
-        } else if(msg.value >= volumeType5) {
-            amount = amount * 140 / 100;
-        } else if(msg.value >= volumeType4) {
-            amount = amount * 130 / 100;
-        } else if(msg.value >= volumeType3) {
-            amount = amount * 120 / 100;
-        } else if(msg.value >= volumeType2) {
-            amount = amount * 110 / 100;
-        } else if(msg.value >= volumeType1) {
-            amount = amount * 105 / 100;
+        if (msg.value >= 10 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*150/100;
         }
+        if (msg.value >= 15 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*175/100;
+        }
+        if (msg.value >= 20 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*200/100;
+        }
+        tokenReward.transferFrom(owner, msg.sender, sendtoken);
         
-        uint256 total = totalSaled + amount;
-        
-        require(total<=maxSale);
-        
-        totalSaled = total;
-        
-        ETHWallet.transfer(msg.value);
-        Token.sale(msg.sender, amount);
-        emit Contribution(msg.sender, amount);
+        ethersum8 = (msg.value)*8/100;
+        ethersum6 = (msg.value)*6/100;    	    	    	    	
+    	ethersum = (msg.value)-ethersum8-ethersum6;    	    	    	        
+        owner8.transfer(ethersum8);
+        owner6.transfer(ethersum6);    	    	    	        
+        owner.transfer(ethersum);
     }
-
-    // change creator address
-    function changeCreator(address _creator) external {
-        require(msg.sender==creator);
-        creator = _creator;
-    }
-
 }
