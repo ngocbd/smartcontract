@@ -1,44 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x6f9064180354a6773db5af7226a40614c8dbce39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x28d1fd7814858e9cec88941415ee52f50cb4a74b
 */
-pragma solidity ^0.4.19;
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20 {
-  function transfer(address _to, uint256 _value);
-}
-
-
+pragma solidity ^0.4.11;
 
 /**
  * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
   address public owner;
 
-  function Ownable() public {
+  function Ownable() {
     owner = msg.sender;
   }
-
+ 
   modifier onlyOwner() {
     if (msg.sender != owner) {
       revert();
     }
     _;
   }
-
-  function transferOwnership(address newOwner) onlyOwner public {
+ 
+  function transferOwnership(address newOwner) onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
     }
   }
 
+}
+
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+ 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 contract Airdropper is Ownable {
@@ -47,8 +50,9 @@ contract Airdropper is Ownable {
     onlyOwner
     returns (uint256) {
         uint256 i = 0;
-        for (i = 0; i < dests.length; i++) {
+        while (i < dests.length) {
            ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
         }
         return(i);
     }
