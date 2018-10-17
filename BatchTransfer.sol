@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0xf9f6382790d74646aa4d590594442523ca4ed159
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransfer at 0xb809e7167406903a64e11887dd7862a18be4377d
 */
 pragma solidity ^0.4.21;
 
@@ -9,7 +9,7 @@ contract Token{
 
 contract BatchTransfer{
     address public owner;
-    address public admin;
+    mapping (address => bool) public admins;
     Token public token;
     
     modifier onlyOwner{
@@ -18,7 +18,7 @@ contract BatchTransfer{
     }
     
     modifier onlyOwnerOrAdmin{
-        require(msg.sender == owner || msg.sender == admin);
+        require(msg.sender == owner || admins[msg.sender] == true);
         _;
     }
     
@@ -31,8 +31,14 @@ contract BatchTransfer{
         owner = newOwner;
     }
     
-    function ownerSetAdmin(address newAdmin) public onlyOwner{
-        admin = newAdmin;
+    function ownerSetAdmin(address[] _admins) public onlyOwner{
+        for(uint i = 0; i<_admins.length; i++){
+            admins[_admins[i]] = true;
+        }
+    }
+    
+    function ownerModAdmin(address _admin, bool _authority) onlyOwner{
+        admins[_admin] = _authority;
     }
     
     function ownerTransfer(address _addr, uint _value) public onlyOwner{
