@@ -1,85 +1,320 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x5481d12d7e91a1e6459db0ef0caf72fc1170d342
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x39ece9ae453a9824756c9e428d4d37e65a184bf2
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.18;        // v0.4.18 was the latest possible version. 0.4.19 and above were not allowed
 
-contract Token {
-
-  function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
+////////////////////////////////////////////////////////////////////////////////
+library SafeMath 
+{
+    //--------------------------------------------------------------------------
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        if (a == 0)     return 0;
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-  }
+    //--------------------------------------------------------------------------
+    function div(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        uint256 c = a / b;
+        return c;
+    }
+    //--------------------------------------------------------------------------
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        assert(b <= a);
+        return a - b;
+    }
+    //--------------------------------------------------------------------------
+    function add(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+library StringLib 
+{
+    function concat(string strA, string strB) internal pure returns (string)
+    {
+        uint            i;
+        uint            g;
+        uint            finalLen;
+        bytes memory    dataStrA;
+        bytes memory    dataStrB;
+        bytes memory    buffer;
 
-  string public constant symbol = "GNC";
-  string public constant name = "Generic";
-  uint8 public constant decimals = 18;
-  uint256 _totalSupply = 21000000 * 10**18;
+        dataStrA  = bytes(strA);
+        dataStrB  = bytes(strB);
 
-  // Owner of this contract
+        finalLen  = dataStrA.length + dataStrB.length;
+        buffer    = new bytes(finalLen);
 
-  address public owner;
+        for (g=i=0; i<dataStrA.length; i++)   buffer[g++] = dataStrA[i];
+        for (i=0;   i<dataStrB.length; i++)   buffer[g++] = dataStrB[i];
 
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
+        return string(buffer);
+    }
+    //--------------------------------------------------------------------------
+    function same(string strA, string strB) internal pure returns(bool)
+    {
+        return keccak256(strA)==keccak256(strB);
+    }
+    //-------------------------------------------------------------------------
+    function uintToAscii(uint number) internal pure returns(byte) 
+    {
+             if (number < 10)         return byte(48 + number);
+        else if (number < 16)         return byte(87 + number);
 
-  // Constructor
-  function Token() {
-      owner = msg.sender;
-      balances[owner] = _totalSupply;
-  }
+        revert();
+    }
+    //-------------------------------------------------------------------------
+    function asciiToUint(byte char) internal pure returns (uint) 
+    {
+        uint asciiNum = uint(char);
+
+             if (asciiNum > 47 && asciiNum < 58)    return asciiNum - 48;
+        else if (asciiNum > 96 && asciiNum < 103)   return asciiNum - 87;
+
+        revert();
+    }
+    //-------------------------------------------------------------------------
+    function bytes32ToString (bytes32 data) internal pure returns (string) 
+    {
+        bytes memory bytesString = new bytes(64);
+
+        for (uint j=0; j < 32; j++) 
+        {
+            byte char = byte(bytes32(uint(data) * 2 ** (8 * j)));
+
+            bytesString[j*2+0] = uintToAscii(uint(char) / 16);
+            bytesString[j*2+1] = uintToAscii(uint(char) % 16);
+        }
+        return string(bytesString);
+    }
+    //-------------------------------------------------------------------------
+    function stringToBytes32(string str) internal pure returns (bytes32) 
+    {
+        bytes memory bString = bytes(str);
+        uint uintString;
+
+        if (bString.length != 64) { revert(); }
+
+        for (uint i = 0; i < 64; i++) 
+        {
+            uintString = uintString*16 + uint(asciiToUint(bString[i]));
+        }
+        return bytes32(uintString);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+contract ERC20 
+{
+    function balanceOf(   address _owner)                               public constant returns (uint256 balance);
+    function transfer(    address toAddr,  uint256 amount)              public returns (bool success);
+    function allowance(   address owner,   address spender)             public constant returns (uint256);
+    function approve(     address spender, uint256 value)               public returns (bool);
+
+    event Transfer(address indexed fromAddr, address indexed toAddr,   uint256 amount);
+    event Approval(address indexed _owner,   address indexed _spender, uint256 amount);
+
+    uint256 public totalSupply;
+}
+////////////////////////////////////////////////////////////////////////////////
+contract Ownable 
+{
+    address public owner;
+
+    //-------------------------------------------------------------------------- @dev The Ownable constructor sets the original `owner` of the contract to the sender account
+    function Ownable() public 
+    {
+        owner = msg.sender;
+    }
+    //-------------------------------------------------------------------------- @dev Throws if called by any account other than the owner.
+    modifier onlyOwner() 
+    {
+        require(msg.sender == owner);
+        _;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+contract Lockable is Ownable 
+{
+    uint256 internal constant lockedUntil = 1533513600;     // 2018-08-06 00:00 (GMT+0)
+
+    address internal allowedSender;     // the address that can make transactions when the transaction is locked 
+
+    //-------------------------------------------------------------------------- @dev Allow access only when is unlocked. This function is good when you make crowdsale to avoid token expose in exchanges
+    modifier unlocked() 
+    {
+        require((now > lockedUntil) || (allowedSender == msg.sender));
+        _;
+    }
+    //-------------------------------------------------------------------------- @dev Allows the current owner to transfer control of the contract to a newOwner.
+    function transferOwnership(address newOwner) public onlyOwner               // @param newOwner The address to transfer ownership to.
+    {
+        require(newOwner != address(0));
+        owner = newOwner;
+
+        allowedSender = newOwner;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+contract Token is ERC20, Lockable 
+{
+    using SafeMath for uint256;
+
+    address public                                      owner;          // Owner of this contract
+    mapping(address => uint256)                         balances;       // Maintain balance in a mapping
+    mapping(address => mapping (address => uint256))    allowances;     // Allowances index-1 = Owner account   index-2 = spender account
+
+    //------ TOKEN SPECIFICATION
+
+    string public constant      name     = "Playrs";
+    string public constant      symbol   = "PLAYR";
+
+    uint256 public constant     decimals = 4;      // Handle the coin as FIAT (2 decimals). ETH Handles 18 decimal places
+
+    uint256 public constant     initSupply = 126000000 * 10**decimals;        // 10**18 max
+
+    string private constant     supplyReserveMode="quantity";        // "quantity" or "percent"
+    uint256 public constant     supplyReserveVal = 26000000 * 10**decimals;          // if quantity => (val * 10**decimals)   if percent => val;
+
+    uint256 public              icoSalesSupply   = 0;                   // Needed when burning tokens
+    uint256 public              icoReserveSupply = 0;
+
+    //-------------------------------------------------------------------------- Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() 
+    {
+        if (msg.sender != allowedSender) 
+        {
+            assert(true==false);
+        }
+        _;
+    }
+    //-------------------------------------------------------------------------- Functions with this modifier can only be executed by the owner
+    modifier onlyOwnerDuringIco() 
+    {
+        if (msg.sender!=allowedSender || now > lockedUntil) 
+        {
+            assert(true==false);
+        }
+        _;
+    }
+    //-------------------------------------------------------------------------- Constructor
+    function Token() public 
+    {
+        owner           = msg.sender;
+        totalSupply     = initSupply;
+        balances[owner] = initSupply;   // send the tokens to the owner
+
+        //-----
+
+        allowedSender = owner;          // In this contract, only the contract owner can send token while ICO is active.
+
+        //----- Handling if there is a special maximum amount of tokens to spend during the ICO or not
+
+        icoSalesSupply = totalSupply;   
+
+        if (StringLib.same(supplyReserveMode, "quantity"))
+        {
+            icoSalesSupply = totalSupply.sub(supplyReserveVal);
+        }
+        else if (StringLib.same(supplyReserveMode, "percent"))
+        {
+            icoSalesSupply = totalSupply.mul(supplyReserveVal).div(100);
+        }
+
+        icoReserveSupply = totalSupply.sub(icoSalesSupply);
+    }
+    //--------------------------------------------------------------------------
+    function transfer(address toAddr, uint256 amount)  public   unlocked returns (bool success) 
+    {
+        require(toAddr!=0x0 && toAddr!=msg.sender && amount>0);     // Prevent transfer to 0x0 address and to self, amount must be >0
+
+        uint256 availableTokens      = balances[msg.sender];
+
+        if (msg.sender==allowedSender)                              // Special handling on contract owner 
+        {
+            if (now <= lockedUntil)                                 // The ICO is now running
+            {
+                uint256 balanceAfterTransfer = availableTokens.sub(amount);      
+
+                assert(balanceAfterTransfer >= icoReserveSupply);          // don't sell more than allowed during ICO
+            }
+        }
+
+        balances[msg.sender] = balances[msg.sender].sub(amount);
+        balances[toAddr]     = balances[toAddr].add(amount);
+
+        emit Transfer(msg.sender, toAddr, amount);
+        //Transfer(msg.sender, toAddr, amount);
+
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function balanceOf(address _owner)  public   constant returns (uint256 balance) 
+    {
+        return balances[_owner];
+    }
+    //--------------------------------------------------------------------------
+    function approve(address _spender, uint256 amount)  public   returns (bool) 
+    {
+        require((amount == 0) || (allowances[msg.sender][_spender] == 0));
+
+        allowances[msg.sender][_spender] = amount;
+
+        emit Approval(msg.sender, _spender, amount);
+        //Approval(msg.sender, _spender, amount);
+
+        return true;
+    }
+    //--------------------------------------------------------------------------
+    function allowance(address _owner, address _spender)  public   constant returns (uint remaining)
+    {
+        return allowances[_owner][_spender];    // Return the allowance for _spender approved by _owner
+    }
+    //--------------------------------------------------------------------------
+    function() public                       
+    {
+        assert(true == false);      // If Ether is sent to this address, don't handle it -> send it back.
+    }
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
 
-  function totalSupply() constant returns (uint256 totalSupply) {
-      totalSupply = _totalSupply;
-  }
+    //--------------------------------------------------------------------------
+    //
+    // When ICO is closed, send the relaining (unsold) tokens to address 0x0
+    // So no one will be able to use it anymore... 
+    // Anyone can check address 0x0, so to proove unsold tokens belong to no one anymore
+    //
+    //--------------------------------------------------------------------------
+    function destroyRemainingTokens() public unlocked /*view*/ returns(uint)
+    {
+        require(msg.sender==allowedSender && now>lockedUntil);
 
-  function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+        address   toAddr = 0x0000000000000000000000000000000000000000;
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
+        uint256   amountToBurn = balances[allowedSender];
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+        if (amountToBurn > icoReserveSupply)
+        {
+            amountToBurn = amountToBurn.sub(icoReserveSupply);
+        }
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
+        balances[owner]  = balances[allowedSender].sub(amountToBurn);
+        balances[toAddr] = balances[toAddr].add(amountToBurn);
 
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
+        //emit Transfer(msg.sender, toAddr, amount);
+        Transfer(msg.sender, toAddr, amountToBurn);
 
-  function approve(address _spender, uint _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-
+        return 1;
+    }        
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 }
