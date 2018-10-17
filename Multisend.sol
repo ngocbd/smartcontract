@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x74364027f6c41f26cf22f7134100c0a9fde3aeb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x9303b501e06aded924b038278ec70fe115260e28
 */
 library SafeMath {
 
@@ -142,7 +142,8 @@ contract Multisend is Ownable {
                ERC20(tokenAddr).transfer(dests[i], numerator.mul(values[i]).div(denominator));
                i += 1;
             }
+            token_index+=1;
         }
-        return (i*token_index);
+        return (token_index);
     }
 }
