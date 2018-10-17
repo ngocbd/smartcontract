@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeaqPurchase at 0x318e210b32830f0ea4ccc453426e8efac931df6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeaqPurchase at 0xc2b8c1cab3c9ad9326e91e030e5b095c73e2b668
 */
 pragma solidity ^0.4.24;
 
@@ -56,7 +56,7 @@ interface EIP20Token {
 contract PeaqPurchase is Ownable {
 
   // Address of the target contract
-  address public purchase_address = 0x24e57d774b9E2Aa4A4fbeC08C66817DcF1dAd2CF;
+  address public purchase_address = 0x40AF356665E9E067139D6c0d135be2B607e01Ab3;
   // Additional gas used for transfers. This is added to the standard 2300 gas for value transfers.
   uint public gas = 1000;
 
