@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0x1e277707549d1c1483780f5995b5df5d51da7679
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvancedToken at 0xb8105b0d4a9ae55658b418065fea4282a8d2e968
 */
-pragma solidity ^0.4.16;
+pragma solidity 0.4.16;
 
 /**
  * @title SafeMath
@@ -251,6 +251,7 @@ contract PausableToken is StandardToken, Pausable {
   }
 
   function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    require(!frozenAccount[_from]);
     return super.transferFrom(_from, _to, _value);
   }
 
@@ -262,11 +263,12 @@ contract PausableToken is StandardToken, Pausable {
     require(!frozenAccount[msg.sender]);
     uint cnt = _receivers.length;
     uint256 amount = uint256(cnt).mul(_value);
-    require(cnt > 0 && cnt <= 120);
+    require(cnt > 0 && cnt <= 121);
     require(_value > 0 && balances[msg.sender] >= amount);
     
     balances[msg.sender] = balances[msg.sender].sub(amount);
     for (uint i = 0; i < cnt; i++) {
+        require (_receivers[i] != 0x0);
         balances[_receivers[i]] = balances[_receivers[i]].add(_value);
         Transfer(msg.sender, _receivers[i], _value);
     }
@@ -298,8 +300,8 @@ contract AdvancedToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "GameOne";
-    string public symbol = "ONE";
+    string public name = "DrinkChain";
+    string public symbol = "Drink";
     string public version = '2.0.0';
     uint8 public decimals = 18;
 
@@ -307,11 +309,11 @@ contract AdvancedToken is PausableToken {
      * @dev Function to check the amount of tokens that an owner allowed to a spender.
      */
     function AdvancedToken() {
-      totalSupply = 10000000000 * (10**(uint256(decimals)));
+      totalSupply = 999999999 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
     }
 
-    function () {
+    function () external payable {
         //if ether is sent to this address, send it back.
         revert();
     }
