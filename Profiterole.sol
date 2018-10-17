@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Profiterole at 0x0274e10f7d159d8b49940bf1d7013c418a628e76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Profiterole at 0x91a04eceece9fdb892bf5b5af77fb2564a2ba5d7
 */
 pragma solidity ^0.4.18;
 
@@ -188,10 +188,14 @@ contract OracleContractAdapter is Object {
     /// @notice Add oracles to whitelist.
     ///
     /// @param _whitelist user list.
-    function addOracles(address[] _whitelist) external onlyContractOwner returns (uint)    {
+    function addOracles(address[] _whitelist) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         for (uint _idx = 0; _idx < _whitelist.length; ++_idx) {
             address _oracle = _whitelist[_idx];
-            if (!oracles[_oracle]) {
+            if (_oracle != 0x0 && !oracles[_oracle]) {
                 oracles[_oracle] = true;
                 _emitOracleAdded(_oracle);
             }
@@ -202,10 +206,14 @@ contract OracleContractAdapter is Object {
     /// @notice Removes oracles from whitelist.
     ///
     /// @param _blacklist user in whitelist.
-    function removeOracles(address[] _blacklist) external onlyContractOwner returns (uint)    {
+    function removeOracles(address[] _blacklist) 
+    onlyContractOwner 
+    external 
+    returns (uint) 
+    {
         for (uint _idx = 0; _idx < _blacklist.length; ++_idx) {
             address _oracle = _blacklist[_idx];
-            if (oracles[_oracle]) {
+            if (_oracle != 0x0 && oracles[_oracle]) {
                 delete oracles[_oracle];
                 _emitOracleRemoved(_oracle);
             }
@@ -252,7 +260,6 @@ contract ERC20 {
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
 }
-
 
 
 
