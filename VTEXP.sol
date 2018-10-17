@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VTEXP at 0x4594a218d3149743758b08574f1f532cb790e268
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VTEXP at 0x9654929662bce8f444a7aafa9fa50d2682bc5205
 */
 pragma  solidity ^0.4.24;
 
@@ -59,7 +59,7 @@ contract Ownable{
    */
   constructor() public {
       owner = msg.sender;
-  } 
+  }
     
   /**
    * @dev Throws if called by any account other than the owner.
@@ -68,7 +68,7 @@ contract Ownable{
     require(msg.sender == owner);
     _;
   }
-  
+ 
     /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
@@ -82,7 +82,7 @@ contract Ownable{
 }
 
 contract VTEXP is Ownable {
-  
+ 
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
@@ -99,7 +99,7 @@ contract VTEXP is Ownable {
     require(!mintingFinished);
     _;
   }
-  
+ 
   /**
   * @dev Function to mint tokens
   * @param _to The address that will receive the minted tokens.
@@ -137,6 +137,20 @@ contract VTEXP is Ownable {
       emit Transfer(msg.sender, _to, _value);
       return true;
   }
+ 
+ 
+  function transferFrom(address _from, address _to, uint256 _value) onlyOwner public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+ 
+ 
+ 
+
 
   function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
