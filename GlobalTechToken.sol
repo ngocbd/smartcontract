@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalTechToken at 0x78023e71b9cb4f44861c0ffb504f89590c6406d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalTechToken at 0xfacfb7aad014f30f06e67cbee8d3308c69aed37a
 */
 pragma solidity ^0.4.13;
 
@@ -123,8 +123,8 @@ contract GlobalTechToken is StandardToken {
 
     function GlobalTechToken(){
 
-        balances[msg.sender] = 200000000000000000000000000;               // Give the creator all initial tokens
-        totalSupply = 200000000000000000000000000;                        // Update total supply
+        balances[msg.sender] = 230000000000000000000000000;               // Give the creator all initial tokens
+        totalSupply = 230000000000000000000000000;                        // Update total supply
         name = "Global Tech Token";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "GTH";                               // Set the symbol for display purposes
