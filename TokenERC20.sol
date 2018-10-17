@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x81ff7ef908534045722a06cc8d3c11e590ccc775
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x5cea74f666fda8ebf4d6265cab4615b6878c5935
 */
 pragma solidity ^0.4.16;
 
