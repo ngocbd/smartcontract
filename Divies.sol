@@ -1,36 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0xb804dc1719852c036724944c7bbf7cb261609f88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x3b4f4505e644ae36fd0d3223af9b0bac1c49e656
 */
 pragma solidity ^0.4.24;
 /** title -Divies- v0.7.1
- * ????????????   ?? ???????  ????????????????????????
- *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
- *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
- *                                  _____                      _____
- *                                 (, /     /)       /) /)    (, /      /)          /)
- *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
- *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
- *          ? ?                /   /          .-/ _____   (__ /                               
- *                            (__ /          (_/ (, /                                      /)™ 
- *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
- * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
- * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
- * ?  ??????????????? ?                                        (_/
- *          ______      .-./`)  ,---.  ,---. .-./`)      .-''-.      .-'''-.   .---.  
- *=========|    _ `''.  \ .-.') |   /  |   | \ .-.')   .'_ _   \    / _     \  \   /=========*
- *         | _ | ) _  \ / `-' \ |  |   |  .' / `-' \  / ( ` )   '  (`' )/`--'  |   |  
- *         |( ''_'  ) |  `-'`"` |  | _ |  |   `-'`"` . (_ o _)  | (_ o _).      \ /   
- *         | . (_) `. |  .---.  |  _( )_  |   .---.  |  (_,_)___|  (_,_). '.     v    
- *         |(_    ._) '  |   |  \ (_ o._) /   |   |  '  \   .---. .---.  \  :   _ _   
- *         |  (_.\.' /   |   |   \ (_,_) /    |   |   \  `-'    / \    `-'  |  (_I_)  
- *=========|       .'    |   |    \     /     |   |    \       /   \       /  (_(=)_)========* 
- *         '-----'`      '---'     `---`      '---'     `'-..-'     `-...-'    (_I_)  
- * ????????????????????????  ???????????? ????????????
- * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
- * ????????? ? ???? ???? ?   ???????????? ????????????
  *         ????????????????????????????????????????????????????????????????????????
- *         ? Divies!, is a contract that adds an external dividend system to P3D. ?
- *         ? All eth sent to this contract, can be distributed to P3D holders.    ?
+ *         ? Divies!, is a contract that adds an external dividend system to H4D. ?
+ *         ? All eth sent to this contract, can be distributed to H4D holders.    ?
  *         ? Uses msg.sender as masternode for initial buy order.                 ?
  *         ????????????????????????????????????????????????????????????????????????
  *                                ??????????????????????
@@ -42,7 +17,7 @@ pragma solidity ^0.4.24;
  * 
  * (Step 2) set up the interface and point it to this contract
  * 
- *    DiviesInterface private Divies = DiviesInterface(0xc7029Ed9EBa97A096e72607f4340c34049C7AF48);
+ *    DiviesInterface private Divies = DiviesInterface(0xeB0b5FA53843aAa2e636ccB599bA4a8CE8029aA1);
  *                                ??????????????????????
  *                                ? Usage Instructions ?
  *                                ??????????????????????
@@ -69,7 +44,7 @@ contract Divies {
     using SafeMath for uint256;
     using UintCompressor for uint256;
 
-    HourglassInterface constant P3Dcontract_ = HourglassInterface(0x192e606e24d3ef48003078401af248f82f99a634);
+    HourglassInterface constant H4Dcontract_ = HourglassInterface(0xeB0b5FA53843aAa2e636ccB599bA4a8CE8029aA1);
     
     uint256 public pusherTracker_ = 100;
     mapping (address => Pusher) public pushers_;
@@ -84,11 +59,7 @@ contract Divies {
     // MODIFIERS
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     modifier isHuman() {
-        address _addr = msg.sender;
-        uint256 _codeLength;
-        
-        assembly {_codeLength := extcodesize(_addr)}
-        require(_codeLength == 0, "sorry humans only");
+        require(tx.origin == msg.sender);
         _;
     }
     
@@ -164,32 +135,32 @@ contract Divies {
             pusherTracker_++;
             
             // setup mn payout for event
-            if (P3Dcontract_.balanceOf(_pusher) >= P3Dcontract_.stakingRequirement())
+            if (H4Dcontract_.balanceOf(_pusher) >= H4Dcontract_.stakingRequirement())
                 _mnPayout = (_bal / 10) / 3;
             
             // setup _stop.  this will be used to tell the loop to stop
             uint256 _stop = (_bal.mul(100 - _percent)) / 100;
             
             // buy & sell    
-            P3Dcontract_.buy.value(_bal)(_pusher);
-            P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
+            H4Dcontract_.buy.value(_bal)(_pusher);
+            H4Dcontract_.sell(H4Dcontract_.balanceOf(address(this)));
             
             // setup tracker.  this will be used to tell the loop to stop
-            uint256 _tracker = P3Dcontract_.dividendsOf(address(this));
+            uint256 _tracker = H4Dcontract_.dividendsOf(address(this));
     
             // reinvest/sell loop
             while (_tracker >= _stop) 
             {
-                // lets burn some tokens to distribute dividends to p3d holders
-                P3Dcontract_.reinvest();
-                P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
+                // lets burn some tokens to distribute dividends to H4D holders
+                H4Dcontract_.reinvest();
+                H4Dcontract_.sell(H4Dcontract_.balanceOf(address(this)));
                 
                 // update our tracker with estimates (yea. not perfect, but cheaper on gas)
                 _tracker = (_tracker.mul(81)) / 100;
             }
             
             // withdraw
-            P3Dcontract_.withdraw();
+            H4Dcontract_.withdraw();
         } else {
             _compressedData = _compressedData.insert(1, 47, 47);
         }
@@ -210,27 +181,7 @@ contract Divies {
 
 /**
 * @title -UintCompressor- v0.1.9
-* ????????????   ?? ???????  ????????????????????????
-*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
-*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
-*                                  _____                      _____
-*                                 (, /     /)       /) /)    (, /      /)          /)
-*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
-*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
-*          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)™ 
-*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
-* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
-* ?  ??????????????? ?                                        (_/
-*    _  _   __   __ _  ____     ___   __   _  _  ____  ____  ____  ____  ____   __   ____ 
-*===/ )( \ (  ) (  ( \(_  _)===/ __) /  \ ( \/ )(  _ \(  _ \(  __)/ ___)/ ___) /  \ (  _ \===*
-*   ) \/ (  )(  /    /  )(    ( (__ (  O )/ \/ \ ) __/ )   / ) _) \___ \\___ \(  O ) )   /
-*===\____/ (__) \_)__) (__)====\___) \__/ \_)(_/(__)  (__\_)(____)(____/(____/ \__/ (__\_)===*
-*
-* ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
-* ????????? ? ???? ???? ?   ???????????? ????????????
+
 */
 
 library UintCompressor {
@@ -260,9 +211,9 @@ library UintCompressor {
     }
     
     function extract(uint256 _input, uint256 _start, uint256 _end)
-        internal
-        pure
-        returns(uint256)
+	    internal
+	    pure
+	    returns(uint256)
     {
         // check conditions
         require(_end < 77 && _start < 77, "start/end must be less than 77");
