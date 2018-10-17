@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SNcoin_CountrySale at 0x1a00f5999095c25cc4fd508dd9272f21ecc696b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SNcoin_CountrySale at 0xf3bf8a7e89c779eeae03a429d8c9eec1b91bd2e8
 */
 pragma solidity ^0.4.24;
 
@@ -40,6 +40,10 @@ contract MinimalTokenInterface {
     function decimals() public returns (uint8);
 }
 
+contract TokenPriveProviderInterface {
+    function tokenPrice() public constant returns (uint);
+}
+
 // ----------------------------------------------------------------------------
 // Dividends implementation interface
 // ----------------------------------------------------------------------------
@@ -50,25 +54,25 @@ contract SNcoin_CountrySale is Owned {
     address public ambassadorAddress;
     bool public fundingEnabled;
     uint public totalCollected;         // In wei
-    uint public tokenPrice;         // In wei
+    TokenPriveProviderInterface public tokenPriceProvider;         // In wei
     string public country;
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    constructor(address _tokenAddress, address _spenderAddress, address _vaultAddress, address _ambassadorAddress, bool _fundingEnabled, uint _newTokenPrice, string _country) public {
+    constructor(address _tokenAddress, address _spenderAddress, address _vaultAddress, address _ambassadorAddress, bool _fundingEnabled, address _tokenPriceProvider, string _country) public {
         require (_tokenAddress != 0);
         require (_spenderAddress != 0);
         require (_vaultAddress != 0);
-        require (_newTokenPrice > 0);
+        require (_tokenPriceProvider != 0);
         require (bytes(_country).length > 0);
         tokenContract = MinimalTokenInterface(_tokenAddress);
         spenderAddress = _spenderAddress;
         vaultAddress = _vaultAddress;
         ambassadorAddress = _ambassadorAddress;
         fundingEnabled = _fundingEnabled;
-        tokenPrice = _newTokenPrice;
+        tokenPriceProvider = TokenPriveProviderInterface(_tokenPriceProvider);
         country = _country;
     }
 
@@ -95,15 +99,17 @@ contract SNcoin_CountrySale is Owned {
         return;
     }
 
-    function updateTokenPrice(uint _newTokenPrice) public onlyOwner {
-        require(_newTokenPrice > 10**9);
-        tokenPrice = _newTokenPrice;
+    function updateTokenPriceProvider(address _newTokenPriceProvider) public onlyOwner {
+        require(_newTokenPriceProvider != 0);
+        tokenPriceProvider = TokenPriveProviderInterface(_newTokenPriceProvider);
+        require(tokenPriceProvider.tokenPrice() > 10**9);
         return;
     }
 
     function () public payable {
         require (fundingEnabled);
         require (ambassadorAddress != 0);
+        uint tokenPrice = tokenPriceProvider.tokenPrice(); // In wei
         require (tokenPrice > 10**9);
         require (msg.value >= tokenPrice);
 
@@ -135,6 +141,6 @@ contract SNcoin_CountrySale is Owned {
         token.transfer(owner, balance);
         emit ClaimedTokens(_token, owner, balance);
     }
-    
+
     event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
 }
