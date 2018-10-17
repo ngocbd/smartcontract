@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OffGridParadise at 0x3d11a869c9a97c1c9c6a0ce058a98db20bb753db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OffGridParadise at 0x5ba2948083538208fca28de380b93cffb3b75fe0
 */
 //TheEthadams's Prod Ready.
 //https://rinkeby.etherscan.io/address/0x8d4665fe98968707da5042be347060e673da98f1#code
 
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.22;
 
 
 interface tokenRecipient {
@@ -78,7 +78,7 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
+    constructor(
         string tokenName,
         string tokenSymbol
     ) public {
@@ -242,7 +242,7 @@ contract OffGridParadise is TokenERC20 {
 
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function OffGridParadise (
+    constructor (
         string tokenName,
         string tokenSymbol
     ) TokenERC20(tokenName, tokenSymbol) public {
