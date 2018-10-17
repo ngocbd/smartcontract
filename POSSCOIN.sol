@@ -1,26 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSSCOIN at 0xdf33561c4cdfa8d2fb0a7c70536fd502f002409e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract posscoin at 0x9a2dd1ca42ce0624647d248188e2166446171823
 */
 pragma solidity ^0.4.18;
 
-// ----------------------------------------------------------------------------
-// 'POSSCOIN' token contract
-//
-// Deployed to : 0x390435245F2f95f7443eBb045357DA743E9A65a4
-// Symbol      : POSS
-// Name        : POSSCOIN
-// Total supply: 10000000000
-// Decimals    : 18
-//
-// Enjoy.
-//
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
-// ----------------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
 contract SafeMath {
     function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
@@ -40,11 +22,6 @@ contract SafeMath {
     }
 }
 
-
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -57,20 +34,9 @@ contract ERC20Interface {
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
 contract Owned {
     address public owner;
     address public newOwner;
@@ -97,12 +63,7 @@ contract Owned {
     }
 }
 
-
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract POSSCOIN is ERC20Interface, Owned, SafeMath {
+contract posscoin is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -111,17 +72,13 @@ contract POSSCOIN is ERC20Interface, Owned, SafeMath {
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
 
-
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function POSSCOIN() public {
+function posscoin() public {
         symbol = "POSS";
-        name = "POSSCOIN";
+        name = "Posscoin";
         decimals = 18;
         _totalSupply = 10000000000000000000000000000;
-        balances[0x390435245F2f95f7443eBb045357DA743E9A65a4] = _totalSupply;
-        Transfer(address(0), 0x390435245F2f95f7443eBb045357DA743E9A65a4, _totalSupply);
+        balances[0xAbB082211930DA475879BF315AFaDDD55913C6a8] = _totalSupply;
+        Transfer(address(0), 0xAbB082211930DA475879BF315AFaDDD55913C6a8, _totalSupply);
     }
 
 
