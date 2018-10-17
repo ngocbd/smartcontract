@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0xb2501a43089d2d5d61917d4acc921f4a1689e32f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbcdEfg at 0x129bc997c3448515d36c83382eaae2454b0884b6
 */
 pragma solidity 0.4.24;
 
 contract AbcdEfg {
-  mapping (uint256 => Mark) public marks;
+  mapping (uint256 => bytes) public marks;
   string public constant name = "abcdEfg";
   string public constant symbol = "a2g";
   uint8 public constant decimals = 0;
@@ -21,11 +21,6 @@ contract AbcdEfg {
     uint256 value
   );
   
-  struct Mark {
-    address author;
-    bytes content;
-  }
-
   constructor() public {
     balances[msg.sender] = totalSupply_;
   } 
@@ -35,15 +30,11 @@ contract AbcdEfg {
   }
 
   function mark() internal {
-    require(1 + marked[msg.sender] <= balances[msg.sender]);
     markId ++;
     marked[msg.sender] ++;
-    Mark memory temp;
-    temp.author = msg.sender;
-    temp.content = msg.data;
-    marks[markId] = temp;
+    marks[markId] = abi.encodePacked(msg.sender, msg.data);
   }
-  
+
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
