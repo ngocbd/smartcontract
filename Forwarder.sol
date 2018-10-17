@@ -1,35 +1,53 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0xbd6840005d25b208650414053244064f2d280c01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Forwarder at 0xbd4c9ab2f3e241f1291d55af51cb0d949077b591
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
-/**
- * Contract that will forward any incoming Ether to its creator
- */
 contract Forwarder {
-  // Address to which any funds sent to this contract will be forwarded
-  address public destinationAddress;
+    string public name = "Forwarder";
+    address private currentCorpBank_;
+    bool needsBank_ = true;
+    
+    constructor() 
+        public
+    {
+        //constructor does nothing.
+    }
+    
+    function()
+        public
+        payable
+    {
+        // done so that if any one tries to dump eth into this contract, we can
+        // just forward it to corp bank.
+        if (currentCorpBank_ != address(0))
+            currentCorpBank_.transfer(msg.value);
+    }
+    
+    function deposit()
+        public 
+        payable
+        returns(bool)
+    {
+        require(msg.value > 0, "Forwarder Deposit failed - zero deposits not allowed");
+        require(needsBank_ == false, "Forwarder Deposit failed - no registered bank");
+        currentCorpBank_.transfer(msg.value);
+        return(true);
+    }
 
-  /**
-   * Create the contract, and set the destination address to that of the creator
-   */
-  function Forwarder() public {
-    destinationAddress = msg.sender;
-  }
+    function withdraw()
+        public
+        payable
+    {
+        require(msg.sender == currentCorpBank_);
+        currentCorpBank_.transfer(address(this).balance);
+    }
 
-  /**
-   * Default function; Gets called when Ether is deposited, and forwards it to the destination address
-   */
-  function() payable public {
-        destinationAddress.transfer(msg.value);
-  }
-
-  /**
-   * It is possible that funds were sent to this address before the contract was deployed.
-   * We can flush those funds to the destination address.
-   */
-  function flush() public {
-    destinationAddress.transfer(this.balance);
-  }
-
+    function setup(address _firstCorpBank)
+        external
+    {
+        require(needsBank_ == true, "Forwarder setup failed - corp bank already registered");
+        currentCorpBank_ = _firstCorpBank;
+        needsBank_ = false;
+    }
 }
