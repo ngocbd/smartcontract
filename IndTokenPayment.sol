@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0x09df4d4490c34608b13afdea0a1e6577f8e6b21a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndTokenPayment at 0xdeca7a07bd58fc6d091e86469077d1c4372cf04a
 */
 pragma solidity ^0.4.23;
 
@@ -104,6 +104,58 @@ contract ReentrancyGuard {
 
 }
 
+// File: contracts/common/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 // File: contracts/interfaces/ERC20Interface.sol
 
 interface ERC20 {
@@ -129,7 +181,6 @@ interface IERC20Token {
     function decimals() public view returns(uint digits);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
-
 
 // File: contracts/interfaces/IBancorNetwork.sol
 
@@ -177,9 +228,18 @@ contract IContractRegistry {
  * @notice It does not support ERC20 to ERC20 transfer.
  */
 
+
+
+
+
+
+
+
 contract IndTokenPayment is Ownable, ReentrancyGuard {  
+    using SafeMath for uint256;
     IERC20Token[] public path;    
     address public destinationWallet;       
+    //Minimum tokens per 1 ETH to convert
     uint256 public minConversionRate;
     IContractRegistry public bancorRegistry;
     bytes32 public constant BANCOR_NETWORK = "BancorNetwork";
@@ -215,8 +275,7 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
     function convertToInd() internal nonReentrant {
         assert(bancorRegistry.getAddress(BANCOR_NETWORK) != address(0));
         IBancorNetwork bancorNetwork = IBancorNetwork(bancorRegistry.getAddress(BANCOR_NETWORK));   
-        //TODO : Compute minReturn
-        uint256 minReturn =1;
+        uint256 minReturn = minConversionRate.mul(msg.value);
         uint256 convTokens =  bancorNetwork.convertFor.value(msg.value)(path,msg.value,minReturn,destinationWallet);        
         assert(convTokens > 0);
         emit conversionSucceded(msg.sender,msg.value,destinationWallet,convTokens);                                                                    
@@ -240,19 +299,20 @@ contract IndTokenPayment is Ownable, ReentrancyGuard {
         return true;
     }
  
-    function () public payable {
+    function () public payable nonReentrant {
         //Bancor contract can send the transfer back in case of error, which goes back into this
         //function ,convertToInd is non-reentrant.
         convertToInd();
     }
 
     /*
-    * Helper functions to debug contract. Not to be deployed
+    * Helper function
     *
     */
 
     function getBancorContractAddress() public view returns(address) {
         return bancorRegistry.getAddress(BANCOR_NETWORK);
     }
+
 
 }
