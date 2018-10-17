@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTX at 0xa31db090513d20edd70e0e8379ee645ae1e51adf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTX at 0x73f20ef6d6bbfe135a0c6db8cb87af90893bd0d8
 */
 pragma solidity ^0.4.17;
 
@@ -459,8 +459,8 @@ contract PausableToken is StandardToken, Pausable {
  */
 contract RTX is MintableToken, PausableToken {
     string public constant version = "1.0";
-    string public constant name = "RTX0688";
-    string public constant symbol = "RTX0688";
+    string public constant name = "RTX";
+    string public constant symbol = "RTX";
     uint8 public constant decimals = 18;
 
     event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
