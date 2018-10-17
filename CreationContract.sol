@@ -1,64 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreationContract at 0x1c36318a0b2a36636a32f9a712f5a709b4016f77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CreationContract at 0xe4ad7215421cb0c0e44fef1460f841f088c85435
 */
-pragma solidity ^0.4.8;
-
 contract IToken {
     function totalSupply() constant returns (uint256 supply) {}
     function balanceOf(address _owner) constant returns (uint256 balance) {}
     function transferViaProxy(address _from, address _to, uint _value) returns (uint error) {}
     function transferFromViaProxy(address _source, address _from, address _to, uint256 _amount) returns (uint error) {}
     function approveFromProxy(address _source, address _spender, uint256 _value) returns (uint error) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {} 
-    function issueNewCoins(address _destination, uint _amount, string _details) returns (uint error){}
-    function destroyOldCoins(address _destination, uint _amount, string _details) returns (uint error) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    function issueNewCoins(address _destination, uint _amount) returns (uint error){}
+    function issueNewHeldCoins(address _destination, uint _amount){}
+    function destroyOldCoins(address _destination, uint _amount) returns (uint error) {}
+    function takeTokensForBacking(address _destination, uint _amount){}
 }
 
+
 contract CreationContract{
-    
+
     address public curator;
     address public dev;
-
     IToken tokenContract;
-
-  
 
     function CreationContract(){
         dev = msg.sender;
     }
 
-    function create(address _destination, uint _amount, string _details) returns (uint error){
-        if (msg.sender != curator){ return 1; }
+    function create(address _destination, uint _amount){
+        if (msg.sender != curator) throw;
 
-        return tokenContract.issueNewCoins(_destination, _amount, _details);
+        tokenContract.issueNewCoins(_destination, _amount);
+    }
+    
+    function createHeld(address _destination, uint _amount){
+         if (msg.sender != curator) throw;
+         
+         tokenContract.issueNewHeldCoins(_destination, _amount);
     }
 
-    function setCreationCurator(address _curatorAdress) returns (uint error){
-        if (msg.sender != dev){ return 1; }
+    function setCreationCurator(address _curatorAdress){
+        if (msg.sender != dev) throw;
 
         curator = _curatorAdress;
-        return 0;
     }
 
-    function setTokenContract(address _contractAddress) returns (uint error){
-        if (msg.sender != curator){ return 1; }
+    function setTokenContract(address _contractAddress){
+        if (msg.sender != curator) throw;
 
         tokenContract = IToken(_contractAddress);
-        return 0;
     }
 
-    function killContract() returns (uint error) {
-        if (msg.sender != dev) { return 1; }
+    function killContract(){
+        if (msg.sender != dev) throw;
 
         selfdestruct(dev);
-        return 0;
     }
 
     function tokenAddress() constant returns (address tokenAddress){
         return address(tokenContract);
-    } 
-
-    function () {
-        throw;
     }
 }
