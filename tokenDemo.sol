@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDemo at 0x0561fb9c7c4fd6877cc3e8e51036e7d7bcd8f23a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDemo at 0xd4e008961e7eefd93113bbeec1eaecd64768cbd7
 */
+pragma solidity ^0.4.24;
 contract Token{
     uint256 public totalSupply;
 
