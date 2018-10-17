@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x908c8b42b19e157592865e1a15f99a077e9e9cdf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3Dshort at 0x574d31c8737fc015f6fe8e21d44e1a022081e06e
 */
 pragma solidity ^0.4.24;
 
@@ -37,7 +37,7 @@ contract F3Devents {
         uint256 airDropPot
     );
 
-  // fired whenever theres a withdraw
+	// fired whenever theres a withdraw
     event onWithdraw
     (
         uint256 indexed playerID,
@@ -128,15 +128,15 @@ contract FoMo3Dshort is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x9Fd832c2095E14B489a01744048B264CB515c4Cf);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xa6407c2C318F5594e1d711E48C62F593D7Ad73D6);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
-    address public admin = msg.sender;
-    string constant public name = "FOMO Short";
-    string constant public symbol = "SHORT";
+    address private admin = msg.sender;
+    string constant public name = "FOMO NOW";
+    string constant public symbol = "FNW";
     uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
     uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
@@ -174,27 +174,27 @@ contract FoMo3Dshort is modularShort {
     constructor()
         public
     {
-    // Team allocation structures
+		// Team allocation structures
         // 0 = whales
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
 
-    // Team allocation percentages
+		// Team allocation percentages
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
-        fees_[0] = F3Ddatasets.TeamFee(30,6);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(43,0);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(56,10);  //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(43,8);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F3Ddatasets.TeamFee(32,0);   //50% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(45,0);   //37% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(62,0);  //20% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(47,0);   //35% to pot, 15% to aff, 3% to com, 0% to pot swap, 0% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
-        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
-  }
+        potSplit_[0] = F3Ddatasets.PotSplit(47,0);  //25% to winner, 25% to next round, 3% to com
+        potSplit_[1] = F3Ddatasets.PotSplit(47,0);   //25% to winner, 25% to next round, 3% to com
+        potSplit_[2] = F3Ddatasets.PotSplit(62,0);  //25% to winner, 10% to next round, 3% to com
+        potSplit_[3] = F3Ddatasets.PotSplit(62,0);  //25% to winner, 10% to next round,3% to com
+	}
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -526,10 +526,10 @@ contract FoMo3Dshort is modularShort {
             F3Ddatasets.EventReturns memory _eventData_;
 
             // end the round (distributes pot)
-      round_[_rID].ended = true;
+			round_[_rID].ended = true;
             _eventData_ = endRound(_eventData_);
 
-      // get their earnings
+			// get their earnings
             _eth = withdrawEarnings(_pID);
 
             // gib moni
@@ -809,7 +809,7 @@ contract FoMo3Dshort is modularShort {
      * @return winnings vault
      * @return general vault
      * @return affiliate vault
-   * @return player round eth
+	 * @return player round eth
      */
     function getPlayerInfoByAddress(address _addr)
         public
@@ -866,7 +866,7 @@ contract FoMo3Dshort is modularShort {
             if (_now > round_[_rID].end && round_[_rID].ended == false)
             {
                 // end the round (distributes pot) & start new round
-          round_[_rID].ended = true;
+			    round_[_rID].ended = true;
                 _eventData_ = endRound(_eventData_);
 
                 // build event data
@@ -986,59 +986,10 @@ contract FoMo3Dshort is modularShort {
 
             // set the new leader bool to true
             _eventData_.compressedData = _eventData_.compressedData + 100;
-        }
+             }
 
-            // manage airdrops
-            if (_eth >= 100000000000000000)
-            {
-            airDropTracker_++;
-            if (airdrop() == true)
-            {
-                // gib muni
-                uint256 _prize;
-                if (_eth >= 10000000000000000000)
-                {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(75)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-
-                    // adjust airDropPot
-                    airDropPot_ = (airDropPot_).sub(_prize);
-
-                    // let event know a tier 3 prize was won
-                    _eventData_.compressedData += 300000000000000000000000000000000;
-                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(50)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-
-                    // adjust airDropPot
-                    airDropPot_ = (airDropPot_).sub(_prize);
-
-                    // let event know a tier 2 prize was won
-                    _eventData_.compressedData += 200000000000000000000000000000000;
-                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(25)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-
-                    // adjust airDropPot
-                    airDropPot_ = (airDropPot_).sub(_prize);
-
-                    // let event know a tier 3 prize was won
-                    _eventData_.compressedData += 300000000000000000000000000000000;
-                }
-                // set airdrop happened bool to true
-                _eventData_.compressedData += 10000000000000000000000000000000;
-                // let event know how much was won
-                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
-
-                // reset air drop tracker
-                airDropTracker_ = 0;
-            }
-        }
-
-            // store the air drop tracker number (number of buys since last airdrop)
+            // adjust airDropPot
+                  
             _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
 
             // update player
@@ -1055,7 +1006,7 @@ contract FoMo3Dshort is modularShort {
             _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
 
             // call end tx function to fire end tx event.
-        endTx(_pID, _team, _eth, _keys, _eventData_);
+		    endTx(_pID, _team, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -1124,7 +1075,7 @@ contract FoMo3Dshort is modularShort {
 //     | (_)(_)|_\  .
 //==============================================================================
     /**
-   * @dev receives name/player info from names contract
+	 * @dev receives name/player info from names contract
      */
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
         external
