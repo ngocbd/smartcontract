@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0x781ff41238f6ed9974061b8ffd4059723f92f894
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TMTG at 0xb7ec5cadc507b70f424f06ac0c5265a5badb35aa
 */
 pragma solidity ^0.4.24;
 
@@ -239,8 +239,9 @@ contract StandardToken is ERC20, BasicToken {
 /**
  * @title TMTGOwnable
  *
- * @dev zeppelin? ownable? ???? TMTGOwnable?? ??? hiddenOwner, superOwner, owner, centralBanker, operator? ????.
- * ? ???? ??? ????.
+ * @dev Due to ownable change in zeppelin, the authorities in TMTGOwnable include hiddenOwner,
+ *      superOwner, owner, centerBanker, and operator. 
+ *      Each authority has different roles.
  */
 contract TMTGOwnable {
     address public owner;
@@ -300,7 +301,7 @@ contract TMTGOwnable {
     }
 
     /**
-    * @dev ?? ??? operator? ????.
+    * @dev Set the address to operator
     * @param _operator has the ability to pause transaction, has the ability to blacklisting & unblacklisting. 
     */
     function setOperator(address _operator) external onlySuperOwner {
@@ -309,7 +310,7 @@ contract TMTGOwnable {
     }
 
     /**
-    * @dev ?? ??? operator?? ????.
+    * @dev Remove the address from operator
     * @param _operator has the ability to pause transaction, has the ability to blacklisting & unblacklisting. 
     */
     function delOperator(address _operator) external onlySuperOwner {
@@ -318,7 +319,7 @@ contract TMTGOwnable {
     }
 
     /**
-    * @dev owner? ??? ?? ? ? ??. ?, superowner? ??? ? ??.
+    * @dev It is possible to hand over owner’s authority. Only superowner is available.
     * @param newOwner  
     */
     function transferOwnership(address newOwner) public onlySuperOwner {
@@ -327,10 +328,10 @@ contract TMTGOwnable {
     }
 
     /**
-    * @dev centralBanker? ??? ?? ? ? ??. ?, superOwner? ??? ? ??.
-    * @param newBanker centralBanker? ??? ?????? ??? ?????. 
-    * ?? ???? ???? ?? ???? ??? ??????.
-    * ?? ??? ???? ??? ??? owner??? ??? ????. 
+    * @dev It is possible to hand over centerBanker’s authority. Only superowner is available.
+    * @param newBanker centerBanker is a kind of a central bank, transaction is impossible.
+    * The amount of money to deposit is determined in accordance with cash reserve ratio and the amount of currency in circulation
+    * To withdraw money out of a wallet and give it to owner, audit is inevitable 
     */
     function transferBankOwnership(address newBanker) public onlySuperOwner {
         emit TMTG_RoleTransferred(Role.centralBanker, centralBanker, newBanker);
@@ -338,8 +339,8 @@ contract TMTGOwnable {
     }
 
     /**
-    * @dev superOwner? ??? ?? ? ? ??. ?, hiddenOwner? ?? ? ? ??.
-    * @param newSuperOwner  superOwner? hiddenOwner? superOwner? ??? ?? ?? ??? ????.
+    * @dev It is possible to hand over superOwner’s authority. Only hiddenowner is available.  
+    * @param newSuperOwner  SuperOwner manages all authorities except for hiddenOwner and superOwner
     */
     function transferSuperOwnership(address newSuperOwner) public onlyhiddenOwner {
         emit TMTG_RoleTransferred(Role.superOwner, superOwner, newSuperOwner);
@@ -347,9 +348,9 @@ contract TMTGOwnable {
     }
     
     /**
-    * @dev hiddenOwner? ?? ? ?? ? ? ??. ?, hiddenOwner? ?? ? ? ??.
-    * @param newhiddenOwner hiddenOwner? ? ?? ??? ??? 
-    * superOwner? hiddenOwner? ??? ?? ?? ? ??? ????.   
+    * @dev It is possible to hand over hiddenOwner’s authority. Only hiddenowner is available
+    * @param newhiddenOwner NewhiddenOwner and hiddenOwner don’t have many functions, 
+    * but they can set and remove authorities of superOwner and hiddenOwner.
     */
     function changeHiddenOwner(address newhiddenOwner) public onlyhiddenOwner {
         emit TMTG_RoleTransferred(Role.hiddenOwner, hiddenOwner, newhiddenOwner);
@@ -360,7 +361,7 @@ contract TMTGOwnable {
 /**
  * @title TMTGPausable
  *
- * @dev ??? ???? ??? ????? ????.
+ * @dev It is used to stop trading in emergency situation
  */
 contract TMTGPausable is TMTGOwnable {
     event TMTG_Pause();
@@ -378,7 +379,7 @@ contract TMTGPausable is TMTGOwnable {
         _;
     }
     /**
-    * @dev ??? ? ? ?? ???. ?, owner ?? operator? ?? ? ? ??.
+    * @dev Block trading. Only owner and operator are available.
     */
     function pause() onlyOwnerOrOperator whenNotPaused public {
         paused = true;
@@ -386,7 +387,7 @@ contract TMTGPausable is TMTGOwnable {
     }
   
     /**
-    * @dev ??? ? ? ?? ????. ?, owner ?? operator? ?? ? ? ??? paused ??? ?? ??? ????.
+    * @dev Unlock limit for trading. Owner and operator are available and this function can be operated in paused mode.
     */
     function unpause() onlyOwnerOrOperator whenPaused public {
         paused = false;
@@ -397,7 +398,7 @@ contract TMTGPausable is TMTGOwnable {
 /**
  * @title TMTGBlacklist
  *
- * @dev ?? ??? ?? ??? ??? ?? ??? ? ? ?? ???.
+ * @dev Block trading of the suspicious account address.
  */
 contract TMTGBlacklist is TMTGOwnable {
     mapping(address => bool) blacklisted;
@@ -411,16 +412,16 @@ contract TMTGBlacklist is TMTGOwnable {
     }
     
     /**
-    * @dev ????? ??? ????.
-    * @param node  ?? ???? ?????? ??????? ?? ???  ????.   
+    * @dev Check a certain node is in a blacklist
+    * @param node  Check whether the user at a certain node is in a blacklist
     */
     function isPermitted(address node) public view returns (bool) {
         return !blacklisted[node];
     }
 
     /**
-    * @dev ????? ????.
-    * @param node  ?? ???? ?????? ????.   
+    * @dev Process blacklisting
+    * @param node Process blacklisting. Put the user in the blacklist.   
     */
     function blacklist(address node) public onlyOwnerOrOperator {
         blacklisted[node] = true;
@@ -428,8 +429,8 @@ contract TMTGBlacklist is TMTGOwnable {
     }
 
     /**
-    * @dev ??????? ????.
-    * @param node  ?? ???? ??????? ????.   
+    * @dev Process unBlacklisting. 
+    * @param node Remove the user from the blacklist.   
     */
     function unblacklist(address node) public onlyOwnerOrOperator {
         blacklisted[node] = false;
@@ -439,8 +440,6 @@ contract TMTGBlacklist is TMTGOwnable {
 
 /**
  * @title HasNoEther
- *
- * @dev ?? ??? ?? ??? ??? ?? ??? ? ? ?? ???.
  */
 contract HasNoEther is TMTGOwnable {
     
@@ -470,7 +469,7 @@ contract HasNoEther is TMTGOwnable {
 }
 
 /**
- * @title TMTGBaseToken ???? ?? ?? ? ????? ???? ??.
+ * @title TMTGBaseToken - Major functions such as authority setting on tockenlock are registered.
  */
 contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther {
     uint256 public openingTime;
@@ -502,8 +501,8 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     event TMTG_Burn(address indexed burner, uint256 value);
     
     /**
-    * @dev ??? ??? ????.
-    * @param _CEx  ?? ??? ??? ??? ????.   
+    * @dev Register the address as a cex address
+    * @param _CEx  Register the address as a cex address 
     */
     function setCEx(address _CEx) external onlySuperOwner {   
         CEx[_CEx] = true;
@@ -512,8 +511,8 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev ??? ??? ????.
-    * @param _CEx  ?? ??? ??? ??? ????.   
+    * @dev Remove authorities of the address used in Exchange
+    * @param _CEx Remove authorities of the address used in Exchange   
     */
     function delCEx(address _CEx) external onlySuperOwner {   
         CEx[_CEx] = false;
@@ -522,8 +521,8 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev ????? ??? ????.
-    * @param _super  ?? ??? ????? ??? ????.   
+    * @dev Register the address as a superinvestor address
+    * @param _super Register the address as a superinvestor address   
     */
     function setSuperInvestor(address _super) external onlySuperOwner {
         superInvestor[_super] = true;
@@ -531,9 +530,8 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         emit TMTG_SetSuperInvestor(_super);
     }
 
-    /**
-    * @dev ????? ??? ????.
-    * @param _super  ?? ??? ????? ??? ????.   
+    /** 
+    * @param _super Remove authorities of the address as a superinvestor  
     */
     function delSuperInvestor(address _super) external onlySuperOwner {
         superInvestor[_super] = false;
@@ -542,8 +540,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev ??? ??? ????.
-    * @param _addr  ?? ??? ??? ??? ????.   
+    * @param _addr  Remove authorities of the address as a investor .   
     */
     function delInvestor(address _addr) onlySuperOwner public {
         investorList[_addr] = false;
@@ -551,19 +548,16 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         emit TMTG_DeleteInvestor(_addr);
     }
 
-    /**
-    * @dev ???? ??? ?? ??? ????.   
-    */
     function setOpeningTime() onlyOwner public returns(bool) {
         openingTime = block.timestamp;
 
     }
 
     /**
-    * @dev ?? ???? ???? ?? ?? ???????? ?? ?? ? %? ?? ? ???? ?? ? ? ??.
-    * 1?? ???? 1? ?? 10%? ??? ????, 7? ?? 70%? ?? ???? ??? ???? ??? ????.   
+    * @dev  After one month, the amount will be 1, which means 10% of the coins can be used. 
+    * After 7 months, 70% of the amount can be used.
     */
-    function getLimitPeriod() public view returns (uint256) {
+    function getLimitPeriod() external view returns (uint256) {
         uint256 presentTime = block.timestamp;
         uint256 timeValue = presentTime.sub(openingTime);
         uint256 result = timeValue.div(31 days);
@@ -571,9 +565,9 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev ?? ??? ????.
-    * @param who ?? ???? ? ????? ?? ?? ????. 3?? ??? ??, 
-    * _result ? ?? ???????? ??? ?? 30%? ??? ????. 
+    * @dev Check the latest limit
+    * @param who Check the latest limit. 
+    * Return the limit value of the user at the present moment. After 3 months, _result value will be 30% of initialAmount 
     */
     function _timelimitCal(address who) internal view returns (uint256) {
         uint256 presentTime = block.timestamp;
@@ -584,7 +578,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev ????? transfer?? ??, ???? ?? ?? ????.
+    * @dev In case of investor transfer, values will be limited by timelock
     * @param _to address to send
     * @param _value tmtg's amount
     */
@@ -601,9 +595,10 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev transfer ??? ??? ?, ??????? ?????? ??? ??? ????? ?? ???? ??? ??? ?????,
-    * ????? ?? ???? ??? ??, ?? ???? ????? ???, ?? ?? ??? 10%? limit?? ????.
-    * ?? ????? transfer ??? ???? ??, ???? ?? ??? ?? ????.
+    * @dev When the transfer function is run, 
+    * there are two different types; transfer from superinvestors to investor and to non-investors. 
+    * In the latter case, the non-investors will be investor and 10% of the initial amount will be allocated. 
+    * And when investor operates the transfer function, the values will be limited by timelock.
     * @param _to address to send
     * @param _value tmtg's amount
     */
@@ -630,7 +625,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         }
     }
     /**
-    * @dev ????? transferFrom?? from ? ??, ???? ?? ?? ????.
+    * @dev If investor is from in transforFrom, values will be limited by timelock
     * @param _from send amount from this address 
     * @param _to address to send
     * @param _value tmtg's amount
@@ -650,14 +645,15 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
 
     /**
-    * @dev transferFrom?? superInvestor? ?? approve?? ????? ?? ??? ???? ???. ?? ????? ??,
-    * ???? ?? ?? ????.
+    * @dev If from is superinvestor in transforFrom, the function can’t be used because of limit in Approve. 
+    * And if from is investor, the amount of coins to send is limited by timelock.
     * @param _from send amount from this address 
     * @param _to address to send
     * @param _value tmtg's amount
     */
     function transferFrom(address _from, address _to, uint256 _value)
-    public whenNotPaused whenPermitted(msg.sender) whenPermitted(_to) returns (bool ret)
+    public whenNotPaused whenPermitted(_from) whenPermitted(_to) whenPermitted(msg.sender)
+    returns (bool ret)
     {   
         if(investorList[_from]) {
             return _transferFromInvestor(_from, _to, _value);
@@ -716,7 +712,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     }
     
     /**
-    * @dev owner? ??? ????, ?? ??? ??? centralBanker? ??? ????.
+    * @dev onlyOwner is available and the amount of coins can be deposited in centerBanker.
     * @param _value tmtg's amount
     */
     function stash(uint256 _value) public onlyOwner {
@@ -729,8 +725,7 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
         emit TMTG_Stash(_value);        
     }
     /**
-    * @dev centralBanker? ??? ????, ?? ??? ??? owner?? ??? ????.
-    * ?, ??? ??? ????.
+    * @dev Only centerBanker is available and withdrawal of the amount of coins to owner is possible. But audit is inevitable.
     * @param _value tmtg's amount
     */
     function unstash(uint256 _value) public onlyBankOwner {
@@ -752,7 +747,8 @@ contract TMTGBaseToken is StandardToken, TMTGPausable, TMTGBlacklist, HasNoEther
     } 
 
     /**
-    * @dev ???? ????? ?? ??? ?? ??, ????? 10??? ???? ???. ? ?, ???? ?? ?? ?? ??? ??? ??
+    * @dev When investors buy additional coins in Exchange, the amount will require tockenlock for 10 months. 
+      In this case, it is possible to move the amount in the presence of owner. 
     * @param _investor 
     * @param _to 
     * @param _amount 
