@@ -1,13 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0x88b30117e7eafcda49542d5530d383146ca9af70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Divies at 0xa5697bc0725c664a89a8178e81fbc187aca33d8b
 */
 pragma solidity ^0.4.24;
 /** title -Divies- v0.7.1
- 
+ * ????????????   ?? ???????  ????????????????????????
+ *  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+ *  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+ *                                  _____                      _____
+ *                                 (, /     /)       /) /)    (, /      /)          /)
+ *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+ *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+ *          ? ?                /   /          .-/ _____   (__ /                               
+ *                            (__ /          (_/ (, /                                      /)™ 
+ *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+ * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+ * ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+ * ?  ??????????????? ?                                        (_/
+ *          ______      .-./`)  ,---.  ,---. .-./`)      .-''-.      .-'''-.   .---.  
+ *=========|    _ `''.  \ .-.') |   /  |   | \ .-.')   .'_ _   \    / _     \  \   /=========*
+ *         | _ | ) _  \ / `-' \ |  |   |  .' / `-' \  / ( ` )   '  (`' )/`--'  |   |  
+ *         |( ''_'  ) |  `-'`"` |  | _ |  |   `-'`"` . (_ o _)  | (_ o _).      \ /   
+ *         | . (_) `. |  .---.  |  _( )_  |   .---.  |  (_,_)___|  (_,_). '.     v    
+ *         |(_    ._) '  |   |  \ (_ o._) /   |   |  '  \   .---. .---.  \  :   _ _   
+ *         |  (_.\.' /   |   |   \ (_,_) /    |   |   \  `-'    / \    `-'  |  (_I_)  
+ *=========|       .'    |   |    \     /     |   |    \       /   \       /  (_(=)_)========* 
+ *         '-----'`      '---'     `---`      '---'     `'-..-'     `-...-'    (_I_)  
+ * ????????????????????????  ???????????? ????????????
+ * ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+ * ????????? ? ???? ???? ?   ???????????? ????????????
  *         ????????????????????????????????????????????????????????????????????????
- *         ? Divies!, is a contract that adds an external dividend system to BTB. ?
- *         ? All eth sent to this contract, can be distributed to BTB holders.    ?
- *         ? Uses msg.sender as masternode for initial buy order.                 ?
+ *         ? Divies!, is a contract that adds an external dividend system to P3D. ?
+ *         ? All eth sent to this contract, can be distributed to P3D holders.    ?
  *         ????????????????????????????????????????????????????????????????????????
  *                                ??????????????????????
  *                                ? Setup Instructions ?
@@ -18,7 +41,7 @@ pragma solidity ^0.4.24;
  * 
  * (Step 2) set up the interface and point it to this contract
  * 
- *    DiviesInterface private Divies = DiviesInterface(0xEDEaB579e57a7D66297D0a67302647bB109db7A8);
+ *    DiviesInterface private Divies = DiviesInterface(0xC0c001140319C5f114F8467295b1F22F86929Ad0);
  *                                ??????????????????????
  *                                ? Usage Instructions ?
  *                                ??????????????????????
@@ -27,7 +50,6 @@ pragma solidity ^0.4.24;
  *    Divies.deposit.value(amount)();
  *          ex:  Divies.deposit.value(232000000000000000000)();
  */
-
 interface HourglassInterface {
     function() payable external;
     function buy(address _playerAddress) payable external returns(uint256);
@@ -45,7 +67,7 @@ contract Divies {
     using SafeMath for uint256;
     using UintCompressor for uint256;
 
-    HourglassInterface constant BTBcontract_ = HourglassInterface(0xEDEaB579e57a7D66297D0a67302647bB109db7A8);
+    HourglassInterface constant P3Dcontract_ = HourglassInterface(0x5aa487635b1c2bb10550c5c1fd39be943d43aa01);
     
     uint256 public pusherTracker_ = 100;
     mapping (address => Pusher) public pushers_;
@@ -60,7 +82,12 @@ contract Divies {
     // MODIFIERS
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     modifier isHuman() {
-        require(tx.origin == msg.sender);
+        address _addr = msg.sender;
+        require(_addr == tx.origin);
+        uint256 _codeLength;
+        
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "sorry humans only");
         _;
     }
     
@@ -96,7 +123,6 @@ contract Divies {
     event onDistribute(
         address pusher,
         uint256 startingBalance,
-        uint256 masternodePayout,
         uint256 finalBalance,
         uint256 compressedData
     );
@@ -122,7 +148,6 @@ contract Divies {
         // data setup
         address _pusher = msg.sender;
         uint256 _bal = address(this).balance;
-        uint256 _mnPayout;
         uint256 _compressedData;
         
         // limit pushers greed (use "if" instead of require for level 42 top kek)
@@ -135,33 +160,29 @@ contract Divies {
             pushers_[_pusher].tracker = pusherTracker_;
             pusherTracker_++;
             
-            // setup mn payout for event
-            if (BTBcontract_.balanceOf(_pusher) >= BTBcontract_.stakingRequirement())
-                _mnPayout = (_bal / 10) / 3;
-            
             // setup _stop.  this will be used to tell the loop to stop
             uint256 _stop = (_bal.mul(100 - _percent)) / 100;
             
             // buy & sell    
-            BTBcontract_.buy.value(_bal)(_pusher);
-            BTBcontract_.sell(BTBcontract_.balanceOf(address(this)));
+            P3Dcontract_.buy.value(_bal)(address(0));
+            P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
             
             // setup tracker.  this will be used to tell the loop to stop
-            uint256 _tracker = BTBcontract_.dividendsOf(address(this));
+            uint256 _tracker = P3Dcontract_.dividendsOf(address(this));
     
             // reinvest/sell loop
             while (_tracker >= _stop) 
             {
                 // lets burn some tokens to distribute dividends to p3d holders
-                BTBcontract_.reinvest();
-                BTBcontract_.sell(BTBcontract_.balanceOf(address(this)));
+                P3Dcontract_.reinvest();
+                P3Dcontract_.sell(P3Dcontract_.balanceOf(address(this)));
                 
                 // update our tracker with estimates (yea. not perfect, but cheaper on gas)
                 _tracker = (_tracker.mul(81)) / 100;
             }
             
             // withdraw
-            BTBcontract_.withdraw();
+            P3Dcontract_.withdraw();
         } else {
             _compressedData = _compressedData.insert(1, 47, 47);
         }
@@ -176,13 +197,34 @@ contract Divies {
         _compressedData = _compressedData.insert(_percent, 45, 46);
             
         // fire event
-        emit onDistribute(_pusher, _bal, _mnPayout, address(this).balance, _compressedData);
+        emit onDistribute(_pusher, _bal, address(this).balance, _compressedData);
     }
 }
 
+
 /**
 * @title -UintCompressor- v0.1.9
-
+* ????????????   ?? ???????  ????????????????????????
+*  ? ?? ??????   ?? ???? ?   ???????? ????? ??? ? ???
+*  ? ???? ?? ?  ???????? ?   ?  ??????????????? ? ???
+*                                  _____                      _____
+*                                 (, /     /)       /) /)    (, /      /)          /)
+*          ???                      /   _ (/_      // //       /  _   // _   __  _(/
+*          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
+*          ? ?                /   /          .-/ _____   (__ /                               
+*                            (__ /          (_/ (, /                                      /)™ 
+*                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
+* ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
+* ?  ??????????????? ?                                        (_/
+*    _  _   __   __ _  ____     ___   __   _  _  ____  ____  ____  ____  ____   __   ____ 
+*===/ )( \ (  ) (  ( \(_  _)===/ __) /  \ ( \/ )(  _ \(  _ \(  __)/ ___)/ ___) /  \ (  _ \===*
+*   ) \/ (  )(  /    /  )(    ( (__ (  O )/ \/ \ ) __/ )   / ) _) \___ \\___ \(  O ) )   /
+*===\____/ (__) \_)__) (__)====\___) \__/ \_)(_/(__)  (__\_)(____)(____/(____/ \__/ (__\_)===*
+*
+* ????????????????????????  ???????????? ????????????
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
+* ????????? ? ???? ???? ?   ???????????? ????????????
 */
 
 library UintCompressor {
