@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0xe9e0c83a98314d799fbfed18f873a41ee66b40cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0xc496caeb3998111b827e208c4805f02b33563ab4
 */
 pragma solidity ^0.4.21;
 
@@ -131,7 +131,6 @@ contract Ownable {
 
 }
 
-
 interface BancorConverter {
     function quickConvert(address[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
 }
@@ -141,11 +140,11 @@ contract BancorHandler is ExchangeHandler, Ownable {
     uint256 constant MAX_UINT = 2**256 - 1;
 
     modifier onlyTotle() {
-        require(msg.sender == totlePrimary);
+        require(msg.sender == totlePrimary, "BancorHandler - Only TotlePrimary allowed to call this function");
         _;
     }
 
-    function BancorHandler(
+    constructor(
         address _totlePrimary
     ) public {
         require(_totlePrimary != address(0x0));
@@ -201,7 +200,7 @@ contract BancorHandler is ExchangeHandler, Ownable {
         uint256 len;
         for(len = 1; len < orderAddresses.length; len++) {
             if(orderAddresses[len] == 0) {
-                require(len > 1);
+                require(len > 1, "BancorHandler - Invalid conversion path");
                 destinationToken = orderAddresses[len - 1];
                 len--;
                 break;
@@ -223,7 +222,7 @@ contract BancorHandler is ExchangeHandler, Ownable {
     }
 
     function transferTokenToSender(address token, uint256 amount) internal {
-        require(Token(token).transfer(msg.sender, amount));
+        require(Token(token).transfer(msg.sender, amount), "BancorHandler - Failed to transfer token to msg.sender");
     }
 
     function transferEtherToSender(uint256 amount) internal {
@@ -232,7 +231,7 @@ contract BancorHandler is ExchangeHandler, Ownable {
 
     function approveExchange(address exchange, address token) internal {
         if(Token(token).allowance(address(this), exchange) == 0) {
-            require(Token(token).approve(exchange, MAX_UINT));
+            require(Token(token).approve(exchange, MAX_UINT), "BancorHandler - Failed to approve token");
         }
     }
 
@@ -245,7 +244,7 @@ contract BancorHandler is ExchangeHandler, Ownable {
     }
 
     function setTotle(address _totlePrimary) external onlyOwner {
-        require(_totlePrimary != address(0));
+        require(_totlePrimary != address(0), "Invalid address for totlePrimary");
         totlePrimary = _totlePrimary;
     }
 
@@ -256,6 +255,6 @@ contract BancorHandler is ExchangeHandler, Ownable {
         assembly {
             size := extcodesize(sender)
         }
-        require(size > 0);
+        require(size > 0, "BancorHandler - can only send ether from another contract");
     }
 }
