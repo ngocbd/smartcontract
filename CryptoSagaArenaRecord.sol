@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x951a2a90a2384ae86c1ed822e468c35912ce0721
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSagaArenaRecord at 0x898ee0a9de7f580085247db1db775586c548aedb
 */
 pragma solidity ^0.4.18;
 
