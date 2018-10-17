@@ -1,88 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneToken at 0x698e0209955846a1dd8782a1d107f23ee4255476
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneToken at 0x959672e1701f408ca053962c38464edf769d017b
 */
-pragma solidity ^0.4.4;
-contract Token {
- function totalSupply() constant returns (uint256 supply) {}
- function balanceOf(address _owner) constant returns (uint256 balance) {}
- function transfer(address _to, uint256 _value) returns (bool success) {}
- function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
- function approve(address _spender, uint256 _value) returns (bool success) {}
- function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+pragma solidity ^0.4.24;
 
-event Transfer(address indexed _from, address indexed _to, uint256 _value);
- event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract OneToken {
+    uint256 public currentHodlerId;
+    address public currentHodler;
+    address[] public previousHodlers;
+    
+    string[] public messages;
+    uint256 public price;
+    
+    event Purchased(
+        uint indexed _buyerId,
+        address _buyer
+    );
 
-}
-contract StandardToken is Token {
- function transfer(address _to, uint256 _value) returns (bool success) {
- if (balances[msg.sender] >= _value && _value > 0) {
- balances[msg.sender] -= _value;
- balances[_to] += _value;
- Transfer(msg.sender, _to, _value);
- return true;
- } else { return false; }
- }
+    mapping (address => uint) public balance;
 
-function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
- if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
- balances[_to] += _value;
- balances[_from] -= _value;
- allowed[_from][msg.sender] -= _value;
- Transfer(_from, _to, _value);
- return true;
- } else { return false; }
- }
+    constructor() public {
+        currentHodler = msg.sender;
+        currentHodlerId = 0;
+        messages.push("Sky is the limit!");
+        price = 8 finney;
+        emit Purchased(currentHodlerId, currentHodler);
+    }
 
-function balanceOf(address _owner) constant returns (uint256 balance) {
- return balances[_owner];
- }
+    function buy(string message) public payable returns (bool) {
+        require (msg.value >= price);
+        
+        if (msg.value > price) {
+            balance[msg.sender] += msg.value - price;
+        }
+        uint256 previousHodlersCount = previousHodlers.length;
+        for (uint256 i = 0; i < previousHodlersCount; i++) {
+            balance[previousHodlers[i]] += (price * 8 / 100) / previousHodlersCount;
+        }
+        balance[currentHodler] += price * 92 / 100;
 
-function approve(address _spender, uint256 _value) returns (bool success) {
- allowed[msg.sender][_spender] = _value;
- Approval(msg.sender, _spender, _value);
- return true;
- }
+        price = price * 120 / 100;  
+        previousHodlers.push(currentHodler);
+        messages.push(message);
+        
+        currentHodler = msg.sender;
+        currentHodlerId = previousHodlersCount + 1;
+        emit Purchased(currentHodlerId, currentHodler);
+    }
 
-function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
- return allowed[_owner][_spender];
- }
-
-mapping (address => uint256) balances;
- mapping (address => mapping (address => uint256)) allowed;
- uint256 public totalSupply;
-}
-
-contract OneToken is StandardToken {
- string public name; 
- uint8 public decimals; 
- string public symbol;
- string public version = 'H1.0'; 
- uint256 public unitsOneEthCanBuy;
- uint256 public totalEthInWei;
- address public fundsWallet; 
- function OneToken() {
- balances[msg.sender] = 1200;
- totalSupply = 1200;
- name = "One Token";
- decimals = 18;
- symbol = "ONE";
- unitsOneEthCanBuy = 5000;
- fundsWallet = msg.sender;
- }
- function() payable{
- totalEthInWei = totalEthInWei + msg.value;
- uint256 amount = msg.value * unitsOneEthCanBuy;
- require(balances[fundsWallet] >= amount);
- balances[fundsWallet] = balances[fundsWallet] - amount;
- balances[msg.sender] = balances[msg.sender] + amount;
- Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
- fundsWallet.transfer(msg.value); 
- }
- function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
- allowed[msg.sender][_spender] = _value;
- Approval(msg.sender, _spender, _value);
- if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
- return true;
- }
+    function withdraw() public {
+        uint amount = balance[msg.sender];
+        balance[msg.sender] = 0;
+        msg.sender.transfer(amount);
+    }
 }
