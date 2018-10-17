@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SieChain at 0xc2fbcfc668c4ec48f50747cc51158118fb460e9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIEChain at 0xd18822836d79cc89b79cb4d8c949c1ba79f7d27b
 */
 pragma solidity ^0.4.24;
 
@@ -281,14 +281,14 @@ contract ModToken is StandardToken {
 }
 
 
-contract SieChain is ModToken {
+contract SIEChain is ModToken {
    uint256 _initialAmount = 1000000000;
     uint8 constant public decimals = 8;
     uint public totalSupply = _initialAmount * 10 ** uint256(decimals);
-    string constant public name = "Sie Chain";
-    string constant public symbol = "sie";
+    string constant public name = "SIE Chain";
+    string constant public symbol = "SIE";
     
-  function SieChain() public {
+  function SIEChain() public {
         balances[msg.sender] = totalSupply;
         Transfer(address(0), msg.sender, totalSupply);
   }
