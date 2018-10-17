@@ -1,56 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GuessEth at 0x057410216d0655272de93f0ecd084423be6c1161
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GuessEth at 0xa4bc6cc6ac0887c7344d0636cad955988eefd18d
 */
 pragma solidity ^0.4.24;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-library utils{
-    function inArray(uint[] _arr,uint _val) internal pure returns(bool){
-        for(uint _i=0;_i< _arr.length;_i++){
-            if(_arr[_i]==_val){
-                return true;
-                break;
-            }
-        }
-        return false;
-    }
-    
-    function inArray(address[] _arr,address _val) internal pure returns(bool){
-        for(uint _i=0;_i< _arr.length;_i++){
-            if(_arr[_i]==_val){
-                return true;
-                break;
-            }
-        }
-        return false;
-    }
-}
-
 
 contract Ownable {
   address public owner;
@@ -151,7 +102,8 @@ contract GuessEth is Ownable,GuessEthEvents{
     address private wallet2;
     
     uint private predictBlockInterval=3;
-    uint public odds=30;
+    uint public odds=45;
+    uint public minBetVal=1 finney;
     uint public blockInterval=500;
     uint public curOpenBNumber=0;
     uint public numberRange=100;
@@ -206,7 +158,7 @@ contract GuessEth is Ownable,GuessEthEvents{
     }
     
     function guess(uint[] _numbers) payable isHuman() public returns(uint){
-        require(msg.value  >= _numbers.length * 0.05 ether);
+        require(msg.value  >= _numbers.length.mul(minBetVal));
 
         uint n=blockInterval*(predictBlockInterval + block.number/blockInterval);
         
@@ -343,7 +295,7 @@ contract GuessEth is Ownable,GuessEthEvents{
     
     
     function invest() isHuman payable public returns(uint){
-        require(msg.value >= 1 ether,"Minima amoun:1 ether");
+        require(msg.value >= 0.1 ether,"Minima amoun:0.1 ether");
         
         Sponsors[msg.sender] = Sponsors[msg.sender].add(msg.value);
         balanceOfSPS = balanceOfSPS.add(msg.value);
@@ -405,4 +357,52 @@ contract GuessEth is Ownable,GuessEthEvents{
     }
     
   
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+library utils{
+    function inArray(uint[] _arr,uint _val) internal pure returns(bool){
+        for(uint _i=0;_i< _arr.length;_i++){
+            if(_arr[_i]==_val){
+                return true;
+                break;
+            }
+        }
+        return false;
+    }
+    
+    function inArray(address[] _arr,address _val) internal pure returns(bool){
+        for(uint _i=0;_i< _arr.length;_i++){
+            if(_arr[_i]==_val){
+                return true;
+                break;
+            }
+        }
+        return false;
+    }
 }
