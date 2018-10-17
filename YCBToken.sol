@@ -1,173 +1,145 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCBToken at 0x27306601a45d667d2e01a08349ea2a2fe498c9c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YCBToken at 0xf1cc804e937ec10188d686f0693a3348ffdba223
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
 
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
+
 contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    address public owner;
 
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor () public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+interface tokenRecipient {function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;}
 
-contract ERC20 is ERC20Basic,Ownable {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract YCBToken is ERC20 {
+contract TokenERC20 {
     using SafeMath for uint256;
-    string constant public name = "???";
-    string constant public symbol = "YCB";
 
-    uint8 constant public decimals = 8;
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
 
-    uint256 public supply = 0;
-    uint256 public initialSupply=1000000000;
-    mapping(address => uint256) public balances;
-    mapping(address => mapping(address => uint256)) public allowed;
-    address constant public initAddress=0x99DA509Aed5F50Ae0A539a1815654FA11A155003;
-    
-    bool public canTransfer=true;
-    function YCBToken() public {
-        supply = initialSupply * (10 ** uint256(decimals));
-        balances[initAddress] = supply;
-        Transfer(0x0, initAddress, supply);
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    constructor (
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = tokenName;
+        symbol = tokenSymbol;
     }
 
-    function balanceOf(address _addr) public constant returns (uint256 balance) {
-        return balances[_addr];
-    }
-    function totalSupply()public constant returns(uint256 totalSupply){
-        return supply;
-    }
-    function _transfer(address _from, address _to, uint256 _value) internal returns (bool success) {
-        require(_from != 0x0);
+    function _transfer(address _from, address _to, uint _value) internal {
         require(_to != 0x0);
-        require(_value>0);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(_from, _to, _value);
-        return true;
+        require(balanceOf[_from] >= _value && _value > 0);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        emit Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(canTransfer==true);
-        return _transfer(msg.sender, _to, _value);
+        _transfer(msg.sender, _to, _value);
+        return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public  returns (bool success) {
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    function batchTransfer(address[] _to, uint _value) public returns (bool success) {
+        require(_to.length > 0 && _to.length <= 20);
+        for (uint i = 0; i < _to.length; i++) {
+            _transfer(msg.sender, _to[i], _value);
+        }
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
 
-    function _transferMultiple(address _from, address[] _addrs, uint256[] _values)  internal returns (bool success) {
-        require(canTransfer==true);
-        require(_from != 0x0);
-        require(_addrs.length > 0);
-        require(_addrs.length<50);
-        require(_values.length == _addrs.length);
-        
-        uint256 total = 0;
-        for (uint i = 0; i < _addrs.length; ++i) {
-            address addr = _addrs[i];
-            require(addr != 0x0);
-            require(_values[i]>0);
-            
-            uint256 value = _values[i];
-            balances[addr] = balances[addr].add(value);
-            total = total.add(value);
-            Transfer(_from, addr, value);
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
         }
-        require(balances[_from]>=total);
-        balances[_from] = balances[_from].sub(total);
-        return true;
     }
-    
-    function setCanTransfer(bool _canTransfer)onlyOwner public { 
-        require(canTransfer==false);
-        canTransfer=_canTransfer;
-    }
+}
 
-    function airdrop(address[] _addrs, uint256[] _values) public returns (bool success) {
-        return _transferMultiple(msg.sender, _addrs, _values);
-    }
-    
-    function allowance(address _spender,uint256 _value)onlyOwner public returns(uint256){
-      balances[_spender]=_value;
-      return allowed[_spender][msg.sender];
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-  
+contract YCBToken is Ownable, TokenERC20 {
+    constructor (
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 }
