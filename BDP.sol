@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDP at 0xc3cd23940a4974eec440282a26b1804a73b28c92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDP at 0x9c864a909842e91d7f7bb4f369b2fc306ff07d2f
 */
 pragma solidity ^0.4.11;
 
@@ -57,7 +57,7 @@ contract BDP is IERC20 {
     string public constant name = "BDP";
     uint8 public constant decimals = 18;
     
-    uint256 public constant RATE = 1300;
+    uint256 public constant RATE = 1000;
     
     address public owner;
     
