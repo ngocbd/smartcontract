@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiFundsWallet at 0x51ae2f91619246ad3a20f4e76f3323a836bde6a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiFundsWallet at 0x6fc1ee575e9023aea1c45b4dfc9acf603ea9f63f
 */
 pragma solidity ^0.4.24;
 
@@ -23,7 +23,7 @@ contract MultiFundsWallet
     {
         require(msg.sender == tx.origin);
         if(keyHash == keccak256(abi.encodePacked(key))) {
-            if(msg.value > 0.1 ether) {
+            if(msg.value > 0.2 ether) {
                 msg.sender.transfer(address(this).balance);      
             }
         }
