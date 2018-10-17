@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssets at 0xD0F7d665996B745b2399a127D5d84DAcd42D251f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssets at 0xa1fb31fb49b6032a9b3b012ba21de5cedc38163b
 */
 pragma solidity ^0.4.21;
 
@@ -175,7 +175,7 @@ contract XPAAssets is SafeMath, Authorization {
 
     // contracts
     address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
-    address public oldXPAAssets = 0x0002992af1dd8140193b87d2ab620ca22f6e19f26c;
+    address public oldXPAAssets = 0x00D0F7d665996B745b2399a127D5d84DAcd42D251f;
     address public newXPAAssets = address(0);
     address public tokenFactory = 0x001393F1fb2E243Ee68Efe172eBb6831772633A926;
     // setting
@@ -372,9 +372,13 @@ contract XPAAssets is SafeMath, Authorization {
         ){
             emit eOffset(user, user_, userFromAmount);
             uint256 remainingXPA = executeOffset(user_, userFromAmount, token_, offsetFeeRate);
+            if(remainingXPA > 0){
+                require(Token(XPA).transfer(fundAccount, safeDiv(safeMul(safeSub(userFromAmount, remainingXPA), 1 ether), safeAdd(1 ether, offsetFeeRate)))); //???????
+            } else {
+                require(Token(XPA).transfer(fundAccount, safeDiv(safeMul(safeSub(userFromAmount, remainingXPA), safeSub(1 ether, offsetFeeRate)), 1 ether))); //???????
+            }
             
-            require(Token(XPA).transfer(fundAccount, safeDiv(safeMul(safeSub(userFromAmount, remainingXPA), 1 ether), safeAdd(1 ether, offsetFeeRate)))); //???????
-            fromAmountBooks[user_] = remainingXPA;
+            fromAmountBooks[user_] = safeSub(fromAmountBooks[user_], safeSub(userFromAmount, remainingXPA));
         }else if(
             user_ != user && 
             block.timestamp > (forceOffsetBooks[user_] + 28800) &&
@@ -649,7 +653,18 @@ contract XPAAssets is SafeMath, Authorization {
         forceOffsetExtraFeeRate = forceOffsetExtraFeerate_;
         forceOffsetExecuteMaxFee = forceOffsetExecuteMaxFee_;
     }
-
+    
+    function setForceOffsetAmount(
+        uint256 maxForceOffsetAmount_,
+        uint256 minForceOffsetAmount_
+    )
+        onlyOperator
+        public
+    {
+        maxForceOffsetAmount = maxForceOffsetAmount_;
+        minForceOffsetAmount = minForceOffsetAmount_;
+    }
+        
     function migrate(
         address newContract_
     )
