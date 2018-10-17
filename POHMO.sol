@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POHMO at 0x8fe7af8163b3891d368126db0ba6d68e70f680f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POHMO at 0x5041d5c444c2d730b406ae5ec9199cd8e47e463c
 */
 pragma solidity ^0.4.24;
 
@@ -31,7 +31,7 @@ contract PoHEVENTS {
         bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
-        uint256 PoCAmount,
+        uint256 PoHAmount,
         uint256 genAmount,
         uint256 potAmount
     );
@@ -58,7 +58,7 @@ contract PoHEVENTS {
         bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
-        uint256 PoCAmount,
+        uint256 PoHAmount,
         uint256 genAmount
     );
 
@@ -75,7 +75,7 @@ contract PoHEVENTS {
         bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
-        uint256 PoCAmount,
+        uint256 PoHAmount,
         uint256 genAmount
     );
 
@@ -91,7 +91,7 @@ contract PoHEVENTS {
         bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
-        uint256 PoCAmount,
+        uint256 PoHAmount,
         uint256 genAmount
     );
 
@@ -126,13 +126,13 @@ contract POHMO is PoHEVENTS {
     using KeysCalc for uint256;
 
     PlayerBookInterface private PlayerBook;
+    POHCONTRACT private POHToken;
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
 //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
 //=================_|===========================================================
     address private admin = msg.sender;
-    address private _POHWHALE;
     string constant public name = "POHMO";
     string constant public symbol = "POHMO";
     uint256 private rndExtra_ = 1 seconds;     // length of the very first ICO
@@ -167,13 +167,13 @@ contract POHMO is PoHEVENTS {
 //     _ _  _  __|_ _    __|_ _  _  .
 //    (_(_)| |_\ | | |_|(_ | (_)|   .  (initial data setup upon contract deploy)
 //==============================================================================
-    constructor(address whaleContract, address playerbook)
+    constructor(address token, address playerbook)
         public
     {
-        _POHWHALE = whaleContract;
+        POHToken = POHCONTRACT(token);
         PlayerBook = PlayerBookInterface(playerbook);
 
-        //no teams... only POOH-heads
+        //no teams... only POH-heads
         // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = POHMODATASETS.TeamFee(47,12);   //30% to pot, 10% to aff, 1% to dev,
        
@@ -517,7 +517,7 @@ contract POHMO is PoHEVENTS {
                 _eventData_.winnerName,
                 _eventData_.amountWon,
                 _eventData_.newPot,
-                _eventData_.PoCAmount,
+                _eventData_.PoHAmount,
                 _eventData_.genAmount
             );
 
@@ -849,7 +849,7 @@ contract POHMO is PoHEVENTS {
                     _eventData_.winnerName,
                     _eventData_.amountWon,
                     _eventData_.newPot,
-                    _eventData_.PoCAmount,
+                    _eventData_.PoHAmount,
                     _eventData_.genAmount
                 );
             }
@@ -904,7 +904,7 @@ contract POHMO is PoHEVENTS {
                 _eventData_.winnerName,
                 _eventData_.amountWon,
                 _eventData_.newPot,
-                _eventData_.PoCAmount,
+                _eventData_.PoHAmount,
                 _eventData_.genAmount
             );
         }
@@ -1149,8 +1149,8 @@ contract POHMO is PoHEVENTS {
         uint256 _win = (_pot.mul(48)) / 100;   //48%
         uint256 _dev = (_pot / 50);            //2%
         uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100; //15
-        uint256 _PoC = (_pot.mul(potSplit_[_winTID].pooh)) / 100; // 10
-        uint256 _res = (((_pot.sub(_win)).sub(_dev)).sub(_gen)).sub(_PoC); //25
+        uint256 _PoH = (_pot.mul(potSplit_[_winTID].poh)) / 100; // 10
+        uint256 _res = (((_pot.sub(_win)).sub(_dev)).sub(_gen)).sub(_PoH); //25
 
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1168,7 +1168,7 @@ contract POHMO is PoHEVENTS {
 
         admin.transfer(_dev);
 
-        _POHWHALE.call.value(_PoC)(bytes4(keccak256("donate()")));  
+        POHToken.call.value(_PoH)(bytes4(keccak256("sendDividends()")));
 
         // distribute gen portion to key holders
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
@@ -1180,7 +1180,7 @@ contract POHMO is PoHEVENTS {
         _eventData_.winnerName = plyr_[_winPID].name;
         _eventData_.amountWon = _win;
         _eventData_.genAmount = _gen;
-        _eventData_.PoCAmount = _PoC;
+        _eventData_.PoHAmount = _PoH;
         _eventData_.newPot = _res;
 
         // start next round
@@ -1241,7 +1241,7 @@ contract POHMO is PoHEVENTS {
 
    
     /**
-     * @dev distributes eth based on fees to com, aff, and pooh
+     * @dev distributes eth based on fees to com, aff, and poh
      */
     function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, POHMODATASETS.EventReturns memory _eventData_)
         private
@@ -1250,10 +1250,10 @@ contract POHMO is PoHEVENTS {
         // pay 1% out to dev
         uint256 _dev = _eth / 100;  // 1%
 
-        uint256 _PoC = 0;
+        uint256 _PoH = 0;
         if (!address(admin).call.value(_dev)())
         {
-            _PoC = _dev;
+            _PoH = _dev;
             _dev = 0;
         }
 
@@ -1267,18 +1267,18 @@ contract POHMO is PoHEVENTS {
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit PoHEVENTS.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
-            _PoC = _PoC.add(_aff);
+            _PoH = _PoH.add(_aff);
         }
 
-        // pay out POOH
-        _PoC = _PoC.add((_eth.mul(fees_[_team].pooh)) / (100));
-        if (_PoC > 0)
+        // pay out POH
+        _PoH = _PoH.add((_eth.mul(fees_[_team].poh)) / (100));
+        if (_PoH > 0)
         {
             // deposit to divies contract
-            _POHWHALE.call.value(_PoC)(bytes4(keccak256("donate()")));
+            POHToken.call.value(_PoH)(bytes4(keccak256("sendDividends()")));
 
             // set up event data
-            _eventData_.PoCAmount = _PoC.add(_eventData_.PoCAmount);
+            _eventData_.PoHAmount = _PoH.add(_eventData_.PoHAmount);
         }
 
         return(_eventData_);
@@ -1304,7 +1304,7 @@ contract POHMO is PoHEVENTS {
 
 
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].pooh)) / 100));
+        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].poh)) / 100));
 
         // calculate pot
         uint256 _pot = _eth.sub(_gen);
@@ -1401,7 +1401,7 @@ contract POHMO is PoHEVENTS {
             _eventData_.winnerName,
             _eventData_.amountWon,
             _eventData_.newPot,
-            _eventData_.PoCAmount,
+            _eventData_.PoHAmount,
             _eventData_.genAmount,
             _eventData_.potAmount
         );
@@ -1447,7 +1447,7 @@ library POHMODATASETS {
         bytes32 winnerName;         // winner name
         uint256 amountWon;          // amount won
         uint256 newPot;             // amount in new pot
-        uint256 PoCAmount;          // amount distributed to p3d
+        uint256 PoHAmount;          // amount distributed to p3d
         uint256 genAmount;          // amount distributed to gen
         uint256 potAmount;          // amount added to pot
     }
@@ -1482,11 +1482,11 @@ library POHMODATASETS {
     }
     struct TeamFee {
         uint256 gen;    // % of buy in thats paid to key holders of current round
-        uint256 pooh;    // % of buy in thats paid to POOH holders
+        uint256 poh;    // % of buy in thats paid to POH holders
     }
     struct PotSplit {
         uint256 gen;    // % of pot thats paid to key holders of current round
-        uint256 pooh;    // % of pot thats paid to POOH holders
+        uint256 poh;    // % of pot thats paid to POH holders
     }
 }
 
@@ -1555,6 +1555,13 @@ library KeysCalc {
 //  . _ _|_ _  _ |` _  _ _  _  .
 //  || | | (/_| ~|~(_|(_(/__\  .
 //==============================================================================
+
+
+//Define the PoH token
+contract POHCONTRACT 
+{
+    function sendDividends () payable public;
+}
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
