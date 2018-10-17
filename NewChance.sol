@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0xee670a85a0a449bee80b9fe48ed679a5760a6031
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewChance at 0x1fe4de38647778255a47060769942c360fbc5b71
 */
 pragma solidity ^0.4.24;
 
@@ -121,7 +121,7 @@ contract NewChance is modularShort {
     using NameFilter for string;
     using F3DKeysCalcShort for uint256;
 
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0x2A8Cc43F5124Af19386A34DCb8BF0b2EFc3594Ba);
+    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xdF762c13796758D89C91F7fdac1287b8Eeb294c4);
 
 //==============================================================================
 //     _ _  _  |`. _     _ _ |_ | _  _  .
@@ -131,11 +131,11 @@ contract NewChance is modularShort {
     address private admin2 = msg.sender;
     string constant public name = "New Chance";
     string constant public symbol = "NEWCH";
-    uint256 private rndExtra_ = 30 minutes;     // length of the very first ICO
+    uint256 private rndExtra_ = 12 hours;     // length of the very first ICO
     uint256 private rndGap_ = 30 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 30 minutes;                // round timer starts at this
     uint256 constant private rndInc_ = 10 seconds;              // every full key purchased adds this much to the timer
-    uint256 constant private rndMax_ = 12 hours;                // max length a round timer can be
+    uint256 constant private rndMax_ = 2 hours;                // max length a round timer can be
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .  (data used to store game info that changes)
@@ -178,9 +178,9 @@ contract NewChance is modularShort {
         // (F3D, P3D) + (Pot , Referrals, Community)
             // Referrals / Community rewards are mathematically designed to come from the winner's share of the pot.
         fees_[0] = F3Ddatasets.TeamFee(36,0);   //50% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
-        fees_[1] = F3Ddatasets.TeamFee(49,0);   //37% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
-        fees_[2] = F3Ddatasets.TeamFee(66,0);  //20% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
-        fees_[3] = F3Ddatasets.TeamFee(56,0);   //30% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[1] = F3Ddatasets.TeamFee(59,0);   //27% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[2] = F3Ddatasets.TeamFee(66,0);   //20% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
+        fees_[3] = F3Ddatasets.TeamFee(46,0);   //40% to pot, 10% to aff, 3% to com, 0% to pot swap, 1% to air drop pot
 
         // how to split up the final pot based on which team was picked
         // (F3D, P3D)
@@ -1539,7 +1539,7 @@ contract NewChance is modularShort {
         public
     {
         // only team just can activate
-        require(msg.sender == admin2, "only admin can activate");
+        require((msg.sender == admin1 || msg.sender == admin2), "only admin can activate");
 
 
         // can only be ran once
