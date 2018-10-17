@@ -1,278 +1,292 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xff1667bddc9b832a0022bbfc6c586bd299262d94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x32353f618727f1272258b45a2aac1bf2335faa2a
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.11;
 
-contract Control {
-    address public owner;
-    bool public pause;
 
-    event PAUSED();
-    event STARTED();
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+/**
 
-    modifier whenPaused {
-        require(pause);
-        _;
-    }
+ * @title SafeMath
 
-    modifier whenNotPaused {
-        require(!pause);
-        _;
-    }
+ * @dev Math operations with safety checks that throw on error
 
-    function setOwner(address _owner) onlyOwner public {
-        owner = _owner;
-    }
-
-    function setState(bool _pause) onlyOwner public {
-        pause = _pause;
-        if (pause) {
-            emit PAUSED();
-        } else {
-            emit STARTED();
-        }
-    }
-    
-    constructor() public {
-        owner = msg.sender;
-    }
-}
-
-contract ERC20Token {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    function symbol() public constant returns (string);
-    function decimals() public constant returns (uint256);
-    
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-contract Share {
-    function onIncome() public payable;
-}
+ */
 
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
 
-    c = a * b;
-    assert(c / a == b);
+    uint256 c = a * b;
+
+    assert(a == 0 || c / a == b);
+
     return c;
+
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
+
+    uint256 c = a / b;
+
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
     return c;
+
   }
+
+
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+
+    assert(b <= a);
+
+    return a - b;
+
+  }
+
+
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+
+    uint256 c = a + b;
+
+    assert(c >= a);
+
+    return c;
+
+  }
+
 }
 
-contract Crowdsale is Control {
-    using SafeMath for uint256;
 
-    // The token being sold
-    ERC20Token public token;
 
-    address public tokenFrom;
-    function setTokenFrom(address _from) onlyOwner public {
-        tokenFrom = _from;
-    }
+/**
 
-    // Address where funds are collected
-    Share public wallet;
-    function setWallet(Share _wallet) onlyOwner public {
-        wallet = _wallet;
-    }
+ * @title Crowdsale
 
-    // How many token units a buyer gets per wei.
-    // The rate is the conversion between wei and the smallest and indivisible token unit.
-    // So, if you are using a rate of 1 with a DetailedShare token with 3 decimals called TOK
-    // 1 wei will give you 1 unit, or 0.001 TOK.
-    uint256 public rate;
-    function adjustRate(uint256 _rate) onlyOwner public {
-        rate = _rate;
-    }
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
 
-    uint256 public weiRaiseLimit;
-    
-    function setWeiRaiseLimit(uint256 _limit) onlyOwner public {
-        weiRaiseLimit = _limit;
-    }
-    
-    // Amount of wei raised
-    uint256 public weiRaised;
-  
-    /**
-      * Event for token purchase logging
-      * @param purchaser who paid for the tokens
-      * @param beneficiary who got the tokens
-      * @param value weis paid for purchase
-      * @param amount amount of tokens purchased
-      */
-    event TokenPurchase (
-        address indexed purchaser,
-        address indexed beneficiary,
-        uint256 value,
-        uint256 amount
-    );
+ * Crowdsales have a start and end timestamps, where investors can make
 
-    modifier onlyAllowed {
-        require(weiRaised < weiRaiseLimit);
-        _;
-    }
+ * token purchases and the crowdsale will assign them tokens based
+
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+
+ * as they arrive.
+
+ */
+
+contract token { function transfer(address receiver, uint amount){  } }
+
+contract Crowdsale {
+
+  using SafeMath for uint256;
+
+
+
+  // uint256 durationInMinutes;
+
+  // address where funds are collected
+
+  address public wallet;
+
+  // token address
+
+  address addressOfTokenUsedAsReward;
+
+
+
+  token tokenReward;
+
+
+
+
+
+
+
+  // start and end timestamps where investments are allowed (both inclusive)
+
+  uint256 public startTime;
+
+  uint256 public endTime;
+
+  // amount of raised money in wei
+
+  uint256 public weiRaised;
+
+
+
   /**
-   * @param _rate Number of token units a buyer gets per wei
-   * @param _wallet Address where collected funds will be forwarded to
-   * @param _token Address of the token being sold
-   */
-  constructor(uint256 _rate, Share _wallet, ERC20Token _token, address _tokenFrom, uint256 _ethRaiseLimit) 
-  public 
-  {
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_token != address(0));
 
-    owner = msg.sender;
-    rate = _rate;
-    wallet = _wallet;
-    token = _token;
-    tokenFrom  = _tokenFrom;
-    weiRaiseLimit = _ethRaiseLimit * (10 ** 18);
+   * event for token purchase logging
+
+   * @param purchaser who paid for the tokens
+
+   * @param beneficiary who got the tokens
+
+   * @param value weis paid for purchase
+
+   * @param amount amount of tokens purchased
+
+   */
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+
+
+
+  function Crowdsale() {
+
+    wallet = 0x4E28639eFfEd150Bd154222452EA6E7e605738f3;
+
+    // durationInMinutes = _durationInMinutes;
+
+    addressOfTokenUsedAsReward = 0x0f42D209FC46F678e8d31717d7ce14c69724A60E;
+
+
+
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+
   }
 
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
 
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
+
+  bool started = false;
+
+
+
+  function startSale(uint256 delay){
+
+    if (msg.sender != wallet || started) throw;
+
+    startTime = now + delay * 1 minutes;
+
+    endTime = startTime + 30 * 24 * 60 * 1 minutes;
+
+    started = true;
+
+  }
+
+
+
+  // fallback function can be used to buy tokens
+
+  function () payable {
+
     buyTokens(msg.sender);
+
   }
 
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable onlyAllowed whenNotPaused {
+
+
+  // low level token purchase function
+
+  function buyTokens(address beneficiary) payable {
+
+    require(beneficiary != 0x0);
+
+    require(validPurchase());
+
+
 
     uint256 weiAmount = msg.value;
-    if (weiAmount > weiRaiseLimit.sub(weiRaised)) {
-        weiAmount = weiRaiseLimit.sub(weiRaised);
+
+
+
+    // calculate token amount to be sent
+
+    uint256 tokens = (weiAmount/10**10) * 1300;
+
+
+
+    if(now < startTime + 1*7*24*60* 1 minutes){
+
+      tokens += (tokens * 20) / 100;
+
+    }else if(now < startTime + 2*7*24*60* 1 minutes){
+
+      tokens += (tokens * 10) / 100;
+
+    }else{
+
+      tokens += (tokens * 5) / 100;
+
     }
-    
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
-    
-    if (address(wallet) != address(0)) {
-        wallet.onIncome.value(weiAmount)();
-    }
-    
+
+
+
     // update state
+
     weiRaised = weiRaised.add(weiAmount);
 
-    _processPurchase(_beneficiary, tokens);
-    
-    emit TokenPurchase(
-      msg.sender,
-      _beneficiary,
-      weiAmount,
-      tokens
-    );
-    
-    if(msg.value.sub(weiAmount) > 0) {
-        msg.sender.transfer(msg.value.sub(weiAmount));
+
+
+    tokenReward.transfer(beneficiary, tokens);
+
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+
+  }
+
+
+
+  // send ether to the fund collection wallet
+
+  // override to create custom fund forwarding mechanisms
+
+  function forwardFunds() internal {
+
+    // wallet.transfer(msg.value);
+
+    if (!wallet.send(msg.value)) {
+
+      throw;
+
     }
-  }
 
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    token.transferFrom(tokenFrom, _beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    _deliverTokens(_beneficiary, _tokenAmount);
   }
 
 
 
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount)
-    internal view returns (uint256)
-  {
-    return _weiAmount / rate;
+  // @return true if the transaction can buy tokens
+
+  function validPurchase() internal constant returns (bool) {
+
+    bool withinPeriod = now >= startTime && now <= endTime;
+
+    bool nonZeroPurchase = msg.value != 0;
+
+    return withinPeriod && nonZeroPurchase;
+
   }
-  
-  function withdrawl() public {
-      owner.transfer(address(this).balance);
+
+
+
+  // @return true if crowdsale event has ended
+
+  function hasEnded() public constant returns (bool) {
+
+    return now > endTime;
+
   }
+
+
+
+  function withdrawTokens(uint256 _amount) {
+
+    if(msg.sender!=wallet) throw;
+
+    tokenReward.transfer(wallet,_amount);
+
+  }
+
 }
