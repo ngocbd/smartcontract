@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x8735ee170b3d2cffc335473addc55dacb1744081
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x939dc44d83606bc172adfa319e5b27738dc28942
 */
 // <ORACLIZE_API>
 /*
@@ -1236,7 +1236,7 @@ contract GladiethersOraclize is usingOraclize
 {
     address public m_Owner;
     
-    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0xf3a7347cde5928688a41b6b521a1ead2999f9c34);
+    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0x488dadeb1b698d95747f883b98799fbb5a0cf428);
     mapping (bytes32 => address) public queryIdToGladiator;
     mapping (bytes32 => bool) public queryIdToIsEthPrice;
     uint public initGameAt = 1529532000;
