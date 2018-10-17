@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xb6cd913cd9370c82417a1ad7f676a99c0b5b298d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CompliantToken at 0xfb417600ea46c7047703d34e190c9c13e10b0b9d
 */
 pragma solidity 0.4.24;
 
@@ -496,13 +496,15 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
     * @param value number of tokens
     * @param fee fee in tokens
     * @param spender The address which will spend the tokens
+    * @param nonce request recorded at this particular nonce
     */
     event RecordedPendingTransaction(
         address indexed from,
         address indexed to,
         uint256 value,
         uint256 fee,
-        address indexed spender
+        address indexed spender,
+        uint256 nonce
     );
 
     /**
@@ -633,7 +635,7 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
             address(0)
         );
 
-        emit RecordedPendingTransaction(msg.sender, _to, _value, transferFee, address(0));
+        emit RecordedPendingTransaction(msg.sender, _to, _value, transferFee, address(0), currentNonce);
         currentNonce++;
 
         return true;
@@ -672,7 +674,7 @@ contract CompliantToken is Validator, DetailedERC20, MintableToken {
             msg.sender
         );
 
-        emit RecordedPendingTransaction(_from, _to, _value, transferFee, msg.sender);
+        emit RecordedPendingTransaction(_from, _to, _value, transferFee, msg.sender, currentNonce);
         currentNonce++;
 
         return true;
