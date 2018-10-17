@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCToken at 0xb1a819a4aa03741d8b2af06d78ca91a74c831029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCToken at 0xede3fe45d0c671f21ed10eb7bcd0a85ec9f8418e
 */
 pragma solidity ^0.4.19;
 library SafeMath {
@@ -148,7 +148,7 @@ contract ERC20Token is ERC20Interface {
         allowed [_from][msg.sender] = spenderAllowance.sub(_value);
     
         if (_value > 0 && _from != _to) {
-          balances [_from] = fromBalance.add(_value);
+          balances [_from] = fromBalance.sub(_value);
           balances [_to] = balances[_to].add(_value);
         }
 
@@ -321,7 +321,7 @@ contract DOCTokenConfig {
     uint256 public constant TOKEN_TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
 
     address public constant PUBLIC_RESERVED = 0x347364f2bc343f6c676620d09eb9c37431dbee60;
-    uint256 public constant PUBLIC_RESERVED_PERSENTAGE = 9000;
+    uint256 public constant PUBLIC_RESERVED_PERSENTAGE = 10000;
 
     address[] public BOARD_RESERVED = [0x7a59b7a5d6b00745effe411090ff424819b7055a,
     0x00b9991e08d8e20b6efd12d259321b7ab88a700a,
@@ -334,7 +334,7 @@ contract DOCTokenConfig {
     0x17a58a997a0a5ea218e82c7ae6d560e04f4defa0,
     0x03ff44be1efb207fea4a30fd546b0741a476a0e4];
 
-    uint256[] public BOARD_RESERVED_PERSENTAGE = [200,200,200,500,500,1000,1000,2000,2000,2400];
+    uint256[] public BOARD_RESERVED_PERSENTAGE = [0,0,0,0,0,0,0,0,0,0];
 
 }
 
