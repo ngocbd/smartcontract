@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RudysToken at 0x9299a41d1f55e49b7d1ec01b09ccb96ee32d5c78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RudysToken at 0x44e068191486cb576fb6875e5d478a326af7c80a
 */
 pragma solidity ^0.4.4;
 
@@ -98,7 +98,7 @@ contract RudysToken is StandardToken { // CHANGE THIS. Update the contract name.
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol;                 // An identifier: ..
     string public version = 'H1.0'; 
-    uint256 public WellnessToken ;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public RudysToken ;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address  fundsWallet;           // Where should the raised ETH go?
 
@@ -107,7 +107,7 @@ contract RudysToken is StandardToken { // CHANGE THIS. Update the contract name.
     function RudysToken() {
         balances[msg.sender] = 10000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 10000000000;                        // Update total supply (1000 for example) (RudysToken )
-        name = "RudysToken";                                   // Set the name for display purposes WellnessToken
+        name = "RudysToken";                                   // Set the name for display purposes RudysToken
         decimals = 4;                                               // Amount of decimals for display purposes (RudysToken)
         symbol = "RDS";                                             // Set the symbol for display purposes RudysToken
                                               // Set the price of your token for the ICO RudysToken
