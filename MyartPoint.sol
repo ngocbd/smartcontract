@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyartPoint at 0x818a6f5515e18a94ada2d6e30bf7748d8e45cc48
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyartPoint at 0xc711348eb06f6918f8eae66ce3fcf4747345d78e
 */
 /*
 Copyright (c) 2018 Myart Dev Team
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -66,7 +66,7 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -99,9 +99,6 @@ contract MyartPoint is ERC20Interface, Owned {
     uint private  _totalSupply;
     bool public halted;
 
-    uint number = 0;
-    mapping(uint => address) private indices;
-    mapping(address => bool) private exists;
     mapping(address => uint) private balances;
     mapping(address => mapping(address => uint)) private allowed;
     mapping(address => bool) public frozenAccount;
@@ -109,39 +106,14 @@ contract MyartPoint is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function MyartPoint() public {
+    constructor() public {
         halted = false;
         symbol = "MYT";
-        name = "Myart Point";
+        name = "Myart";
         decimals = 18;
         _totalSupply = 1210 * 1000 * 1000 * 10**uint(decimals);
 
         balances[owner] = _totalSupply;
-    }
-
-    // ------------------------------------------------------------------------
-    // Record a new address
-    // ------------------------------------------------------------------------    
-    function recordNewAddress(address _adr) internal {
-        if (exists[_adr] == false) {
-            exists[_adr] = true;
-            indices[number] = _adr;
-            number++;
-        } 
-    }
-    
-    // ------------------------------------------------------------------------
-    // Get number of addresses
-    // ------------------------------------------------------------------------
-    function numAdrs() public constant returns (uint) {
-        return number;
-    }
-
-    // ------------------------------------------------------------------------
-    // Get address by index
-    // ------------------------------------------------------------------------
-    function getAdrByIndex(uint _index) public constant returns (address) {
-        return indices[_index];
     }
 
     // ------------------------------------------------------------------------
@@ -160,8 +132,6 @@ contract MyartPoint is ERC20Interface, Owned {
         require(!halted && amount > 0);
         require(balances[owner] >= amount);
 
-        recordNewAddress(to);
-
         balances[owner] = balances[owner].sub(amount);
         balances[to] = balances[to].add(amount);
         emit Transfer(address(0), to, amount);
@@ -179,7 +149,7 @@ contract MyartPoint is ERC20Interface, Owned {
     // Total supply
     // ------------------------------------------------------------------------
     function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+        return _totalSupply.sub(balances[address(0)]);
     }
 
     // ------------------------------------------------------------------------
@@ -196,11 +166,8 @@ contract MyartPoint is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
         if (halted || tokens <= 0) revert();
-        if (frozenAccount[msg.sender] || frozenAccount[to]) revert();
-        if (balances[msg.sender] < tokens) revert();
+        require(!frozenAccount[msg.sender]);
 
-        recordNewAddress(to);
-        
         balances[msg.sender] = balances[msg.sender].sub(tokens);
         balances[to] = balances[to].add(tokens);
         emit Transfer(msg.sender, to, tokens);
@@ -217,7 +184,6 @@ contract MyartPoint is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         if (halted || tokens <= 0) revert();
-        if (frozenAccount[msg.sender] || frozenAccount[spender]) revert();
 
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
@@ -235,11 +201,7 @@ contract MyartPoint is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
         if (halted || tokens <= 0) revert();
-        if (frozenAccount[from] || frozenAccount[to] || frozenAccount[msg.sender]) revert();
-        if (balances[from] < tokens) revert();
-        if (allowed[from][msg.sender] < tokens) revert();
-
-        recordNewAddress(to);
+        require(!frozenAccount[from]);
 
         balances[from] = balances[from].sub(tokens);
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
@@ -263,7 +225,6 @@ contract MyartPoint is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         if (halted || tokens <= 0) revert();
-        if (frozenAccount[msg.sender] || frozenAccount[spender]) revert();
 
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
