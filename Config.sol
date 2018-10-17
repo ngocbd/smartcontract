@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0xc2abb67e6c952d136400c278174066384d211d1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x7d3e5eff86d25e9618512d871f4533c277361cc1
 */
 pragma solidity ^0.4.20;
 
@@ -285,8 +285,8 @@ contract Config is Ownable, ConfigInterface
 
     function getTutorialBabyGen(uint16 _dadGen) public pure returns (uint16)
     {
-        // Tutorial pet gen is 0
-        return getBabyGen(0, _dadGen);
+        // Tutorial pet gen is 1
+        return getBabyGen(1, _dadGen);
     }
 
     function getBreedingFee(uint40 _momId, uint40 _dadId)
