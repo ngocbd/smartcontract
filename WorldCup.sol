@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCup at 0xEe764010e20Cc410598a2FEeC5e0042ada363687
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldCup at 0x6f936639c9b7514df2f92b618b19eee30de0260c
 */
 pragma solidity ^0.4.18;
 // <ORACLIZE_API>
@@ -1363,11 +1363,13 @@ contract WorldCup is usingOraclize {
     setLosers();
   }
 
-  function oraclizeSetWinner() public payable
+  function oraclizeSetWinner(uint _callback_wei) public payable
     onlyAfterEndTime
     onlyIfWinnerIsMissing
   {
     require(oraclize_getPrice("URL") < msg.value);
+    
+    oraclize_setCustomGasPrice(_callback_wei);
 
     if (oraclize_getPrice("URL") > address(this).balance) {
       OraclizeQuery("Oraclize query not sent, balance too low");
