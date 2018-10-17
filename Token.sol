@@ -1,20 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x46a7Bd787a9c5C873dC762ba7D3E52Fd3C5F68d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7200d6ba3dae1eb92415dbc9a059433126cfb25f
 */
 pragma solidity ^0.4.18;
 
 /*
-*
-*
-*
-  ___ _    ____   ___ _         _
- / __| |  |_  /  / __| |_  __ _(_)_ _
-| (__| |__ / /  | (__| ' \/ _` | | ' \
-\___|____/___|  \___|_||_\__,_|_|_||_|
-                                     
-*
-*
-*
+// --
+// --
+// --
+//   ___       ___       ___       ___       ___
+//   /\  \     /\__\     /\  \     /\__\     /\  \
+//   /::\  \   /:/ _/_   /::\  \   /::L_L_    \:\  \
+//   /\:\:\__\ /:/_/\__\ /::\:\__\ /:/L:\__\   /::\__\
+//   \:\:\/__/ \:\/:/  / \/\::/  / \/_/:/  /  /:/\/__/
+//   \::/  /   \::/  /     \/__/    /:/  /   \/__/
+//   \/__/     \/__/               \/__/
+// --
+// --
+// --
 */
 
 // Contract must have an owner
