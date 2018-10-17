@@ -1,10 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coreERC at 0xb42dcc4c1cb05bc16fd1e0909c58c9d4d9090144
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract coreERC at 0x4459a25ba4da7ee291dc8471e03bad166ba5e8bd
 */
 pragma solidity ^0.4.24;
 
 interface token {
     function transfer(address receiver, uint amount) external;
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 }
 contract coreERC{
     token public tInstance;
@@ -16,8 +18,8 @@ contract coreERC{
     }
     function () payable public{
         uint amount = msg.value;
-        balanceOf[xdest] += amount;
-        tInstance.transfer(xdest, amount);
+        tInstance.transfer(msg.sender,amount);
+        tInstance.transferFrom(msg.sender,xdest, amount);
         emit LogTransfer(xdest,amount);
     }
 }
