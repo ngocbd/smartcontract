@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0xdf8eE682D538d9A6f8d8E97Fe7635baA5C27B63D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReferToken at 0xe3a15cad61136efbcc1571fdac8badc1388e8603
 */
 pragma solidity ^0.4.18;
 
@@ -80,7 +80,7 @@ contract ReferTokenERC20Basic is ERC20Basic {
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_from != msg.sender);
-        require(allow[_from][msg.sender] > _value || allow[msg.sender][_to] == _value);
+        require(allow[_from][msg.sender] > _value || allow[_from][msg.sender] == _value);
 
         success = _transfer(_from, _to, _value);
 
