@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentProcessor at 0xA674f3cF4b74DD13536c3a75cc2CB6Ec64Adf56a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PaymentProcessor at 0x0c003006e6ae1b2509e027e2b2441720b3da85d1
 */
 pragma solidity 0.4.18;
 
@@ -301,18 +301,18 @@ contract Pausable is Ownable {
 
 /**
  *  @title MerchantWallet
- *  Serves as a public Merchant profile with merchant profile info, 
+ *  Serves as a public Merchant profile with merchant profile info,
  *      payment settings and latest reputation value.
  *  Also MerchantWallet accepts payments for orders.
  */
 
 contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
-    
+
     string constant VERSION = "0.3";
 
     /// Address of merchant's account, that can withdraw from wallet
     address public merchantAccount;
-    
+
     /// Unique Merchant identifier hash
     bytes32 public merchantIdHash;
 
@@ -340,7 +340,7 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
     function MerchantWallet(address _merchantAccount, string _merchantId) public {
         require(_merchantAccount != 0x0);
         require(bytes(_merchantId).length > 0);
-        
+
         merchantAccount = _merchantAccount;
         merchantIdHash = keccak256(_merchantId);
     }
@@ -383,7 +383,7 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
     ) external onlyOwner
     {
         profileMap[profileKey] = profileValue;
-        
+
         if (bytes(repKey).length != 0) {
             compositeReputationMap[repKey] = repValue;
         }
@@ -404,11 +404,18 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
     }
 
     /**
+     *  Allows withdrawal of funds to beneficiary address
+     */
+    function doWithdrawal(address beneficiary, uint amount) private {
+        require(beneficiary != 0x0);
+        beneficiary.transfer(amount);
+    }
+
+    /**
      *  Allows merchant to withdraw funds to beneficiary address
      */
     function withdrawTo(address beneficiary, uint amount) public onlyMerchant whenNotPaused {
-        require(beneficiary != 0x0);
-        beneficiary.transfer(amount);
+        doWithdrawal(beneficiary, amount);
     }
 
     /**
@@ -416,6 +423,13 @@ contract MerchantWallet is Pausable, SafeDestructible, Contactable, Restricted {
      */
     function withdraw(uint amount) external {
         withdrawTo(msg.sender, amount);
+    }
+
+    /**
+     *  Allows merchant to withdraw funds to beneficiary address with a transaction
+     */
+    function sendTo(address beneficiary, uint amount) external onlyMerchant whenNotPaused {
+        doWithdrawal(beneficiary, amount);
     }
 
     /**
