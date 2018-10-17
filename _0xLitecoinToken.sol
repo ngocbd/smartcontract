@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xLitecoinToken at 0x012fd5049a203df08c02fb2e0ed15ceed10d9ed4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xLitecoinToken at 0x860df4c4a3ec207be16e39f96c8802470db9e799
 */
 pragma solidity ^0.4.18;
 
@@ -10,13 +10,22 @@ pragma solidity ^0.4.18;
 
 // Mineable ERC20 Token using Proof Of Work
 
+
+
+/*
+
+the idea is that the miner uses proxyMergeMint in https://github.com/snissn/0xlitecoin-token/blob/master/contracts/MintHelper.sol#L189 
+to call parent::mint() and then this::merge() in the same transaction
+
+*/
+
 //
 
 // Symbol      : 0xLTC
 
 // Name        : 0xLitecoin Token
 
-// Total supply: 84,000,000.00
+// Total supply: 4*21,000,000.00
 
 // Decimals    : 8
 
@@ -111,8 +120,28 @@ contract ERC20Interface {
 
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 
+
 }
 
+
+contract ERC918Interface {
+  function totalSupply() public constant returns (uint);
+  function getMiningDifficulty() public constant returns (uint);
+  function getMiningTarget() public constant returns (uint);
+  function getMiningReward() public constant returns (uint);
+  function balanceOf(address tokenOwner) public constant returns (uint balance);
+
+  function mint(uint256 nonce, bytes32 challenge_digest) public returns (bool success);
+
+  event Mint(address indexed from, uint reward_amount, uint epochCount, bytes32 newChallengeNumber);
+  address public lastRewardTo;
+  uint public lastRewardAmount;
+  uint public lastRewardEthBlockNumber;
+  bytes32 public challengeNumber;
+
+
+
+}
 
 
 // ----------------------------------------------------------------------------
@@ -209,6 +238,7 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
 
     uint public _totalSupply;
 
+    address parentAddress;
 
 
      uint public latestDifficultyPeriodStarted;
@@ -218,15 +248,17 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
     uint public epochCount;//number of 'blocks' mined
 
 
+    // the goal is for 0xLitecoin to be mined with 0xBTC
+
     uint public _BLOCKS_PER_READJUSTMENT = 1024;
 
 
     //a little number
-    uint public  _MINIMUM_TARGET = 2**16;
+    uint public  _MINIMUM_TARGET = 2**16; // TODO increase this before deploying
 
 
       //a big number is easier ; just find a solution that is smaller
-    //uint public  _MAXIMUM_TARGET = 2**224;  bitcoin uses 224
+    //uint public  _MAXIMUM_TARGET = 2**224;  Litecoin uses 224
     uint public  _MAXIMUM_TARGET = 2**234;
 
 
@@ -274,7 +306,7 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
 
         decimals = 8;
 
-        _totalSupply = 84000000 * 10**uint(decimals);
+        _totalSupply = 4*21000000 * 10**uint(decimals);
 
         if(locked) revert();
         locked = true;
@@ -284,11 +316,14 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
         rewardEra = 0;
         maxSupplyForEra = _totalSupply.div(2);
 
-        miningTarget = _MAXIMUM_TARGET;
+        miningTarget = 27938697607979437428382017032425071986904332731688489302005732; // from 0xBitcoin as of block 5902249
 
         latestDifficultyPeriodStarted = block.number;
 
         _startNewMiningEpoch();
+
+        parentAddress = 0xb6ed7644c69416d67b522e20bc294a9a9b405b31;
+
 
 
         //The owner gets nothing! You must mine this ERC20 token
@@ -344,6 +379,79 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
         }
 
 
+
+
+        function merge() public returns (bool success) {
+
+            // the idea is that the miner uses https://github.com/0xbitcoin/mint-helper/blob/master/contracts/MintHelper.sol 
+            // to call mint() and then mergeMint() in the same transaction
+
+
+
+            // hard code a reference to the "Parent" ERC918 Contract ( in this case 0xBitcoin)
+            // Verify that the Parent contract was minted in this block, by the same person calling this contract
+            // then followthrough with the resulting mint logic
+            // don't call revert, but return true or false based on success
+            // this method shouldn't revert because it will be calleed in the same transaction as a "Parent" mint attempt
+
+            //ensure that mergeMint() can only be called once per Parent::mint()
+            //do this by ensuring that the "new" challenge number from Parent::challenge post mint can be called once
+            //and that this block time is the same as this mint, and the caller is msg.sender
+
+
+            //only allow one reward for each challenge
+            // do this by calculating what the new challenge will be in _startNewMiningEpoch, and verify that it is not that value
+            // this checks happen in the local contract, not in the parent
+
+            bytes32 future_challengeNumber = block.blockhash(block.number - 1);
+            if(challengeNumber == future_challengeNumber){
+                return false; // ( this is likely the second time that mergeMint() has been called in a transaction, so return false (don't revert))
+            }
+
+            //verify Parent::lastRewardTo == msg.sender;
+            if(ERC918Interface(parentAddress).lastRewardTo() != msg.sender){
+                return false; // a different address called mint last so return false ( don't revert)
+            }
+            
+            //verify Parent::lastRewardEthBlockNumber == block.number;
+
+            if(ERC918Interface(parentAddress).lastRewardEthBlockNumber() != block.number){
+                return false; // parent::mint() was called in a different block number so return false ( don't revert)
+            }
+
+            //we have verified that _startNewMiningEpoch has not been run more than once this block by verifying that
+            // the challenge is not the challenge that will be set by _startNewMiningEpoch
+            //we have verified that this is the same block as a call to Parent::mint() and that the sender
+            // is the sender that has called mint
+
+            //so now we may safely run the relevant logic to give an award to the sender, and update the contract
+
+            uint reward_amount = getMiningReward();
+
+            balances[msg.sender] = balances[msg.sender].add(reward_amount);
+
+            tokensMinted = tokensMinted.add(reward_amount);
+
+
+            //Cannot mint more tokens than there are
+            assert(tokensMinted <= maxSupplyForEra);
+
+            //set readonly diagnostics data
+            lastRewardTo = msg.sender;
+            lastRewardAmount = reward_amount;
+            lastRewardEthBlockNumber = block.number;
+
+
+             _startNewMiningEpoch();
+
+              Mint(msg.sender, reward_amount, epochCount, 0 ); // use 0 to indicate a merge mine
+
+           return true;
+
+        }
+
+
+
     //a new 'block' to be mined
     function _startNewMiningEpoch() internal {
 
@@ -357,7 +465,7 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
       }
 
       //set the next minted supply at which the era will change
-      // total supply is 8400000000000000  because of 8 decimal places
+      // total supply is 4*2100000000000000  because of 8 decimal places
       maxSupplyForEra = _totalSupply - _totalSupply.div( 2**(rewardEra + 1));
 
       epochCount = epochCount.add(1);
@@ -384,7 +492,7 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
 
 
     //https://en.Litecoin.it/wiki/Difficulty#What_is_the_formula_for_difficulty.3F
-    //as of 2017 the bitcoin difficulty was up to 17 zeroes, it was only 8 in the early days
+    //as of 2017 the Litecoin difficulty was up to 17 zeroes, it was only 8 in the early days
 
     //readjust the target by 5 percent
     function _reAdjustDifficulty() internal {
@@ -393,10 +501,10 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
         uint ethBlocksSinceLastDifficultyPeriod = block.number - latestDifficultyPeriodStarted;
         //assume 360 ethereum blocks per hour
 
-        //we want miners to spend 2.5 minutes to mine each 'block', about 15 ethereum blocks = one 0xLitecoin epoch
+        //we want miners to spend 15 minutes to mine each 'block', about 60 ethereum blocks = one 0xLitecoin epoch = one 0xBitcoin
         uint epochsMined = _BLOCKS_PER_READJUSTMENT; //256
 
-        uint targetEthBlocksPerDiffPeriod = epochsMined * 15; //should be 15 times slower than ethereum
+        uint targetEthBlocksPerDiffPeriod = epochsMined * 60; //should be 60 times slower than ethereum
 
         //if there were less eth blocks passed in time than expected
         if( ethBlocksSinceLastDifficultyPeriod < targetEthBlocksPerDiffPeriod )
@@ -449,14 +557,14 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
 
 
 
-    //84 m coins total
-    //reward begins at 50 and is cut in half every reward era (as tokens are mined)
+    //4*21m coins total
+    //reward begins at 4*25 and is cut in half every reward era (as tokens are mined)
     function getMiningReward() public constant returns (uint) {
         //once we get half way thru the coins, only get 25 per block
 
          //every reward era, the reward amount halves.
 
-         return (50 * 10**uint(decimals) ).div( 2**rewardEra ) ;
+         return (4*25 * 10**uint(decimals) ).div( 2**rewardEra ) ;
 
     }
 
