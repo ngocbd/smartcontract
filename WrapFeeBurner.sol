@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapFeeBurner at 0x466ba7c5094d112fd56d6cbf1ad2d2776f211d7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapFeeBurner at 0xeba1b66d89220bc561a0eb7ded318b124784d787
 */
 pragma solidity 0.4.18;
+
+// File: contracts/FeeBurnerInterface.sol
+
+interface FeeBurnerInterface {
+    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
+}
 
 // File: contracts/ERC20Interface.sol
 
@@ -15,12 +21,6 @@ interface ERC20 {
     function allowance(address _owner, address _spender) public view returns (uint remaining);
     function decimals() public view returns(uint digits);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-// File: contracts/FeeBurnerInterface.sol
-
-interface FeeBurnerInterface {
-    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
 }
 
 // File: contracts/Utils.sol
@@ -385,13 +385,15 @@ contract WrapperBase is Withdrawable {
     PermissionGroups public wrappedContract;
 
     struct DataTracker {
-        address [] approveSignatureArray;
+        address[] approveSignatureArray;
         uint lastSetNonce;
     }
 
     DataTracker[] internal dataInstances;
 
-    function WrapperBase(PermissionGroups _wrappedContract, address _admin, uint _numDataInstances) public {
+    function WrapperBase(PermissionGroups _wrappedContract, address _admin, uint _numDataInstances) public
+        Withdrawable()
+    {
         require(_wrappedContract != address(0));
         require(_admin != address(0));
         wrappedContract = _wrappedContract;
@@ -425,7 +427,7 @@ contract WrapperBase is Withdrawable {
         require(dataIndex < dataInstances.length);
         require(dataInstances[dataIndex].lastSetNonce == signedNonce);
 
-        for(uint i = 0; i < dataInstances[dataIndex].approveSignatureArray.length; i++) {
+        for (uint i = 0; i < dataInstances[dataIndex].approveSignatureArray.length; i++) {
             if (signer == dataInstances[dataIndex].approveSignatureArray[i]) revert();
         }
         dataInstances[dataIndex].approveSignatureArray.push(signer);
@@ -494,11 +496,11 @@ contract WrapFeeBurner is WrapperBase {
     uint internal constant LAST_DATA_INDEX = 4;
 
     //general functions
-    function WrapFeeBurner(FeeBurner _feeBurner, address _admin) public
-        WrapperBase(PermissionGroups(address(_feeBurner)), _admin, LAST_DATA_INDEX)
+    function WrapFeeBurner(FeeBurner feeBurner, address _admin) public
+        WrapperBase(PermissionGroups(address(feeBurner)), _admin, LAST_DATA_INDEX)
     {
-        require(_feeBurner != address(0));
-        feeBurnerContract = _feeBurner;
+        require(feeBurner != address(0));
+        feeBurnerContract = feeBurner;
     }
 
     //register wallets for fee sharing
@@ -573,20 +575,20 @@ contract WrapFeeBurner is WrapperBase {
 
     //set reserve data
     //////////////////
-    function setPendingReserveData(address _reserve, uint feeBps, address kncWallet) public onlyOperator {
-        require(_reserve != address(0));
+    function setPendingReserveData(address reserve, uint feeBps, address kncWallet) public onlyOperator {
+        require(reserve != address(0));
         require(kncWallet != address(0));
         require(feeBps > 0);
         require(feeBps < 10000);
 
-        addReserve.reserve = _reserve;
+        addReserve.reserve = reserve;
         addReserve.feeBps = feeBps;
         addReserve.kncWallet = kncWallet;
         setNewData(ADD_RESERVE_INDEX);
     }
 
     function getPendingAddReserveData() public view
-        returns(address _reserve, uint feeBps, address kncWallet, uint nonce)
+        returns(address reserve, uint feeBps, address kncWallet, uint nonce)
     {
         address[] memory signatures;
         (signatures, nonce) = getDataTrackingParameters(ADD_RESERVE_INDEX);
@@ -639,12 +641,12 @@ contract WrapFeeBurner is WrapperBase {
 
     //tax parameters
     ////////////////
-    function setPendingTaxParameters(address _taxWallet, uint feeBps) public onlyOperator {
-        require(_taxWallet != address(0));
+    function setPendingTaxParameters(address taxWallet, uint feeBps) public onlyOperator {
+        require(taxWallet != address(0));
         require(feeBps > 0);
         require(feeBps < 10000);
 
-        taxData.wallet = _taxWallet;
+        taxData.wallet = taxWallet;
         taxData.feeBps = feeBps;
         setNewData(TAX_DATA_INDEX);
     }
