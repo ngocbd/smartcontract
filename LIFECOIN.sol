@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0x0bf878a3e87600ec94b541edf0334b32b1647c0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LIFECOIN at 0xc07b4dadeb18a6c5b62b92115ffa3aa28a13b641
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// '0Fucks' token contract
+// 'LIFECOIN' token contract
 //
 // Deployed to : 0xD133cc957d41C0cd62ed6175155B2E54F951eA79
 // Symbol      : LIFE
-// Name        : LIFETOKEN
+// Name        : LIFECOIN Token
 // Total supply: 3000000000000
 // Decimals    : 18
 //
