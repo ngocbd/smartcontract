@@ -1,64 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOeureka at 0xae5b9300c9812d4719b2ed6da62ab0efa80613cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GOeureka at 0x8678b5fb41d87f4bec43b3142bce852366100336
 */
 pragma solidity ^0.4.23;
-
-
-
-
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+// produced by the Solididy File Flattener (c) David Appleton 2018
+// contact : dave@akomba.com
+// released under Apache 2.0 licence
+contract GoConfig {
+    string public constant NAME = "GOeureka";
+    string public constant SYMBOL = "GOT";
+    uint8 public constant DECIMALS = 18;
+    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
+    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
   address public owner;
 
@@ -105,45 +60,83 @@ contract Ownable {
   }
 }
 
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-  address public pendingOwner;
+contract WhiteListedBasic {
+    function addWhiteListed(address[] addrs) external;
+    function removeWhiteListed(address addr) external;
+    function isWhiteListed(address addr) external view returns (bool);
+}
+library SafeMath {
 
   /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
   /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
   /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
+contract OperatableBasic {
+    function setMinter (address addr) external;
+    function setWhiteLister (address addr) external;
+}
+contract gotTokenSaleConfig is GoConfig {
+    uint public constant MIN_PRESALE = 5 ether;
+    uint public constant MIN_PRESALE2 = 1 ether;
+    
+
+    uint public constant VESTING_AMOUNT = 100000000 * DECIMALSFACTOR;
+    address public constant VESTING_WALLET = 0x8B6EB396eF85D2a9ADbb79955dEB5d77Ee61Af88;
+        
+    uint public constant RESERVE_AMOUNT = 300000000 * DECIMALSFACTOR;
+    address public constant RESERVE_WALLET = 0x8B6EB396eF85D2a9ADbb79955dEB5d77Ee61Af88;
+
+    uint public constant PRESALE_START = 1529035246; // Friday, June 15, 2018 12:00:46 PM GMT+08:00
+    uint public constant SALE_START = PRESALE_START + 4 weeks;
+        
+    uint public constant SALE_CAP = 600000000 * DECIMALSFACTOR;
+
+    address public constant MULTISIG_ETH = RESERVE_WALLET;
+
+}
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
@@ -184,43 +177,6 @@ contract Pausable is Ownable {
   }
 }
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender)
-    public view returns (uint256);
-
-  function transferFrom(address from, address to, uint256 value)
-    public returns (bool);
-
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(
-    address indexed owner,
-    address indexed spender,
-    uint256 value
-  );
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -261,14 +217,128 @@ contract BasicToken is ERC20Basic {
 
 }
 
+contract Claimable is Ownable {
+  address public pendingOwner;
 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
+
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    emit OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+contract Operatable is Claimable, OperatableBasic {
+    address public minter;
+    address public whiteLister;
+    address public launcher;
+
+    event NewMinter(address newMinter);
+    event NewWhiteLister(address newwhiteLister);
+
+    modifier canOperate() {
+        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
+        _;
+    }
+
+    constructor() public {
+        minter = owner;
+        whiteLister = owner;
+        launcher = owner;
+    }
+
+    function setMinter (address addr) external onlyOwner {
+        minter = addr;
+        emit NewMinter(minter);
+    }
+
+    function setWhiteLister (address addr) external onlyOwner {
+        whiteLister = addr;
+        emit NewWhiteLister(whiteLister);
+    }
+
+    modifier ownerOrMinter()  {
+        require ((msg.sender == minter) || (msg.sender == owner));
+        _;
+    }
+
+    modifier onlyLauncher()  {
+        require (msg.sender == launcher);
+        _;
+    }
+
+    modifier onlyWhiteLister()  {
+        require (msg.sender == whiteLister);
+        _;
+    }
+}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+contract Salvageable is Operatable {
+    // Salvage other tokens that are accidentally sent into this token
+    function emergencyERC20Drain(ERC20 oddToken, uint amount) public onlyLauncher {
+        if (address(oddToken) == address(0)) {
+            launcher.transfer(amount);
+            return;
+        }
+        oddToken.transfer(launcher, amount);
+    }
+}
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -384,11 +454,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-/**
- * @title Pausable token
- * @dev StandardToken modified with pausable transfers.
- **/
 contract PausableToken is StandardToken, Pausable {
 
   function transfer(
@@ -448,115 +513,7 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
-
-contract WhiteListedBasic {
-    function addWhiteListed(address[] addrs) external;
-    function removeWhiteListed(address addr) external;
-    function isWhiteListed(address addr) external view returns (bool);
-}
-
-contract OperatableBasic {
-    function setMinter (address addr) external;
-    function setWhiteLister (address addr) external;
-}
-
-contract Operatable is Claimable, OperatableBasic {
-    address public minter;
-    address public whiteLister;
-    address public launcher;
-
-    event NewMinter(address newMinter);
-    event NewWhiteLister(address newwhiteLister);
-
-    modifier canOperate() {
-        require(msg.sender == minter || msg.sender == whiteLister || msg.sender == owner);
-        _;
-    }
-
-    constructor() public {
-        minter = owner;
-        whiteLister = owner;
-        launcher = owner;
-    }
-
-    function setMinter (address addr) external onlyOwner {
-        minter = addr;
-        emit NewMinter(minter);
-    }
-
-    function setWhiteLister (address addr) external onlyOwner {
-        whiteLister = addr;
-        emit NewWhiteLister(whiteLister);
-    }
-
-    modifier ownerOrMinter()  {
-        require ((msg.sender == minter) || (msg.sender == owner));
-        _;
-    }
-
-    modifier onlyLauncher()  {
-        require (msg.sender == launcher);
-        _;
-    }
-
-    modifier onlyWhiteLister()  {
-        require (msg.sender == whiteLister);
-        _;
-    }
-}
-
-contract Salvageable is Operatable {
-    // Salvage other tokens that are accidentally sent into this token
-    function emergencyERC20Drain(ERC20 oddToken, uint amount) public onlyLauncher {
-        if (address(oddToken) == address(0)) {
-            launcher.transfer(amount);
-            return;
-        }
-        oddToken.transfer(launcher, amount);
-    }
-}
-
-
-contract WhiteListed is Operatable, WhiteListedBasic, Salvageable {
-
-
-    uint public count;
-    mapping (address => bool) public whiteList;
-
-    event Whitelisted(address indexed addr, uint whitelistedCount, bool isWhitelisted);
-
-    function addWhiteListed(address[] addrs) external canOperate {
-        uint c = count;
-        for (uint i = 0; i < addrs.length; i++) {
-            if (!whiteList[addrs[i]]) {
-                whiteList[addrs[i]] = true;
-                c++;
-                emit Whitelisted(addrs[i], count, true);
-            }
-        }
-        count = c;
-    }
-
-    function removeWhiteListed(address addr) external canOperate {
-        require(whiteList[addr]);
-        whiteList[addr] = false;
-        count--;
-        emit Whitelisted(addr, count, false);
-    }
-
-    function isWhiteListed(address addr) external view returns (bool) {
-        return whiteList[addr];
-    }
-}
-contract GoConfig {
-    string public constant NAME = "GOeureka";
-    string public constant SYMBOL = "GOT";
-    uint8 public constant DECIMALS = 18;
-    uint public constant DECIMALSFACTOR = 10 ** uint(DECIMALS);
-    uint public constant TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
-}
-
-contract GOeureka is  Salvageable, PausableToken, GoConfig {
+contract GOeureka is  Salvageable, PausableToken, BurnableToken, GoConfig {
     using SafeMath for uint;
  
     string public name = NAME;
@@ -640,25 +597,6 @@ contract GOeureka is  Salvageable, PausableToken, GoConfig {
 
 }
 
-
-contract gotTokenSaleConfig is GoConfig {
-    uint public constant MIN_PRESALE = 10 ether;
-
-    uint public constant VESTING_AMOUNT = 100000000 * DECIMALSFACTOR;
-    address public constant VESTING_WALLET = 0xf0cf34Be9cAB4354b228193FF4F6A2C61DdE95f4;  // <<============================
-        
-    uint public constant RESERVE_AMOUNT = 300000000 * DECIMALSFACTOR;
-    address public constant RESERVE_WALLET = 0x83Fee7D53b6A5B5fD0d60b772c2B56b02D8835da; // <<============================
-
-    uint public constant PRESALE_START = 1529035246; // Friday, June 15, 2018 12:00:46 PM GMT+08:00
-    uint public constant SALE_START = PRESALE_START + 4 weeks;
-        
-    uint public constant SALE_CAP = 600000000 * DECIMALSFACTOR;
-
-    address public constant MULTISIG_ETH = RESERVE_WALLET;
-
-}
-
 contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
     using SafeMath for uint256;
 
@@ -667,26 +605,11 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
 
     WhiteListedBasic public whiteListed;
 
-    // start and end block where investments are allowed 
-    uint256 public presaleStart;
     uint256 public presaleEnd;
-
-    uint256 public week1Start;
-    uint256 public week1End;
-    uint256 public week2End;
-    uint256 public week3End;
-
-    // Caps are in ETHER not tokens - need to back calculate to get token cap
-    uint256 public presaleCap;
-    uint256 public week1Cap;
-    uint256 public week2Cap;
-    uint256 public week3Cap;
+    uint256 public saleEnd;
 
     // Minimum contribution is now calculated
     uint256 public minContribution;
-
-    uint public currentCap;
-    //uint256[] public cap;
 
     // address where funds are collected
     address public multiSig;
@@ -715,12 +638,13 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
     // CONSTRUCTOR
 
     constructor(GOeureka token_, WhiteListedBasic _whiteListed) public {
-        calcDates(PRESALE_START, SALE_START); // Continuous sale
 
         basicRate = 3000;  // TokensPerEther
         calculateRates();
-
         
+        presaleEnd = 1536508800; //20180910 00:00 +8
+        saleEnd = 1543593600; //20181201 00:00 +8
+
         multiSig = MULTISIG_ETH;
 
         // NOTE - toke
@@ -729,30 +653,14 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
         whiteListed = _whiteListed;
     }
 
+    // This sale contract must be the minter before we mintAllocations or do anything else.
+    //
     bool allocated = false;
     function mintAllocations() external onlyOwner {
         require(!allocated);
         allocated = true;
         token.mint(VESTING_WALLET,VESTING_AMOUNT);
         token.mint(RESERVE_WALLET,RESERVE_AMOUNT);
-    }
-
-    function setDates(uint presaleStart_, uint saleStart) external onlyOwner {
-        calcDates(presaleStart_, saleStart);
-    }
-
-    function calcDates(uint presaleStart_, uint saleStart) internal {
-        require(weiRaised == 0);
-        require(now < presaleStart_);
-        require(presaleStart_ < saleStart);
-        presaleStart = presaleStart_;
-        week1Start = saleStart;
-
-        presaleEnd = saleStart; 
-
-        week1End = week1Start + 1 weeks;
-        week2End = week1Start + 2 weeks; 
-        week3End = week1Start + 4 weeks;
     }
 
     function setWallet(address _newWallet) public onlyOwner {
@@ -762,7 +670,7 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
 
     // @return true if crowdsale event has ended
     function hasEnded() public view returns (bool) {
-        if (now > week3End)
+        if (now > saleEnd)
             return true;
         if (tokensRaised >= SALE_CAP)
             return true; // if we reach the tokensForSale
@@ -776,47 +684,37 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
 
     modifier onlyAuthorised(address beneficiary) {
         require(isWhiteListed(beneficiary),"Not authorised");
-        require (now >= presaleStart,"too early");
+        
         require (!hasEnded(),"ended");
         require (multiSig != 0x0,"MultiSig empty");
-        require ((msg.value > minContribution) || (weiRaised.add(minContribution) > week3Cap),"Value too small");
+        require ((msg.value > minContribution) || (tokensRaised.add(getTokens(msg.value)) == SALE_CAP),"Value too small");
         _;
     }
 
     function setNewRate(uint newRate) onlyOwner public {
         require(weiRaised == 0);
-        require(0 < newRate && newRate < 5000);
+        require(1000 < newRate && newRate < 10000);
         basicRate = newRate;
         calculateRates();
     }
 
     function calculateRates() internal {
-        presaleCap =              uint(150000000 * DECIMALSFACTOR).div(basicRate);
-        week1Cap = presaleCap.add(uint(100000000 * DECIMALSFACTOR).div(basicRate));
-        week2Cap = week1Cap.add(uint(100000000 * DECIMALSFACTOR).div(basicRate));
-        week3Cap = week2Cap.add(uint(200000000 * DECIMALSFACTOR).div(basicRate));
         minContribution = uint(100 * DECIMALSFACTOR).div(basicRate);
-        currentCap = presaleCap;
     }
 
 
     function getTokens(uint256 amountInWei) 
     internal
     view
-    returns (uint256 tokens, uint256 currentCap_)
+    returns (uint256 tokens)
     {
-        if ((now < week1Start) && (weiRaised < presaleCap)) {
-            require(amountInWei.add(contributions[msg.sender]) >= MIN_PRESALE); // if already sent min_presale, allow topup
-            return (amountInWei.mul(basicRate).mul(115).div(100), presaleCap);
+        if (now <= presaleEnd) {
+            uint theseTokens = amountInWei.mul(basicRate).mul(1125).div(1000);
+            require((amountInWei >= 1 ether) || (tokensRaised.add(theseTokens)==SALE_CAP));
+            return (theseTokens);
         }
-        if ((now <= week1End) && (weiRaised < week1Cap)) {
-            return (amountInWei.mul(basicRate).mul(110).div(100), week1Cap);
-        }
-        if ((now <= week2End) && (weiRaised < week2Cap)) {
-            return (amountInWei.mul(basicRate).mul(105).div(100), week2Cap);
-        }
-        if ((now <= week3End) && (weiRaised < week3Cap)) { 
-            return (amountInWei.mul(basicRate), week3Cap);
+        if (now <= saleEnd) { 
+            return (amountInWei.mul(basicRate));
         }
         revert();
     }
@@ -829,48 +727,25 @@ contract GOeurekaSale is Claimable, gotTokenSaleConfig, Pausable, Salvageable {
         whenNotPaused
     {
         uint256 newTokens;
-        uint256 newestTokens;
-        uint256 thisPhase = value;
-        uint256 nextPhase = 0;
-        uint256 refund = 0;
-
-        if (weiRaised.add(value) > currentCap) { // exceeds current tranche?
-            thisPhase = currentCap.sub(weiRaised);
-            nextPhase = value.sub(thisPhase);
-        }
-        (newTokens, currentCap) = getTokens(thisPhase);
-        weiRaised = weiRaised.add(thisPhase);
+ 
+        newTokens = getTokens(value);
+        weiRaised = weiRaised.add(value);
         // if we have bridged two tranches....
-        if (nextPhase > 0) {
-            if (weiRaised.add(nextPhase) <= week3Cap) { // another phase to enter
-                weiRaised = weiRaised.add(nextPhase);
-                (newestTokens, currentCap) = getTokens(nextPhase);
-                newTokens = newTokens.add(newestTokens);
-                emit NewCapActivated(currentCap);
-            } else { // sale is complete...
-                refund = nextPhase;
-                nextPhase = 0;
-                emit HardcapReached();
-            }
-        }
         if (contributions[beneficiary] == 0) {
             numberOfContributors++;
         }
-        contributions[beneficiary] = contributions[beneficiary].add(thisPhase).add(nextPhase);
+        contributions[beneficiary] = contributions[beneficiary].add(value);
         tokensRaised = tokensRaised.add(newTokens);
         token.mint(beneficiary,newTokens);
-        emit TokenPurchase(beneficiary, thisPhase.add(nextPhase), newTokens);
-        multiSig.transfer(thisPhase.add(nextPhase));
-        if (refund > 0) {
-            beneficiary.transfer(refund);
-        }
+        emit TokenPurchase(beneficiary, value, newTokens);
+        multiSig.transfer(value);
     }
 
     function placeTokens(address beneficiary, uint256 tokens) 
         public       
         onlyOwner
     {
-        require(now < presaleStart);
+        require(!hasEnded());
         tokensRaised = tokensRaised.add(tokens);
         token.mint(beneficiary,tokens);
     }
