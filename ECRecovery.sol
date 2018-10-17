@@ -1,17 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECRecovery at 0xd8e8328501e9645d16cf49539efc04f734606ee4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECRecovery at 0x61388904afac03beb15173340dfe3e634fcd7c16
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
-/**
- * @title Eliptic curve signature operations
- *
- * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
- */
 library ECRecovery {
 
   /**
-   * @dev Recover signer address from a message by using his signature
+   * @dev Recover signer address from a message by using their signature
    * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
    * @param sig bytes signature, the signature is generated using web3.eth.sign()
    */
