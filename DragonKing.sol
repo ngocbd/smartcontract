@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x6ee4d5d2dec16454b53c6697b6a5f672935a765f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x6086f10b9718b9baac661fd1141582da55e6a8ad
 */
 /**
  * Note for the truffle testversion:
@@ -130,20 +130,20 @@ contract DragonKing is mortal {
 	uint8 public fightFactor;
 
 	/** the teleport token contract used to send knights to the game scene */
-	Token public teleportToken;
+	Token teleportToken;
 	/** the price for teleportation*/
 	uint public teleportPrice;
 	/** the neverdue token contract used to purchase protection from eruptions and fights */
-	Token public neverdieToken;
+	Token neverdieToken;
 	/** the price for protection */
 	uint public protectionPrice;
 	/** tells the number of times a character is protected */
 	mapping(uint32 => uint8) public protection;
 
 	/** the SKL token contract **/
-	Token public sklToken;
+	Token sklToken;
 	/** the XP token contract **/
-	Token public xperToken;
+	Token xperToken;
 
 	// EVENTS
 
@@ -307,7 +307,6 @@ contract DragonKing is mortal {
 	 * */
 
 	function triggerVolcanoEruption() public {
-	    require(tx.origin == msg.sender);
 		require(now >= lastEruptionTimestamp + eruptionThreshold);
 		require(numCharacters>0);
 		lastEruptionTimestamp = now;
