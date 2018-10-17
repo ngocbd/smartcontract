@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0x2d70fB3Fbae9d7145b4b14fEF31f0a2038C0Dc78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KyberOasisReserve at 0xaF343c416E4b7172F51133cd3C0438c195603B60
 */
 pragma solidity 0.4.18;
 
@@ -96,6 +96,53 @@ contract Utils {
             denominator = (rate * (10**(dstDecimals - srcDecimals)));
         }
         return (numerator + denominator - 1) / denominator; //avoid rounding down errors
+    }
+}
+
+// File: contracts/Utils2.sol
+
+contract Utils2 is Utils {
+
+    /// @dev get the balance of a user.
+    /// @param token The token type
+    /// @return The balance
+    function getBalance(ERC20 token, address user) public view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS)
+            return user.balance;
+        else
+            return token.balanceOf(user);
+    }
+
+    function getDecimalsSafe(ERC20 token) internal returns(uint) {
+
+        if (decimals[token] == 0) {
+            setDecimals(token);
+        }
+
+        return decimals[token];
+    }
+
+    function calcDestAmount(ERC20 src, ERC20 dest, uint srcAmount, uint rate) internal view returns(uint) {
+        return calcDstQty(srcAmount, getDecimals(src), getDecimals(dest), rate);
+    }
+
+    function calcSrcAmount(ERC20 src, ERC20 dest, uint destAmount, uint rate) internal view returns(uint) {
+        return calcSrcQty(destAmount, getDecimals(src), getDecimals(dest), rate);
+    }
+
+    function calcRateFromQty(uint srcAmount, uint destAmount, uint srcDecimals, uint dstDecimals)
+        internal pure returns(uint)
+    {
+        require(srcAmount <= MAX_QTY);
+        require(destAmount <= MAX_QTY);
+
+        if (dstDecimals >= srcDecimals) {
+            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
+            return (destAmount * PRECISION / ((10 ** (dstDecimals - srcDecimals)) * srcAmount));
+        } else {
+            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
+            return (destAmount * PRECISION * (10 ** (srcDecimals - dstDecimals)) / srcAmount);
+        }
     }
 }
 
@@ -256,7 +303,7 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
-// File: contracts/KyberOasisReserve.sol
+// File: contracts/oasisContracts/KyberOasisReserve.sol
 
 contract OtcInterface {
     function getBuyAmount(ERC20 buyGem, ERC20 payGem, uint payAmt) public constant returns (uint fillAmt);
@@ -270,8 +317,11 @@ contract TokenInterface is ERC20 {
 }
 
 
-contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
+contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils2 {
 
+    uint constant internal MIN_TRADE_TOKEN_SRC_AMOUNT = (10**18);
+    uint constant internal COMMON_DECIMALS = 18;
+    address public sanityRatesContract = 0;
     address public kyberNetwork;
     OtcInterface public otc;
     TokenInterface public wethToken;
@@ -286,13 +336,17 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         ERC20 _tradeToken,
         address _admin,
         uint _feeBps
-    ) public {
+    )
+        public
+    {
         require(_admin != address(0));
         require(_kyberNetwork != address(0));
         require(_otc != address(0));
         require(_wethToken != address(0));
         require(_tradeToken != address(0));
         require(_feeBps < 10000);
+        require(getDecimals(_wethToken) == COMMON_DECIMALS);
+        require(getDecimals(_tradeToken) == COMMON_DECIMALS);
 
         kyberNetwork = _kyberNetwork;
         otc = _otc;
@@ -301,16 +355,17 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         admin = _admin;
         feeBps = _feeBps;
         tradeEnabled = true;
+
+        wethToken.approve(otc, 2**255);
+        tradeToken.approve(otc, 2**255);
     }
 
-    event DepositToken(ERC20 token, uint amount);
-
     function() public payable {
-        DepositToken(ETH_TOKEN_ADDRESS, msg.value);
+        require(msg.sender == address(wethToken));
     }
 
     event TradeExecute(
-        address indexed origin,
+        address indexed sender,
         address src,
         uint srcAmount,
         address destToken,
@@ -355,44 +410,36 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         return true;
     }
 
-    event ReserveParamsSet(
-        address kyberNetwork,
-        OtcInterface otc,
-        TokenInterface wethToken,
-        ERC20 tradeToken,
-        uint feeBps
-    );
+    event KyberNetworkSet(address kyberNetwork);
 
-    function setReserveParams(
-        address _kyberNetwork,
-        OtcInterface _otc,
-        TokenInterface _wethToken,
-        ERC20 _tradeToken,
-        uint _feeBps
-    )
-        public
-        onlyAdmin
-    {
+    function setKyberNetwork(address _kyberNetwork) public onlyAdmin {
         require(_kyberNetwork != address(0));
-        require(_otc != address(0));
-        require(_wethToken != address(0));
-        require(_tradeToken != address(0));
-        require(_feeBps < 10000);
 
         kyberNetwork = _kyberNetwork;
-        otc = _otc;
-        wethToken = _wethToken;
-        tradeToken = _tradeToken;
-        feeBps = _feeBps;
-
-        ReserveParamsSet(kyberNetwork, otc, wethToken, tradeToken, feeBps);
+        KyberNetworkSet(kyberNetwork);
     }
 
-    function getDestQty(ERC20 src, ERC20 dest, uint srcQty, uint rate) public view returns(uint) {
-        uint dstDecimals = getDecimals(dest);
-        uint srcDecimals = getDecimals(src);
+    event OtcSet(address otc);
 
-        return calcDstQty(srcQty, srcDecimals, dstDecimals, rate);
+    function setOtc(OtcInterface _otc) public onlyAdmin {
+        require(_otc != address(0));
+
+        wethToken.approve(otc, 0);
+        tradeToken.approve(otc, 0);
+        wethToken.approve(_otc, 2**255);
+        tradeToken.approve(_otc, 2**255);
+
+        otc = _otc;
+        OtcSet(otc);
+    }
+
+    event FeeBpsSet(uint feeBps);
+
+    function setFeeBps(uint _feeBps) public onlyAdmin {
+        require(_feeBps < 10000);
+
+        feeBps = _feeBps;
+        FeeBpsSet(feeBps);
     }
 
     function valueAfterReducingFee(uint val) public view returns(uint) {
@@ -400,9 +447,15 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         return ((10000 - feeBps) * val) / 10000;
     }
 
+    function valueBeforeFeesWereReduced(uint val) public view returns(uint) {
+        require(val <= MAX_QTY);
+        return val * 10000 / (10000 - feeBps);
+    }
+
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
         uint  rate;
         uint  destQty;
+        uint  actualSrcQty;
         ERC20 wrappedSrc;
         ERC20 wrappedDest;
 
@@ -414,16 +467,23 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         if (src == ETH_TOKEN_ADDRESS) {
             wrappedSrc = wethToken;
             wrappedDest = dest;
+            actualSrcQty = srcQty;
         } else if (dest == ETH_TOKEN_ADDRESS) {
             wrappedSrc = src;
             wrappedDest = wethToken;
+
+            if (srcQty < MIN_TRADE_TOKEN_SRC_AMOUNT) {
+                /* Assuming token is stable, use a minimal amount to get rate also for small token quant. */
+                actualSrcQty = MIN_TRADE_TOKEN_SRC_AMOUNT;
+            } else {
+                actualSrcQty = srcQty;
+            }
         } else {
             return 0;
         }
 
-        destQty = otc.getBuyAmount(wrappedDest, wrappedSrc, srcQty);
-
-        rate = valueAfterReducingFee(destQty) * PRECISION / srcQty;
+        destQty = otc.getBuyAmount(wrappedDest, wrappedSrc, actualSrcQty);
+        rate = calcRateFromQty(actualSrcQty, valueAfterReducingFee(destQty), COMMON_DECIMALS, COMMON_DECIMALS);
 
         return rate;
     }
@@ -439,11 +499,10 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
         internal
         returns(bool)
     {
-
-        uint actualDestAmount;
-
         require((ETH_TOKEN_ADDRESS == srcToken) || (ETH_TOKEN_ADDRESS == destToken));
         require((tradeToken == srcToken) || (tradeToken == destToken));
+
+        uint actualDestAmount;
 
         // can skip validation if done at kyber network level
         if (validate) {
@@ -454,42 +513,32 @@ contract KyberOasisReserve is KyberReserveInterface, Withdrawable, Utils {
                 require(msg.value == 0);
         }
 
-        uint destAmount = getDestQty(srcToken, destToken, srcAmount, conversionRate);
-        // sanity check
-        require(destAmount > 0);
+        uint userExpectedDestAmount = calcDstQty(srcAmount, COMMON_DECIMALS, COMMON_DECIMALS, conversionRate);
+        require(userExpectedDestAmount > 0); // sanity check
+
+        uint destAmountIncludingFees = valueBeforeFeesWereReduced(userExpectedDestAmount);
 
         if (srcToken == ETH_TOKEN_ADDRESS) {
             wethToken.deposit.value(msg.value)();
 
-            //TODO - move to constructor...
-            if (wethToken.allowance(this, otc) < msg.value) {
-                wethToken.approve(otc, uint(-1));
-            }
-
-            actualDestAmount = otc.sellAllAmount(wethToken, msg.value, destToken, destAmount);
-            require(actualDestAmount >= destAmount);
+            actualDestAmount = otc.sellAllAmount(wethToken, msg.value, destToken, destAmountIncludingFees);
+            require(actualDestAmount >= destAmountIncludingFees);
 
             // transfer back only requested dest amount.
-            require(destToken.transfer(destAddress, destAmount));
+            require(destToken.transfer(destAddress, userExpectedDestAmount));
         } else {
             require(srcToken.transferFrom(msg.sender, this, srcAmount));
-
-            /* TODO - move to constructor  */
-            if (srcToken.allowance(this, otc) < srcAmount) {
-                srcToken.approve(otc, uint(-1));
-            }
  
-            actualDestAmount = otc.sellAllAmount(srcToken, srcAmount, wethToken, destAmount);
-            require(actualDestAmount >= destAmount);
+            actualDestAmount = otc.sellAllAmount(srcToken, srcAmount, wethToken, destAmountIncludingFees);
+            require(actualDestAmount >= destAmountIncludingFees);
             wethToken.withdraw(actualDestAmount);
 
             // transfer back only requested dest amount.
-            destAddress.transfer(destAmount); 
+            destAddress.transfer(userExpectedDestAmount); 
         }
 
-        TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
+        TradeExecute(msg.sender, srcToken, srcAmount, destToken, userExpectedDestAmount, destAddress);
 
         return true;
-
     }
 }
