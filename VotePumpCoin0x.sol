@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VotePumpCoin0x at 0x41a3bd762288d9dde5eb640efe4d21fc1da2f74d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VotePumpCoin0x at 0x2069b1a93e604289cfda205330f7ed434b6cb743
 */
 pragma solidity ^0.4.22;
 
@@ -73,7 +73,7 @@ contract VotePumpCoin0x is ERC20 {
 
     string public constant name = "VotePumpCoin0x";
     string public constant symbol = "VPCx";
-    uint public constant decimals = 3;
+    uint public constant decimals = 18;
     
 uint256 public totalSupply = 66000000e3;
     
