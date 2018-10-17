@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x270aac03fdee71f4a589890e51f070ee719b9fe5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x59fc8abb956cd4b76f81efeced8ccdf902ff8c6a
 */
 pragma solidity ^0.4.24;
 
@@ -462,18 +462,6 @@ contract MultiToken is BasicMultiToken, ERC228 {
 
 }
 
-// File: contracts/FeeMultiToken.sol
-
-contract FeeMultiToken is MultiToken {
-    function init(ERC20[] _tokens, uint256[] _weights, string _name, string _symbol, uint8 _decimals) public {
-        super.init(_tokens, _weights, _name, _symbol, 18);
-    }
-
-    function getReturn(address _fromToken, address _toToken, uint256 _amount) public view returns(uint256 returnAmount) {
-        returnAmount = super.getReturn(_fromToken, _toToken, _amount).mul(998).div(1000); // 0.2% exchange fee
-    }
-}
-
 // File: contracts/registry/IDeployer.sol
 
 interface IDeployer {
@@ -491,7 +479,7 @@ contract MultiTokenDeployer is IDeployer {
             (data[0] == 0x18 && data[1] == 0x2a && data[2] == 0x54 && data[3] == 0x15)
         );
 
-        mtkn = new FeeMultiToken();
+        mtkn = new MultiToken();
         require(mtkn.call(data));
     }
 }
