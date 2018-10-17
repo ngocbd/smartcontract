@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x8b063485c2e7d18519b4d2227ec35dc761cc25df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventureItem at 0x0e6e19549a89c9bec84b5b632cd1674f8e066d06
 */
 pragma solidity ^0.4.23;
 
@@ -104,7 +104,6 @@ interface ERC721 {
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
     
     function transferFrom(address _from, address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
     function approve(address _approved, uint256 _tokenId) external;
     function setApprovalForAll(address _operator, bool _approved) external;
     
@@ -200,13 +199,6 @@ contract NFToken is ERC721, SupportsInterface {
     function transferFrom(address _from, address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
         address tokenOwner = idToOwner[_tokenId];
         require(tokenOwner == _from);
-        require(_to != address(0));
-        _transfer(_to, _tokenId);
-    }
-    
-    function transfer(address _to, uint256 _tokenId) external canTransfer(_tokenId) validNFToken(_tokenId) {
-        address tokenOwner = idToOwner[_tokenId];
-        require(tokenOwner == msg.sender);
         require(_to != address(0));
         _transfer(_to, _tokenId);
     }
