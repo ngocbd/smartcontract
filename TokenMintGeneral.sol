@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenMintGeneral at 0xebd30812d8f4b6e4828873900f82180bfc86bdc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenMintGeneral at 0x06569b26fc3ca0879300aa626f4b046a4dc95928
 */
 pragma solidity ^0.4.18;
 
@@ -45,7 +45,7 @@ contract Owned {
 
     event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -67,15 +67,15 @@ contract Owned {
 }
 
 contract TokenMintGeneral is ERC20Interface, Owned, SafeMath {
-    string public symbol = "BitCat";
-    string public name = "BitCat";
-    uint8 public decimals = 18;
-    uint public _totalSupply = 210000000000 * 10 ** uint(decimals);
+    string public symbol = "AILE";
+    string public name = "??";
+    uint8 public decimals = 6;
+    uint public _totalSupply = 1001 * 10 ** uint(decimals);
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
 
-    function TokenMintGeneral() public {
+    constructor() public {
         balances[msg.sender] = _totalSupply;
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
