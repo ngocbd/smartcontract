@@ -1,12 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamEth at 0x9c229dd7546eb8f5a12896e03e977b644a96b961
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamEth at 0x67ed24a0db2ae01c4841cd8aef1da519b588e2b2
 */
-// Ethertote - Team Eth timelocked smart contract
+// Ethertote - TeamEth time-locked smart contract
 //
 // The following contract offers peace of mind to investors as the
 // Eth that will go to the members of the Ethertote team
-// will be time-locked over a 12-month period, whereby the 
-// withdraw functions can only be called when the current timestamp is 
+// will be time-locked whereby a maximum of 25% of the Eth can be withdrawn
+// from the smart contract every 3 months, starting from December 1st 2018
+//
+// Withdraw functions can only be called when the current timestamp is 
 // greater than the time specified in each functions
 // ----------------------------------------------------------------------------
 
@@ -71,27 +73,42 @@ contract TeamEth {
     address public thisContractAddress;
     address public admin;
     
-    // time expressed in seconds of 3 months (1 quarter of a year)
-    uint public oneQuarterInSeconds = 7890000;
-    
-    
+
     // the first team withdrawal can be made after:
     // GMT: Saturday, 1 December 2018 00:00:00
     // expressed as Unix epoch time 
     // https://www.epochconverter.com/
     uint256 public unlockDate1 = 1543622400;
     
-    uint256 public unlockDate2 = unlockDate1.add(oneQuarterInSeconds);
-    uint256 public unlockDate3 = unlockDate2.add(oneQuarterInSeconds);
-    uint256 public unlockDate4 = unlockDate3.add(oneQuarterInSeconds);
+    // the second team withdrawal can be made after:
+    // GMT: Friday, 1 March 2019 00:00:00
+    // expressed as Unix epoch time 
+    // https://www.epochconverter.com/
+    uint256 public unlockDate2 = 1551398400;
     
+    // the third team withdrawal can be made after:
+    // GMT: Saturday, 1 June 2019 00:00:00
+    // expressed as Unix epoch time 
+    // https://www.epochconverter.com/
+    uint256 public unlockDate3 = 1559347200;
+    
+    // the final team withdrawal can be made after:
+    // GMT: Sunday, 1 September 2019 00:00:00
+    // expressed as Unix epoch time 
+    // https://www.epochconverter.com/
+    uint256 public unlockDate4 = 1567296000;
+    
+    // time of the contract creation
     uint256 public createdAt;
     
     // amount of eth that will be claimed
     uint public ethToBeClaimed;
     
+    // ensure the function is only called once
+    bool public claimAmountSet;
+    
     // percentage that the team can withdraw Eth
-    // it can naturally be inferred that quarter4 will be 25%
+    // it can naturally be inferred that quarter4 will also be 25%
     uint public percentageQuarter1 = 25;
     uint public percentageQuarter2 = 25;
     uint public percentageQuarter3 = 25;
@@ -131,17 +148,20 @@ contract TeamEth {
     }
     
     function setEthToBeClaimed() onlyAdmin public {
+        require(claimAmountSet == false);
         ethToBeClaimed = address(this).balance;
+        claimAmountSet = true;
     }
 
     // team withdrawal after specified time
     function withdraw_1() onlyAdmin public {
        require(ethToBeClaimed > 0);
        require(withdraw_1Completed == false);
+       // ensure current time is later than time set
        require(now >= unlockDate1);
        // now allow a percentage of the balance to be claimed
-       msg.sender.transfer(ethToBeClaimed.div(quarter1));
-       emit Withdrew(msg.sender, ethToBeClaimed.div(quarter1));    // 25%
+       admin.transfer(ethToBeClaimed.div(quarter1));
+       emit Withdrew(admin, ethToBeClaimed.div(quarter1));    // 25%
        withdraw_1Completed = true;
     }
     
@@ -149,10 +169,11 @@ contract TeamEth {
     function withdraw_2() onlyAdmin public {
        require(ethToBeClaimed > 0);
        require(withdraw_2Completed == false);
+       // ensure current time is later than time set
        require(now >= unlockDate2);
        // now allow a percentage of the balance to be claimed
-       msg.sender.transfer(ethToBeClaimed.div(quarter2));
-       emit Withdrew(msg.sender, ethToBeClaimed.div(quarter2));    // 25%
+       admin.transfer(ethToBeClaimed.div(quarter2));
+       emit Withdrew(admin, ethToBeClaimed.div(quarter2));    // 25%
        withdraw_2Completed = true;
     }
     
@@ -160,19 +181,21 @@ contract TeamEth {
     function withdraw_3() onlyAdmin public {
        require(ethToBeClaimed > 0);
        require(withdraw_3Completed == false);
+       // ensure current time is later than time set
        require(now >= unlockDate3);
        // now allow a percentage of the balance to be claimed
-       msg.sender.transfer(ethToBeClaimed.div(quarter3));
-       emit Withdrew(msg.sender, ethToBeClaimed.div(quarter3));    // 25%
+       admin.transfer(ethToBeClaimed.div(quarter3));
+       emit Withdrew(admin, ethToBeClaimed.div(quarter3));    // 25%
        withdraw_3Completed = true;
     }
     
     // team withdrawal after specified time
     function withdraw_4() onlyAdmin public {
+       // ensure current time is later than time set
        require(now >= unlockDate4);
        // now allow all remaining balance to be claimed
-       msg.sender.transfer(address(this).balance);
-       emit Withdrew(msg.sender, address(this).balance);    // all remaining balance
+       admin.transfer(address(this).balance);
+       emit Withdrew(admin, address(this).balance);    // all remaining balance
     }
 
 }
