@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENC at 0x893f84541af5c2416b79ee8214e8afd5e518d192
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENC at 0x57f432615a31f96528cba0427aaf1e6e61da0668
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 // Enetrix Coinby ENC Limited.
 // An ERC20 standard
 //
-// author: AcuteAngleCoin Team
+// author: ENC Team
 
 contract ERC20Interface {
     function totalSupply() public constant returns (uint256 _totalSupply);
@@ -26,7 +26,7 @@ contract ENC is ERC20Interface {
     string public constant symbol = "ENC";
     string public constant name = "Enetrix Coin";
 
-    uint256 public _totalSupply = 5 ** 14; // total supply is 10^14 unit, equivalent to 10^9 ENC
+    uint256 public _totalSupply = 10 ** 14 / 2; // total supply is 10^14 unit, equivalent to 10^9 ENC
 
     // Owner of this contract
     address public owner;
