@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xbcc188d7c1cf7afe35654e5ff7b23ca6706c2e1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x0aE2bA897535E460F454E57F97beb66AD3B9e7A6
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'KomoToken';
-        symbol = 'KT';
+        totalSupply = 2100000000000000000000000000;
+        name = 'YourTokenBlockChain';
+        symbol = 'YTB';
         decimals = 18;
-        balanceOf[0x349a6206972761f0902a69930ca07977254c88c3] = totalSupply;
-        Transfer(address(0), 0x349a6206972761f0902a69930ca07977254c88c3, totalSupply);
+        balanceOf[0x2e8f7bd73790a242f1271a381a3d0011078e9fc8] = totalSupply;
+        Transfer(address(0), 0x2e8f7bd73790a242f1271a381a3d0011078e9fc8, totalSupply);
     }
 }
