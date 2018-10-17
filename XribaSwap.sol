@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XribaSwap at 0x35e8312dfa25f478d85d88c10fde88824cacbced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XribaSwap at 0xab244f9aa7a8dd03e8261b2508438d301ac05a4f
 */
 pragma solidity ^0.4.23;
 
@@ -72,7 +72,7 @@ contract tokenInterface {
 	function balanceOf(address _owner) public constant returns (uint256 balance);
 	function transfer(address _to, uint256 _value) public returns (bool);
 	string public symbols;
-	function originBurn(uint256 _value) public returns(bool);
+	function originTransfer(address _to, uint256 _value) public returns(bool);
 }
 
 contract XribaSwap is Ownable {
@@ -115,7 +115,7 @@ contract XribaSwap is Ownable {
 		uint256 tknToSend;
 		
 		if( mtv_amount > 0 ) {
-		    mtv.originBurn(mtv_amount);
+		    mtv.originTransfer(0x0Dead0DeAd0dead0DEad0DEAd0DEAD0deaD0DEaD, mtv_amount);
 		    xra_amount[msg.sender] = xra_amount[msg.sender].add(mtv_amount.mul(5));
 		    
 		    tknToSend = xra_amount[msg.sender].mul(30).div(100).sub(xra_sent[msg.sender]);
