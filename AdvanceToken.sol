@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x8d63dd1418cc85c6a5c38ad171679c26fdc2ac49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceToken at 0x80c30a85d0cfffbf14ca43265c3509632391d9fb
 */
 pragma solidity ^0.4.20;
 
@@ -58,9 +58,9 @@ contract ERC20 is ERC20Interface,SafeMath {
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "CCC";
-       decimals = 4;
-       totalSupply = 100000000000000;
+       symbol = "REL";
+       decimals = 18;
+       totalSupply = 10000000000000000000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
@@ -154,7 +154,6 @@ contract AdvanceToken is ERC20, owned,SelfDesctructionContract{
 
     mapping (address => bool) public frozenAccount;
 
-    event AddSupply(uint amount);
     event FrozenFunds(address target, bool frozen);
     event Burn(address target, uint amount);
 
@@ -162,15 +161,7 @@ contract AdvanceToken is ERC20, owned,SelfDesctructionContract{
 
     }
 
-    function mine(address target, uint amount) public onlyOwner {
-        totalSupply =SafeMath.safeAdd(totalSupply,amount) ;
-        balanceOf[target] = SafeMath.safeAdd(balanceOf[target],amount);
-
-        emit AddSupply(amount);
-        emit Transfer(0, target, amount);
-    }
-
-    function freezeAccount(address target, bool freeze) public onlyOwner {
+  function freezeAccount(address target, bool freeze) public onlyOwner {
         frozenAccount[target] = freeze;
         emit FrozenFunds(target, freeze);
     }
