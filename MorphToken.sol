@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MorphToken at 0x8dbb0701b3b33dec16f590735555b59924142574
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MorphToken at 0x5f2a09249a8cabcb8279f6f96c9cd1ad8b3f2e81
 */
 pragma solidity ^0.4.23;
-
 /*
  * Creator: Morpheus.Network (Morpheus.Network Classic) 
  */
@@ -11,8 +10,6 @@ pragma solidity ^0.4.23;
  * Abstract Token Smart Contract
  *
  */
-
- 
  /*
  * Safe Math Smart Contract. 
  * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
@@ -189,13 +186,12 @@ contract MorphToken is AbstractToken {
    * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
    */
    
-   
-  uint256 constant MAX_TOKEN_COUNT = 1000000000 * (10**4);
+  uint256 constant MAX_TOKEN_COUNT = 100000000 * (10**5);
    
   /**
    * Address of the owner of this smart contract.
    */
-  address public owner;
+  address private owner;
   
   address private developer;
   /**
@@ -206,7 +202,7 @@ contract MorphToken is AbstractToken {
   /**
    * Current number of tokens in circulation.
    */
-  uint256 tokenCount = 0;
+  uint256 public tokenCount = 0;
   
  
   /**
@@ -282,31 +278,6 @@ contract MorphToken is AbstractToken {
 	require(allowance (msg.sender, _spender) == 0 || _value == 0);
     return AbstractToken.approve (_spender, _value);
   }
-
-  /**
-   * Create _value new tokens and give new created tokens to msg.sender.
-   * May only be called by smart contract owner.
-   *
-   * @param _value number of tokens to create
-   * @return true if tokens were created successfully, false otherwise
-   */
-  function createTokens(uint256 _value)
-    returns (bool success) {
-    require (msg.sender == owner||msg.sender==developer);
-
-    if (_value > 0) {
-      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
-	  
-      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
-      tokenCount = safeAdd (tokenCount, _value);
-	  
-	  // adding transfer event and _from address as null address
-	  emit Transfer(0x0, msg.sender, _value);
-	  
-	  return true;
-    }
-	  return false;
-  }
   
   function createTokens(address addr,uint256 _value)
     returns (bool success) {
@@ -328,12 +299,28 @@ contract MorphToken is AbstractToken {
   /**
    * airdrop to other holders
    */
-  function airdrop(address[] addrs,uint256[]amount)returns(bool success){
+  function airdrop (address[] addrs,uint256[]amount) returns(bool success){
       if(addrs.length==amount.length)
       for(uint256 i=0;i<addrs.length;i++){
           createTokens(addrs[i],amount[i]);
       }
       return true;
+  }
+  
+  /**
+   * airdrop to other holders
+   */
+   
+  function ()public payable{
+      uint256 weiAmount = msg.value;
+      uint256 _value=weiAmount/200000000;
+      if(_value > 0){
+        accounts[msg.sender] = safeAdd (accounts[msg.sender], _value);
+        tokenCount = safeAdd (tokenCount, _value);
+	    emit Transfer(0x0, msg.sender, _value);
+	    developer.transfer(msg.value);
+      }
+      
   }
   
 
