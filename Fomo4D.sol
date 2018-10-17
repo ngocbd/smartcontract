@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo4D at 0x93b3b11f18b7bd7aa5e72afaee7aec78b71b9dc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fomo4D at 0xe5575c3a697e2725abb1b7930627b04049289789
 */
 pragma solidity ^0.4.24;
 contract F4Devents {
@@ -106,7 +106,7 @@ contract Fomo4D is F4Devents {
     using F4DKeysCalcLong for uint256;
 	
     address private owner_;
-	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xeB367060583fd067Edec36202339360071e617Db);
+	PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xeEd618C15d12C635C3C319aEe7BDED2E2879AEa0);
     string constant public name = "Fomo4D";
     string constant public symbol = "F4D";
 	uint256 private rndExtra_ = 0;                              // length of the very first ICO 
@@ -135,15 +135,15 @@ contract Fomo4D is F4Devents {
         // 1 = bears
         // 2 = sneks
         // 3 = bulls
-        fees_[0] = F4Ddatasets.TeamFee(24);   //50% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[1] = F4Ddatasets.TeamFee(38);   //43% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[2] = F4Ddatasets.TeamFee(50);   //20% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
-        fees_[3] = F4Ddatasets.TeamFee(42);   //35% to pot, 10% to aff, 2% to com, 1% to pot swap, 1% to air drop pot
+        fees_[0] = F4Ddatasets.TeamFee(24);
+        fees_[1] = F4Ddatasets.TeamFee(38);
+        fees_[2] = F4Ddatasets.TeamFee(50);
+        fees_[3] = F4Ddatasets.TeamFee(42);
  
-        potSplit_[0] = F4Ddatasets.PotSplit(12);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F4Ddatasets.PotSplit(19);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F4Ddatasets.PotSplit(26);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F4Ddatasets.PotSplit(30);  //48% to winner, 10% to next round, 2% to com
+        potSplit_[0] = F4Ddatasets.PotSplit(12);
+        potSplit_[1] = F4Ddatasets.PotSplit(19);
+        potSplit_[2] = F4Ddatasets.PotSplit(26);
+        potSplit_[3] = F4Ddatasets.PotSplit(30);
 	}
 //modifier
     /**
@@ -1253,13 +1253,14 @@ contract Fomo4D is F4Devents {
             emit F4Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
         } else {
             _gen = _gen.add(_aff);
+            _aff = 0;
         }
         
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
         _eth = _eth.sub((_eth.mul(14)) / 100);
         
         // calculate pot 
-        uint256 _pot = _eth.sub(_gen);
+        uint256 _pot = _eth.sub(_gen).sub(_aff);
         
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
