@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AumonetICO at 0x1f62496c6d11b5dd40f8a0b83f8f45b69d360979
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AumonetICO at 0x84e32099024030cf1d5519c02b4c0edf6f6140c3
 */
 pragma solidity ^0.4.25;
 
@@ -464,22 +464,25 @@ contract OwnableToken is PausableToken {
 contract AumonetToken is OwnableToken {
 
 	/* Contract Constants */
-	string public _name = "Aumonet";
-	string public _symbol = "AUMO";
+	string public _name = "Ezekiel";
+	string public _symbol = "EZ37";
 	uint8 public _decimals = 5;
 	uint256 public _creatorSupply;
 	uint256 public _icoSupply;
 	uint256 public _bonusSupply = 187000 * (10 ** uint256(_decimals)); // The Bonus scheme supply is 17% (187 000 tokens);
 
 	constructor()public {
+		//pause();
 
 		_totalSupply = 1100000 * (10 ** uint256(_decimals));
 
 		_creatorSupply = _totalSupply * 25 / 100; // The creator has 25% of tokens
 		_icoSupply = _totalSupply * 58 / 100; // Smart contract balance is 58% of tokens (638 000 tokens)
 
+		//balances[this] = _icoSupply.add(_bonusSupply); // Token balance to smart contract.
+		//balances[msg.sender] = _creatorSupply;
 		balances[msg.sender] = _icoSupply.add(_bonusSupply);
-		balances[tx.origin] = _creatorSupply; //the creator gets supply for pre-ico and so on, tx.origin is only possible here
+		balances[tx.origin] = _creatorSupply; //instead of tx.origin should be address of where will be sended money
 
 	}
 
