@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x7ea6b937fe5c8734e057c9e86784f734392eb344
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zethroll at 0x1fe2401bd6f4de5eff1661086440297baa9a2e12
 */
 pragma solidity ^0.4.24;
 
@@ -189,7 +189,7 @@ contract Zethroll is ZethrShell {
     // Init min bet (1 ZTH)
     ownerSetMinBet(1e18);
     
-    canMining = true;
+    canMining = false;
     miningProfit = 100;
     minBetMining = 1e18;
   }
@@ -450,6 +450,11 @@ contract Zethroll is ZethrShell {
   }
 
   // Only owner address can set emergency pause #1
+  function ownerSetupBankrollInterface(address ZethrMainBankrollAddress) public
+  onlyOwner
+  {
+    setupBankrollInterface(ZethrMainBankrollAddress);
+  }
   function ownerPauseGame(bool newStatus) public
   onlyOwner
   {
