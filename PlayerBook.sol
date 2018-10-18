@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0xc4AD45a8808d577D8B08Ca5E4dD6939964EB645f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x86767b90BAC12000aAB5Bd2037e32E5775928bbB
 */
 pragma solidity ^0.4.24;
 /*
@@ -57,11 +57,11 @@ contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
-    JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x1f5654082761182b50460c0E8945324aC7c62D1d);
-    // TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
-    TeamJustInterface constant private TeamJust = TeamJustInterface(0x73A28aCF647BfB89f8c011AC7Bb057a4007205b5);
-
+    // Hack ????
+    // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0x548e2295fc38b69000ff43a730933919b08c2562);
+    TeamJustInterface constant private TeamJust = TeamJustInterface(0x7cfF41B4671143E8b907887d52e0BF77a40B2d14);
+    address constant private reward = 0x43505CE3219A8C93Cf8d18782094404A4450126b;
+    
     MSFun.Data private msData;
     function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredDevSignatures(), _whatFunction));}
     function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
@@ -100,50 +100,40 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        // plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
-        // plyr_[1].name = "justo";
-        // plyr_[1].names = 1;
-        // pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
-        // pIDxName_["justo"] = 1;
-        // plyrNames_[1]["justo"] = true;
-        // plyrNameList_[1][1] = "justo";
-        
-        // plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
-        // plyr_[2].name = "mantso";
-        // plyr_[2].names = 1;
-        // pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
-        // pIDxName_["mantso"] = 2;
-        // plyrNames_[2]["mantso"] = true;
-        // plyrNameList_[2][1] = "mantso";
-        
-        // plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
-        // plyr_[3].name = "sumpunk";
-        // plyr_[3].names = 1;
-        // pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
-        // pIDxName_["sumpunk"] = 3;
-        // plyrNames_[3]["sumpunk"] = true;
-        // plyrNameList_[3][1] = "sumpunk";
-        
-        // plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
-        // plyr_[4].name = "inventor";
-        // plyr_[4].names = 1;
-        // pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
-        // pIDxName_["inventor"] = 4;
-        // plyrNames_[4]["inventor"] = true;
-        // plyrNameList_[4][1] = "inventor";
-        
-        // pID_ = 4;
-
-        plyr_[1].addr = 0xD9A85b1eEe7718221713D5e8131d041DC417E901;
-        plyr_[1].name = "yi";
+        plyr_[1].addr = 0xa8E88C7fA55a8709bDf38d810769dC68cBdA3eb0;
+        plyr_[1].name = "justo";
         plyr_[1].names = 1;
-        pIDxAddr_[0xD9A85b1eEe7718221713D5e8131d041DC417E901] = 1;
-        pIDxName_["yi"] = 1;
-        plyrNames_[1]["yi"] = true;
-        plyrNameList_[1][1] = "yi";
-
-        pID_ = 1;
-   }
+        pIDxAddr_[0xa8E88C7fA55a8709bDf38d810769dC68cBdA3eb0] = 1;
+        pIDxName_["justo"] = 1;
+        plyrNames_[1]["justo"] = true;
+        plyrNameList_[1][1] = "justo";
+        
+        plyr_[2].addr = 0x5e332cA3C520Eb67531A939B3C2Bd0ab0C704D3A;
+        plyr_[2].name = "mantso";
+        plyr_[2].names = 1;
+        pIDxAddr_[0x5e332cA3C520Eb67531A939B3C2Bd0ab0C704D3A] = 2;
+        pIDxName_["mantso"] = 2;
+        plyrNames_[2]["mantso"] = true;
+        plyrNameList_[2][1] = "mantso";
+        
+        plyr_[3].addr = 0x0DE04B2fe678Df1B469B7440Bc1D1d1B1eE88485;
+        plyr_[3].name = "sumpunk";
+        plyr_[3].names = 1;
+        pIDxAddr_[0x0DE04B2fe678Df1B469B7440Bc1D1d1B1eE88485] = 3;
+        pIDxName_["sumpunk"] = 3;
+        plyrNames_[3]["sumpunk"] = true;
+        plyrNameList_[3][1] = "sumpunk";
+        
+        plyr_[4].addr = 0x5F4c768496eC8714F6EbD017979E194bB7D0A973;
+        plyr_[4].name = "inventor";
+        plyr_[4].names = 1;
+        pIDxAddr_[0x5F4c768496eC8714F6EbD017979E194bB7D0A973] = 4;
+        pIDxName_["inventor"] = 4;
+        plyrNames_[4]["inventor"] = true;
+        plyrNameList_[4][1] = "inventor";
+        
+        pID_ = 4;
+    }
 //==============================================================================
 //     _ _  _  _|. |`. _  _ _  .
 //    | | |(_)(_||~|~|(/_| _\  .  (these are safety checks)
@@ -439,7 +429,8 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        Jekyll_Island_Inc.deposit.value(address(this).balance)();
+        // Jekyll_Island_Inc.deposit.value(address(this).balance)();
+        reward.transfer(address(this).balance);
         
         // push player info to games
         if (_all == true)
@@ -633,9 +624,9 @@ contract PlayerBook {
             games_[gID_] = PlayerBookReceiverInterface(_gameAddress);
         
             games_[gID_].receivePlayerInfo(1, plyr_[1].addr, plyr_[1].name, 0);
-            // games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
-            // games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
-            // games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+            games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
+            games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
+            games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
         }
     }
     
