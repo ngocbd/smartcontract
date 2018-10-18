@@ -1,147 +1,58 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0x0b529c6c842cd1d0454f9dc4d4ed21a696561213
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDistribution at 0xccad24a69a76da7763f937d855857302535bfd88
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+/// `Owned` is a base level contract that assigns an `owner` that can be later changed
+contract Owned {
+    /// @dev `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner { require (msg.sender == owner); _; }
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() public { owner = msg.sender;}
+
+    /// @notice `owner` can step down and assign some other address to this role
+    /// @param _newOwner The address of the new owner. 0x0 can be used to create
+    ///  an unowned neutral vault, however that cannot be undone
+    function changeOwner(address _newOwner)  onlyOwner public {
+        owner = _newOwner;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+contract ERC20 {
 
+  function balanceOf(address who) constant public returns (uint);
+  function allowance(address owner, address spender) constant public returns (uint);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  function transfer(address to, uint value) public returns (bool ok);
+  function transferFrom(address from, address to, uint value) public returns (bool ok);
+  function approve(address spender, uint value) public returns (bool ok);
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+contract TokenDistribution is Owned {
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+    ERC20 public tokenContract;
+    
+    function TokenDistribution ( address _tokenAddress ) public {
+        tokenContract = ERC20(_tokenAddress); // The Deployed Token Contract
+     }
+          
+    function distributeTokens(address[] _owners, uint256[] _tokens) onlyOwner public {
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+        require( _owners.length == _tokens.length );
+        for(uint i=0;i<_owners.length;i++){
+            require (tokenContract.transferFrom(this, _owners[i], _tokens[i]));
+        }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// File: contracts/TokenDistribution.sol
-
-contract TokenDistribution is Ownable {
-  using SafeMath for uint256;
-
-  ERC20 public token;
-
-  address public wallet;
-
-  function TokenDistribution(
-    ERC20 _token,
-    address _wallet) public
-  {
-    require(_token != address(0));
-    require(_wallet != address(0));
-    token = _token;
-    wallet = _wallet;
-  }
-
-  function sendToken(address[] _beneficiaries, uint256 _amount) external onlyOwner {
-    for (uint256 i = 0; i < _beneficiaries.length; i++) {
-      require(token.transferFrom(wallet, _beneficiaries[i], _amount));
     }
-  }
+
 }
