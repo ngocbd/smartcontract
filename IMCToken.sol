@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCToken at 0x745e8a7bfaa12498c426a554b233ba5b843704d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCToken at 0xc6eadcf0d8c1e9e9c63c142d25e25350a1b83dbf
 */
 pragma solidity ^0.4.24;
 
@@ -140,7 +140,7 @@ contract IMCToken is ERC20Interface, Owned {
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
 
-    address externalContractAddress;
+    address public externalContractAddress;
 
 
     /**
