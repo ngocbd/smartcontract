@@ -1,7 +1,53 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscountPhases at 0xc3acd66ad15b6f98c4ae557253f7a9dd7d0d9ec7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscountPhases at 0x37cbd2e72c9ba7909ca198bb839c119917cba05c
 */
 pragma solidity ^0.4.13;
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 contract Ownable {
   address public owner;
@@ -234,6 +280,7 @@ contract StaffUtil {
 }
 
 contract DiscountPhases is StaffUtil {
+	using SafeMath for uint256;
 
 	event DiscountPhaseAdded(uint index, string name, uint8 percent, uint fromDate, uint toDate, uint timestamp, address byStaff);
 	event DiscountPhaseRemoved(uint index, uint timestamp, address byStaff);
@@ -252,14 +299,14 @@ contract DiscountPhases is StaffUtil {
 	function calculateBonusAmount(uint256 _purchasedAmount) public constant returns (uint256) {
 		for (uint i = 0; i < discountPhases.length; i++) {
 			if (now >= discountPhases[i].fromDate && now <= discountPhases[i].toDate) {
-				return _purchasedAmount * discountPhases[i].percent / 100;
+				return _purchasedAmount.mul(discountPhases[i].percent).div(100);
 			}
 		}
 	}
 
 	function addDiscountPhase(string _name, uint8 _percent, uint _fromDate, uint _toDate) public onlyOwnerOrStaff {
 		require(bytes(_name).length > 0);
-		require(_percent > 0);
+		require(_percent > 0 && _percent <= 100);
 
 		if (now > _fromDate) {
 			_fromDate = now;
