@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0xB4FE1fE5f36F239B811Be635622d3c5a92aD3cD0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Store at 0x51A1A60aE2310e34295A18B559cAC9E4140303D7
 */
 pragma solidity ^0.4.24;
 
@@ -991,6 +991,37 @@ contract Main is MainChip,MainCard,MainBag,MainBonus
 
 
 
+contract StoreChipBag is BasicAuth
+{
+
+    mapping(address => uint32[]) g_ChipBag;
+
+    constructor(address Master) public
+    {
+        InitMaster(Master);
+    }
+
+    function AddChip(address acc, uint32 iChip) external OwnerAble(acc) AuthAble
+    {
+        g_ChipBag[acc].push(iChip);
+    }
+
+    function CollectChips(address acc) external returns(uint32[] chips)
+    {
+        chips = g_ChipBag[acc];
+        delete g_ChipBag[acc];
+    }
+
+    function GetChipsInfo(address acc) external view returns(uint32[] chips)
+    {
+        chips = g_ChipBag[acc];
+    }
+
+}
+
+
+
+
 contract StoreGifts is BasicAuth
 {
     struct Gift
@@ -1227,13 +1258,16 @@ contract Store is Child
 
     StoreGoods g_Goods;
     StoreGifts g_Gifts;
+    StoreChipBag g_ChipBag;
 
-    constructor(Main main, StoreGoods goods, StoreGifts gifts) public Child(main)
+    constructor(Main main, StoreGoods goods, StoreGifts gifts, StoreChipBag chipbag) public Child(main)
     {
         g_Goods = goods;
         g_Gifts = gifts;
+        g_ChipBag = chipbag;
         g_Goods.SetAuth(this);
         g_Gifts.SetAuth(this);
+        g_ChipBag.SetAuth(this);
     }
     
     function kill() external MasterAble
@@ -1260,7 +1294,7 @@ contract Store is Child
         {
             (uint random,) = GenRandom(level, 0);
             uint32 iChip = g_Main.GenChipByRandomWeight(random, level, GenExtWeightList(level));
-            g_Main.GainChip(msg.sender, iChip, true);
+            g_ChipBag.AddChip(msg.sender,iChip);
         }
     }
 
@@ -1294,11 +1328,6 @@ contract Store is Child
         }
     }
 
-    function GetPurchaseInfo() external view returns(uint32[] goodsList, uint[] purchaseCountList)
-    {
-        (goodsList, purchaseCountList) = g_Goods.GetPurchaseInfo(msg.sender);
-    }
-
     function CheckExchange(string key) public view returns(uint8)
     {
         if (!g_Gifts.HasGift(key)) return EXCHANGE_KEYERR;
@@ -1315,6 +1344,21 @@ contract Store is Child
         {
             g_Main.GainStuff(msg.sender, idxList[i], numList[i]);
         }
+    }
+
+    function CollectChipBag() external
+    {
+        uint32[] memory chips = g_ChipBag.CollectChips(msg.sender);
+        for (uint i=0; i<chips.length; i++)
+        {
+            g_Main.GainChip(msg.sender, chips[i], true);
+        }
+    }
+
+    function GetStoreInfo() external view returns(uint32[] goodsList, uint[] purchaseCountList, uint32[] chips)
+    {
+        (goodsList, purchaseCountList) = g_Goods.GetPurchaseInfo(msg.sender);
+        chips = g_ChipBag.GetChipsInfo(msg.sender);
     }
 
 }
