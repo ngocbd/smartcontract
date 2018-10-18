@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartPyramid at 0xa9fa841e2b56be2d8b645819b46fedfd9e331206
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartPyramid at 0x3da6d8f14dfcd576c46f9994d8fd94883a8f3fe8
 */
 pragma solidity ^0.4.24;
 
@@ -15,12 +15,13 @@ pragma solidity ^0.4.24;
  *    -- 16% Marketing + Operating Expenses
  *
  *
- * The later widthdrow - the MORE PROFIT !
+ * You get MORE PROFIT if you withdraw later !
  * Increase of the total rate of return by 0.01% every day before the payment.
  * The increase in profitability affects all previous days!
  *  After the dividend is paid, the rate of return is returned to 1.23 % per day
  *
  *           For example: if the Deposit is 10 ETH
+ * 
  *                days      |   %    |   profit
  *          --------------------------------------
  *            1 (>24 hours) | 1.24 % | 0.124 ETH
@@ -165,9 +166,9 @@ contract SmartPyramid {
 
     mapping (uint => Leader) top;
 
-    event LogInvestment(address _addr, uint _value);
-    event LogIncome(address _addr, uint _value, string _type);
-    event LogReferralInvestment(address _referrer, address _referral, uint _value);
+    event LogInvestment(address indexed _addr, uint _value);
+    event LogIncome(address indexed _addr, uint _value, string indexed _type);
+    event LogReferralInvestment(address indexed _referrer, address indexed _referral, uint _value);
     event LogGift(address _firstAddr, uint _firstDep, address _secondAddr, uint _secondDep, address _thirdAddr, uint _thirdDep);
     event LogNewWave(uint _waveStartUp);
 
