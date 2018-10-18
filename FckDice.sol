@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FckDice at 0x722b035cdaf0daf521ead7bc3496029a280e6249
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FckDice at 0x837e2f52db5017316adee47aa171d56e2c8af2af
 */
 pragma solidity ^0.4.25;
 
@@ -74,7 +74,7 @@ contract FckDice {
     // EVM BLOCKHASH opcode can query no further than 256 blocks into the
     // past. Given that settleBet uses block hash of placeBet as one of
     // complementary entropy sources, we cannot process bets older than this
-    // threshold. On rare occasions croupier may fail to invoke
+    // threshold. On rare occasions dice2.win croupier may fail to invoke
     // settleBet in this timespan due to technical issues or extreme Ethereum
     // congestion; such bets can be refunded via invoking refundBet.
     uint constant BET_EXPIRATION_BLOCKS = 250;
@@ -191,7 +191,7 @@ contract FckDice {
         jackpotSize += uint128(increaseAmount);
     }
 
-    // Funds withdrawal to cover costs of croupier operation.
+    // Funds withdrawal to cover costs of dice2.win operation.
     function withdrawFunds(address beneficiary, uint withdrawAmount) external onlyOwner {
         require(withdrawAmount <= address(this).balance, "Increase amount larger than balance.");
         require(jackpotSize + lockedInBets + withdrawAmount <= address(this).balance, "Not enough funds.");
@@ -231,7 +231,7 @@ contract FckDice {
     //  modulo          - game modulo.
     //  commitLastBlock - number of the maximum block where "commit" is still considered valid.
     //  commit          - Keccak256 hash of some secret "reveal" random number, to be supplied
-    //                    by the croupier bot in the settleBet transaction. Supplying
+    //                    by the dice2.win croupier bot in the settleBet transaction. Supplying
     //                    "commit" ensures that "reveal" cannot be changed behind the scenes
     //                    after placeBet have been mined.
     //  r, s            - components of ECDSA signature of (commitLastBlock, commit). v is
@@ -267,7 +267,8 @@ contract FckDice {
             // Small modulo games specify bet outcomes via bit mask.
             // rollUnder is a number of 1 bits in this mask (population count).
             // This magic looking formula is an efficient way to compute population
-            // count on EVM for numbers below 2**40.
+            // count on EVM for numbers below 2**40. For detailed proof consult
+            // the dice2.win whitepaper.
             rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
             mask = betMask;
         } else {
@@ -336,7 +337,7 @@ contract FckDice {
     //    event DebugBytes32(string name, bytes32 data);
     //    event DebugUint(string name, uint data);
 
-    // Common settlement code for settleBet.
+    // Common settlement code for settleBet & settleBetUncleMerkleProof.
     function settleBetCommon(Bet storage bet, bytes20 reveal1, bytes20 reveal2, bytes32 entropyBlockHash) private {
         // Fetch bet parameters into local variables (to save gas).
         uint amount = bet.amount;
@@ -410,7 +411,7 @@ contract FckDice {
     // Refund transaction - return the bet amount of a roll that was not processed in a
     // due timeframe. Processing such blocks is not possible due to EVM limitations (see
     // BET_EXPIRATION_BLOCKS comment above for details). In case you ever find yourself
-    // in a situation like this, just contact the fck.com support, however nothing
+    // in a situation like this, just contact the dice2.win support, however nothing
     // precludes you from invoking this method yourself.
     function refundBet(uint commit) external {
         // Check that bet is in 'active' state.
