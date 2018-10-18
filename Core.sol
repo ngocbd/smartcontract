@@ -1,212 +1,278 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0xc6c2a8f2c957806ac0580b46d84d2717291b9df1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0x4f5c2dc89482eace09fe32c443b1893387406887
 */
-pragma solidity 0.4.21;
-
-contract Maths {
-
-    function Mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        require(a == 0 || c / a == b);
-        return c;
-    }
-
-    function Div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-
-    function Sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function Add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a);
-        return c;
-    }
-
-}
-
-contract Owned is Maths {
-
-    address public owner;
-    address public collector;
-    bool public transfer_status = true;
-    event OwnershipChanged(address indexed _invoker, address indexed _newOwner);        
-    event TransferStatusChanged(bool _newStatus);
-    uint256 public TotalSupply = 500000000000000000000000000;
-    mapping(address => uint256) UserBalances;
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-        
-    function Owned() public {
-        owner = msg.sender;
-        collector = msg.sender;
-    }
-
-    modifier _onlyOwner() {
-        require(msg.sender == owner);
+//etherate v.1.0
+//https://etherate.org
+//ETHERATE - BET and WIN ETH
+/*
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+??????????????????????????????????????????
+*/
+//69 84 72 69 82 65 84 69 
+pragma solidity ^0.4.24;
+contract Control
+{
+    mapping(address => uint8) public agents;
+    modifier onlyADM()
+    {
+        require(agents[msg.sender] == 1);
         _;
     }
-
-    function ChangeOwner(address _AddressToMake) public _onlyOwner returns (bool _success) {
-
-        owner = _AddressToMake;
-        emit OwnershipChanged(msg.sender, _AddressToMake);
-
-        return true;
-
+    event ChangePermission(address indexed _called, address indexed _agent, uint8 _value);
+    function changePermission(address _agent, uint8 _value) public onlyADM()
+    {
+        require(msg.sender != _agent);
+        agents[_agent] = _value;
+        ChangePermission(msg.sender, _agent, _value);
     }
-    
-    function ChangeCollector(address _AddressToMake) public _onlyOwner returns (bool _success) {
-
-        collector = _AddressToMake;
-
-        return true;
-
+    bool public status;
+    event ChangeStatus(address indexed _called, bool _value);
+    function changeStatus(bool _value) public onlyADM()
+    {
+        status = _value;
+        ChangeStatus(msg.sender, _value);
     }
-
-    function ChangeTransferStatus(bool _newStatus) public _onlyOwner returns (bool _success) {
-
-        transfer_status = _newStatus;
-        emit TransferStatusChanged(_newStatus);
-    
-        return true;
-    
+    modifier onlyRun()
+    {
+        require(status);
+        _;
     }
-	
-   function Mint(uint256 _amount) public _onlyOwner returns (bool _success) {
-
-        TotalSupply = Add(TotalSupply, _amount);
-        UserBalances[msg.sender] = Add(UserBalances[msg.sender], _amount);
-	
-    	emit Transfer(address(0), msg.sender, _amount);
-
-        return true;
-
+    event WithdrawWEI(address indexed _called, address indexed _to, uint256 _wei, uint8 indexed _type);
+    uint256 private totalDonateWEI;
+    event Donate(address indexed _from, uint256 _value);
+    function () payable //Thank you very much ;)
+    {
+        totalDonateWEI = totalDonateWEI + msg.value;
+        Donate(msg.sender, msg.value);
     }
-
-    function Burn(uint256 _amount) public _onlyOwner returns (bool _success) {
-
-        require(Sub(UserBalances[msg.sender], _amount) >= 0);
-        TotalSupply = Sub(TotalSupply, _amount);
-        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
-	
-	    emit Transfer(msg.sender, address(0), _amount);
-
-        return true;
-
+    function getTotalDonateWEIInfo() public onlyADM() constant returns(uint256)
+    {
+        return totalDonateWEI;
     }
-        
+    function withdrawDonateWEI(address _to) public onlyADM()
+    {
+        _to.transfer(totalDonateWEI);
+        WithdrawWEI(msg.sender, _to, totalDonateWEI, 1);
+        totalDonateWEI = 0;
+    }
+    function Control()
+    {
+        agents[msg.sender] = 1;
+        status = true;
+    }
 }
 
-contract Core is Owned {
-
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event OrderPaid(uint256 indexed _orderID, uint256 _value);
-
-    string public name = "CoinMarketAlert";
-    string public symbol = "CMA";
-    uint256 public decimals = 18;
-    mapping(uint256 => bool) public OrdersPaid;
-    mapping(address => mapping(address => uint256)) public Allowance;
-
-    function Core() public {
-
-        UserBalances[msg.sender] = TotalSupply;
-
+contract Core is Control
+{
+    ///RANDOM
+    function random(uint256 _min, uint256 _max) public constant returns(uint256)
+    {
+        return uint256(sha3(block.blockhash(block.number - 1))) % (_min + _max) - _min;
+	}
+    ///*RANDOM
+    uint256 public betSizeFINNEY;
+    uint256 public totalBets;
+    uint256 public limitAgentBets;
+    uint256 public roundNum;
+    uint256 public betsNum;
+    uint256 public commissionPCT;
+    bool public commissionType;
+    uint256 private bankBalanceWEI;
+    uint256 private commissionBalanceWEI;
+    uint256 private overBalanceWEI;
+    uint256 public timeoutSEC;
+    uint256 public lastBetTimeSEC;
+    function getOverBalanceWEIInfo() public onlyADM() constant returns(uint256)
+    {
+        return overBalanceWEI;
     }
-
-    function _transferCheck(address _sender, address _recipient, uint256 _amount) private view returns (bool success) {
-
-        require(transfer_status == true);
-        require(_amount > 0);
-        require(_recipient != address(0));
-        require(UserBalances[_sender] >= _amount);
-        require(Sub(UserBalances[_sender], _amount) >= 0);
-        require(Add(UserBalances[_recipient], _amount) > UserBalances[_recipient]);
-        
-        return true;
-
+    function getBankBalanceWEIInfo() public onlyADM() constant returns(uint256)
+    {
+        return bankBalanceWEI;
     }
-    
-    function payOrder(uint256 _orderID, uint256 _amount) public returns (bool status) {
-        
-        require(OrdersPaid[_orderID] == false);
-        require(_transferCheck(msg.sender, collector, _amount));
-        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
-        UserBalances[collector] = Add(UserBalances[collector], _amount);
-		OrdersPaid[_orderID] = true;
-        emit OrderPaid(_orderID,  _amount);
-		emit Transfer(msg.sender, collector, _amount);
-        
-        return true;
-        
-
+    function getCommissionBalanceWEIInfo() public onlyADM() constant returns(uint256)
+    {
+        return commissionBalanceWEI;
     }
-
-    function transfer(address _receiver, uint256 _amount) public returns (bool status) {
-
-        require(_transferCheck(msg.sender, _receiver, _amount));
-        UserBalances[msg.sender] = Sub(UserBalances[msg.sender], _amount);
-        UserBalances[_receiver] = Add(UserBalances[_receiver], _amount);
-        emit Transfer(msg.sender, _receiver, _amount);
-        
-        return true;
-
+    function withdrawOverBalanceWEI(address _to) public onlyADM()
+    {
+        _to.transfer(overBalanceWEI);
+        WithdrawWEI(msg.sender, _to, overBalanceWEI, 2);
+        overBalanceWEI = 0;
     }
-
-    function transferFrom(address _owner, address _receiver, uint256 _amount) public returns (bool status) {
-
-        require(_transferCheck(_owner, _receiver, _amount));
-        require(Sub(Allowance[_owner][msg.sender], _amount) >= 0);
-        Allowance[_owner][msg.sender] = Sub(Allowance[_owner][msg.sender], _amount);
-        UserBalances[_owner] = Sub(UserBalances[_owner], _amount);
-        UserBalances[_receiver] = Add(UserBalances[_receiver], _amount);
-        emit Transfer(_owner, _receiver, _amount);
-
-        return true;
-
+    function withdrawCommissionBalanceWEI(address _to) public onlyADM()
+    {
+        _to.transfer(commissionBalanceWEI);
+        WithdrawWEI(msg.sender, _to, commissionBalanceWEI, 3);
+        commissionBalanceWEI = 0;
     }
-
-    function multiTransfer(address[] _destinations, uint256[] _values) public returns (uint256) {
-
-		for (uint256 i = 0; i < _destinations.length; i++) {
-            require(transfer(_destinations[i], _values[i]));
+    mapping(address => uint256) private agentAddressId;
+    address[] private agentIdAddress;
+    uint256[] private agentIdBetsSum;
+    uint256[] private agentIdBankBalanceWEI;
+    uint256[] private betsNumAgentId;
+    function getAgentId(address _agentAddress) public constant returns(uint256)
+    {
+        uint256 value;
+        uint256 id = agentAddressId[_agentAddress];
+        if (id != 0 && id <= agentIdAddress.length)
+        {
+            if (agentIdAddress[id - 1] == _agentAddress)
+            {
+                value = agentAddressId[_agentAddress];
+            }
         }
-
-        return (i);
-
+        return value;
     }
-
-    function approve(address _spender, uint256 _amount) public returns (bool approved) {
-
-        require(_amount >= 0);
-        Allowance[msg.sender][_spender] = _amount;
-        emit Approval(msg.sender, _spender, _amount);
-
-        return true;
-
+    function getAgentAdress(uint256 _agentId) public constant returns(address)
+    {
+        address value;
+        if (_agentId > 0 && _agentId <= agentIdAddress.length)
+        {
+            value = agentIdAddress[_agentId - 1];
+        }
+        return value;
     }
-
-    function balanceOf(address _address) public view returns (uint256 balance) {
-
-        return UserBalances[_address];
-
+    function getAgentBetsSum(uint256 _agentId) public constant returns(uint256)
+    {
+        uint256 value;
+        if (_agentId > 0 && _agentId <= agentIdBetsSum.length)
+        {
+            value = agentIdBetsSum[_agentId - 1];
+        }
+        return value;
     }
-
-    function allowance(address _owner, address _spender) public view returns (uint256 allowed) {
-
-        return Allowance[_owner][_spender];
-
+    function getAgentBankBalanceWEI(uint256 _agentId) public constant returns(uint256)
+    {
+        uint256 value;
+        if (_agentId > 0 && _agentId <= agentIdBankBalanceWEI.length)
+        {
+            value = agentIdBankBalanceWEI[_agentId - 1];
+        }
+        return value;
     }
-
-    function totalSupply() public view returns (uint256 supply) {
-
-        return TotalSupply;
-
+    function getPositionBetAgent(uint256 _positionBet) public constant returns(uint256)
+    {
+        uint256 value;
+        if (_positionBet > 0 && _positionBet <= betsNumAgentId.length)
+        {
+            value = betsNumAgentId[_positionBet - 1];
+        }
+        return value;
     }
-
+    function getAgentsNum() public constant returns(uint256)
+    {
+        return agentIdAddress.length;
+    }
+    function Core()
+    {
+        roundNum = 1;
+    }
+    event ChangeGameSettings(address indexed _called, uint256 _betSizeFINNEY, uint256 _totalBets, uint256 _limitAgentBets, uint256 _commissionPCT, bool _commissionType, uint256 _timeoutSEC);
+    function changeGameSettings(uint256 _betSizeFINNEY, uint256 _totalBets, uint256 _limitAgentBets, uint256 _commissionPCT, bool _commissionType, uint256 _timeoutSEC) public onlyADM()
+    {
+        require(betsNum == 0);
+        require(_limitAgentBets < _totalBets);
+        require(_commissionPCT < 100);
+        betSizeFINNEY = _betSizeFINNEY;
+        totalBets = _totalBets;
+        limitAgentBets = _limitAgentBets;
+        commissionPCT = _commissionPCT;
+        commissionType = _commissionType;
+        timeoutSEC = _timeoutSEC;
+        ChangeGameSettings(msg.sender, _betSizeFINNEY, _totalBets, _limitAgentBets, _commissionPCT, _commissionType, _timeoutSEC);
+    }
+    event Bet(address indexed _agent, uint256 _agentId, uint256 _round, uint256 _bets, uint256 _WEI);
+    event Winner(address indexed _agent, uint256 _agentId, uint256 _round, uint256 _betsSum, uint256 _depositWEI, uint256 _winWEI, uint256 _luckyNumber);
+    function bet() payable public onlyRun() //BET AND WIN
+    {
+        require(msg.value > 0);
+        uint256 agentID;
+        agentID = getAgentId(msg.sender);
+        if (agentID == 0)
+        {
+            agentIdAddress.push(msg.sender);
+            agentID = agentIdAddress.length;
+            agentAddressId[msg.sender] = agentID;
+            agentIdBetsSum.push(0);
+            agentIdBankBalanceWEI.push(0);
+        }
+        bankBalanceWEI = bankBalanceWEI + msg.value;
+        agentIdBankBalanceWEI[agentID - 1] = getAgentBankBalanceWEI(agentID) + msg.value;
+        uint256 agentTotalBets = (getAgentBankBalanceWEI(agentID)/1000000000000000)/betSizeFINNEY;
+        uint256 agentAmountBets = agentTotalBets - getAgentBetsSum(agentID);
+        if (agentAmountBets > 0)
+        {
+            if ((agentAmountBets + getAgentBetsSum(agentID) + betsNum) > totalBets)
+            {
+                agentAmountBets = 
+                totalBets - betsNum;
+            }
+            if ((agentAmountBets + getAgentBetsSum(agentID)) > limitAgentBets)
+            {
+                agentAmountBets = 
+                limitAgentBets - getAgentBetsSum(agentID);   
+            }
+            
+            agentIdBetsSum[agentID - 1] = getAgentBetsSum(agentID) + agentAmountBets;
+            
+            while (betsNumAgentId.length < betsNum + agentAmountBets)
+            {
+                betsNumAgentId.push(agentID);
+            }
+            
+            betsNum = betsNum + agentAmountBets;
+            
+            Bet(msg.sender, agentID, roundNum, agentAmountBets, msg.value);
+        }
+        lastBetTimeSEC = block.timestamp;
+        if (betsNum == totalBets)
+        {
+            _play();
+        }
+    }
+    function playForcibly() public onlyRun() onlyADM()
+    {
+        require(block.timestamp + timeoutSEC > lastBetTimeSEC);
+        _play();
+    }
+    function _play() private
+    {
+        uint256 luckyNumber = random(1, betsNum);
+        uint256 winnerID = betsNumAgentId[luckyNumber - 1];
+        address winnerAddress = getAgentAdress(winnerID);
+        uint256 jackpotBankWEI = betsNum * betSizeFINNEY * 1000000000000000;
+        uint256 overWEI = bankBalanceWEI - jackpotBankWEI;
+        uint256 commissionWEI;
+        if (commissionType)
+        {
+            commissionWEI = (jackpotBankWEI/100) * commissionPCT;
+        }
+        else
+        {
+            commissionWEI = (betsNum - getAgentBetsSum(winnerID)) * (betSizeFINNEY * 1000000000000000) / 100 * commissionPCT;
+        }
+        winnerAddress.transfer(jackpotBankWEI - commissionWEI);
+        commissionBalanceWEI = commissionBalanceWEI + commissionWEI;
+        overBalanceWEI = overBalanceWEI + overWEI;
+        Winner(winnerAddress, winnerID, roundNum, getAgentBetsSum(winnerID), getAgentBankBalanceWEI(winnerID), jackpotBankWEI - commissionWEI, luckyNumber);
+        bankBalanceWEI = 0;
+        betsNum = 0;
+        roundNum++;
+        delete agentIdAddress;
+        delete agentIdBetsSum;
+        delete agentIdBankBalanceWEI;
+        delete betsNumAgentId;
+    }
 }
+//https://etherate.org
+//Blog (Medium): https://medium.com/etherate
+//Reddit: https://www.reddit.com/r/EtheRate
+//Twitter: https://twitter.com/etherate_org
+//Facebook: https://www.facebook.com/etherate
+//Instagram: https://www.instagram.com/etherate_org
+//Telegram: https://t.me/etherate
