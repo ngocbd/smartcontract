@@ -1,722 +1,252 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0xd5069dab4bb9c53c5ad8b4f2871c64cadf2b7a03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0x8dca8784bd774e81887d76b09e8ce135c10c77d1
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-    address public owner;
+	address public owner;
 
-    function Ownable() public {
-        owner = msg.sender;
-    }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+	/**
+	 * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+	 * account.
+	 */
+	function Ownable() public {
+		owner = msg.sender;
+	}
 
-    function transferOwnership(address newOwner) public onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
+
+	/**
+	 * @dev Throws if called by any account other than the owner.
+	 */
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+
+
+	/**
+	 * @dev Allows the current owner to transfer control of the contract to a newOwner.
+	 * @param newOwner The address to transfer ownership to.
+	 */
+	function transferOwnership(address newOwner) public onlyOwner {
+		if (newOwner != address(0)) {
+			owner = newOwner;
+		}
+	}
+
 }
 
 
+/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
+/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
 contract ERC721 {
+    // Required methods
     function totalSupply() public view returns (uint256 total);
     function balanceOf(address _owner) public view returns (uint256 balance);
     function ownerOf(uint256 _tokenId) external view returns (address owner);
     function approve(address _to, uint256 _tokenId) external;
     function transfer(address _to, uint256 _tokenId) external;
     function transferFrom(address _from, address _to, uint256 _tokenId) external;
+
+    // Events
     event Transfer(address from, address to, uint256 tokenId);
     event Approval(address owner, address approved, uint256 tokenId);
-}
 
-contract GeneScienceInterface {
-    function isGeneScience() public pure returns (bool);
-    function mixGenes(uint256 genes1, uint256 genes2, uint256 targetBlock) public returns (uint256);
-}
+    // Optional
+    // function name() public view returns (string name);
+    // function symbol() public view returns (string symbol);
+    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
+    // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
 
-contract NinjaAccessControl {
-    event ContractUpgrade(address newContract);
-    address public ceoAddress;
-    address public cfoAddress;
-    address public cooAddress;
-    bool public paused = false;
-
-    modifier onlyCEO() {
-        require(msg.sender == ceoAddress);
-        _;
-    }
-
-    modifier onlyCFO() {
-        require(msg.sender == cfoAddress);
-        _;
-    }
-
-    modifier onlyCOO() {
-        require(msg.sender == cooAddress);
-        _;
-    }
-
-    modifier onlyCLevel() {
-        require(
-            msg.sender == cooAddress ||
-            msg.sender == ceoAddress ||
-            msg.sender == cfoAddress
-        );
-        _;
-    }
-
-    function setCEO(address _newCEO) external onlyCEO {
-        require(_newCEO != address(0));
-
-        ceoAddress = _newCEO;
-    }
-
-    function setCFO(address _newCFO) external onlyCEO {
-        require(_newCFO != address(0));
-
-        cfoAddress = _newCFO;
-    }
-
-    function setCOO(address _newCOO) external onlyCEO {
-        require(_newCOO != address(0));
-
-        cooAddress = _newCOO;
-    }
-
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-    modifier whenPaused {
-        require(paused);
-        _;
-    }
-
-    function pause() external onlyCLevel whenNotPaused {
-        paused = true;
-    }
-
-    function unpause() public onlyCEO whenPaused {
-        paused = false;
-    }
+    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
 
-contract NinjaBase is NinjaAccessControl {
-    event Birth(
-      address owner,
-      uint256 ninjaId,
-      uint256 matronId,
-      uint256 sireId,
-      uint256 genes,
-      uint256 birthTime
-    );
-
-    event Transfer(address from, address to, uint256 tokenId);
-
-    struct Ninja {
-        uint256 genes;
-        uint64 birthTime;
-        uint64 cooldownEndBlock;
-        uint32 matronId;
-        uint32 sireId;
-        uint32 siringWithId;
-        uint16 cooldownIndex;
-        uint16 generation;
-    }
-
-    uint32[14] public cooldowns = [
-        uint32(1 minutes),
-        uint32(2 minutes),
-        uint32(5 minutes),
-        uint32(10 minutes),
-        uint32(30 minutes),
-        uint32(1 hours),
-        uint32(2 hours),
-        uint32(4 hours),
-        uint32(8 hours),
-        uint32(16 hours),
-        uint32(1 days),
-        uint32(2 days),
-        uint32(4 days),
-        uint32(7 days)
-    ];
-
-    uint256 public secondsPerBlock = 15;
-
-    Ninja[] ninjas;
-
-    mapping (uint256 => address) public ninjaIndexToOwner;
-    mapping (address => uint256) ownershipTokenCount;
-    mapping (uint256 => address) public ninjaIndexToApproved;
-    mapping (uint256 => address) public sireAllowedToAddress;
-    uint32 public destroyedNinjas;
-    SaleClockAuction public saleAuction;
-    SiringClockAuction public siringAuction;
-
-    function _transfer(address _from, address _to, uint256 _tokenId) internal {
-        if (_to == address(0)) {
-            delete ninjaIndexToOwner[_tokenId];
-        } else {
-            ownershipTokenCount[_to]++;
-            ninjaIndexToOwner[_tokenId] = _to;
-        }
-        if (_from != address(0)) {
-            ownershipTokenCount[_from]--;
-            delete sireAllowedToAddress[_tokenId];
-            delete ninjaIndexToApproved[_tokenId];
-        }
-        Transfer(_from, _to, _tokenId);
-    }
-
-    function _createNinja(
-        uint256 _matronId,
-        uint256 _sireId,
-        uint256 _generation,
-        uint256 _genes,
-        address _owner
-    )
-        internal
-        returns (uint)
-    {
-        require(_matronId == uint256(uint32(_matronId)));
-        require(_sireId == uint256(uint32(_sireId)));
-        require(_generation == uint256(uint16(_generation)));
-
-        uint16 cooldownIndex = uint16(_generation / 2);
-        if (cooldownIndex > 13) {
-            cooldownIndex = 13;
-        }
-
-        Ninja memory _ninja = Ninja({
-            genes: _genes,
-            birthTime: uint64(now),
-            cooldownEndBlock: 0,
-            matronId: uint32(_matronId),
-            sireId: uint32(_sireId),
-            siringWithId: 0,
-            cooldownIndex: cooldownIndex,
-            generation: uint16(_generation)
-        });
-        uint256 newNinjaId = ninjas.push(_ninja) - 1;
-
-        require(newNinjaId == uint256(uint32(newNinjaId)));
-
-        Birth(
-            _owner,
-            newNinjaId,
-            uint256(_ninja.matronId),
-            uint256(_ninja.sireId),
-            _ninja.genes,
-            uint256(_ninja.birthTime)
-       );
-
-        _transfer(0, _owner, newNinjaId);
-
-        return newNinjaId;
-    }
-
-    function _destroyNinja(uint256 _ninjaId) internal {
-        require(_ninjaId > 0);
-        address from = ninjaIndexToOwner[_ninjaId];
-        require(from != address(0));
-        destroyedNinjas++;
-        _transfer(from, 0, _ninjaId);
-    }
-
-    function setSecondsPerBlock(uint256 secs) external onlyCLevel {
-        require(secs < cooldowns[0]);
-        secondsPerBlock = secs;
-    }
-}
-
-
-contract NinjaExtension is NinjaBase {
-    event Lock(uint256 ninjaId, uint16 mask);
-    mapping (address => bool) extensions;
-    mapping (uint256 => uint16) locks;
-    uint16 constant LOCK_BREEDING = 1;
-    uint16 constant LOCK_TRANSFER = 2;
-    uint16 constant LOCK_ALL = LOCK_BREEDING | LOCK_TRANSFER;
-
-    function addExtension(address _contract) external onlyCEO {
-        extensions[_contract] = true;
-    }
-
-    function removeExtension(address _contract) external onlyCEO {
-        delete extensions[_contract];
-    }
-
-    modifier onlyExtension() {
-        require(extensions[msg.sender] == true);
-        _;
-    }
-
-    function extCreateNinja(
-        uint256 _matronId,
-        uint256 _sireId,
-        uint256 _generation,
-        uint256 _genes,
-        address _owner
-    )
-        public
-        onlyExtension
-        returns (uint)
-    {
-        return _createNinja(_matronId, _sireId, _generation, _genes, _owner);
-    }
-
-    function extDestroyNinja(uint256 _ninjaId)
-        public
-        onlyExtension
-    {
-        require(locks[_ninjaId] == 0);
-
-        _destroyNinja(_ninjaId);
-    }
-
-    function extLockNinja(uint256 _ninjaId, uint16 _mask)
-        public
-        onlyExtension
-    {
-        _lockNinja(_ninjaId, _mask);
-    }
-
-    function _lockNinja(uint256 _ninjaId, uint16 _mask)
-        internal
-    {
-        require(_mask > 0);
-
-        uint16 mask = locks[_ninjaId];
-        require(mask & _mask == 0);
-
-        if (_mask & LOCK_BREEDING > 0) {
-            Ninja storage ninja = ninjas[_ninjaId];
-            require(ninja.siringWithId == 0);
-        }
-
-        if (_mask & LOCK_TRANSFER > 0) {
-            address owner = ninjaIndexToOwner[_ninjaId];
-            require(owner != address(saleAuction));
-            require(owner != address(siringAuction));
-        }
-
-        mask |= _mask;
-
-        locks[_ninjaId] = mask;
-
-        Lock(_ninjaId, mask);
-    }
-
-    function extUnlockNinja(uint256 _ninjaId, uint16 _mask)
-        public
-        onlyExtension
-        returns (uint16)
-    {
-        _unlockNinja(_ninjaId, _mask);
-    }
-
-    function _unlockNinja(uint256 _ninjaId, uint16 _mask)
-        internal
-    {
-        require(_mask > 0);
-
-        uint16 mask = locks[_ninjaId];
-        require(mask & _mask == _mask);
-        mask ^= _mask;
-
-        locks[_ninjaId] = mask;
-
-        Lock(_ninjaId, mask);
-    }
-
-    function extGetLock(uint256 _ninjaId)
-        public
-        view
-        onlyExtension
-        returns (uint16)
-    {
-        return locks[_ninjaId];
-    }
-}
-
-
-contract NinjaOwnership is NinjaExtension, ERC721 {
-    string public constant name = "CryptoNinjas";
-    string public constant symbol = "CBT";
-
-    function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return ninjaIndexToOwner[_tokenId] == _claimant;
-    }
-
-    function _approvedFor(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return ninjaIndexToApproved[_tokenId] == _claimant;
-    }
-
-    function _approve(uint256 _tokenId, address _approved) internal {
-        ninjaIndexToApproved[_tokenId] = _approved;
-    }
-
-    function balanceOf(address _owner) public view returns (uint256 count) {
-        return ownershipTokenCount[_owner];
-    }
-
-    function transfer(
-        address _to,
-        uint256 _tokenId
-    )
-        external
-        whenNotPaused
-    {
-        require(_to != address(0));
-        require(_to != address(this));
-        require(_to != address(saleAuction));
-        require(_to != address(siringAuction));
-        require(_owns(msg.sender, _tokenId));
-        require(locks[_tokenId] & LOCK_TRANSFER == 0);
-        _transfer(msg.sender, _to, _tokenId);
-    }
-
-    function approve(
-        address _to,
-        uint256 _tokenId
-    )
-        external
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _tokenId));
-        require(locks[_tokenId] & LOCK_TRANSFER == 0);
-        _approve(_tokenId, _to);
-        Approval(msg.sender, _to, _tokenId);
-    }
-
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    )
-        external
-        whenNotPaused
-    {
-        require(_to != address(0));
-        require(_to != address(this));
-        require(_approvedFor(msg.sender, _tokenId));
-        require(_owns(_from, _tokenId));
-        require(locks[_tokenId] & LOCK_TRANSFER == 0);
-        _transfer(_from, _to, _tokenId);
-    }
-
-    function totalSupply() public view returns (uint) {
-        return ninjas.length - destroyedNinjas;
-    }
-
-    function ownerOf(uint256 _tokenId)
-        external
-        view
-        returns (address owner)
-    {
-        owner = ninjaIndexToOwner[_tokenId];
-        require(owner != address(0));
-    }
-
-    function tokensOfOwner(address _owner) external view returns(uint256[] ownerTokens) {
-        uint256 tokenCount = balanceOf(_owner);
-
-        if (tokenCount == 0) {
-            return new uint256[](0);
-        } else {
-            uint256[] memory result = new uint256[](tokenCount);
-            uint256 totalNinjas = ninjas.length - 1;
-            uint256 resultIndex = 0;
-            uint256 ninjaId;
-            for (ninjaId = 0; ninjaId <= totalNinjas; ninjaId++) {
-                if (ninjaIndexToOwner[ninjaId] == _owner) {
-                    result[resultIndex] = ninjaId;
-                    resultIndex++;
-                }
-            }
-
-            return result;
-        }
-    }
-}
-
-
-contract NinjaBreeding is NinjaOwnership {
-    event Pregnant(address owner, uint256 matronId, uint256 sireId, uint256 cooldownEndBlock);
-    uint256 public autoBirthFee = 2 finney;
-    uint256 public pregnantNinjas;
-    GeneScienceInterface public geneScience;
-
-    function setGeneScienceAddress(address _address) external onlyCEO {
-        GeneScienceInterface candidateContract = GeneScienceInterface(_address);
-        require(candidateContract.isGeneScience());
-        geneScience = candidateContract;
-    }
-
-    function _isReadyToBreed(uint256 _ninjaId, Ninja _ninja) internal view returns (bool) {
-        return
-            (_ninja.siringWithId == 0) &&
-            (_ninja.cooldownEndBlock <= uint64(block.number)) &&
-            (locks[_ninjaId] & LOCK_BREEDING == 0);
-    }
-
-    function _isSiringPermitted(uint256 _sireId, uint256 _matronId) internal view returns (bool) {
-        address matronOwner = ninjaIndexToOwner[_matronId];
-        address sireOwner = ninjaIndexToOwner[_sireId];
-        return (matronOwner == sireOwner || sireAllowedToAddress[_sireId] == matronOwner);
-    }
-
-    function _triggerCooldown(Ninja storage _ninja) internal {
-        _ninja.cooldownEndBlock = uint64((cooldowns[_ninja.cooldownIndex]/secondsPerBlock) + block.number);
-        if (_ninja.cooldownIndex < 13) {
-            _ninja.cooldownIndex += 1;
-        }
-    }
-
-    function approveSiring(address _addr, uint256 _sireId)
-        external
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _sireId));
-        sireAllowedToAddress[_sireId] = _addr;
-    }
-
-    function setAutoBirthFee(uint256 val) external onlyCOO {
-        autoBirthFee = val;
-    }
-
-    function _isReadyToGiveBirth(Ninja _matron) private view returns (bool) {
-        return (_matron.siringWithId != 0) && (_matron.cooldownEndBlock <= uint64(block.number));
-    }
-
-    function isReadyToBreed(uint256 _ninjaId)
-        public
-        view
-        returns (bool)
-    {
-        Ninja storage ninja = ninjas[_ninjaId];
-        return _ninjaId > 0 && _isReadyToBreed(_ninjaId, ninja);
-    }
-
-    function isPregnant(uint256 _ninjaId)
-        public
-        view
-        returns (bool)
-    {
-        return _ninjaId > 0 && ninjas[_ninjaId].siringWithId != 0;
-    }
-
-    function _isValidMatingPair(
-        Ninja storage _matron,
-        uint256 _matronId,
-        Ninja storage _sire,
-        uint256 _sireId
-    )
-        private
-        view
-        returns(bool)
-    {
-        if (_matronId == _sireId) {
-            return false;
-        }
-        if (_matron.matronId == _sireId || _matron.sireId == _sireId) {
-            return false;
-        }
-        if (_sire.matronId == _matronId || _sire.sireId == _matronId) {
-            return false;
-        }
-        if (_sire.matronId == 0 || _matron.matronId == 0) {
-            return true;
-        }
-        if (_sire.matronId == _matron.matronId || _sire.matronId == _matron.sireId) {
-            return false;
-        }
-        if (_sire.sireId == _matron.matronId || _sire.sireId == _matron.sireId) {
-            return false;
-        }
-        return true;
-    }
-
-    function _canBreedWithViaAuction(uint256 _matronId, uint256 _sireId)
-        internal
-        view
-        returns (bool)
-    {
-        Ninja storage matron = ninjas[_matronId];
-        Ninja storage sire = ninjas[_sireId];
-        return _isValidMatingPair(matron, _matronId, sire, _sireId);
-    }
-
-    function canBreedWith(uint256 _matronId, uint256 _sireId)
-        external
-        view
-        returns(bool)
-    {
-        require(_matronId > 0);
-        require(_sireId > 0);
-        Ninja storage matron = ninjas[_matronId];
-        Ninja storage sire = ninjas[_sireId];
-        return _isValidMatingPair(matron, _matronId, sire, _sireId) &&
-            _isSiringPermitted(_sireId, _matronId);
-    }
-
-    function _breedWith(uint256 _matronId, uint256 _sireId) internal {
-        Ninja storage sire = ninjas[_sireId];
-        Ninja storage matron = ninjas[_matronId];
-        matron.siringWithId = uint32(_sireId);
-        _triggerCooldown(sire);
-        _triggerCooldown(matron);
-        delete sireAllowedToAddress[_matronId];
-        delete sireAllowedToAddress[_sireId];
-        pregnantNinjas++;
-        Pregnant(ninjaIndexToOwner[_matronId], _matronId, _sireId, matron.cooldownEndBlock);
-    }
-
-    function breedWithAuto(uint256 _matronId, uint256 _sireId)
-        external
-        payable
-        whenNotPaused
-    {
-        require(msg.value >= autoBirthFee);
-        require(_owns(msg.sender, _matronId));
-        require(_isSiringPermitted(_sireId, _matronId));
-        Ninja storage matron = ninjas[_matronId];
-        require(_isReadyToBreed(_matronId, matron));
-        Ninja storage sire = ninjas[_sireId];
-        require(_isReadyToBreed(_sireId, sire));
-        require(_isValidMatingPair(
-            matron,
-            _matronId,
-            sire,
-            _sireId
-        ));
-        _breedWith(_matronId, _sireId);
-    }
-
-    function giveBirth(uint256 _matronId)
-        external
-        whenNotPaused
-        returns(uint256)
-    {
-        Ninja storage matron = ninjas[_matronId];
-        require(matron.birthTime != 0);
-        require(_isReadyToGiveBirth(matron));
-        uint256 sireId = matron.siringWithId;
-        Ninja storage sire = ninjas[sireId];
-        uint16 parentGen = matron.generation;
-        if (sire.generation > matron.generation) {
-            parentGen = sire.generation;
-        }
-        uint256 childGenes = geneScience.mixGenes(matron.genes, sire.genes, matron.cooldownEndBlock - 1);
-        address owner = ninjaIndexToOwner[_matronId];
-        uint256 ninjaId = _createNinja(_matronId, matron.siringWithId, parentGen + 1, childGenes, owner);
-        delete matron.siringWithId;
-        pregnantNinjas--;
-        msg.sender.send(autoBirthFee);
-        return ninjaId;
-    }
-}
-
-
+/// @title Auction Core
+/// @dev Contains models, variables, and internal methods for the auction.
+/// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract ClockAuctionBase {
+
+    // Represents an auction on an NFT
     struct Auction {
+        // Current owner of NFT
         address seller;
+        // Price (in wei) at beginning of auction
         uint128 startingPrice;
+        // Price (in wei) at end of auction
         uint128 endingPrice;
+        // Duration (in seconds) of auction
         uint64 duration;
+        // Time when auction started
+        // NOTE: 0 if this auction has been concluded
         uint64 startedAt;
     }
-    ERC721 public nonFungibleContract;
-    uint256 public ownerCut;
-    mapping (uint256 => Auction) tokenIdToAuction;
-    event AuctionCreated(
-      address seller,
-      uint256 tokenId,
-      uint256 startingPrice,
-      uint256 endingPrice,
-      uint256 creationTime,
-      uint256 duration
-    );
-    event AuctionSuccessful(uint256 tokenId, uint256 totalPrice, address seller, address winner, uint256 time);
-    event AuctionCancelled(uint256 tokenId, address seller, uint256 time);
 
+    // Reference to contract tracking NFT ownership
+    ERC721 public nonFungibleContract;
+
+    // Cut owner takes on each auction, measured in basis points (1/100 of a percent).
+    // Values 0-10,000 map to 0%-100%
+    uint256 public ownerCut;
+
+    // Map from token ID to their corresponding auction.
+    mapping (uint256 => Auction) tokenIdToAuction;
+
+    event AuctionCreated(uint256 tokenId, uint256 startingPrice, uint256 endingPrice, uint256 duration);
+    event AuctionSuccessful(uint256 tokenId, uint256 totalPrice, address winner);
+    event AuctionCancelled(uint256 tokenId);
+
+    /// @dev Returns true if the claimant owns the token.
+    /// @param _claimant - Address claiming to own the token.
+    /// @param _tokenId - ID of token whose ownership to verify.
     function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
         return (nonFungibleContract.ownerOf(_tokenId) == _claimant);
     }
 
+    /// @dev Escrows the NFT, assigning ownership to this contract.
+    /// Throws if the escrow fails.
+    /// @param _owner - Current owner address of token to escrow.
+    /// @param _tokenId - ID of token whose approval to verify.
     function _escrow(address _owner, uint256 _tokenId) internal {
+        // it will throw if transfer fails
         nonFungibleContract.transferFrom(_owner, this, _tokenId);
     }
 
+    /// @dev Transfers an NFT owned by this contract to another address.
+    /// Returns true if the transfer succeeds.
+    /// @param _receiver - Address to transfer NFT to.
+    /// @param _tokenId - ID of token to transfer.
     function _transfer(address _receiver, uint256 _tokenId) internal {
+        // it will throw if transfer fails
         nonFungibleContract.transfer(_receiver, _tokenId);
     }
 
+    /// @dev Adds an auction to the list of open auctions. Also fires the
+    ///  AuctionCreated event.
+    /// @param _tokenId The ID of the token to be put on auction.
+    /// @param _auction Auction to add.
     function _addAuction(uint256 _tokenId, Auction _auction) internal {
+        // Require that all auctions have a duration of
+        // at least one minute. (Keeps our math from getting hairy!)
         require(_auction.duration >= 1 minutes);
+
         tokenIdToAuction[_tokenId] = _auction;
+
         AuctionCreated(
-            _auction.seller,
             uint256(_tokenId),
             uint256(_auction.startingPrice),
             uint256(_auction.endingPrice),
-            uint256(_auction.startedAt),
             uint256(_auction.duration)
         );
     }
 
+    /// @dev Cancels an auction unconditionally.
     function _cancelAuction(uint256 _tokenId, address _seller) internal {
         _removeAuction(_tokenId);
         _transfer(_seller, _tokenId);
-        AuctionCancelled(_tokenId, _seller, uint256(now));
+        AuctionCancelled(_tokenId);
     }
 
+    /// @dev Computes the price and transfers winnings.
+    /// Does NOT transfer ownership of token.
     function _bid(uint256 _tokenId, uint256 _bidAmount)
         internal
         returns (uint256)
     {
+        // Get a reference to the auction struct
         Auction storage auction = tokenIdToAuction[_tokenId];
+
+        // Explicitly check that this auction is currently live.
+        // (Because of how Ethereum mappings work, we can't just count
+        // on the lookup above failing. An invalid _tokenId will just
+        // return an auction object that is all zeros.)
         require(_isOnAuction(auction));
+
+        // Check that the bid is greater than or equal to the current price
         uint256 price = _currentPrice(auction);
         require(_bidAmount >= price);
+
+        // Grab a reference to the seller before the auction struct
+        // gets deleted.
         address seller = auction.seller;
+
+        // The bid is good! Remove the auction before sending the fees
+        // to the sender so we can't have a reentrancy attack.
         _removeAuction(_tokenId);
+
+        // Transfer proceeds to seller (if there are any!)
         if (price > 0) {
+            // Calculate the auctioneer's cut.
+            // (NOTE: _computeCut() is guaranteed to return a
+            // value <= price, so this subtraction can't go negative.)
             uint256 auctioneerCut = _computeCut(price);
             uint256 sellerProceeds = price - auctioneerCut;
+
+            // NOTE: Doing a transfer() in the middle of a complex
+            // method like this is generally discouraged because of
+            // reentrancy attacks and DoS attacks if the seller is
+            // a contract with an invalid fallback function. We explicitly
+            // guard against reentrancy attacks by removing the auction
+            // before calling transfer(), and the only thing the seller
+            // can DoS is the sale of their own asset! (And if it's an
+            // accident, they can call cancelAuction(). )
             seller.transfer(sellerProceeds);
         }
+
+        // Calculate any excess funds included with the bid. If the excess
+        // is anything worth worrying about, transfer it back to bidder.
+        // NOTE: We checked above that the bid amount is greater than or
+        // equal to the price so this cannot underflow.
         uint256 bidExcess = _bidAmount - price;
+
+        // Return the funds. Similar to the previous transfer, this is
+        // not susceptible to a re-entry attack because the auction is
+        // removed before any transfers occur.
         msg.sender.transfer(bidExcess);
-        AuctionSuccessful(_tokenId, price, seller, msg.sender, uint256(now));
+
+        // Tell the world!
+        AuctionSuccessful(_tokenId, price, msg.sender);
+
         return price;
     }
 
+    /// @dev Removes an auction from the list of open auctions.
+    /// @param _tokenId - ID of NFT on auction.
     function _removeAuction(uint256 _tokenId) internal {
         delete tokenIdToAuction[_tokenId];
     }
 
+    /// @dev Returns true if the NFT is on auction.
+    /// @param _auction - Auction to check.
     function _isOnAuction(Auction storage _auction) internal view returns (bool) {
         return (_auction.startedAt > 0);
     }
 
+    /// @dev Returns current price of an NFT on auction. Broken into two
+    ///  functions (this one, that computes the duration from the auction
+    ///  structure, and the other that does the price computation) so we
+    ///  can easily test that the price computation works correctly.
     function _currentPrice(Auction storage _auction)
         internal
         view
         returns (uint256)
     {
         uint256 secondsPassed = 0;
+
+        // A bit of insurance against negative values (or wraparound).
+        // Probably not necessary (since Ethereum guarnatees that the
+        // now variable doesn't ever go backwards).
         if (now > _auction.startedAt) {
             secondsPassed = now - _auction.startedAt;
         }
+
         return _computeCurrentPrice(
             _auction.startingPrice,
             _auction.endingPrice,
@@ -725,6 +255,10 @@ contract ClockAuctionBase {
         );
     }
 
+    /// @dev Computes the current price of an auction. Factored out
+    ///  from _currentPrice so we can run extensive unit tests.
+    ///  When testing, make this function public and turn on
+    ///  `Current price computation` test suite.
     function _computeCurrentPrice(
         uint256 _startingPrice,
         uint256 _endingPrice,
@@ -735,69 +269,139 @@ contract ClockAuctionBase {
         pure
         returns (uint256)
     {
+        // NOTE: We don't use SafeMath (or similar) in this function because
+        //  all of our public functions carefully cap the maximum values for
+        //  time (at 64-bits) and currency (at 128-bits). _duration is
+        //  also known to be non-zero (see the require() statement in
+        //  _addAuction())
         if (_secondsPassed >= _duration) {
+            // We've reached the end of the dynamic pricing portion
+            // of the auction, just return the end price.
             return _endingPrice;
         } else {
+            // Starting price can be higher than ending price (and often is!), so
+            // this delta can be negative.
             int256 totalPriceChange = int256(_endingPrice) - int256(_startingPrice);
+
+            // This multiplication can't overflow, _secondsPassed will easily fit within
+            // 64-bits, and totalPriceChange will easily fit within 128-bits, their product
+            // will always fit within 256-bits.
             int256 currentPriceChange = totalPriceChange * int256(_secondsPassed) / int256(_duration);
+
+            // currentPriceChange can be negative, but if so, will have a magnitude
+            // less that _startingPrice. Thus, this result will always end up positive.
             int256 currentPrice = int256(_startingPrice) + currentPriceChange;
+
             return uint256(currentPrice);
         }
     }
 
+    /// @dev Computes owner's cut of a sale.
+    /// @param _price - Sale price of NFT.
     function _computeCut(uint256 _price) internal view returns (uint256) {
+        // NOTE: We don't use SafeMath (or similar) in this function because
+        //  all of our entry functions carefully cap the maximum values for
+        //  currency (at 128-bits), and ownerCut <= 10000 (see the require()
+        //  statement in the ClockAuction constructor). The result of this
+        //  function is always guaranteed to be <= _price.
         return _price * ownerCut / 10000;
     }
 }
 
 
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
 contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
-    bool public paused = false;
+	event Pause();
+	event Unpause();
 
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
+	bool public paused = false;
 
-    modifier whenPaused {
-        require(paused);
-        _;
-    }
 
-    function pause() public onlyOwner whenNotPaused returns (bool) {
-        paused = true;
-        Pause();
-        return true;
-    }
+	/**
+	 * @dev modifier to allow actions only when the contract IS paused
+	 */
+	modifier whenNotPaused() {
+		require(!paused);
+		_;
+	}
 
-    function unpause() public onlyOwner whenPaused returns (bool) {
-        paused = false;
-        Unpause();
-        return true;
-    }
+	/**
+	 * @dev modifier to allow actions only when the contract IS NOT paused
+	 */
+	modifier whenPaused {
+		require(paused);
+		_;
+	}
+
+	/**
+	 * @dev called by the owner to pause, triggers stopped state
+	 */
+	function pause() public onlyOwner whenNotPaused returns (bool) {
+		paused = true;
+		Pause();
+		return true;
+	}
+
+	/**
+	 * @dev called by the owner to unpause, returns to normal state
+	 */
+	function unpause() public onlyOwner whenPaused returns (bool) {
+		paused = false;
+		Unpause();
+		return true;
+	}
 }
 
 
+/// @title Clock auction for non-fungible tokens.
+/// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract ClockAuction is Pausable, ClockAuctionBase {
+
+    /// @dev The ERC-165 interface signature for ERC-721.
+    ///  Ref: https://github.com/ethereum/EIPs/issues/165
+    ///  Ref: https://github.com/ethereum/EIPs/issues/721
+    bytes4 constant InterfaceSignature_ERC721 = bytes4(0x9a20483d);
+
+    /// @dev Constructor creates a reference to the NFT ownership contract
+    ///  and verifies the owner cut is in the valid range.
+    /// @param _nftAddress - address of a deployed contract implementing
+    ///  the Nonfungible Interface.
+    /// @param _cut - percent cut the owner takes on each auction, must be
+    ///  between 0-10,000.
     function ClockAuction(address _nftAddress, uint256 _cut) public {
         require(_cut <= 10000);
         ownerCut = _cut;
 
         ERC721 candidateContract = ERC721(_nftAddress);
+        require(candidateContract.supportsInterface(InterfaceSignature_ERC721));
         nonFungibleContract = candidateContract;
     }
 
+    /// @dev Remove all Ether from the contract, which is the owner's cuts
+    ///  as well as any Ether sent directly to the contract address.
+    ///  Always transfers to the NFT contract, but can be called either by
+    ///  the owner or the NFT contract.
     function withdrawBalance() external {
         address nftAddress = address(nonFungibleContract);
+
         require(
             msg.sender == owner ||
             msg.sender == nftAddress
         );
-        bool res = nftAddress.send(this.balance);
+        // We are using this boolean method to make sure that even if one fails it will still work
+        nftAddress.transfer(this.balance);
     }
 
+    /// @dev Creates and begins a new auction.
+    /// @param _tokenId - ID of token to auction, sender must be owner.
+    /// @param _startingPrice - Price of item (in wei) at beginning of auction.
+    /// @param _endingPrice - Price of item (in wei) at end of auction.
+    /// @param _duration - Length of time to move between starting
+    ///  price and ending price (in seconds).
+    /// @param _seller - Seller, if not the message sender
     function createAuction(
         uint256 _tokenId,
         uint256 _startingPrice,
@@ -808,9 +412,12 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         external
         whenNotPaused
     {
+        // Sanity check that no inputs overflow how many bits we've allocated
+        // to store them in the auction struct.
         require(_startingPrice == uint256(uint128(_startingPrice)));
         require(_endingPrice == uint256(uint128(_endingPrice)));
         require(_duration == uint256(uint64(_duration)));
+
         require(_owns(msg.sender, _tokenId));
         _escrow(msg.sender, _tokenId);
         Auction memory auction = Auction(
@@ -823,15 +430,24 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         _addAuction(_tokenId, auction);
     }
 
+    /// @dev Bids on an open auction, completing the auction and transferring
+    ///  ownership of the NFT if enough Ether is supplied.
+    /// @param _tokenId - ID of token to bid on.
     function bid(uint256 _tokenId)
         external
         payable
         whenNotPaused
     {
+        // _bid will throw if the bid or funds transfer fails
         _bid(_tokenId, msg.value);
         _transfer(msg.sender, _tokenId);
     }
 
+    /// @dev Cancels an auction that hasn't been won yet.
+    ///  Returns the NFT to original owner.
+    /// @notice This is a state-modifying function that can
+    ///  be called while the contract is paused.
+    /// @param _tokenId - ID of token on auction
     function cancelAuction(uint256 _tokenId)
         external
     {
@@ -842,16 +458,22 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         _cancelAuction(_tokenId, seller);
     }
 
+    /// @dev Cancels an auction when the contract is paused.
+    ///  Only the owner may do this, and NFTs are returned to
+    ///  the seller. This should only be used in emergencies.
+    /// @param _tokenId - ID of the NFT on auction to cancel.
     function cancelAuctionWhenPaused(uint256 _tokenId)
-        external
         whenPaused
         onlyOwner
+        external
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
         _cancelAuction(_tokenId, auction.seller);
     }
 
+    /// @dev Returns auction info for an NFT on auction.
+    /// @param _tokenId - ID of NFT on auction.
     function getAuction(uint256 _tokenId)
         external
         view
@@ -862,8 +484,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 endingPrice,
         uint256 duration,
         uint256 startedAt
-    )
-    {
+    ) {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
         return (
@@ -875,6 +496,8 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         );
     }
 
+    /// @dev Returns the current price of an auction.
+    /// @param _tokenId - ID of the token price we are checking.
     function getCurrentPrice(uint256 _tokenId)
         external
         view
@@ -888,57 +511,28 @@ contract ClockAuction is Pausable, ClockAuctionBase {
 }
 
 
-contract SiringClockAuction is ClockAuction {
-    bool public isSiringClockAuction = true;
-
-    function SiringClockAuction(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) {}
-
-    function createAuction(
-        uint256 _tokenId,
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration,
-        address _seller
-    )
-        external
-    {
-        require(_startingPrice == uint256(uint128(_startingPrice)));
-        require(_endingPrice == uint256(uint128(_endingPrice)));
-        require(_duration == uint256(uint64(_duration)));
-        require(msg.sender == address(nonFungibleContract));
-        _escrow(_seller, _tokenId);
-        Auction memory auction = Auction(
-            _seller,
-            uint128(_startingPrice),
-            uint128(_endingPrice),
-            uint64(_duration),
-            uint64(now)
-        );
-        _addAuction(_tokenId, auction);
-    }
-
-    function bid(uint256 _tokenId)
-        external
-        payable
-    {
-        require(msg.sender == address(nonFungibleContract));
-        address seller = tokenIdToAuction[_tokenId].seller;
-        _bid(_tokenId, msg.value);
-        _transfer(seller, _tokenId);
-    }
-
-}
-
-
+/// @title Clock auction modified for sale of CobeFriends
+/// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract SaleClockAuction is ClockAuction {
+
+    // @dev Sanity check that allows us to ensure that we are pointing to the
+    //  right auction in our setSaleAuctionAddress() call.
     bool public isSaleClockAuction = true;
+
+    // Tracks last 5 sale price of gen0 CobeFriend sales
     uint256 public gen0SaleCount;
     uint256[5] public lastGen0SalePrices;
 
+    // Delegate constructor
     function SaleClockAuction(address _nftAddr, uint256 _cut) public
         ClockAuction(_nftAddr, _cut) {}
 
+    /// @dev Creates and begins a new auction.
+    /// @param _tokenId - ID of token to auction, sender must be owner.
+    /// @param _startingPrice - Price of item (in wei) at beginning of auction.
+    /// @param _endingPrice - Price of item (in wei) at end of auction.
+    /// @param _duration - Length of auction (in seconds).
+    /// @param _seller - Seller, if not the message sender
     function createAuction(
         uint256 _tokenId,
         uint256 _startingPrice,
@@ -948,9 +542,12 @@ contract SaleClockAuction is ClockAuction {
     )
         external
     {
+        // Sanity check that no inputs overflow how many bits we've allocated
+        // to store them in the auction struct.
         require(_startingPrice == uint256(uint128(_startingPrice)));
         require(_endingPrice == uint256(uint128(_endingPrice)));
         require(_duration == uint256(uint64(_duration)));
+
         require(msg.sender == address(nonFungibleContract));
         _escrow(_seller, _tokenId);
         Auction memory auction = Auction(
@@ -963,14 +560,20 @@ contract SaleClockAuction is ClockAuction {
         _addAuction(_tokenId, auction);
     }
 
+    /// @dev Updates lastSalePrice if seller is the nft contract
+    /// Otherwise, works the same as default bid method.
     function bid(uint256 _tokenId)
         external
         payable
     {
+        // _bid verifies token ID size
         address seller = tokenIdToAuction[_tokenId].seller;
         uint256 price = _bid(_tokenId, msg.value);
         _transfer(msg.sender, _tokenId);
+
+        // If not a gen0 auction, exit
         if (seller == address(nonFungibleContract)) {
+            // Track gen0 sale prices
             lastGen0SalePrices[gen0SaleCount % 5] = price;
             gen0SaleCount++;
         }
@@ -984,206 +587,4 @@ contract SaleClockAuction is ClockAuction {
         return sum / 5;
     }
 
-}
-
-
-contract NinjaAuction is NinjaBreeding {
-    function setSaleAuctionAddress(address _address) external onlyCEO {
-        SaleClockAuction candidateContract = SaleClockAuction(_address);
-        require(candidateContract.isSaleClockAuction());
-        saleAuction = candidateContract;
-    }
-
-    function setSiringAuctionAddress(address _address) external onlyCEO {
-        SiringClockAuction candidateContract = SiringClockAuction(_address);
-        require(candidateContract.isSiringClockAuction());
-        siringAuction = candidateContract;
-    }
-
-    function createSaleAuction(
-        uint256 _ninjaId,
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration
-    )
-        external
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _ninjaId));
-        require(!isPregnant(_ninjaId));
-        _approve(_ninjaId, saleAuction);
-        saleAuction.createAuction(
-            _ninjaId,
-            _startingPrice,
-            _endingPrice,
-            _duration,
-            msg.sender
-        );
-    }
-
-    function createSiringAuction(
-        uint256 _ninjaId,
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration
-    )
-        external
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _ninjaId));
-        require(isReadyToBreed(_ninjaId));
-        _approve(_ninjaId, siringAuction);
-        siringAuction.createAuction(
-            _ninjaId,
-            _startingPrice,
-            _endingPrice,
-            _duration,
-            msg.sender
-        );
-    }
-
-    function bidOnSiringAuction(
-        uint256 _sireId,
-        uint256 _matronId
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        require(_owns(msg.sender, _matronId));
-        require(isReadyToBreed(_matronId));
-        require(_canBreedWithViaAuction(_matronId, _sireId));
-        uint256 currentPrice = siringAuction.getCurrentPrice(_sireId);
-        require(msg.value >= currentPrice + autoBirthFee);
-        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
-        _breedWith(uint32(_matronId), uint32(_sireId));
-    }
-
-    function withdrawAuctionBalances() external onlyCLevel {
-        saleAuction.withdrawBalance();
-        siringAuction.withdrawBalance();
-    }
-}
-
-
-contract NinjaMinting is NinjaAuction {
-    uint256 public constant PROMO_CREATION_LIMIT = 5000;
-    uint256 public constant GEN0_CREATION_LIMIT = 45000;
-    uint256 public constant GEN0_STARTING_PRICE = 10 finney;
-    uint256 public constant GEN0_AUCTION_DURATION = 1 days;
-    uint256 public promoCreatedCount;
-    uint256 public gen0CreatedCount;
-
-    function createPromoNinja(uint256 _genes, address _owner) external onlyCOO {
-        address ninjaOwner = _owner;
-        if (ninjaOwner == address(0)) {
-            ninjaOwner = cooAddress;
-        }
-        require(promoCreatedCount < PROMO_CREATION_LIMIT);
-
-        promoCreatedCount++;
-        _createNinja(0, 0, 0, _genes, ninjaOwner);
-    }
-
-    function createGen0Auction(uint256 _genes) external onlyCOO {
-        require(gen0CreatedCount < GEN0_CREATION_LIMIT);
-
-        uint256 ninjaId = _createNinja(0, 0, 0, _genes, address(this));
-        _approve(ninjaId, saleAuction);
-
-        saleAuction.createAuction(
-            ninjaId,
-            _computeNextGen0Price(),
-            0,
-            GEN0_AUCTION_DURATION,
-            address(this)
-        );
-
-        gen0CreatedCount++;
-    }
-
-    function _computeNextGen0Price() internal view returns (uint256) {
-        uint256 avePrice = saleAuction.averageGen0SalePrice();
-        require(avePrice == uint256(uint128(avePrice)));
-        uint256 nextPrice = avePrice + (avePrice / 2);
-        if (nextPrice < GEN0_STARTING_PRICE) {
-            nextPrice = GEN0_STARTING_PRICE;
-        }
-        return nextPrice;
-    }
-}
-
-
-contract NinjaCore is NinjaMinting {
-    address public newContractAddress;
-
-    function NinjaCore() public {
-        paused = true;
-        ceoAddress = msg.sender;
-        cooAddress = msg.sender;
-        _createNinja(0, 0, 0, uint256(-1), msg.sender);
-    }
-
-    function setNewAddress(address _v2Address) external onlyCEO whenPaused {
-        newContractAddress = _v2Address;
-        ContractUpgrade(_v2Address);
-    }
-
-    function() external payable {
-        require(
-            msg.sender == address(saleAuction) ||
-            msg.sender == address(siringAuction)
-        );
-    }
-
-    function getNinja(uint256 _id)
-        external
-        view
-        returns (
-        bool isGestating,
-        bool isReady,
-        uint256 cooldownIndex,
-        uint256 nextActionAt,
-        uint256 siringWithId,
-        uint256 birthTime,
-        uint256 matronId,
-        uint256 sireId,
-        uint256 generation,
-        uint256 genes
-    )
-    {
-        require(ninjaIndexToOwner[_id] != address(0));
-        Ninja storage ninja = ninjas[_id];
-        isGestating = (ninja.siringWithId != 0);
-        isReady = (ninja.cooldownEndBlock <= block.number);
-        cooldownIndex = uint256(ninja.cooldownIndex);
-        nextActionAt = uint256(ninja.cooldownEndBlock);
-        siringWithId = uint256(ninja.siringWithId);
-        birthTime = uint256(ninja.birthTime);
-        matronId = uint256(ninja.matronId);
-        sireId = uint256(ninja.sireId);
-        generation = uint256(ninja.generation);
-        genes = ninja.genes;
-    }
-
-    function unpause() public onlyCEO whenPaused {
-        require(saleAuction != address(0));
-        require(siringAuction != address(0));
-        require(geneScience != address(0));
-        require(newContractAddress == address(0));
-        super.unpause();
-    }
-
-    function withdrawBalance() external onlyCFO {
-        uint256 balance = this.balance;
-        uint256 subtractFees = (pregnantNinjas + 1) * autoBirthFee;
-        if (balance > subtractFees) {
-            cfoAddress.send(balance - subtractFees);
-        }
-    }
-
-    function destroyNinja(uint256 _ninjaId) external onlyCEO {
-        require(locks[_ninjaId] == 0);
-        _destroyNinja(_ninjaId);
-    }
 }
