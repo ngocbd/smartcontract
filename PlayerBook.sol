@@ -1,28 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x748286a6a4cead7e8115ed0c503d77202eeeac6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayerBook at 0x0f717ffff71e639636fcdd33727ee8c17c4724bf
 */
 pragma solidity ^0.4.24;
 
+
+/*interface JIincForwarderInterface {
+    function deposit() external payable returns(bool);
+    function status() external view returns(address, address, bool);
+    function startMigration(address _newCorpBank) external returns(bool);
+    function cancelMigration() external returns(bool);
+    function finishMigration() external returns(bool);
+    function setup(address _firstCorpBank) external;
+}*/
 
 interface PlayerBookReceiverInterface {
     function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff) external;
     function receivePlayerNameList(uint256 _pID, bytes32 _name) external;
 }
 
+/*interface TeamJustInterface {
+    function requiredSignatures() external view returns(uint256);
+    function requiredDevSignatures() external view returns(uint256);
+    function adminCount() external view returns(uint256);
+    function devCount() external view returns(uint256);
+    function adminName(address _who) external view returns(bytes32);
+    function isAdmin(address _who) external view returns(bool);
+    function isDev(address _who) external view returns(bool);
+}*/
 
 contract PlayerBook {
     using NameFilter for string;
     using SafeMath for uint256;
     
-    //address private communityAddr = 0x2b5006d3dce09dafec33bfd08ebec9327f1612d8;
-    address private communityAddr = 0xfd76dB2AF819978d43e07737771c8D9E8bd8cbbF;
-    address private activateAddr1 = 0x6c7dfe3c255a098ea031f334436dd50345cfc737;
-    //address private communityAddr = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c;
+   // JIincForwarderInterface constant private Jekyll_Island_Inc = JIincForwarderInterface(0xdd4950F977EE28D2C132f1353D1595035Db444EE);
+   // TeamJustInterface constant private TeamJust = TeamJustInterface(0x464904238b5CdBdCE12722A7E6014EC1C0B66928);
+    
+    MSFun.Data private msData;
+   // function multiSigDev(bytes32 _whatFunction) private returns (bool) {return(MSFun.multiSig(msData, TeamJust.requiredDevSignatures(), _whatFunction));}
+    function deleteProposal(bytes32 _whatFunction) private {MSFun.deleteProposal(msData, _whatFunction);}
+    function deleteAnyProposal(bytes32 _whatFunction) onlyDevs() public {MSFun.deleteProposal(msData, _whatFunction);}
+    function checkData(bytes32 _whatFunction) onlyDevs() public view returns(bytes32, uint256) {return(MSFun.checkMsgData(msData, _whatFunction), MSFun.checkCount(msData, _whatFunction));}
+    function checkSignersByAddress(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(address, address, address) {return(MSFun.checkSigner(msData, _whatFunction, _signerA), MSFun.checkSigner(msData, _whatFunction, _signerB), MSFun.checkSigner(msData, _whatFunction, _signerC));}
+   // function checkSignersByName(bytes32 _whatFunction, uint256 _signerA, uint256 _signerB, uint256 _signerC) onlyDevs() public view returns(bytes32, bytes32, bytes32) {return(TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerA)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerB)), TeamJust.adminName(MSFun.checkSigner(msData, _whatFunction, _signerC)));}
 //==============================================================================
 //     _| _ _|_ _    _ _ _|_    _   .
 //    (_|(_| | (_|  _\(/_ | |_||_)  .
 //=============================|================================================    
-    uint256 public registrationFee_ = 1 finney;            // price to register a name
+    uint256 public registrationFee_ = 20 finney;            // price to register a name
     mapping(uint256 => PlayerBookReceiverInterface) public games_;  // mapping of our game interfaces for sending your account info to games
     mapping(address => bytes32) public gameNames_;          // lookup a games name
     mapping(address => uint256) public gameIDs_;            // lokup a games ID
@@ -49,37 +73,15 @@ contract PlayerBook {
         // premine the dev names (sorry not sorry)
             // No keys are purchased with this method, it's simply locking our addresses,
             // PID's and names for referral codes.
-        plyr_[1].addr = 0x33E161A482C560DCA9180D84706eCDd2D906668B;
-        plyr_[1].name = "daddy";
+        plyr_[1].addr = 0x39f935eCc8222637dd5F6b7E942eFeb05bb23510;
+        plyr_[1].name = "newGame";
         plyr_[1].names = 1;
-        pIDxAddr_[0x33E161A482C560DCA9180D84706eCDd2D906668B] = 1;
-        pIDxName_["daddy"] = 1;
-        plyrNames_[1]["daddy"] = true;
-        plyrNameList_[1][1] = "daddy";
+        pIDxAddr_[0x39f935eCc8222637dd5F6b7E942eFeb05bb23510] = 1;
+        pIDxName_["newGame"] = 1;
+        plyrNames_[1]["newGame"] = true;
+        plyrNameList_[1][1] = "newGame";
         
-        plyr_[2].addr = 0x9eb79e917b9e051A1BEf27f8A6cCDA316F228a7c;
-        plyr_[2].name = "suoha";
-        plyr_[2].names = 1;
-        pIDxAddr_[0x9eb79e917b9e051A1BEf27f8A6cCDA316F228a7c] = 2;
-        pIDxName_["suoha"] = 2;
-        plyrNames_[2]["suoha"] = true;
-        plyrNameList_[2][1] = "suoha";
-        
-        plyr_[3].addr = 0x261901840C99C914Aa8Cc2f7AEd0d2e09A749c8B;
-        plyr_[3].name = "nodumb";
-        plyr_[3].names = 1;
-        pIDxAddr_[0x261901840C99C914Aa8Cc2f7AEd0d2e09A749c8B] = 3;
-        pIDxName_["nodumb"] = 3;
-        plyrNames_[3]["nodumb"] = true;
-        plyrNameList_[3][1] = "nodumb";
-        
-        plyr_[4].addr = 0x7649938FAdf6C597F27349D338e3bDC8488c14e6;
-        plyr_[4].name = "dddos";
-        plyr_[4].names = 1;
-        pIDxAddr_[0x7649938FAdf6C597F27349D338e3bDC8488c14e6] = 4;
-        pIDxName_["dddos"] = 4;
-        plyrNames_[4]["dddos"] = true;
-        plyrNameList_[4][1] = "dddos";
+       
         
         pID_ = 4;
     }
@@ -99,9 +101,10 @@ contract PlayerBook {
         _;
     }
     
-    modifier onlyCommunity() 
+    modifier onlyDevs() 
     {
-        require(msg.sender == activateAddr1, "msg sender is not the community");
+        //require(TeamJust.isDev(msg.sender) == true, "msg sender is not a dev");
+        require(msg.sender == 0xf0967Bbfd1137fD28D68a46c9E61E4199aE4363C);
         _;
     }
     
@@ -127,6 +130,11 @@ contract PlayerBook {
         uint256 amountPaid,
         uint256 timeStamp
     );
+    
+    function withdraw() onlyDevs() public {
+    	msg.sender.transfer(address(this).balance);
+    }
+    
 //==============================================================================
 //     _  _ _|__|_ _  _ _  .
 //    (_|(/_ |  | (/_| _\  . (for UI & viewing things on etherscan)
@@ -378,7 +386,7 @@ contract PlayerBook {
         }
         
         // registration fee goes directly to community rewards
-        communityAddr.transfer(address(this).balance);
+        //Jekyll_Island_Inc.deposit.value(address(this).balance)();
         
         // push player info to games
         if (_all == true)
@@ -558,11 +566,14 @@ contract PlayerBook {
 //  _\(/_ | |_||_)  .
 //=============|================================================================
     function addGame(address _gameAddress, string _gameNameStr)
-     onlyCommunity()
+        onlyDevs()
         public
     {
         require(gameIDs_[_gameAddress] == 0, "derp, that games already been registered");
-
+        
+        //if (multiSigDev("addGame") == true)
+        //{
+            deleteProposal("addGame");
             gID_++;
             bytes32 _name = _gameNameStr.nameFilter();
             gameIDs_[_gameAddress] = gID_;
@@ -573,13 +584,18 @@ contract PlayerBook {
             games_[gID_].receivePlayerInfo(2, plyr_[2].addr, plyr_[2].name, 0);
             games_[gID_].receivePlayerInfo(3, plyr_[3].addr, plyr_[3].name, 0);
             games_[gID_].receivePlayerInfo(4, plyr_[4].addr, plyr_[4].name, 0);
+       // }
     }
     
     function setRegistrationFee(uint256 _fee)
-     onlyCommunity()
+        onlyDevs()
         public
     {
+       // if (multiSigDev("setRegistrationFee") == true)
+       //{
+            deleteProposal("setRegistrationFee");
             registrationFee_ = _fee;
+       // }
     }
         
 } 
@@ -594,17 +610,17 @@ contract PlayerBook {
 *          ???                      /   _ (/_      // //       /  _   // _   __  _(/
 *          ???                  ___/___(/_/(__(_/_(/_(/_   ___/__/_)_(/_(_(_/ (_(_(_
 *          ? ?                /   /          .-/ _____   (__ /                               
-*                            (__ /          (_/ (, /                                      /)? 
+*                            (__ /          (_/ (, /                                      /)™ 
 *                                                 /  __  __ __ __  _   __ __  _  _/_ _  _(/
 * ????????????? ???????                          /__/ (_(__(_)/ (_/_)_(_)/ (_(_(_(__(/_(_(_
-* ??????? ? ??? ??   ?                      (__ /              .-/  ? Jekyll Island Inc. 2018
+* ??????? ? ??? ??   ?                      (__ /              .-/  © Jekyll Island Inc. 2018
 * ?  ??????????????? ?                                        (_/
 *              _       __    _      ____      ____  _   _    _____  ____  ___  
 *=============| |\ |  / /\  | |\/| | |_ =====| |_  | | | |    | |  | |_  | |_)==============*
 *=============|_| \| /_/--\ |_|  | |_|__=====|_|   |_| |_|__  |_|  |_|__ |_| \==============*
 *
 * ????????????????????????  ???????????? ????????????
-* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? dddos ?
+* ?  ? ???? ? ???????   ?   ?  ? ? ????  ? Inventor ?
 * ????????? ? ???? ???? ?   ???????????? ????????????
 */
 library NameFilter {
@@ -687,7 +703,7 @@ library NameFilter {
 /**
  * @title SafeMath v0.1.9
  * @dev Math operations with safety checks that throw on error
- * change notes:  original SafeMath library from OpenZeppelin modified by dddos
+ * change notes:  original SafeMath library from OpenZeppelin modified by Inventor
  * - added sqrt
  * - added sq
  * - added pwr 
@@ -784,5 +800,175 @@ library SafeMath {
                 z = mul(z,x);
             return (z);
         }
+    }
+}
+
+
+library MSFun {
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // DATA SETS
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // contact data setup
+    struct Data 
+    {
+        mapping (bytes32 => ProposalData) proposal_;
+    }
+    struct ProposalData 
+    {
+        // a hash of msg.data 
+        bytes32 msgData;
+        // number of signers
+        uint256 count;
+        // tracking of wither admins have signed
+        mapping (address => bool) admin;
+        // list of admins who have signed
+        mapping (uint256 => address) log;
+    }
+    
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // MULTI SIG FUNCTIONS
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    function multiSig(Data storage self, uint256 _requiredSignatures, bytes32 _whatFunction)
+        internal
+        returns(bool) 
+    {
+        // our proposal key will be a hash of our function name + our contracts address 
+        // by adding our contracts address to this, we prevent anyone trying to circumvent
+        // the proposal's security via external calls.
+        bytes32 _whatProposal = whatProposal(_whatFunction);
+        
+        // this is just done to make the code more readable.  grabs the signature count
+        uint256 _currentCount = self.proposal_[_whatProposal].count;
+        
+        // store the address of the person sending the function call.  we use msg.sender 
+        // here as a layer of security.  in case someone imports our contract and tries to 
+        // circumvent function arguments.  still though, our contract that imports this
+        // library and calls multisig, needs to use onlyAdmin modifiers or anyone who
+        // calls the function will be a signer. 
+        address _whichAdmin = msg.sender;
+        
+        // prepare our msg data.  by storing this we are able to verify that all admins
+        // are approving the same argument input to be executed for the function.  we hash 
+        // it and store in bytes32 so its size is known and comparable
+        bytes32 _msgData = keccak256(msg.data);
+        
+        // check to see if this is a new execution of this proposal or not
+        if (_currentCount == 0)
+        {
+            // if it is, lets record the original signers data
+            self.proposal_[_whatProposal].msgData = _msgData;
+            
+            // record original senders signature
+            self.proposal_[_whatProposal].admin[_whichAdmin] = true;        
+            
+            // update log (used to delete records later, and easy way to view signers)
+            // also useful if the calling function wants to give something to a 
+            // specific signer.  
+            self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;  
+            
+            // track number of signatures
+            self.proposal_[_whatProposal].count += 1;  
+            
+            // if we now have enough signatures to execute the function, lets
+            // return a bool of true.  we put this here in case the required signatures
+            // is set to 1.
+            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
+                return(true);
+            }            
+        // if its not the first execution, lets make sure the msgData matches
+        } else if (self.proposal_[_whatProposal].msgData == _msgData) {
+            // msgData is a match
+            // make sure admin hasnt already signed
+            if (self.proposal_[_whatProposal].admin[_whichAdmin] == false) 
+            {
+                // record their signature
+                self.proposal_[_whatProposal].admin[_whichAdmin] = true;        
+                
+                // update log (used to delete records later, and easy way to view signers)
+                self.proposal_[_whatProposal].log[_currentCount] = _whichAdmin;  
+                
+                // track number of signatures
+                self.proposal_[_whatProposal].count += 1;  
+            }
+            
+            // if we now have enough signatures to execute the function, lets
+            // return a bool of true.
+            // we put this here for a few reasons.  (1) in normal operation, if 
+            // that last recorded signature got us to our required signatures.  we 
+            // need to return bool of true.  (2) if we have a situation where the 
+            // required number of signatures was adjusted to at or lower than our current 
+            // signature count, by putting this here, an admin who has already signed,
+            // can call the function again to make it return a true bool.  but only if
+            // they submit the correct msg data
+            if (self.proposal_[_whatProposal].count == _requiredSignatures) {
+                return(true);
+            }
+        }
+    }
+    
+    
+    // deletes proposal signature data after successfully executing a multiSig function
+    function deleteProposal(Data storage self, bytes32 _whatFunction)
+        internal
+    {
+        //done for readability sake
+        bytes32 _whatProposal = whatProposal(_whatFunction);
+        address _whichAdmin;
+        
+        //delete the admins votes & log.   i know for loops are terrible.  but we have to do this 
+        //for our data stored in mappings.  simply deleting the proposal itself wouldn't accomplish this.
+        for (uint256 i=0; i < self.proposal_[_whatProposal].count; i++) {
+            _whichAdmin = self.proposal_[_whatProposal].log[i];
+            delete self.proposal_[_whatProposal].admin[_whichAdmin];
+            delete self.proposal_[_whatProposal].log[i];
+        }
+        //delete the rest of the data in the record
+        delete self.proposal_[_whatProposal];
+    }
+    
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // HELPER FUNCTIONS
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    function whatProposal(bytes32 _whatFunction)
+        private
+        view
+        returns(bytes32)
+    {
+        return(keccak256(abi.encodePacked(_whatFunction,this)));
+    }
+    
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // VANITY FUNCTIONS
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // returns a hashed version of msg.data sent by original signer for any given function
+    function checkMsgData (Data storage self, bytes32 _whatFunction)
+        internal
+        view
+        returns (bytes32 msg_data)
+    {
+        bytes32 _whatProposal = whatProposal(_whatFunction);
+        return (self.proposal_[_whatProposal].msgData);
+    }
+    
+    // returns number of signers for any given function
+    function checkCount (Data storage self, bytes32 _whatFunction)
+        internal
+        view
+        returns (uint256 signature_count)
+    {
+        bytes32 _whatProposal = whatProposal(_whatFunction);
+        return (self.proposal_[_whatProposal].count);
+    }
+    
+    // returns address of an admin who signed for any given function
+    function checkSigner (Data storage self, bytes32 _whatFunction, uint256 _signer)
+        internal
+        view
+        returns (address signer)
+    {
+        require(_signer > 0, "MSFun checkSigner failed - 0 not allowed");
+        bytes32 _whatProposal = whatProposal(_whatFunction);
+        return (self.proposal_[_whatProposal].log[_signer - 1]);
     }
 }
