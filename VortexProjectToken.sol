@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VortexProjectToken at 0xab1f8edc8fdc45cc8dce189029a563e6625f1f89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VortexProjectToken at 0xc3adb781ea79d861786ba98d157488b03439046d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -79,10 +79,10 @@ contract VortexProjectToken is ERC20 {
     string public constant symbol = "VORTEX";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 10000000000e8;
+    uint256 public totalSupply = 10000000000e18;
     uint256 public totalDistributed = 0;        
-    uint256 public tokensPerEth = 30000000e8;
-    uint256 public constant minContribution = 1 ether / 100; // 0.01 Ethereum
+    uint256 public tokensPerEth = 30000000e18;
+    uint256 public constant minContribution = 1 ether / 100; // 0.01 Eth
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
