@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win at 0xf8394e77472455a2cfa3c949c575741f36253997
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win at 0x83997e0538266d002f431ab0130826f8008b0160
 */
 pragma solidity ^0.4.20;
 
@@ -113,7 +113,7 @@ contract Win {
     constructor () public
     {
         administrators[msg.sender] = true;
-        gameActive = false;
+        gameActive = true;
 
     }
 
