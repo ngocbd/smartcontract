@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLP at 0x002036ed3d00736787a31a19b1e28f7a86c72672
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLP at 0xfa395c73ad9d87817ff3f3eb0979c8dfb47a6c0b
 */
 pragma solidity ^0.4.16;
 
@@ -32,9 +32,9 @@ contract DLP {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function DLP() public {
-        totalSupply = 2000000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 10000000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "Distributed Lottery Platform";                                   // Set the name for display purposes
+        name = "Distributed Lottery Platform?Official?";  // Set the name for display purposes
         symbol = "DLP";                               // Set the symbol for display purposes
     }
 
