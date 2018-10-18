@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ROCICO at 0xa64f1c590f7312155b4936c583d835930fe822b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ROCICO at 0xeb0578ab07509115cde58744f58f65942e22b6bc
 */
 pragma solidity 0.4.24;
 /**
@@ -124,10 +124,10 @@ contract ROCICO is admined {
 
     //Time-state Related
     State public state = State.Stage1; //Set initial stage
-    uint256 public startTime = 1536969600; //Human time (GMT): Saturday, 15 September 2018 0:00:00
-    uint256 public Stage1Deadline = 1538308800; //Human time (GMT): Sunday, 30 September 2018 12:00:00
-    uint256 public Stage2Deadline = 1539604800; //Human time (GMT): Monday, 15 October 2018 12:00:00
-    uint256 public Stage3Deadline = 1540943999; //Human time (GMT): Tuesday, 30 October 2018 23:59:59
+    uint256 public startTime = 1536883200; //Human time (GMT): Friday, 14 September 2018 0:00:00
+    uint256 public Stage1Deadline = 1537833600; //Human time (GMT): Tuesday, 25 September 2018 0:00:00
+    uint256 public Stage2Deadline = 1538697600; //Human time (GMT): Friday, 5 October 2018 0:00:00
+    uint256 public Stage3Deadline = 1539647999; //Human time (GMT): Monday, 15 October 2018 23:59:59
     uint256 public completedAt; //Set when ico finish
 
     //Token-eth related
@@ -159,13 +159,13 @@ contract ROCICO is admined {
     /**
     * @notice ICO constructor
     */
-    constructor(address _beneficiaryAddress) public {
+    constructor(address _beneficiaryAddress, address _tokenAddress) public {
 
         require(_beneficiaryAddress != address(0));
 
         beneficiary = _beneficiaryAddress;
         creator = msg.sender; //Creator is set on deployment
-        tokenReward = ERC20Basic(0x7872b3f20268Eb85120430Cf9abfEEa01F95A91c); //Token contract address
+        tokenReward = ERC20Basic(_tokenAddress); //Token contract address
 
         emit LogFundrisingInitialized(beneficiary);
     }
@@ -174,8 +174,6 @@ contract ROCICO is admined {
     * @notice contribution handler
     */
     function contribute() public notFinished payable {
-
-        require(now >= startTime);
 
         //Minimum contribution 0.001 eth
         require(msg.value >= 1 finney);
@@ -214,7 +212,15 @@ contract ROCICO is admined {
 
         tokenBought = tokenBought.div(1e10); //Decimals correction
 
+        if(msg.value >= 5 ether){
+          tokenBought = tokenBought.mul(2); //+100%
+        }
+
         totalDistributed = totalDistributed.add(tokenBought); //whole tokens sold counter updated
+
+        beneficiary.transfer(address(this).balance);
+
+        emit LogBeneficiaryPaid(creator);
 
         require(tokenReward.transfer(msg.sender,tokenBought));
 
@@ -267,8 +273,6 @@ contract ROCICO is admined {
     * @notice Function to claim any token stuck on contract
     */
     function externalTokensRecovery(ERC20Basic _address) onlyAdmin(2) public{
-
-        require(state == State.Successful);
 
         uint256 remainder = _address.balanceOf(this); //Check remainder tokens
         _address.transfer(msg.sender,remainder); //Transfer tokens to admin
