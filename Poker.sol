@@ -1,332 +1,392 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Poker at 0x82e727d640826cfbe0364d52481d79d6821fa39b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Poker at 0x23b8e1a594b18c450852454d72a5cd20e1ba63ad
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.25;
 
-/// poker.sol -- ds-cache with medianizer poke
+contract Ownable {
+  address public owner;
 
-// Copyright (C) 2017  DappHub, LLC
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-// Licensed under the Apache License, Version 2.0 (the "License").
-// You may not use this file except in compliance with the License.
 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-contract DSAuthority {
-    function canCall(
-        address src, address dst, bytes4 sig
-    ) constant returns (bool);
-}
 
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    function DSAuth() {
-        owner = msg.sender;
-        LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-        auth
-    {
-        owner = owner_;
-        LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-        auth
-    {
-        authority = authority_;
-        LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        assert(isAuthorized(msg.sender, msg.sig));
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    //emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+  
+    /**
+    * @dev prevents contracts from interacting with others
+    */
+    modifier isHuman() {
+        address _addr = msg.sender;
+        uint256 _codeLength;
+    
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "sorry humans only");
         _;
     }
 
-    modifier authorized(bytes4 sig) {
-        assert(isAuthorized(msg.sender, sig));
-        _;
-    }
 
-    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-
-    function assert(bool x) internal {
-        if (!x) throw;
-    }
 }
 
-
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-	uint	 	  wad,
-        bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
-
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
+contract pokerEvents{
+    event Bettings(
+        uint indexed guid,
+        uint gameType,
+        address indexed playerAddr,
+        uint[] bet,
+        bool indexed result,
+        uint winNo,
+        uint amount,
+        uint winAmount,
+        uint jackpot
+        );
+        
+    event JackpotPayment(
+        uint indexed juid,
+        address indexed playerAddr,
+        uint amount,
+        uint winAmount
+        );
+    
+    event FreeLottery(
+        uint indexed luid,
+        address indexed playerAddr,
+        uint indexed winAmount
+        );
+    
 }
 
-contract DSMath {
+contract Poker is Ownable,pokerEvents{
+    using inArrayExt for address[];
+    using intArrayExt for uint[];
+    
+    address private opAddress;
+    address private wallet1;
+    address private wallet2;
+    
+    bool public gamePaused=false;
+    uint public guid=1;
+    uint public luid=1;
+    mapping(string=>uint) odds;
+
+    /* setting*/
+    uint minPrize=0.01 ether;
+    uint lotteryPercent = 3 ether;
+    uint public minBetVal=0.01 ether;
+    uint public maxBetVal=1 ether;
+    
+    /* free lottery */
+    struct FreeLotto{
+        bool active;
+        uint prob;
+        uint prize;
+        uint freezeTimer;
+        uint count;
+        mapping(address => uint) lastTime;
+    }
+    mapping(uint=>FreeLotto) lotto;
+    mapping(address=>uint) playerCount;
+    bool freeLottoActive=true;
+    
+    /* jackpot */
+    uint public jpBalance=0;
+    uint jpMinBetAmount=0.05 ether;
+    uint jpMinPrize=0.01 ether;
+    uint jpChance=1000;
+    uint jpPercent=0.3 ether;
+    
+        /*misc */
+    uint private rndSeed;
+    uint private minute=60;
+    uint private hour=60*60;
     
     /*
-    standard uint256 functions
-     */
+    ===========================================
+    CONSTRUCTOR
+    ===========================================
+    */
+    constructor(uint _rndSeed) public{
+        opAddress=msg.sender;
+        wallet1=msg.sender;
+        wallet2=msg.sender;
+        
+        odds['bs']=1.97 ether;
+        odds['suit']=3.82 ether;
+        odds['num']=11.98 ether;
+        odds['nsuit']=49.98 ether;
+    
+        /* free lottery initial*/
+        lotto[1]=FreeLotto(true,1000,0.1 ether,hour / 100 ,0);
+        lotto[2]=FreeLotto(true,100000,1 ether,3*hour/100 ,0);
 
-    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x + y) >= x);
+        
+        /* initial random seed*/
+        rndSeed=uint(keccak256(abi.encodePacked(blockhash(block.number-1), msg.sender,now,_rndSeed)));
     }
 
-    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x - y) <= x);
-    }
+     function play(uint _gType,uint[] _bet) payable isHuman() public returns(uint){
+        require(!gamePaused,'Game Pause');
+        require(msg.value >=  minBetVal*_bet.length && msg.value <=  maxBetVal*_bet.length );
 
-    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x * y;
-        assert(x == 0 || z / x == y);
-    }
-
-    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x / y;
-    }
-
-    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x <= y ? x : y;
-    }
-    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    uint128 functions (h is for half)
-     */
-
-
-    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x - y) <= x);
-    }
-
-    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = x * y;
-        assert(x == 0 || z / x == y);
-    }
-
-    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = x / y;
-    }
-
-    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x <= y ? x : y;
-    }
-    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x >= y ? x : y;
-    }
-
-
-    /*
-    int256 functions
-     */
-
-    function imin(int256 x, int256 y) constant internal returns (int256 z) {
-        return x <= y ? x : y;
-    }
-    function imax(int256 x, int256 y) constant internal returns (int256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    WAD math
-     */
-
-    uint128 constant WAD = 10 ** 18;
-
-    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + WAD / 2) / WAD);
-    }
-
-    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * WAD + y / 2) / y);
-    }
-
-    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    /*
-    RAY math
-     */
-
-    uint128 constant RAY = 10 ** 27;
-
-    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + RAY / 2) / RAY);
-    }
-
-    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * RAY + y / 2) / y);
-    }
-
-    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
-        // This famous algorithm is called "exponentiation by squaring"
-        // and calculates x^n with x as fixed-point and n as regular unsigned.
-        //
-        // It's O(log n), instead of O(n) for naive repeated multiplication.
-        //
-        // These facts are why it works:
-        //
-        //  If n is even, then x^n = (x^2)^(n/2).
-        //  If n is odd,  then x^n = x * x^(n-1),
-        //   and applying the equation for even x gives
-        //    x^n = x * (x^2)^((n-1) / 2).
-        //
-        //  Also, EVM division is flooring and
-        //    floor[(n-1) / 2] = floor[n / 2].
-
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
+        bool _ret=false;
+        uint _betAmount= msg.value /_bet.length;
+        uint _prize=0;
+        uint _winNo= uint(keccak256(abi.encodePacked(rndSeed,msg.sender,block.coinbase,block.timestamp, block.difficulty,block.gaslimit))) % 52 + 1;
+        
+        if(_gType==1){
+            if(_betAmount * odds['bs']  / 1 ether >= address(this).balance/2){
+                revert("over max bet amount");
+            }
+            
+            if((_winNo > 31 && _bet.contain(2)) || (_winNo < 28 && _bet.contain(1))){
+                _ret=true;
+                _prize=(_betAmount * odds['bs']) / 1 ether;
+            }else if(_winNo>=28 && _winNo <=31 && _bet.contain(0)){
+                _ret=true;
+                _prize=(_betAmount * 12 ether) / 1 ether; 
             }
         }
-    }
+        
+        /*
+        ret%4=0 spades;
+        ret%4=1 hearts
+        ret%4=2 clubs;
+        ret%4=3 diamonds;
+        */
+        if(_gType==2 && _bet.contain(_winNo%4+1)){
+            if(_betAmount * odds['suit'] / 1 ether >= address(this).balance/2){
+                revert("over max bet amount");
+            }
+            
+            _ret=true;
+            _prize=(_betAmount * odds['suit']) / 1 ether; 
+        }
+        
+        if(_gType==3 && _bet.contain((_winNo-1)/4+1)){
+            if(_betAmount * odds['num'] / 1 ether >= address(this).balance/2){
+                revert("over max bet amount");
+            }
+            
+            _ret=true;
+            _prize=(_betAmount * odds['num']) / 1 ether; 
+        }
+        
+        if(_gType==4 && _bet.contain(_winNo)){
+            if(_betAmount * odds['nsuit'] / 1 ether >= address(this).balance/2){
+                revert("over max bet amount");
+            }
+            
+            _ret=true;
+            _prize=(_betAmount * odds['nsuit']) / 1 ether; 
+            
+        }
 
-    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
+        if(_ret){
+            msg.sender.transfer(_prize);
+        }else{
+            jpBalance += (msg.value * jpPercent) / 100 ether;
+        }
+        
+        rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.timestamp, block.difficulty,block.gaslimit,_winNo))));
+        
 
-    function cast(uint256 x) constant internal returns (uint128 z) {
-        assert((z = uint128(x)) == x);
+        /* JackPot*/
+        uint tmpJackpot=0;
+        if(_betAmount >= jpMinBetAmount){
+            uint _jpNo= uint(keccak256(abi.encodePacked(rndSeed,msg.sender,block.coinbase,block.timestamp, block.difficulty,block.gaslimit))) % jpChance;
+            if(_jpNo==77 && jpBalance>jpMinPrize){
+                msg.sender.transfer(jpBalance);
+                emit JackpotPayment(guid,msg.sender,_betAmount,jpBalance);
+                tmpJackpot=jpBalance;
+                jpBalance=0;
+            }else{
+                tmpJackpot=0;
+            }
+            
+            rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.timestamp, block.difficulty,block.gaslimit,_jpNo))));
+        }
+        
+        emit Bettings(guid,_gType,msg.sender,_bet,_ret,_winNo,msg.value,_prize,tmpJackpot);
+        
+        guid+=1;
+        return _winNo;
     }
+    
 
+    function freeLottery(uint _gid) public{
+        require(!gamePaused,'Game Pause');
+        require(freeLottoActive && lotto[_gid].active,'Free Lotto is closed');
+        require(now - lotto[_gid].lastTime[msg.sender] >= lotto[_gid].freezeTimer,'in the freeze time');
+        
+        uint chancex=1;
+        uint winNo = 0;
+        if(playerCount[msg.sender]>=3){
+            chancex=2;
+        }
+        if(playerCount[msg.sender]>=6){
+            chancex=3;
+        }
+        
+        winNo=uint(keccak256(abi.encodePacked(msg.sender,block.number,block.timestamp, block.difficulty,block.gaslimit))) % (playerCount[msg.sender]>=3?lotto[_gid].prob/chancex:lotto[_gid].prob)+1;
+
+        bool result;
+        if(winNo==7){
+            result=true;
+            msg.sender.transfer(lotto[_gid].prize);
+        }else{
+            result=false;
+            if(playerCount[msg.sender]==0 || lotto[_gid].lastTime[msg.sender] <= now -lotto[_gid].freezeTimer - 15*minute){
+                playerCount[msg.sender]+=1;
+            }else{
+                playerCount[msg.sender]=0;
+            }
+        }
+        
+        emit FreeLottery(luid,msg.sender,result?lotto[_gid].prize:0);
+        
+        luid=luid+1;
+        lotto[_gid].lastTime[msg.sender]=now;
+    }
+    
+    function freeLottoInfo() public view returns(uint,uint,uint){
+        uint chance=1;
+        if(playerCount[msg.sender]>=3){
+            chance=2;
+        }
+        if(playerCount[msg.sender]>=6){
+            chance=3;
+        }
+        return (lotto[1].lastTime[msg.sender],lotto[2].lastTime[msg.sender],chance);
+    }
+    
+    function updateRndSeed() public {
+        require(msg.sender==owner || msg.sender==opAddress,"DENIED");
+        
+        rndSeed = uint(uint(keccak256(abi.encodePacked(msg.sender,block.number,block.timestamp,block.coinbase, block.difficulty,block.gaslimit))));
+    }
+    
+    function updateOdds(string _game,uint _val) public{
+        require(msg.sender==owner || msg.sender==opAddress);
+        
+        odds[_game]=_val;
+    }
+    
+    function updateStatus(uint _p,bool _status) public{
+        require(msg.sender==owner || msg.sender==opAddress);
+        
+        if(_p==1){gamePaused=_status;}
+        if(_p==2){freeLottoActive=_status;}
+        if(_p==3){lotto[1].active =_status;}
+        if(_p==4){lotto[2].active =_status;}
+        
+    }
+    
+    function getOdds() public view returns(uint[]) {
+        uint[] memory ret=new uint[](4);
+        ret[0]=odds['bs'];
+        ret[1]=odds['suit'];
+        ret[2]=odds['num'];
+        ret[3]=odds['nsuit'];
+        
+        return ret;
+    }
+    
+    function updateLottoParams(uint _gid,uint _key,uint _val) public{
+        require(msg.sender==owner || msg.sender==opAddress);
+        /* 
+        _ke y=> 1:active,2:prob,3:prize,4:freeTimer
+        */
+        
+        if(_key==1){lotto[_gid].active=(_val==1);}
+        if(_key==2){lotto[_gid].prob=_val;}
+        if(_key==3){lotto[_gid].prize=_val;}
+        if(_key==4){lotto[_gid].freezeTimer=_val;}
+        
+    }
+    
+    function getLottoData(uint8 _gid) public view returns(bool,uint,uint,uint,uint){
+        return (lotto[_gid].active,lotto[_gid].prob,lotto[_gid].prize,lotto[_gid].freezeTimer,lotto[_gid].count);
+        
+    }
+    
+    function setAddr(uint _acc,address _addr) public onlyOwner{
+        if(_acc==1){wallet1=_addr;}
+        if(_acc==2){wallet2=_addr;}
+        if(_acc==3){opAddress=_addr;}
+    }
+    
+    function getAddr(uint _acc) public view onlyOwner returns(address){
+        if(_acc==1){return wallet1;}
+        if(_acc==2){return wallet2;}
+        if(_acc==3){return opAddress;}
+    }
+    
+
+    function withdraw(address _to,uint amount) public onlyOwner returns(bool){
+        require(address(this).balance - amount > 0);
+        _to.transfer(amount);
+    }
+    
+    function distribute(uint _p) public onlyOwner{
+        uint prft1=_p* 85 / 100;
+        uint prft2=_p* 10 / 100;
+        uint prft3=_p* 5 / 100;
+
+        owner.transfer(prft1);
+        wallet1.transfer(prft2);
+        wallet2.transfer(prft3);
+
+    }
+    
+    
+    function() payable isHuman() public {
+        
+    }
+    
 }
 
-contract DSThing is DSAuth, DSNote, DSMath {
-}
 
-contract DSValue is DSThing {
-    bool    has;
-    bytes32 val;
-    function peek() constant returns (bytes32, bool) {
-        return (val,has);
-    }
-    function read() constant returns (bytes32) {
-        var (wut, has) = peek();
-        assert(has);
-        return wut;
-    }
-    function poke(bytes32 wut) note auth {
-        val = wut;
-        has = true;
-    }
-    function void() note auth { // unset the value
-        has = false;
+library inArrayExt{
+    function contain(address[] _arr,address _val) internal pure returns(bool){
+        for(uint _i=0;_i< _arr.length;_i++){
+            if(_arr[_i]==_val){
+                return true;
+                break;
+            }
+        }
+        return false;
     }
 }
 
-contract DSCache is DSValue
-{
-    uint128 public zzz;
-//  from DSValue:
-//  bool    has;
-//  bytes32 val;
-    function peek() constant returns (bytes32, bool) {
-        return (val, has && now < zzz);
-    }
-    function read() constant returns (bytes32) {
-        var (wut, has) = peek();
-        assert(now < zzz);
-        assert(has);
-        return wut;
-    }
-    function prod(bytes32 wut, uint128 Zzz) note auth {
-        zzz = Zzz;
-        poke(wut);
-    }
-    // from DSValue:
-    // function poke(bytes32 wut) note auth {
-    //     val = wut;
-    //     has = true;
-    // }
-    // function void() note auth { // unset the value
-    //     has = false;
-    // }
-
-}
-
-contract Poker is DSCache {
-
-    function poke(address med, bytes32 wut) auth {
-        super.poke(wut);
-        assert(med.call(bytes4(sha3("poke()"))));
-        //Medianizer(med).poke();
-    }
-
-    function prod(address med, bytes32 wut, uint128 zzz) auth {
-        super.prod(wut, zzz);
-        assert(med.call(bytes4(sha3("poke()"))));
-        //Medianizer(med).poke();
+library intArrayExt{
+    function contain(uint[] _arr,uint _val) internal pure returns(bool){
+        for(uint _i=0;_i< _arr.length;_i++){
+            if(_arr[_i]==_val){
+                return true;
+                break;
+            }
+        }
+        return false;
     }
 }
