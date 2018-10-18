@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dPonzi at 0x25a13c4f2761afe0e89801adaaac111c75c55a54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dPonzi at 0x08d71dc572fee3fb25a7a3e70a17900bae96b718
 */
 pragma solidity ^0.4.24;
 
@@ -164,7 +164,7 @@ contract dPonzi {
           potCntInfo[x1].player.push(msg.sender);
           idxStruct[x2].playerStruct[msg.sender] = PlayerStruct(key, 0, potCntInfo[x1].player.length, potCntInfo[x1].gtime, 1);
       }
-      else if (idxStruct[x2].playerStruct[msg.sender].gametime != potCntInfo['d'].gtime){
+      else if (idxStruct[x2].playerStruct[msg.sender].gametime != potCntInfo[x1].gtime){
           potCntInfo[x1].player.push(msg.sender);
           idxStruct[x2].playerStruct[msg.sender] = PlayerStruct(key, 0, potCntInfo[x1].player.length, potCntInfo[x1].gtime, 1);
       }
@@ -237,29 +237,33 @@ contract dPonzi {
     }
 
     function hitPotProcess(string x1, bool send, uint pickTime) private {
-      if (potCntInfo[x1].balance > 0 && send) {
-          if (pickTime - potCntInfo[x1].last >= 20) {
-              potCntInfo[x1].balance = 0;
-              potCntInfo[x1].food = 0;
-              potCntInfo[x1].keys = 0;
-              delete potCntInfo[x1].player;
-              potCntInfo[x1].gameTime = 0;
-              potCntInfo[x1].gtime = pickTime;
-          }
-      }
+        if( pickTime > potCntInfo[x1].last) {
+            if (potCntInfo[x1].balance > 0 && send) {
+                if (pickTime - potCntInfo[x1].last >= 20) {
+                    potCntInfo[x1].balance = 0;
+                    potCntInfo[x1].food = 0;
+                    potCntInfo[x1].keys = 0;
+                    delete potCntInfo[x1].player;
+                    potCntInfo[x1].gameTime = 0;
+                    potCntInfo[x1].gtime = pickTime;
+                }
+            }
+        }
     }
 
     function maturityProcess(string x1, bool send, uint pickTime, uint addTime) private {
-      if ( (pickTime - potCntInfo[x1].gameTime) >= addTime) {
+      if( pickTime > potCntInfo[x1].gameTime) {
+          if ( (pickTime - potCntInfo[x1].gameTime) >= addTime) {
             if (potCntInfo[x1].balance > 0 && send) {
                 potCntInfo[x1].balance = 0;
                 potCntInfo[x1].food = 0;
                 potCntInfo[x1].keys = 0;
                 delete potCntInfo[x1].player;
+                potCntInfo[x1].gameTime = 0;
+                potCntInfo[x1].gtime    = pickTime;
             }
-            potCntInfo[x1].gameTime = 0;
-            potCntInfo[x1].gtime    = pickTime;
         }
+      }
     }
 
     modifier restricted() {
