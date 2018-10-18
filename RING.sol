@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RING at 0x86e56f3c89a14528858e58b3de48c074538baf2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RING at 0x9469d013805bffb7d3debe5e7839237e535ec483
 */
 pragma solidity ^0.4.23;
 
@@ -318,13 +318,6 @@ interface ERC223ReceivingContract {
     /// @param _value Number of tokens to transfer.
     /// @param _data Data containig a function signature and/or parameters
     function tokenFallback(address _from, uint256 _value, bytes _data) public;
-
-
-    /// @dev For ERC20 backward compatibility, same with above tokenFallback but without data.
-    /// The function execution could fail, but do not influence the token transfer.
-    /// @param _from Transaction initiator, analogue of msg.sender
-    /// @param _value Number of tokens to transfer.
-    //  function tokenFallback(address _from, uint256 _value) public;
 }
 
 /// @dev The token controller contract must implement these functions
@@ -332,7 +325,7 @@ contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
     /// @return True if the ether is accepted, false if it throws
-    function proxyPayment(address _owner) payable public returns (bool);
+    function proxyPayment(address _owner, bytes4 sig, bytes data) payable public returns (bool);
 
     /// @notice Notifies the controller about a token transfer allowing the
     ///  controller to react if desired
@@ -351,23 +344,6 @@ contract TokenController {
     function onApprove(address _owner, address _spender, uint _amount) public returns (bool);
 }
 
-
-contract Controlled {
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController { if (msg.sender != controller) throw; _; }
-
-    address public controller;
-
-    constructor() public { controller = msg.sender;}
-
-    /// @notice Changes the controller of the contract
-    /// @param _newController The new controller of the contract
-    function changeController(address _newController) onlyController {
-        controller = _newController;
-    }
-}
-
 interface ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
@@ -378,14 +354,101 @@ interface ERC223 {
     function transferFrom(address from, address to, uint256 amount, bytes data) public returns (bool ok);
 
     event ERC223Transfer(address indexed from, address indexed to, uint amount, bytes data);
-
-    event ReceivingContractTokenFallbackFailed(address indexed from, address indexed to, uint amount);
 }
 
-contract RING is DSToken("RING"), ERC223, Controlled {
+contract ISmartToken {
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
+
+contract RING is DSToken("RING"), ERC223, ISmartToken {
+    address public newOwner;
+    bool public transfersEnabled = true;    // true if transfer/transferFrom are enabled, false if not
+
+    uint256 public cap;
+
+    address public controller;
+
+    // allows execution only when transfers aren't disabled
+    modifier transfersAllowed {
+        assert(transfersEnabled);
+        _;
+    }
 
     constructor() public {
         setName("Evolution Land Global Token");
+        controller = msg.sender;
+    }
+
+//////////
+// IOwned Methods
+//////////
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public auth {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+
+//////////
+// SmartToken Methods
+//////////
+    /**
+        @dev disables/enables transfers
+        can only be called by the contract owner
+        @param _disable    true to disable transfers, false to enable them
+    */
+    function disableTransfers(bool _disable) public auth {
+        transfersEnabled = !_disable;
+    }
+
+    function issue(address _to, uint256 _amount) public auth stoppable {
+        mint(_to, _amount);
+    }
+
+    function destroy(address _from, uint256 _amount) public auth stoppable {
+        // do not require allowance
+
+        _balances[_from] = sub(_balances[_from], _amount);
+        _supply = sub(_supply, _amount);
+        emit Burn(_from, _amount);
+        emit Transfer(_from, 0, _amount);
+    }
+
+//////////
+// Cap Methods
+//////////
+    function changeCap(uint256 _newCap) public auth {
+        require(_newCap >= _supply);
+
+        cap = _newCap;
+    }
+
+//////////
+// Controller Methods
+//////////
+    /// @notice Changes the controller of the contract
+    /// @param _newController The new controller of the contract
+    function changeController(address _newController) auth {
+        controller = _newController;
     }
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
@@ -395,28 +458,14 @@ contract RING is DSToken("RING"), ERC223, Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function transferFrom(address _from, address _to, uint256 _amount
-    ) public returns (bool success) {
+    ) public transfersAllowed returns (bool success) {
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
             if (!TokenController(controller).onTransfer(_from, _to, _amount))
-               throw;
+               revert();
         }
 
         success = super.transferFrom(_from, _to, _amount);
-
-        if (success && isContract(_to))
-        {
-            // ERC20 backward compatiability
-            if(!_to.call(bytes4(keccak256("tokenFallback(address,uint256)")), _from, _amount)) {
-                // do nothing when error in call in case that the _to contract is not inherited from ERC223ReceivingContract
-                // revert();
-                // bytes memory empty;
-
-                emit ReceivingContractTokenFallbackFailed(_from, _to, _amount);
-
-                // Even the fallback failed if there is such one, the transfer will not be revert since "revert()" is not called.
-            }
-        }
     }
 
     /*
@@ -424,13 +473,13 @@ contract RING is DSToken("RING"), ERC223, Controlled {
      * Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
      */
     function transferFrom(address _from, address _to, uint256 _amount, bytes _data)
-        public
+        public transfersAllowed
         returns (bool success)
     {
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
             if (!TokenController(controller).onTransfer(_from, _to, _amount))
-               throw;
+               revert();
         }
 
         require(super.transferFrom(_from, _to, _amount));
@@ -478,13 +527,15 @@ contract RING is DSToken("RING"), ERC223, Controlled {
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
             if (!TokenController(controller).onApprove(msg.sender, _spender, _amount))
-                throw;
+                revert();
         }
         
         return super.approve(_spender, _amount);
     }
 
     function mint(address _guy, uint _wad) auth stoppable {
+        require(add(_supply, _wad) <= cap);
+
         super.mint(_guy, _wad);
 
         emit Transfer(0, _guy, _wad);
@@ -504,7 +555,7 @@ contract RING is DSToken("RING"), ERC223, Controlled {
     /// @return True if the function call was successful
     function approveAndCall(address _spender, uint256 _amount, bytes _extraData
     ) returns (bool success) {
-        if (!approve(_spender, _amount)) throw;
+        if (!approve(_spender, _amount)) revert();
 
         ApproveAndCallFallBack(_spender).receiveApproval(
             msg.sender,
@@ -533,10 +584,10 @@ contract RING is DSToken("RING"), ERC223, Controlled {
     ///  ether and creates tokens as described in the token controller contract
     function ()  payable {
         if (isContract(controller)) {
-            if (! TokenController(controller).proxyPayment.value(msg.value)(msg.sender))
-                throw;
+            if (! TokenController(controller).proxyPayment.value(msg.value)(msg.sender, msg.sig, msg.data))
+                revert();
         } else {
-            throw;
+            revert();
         }
     }
 
@@ -544,21 +595,26 @@ contract RING is DSToken("RING"), ERC223, Controlled {
 // Safety Methods
 //////////
 
-    /// @notice This method can be used by the controller to extract mistakenly
+    /// @notice This method can be used by the owner to extract mistakenly
     ///  sent tokens to this contract.
     /// @param _token The address of the token contract that you want to recover
     ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) onlyController {
+    function claimTokens(address _token) public auth {
         if (_token == 0x0) {
-            controller.transfer(address(this).balance);
+            address(msg.sender).transfer(address(this).balance);
             return;
         }
 
         ERC20 token = ERC20(_token);
         uint balance = token.balanceOf(this);
-        token.transfer(controller, balance);
+        token.transfer(address(msg.sender), balance);
 
-        emit ClaimedTokens(_token, controller, balance);
+        emit ClaimedTokens(_token, address(msg.sender), balance);
+    }
+
+    function withdrawTokens(ERC20 _token, address _to, uint256 _amount) public auth
+    {
+        assert(_token.transfer(_to, _amount));
     }
 
 ////////////////
