@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSHToken at 0x96780fa228a5f6f6c3f5a8c10b637d6407a4acb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSHToken at 0x0c29d192dd5443fb5f00e5fe52f61d793025643b
 */
 pragma solidity ^0.4.25;
 
 /*
- * Creator: POSH (POSH) 
+ * Creator: POSH (GOPOSH) 
  */
 
 /*
@@ -181,7 +181,7 @@ contract AbstractToken is Token, SafeMath {
 
 
 /**
- * POSH smart contract.
+ * GOPOSH smart contract.
  */
 contract POSHToken is AbstractToken {
   /**
@@ -231,7 +231,7 @@ contract POSHToken is AbstractToken {
     return tokenCount;
   }
 
-  string constant public name = "POSH";
+  string constant public name = "GOPOSH";
   string constant public symbol = "POSH";
   uint8 constant public decimals = 2;
   
