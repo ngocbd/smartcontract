@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FckDice at 0x837e2f52db5017316adee47aa171d56e2c8af2af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FckDice at 0x58ea969c48d5d12dad1210d8482af7f69d53f6fe
 */
 pragma solidity ^0.4.25;
 
@@ -21,25 +21,25 @@ contract FckDice {
     uint public JACKPOT_MODULO = 1000;
     uint public JACKPOT_FEE = 0.001 ether;
 
-    function setHouseEdgePercent(uint _HOUSE_EDGE_PERCENT) external onlyOwner {
-        HOUSE_EDGE_PERCENT = _HOUSE_EDGE_PERCENT;
-    }
-
-    function setHouseEdgeMinimumAmount(uint _HOUSE_EDGE_MINIMUM_AMOUNT) external onlyOwner {
-        HOUSE_EDGE_MINIMUM_AMOUNT = _HOUSE_EDGE_MINIMUM_AMOUNT;
-    }
-
-    function setMinJackpotBet(uint _MIN_JACKPOT_BET) external onlyOwner {
-        MIN_JACKPOT_BET = _MIN_JACKPOT_BET;
-    }
-
-    function setJackpotModulo(uint _JACKPOT_MODULO) external onlyOwner {
-        JACKPOT_MODULO = _JACKPOT_MODULO;
-    }
-
-    function setJackpotFee(uint _JACKPOT_FEE) external onlyOwner {
-        JACKPOT_FEE = _JACKPOT_FEE;
-    }
+    //    function setHouseEdgePercent(uint _HOUSE_EDGE_PERCENT) external onlyOwner {
+    //        HOUSE_EDGE_PERCENT = _HOUSE_EDGE_PERCENT;
+    //    }
+    //
+    //    function setHouseEdgeMinimumAmount(uint _HOUSE_EDGE_MINIMUM_AMOUNT) external onlyOwner {
+    //        HOUSE_EDGE_MINIMUM_AMOUNT = _HOUSE_EDGE_MINIMUM_AMOUNT;
+    //    }
+    //
+    //    function setMinJackpotBet(uint _MIN_JACKPOT_BET) external onlyOwner {
+    //        MIN_JACKPOT_BET = _MIN_JACKPOT_BET;
+    //    }
+    //
+    //    function setJackpotModulo(uint _JACKPOT_MODULO) external onlyOwner {
+    //        JACKPOT_MODULO = _JACKPOT_MODULO;
+    //    }
+    //
+    //    function setJackpotFee(uint _JACKPOT_FEE) external onlyOwner {
+    //        JACKPOT_FEE = _JACKPOT_FEE;
+    //    }
 
     // There is minimum and maximum bets.
     uint constant MIN_BET = 0.01 ether;
@@ -74,7 +74,7 @@ contract FckDice {
     // EVM BLOCKHASH opcode can query no further than 256 blocks into the
     // past. Given that settleBet uses block hash of placeBet as one of
     // complementary entropy sources, we cannot process bets older than this
-    // threshold. On rare occasions dice2.win croupier may fail to invoke
+    // threshold. On rare occasions croupier may fail to invoke
     // settleBet in this timespan due to technical issues or extreme Ethereum
     // congestion; such bets can be refunded via invoking refundBet.
     uint constant BET_EXPIRATION_BLOCKS = 250;
@@ -84,8 +84,9 @@ contract FckDice {
     // address constant DUMMY_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // Standard contract ownership transfer.
-    address public owner;
-    address private nextOwner;
+    address public owner1;
+    address public owner2;
+    //    address private nextOwner;
 
     // Adjustable max bet profit. Used to cap bets against dynamic odds.
     uint public maxProfit;
@@ -131,9 +132,12 @@ contract FckDice {
     // This event is emitted in placeBet to record commit in the logs.
     event Commit(uint commit);
 
-    // Constructor. Deliberately does not take any parameters.
-    constructor (address _secretSigner, address _croupier, uint _maxProfit) public payable {
-        owner = msg.sender;
+    // Constructor.
+    constructor (address _owner1, address _owner2,
+        address _secretSigner, address _croupier, uint _maxProfit
+    ) public payable {
+        owner1 = _owner1;
+        owner2 = _owner2;
         secretSigner = _secretSigner;
         croupier = _croupier;
         require(_maxProfit < MAX_AMOUNT, "maxProfit should be a sane number.");
@@ -142,7 +146,7 @@ contract FckDice {
 
     // Standard modifier on methods invokable only by contract owner.
     modifier onlyOwner {
-        require(msg.sender == owner, "OnlyOwner methods called by non-owner.");
+        require(msg.sender == owner1 || msg.sender == owner2, "OnlyOwner methods called by non-owner.");
         _;
     }
 
@@ -152,16 +156,16 @@ contract FckDice {
         _;
     }
 
-    // Standard contract ownership transfer implementation,
-    function approveNextOwner(address _nextOwner) external onlyOwner {
-        require(_nextOwner != owner, "Cannot approve current owner.");
-        nextOwner = _nextOwner;
-    }
-
-    function acceptNextOwner() external {
-        require(msg.sender == nextOwner, "Can only accept preapproved new owner.");
-        owner = nextOwner;
-    }
+    //    // Standard contract ownership transfer implementation,
+    //    function approveNextOwner(address _nextOwner) external onlyOwner {
+    //        require(_nextOwner != owner, "Cannot approve current owner.");
+    //        nextOwner = _nextOwner;
+    //    }
+    //
+    //    function acceptNextOwner() external {
+    //        require(msg.sender == nextOwner, "Can only accept preapproved new owner.");
+    //        owner = nextOwner;
+    //    }
 
     // Fallback function deliberately left empty. It's primary use case
     // is to top up the bank roll.
@@ -191,7 +195,7 @@ contract FckDice {
         jackpotSize += uint128(increaseAmount);
     }
 
-    // Funds withdrawal to cover costs of dice2.win operation.
+    // Funds withdrawal to cover costs of croupier operation.
     function withdrawFunds(address beneficiary, uint withdrawAmount) external onlyOwner {
         require(withdrawAmount <= address(this).balance, "Increase amount larger than balance.");
         require(jackpotSize + lockedInBets + withdrawAmount <= address(this).balance, "Not enough funds.");
@@ -201,8 +205,8 @@ contract FckDice {
     // Contract may be destroyed only when there are no ongoing bets,
     // either settled or refunded. All funds are transferred to contract owner.
     function kill() external onlyOwner {
-        // require(lockedInBets == 0, "All bets should be processed (settled or refunded) before self-destruct.");
-        selfdestruct(owner);
+        require(lockedInBets == 0, "All bets should be processed (settled or refunded) before self-destruct.");
+        selfdestruct(owner1);
     }
 
     function getBetInfo(uint commit) external view returns (uint amount, uint8 modulo, uint8 rollUnder, uint40 placeBlockNumber, uint40 mask, address gambler) {
@@ -231,7 +235,7 @@ contract FckDice {
     //  modulo          - game modulo.
     //  commitLastBlock - number of the maximum block where "commit" is still considered valid.
     //  commit          - Keccak256 hash of some secret "reveal" random number, to be supplied
-    //                    by the dice2.win croupier bot in the settleBet transaction. Supplying
+    //                    by the croupier bot in the settleBet transaction. Supplying
     //                    "commit" ensures that "reveal" cannot be changed behind the scenes
     //                    after placeBet have been mined.
     //  r, s            - components of ECDSA signature of (commitLastBlock, commit). v is
@@ -267,8 +271,7 @@ contract FckDice {
             // Small modulo games specify bet outcomes via bit mask.
             // rollUnder is a number of 1 bits in this mask (population count).
             // This magic looking formula is an efficient way to compute population
-            // count on EVM for numbers below 2**40. For detailed proof consult
-            // the dice2.win whitepaper.
+            // count on EVM for numbers below 2**40.
             rollUnder = ((betMask * POPCNT_MULT) & POPCNT_MASK) % POPCNT_MODULO;
             mask = betMask;
         } else {
@@ -337,7 +340,7 @@ contract FckDice {
     //    event DebugBytes32(string name, bytes32 data);
     //    event DebugUint(string name, uint data);
 
-    // Common settlement code for settleBet & settleBetUncleMerkleProof.
+    // Common settlement code for settleBet.
     function settleBetCommon(Bet storage bet, bytes20 reveal1, bytes20 reveal2, bytes32 entropyBlockHash) private {
         // Fetch bet parameters into local variables (to save gas).
         uint amount = bet.amount;
@@ -411,7 +414,7 @@ contract FckDice {
     // Refund transaction - return the bet amount of a roll that was not processed in a
     // due timeframe. Processing such blocks is not possible due to EVM limitations (see
     // BET_EXPIRATION_BLOCKS comment above for details). In case you ever find yourself
-    // in a situation like this, just contact the dice2.win support, however nothing
+    // in a situation like this, just contact the fck.com support, however nothing
     // precludes you from invoking this method yourself.
     function refundBet(uint commit) external {
         // Check that bet is in 'active' state.
@@ -468,5 +471,4 @@ contract FckDice {
     uint constant POPCNT_MULT = 0x0000000000002000000000100000000008000000000400000000020000000001;
     uint constant POPCNT_MASK = 0x0001041041041041041041041041041041041041041041041041041041041041;
     uint constant POPCNT_MODULO = 0x3F;
-
 }
