@@ -1,20 +1,113 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xb72758ffd33cf4f1f3b935a549939c2af62420d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x5552e616c7ed2d893ace0215adcf91e066675fcb
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.24;
+
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    require(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    require(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    require(token.approve(spender, value));
+  }
+}
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
 
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -36,225 +129,53 @@ contract Ownable {
     owner = newOwner;
   }
 
-}
-
-contract CanReclaimToken is Ownable {
-  using SafeERC20 for ERC20Basic;
-
   /**
-   * @dev Reclaim all ERC20Basic compatible tokens
-   * @param token ERC20Basic The address of the token contract
+   * @dev Allows the current owner to relinquish control of the contract.
    */
-  function reclaimToken(ERC20Basic token) external onlyOwner {
-    uint256 balance = token.balanceOf(this);
-    token.safeTransfer(owner, balance);
-  }
-
-}
-
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    emit OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 }
 
-contract Whitelist is Ownable {
-  mapping(address => bool) public whitelist;
+contract Distribution {
 
-  event WhitelistedAddressAdded(address addr);
-  event WhitelistedAddressRemoved(address addr);
+	using SafeMath for uint256;
+	using SafeERC20 for ERC20;
 
-  /**
-   * @dev Throws if called by any account that's not whitelisted.
-   */
-  modifier onlyWhitelisted() {
-    require(whitelist[msg.sender]);
-    _;
-  }
+	struct distributionInfo {
+		ERC20 token;
+		uint256 tokenDecimal;
+	}
 
-  /**
-   * @dev add an address to the whitelist
-   * @param addr address
-   * @return true if the address was added to the whitelist, false if the address was already in the whitelist
-   */
-  function addAddressToWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (!whitelist[addr]) {
-      whitelist[addr] = true;
-      emit WhitelistedAddressAdded(addr);
-      success = true;
-    }
-  }
+	mapping (address => distributionInfo) wallets;
 
-  /**
-   * @dev add addresses to the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was added to the whitelist,
-   * false if all addresses were already in the whitelist
-   */
-  function addAddressesToWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (addAddressToWhitelist(addrs[i])) {
-        success = true;
-      }
-    }
-  }
+	function() public payable {
+		revert();
+	}
 
-  /**
-   * @dev remove an address from the whitelist
-   * @param addr address
-   * @return true if the address was removed from the whitelist,
-   * false if the address wasn't in the whitelist in the first place
-   */
-  function removeAddressFromWhitelist(address addr) onlyOwner public returns(bool success) {
-    if (whitelist[addr]) {
-      whitelist[addr] = false;
-      emit WhitelistedAddressRemoved(addr);
-      success = true;
-    }
-  }
+	function updateDistributionInfo(ERC20 _token, uint256 _tokenDecimal) public {
+		require(_token != address(0));
+		require(_tokenDecimal > 0);
 
-  /**
-   * @dev remove addresses from the whitelist
-   * @param addrs addresses
-   * @return true if at least one address was removed from the whitelist,
-   * false if all addresses weren't in the whitelist in the first place
-   */
-  function removeAddressesFromWhitelist(address[] addrs) onlyOwner public returns(bool success) {
-    for (uint256 i = 0; i < addrs.length; i++) {
-      if (removeAddressFromWhitelist(addrs[i])) {
-        success = true;
-      }
-    }
-  }
+		distributionInfo storage wallet = wallets[msg.sender];
+		wallet.token = _token;
+		wallet.tokenDecimal = _tokenDecimal;
+	} 
 
-}
+	function distribute(address[] _addresses, uint256[] _amounts) public {
+		require(wallets[msg.sender].token != address(0));
+		require(_addresses.length == _amounts.length);
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+	    for(uint256 i = 0; i < _addresses.length; i++){
+	    	require(wallets[msg.sender].token.balanceOf(msg.sender) >= _amounts[i]);
+	    	require(wallets[msg.sender].token.allowance(msg.sender,this) >= _amounts[i]);
+	    	wallets[msg.sender].token.safeTransferFrom(msg.sender, _addresses[i], _amounts[i]);
+	    }
+	}
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(
-    ERC20 token,
-    address from,
-    address to,
-    uint256 value
-  )
-    internal
-  {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-contract Distribution is CanReclaimToken, Claimable, Whitelist {
-
-    using SafeERC20 for ERC20Basic;
-
-    event Distributed(address beneficiary, uint256 amount);
-
-    address[] public receivers;
-    // Also used to indicate the distribution state.
-    uint256 public amount = 0;
-    ERC20Basic public token;
-
-    constructor(ERC20Basic _token) public {
-        token = _token;
+	function getDistributionInfo(address _address) view public returns (ERC20, uint256) {
+        return (wallets[_address].token, wallets[_address].tokenDecimal);
     }
 
-    function setReceivers(address[] _receivers, uint256 _amount) onlyWhitelisted external {
-        // Be conservative about the size.
-        require(_receivers.length <= 80);
-        require(_amount > 0);
-
-        receivers = _receivers;
-        amount = _amount;
-    }
-
-    function distribute() onlyWhitelisted external {
-        require(receivers.length > 0);
-        require(amount > 0);
-        for (uint256 i = 0; i < receivers.length; ++i) {
-            address beneficiary = receivers[i];
-            token.safeTransfer(beneficiary, amount);
-            emit Distributed(beneficiary, amount);
-        }
-        // Clear.
-        amount = 0;
-        delete receivers;
-    }
-
-    function batchDistribute(
-        address[] batchReceivers,
-        uint256 batchAmount
-    ) onlyWhitelisted external
-    {
-        require(batchReceivers.length > 0);
-        require(batchAmount > 0);
-        for (uint256 i = 0; i < batchReceivers.length; ++i) {
-            address beneficiary = batchReceivers[i];
-            token.safeTransfer(beneficiary, batchAmount);
-            emit Distributed(beneficiary, batchAmount);
-        }
-    }
-    
-    function batchDistributeWithAmount(
-        address[] batchReceivers,
-        uint256[] batchAmounts
-    ) onlyWhitelisted external
-    {
-        require(batchReceivers.length > 0);
-        require(batchAmounts.length == batchReceivers.length);
-        for (uint256 i = 0; i < batchReceivers.length; ++i) {
-            address beneficiary = batchReceivers[i];
-            uint256 v = batchAmounts[i];
-            token.safeTransfer(beneficiary, v);
-            emit Distributed(beneficiary, v);
-        }
-    }
-    
-
-    function finished() public view returns (bool) {
-        return amount == 0;
-    }
 }
