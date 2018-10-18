@@ -1,22 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0x4a3c2fd6a7bf0864f2c053820cd106c45d2638ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0x0d416ffd6964fd122ee13d9a229fd3bb08b2deec
 */
-pragma solidity 0.4.24;
-// produced by the Solididy File Flattener (c) David Appleton 2018
-// contact : dave@akomba.com
-// released under Apache 2.0 licence
+// TAKEN FROM https://github.com/OpenZeppelin/openzeppelin-solidity/commit/5daaf60d11ee2075260d0f3adfb22b1c536db983
+pragma solidity ^0.4.24;
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -29,170 +38,94 @@ contract Ownable {
   }
 
   /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @dev Allows the current owner to relinquish control of the contract.
+   * @notice Renouncing to ownership will leave the contract without an owner.
+   * It will not be possible to call the functions with the `onlyOwner`
+   * modifier anymore.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address _newOwner) public onlyOwner {
+    _transferOwnership(_newOwner);
+  }
+
+  /**
+   * @dev Transfers control of the contract to a newOwner.
+   * @param _newOwner The address to transfer ownership to.
+   */
+  function _transferOwnership(address _newOwner) internal {
+    require(_newOwner != address(0));
+    emit OwnershipTransferred(owner, _newOwner);
+    owner = _newOwner;
+  }
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+// This is an implementation (with some adaptations) of uPort erc780: https://etherscan.io/address/0xdb55d40684e7dc04655a9789937214b493a2c2c6#code && https://github.com/ethereum/EIPs/issues/780
 
 contract Registry is Ownable {
 
-    struct ModuleForSale {
-        uint price;
-        bytes32 sellerUsername;
-        bytes32 moduleName;
-        address sellerAddress;
-        bytes4 licenseId;
+    mapping(address =>
+    mapping(address =>
+    mapping(bytes32 =>
+    mapping(bytes32 => bytes32)))) registry;
+
+    event ClaimSet(
+        address indexed subject,
+        address indexed issuer,
+        bytes32 indexed id,
+        bytes32 key,
+        bytes32 data,
+        uint updatedAt
+    );
+
+    event ClaimRemoved(
+        address indexed subject,
+        address indexed issuer,
+        bytes32 indexed id,
+        bytes32 key,
+        uint removedAt
+    );
+
+    function setClaim(
+        address subject,
+        address issuer,
+        bytes32 id,
+        bytes32 key,
+        bytes32 data
+    ) public {
+        require(msg.sender == issuer || msg.sender == owner);
+        registry[subject][issuer][id][key] = data;
+        emit ClaimSet(subject, issuer, id, key, data, now);
     }
 
-    mapping(string => uint) internal moduleIds;
-    mapping(uint => ModuleForSale) public modules;
-
-    uint public numModules;
-    uint public version;
-
-    // ------------------------------------------------------------------------
-    // Constructor, establishes ownership because contract is owned
-    // ------------------------------------------------------------------------
-    constructor() public {
-        numModules = 0;
-        version = 1;
+    function getClaim(
+        address subject,
+        address issuer,
+        bytes32 id,
+        bytes32 key
+    )
+    public view returns(bytes32) {
+        return registry[subject][issuer][id][key];
     }
 
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens (just in case)
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20(tokenAddress).transfer(owner, tokens);
-    }
-
-    // ------------------------------------------------------------------------
-    // Lets a user list a software module for sale in this registry
-    // ------------------------------------------------------------------------
-    function listModule(uint price, bytes32 sellerUsername, bytes32 moduleName, string usernameAndProjectName, bytes4 licenseId) public {
-        // make sure input params are valid
-        require(price != 0 && sellerUsername != "" && moduleName != "" && bytes(usernameAndProjectName).length != 0 && licenseId != 0);
-
-        // make sure the name isn't already taken
-        require(moduleIds[usernameAndProjectName] == 0);
-
-        numModules += 1;
-        moduleIds[usernameAndProjectName] = numModules;
-
-        ModuleForSale storage module = modules[numModules];
-
-        module.price = price;
-        module.sellerUsername = sellerUsername;
-        module.moduleName = moduleName;
-        module.sellerAddress = msg.sender;
-        module.licenseId = licenseId;
-    }
-
-    // ------------------------------------------------------------------------
-    // Get the ID number of a module given the username and project name of that module
-    // ------------------------------------------------------------------------
-    function getModuleId(string usernameAndProjectName) public view returns (uint) {
-        return moduleIds[usernameAndProjectName];
-    }
-
-    // ------------------------------------------------------------------------
-    // Get info stored for a module by id
-    // ------------------------------------------------------------------------
-    function getModuleById(
-        uint moduleId
-    ) 
-        public 
-        view 
-        returns (
-            uint price, 
-            bytes32 sellerUsername, 
-            bytes32 moduleName, 
-            address sellerAddress, 
-            bytes4 licenseId
-        ) 
-    {
-        ModuleForSale storage module = modules[moduleId];
-        
-
-        if (module.sellerAddress == address(0)) {
-            return;
-        }
-
-        price = module.price;
-        sellerUsername = module.sellerUsername;
-        moduleName = module.moduleName;
-        sellerAddress = module.sellerAddress;
-        licenseId = module.licenseId;
-    }
-
-    // ------------------------------------------------------------------------
-    // get info stored for a module by name
-    // ------------------------------------------------------------------------
-    function getModuleByName(
-        string usernameAndProjectName
-    ) 
-        public 
-        view
-        returns (
-            uint price, 
-            bytes32 sellerUsername, 
-            bytes32 moduleName, 
-            address sellerAddress, 
-            bytes4 licenseId
-        ) 
-    {
-        uint moduleId = moduleIds[usernameAndProjectName];
-        if (moduleId == 0) {
-            return;
-        }
-        ModuleForSale storage module = modules[moduleId];
-
-        price = module.price;
-        sellerUsername = module.sellerUsername;
-        moduleName = module.moduleName;
-        sellerAddress = module.sellerAddress;
-        licenseId = module.licenseId;
-    }
-
-    // ------------------------------------------------------------------------
-    // Edit a module listing
-    // ------------------------------------------------------------------------
-    function editModule(uint moduleId, uint price, address sellerAddress, bytes4 licenseId) public {
-        // Make sure input params are valid
-        require(moduleId != 0 && price != 0 && sellerAddress != address(0) && licenseId != 0);
-
-        ModuleForSale storage module = modules[moduleId];
-
-        // prevent editing an empty module (effectively listing a module)
+    function removeClaim(
+        address subject,
+        address issuer,
+        bytes32 id,
+        bytes32 key
+    ) public {
         require(
-            module.price != 0 && module.sellerUsername != "" && module.moduleName != "" && module.licenseId != 0 && module.sellerAddress != address(0)
+            msg.sender == subject || msg.sender == issuer || msg.sender == owner
         );
-
-        // require that sender is the original module lister, or the contract owner
-        // the contract owner clause lets us recover a module listing if a dev loses access to their privkey
-        require(msg.sender == module.sellerAddress || msg.sender == owner);
-
-        module.price = price;
-        module.sellerAddress = sellerAddress;
-        module.licenseId = licenseId;
+        delete registry[subject][issuer][id][key];
+        emit ClaimRemoved(subject, issuer, id, key, now);
     }
 }
