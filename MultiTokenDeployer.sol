@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x181c20ac082aae3398b6e9164ec6926ac7dbf840
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTokenDeployer at 0x4a240bea124ff7a6780172671795f2a2625a0bce
 */
 pragma solidity ^0.4.24;
 
@@ -611,7 +611,7 @@ contract MultiToken is IMultiToken, BasicMultiToken {
             require(_weights[i] != 0, "The _weights array should not contains zeros");
             require(weights[tokens[i]] == 0, "The _tokens array have duplicates");
             weights[tokens[i]] = _weights[i];
-            if (minimalWeight == 0 || minimalWeight < _weights[i]) {
+            if (minimalWeight == 0 || _weights[i] < minimalWeight) {
                 minimalWeight = _weights[i];
             }
         }
@@ -626,7 +626,7 @@ contract MultiToken is IMultiToken, BasicMultiToken {
             uint256 fromBalance = ERC20(_fromToken).balanceOf(this);
             uint256 toBalance = ERC20(_toToken).balanceOf(this);
             returnAmount = _amount.mul(toBalance).mul(weights[_fromToken]).div(
-                _amount.mul(weights[_fromToken]).div(minimalWeight).add(fromBalance)
+                _amount.mul(weights[_fromToken]).div(minimalWeight).add(fromBalance).mul(weights[_toToken])
             );
         }
     }
