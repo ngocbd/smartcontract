@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropiRide at 0x43c947adfccf7236b8f5d49b2722454757172288
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropiRide at 0x9f138e47fa8a1f8424880f261c34a143987ed6e9
 */
 pragma solidity ^0.4.16;
 
@@ -12,9 +12,10 @@ contract AirdropiRide {
     
     Token public tokenReward;
     address public creator;
-    address public owner = 0x51463cc990900e42f06439C30a6159a1A764Fb6F;
+    address public owner = 0xf33fd617449471031ad6E00f1EbaA9f993f91939;
 
     uint256 public startDate;
+    uint256 public amount;
 
     modifier isCreator() {
         require(msg.sender == creator);
@@ -27,6 +28,7 @@ contract AirdropiRide {
         creator = msg.sender;
         startDate = 1519862400;
         tokenReward = Token(0x69D94dC74dcDcCbadEc877454a40341Ecac34A7c);
+        amount = 500 * (10**18);
     }
 
     function setOwner(address _owner) isCreator public {
@@ -41,6 +43,10 @@ contract AirdropiRide {
         startDate = _startDate;      
     }
     
+    function setAmount(uint256 _amount) isCreator public {
+        amount = _amount;      
+    }
+    
     function setToken(address _token) isCreator public {
         tokenReward = Token(_token);      
     }
@@ -52,7 +58,6 @@ contract AirdropiRide {
     function dropToken(address[] _to) isCreator public{
         require(now > startDate);
         for (uint256 i = 0; i < _to.length; i++) {
-            uint256 amount = 1000 * (10**18);
             tokenReward.transferFrom(owner, _to[i], amount);
             emit FundTransfer(msg.sender, amount, true);
         }
@@ -61,7 +66,6 @@ contract AirdropiRide {
     function dropTokenV2(address[] _to) isCreator public{
         require(now > startDate);
         for (uint256 i = 0; i < _to.length; i++) {
-            uint256 amount = 1000 * (10**18);
             tokenReward.transfer(_to[i], amount);
             emit FundTransfer(msg.sender, amount, true);
         }
