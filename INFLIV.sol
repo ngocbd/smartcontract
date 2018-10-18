@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INFLIV at 0x3656bd0f3f07623bb7f429b390d208f894e44ece
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INFLIV at 0x5a4e4aa9595398bf3f24ac95b787e5b6a5a78248
 */
 pragma solidity 0.4.25;
 
@@ -98,7 +98,6 @@ contract INFLIV is INFLIVERC20 {
         balances[address(this)] = maxPublicSale;
         stage               = CurrentStages.NOTSTARTED;
         Transfer (0, IFVOwner, balances[IFVOwner]);
-        Transfer (0, address(this), balances[address(this)]);
     }
   
     function () public payable {
@@ -140,10 +139,12 @@ contract INFLIV is INFLIVERC20 {
     {
         stage                   = CurrentStages.PRE;
         stopped                 = false;
+        balances[address(this)] = maxPublicSale;
         PreStartTimeStamp       = now;
         PreEndTimeStamp         = now + 20 days;
         ICO1                    = PreEndTimeStamp + 20 days;
         ICO2                    = ICO1 + 20 days;
+        Transfer (0, address(this), balances[address(this)]);
     }
     
     function PauseICO() external onlyOwner
