@@ -1,248 +1,177 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelToken at 0x901Ec4fDAAFafeec78615EC8b1d3DA004B04B47E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelToken at 0x4597cf324eb06ff0c4d1cc97576f11336d8da730
 */
 pragma solidity ^0.4.18;
 
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-contract Owner {
-    address public owner;
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function Owner() {
-        owner = msg.sender;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    modifier  onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function  transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-contract TokenRecipient { 
-    function receiveApproval(
-        address _from, 
-        uint256 _value, 
-        address _token, 
-        bytes _extraData); 
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-
-contract Token {
-    string public standard = "Angel Coin 1.0";
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function Token (
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-    ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
-    }
-    
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) {
-            revert();           // Check if the sender has enough
-        }
-        if (balanceOf[_to] + _value < balanceOf[_to]) {
-            revert(); // Check for overflows
-        }
-
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-    returns (bool success) 
-    {    
-        TokenRecipient spender = TokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(
-                msg.sender,
-                _value,
-                this,
-                _extraData
-            );
-            return true;
-        }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) {
-            revert();                                        // Check if the sender has enough
-        }                 
-        if (balanceOf[_to] + _value < balanceOf[_to]) {
-            revert();  // Check for overflows
-        }
-        if (_value > allowance[_from][msg.sender]) {
-            revert();   // Check allowance
-        }
-
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-//Business Service Token
-contract AngelToken is Token, Owner {
-    uint256 public constant INITIAL_SUPPLY = 100 * 10000 * 10000 * 1 ether; // 1e9 * 1e18
-    string public constant NAME = "Angel Coin"; //??
-    string public constant SYMBOL = "ANGC"; // ??
-    // string public constant STANDARD = "Angel Coin 1.0";
-    uint8 public constant DECIMALS = 18;
-    uint256 public constant BUY = 0; // ??????
-    uint256 constant RATE = 1 szabo;
-    bool private couldTrade = false;
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    // string public standard = STANDARD;
-    // string public name;
-    // string public symbol;
-    // uint public decimals;
+  mapping(address => uint256) balances;
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-    uint minBalanceForAccounts;
+  uint256 totalSupply_;
 
-    mapping (address => bool) frozenAccount;
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
-    event FrozenFunds(address indexed _target, bool _frozen);
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-    function AngelToken() Token(INITIAL_SUPPLY, NAME, DECIMALS, SYMBOL) {
-        balanceOf[msg.sender] = totalSupply;
-        buyPrice = 100000000;
-        sellPrice = 100000000;
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+}
+
+contract StandardToken is ERC20, BasicToken {
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) {
-            revert();           // Check if the sender has enough
-        }
-        if (balanceOf[_to] + _value < balanceOf[_to]) {
-            revert(); // Check for overflows
-        }
-        if (frozenAccount[msg.sender]) {
-            revert();                // Check if frozen
-        }
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+contract AngelToken is MintableToken {
+
+    string public constant name = "Angel";
+    string public constant symbol = "ANGEL";
+    uint8 public constant decimals = 18;
+
+    function getTotalSupply() public returns (uint256) {
+        return totalSupply_;
     }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (frozenAccount[_from]) {
-            revert();                        // Check if frozen       
-        }     
-        if (balanceOf[_from] < _value) {
-            revert();                 // Check if the sender has enough
-        }
-        if (balanceOf[_to] + _value < balanceOf[_to]) {
-            revert();  // Check for overflows
-        }
-        if (_value > allowance[_from][msg.sender]) {
-            revert();   // Check allowance
-        }
-
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function freezeAccount(address _target, bool freeze) onlyOwner {
-        frozenAccount[_target] = freeze;
-        FrozenFunds(_target, freeze);
-    }
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    function buy() payable returns (uint amount) {
-        require(couldTrade);
-        amount = msg.value * RATE / buyPrice;
-        require(balanceOf[this] >= amount);
-        require(balanceOf[msg.sender] + amount >= amount);
-        balanceOf[this] -= amount;
-        balanceOf[msg.sender] += amount;
-        Transfer(this, msg.sender, amount);
-        return amount;
-    }
-
-    function sell(uint256 amountInWeiDecimalIs18) returns (uint256 revenue) {
-        require(couldTrade);
-        uint256 amount = amountInWeiDecimalIs18;
-        require(balanceOf[msg.sender] >= amount);
-        require(!frozenAccount[msg.sender]);
-
-        revenue = amount * sellPrice / RATE;
-        balanceOf[this] += amount;
-        balanceOf[msg.sender] -= amount;
-        require(msg.sender.send(revenue));
-        Transfer(msg.sender, this, amount);
-        return revenue;
-    }
-
-    function withdraw(uint256 amount) onlyOwner returns (bool success) {
-        require(msg.sender.send(amount));
-        return true;
-    }
-
-    function setCouldTrade(uint256 amountInWeiDecimalIs18) onlyOwner returns (bool success) {
-        couldTrade = true;
-        require(balanceOf[msg.sender] >= amountInWeiDecimalIs18);
-        require(balanceOf[this] + amountInWeiDecimalIs18 >= amountInWeiDecimalIs18);
-        balanceOf[msg.sender] -= amountInWeiDecimalIs18;
-        balanceOf[this] += amountInWeiDecimalIs18;
-        Transfer(msg.sender, this, amountInWeiDecimalIs18);
-        return true;
-    }
-
-    function stopTrade() onlyOwner returns (bool success) {
-        couldTrade = false;
-        uint256 _remain = balanceOf[this];
-        require(balanceOf[msg.sender] + _remain >= _remain);
-        balanceOf[msg.sender] += _remain;
-        balanceOf[this] -= _remain;
-        Transfer(this, msg.sender, _remain);
-        return true;
-    }
-
-    function () {
-        revert();
-    }
+	
+	function initialize() onlyOwner public {
+		mint(msg.sender, 7635 * 10**6 * 10**18);
+		finishMinting();
+	}
 }
