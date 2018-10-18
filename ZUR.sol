@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZUR at 0xf224706834749da2165743614db339a97f3e3244
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZUR at 0x8218a33eb15901ce71b3b8123e58b7e312ce638a
 */
 pragma solidity ^0.4.24;
 
@@ -388,7 +388,7 @@ contract MintableToken is StandardToken, Ownable {
 contract ZUR is MintableToken {
   using SafeMath for uint;
 
-  string public constant name = "ZUR Cheque by Zurcoin Core";
+  string public constant name = "ZUR Check by Zurcoin";
   string public constant symbol = "ZUR";
   uint8 public constant decimals = 0;
 
@@ -501,15 +501,24 @@ contract ZUR is MintableToken {
     uint startingBalance = balances[msg.sender];
     require(super.transfer(_to, _value));
 
-    transferCheques(msg.sender, _to, _value, startingBalance);
+    transferChecks(msg.sender, _to, _value, startingBalance);
     return true;
   }
 
-  function transferCheques(address from, address to, uint cheques, uint startingBalance) internal {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool){
+    require(_from != _to);
+    uint startingBalance = balances[_from];
+    require(super.transferFrom(_from, _to, _value));
+
+    transferChecks(_from, _to, _value, startingBalance);
+    return true;
+  }
+
+  function transferChecks(address from, address to, uint checks, uint startingBalance) internal {
 
     // proportional amount of eth released already
     uint claimedEth = ethReleased[from].mul(
-      cheques).div(
+      checks).div(
         startingBalance
     );
 
@@ -524,7 +533,7 @@ contract ZUR is MintableToken {
 
       // proportional amount of token released already
       uint claimed = tokensReleased[tokenAddr][from].mul(
-        cheques).div(
+        checks).div(
           startingBalance
       );
 
@@ -539,14 +548,14 @@ contract ZUR is MintableToken {
   /**
    * @dev Add a new payee to the contract.
    * @param _payees The addresses of the payees to add.
-   * @param _cheques The array of number of cheques owned by the payee.
+   * @param _checks The array of number of checks owned by the payee.
    */
-  function addPayees(address[] _payees, uint[] _cheques) onlyAdmin external {
-    require(_payees.length == _cheques.length);
+  function addPayees(address[] _payees, uint[] _checks) onlyAdmin external {
+    require(_payees.length == _checks.length);
     require(_payees.length > 0);
 
     for (uint i = 0; i < _payees.length; i++) {
-      addPayee(_payees[i], _cheques[i]);
+      addPayee(_payees[i], _checks[i]);
     }
 
   }
@@ -554,17 +563,17 @@ contract ZUR is MintableToken {
   /**
    * @dev Add a new payee to the contract.
    * @param _payee The address of the payee to add.
-   * @param _cheques The number of _cheques owned by the payee.
+   * @param _checks The number of _checks owned by the payee.
    */
-  function addPayee(address _payee, uint _cheques) onlyAdmin canMint public {
+  function addPayee(address _payee, uint _checks) onlyAdmin canMint public {
     require(_payee != address(0));
-    require(_cheques > 0);
+    require(_checks > 0);
     require(balances[_payee] == 0);
 
-    MintableToken(this).mint(_payee, _cheques);
+    MintableToken(this).mint(_payee, _checks);
   }
 
-  // irreversibly close the adding of cheques
+  // irreversibly close the adding of checks
   function finishedLoading() onlyAdmin canMint public {
     MintableToken(this).finishMinting();
   }
@@ -581,7 +590,7 @@ contract ZUR is MintableToken {
    * reaches the point that would make the gas cost of transferring ZUR
    * exceed the block gas limit. This function allows the admin to remove
    * a token from the tracked token list thus reducing the number of loops
-   * required in transferCheques, lowering the gas cost of transfer. The
+   * required in transferChecks, lowering the gas cost of transfer. The
    * remaining balance of this token is sent back to the token's contract.
    *
    * Removal is irreversible.
