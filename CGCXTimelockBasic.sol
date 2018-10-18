@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGCXTimelockBasic at 0x5e87f22d09e82086784467e7d9230de54e28a889
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CGCXTimelockBasic at 0x890c8e3970ada1ee3d05f5c510982b5ef58d50a0
 */
 pragma solidity 0.4.24;
 
@@ -75,7 +75,7 @@ contract CGCXTimelockBasic {
     require(_lockupInDays > 0);
     token = ERC20(_token);
     beneficiary = _beneficiary;
-    releaseTime = now + _lockupInDays * 1 days;
+    releaseTime = now + _lockupInDays * 1 minutes;
   }
 
   /**
