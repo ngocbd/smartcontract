@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockchainedlove at 0x13e3e235f6d00063b1a3c3bbc8c95b913d7013e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockchainedlove at 0xd2774fc7788711e0062f70bd5d5d5c847318219b
 */
 pragma solidity ^0.4.23;
 
@@ -40,9 +40,9 @@ contract Blockchainedlove is Ownable {
 	// Main function, executed once upon deployment
 	constructor() public {
 		// Custom variables
-		partner_1_name = 'Munis Badar';
-		partner_2_name = 'Lubov Mikhalkina';
-		contract_date = '30 August 2018';
+		partner_1_name = '???????';
+		partner_2_name = '????????';
+		contract_date = '17 ???????? 2018';
 		// Standard variables
 		declaration = 'This smart contract has been prepared and deployed by Blockchained.Love - it is stored permanently on the Ethereum blockchain and cannot be deleted. The status of the smart contract, represented by the value of the is_active variable, an only be changed by Blockchained.Love following explicit consent from both persons mentioned in the document.';
 		is_active = true;
