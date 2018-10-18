@@ -1,14 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0xb1553c2a1c4bf7d70a36934d30f9e2f8ef440ad4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonKing at 0x0adadf6b6be1afad94d908b6bc4695dada64074c
 */
 /**
- * Note for the truffle testversion:
- * DragonKingTest inherits from DragonKing and adds one more function for testing the volcano from truffle.
- * For deployment on ropsten or mainnet, just deploy the DragonKing contract and remove this comment before verifying on
- * etherscan.
- * */
-
- /**
   * Dragonking is a blockchain game in which players may purchase dragons and knights of different levels and values.
   * Once every period of time the volcano erupts and wipes a few of them from the board. The value of the killed characters
   * gets distributed amongst all of the survivors. The dragon king receive a bigger share than the others.
@@ -21,7 +14,9 @@
 
 pragma solidity ^0.4.24;
 
+// DragonKing v2.0 2e59d4
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -65,6 +60,33 @@ contract Ownable {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
 
 /**
  * @title Destructible
@@ -86,9 +108,13 @@ contract Destructible is Ownable {
   }
 }
 
-contract DragonKingConfig {
+contract DragonKingConfig is Ownable {
 
 
+  /** the Gift token contract **/
+  ERC20 public giftToken;
+  /** amount of gift tokens to send **/
+  uint256 public giftTokenAmount;
   /** the cost of each character type */
   uint128[] public costs;
   /** the value of each character type (cost - fee), so it's not necessary to compute it each time*/
@@ -112,15 +138,11 @@ contract DragonKingConfig {
   uint256 public teleportPrice;
   /** the price for protection */
   uint256 public protectionPrice;
+  /** the luck threshold */
+  uint256 public luckThreshold;
 
+  function hasEnoughTokensToPurchase(address buyer, uint8 characterType) external returns (bool canBuy);
 }
-
-interface Token {
-  function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
-  function transfer(address _to, uint256 _value) external returns (bool success);
-  function balanceOf(address who) external view returns (uint256);
-}
-
 
 contract DragonKing is Destructible {
 
@@ -140,19 +162,21 @@ contract DragonKing is Destructible {
     uint128 value;
     address owner;
     uint64 purchaseTimestamp;
+    uint8 fightCount;
   }
 
   DragonKingConfig public config;
 
-  /** the neverdue token contract used to purchase protection from eruptions and fights */
-  Token public neverdieToken;
+  /** the neverdie token contract used to purchase protection from eruptions and fights */
+  ERC20 neverdieToken;
   /** the teleport token contract used to send knights to the game scene */
-  Token public teleportToken;
-
+  ERC20 teleportToken;
+  /** the luck token contract **/
+  ERC20 luckToken;
   /** the SKL token contract **/
-  Token public sklToken;
+  ERC20 sklToken;
   /** the XP token contract **/
-  Token public xperToken;
+  ERC20 xperToken;
   
 
   /** array holding ids of the curret characters **/
@@ -179,9 +203,9 @@ contract DragonKing is Destructible {
   /** number of characters per type **/
   mapping(uint8 => uint16) public numCharactersXType;
 
-  /** timestampt of the last eruption event **/
+  /** timestamp of the last eruption event **/
   uint256 public lastEruptionTimestamp;
-  /** timestampt of the last castle loot distribution **/
+  /** timestamp of the last castle loot distribution **/
   uint256 public lastCastleLootDistributionTimestamp;
 
   /** character type range constants **/
@@ -203,14 +227,6 @@ contract DragonKing is Destructible {
   uint8 public constant NUMBER_OF_LEVELS = 6;
 
   uint8 public constant INVALID_CHARACTER_TYPE = 27;
-
-  /** minimum amount of XPER and SKL to purchase wizards **/
-  uint8 public MIN_XPER_AMOUNT_TO_PURCHASE_WIZARD = 100;
-  uint8 public MIN_SKL_AMOUNT_TO_PURCHASE_WIZARD = 50;
-
-  /** minimum amount of XPER and SKL to purchase archer **/
-  uint8 public MIN_XPER_AMOUNT_TO_PURCHASE_ARCHER = 10;
-  uint8 public MIN_SKL_AMOUNT_TO_PURCHASE_ARCHER = 5;
 
     /** knight cooldown. contains the timestamp of the earliest possible moment to start a fight */
   mapping(uint32 => uint) public cooldown;
@@ -237,14 +253,25 @@ contract DragonKing is Destructible {
   /** is fired when a castle loot distribution occurs**/
   event NewDistributionCastleLoot(uint128 castleLoot);
 
-  /** initializes the contract parameters  */
-  constructor(address tptAddress, address ndcAddress, address sklAddress, address xperAddress, address _configAddress) public {
+  /* initializes the contract parameter */
+  constructor(address tptAddress, address ndcAddress, address sklAddress, address xperAddress, address luckAddress, address _configAddress) public {
     nextId = 1;
-    teleportToken = Token(tptAddress);
-    neverdieToken = Token(ndcAddress);
-    sklToken = Token(sklAddress);
-    xperToken = Token(xperAddress);
+    teleportToken = ERC20(tptAddress);
+    neverdieToken = ERC20(ndcAddress);
+    sklToken = ERC20(sklAddress);
+    xperToken = ERC20(xperAddress);
+    luckToken = ERC20(luckAddress);
     config = DragonKingConfig(_configAddress);
+  }
+
+  /** 
+    * gifts one character
+    * @param receiver gift character owner
+    * @param characterType type of the character to create as a gift
+    */
+  function giftCharacter(address receiver, uint8 characterType) payable public onlyUser {
+    _addCharacters(receiver, characterType);
+    assert(config.giftToken().transfer(receiver, config.giftTokenAmount()));
   }
 
   /**
@@ -252,8 +279,19 @@ contract DragonKing is Destructible {
    * @param characterType the type of the character
    */
   function addCharacters(uint8 characterType) payable public onlyUser {
+    _addCharacters(msg.sender, characterType);
+  }
+
+  function _addCharacters(address receiver, uint8 characterType) internal {
     uint16 amount = uint16(msg.value / config.costs(characterType));
+    require(
+      amount > 0,
+      "insufficient amount of ether to purchase a given type of character");
     uint16 nchars = numCharacters;
+    require(
+      config.hasEnoughTokensToPurchase(receiver, characterType),
+      "insufficinet amount of tokens to purchase a given type of character"
+    );
     if (characterType >= INVALID_CHARACTER_TYPE || msg.value < config.costs(characterType) || nchars + amount > config.maxCharacters()) revert();
     uint32 nid = nextId;
     //if type exists, enough ether was transferred and there are less than maxCharacters characters in the game
@@ -263,31 +301,19 @@ contract DragonKing is Destructible {
         oldest = nid;
       for (uint8 i = 0; i < amount; i++) {
         addCharacter(nid + i, nchars + i);
-        characters[nid + i] = Character(characterType, config.values(characterType), msg.sender, uint64(now));
+        characters[nid + i] = Character(characterType, config.values(characterType), receiver, uint64(now), 0);
       }
       numCharactersXType[characterType] += amount;
       numCharacters += amount;
     }
     else {
-      uint256 amountSKL = sklToken.balanceOf(msg.sender);
-      uint256 amountXPER = xperToken.balanceOf(msg.sender);
-      if (characterType >= WIZARD_MIN_TYPE && characterType <= WIZARD_MAX_TYPE) {
-        require( amountSKL >= MIN_SKL_AMOUNT_TO_PURCHASE_WIZARD && amountXPER >= MIN_XPER_AMOUNT_TO_PURCHASE_WIZARD, 
-                "insufficient amount of SKL and XPER tokens"
-               );
-      }
-      if (characterType >= ARCHER_MIN_TYPE && characterType <= ARCHER_MAX_TYPE) {
-        require( amountSKL >= MIN_SKL_AMOUNT_TO_PURCHASE_ARCHER && amountXPER >= MIN_XPER_AMOUNT_TO_PURCHASE_ARCHER, 
-                "insufficient amount of SKL and XPER tokens" 
-               );
-      }
       // to enter game knights, mages, and archers should be teleported later
       for (uint8 j = 0; j < amount; j++) {
-        characters[nid + j] = Character(characterType, config.values(characterType), msg.sender, uint64(now));
+        characters[nid + j] = Character(characterType, config.values(characterType), receiver, uint64(now), 0);
       }
     }
     nextId = nid + amount;
-    emit NewPurchase(msg.sender, characterType, amount, nid);
+    emit NewPurchase(receiver, characterType, amount, nid);
   }
 
 
@@ -385,7 +411,7 @@ contract DragonKing is Destructible {
     if(howmany == 0) howmany = 1;//hit at least 1
     uint32[] memory hitCharacters = new uint32[](howmany);
     bool[] memory alreadyHit = new bool[](nextId);
-    uint8 i = 0;
+    uint16 i = 0;
     uint16 j = 0;
     while (i < howmany) {
       j++;
@@ -444,6 +470,13 @@ contract DragonKing is Destructible {
     uint128 value;
     uint16 base_probability;
     uint16 dice = uint16(generateRandomNumber(characterID) % 100);
+    if (luckToken.balanceOf(msg.sender) >= config.luckThreshold()) {
+      base_probability = uint16(generateRandomNumber(dice) % 100);
+      if (base_probability < dice) {
+        dice = base_probability;
+      }
+      base_probability = 0;
+    }
     uint256 characterPower = sklToken.balanceOf(character.owner) / 10**15 + xperToken.balanceOf(character.owner);
     uint256 adversaryPower = sklToken.balanceOf(adversary.owner) / 10**15 + xperToken.balanceOf(adversary.owner);
     
@@ -469,6 +502,11 @@ contract DragonKing is Destructible {
         value = hitCharacter(characterIndex, numCharacters, adversary.characterType);
         if (value > 0) {
           numCharacters--;
+        } else {
+          cooldown[characterID] = now;
+          if (characters[characterID].fightCount < 3) {
+            characters[characterID].fightCount++;
+          }
         }
         if (adversary.characterType >= ARCHER_MIN_TYPE && adversary.characterType <= ARCHER_MAX_TYPE) {
           castleTreasury += value;
@@ -481,6 +519,10 @@ contract DragonKing is Destructible {
       }
     } else {
       // character won
+      cooldown[characterID] = now;
+      if (characters[characterID].fightCount < 3) {
+        characters[characterID].fightCount++;
+      }
       value = hitCharacter(adversaryIndex, numCharacters, character.characterType);
       if (value > 0) {
         numCharacters--;
@@ -493,9 +535,9 @@ contract DragonKing is Destructible {
       if (oldest == 0) findOldest();
       emit NewFight(characterID, adversaryID, value, base_probability, dice);
     }
-    cooldown[characterID] = now;
   }
 
+  
   /*
   * @param characterType
   * @param adversaryType
@@ -599,7 +641,7 @@ contract DragonKing is Destructible {
     }
     //distribute the rest according to their type
     uint128 valueSum;
-    uint8 size = ARCHER_MAX_TYPE;
+    uint8 size = ARCHER_MAX_TYPE + 1;
     uint128[] memory shares = new uint128[](size);
     for (uint8 v = 0; v < size; v++) {
       if ((v < BALLOON_MIN_TYPE || v > BALLOON_MAX_TYPE) && numCharactersXType[v] > 0) {
@@ -663,12 +705,27 @@ contract DragonKing is Destructible {
     destroy();
   }
 
+  function generateLuckFactor(uint128 nonce) internal view returns(uint128) {
+    uint128 sum = 0;
+    uint128 inc = 1;
+    for (uint128 i = 49; i >= 5; i--) {
+      if (sum > nonce) {
+          return i+2;
+      }
+      sum += inc;
+      if (i != 40 && i != 8) {
+          inc += 1;
+      }
+    }
+    return 5;
+  }
+
   /* @dev distributes castle loot among archers */
   function distributeCastleLoot() external onlyUser {
     require(now >= lastCastleLootDistributionTimestamp + config.castleLootDistributionThreshold(),
             "not enough time passed since the last castle loot distribution");
     lastCastleLootDistributionTimestamp = now;
-    uint128 luckFactor = uint128(generateRandomNumber(now) % 51);
+    uint128 luckFactor = generateLuckFactor(uint128(now % 1000));
     if (luckFactor < 5) {
       luckFactor = 5;
     }
@@ -681,7 +738,9 @@ contract DragonKing is Destructible {
     uint8 cType;
     for (uint8 i = 0; i < ids.length; i++) {
       cType = characters[ids[i]].characterType; 
-      if ((cType >= ARCHER_MIN_TYPE && cType <= ARCHER_MAX_TYPE) && (((uint64(now) - characters[ids[i]].purchaseTimestamp) / config.eruptionThreshold()) >= 7)) {
+      if ((cType >= ARCHER_MIN_TYPE && cType <= ARCHER_MAX_TYPE) 
+        && (characters[ids[i]].fightCount >= 3)
+        && (now - characters[ids[i]].purchaseTimestamp >= 7 days)) {
         valueSum += config.values(cType);
         archers[archersCount] = ids[i];
         archersCount++;
@@ -758,7 +817,7 @@ contract DragonKing is Destructible {
 
       uint256 lifePrice;
       uint8 max;
-      if(cType <= KNIGHT_MAX_TYPE || (cType >= ARCHER_MIN_TYPE && cType <= ARCHER_MAX_TYPE)){
+      if(cType <= KNIGHT_MAX_TYPE ){
         lifePrice = ((cType % NUMBER_OF_LEVELS) + 1) * config.protectionPrice();
         max = 3;
       } else if (cType >= BALLOON_MIN_TYPE && cType <= BALLOON_MAX_TYPE) {
@@ -766,6 +825,9 @@ contract DragonKing is Destructible {
         max = 6;
       } else if (cType >= WIZARD_MIN_TYPE && cType <= WIZARD_MAX_TYPE) {
         lifePrice = (((cType+3) % NUMBER_OF_LEVELS) + 1) * config.protectionPrice() * 2;
+        max = 3;
+      } else if (cType >= ARCHER_MIN_TYPE && cType <= ARCHER_MAX_TYPE) {
+        lifePrice = (((cType+3) % NUMBER_OF_LEVELS) + 1) * config.protectionPrice();
         max = 3;
       }
 
@@ -898,6 +960,15 @@ contract DragonKing is Destructible {
     for (uint16 j = 0; j < numCharacters; j++)
       reserved += characters[ids[j]].value;
     return address(this).balance - reserved;
+  }
+
+  /************* SETTERS ****************/
+
+  /**
+   * sets DragonKingConfig
+   * */
+  function setConfig(address _value) public onlyOwner {
+    config = DragonKingConfig(_value);
   }
 
 
