@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NaviCoin at 0xcc1c2bde317802b1e5fa9fa0efd139bd164d809d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NaviCoin at 0xbed3be040a41e64324efd5402ccbfcd38cc0a39d
 */
 pragma solidity ^0.4.24;
 
@@ -323,7 +323,7 @@ contract NaviCoin is Ownable, StandardToken {
     event Issue(address recepient, uint amount);
 
     constructor() public {
-        name = "NAVI COIN";
+        name = "NaviCoin";
         symbol = "NAVI";
         decimals = 8;
     }
