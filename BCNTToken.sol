@@ -1,7 +1,60 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCNTToken at 0xafab85d05600d5256c436ea98810db297e989168
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCNTToken at 0xb2f71443bbdf67d35a3e6915121c118200e5b15b
 */
 pragma solidity ^0.4.24;
+
+pragma solidity ^0.4.24;
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
+    }
+
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -14,7 +67,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
@@ -62,6 +114,8 @@ contract BasicToken is ERC20Basic {
 
 
 
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -80,8 +134,6 @@ contract ERC20 is ERC20Basic {
     uint256 value
   );
 }
-
-
 
 
 
@@ -205,7 +257,6 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-
 /**
  * @title Lock Token
  *
@@ -217,7 +268,6 @@ contract StandardToken is ERC20, BasicToken {
    using SafeMath for uint256;
 
    bool public isPublic;
-   uint256 public unLockTime;
    PrivateToken public privateToken;
 
    modifier onlyPrivateToken() {
@@ -238,12 +288,155 @@ contract StandardToken is ERC20, BasicToken {
      emit Transfer(privateToken, _depositor, _value);
      return true;
    }
-
-   constructor() public {
-     //2050/12/31 00:00:00.
-     unLockTime = 2556057600;
-   }
  }
+
+/**
+ * @title Eliptic curve signature operations
+ * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
+ * TODO Remove this library once solidity supports passing a signature to ecrecover.
+ * See https://github.com/ethereum/solidity/issues/864
+ */
+
+library ECRecovery {
+
+  /**
+   * @dev Recover signer address from a message by using their signature
+   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
+   * @param sig bytes signature, the signature is generated using web3.eth.sign()
+   */
+  function recover(bytes32 hash, bytes sig)
+    internal
+    pure
+    returns (address)
+  {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+
+    // Check the signature length
+    if (sig.length != 65) {
+      return (address(0));
+    }
+
+    // Divide the signature in r, s and v variables
+    // ecrecover takes the signature parameters, and the only way to get them
+    // currently is to use assembly.
+    // solium-disable-next-line security/no-inline-assembly
+    assembly {
+      r := mload(add(sig, 32))
+      s := mload(add(sig, 64))
+      v := byte(0, mload(add(sig, 96)))
+    }
+
+    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
+    if (v < 27) {
+      v += 27;
+    }
+
+    // If the version is correct return the signer address
+    if (v != 27 && v != 28) {
+      return (address(0));
+    } else {
+      // solium-disable-next-line arg-overflow
+      return ecrecover(hash, v, r, s);
+    }
+  }
+
+  /**
+   * toEthSignedMessageHash
+   * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
+   * and hash the result
+   */
+  function toEthSignedMessageHash(bytes32 hash)
+    internal
+    pure
+    returns (bytes32)
+  {
+    // 32 is the length in bytes of hash,
+    // enforced by the type signature above
+    return keccak256(
+      abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
+    );
+  }
+}
+
+contract PrivateToken is StandardToken {
+    using SafeMath for uint256;
+
+    string public name; // solium-disable-line uppercase
+    string public symbol; // solium-disable-line uppercase
+    uint8 public decimals; // solium-disable-line uppercase
+
+    mapping (address => bool) internal superUsers;
+
+    address public admin;
+    bool public isPublic;
+    uint256 public unLockTime;
+    LockToken originToken;
+
+    event StartPublicSale(uint256 unlockTime);
+    event Deposit(address indexed from, uint256 value);
+    /**
+    *  @dev check if msg.sender is allowed to deposit Origin token.
+    */
+    function isDepositAllowed() internal view{
+      // If the tokens isn't public yet all transfering are limited to origin tokens
+      require(isPublic);
+      require(msg.sender == admin || block.timestamp > unLockTime);
+    }
+
+    /**
+    * @dev Deposit msg.sender's origin token to real token
+    */
+    function deposit(address _depositor) public returns (bool){
+      isDepositAllowed();
+      uint256 _value;
+      _value = balances[_depositor];
+      require(_value > 0);
+      balances[_depositor] = 0;
+      require(originToken.deposit(_depositor, _value));
+      emit Deposit(_depositor, _value);
+
+      // This event is for those apps calculate balance from events rather than balanceOf
+      emit Transfer(_depositor, address(0), _value);
+    }
+
+    /**
+    *  @dev Start Public sale and allow admin to deposit the token.
+    *  normal users could deposit their tokens after the tokens unlocked
+    */
+    function startPublicSale(uint256 _unLockTime) public onlyAdmin {
+      require(!isPublic);
+      isPublic = true;
+      unLockTime = _unLockTime;
+      emit StartPublicSale(_unLockTime);
+    }
+
+    /**
+    *  @dev unLock the origin token and start the public sale.
+    */
+    function unLock() public onlyAdmin{
+      require(isPublic);
+      unLockTime = block.timestamp;
+    }
+
+    modifier onlyAdmin() {
+      require(msg.sender == admin);
+      _;
+    }
+
+    constructor(address _admin, string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public{
+      originToken = LockToken(msg.sender);
+      admin = _admin;
+      name = _name;
+      symbol = _symbol;
+      decimals = _decimals;
+      totalSupply_ = _totalSupply;
+      balances[admin] = _totalSupply;
+      emit Transfer(address(0), admin, _totalSupply);
+    }
+}
+
 
 contract BCNTToken is LockToken{
   string public constant name = "Bincentive SIT Token"; // solium-disable-line uppercase
@@ -338,259 +531,7 @@ contract BCNTToken is LockToken{
     constructor(address _admin) public {
         totalSupply_ = INITIAL_SUPPLY;
         privateToken = new PrivateToken(
-          _admin, "Bincentive Private SIT Token", "BCNP-SIT", decimals, INITIAL_SUPPLY
+          _admin, "Bincentive SIT Private Token", "BCNP-SIT", decimals, INITIAL_SUPPLY
        );
-    }
-}
-
-
-/**
- * @title DetailedERC20 token
- * @dev The decimals are only for visualization purposes.
- * All the operations are done using the smallest and indivisible token unit,
- * just as on Ethereum all the operations are done in wei.
- */
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-
-  constructor(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-  }
-}
-
-
-/**
- * @title Eliptic curve signature operations
- * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
- * TODO Remove this library once solidity supports passing a signature to ecrecover.
- * See https://github.com/ethereum/solidity/issues/864
- */
-
-library ECRecovery {
-
-  /**
-   * @dev Recover signer address from a message by using their signature
-   * @param hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
-   * @param sig bytes signature, the signature is generated using web3.eth.sign()
-   */
-  function recover(bytes32 hash, bytes sig)
-    internal
-    pure
-    returns (address)
-  {
-    bytes32 r;
-    bytes32 s;
-    uint8 v;
-
-    // Check the signature length
-    if (sig.length != 65) {
-      return (address(0));
-    }
-
-    // Divide the signature in r, s and v variables
-    // ecrecover takes the signature parameters, and the only way to get them
-    // currently is to use assembly.
-    // solium-disable-next-line security/no-inline-assembly
-    assembly {
-      r := mload(add(sig, 32))
-      s := mload(add(sig, 64))
-      v := byte(0, mload(add(sig, 96)))
-    }
-
-    // Version of signature should be 27 or 28, but 0 and 1 are also possible versions
-    if (v < 27) {
-      v += 27;
-    }
-
-    // If the version is correct return the signer address
-    if (v != 27 && v != 28) {
-      return (address(0));
-    } else {
-      // solium-disable-next-line arg-overflow
-      return ecrecover(hash, v, r, s);
-    }
-  }
-
-  /**
-   * toEthSignedMessageHash
-   * @dev prefix a bytes32 value with "\x19Ethereum Signed Message:"
-   * and hash the result
-   */
-  function toEthSignedMessageHash(bytes32 hash)
-    internal
-    pure
-    returns (bytes32)
-  {
-    // 32 is the length in bytes of hash,
-    // enforced by the type signature above
-    return keccak256(
-      abi.encodePacked("\x19Ethereum Signed Message:\n32", hash)
-    );
-  }
-}
-
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    // Gas optimization: this is cheaper than asserting 'a' not being zero, but the
-    // benefit is lost if 'b' is also tested.
-    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
-    if (a == 0) {
-      return 0;
-    }
-
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-pragma solidity ^0.4.24;
-pragma solidity ^0.4.24;
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-}
-
-
-contract PrivateToken is StandardToken {
-    using SafeMath for uint256;
-
-    string public name; // solium-disable-line uppercase
-    string public symbol; // solium-disable-line uppercase
-    uint8 public decimals; // solium-disable-line uppercase
-
-    address public admin;
-    bool public isPublic;
-    uint256 public unLockTime;
-    LockToken originToken;
-
-    event StartPublicSale(uint256);
-    event Deposit(address indexed from, uint256 value);
-    /**
-    *  @dev check if msg.sender is allowed to deposit Origin token.
-    */
-    function isDepositAllowed() internal view{
-      // If the tokens isn't public yet all transfering are limited to origin tokens
-      require(isPublic);
-      require(msg.sender == admin || block.timestamp > unLockTime);
-    }
-
-    /**
-    * @dev Deposit msg.sender's origin token to real token
-    */
-    function deposit() public returns (bool){
-      isDepositAllowed();
-      uint256 _value;
-      _value = balances[msg.sender];
-      require(_value > 0);
-      balances[msg.sender] = 0;
-      require(originToken.deposit(msg.sender, _value));
-      emit Deposit(msg.sender, _value);
-    }
-
-    /**
-    * @dev Deposit depositor's origin token from privateToken
-    * @param _depositor address The address of whom deposit the token.
-    */
-    function adminDeposit(address _depositor) public onlyAdmin returns (bool){
-      isDepositAllowed();
-      uint256 _value;
-      _value = balances[_depositor];
-      require(_value > 0);
-      balances[_depositor] = 0;
-      require(originToken.deposit(_depositor, _value));
-      emit Deposit(_depositor, _value);
-    }
-
-    /**
-    *  @dev Start Public sale and allow admin to deposit the token.
-    *  normal users could deposit their tokens after the tokens unlocked
-    */
-    function startPublicSale(uint256 _unLockTime) public onlyAdmin {
-      require(!isPublic);
-      isPublic = true;
-      unLockTime = _unLockTime;
-      emit StartPublicSale(_unLockTime);
-    }
-
-    /**
-    *  @dev unLock the origin token and start the public sale.
-    */
-    function unLock() public onlyAdmin{
-      require(isPublic);
-      unLockTime = block.timestamp;
-    }
-
-
-    modifier onlyAdmin() {
-      require(msg.sender == admin);
-      _;
-    }
-
-    constructor(address _admin, string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public{
-      originToken = LockToken(msg.sender);
-      admin = _admin;
-      name = _name;
-      symbol = _symbol;
-      decimals = _decimals;
-      totalSupply_ = _totalSupply;
-      balances[admin] = _totalSupply;
-      emit Transfer(address(0), admin, _totalSupply);
     }
 }
