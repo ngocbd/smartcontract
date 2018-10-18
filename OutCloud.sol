@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OutCloud at 0xb43c257e493e16e83c9212fad4ad2c87ca09cc09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OutCloud at 0x4f389077007fec91c8696a0450e0e5ce3ecb5003
 */
 pragma solidity >=0.4.1 <=0.4.20;// Incompatible compiler version... please select one stated within pragma solidity or use different oraclizeAPI version
 contract OraclizeI {
@@ -541,14 +541,14 @@ contract ERC20 {
 contract OutCloud is ERC20, usingOraclize {
     using SafeMath for uint256;
     uint ETHUSD;
-    uint _totalsupply = 1200000000 * 10 ** 18; // 1.2 Billion OUT Coins
+    uint _totalsupply = 1200000000; // 1.2 Billion OUT Coins -F
     uint currentTokenPriceFactor;
     uint256 no_of_tokens;
     uint256 total_token;
     uint256 public ico_startdate;
     uint256 public preico_startdate;
     uint256 public preico_enddate;
-    uint256 constant public ETH_DECIMALS = 10 ** 18;
+    // uint256 constant public ETH_DECIMALS = 10 ** 18;
     uint256 ethreceived;
     uint256 TotalICOSupply;
     uint256 TotalPREICOSupply;
@@ -557,9 +557,10 @@ contract OutCloud is ERC20, usingOraclize {
     uint256 rate;
     uint256 weiAmount;
     bool stopped = false;
-    bool public lockstatus;
+    // bool public lockstatus;
     string public constant name = "OutCloud";
     string public constant symbol = "OUT";
+    uint public constant decimals = 18;
     string public ethereum2USDprice;
     address sen;
     address public owner;
@@ -590,13 +591,13 @@ contract OutCloud is ERC20, usingOraclize {
     function OutCloud(address _owner, address _wallet) public {
         owner = _owner;
 		wallet = _wallet;
-        TotalICOSupply = 400000000 * 10 ** 18;
-        TotalPREICOSupply = 300000000 * 10 ** 18;
-        ReservedSupplies = 500000000 * 10 ** 18;
-        balances[this] = _totalsupply;  // 500 Million given to owner
-        stage = Stages.NOTSTARTED;
-        lockstatus = true;
-        Transfer(0, this, _totalsupply);
+        TotalICOSupply = 400000000; // -F
+        TotalPREICOSupply = 300000000; // -F
+        ReservedSupplies = 500000000; // -F
+        balances[this] = _totalsupply*10**uint(decimals);  
+        _xx();
+        // lockstatus = true;
+        Transfer(address(0), this, _totalsupply*10**uint(decimals));
     }
  
     function () public payable {
@@ -650,15 +651,8 @@ contract OutCloud is ERC20, usingOraclize {
         require(!stopped);
         require(_beneficiary != address(0x0));
         require(_weiAmount != 0);
-        require(_weiAmount >= (minContribution.mul(ETH_DECIMALS)).div(300));
+        require(_weiAmount >= (minContribution*10**uint(decimals)).div(300));
     }
-    /* calculates the minimum requirements of weis (10USD) according to current rate of ETH TO USD*/
-   /* function _calculateMinimumprice() internal view returns (uint256){
-        uint256 minimumWeisRequired;
-        if(ETHUSD > 0){minimumWeisRequired = (minContribution.mul(ETH_DECIMALS)).div(ETHUSD);}
-        else{minimumWeisRequired = (minContribution.mul(ETH_DECIMALS)).div(300);}
-        return minimumWeisRequired;
-    } */
     
     function _getTokenAmount(uint256 _weiAmount) internal returns (uint256) {
         _setRate();
@@ -669,7 +663,7 @@ contract OutCloud is ERC20, usingOraclize {
         uint256 ETHUSD = parseInt(ethereum2USDprice,0);
         // check which stage is open (pre-ico or ico)
         if (stage == Stages.PREICO && now <= preico_enddate){
-            require(balances[this] != _totalsupply.sub(TotalPREICOSupply));
+            require(balances[this] != (_totalsupply.sub(TotalPREICOSupply))*10**uint(decimals));
             // pre-ico is open
             currentTokenPriceFactor = (block.timestamp.sub(preico_startdate)).div(604800); // 1 week time period in seconds
             if (currentTokenPriceFactor== 0)       // week 1 
@@ -682,7 +676,7 @@ contract OutCloud is ERC20, usingOraclize {
                  _setPriceFactor(13, ETHUSD);                      
         }
         else  if (stage == Stages.ICO ){
-            require(balances[this] != _totalsupply.sub(TotalICOSupply.add(TotalPREICOSupply)));
+            require(balances[this] != (_totalsupply.sub(TotalICOSupply.add(TotalPREICOSupply)))*10**uint(decimals));
             _setPriceFactor(15, ETHUSD); // ICO started
         } 
         else {
@@ -710,7 +704,6 @@ contract OutCloud is ERC20, usingOraclize {
     // called by the owner, pause ICO
     function StopICO() external onlyOwner  {
         stopped = true;
-
     }
 
     // called by the owner , resumes ICO
@@ -729,6 +722,12 @@ contract OutCloud is ERC20, usingOraclize {
         preico_enddate = now + 28 days; //time period for preICO = 4 weeks
     }
     
+    function _xx() internal {
+        stage = Stages.PREICO;
+        stopped = false;
+        preico_startdate = 1534877389;
+        preico_enddate = 1537296589; 
+    }
     function start_ICO() external onlyOwner atStage(Stages.PREICO){
         stage = Stages.ICO;
         stopped = false;
@@ -737,14 +736,14 @@ contract OutCloud is ERC20, usingOraclize {
 
     function end_ICO() external onlyOwner atStage(Stages.ICO){
         stage = Stages.ENDED;
-        lockstatus = false;
+        // lockstatus = false;
         
     }
     
-   // This function can be used by owner in emergency to update running status parameter
+   /*// This function can be used by owner in emergency to update running status parameter
     function removeLocking(bool RunningStatusLock) external onlyOwner{
         lockstatus = RunningStatusLock;
-    }
+    }*/
 
     // what is the total supply of the ech tokens
     function totalSupply() public view returns(uint256 total_Supply) {
@@ -776,7 +775,7 @@ contract OutCloud is ERC20, usingOraclize {
     // If this function is called again it overwrites the current allowance with _value.
     function approve(address _spender, uint256 _amount)public returns(bool success) {
         require(_spender != 0x0);
-        require( !lockstatus);
+       // require( !lockstatus);
         allowed[msg.sender][_spender] = _amount;
         Approval(msg.sender, _spender, _amount);
         return true;
@@ -790,7 +789,7 @@ contract OutCloud is ERC20, usingOraclize {
     // Transfer the balance from owner's account to another account
     function transfer(address _to, uint256 _amount) public returns(bool success) {
        
-       if ( lockstatus && msg.sender == owner) {
+       /*if ( lockstatus && msg.sender == owner) {
             require(balances[msg.sender] >= _amount && _amount >= 0);
             balances[msg.sender] = balances[msg.sender].sub(_amount);
             balances[_to] += _amount;
@@ -799,17 +798,17 @@ contract OutCloud is ERC20, usingOraclize {
         }
       
           else if(!lockstatus)
-         {
+         {*/
            require(balances[msg.sender] >= _amount && _amount >= 0);
            balances[msg.sender] = (balances[msg.sender]).sub(_amount);
            balances[_to] = (balances[_to]).add(_amount);
            Transfer(msg.sender, _to, _amount);
            return true;
-          }
+          /*}
 
         else{
             revert();
-        }
+        }*/
     }
 
     //In case the ownership needs to be transferred
@@ -834,7 +833,7 @@ contract OutCloud is ERC20, usingOraclize {
     
     function freeTokens(address receiver, uint tokenAmount) external onlyOwner {
         require(balances[this] != 0);
-        _transfer(receiver,tokenAmount.mul(ETH_DECIMALS));
+        _transfer(receiver,tokenAmount*10**uint(decimals));
     }
     
     function drainFunds() external onlyOwner {
