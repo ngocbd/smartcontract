@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xa137c51c5bbf624bf944d0fd2973dd3ec5fa5819
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x913d8a7620a5182ed84a48070765f809875eec47
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.20;
 
 contract SafeMath {
   function safeMul(uint256 a, uint256 b) public pure  returns (uint256)  {
@@ -39,17 +39,55 @@ contract ERC20Interface {
   string public symbol;
   uint8 public  decimals;
   uint public totalSupply;
-  
   function transfer(address _to, uint256 _value) returns (bool success);
   function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  
   function approve(address _spender, uint256 _value) returns (bool success);
   function allowance(address _owner, address _spender) view returns (uint256 remaining);
-  
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
   event Approval(address indexed _owner, address indexed _spender, uint256 _value);
  }
  
-contract ERC20 is ERC20Interface,SafeMath{
+ contract owned {
+    address public owner;
+
+    constructor () public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnerShip(address newOwer) public onlyOwner {
+        owner = newOwer;
+    }
+
+}
+
+contract SelfDesctructionContract is owned {
+   
+   string  public someValue;
+   modifier ownerRestricted {
+      require(owner == msg.sender);
+      _;
+   } 
+ 
+   function SelfDesctructionContract() {
+      owner = msg.sender;
+   }
+   
+   function setSomeValue(string value){
+      someValue = value;
+   } 
+
+   function destroyContract() ownerRestricted {
+     selfdestruct(owner);
+   }
+}
+ 
+contract ERC20 is ERC20Interface,SafeMath,SelfDesctructionContract{
 
     mapping(address => uint256) public balanceOf;
 
@@ -57,9 +95,9 @@ contract ERC20 is ERC20Interface,SafeMath{
 
     constructor(string _name) public {
        name = _name;  // "UpChain";
-       symbol = "MCBF";
+       symbol = "DASL";
        decimals = 4;
-       totalSupply = 8800000000000;
+       totalSupply = 1000000000000;
        balanceOf[msg.sender] = totalSupply;
     }
 
