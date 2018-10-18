@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0x62dd86ef72f4b360c8859ee7e45694959b932770
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CandyContract at 0x9c512904e15a40a3afe004a4ecd029fb7838c266
 */
 pragma solidity ^0.4.18;
 
@@ -42,7 +42,7 @@ contract CandyContract is owned{
         address addressOfTokenUsedAsReward,
         address collector
     ) public {
-        totalCandyNo = 1e9;
+        totalCandyNo = 1e6;
         tokenReward = token(addressOfTokenUsedAsReward);
         collectorAddress = collector;
     }
@@ -61,20 +61,20 @@ contract CandyContract is owned{
         totalCandyNo -= amount;
         balanceOf[msg.sender] = amount;
 
-        tokenReward.transfer(msg.sender, amount * 1e18);
+        tokenReward.transfer(msg.sender, amount * 1e8);
         emit FundTransfer(msg.sender, amount, true);
     }
 
     function getCurrentCandyAmount() private view returns (uint amount){
 
-        if (totalCandyNo >= 7.5e8){
-            return 2000;
-        }else if (totalCandyNo >= 5e8){
-            return 1500;
-        }else if (totalCandyNo >= 2.5e8){
-            return 1000;
-        }else if (totalCandyNo >= 500){
-            return 500;
+        if (totalCandyNo >= 7.5e5){
+            return 200;
+        }else if (totalCandyNo >= 5e5){
+            return 150;
+        }else if (totalCandyNo >= 2.5e5){
+            return 100;
+        }else if (totalCandyNo >= 50){
+            return 50;
         }else{
             return 0;
         }
@@ -86,7 +86,7 @@ contract CandyContract is owned{
 
         require(collectorAddress != 0x0);
 
-        tokenReward.transfer(collectorAddress, totalCandyNo * 1e18);
+        tokenReward.transfer(collectorAddress, totalCandyNo * 1e8);
         totalCandyNo = 0;
 
     }
