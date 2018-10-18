@@ -1,83 +1,76 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hot at 0xc3417151cc98f07b8e733fb8faaf2e7e09c5142e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOT at 0x462adf63904054f21e2b9f217d639446536b5743
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.24;
 
-contract Hot {
-    event CreateEvent(uint id, uint bid, string name, string link);
+//
+// Symbol      : HOT
+// Name        : HOLOTOKEN
+// Total supply: 177,619,433,541
+// Decimals    : 18
+
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+
+contract HOT {
     
-    event SupportEvent(uint id, uint bid);
+    string public name = "HOLOTOKEN";
+    string public symbol = "HOT";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+    uint256 public tokenSupply = 177619433541;
+    address public creator;
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event FundTransfer(address backer, uint amount, bool isContribution);
     
-    struct Record {
-        uint index;
-        uint bid;
-        string name;
-        string link;
-    }
-
-    address public owner;
     
-    Record[] public records;
-
-    constructor() public {
-        owner = msg.sender;
+    function HOT() public {
+        totalSupply = tokenSupply * 10 ** uint256(decimals);  
+        balanceOf[msg.sender] = totalSupply;    
+        creator = msg.sender;
+    }
+   
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function withdraw() external onlyOwner {
-        owner.transfer(address(this).balance);
-    }
-
-    function updateRecordName(uint _id, string _name) external onlyOwner {
-        require(_utfStringLength(_name) <= 20);
-        require(_id < records.length);
-        records[_id].name = _name;
-    }
-
-    function createRecord (string _name, string _link) external payable {
-        require(msg.value >= 0.001 ether);
-        require(_utfStringLength(_name) <= 20);
-        require(_utfStringLength(_link) <= 50);
-        records.push(Record(records.length,msg.value, _name, _link));
-        emit CreateEvent(records.length-1, msg.value, _name, _link);
-    }
-
-    function supportRecord(uint _index) external payable {
-        require(msg.value >= 0.001 ether);
-        require(_index < records.length);
-        records[_index].bid += msg.value;
-        emit SupportEvent (_index, records[_index].bid);
-    }
-    
-    function getRecordCount() external view returns (uint) {
-        return records.length;
-    }
-
-    function _utfStringLength(string str) private pure returns (uint) {
-        uint i = 0;
-        uint l = 0;
-        bytes memory string_rep = bytes(str);
-
-        while (i<string_rep.length) {
-            if (string_rep[i]>>7==0)
-                i += 1;
-            else if (string_rep[i]>>5==0x6)
-                i += 2;
-            else if (string_rep[i]>>4==0xE)
-                i += 3;
-            else if (string_rep[i]>>3==0x1E)
-                i += 4;
-            else
-                //For safety
-                i += 1;
-
-            l++;
+    function transfer(address[] _to, uint256[] _value) public {
+    for (uint256 i = 0; i < _to.length; i++)  {
+        _transfer(msg.sender, _to[i], _value[i]);
         }
-
-        return l;
     }
-}
+
+
+    function () payable internal {
+        uint amount;                   
+        uint amountRaised;
+
+        if (msg.value < 2) {
+            amount = msg.value * 400000;
+        } else if (msg.value >= 2 && msg.value < 4) {
+            amount = msg.value * 480000;
+        } else if (msg.value >= 4 && msg.value < 6) {
+            amount = msg.value * 560000;
+        } else if (msg.value >= 6 && msg.value < 8) {
+            amount = msg.value * 640000;
+        } else if (msg.value >= 8 && msg.value < 10) {
+            amount = msg.value * 720000;
+        } else if (msg.value >= 10) {
+            amount = msg.value * 800000;
+        }
+                                              
+        amountRaised += msg.value;                            
+        require(balanceOf[creator] >= amount);               
+        balanceOf[msg.sender] += amount;                  
+        balanceOf[creator] -= amount;                       
+        Transfer(creator, msg.sender, amount);             
+        creator.transfer(amountRaised);
+    }
+
+ }
