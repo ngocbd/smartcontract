@@ -1,13 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xeb784e034f193e570a2744105008aa313b08a1bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FixedSupplyToken at 0xa3b5fdeb5dbc592ffc5e222223376464b9c56fb8
 */
-pragma solidity ^0.4.24;
-
 // ----------------------------------------------------------------------------
-// 'Elink' 'Example Fixed Supply Token' token contract
+// 'FIXED' 'Example Fixed Supply Token' token contract
 //
-// Symbol      : Elink
-// Total supply: 10,000,000,000.000000000000000000
+// Symbol      : FIXED
+// Name        : Example Fixed Supply Token
+// Total supply: 1,000,000.000000000000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -116,10 +115,10 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "Elink";
-        name = "Elink Token";
+        symbol = "FDGT";
+        name = "Fake Doge Token";
         decimals = 18;
-        _totalSupply = 10000000000 * 10**uint(decimals);
+        _totalSupply = 1000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         emit Transfer(address(0), owner, _totalSupply);
     }
@@ -160,7 +159,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -171,7 +170,7 @@ contract FixedSupplyToken is ERC20Interface, Owned {
 
     // ------------------------------------------------------------------------
     // Transfer `tokens` from the `from` account to the `to` account
-    //
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the `from` account and
     // - From account must have sufficient balance to transfer
