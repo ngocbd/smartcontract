@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DProxy at 0xce43e43e4d8e05de68a8483635170c4e73fe1d17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoMo3DProxy at 0xb18ac9b03d784cb03515169bddbb4d09e1687e7c
 */
 pragma solidity ^0.4.24;
 
@@ -2236,8 +2236,8 @@ contract FoMo3DProxy {
     //     _ _  _  |`. _     _ _ |_ | _  _  .
     //    (_(_)| |~|~|(_||_|| (_||_)|(/__\  .  (game settings)
     //=================_|===========================================================
-    // string constant public name = "FoMo3D Proxy";
-    // string constant public symbol = "F3DP";
+    string constant public name = "FoMo3D Proxy";
+    string constant public symbol = "F3DP";
 
     constructor()
     public
