@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0xc0222d25b514b96d7f4c15149d4d1c9ddb095707
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressToken at 0x9b83fcbf3d987660b11b7e1505cfcc1ed03b95de
 */
 pragma solidity ^0.4.24;
 
@@ -848,7 +848,6 @@ contract IAddressDeployerOwner {
     function ownershipTransferred(address _byWhom) public returns(bool);
 }
 
-
 contract AddressDeployer {
     address public owner = msg.sender;
 
@@ -867,7 +866,6 @@ contract AddressDeployer {
     }
 
     function deploy(bytes _data) public onlyOwner {
-        // solium-disable-next-line security/no-low-level-calls
         require(address(0).call(_data));
         selfdestruct(msg.sender);
     }
@@ -895,14 +893,12 @@ contract AddressToken is ERC721Full("AddressToken", "ATKN"), IAddressDeployerOwn
     }
 
     function burn(uint256 _tokenId) public returns(bool) {
-        require(_isApprovedOrOwner(msg.sender, _tokenId));
         _burn(msg.sender, _tokenId);
         AddressDeployer(_tokenId).transferOwnership(msg.sender);
         return true;
     }
 
     function deploy(uint256 _tokenId, bytes _data) public returns(bool) {
-        require(_isApprovedOrOwner(msg.sender, _tokenId));
         _burn(msg.sender, _tokenId);
         AddressDeployer(_tokenId).deploy(_data);
         return true;
@@ -914,20 +910,19 @@ contract AddressToken is ERC721Full("AddressToken", "ATKN"), IAddressDeployerOwn
     }
 
     // https://solidity.readthedocs.io/en/v0.4.24/assembly.html#example
-    function bytecodeAt(address _addr) public view returns(bytes outCode) {
-        // solium-disable-next-line security/no-inline-assembly
+    function bytecodeAt(address _addr) public view returns(bytes o_code) {
         assembly {
             // retrieve the size of the code, this needs assembly
             let size := extcodesize(_addr)
             // allocate output byte array - this could also be done without assembly
-            // by using outCode = new bytes(size)
-            outCode := mload(0x40)
+            // by using o_code = new bytes(size)
+            o_code := mload(0x40)
             // new "memory end" including padding
-            mstore(0x40, add(outCode, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+            mstore(0x40, add(o_code, and(add(add(size, 0x20), 0x1f), not(0x1f))))
             // store length in memory
-            mstore(outCode, size)
+            mstore(o_code, size)
             // actually retrieve the code, this needs assembly
-            extcodecopy(_addr, add(outCode, 0x20), 0, size)
+            extcodecopy(_addr, add(o_code, 0x20), 0, size)
         }
     }
 
@@ -936,17 +931,17 @@ contract AddressToken is ERC721Full("AddressToken", "ATKN"), IAddressDeployerOwn
         bytes memory alphabet = "0123456789abcdef";
         
         bytes memory str = new bytes(51);
-        str[0] = "e";
-        str[1] = "t";
-        str[2] = "h";
-        str[3] = "e";
-        str[4] = "r";
-        str[5] = "e";
-        str[6] = "u";
-        str[7] = "m";
-        str[8] = ":";
-        str[9] = "0";
-        str[10] = "x";
+        str[0] = 'e';
+        str[1] = 't';
+        str[2] = 'h';
+        str[3] = 'e';
+        str[4] = 'r';
+        str[5] = 'e';
+        str[6] = 'u';
+        str[7] = 'm';
+        str[8] = ':';
+        str[9] = '0';
+        str[10] = 'x';
         for (uint i = 0; i < 20; i++) {
             str[11+i*2] = alphabet[uint(value[i + 12] >> 4)];
             str[12+i*2] = alphabet[uint(value[i + 12] & 0x0f)];
@@ -955,7 +950,6 @@ contract AddressToken is ERC721Full("AddressToken", "ATKN"), IAddressDeployerOwn
     }
 
     function firstAddressFromDeployer(address _deployer) public pure returns(address) {
-        // solium-disable-next-line arg-overflow
         return address(keccak256(abi.encodePacked(byte(0xd6), byte(0x94), _deployer, byte(1))));
     }
 }
