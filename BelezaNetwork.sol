@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BelezaNetwork at 0xdddc7291f23356952b36982a1df5e4a161537ebb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BelezaNetwork at 0x53d53464a636d61c928f3ab18ad76d378bbb359c
 */
 pragma solidity ^0.4.18;
 
@@ -71,7 +71,7 @@ contract BelezaNetwork is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
-    address multisig = 0x0f50b03A123a739Ac550788dAb7CcBFb1f7FeF69;
+    address multisig = 0x5021296614796dea5b223bdf15c9110e0e61dba1;
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;    
