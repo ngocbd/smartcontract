@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyToken at 0xf682654f7f32b96e3da871a1dc41389ddfebf538
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyToken at 0xe6a97415bbea239f98e2b699a6e1c5c46523792e
 */
 pragma solidity ^0.4.24;
 
@@ -509,7 +509,7 @@ contract BurnableToken is MintableToken {
  * @title BUYToken
  */
 contract BuyToken is BurnableToken {
-    string public constant name = "Buy Tokens";
+    string public constant name = "BUY";
     string public constant symbol = "BUY";
     uint8 public constant decimals = 18;
 
