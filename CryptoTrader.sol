@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTrader at 0xbc519388cb4b903f8654e2978c5d57f2ec606f1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTrader at 0x61658990dfdd653aff5198e209a688c5195b5c79
 */
 pragma solidity ^0.4.24;
 /*
@@ -48,10 +48,10 @@ contract CryptoTrader {
  event Approval(address indexed owner, address indexed buyer, uint256 value);
  event Burn(address indexed burner, uint256 value);
 
- string public constant name = "Token1";
- string public constant symbol = "TOK1";
+ string public constant name = "Digital Humanity Token";
+ string public constant symbol = "DHT";
  uint8 public decimals = 0;
- uint public start_sale = 1537434000; // start of presale Thu, 20 Sep 2018 09:00:00 GMT
+ uint public start_sale = 1537952400; // start of presale Thu, 26 Sep 2018 09:00:00 GMT
  uint public presalePeriod = 61; // presale period in days
  address public affiliateAddress ;
 
@@ -129,6 +129,7 @@ contract CryptoTrader {
  * @param _to The address to transfer to.
  * @param _value The amount to be transferred.
  */
+ 
  function transfer(address _to, uint256 _value) public returns (bool) {
      require(_to != address(0));
      require(_value <= balances[msg.sender]);
@@ -147,6 +148,7 @@ contract CryptoTrader {
  * @param _eth_price spended eth for buying tokens.
  * @param _usd_amount spended usd for buying tokens.
  */
+ 
  function transferSale(address _to, uint256 _value, uint256 _eth_price, uint256 _usd_amount) public  returns (bool success) {
      transfer(_to, _value);
      ETHBalance[_to] = ETHBalance[_to].add(_eth_price);
@@ -158,6 +160,7 @@ contract CryptoTrader {
  * @dev Burns a specific amount of tokens.
  * @param _value The amount of token to be burned.
  */
+ 
  function burn(uint256 _value) public {
      require(_value <= balances[msg.sender]);
      address burner = msg.sender;
@@ -170,6 +173,7 @@ contract CryptoTrader {
  * @dev Refund request.
  * @param _to The address for refund.
  */
+ 
  function refund(address _to) public payable returns(bool){
      require(address(this).balance > 0);
      uint256 _value = balances[_to];
@@ -189,6 +193,7 @@ contract CryptoTrader {
  * @dev Deposit contrac.
  * @param _value The amount to be transferred.
  */
+ 
  function depositContrac(uint256 _value) public payable returns(bool){
      approve(address(this), _value);
      return  address(this).send(_value);
