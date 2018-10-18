@@ -1,162 +1,177 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilToken at 0x3893b9422cd5d70a81edeffe3d5a1c6a978310bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MithrilToken at 0x9b61bfb425e2fd59673981761dad6f7119ede645
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @dev Math operations with safety checks that revert on error
  */
 library SafeMath {
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+  /**
+  * @dev Multiplies two numbers, reverts on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+    // benefit is lost if 'b' is also tested.
+    // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+    if (a == 0) {
+      return 0;
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    uint256 c = a * b;
+    require(c / a == b);
+
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers truncating the quotient, reverts on division by zero.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b > 0); // Solidity only automatically asserts when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a);
+    uint256 c = a - b;
+
+    return c;
+  }
+
+  /**
+  * @dev Adds two numbers, reverts on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a);
+
+    return c;
+  }
+
+  /**
+  * @dev Divides two numbers and returns the remainder (unsigned integer modulo),
+  * reverts when dividing by zero.
+  */
+  function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0);
+    return a % b;
+  }
 }
 
-/**
- * @title Owned
- * @dev Ownership model
- */
-contract Owned {
+
+contract MithrilToken {
+    mapping(address => uint256) public balances;
+    mapping(address => mapping (address => uint256)) public allowed;
+    using SafeMath for uint256;
     address public owner;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-    event OwnershipTransfered(address indexed owner);
+    uint256 private constant MAX_UINT256 = 2**256 -1 ;
 
-    function Owned() public {
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    
+    bool lock = false;
+
+    constructor(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+    ) public {
         owner = msg.sender;
+        balances[msg.sender] = _initialAmount;
+        totalSupply = _initialAmount;
+        name = _tokenName;
+        decimals = _decimalUnits;
+        symbol = _tokenSymbol;
+        
     }
-
-    modifier onlyOwner {
+	
+	
+	modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
+    modifier isLock {
+        require(!lock);
+        _;
+    }
+    
+    function setLock(bool _lock) onlyOwner public{
+        lock = _lock;
+    }
+
     function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-        OwnershipTransfered(owner);
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
     }
-}
+	
+	
 
-/**
- * @title ERC20Token
- * @dev Interface for erc20 standard
- */
-contract ERC20Token {
-
-    using SafeMath for uint256;
-
-    string public constant name = "Mithril Token";
-    string public constant symbol = "MITH";
-    uint8 public constant decimals = 18;
-    uint256 public totalSupply;
-
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed from, uint256 value, address indexed to, bytes extraData);
-
-    function ERC20Token() public {
-    }
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address from, address to, uint256 value) internal {
-        // Check if the sender has enough balance
-        require(balanceOf[from] >= value);
-
-        // Check for overflow
-        require(balanceOf[to] + value > balanceOf[to]);
-
-        // Save this for an amount double check assertion
-        uint256 previousBalances = balanceOf[from].add(balanceOf[to]);
-
-        balanceOf[from] = balanceOf[from].sub(value);
-        balanceOf[to] = balanceOf[to].add(value);
-
-        Transfer(from, to, value);
-
-        // Asserts for duplicate check. Should never fail.
-        assert(balanceOf[from].add(balanceOf[to]) == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `value` tokens to `to` from your account
-     *
-     * @param to The address of the recipient
-     * @param value the amount to send
-     */
-    function transfer(address to, uint256 value) public {
-        _transfer(msg.sender, to, value);
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `value` tokens to `to` in behalf of `from`
-     *
-     * @param from The address of the sender
-     * @param to The address of the recipient
-     * @param value the amount to send
-     */
-    function transferFrom(address from, address to, uint256 value) public returns (bool success) {
-        require(value <= allowance[from][msg.sender]);
-        allowance[from][msg.sender] = allowance[from][msg.sender].sub(value);
-        _transfer(from, to, value);
+    function transfer(
+        address _to,
+        uint256 _value
+    ) public returns (bool) {
+        require(balances[msg.sender] >= _value);
+        require(msg.sender == _to || balances[_to] <= MAX_UINT256 - _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `spender` to spend no more than `value` tokens in your behalf
-     *
-     * @param spender The address authorized to spend
-     * @param value the max amount they can spend
-     * @param extraData some extra information to send to the approved contract
-     */
-    function approve(address spender, uint256 value, bytes extraData) public returns (bool success) {
-        allowance[msg.sender][spender] = value;
-        Approval(msg.sender, value, spender, extraData);
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public returns (bool) {
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value);
+        require(_from == _to || balances[_to] <= MAX_UINT256 -_value);
+        require(allowance >= _value);
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        emit Transfer(_from, _to, _value);
         return true;
     }
-}
 
-/**
- * @title MithrilToken
- * @dev MithrilToken
- */
-contract MithrilToken is Owned, ERC20Token {
-
-    // Address where funds are collected.
-    address public vault;
-    address public wallet;
-
-    function MithrilToken() public {
+    function balanceOf(
+        address _owner
+    ) public view returns (uint256) {
+        return balances[_owner];
     }
 
-    function init(uint256 _supply, address _vault, address _wallet) public onlyOwner {
-        require(vault == 0x0);
-        require(_vault != 0x0);
-
-        totalSupply = _supply;
-        vault = _vault;
-        wallet = _wallet;
-        balanceOf[vault] = totalSupply;
+    function approve(
+        address _spender,
+        uint256 _value
+    ) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    function () payable public {
-        wallet.transfer(msg.value);
+    function allowance(
+        address _owner,
+        address _spender
+    ) public view returns (uint256) {
+        return allowed[_owner][_spender];
     }
 }
