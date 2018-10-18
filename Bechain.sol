@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bechain at 0x78a46fcd4c02cbb5e7ac3b037594e31067027fd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BECHAIN at 0xafca07564b2902232e5de6de6cea884fb967819a
 */
 pragma solidity ^0.4.19;
-
-
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -54,7 +52,7 @@ interface Token {
     function balanceOf(address _owner) constant public returns (uint256 balance);
 }
 
-contract Bechain is ERC20 {
+contract BECHAIN is ERC20 {
     
     using SafeMath for uint256;
     address owner = msg.sender;
@@ -63,12 +61,12 @@ contract Bechain is ERC20 {
     mapping (address => mapping (address => uint256)) allowed;
     mapping (address => bool) public blacklist;
 
-    string public constant name = "Bechain";
+    string public constant name = "BECHAIN";
     string public constant symbol = "BCN";
     uint public constant decimals = 8;
     
-    uint256 public totalSupply = 10000000000e8;
-    uint256 public totalDistributed = 1000000000e8;
+    uint256 public totalSupply = 100000000e8;
+    uint256 public totalDistributed = 10000000e8;
     uint256 public totalRemaining = totalSupply.sub(totalDistributed);
     uint256 public value;
 
@@ -97,9 +95,9 @@ contract Bechain is ERC20 {
         _;
     }
     
-    function Bechain () public {
+    function BCN () public {
         owner = msg.sender;
-        value = 4000e8;
+        value = 400e8;
         distr(owner, totalDistributed);
     }
     
