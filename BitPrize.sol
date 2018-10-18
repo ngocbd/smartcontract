@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitPrize at 0xc66265e7520d6e26d9e71377277367c518bf1613
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitPrize at 0x2bd0d7b81d6dc0ae5f1268acc4bd153911c82823
 */
 pragma solidity ^0.4.18;
 
@@ -115,7 +115,7 @@ contract BitPrize is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Bitprize() public {
+    function BitPrize() public {
         symbol = "BTP";
         name = "BitPrize";
         decimals = 8;
