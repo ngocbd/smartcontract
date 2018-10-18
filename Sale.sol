@@ -1,105 +1,163 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xf2fb97a06a655a602bf87317f8fedf4285313777
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xcad646f892aec0e4c7210344bc413aeab9bbc928
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
 /*
-
-  BASIC ERC20 Sale Contract
-  
-  Create this Sale contract first! 
-  
-     Sale(address ethwallet)   // this will send the received ETH funds to this address
-
-
-  @author Hunter Long
-  @repo https://github.com/hunterlong/ethereum-ico-contract
-
+    Sale(address ethwallet)   // this will send the received ETH funds to this address
+  @author Yumerium Ltd
 */
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  function mintToken(address to, uint256 value) returns (uint256);
-  function changeTransfer(bool allowed);
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
+contract YumeriumManager {
+    function getYumerium(uint256 value, address sender) external returns (uint256);
+}
 
 contract Sale {
+    uint public saleEnd1 = 1535846400 + 1 days; //9/3/2018 @ 12:00am (UTC)
+    uint public saleEnd2 = saleEnd1 + 1 days; //9/4/2018 @ 12:00am (UTC)
+    uint public saleEnd3 = saleEnd2 + 1 days; //9/5/2018 @ 12:00am (UTC)
+    uint public saleEnd4 = 1539129600; //10/10/2018 @ 12:00am (UTC)
+    uint256 public minEthValue = 10 ** 15; // 0.001 eth
 
-    uint256 public maxMintable;
-    uint256 public totalMinted;
-    uint public exchangeRate;
-    bool public isFunding;
-    ERC20 public Token;
-    address public ETHWallet;
-
-    bool private configSet;
-    address public creator;
+    uint256 public totalPariticpants = 0;
+    uint256 public adjustedValue = 0;
+    mapping(address => Renowned) public renownedPlayers; // map for the player information
+    mapping(bytes8 => address) public referral; // map for the player information
+    
+    using SafeMath for uint256;
+    uint256 public maxSale;
+    uint256 public totalSaled;
+    
+    YumeriumManager public manager;
+    address public owner;
 
     event Contribution(address from, uint256 amount);
 
-    function Sale(address _wallet) {
-        maxMintable = 10000000000000000000000000000; 
-        ETHWallet = _wallet;
-        isFunding = true;
-        creator = msg.sender;
-        exchangeRate = 25000;
+    constructor(address _manager_address) public {
+        maxSale = 316906850 * 10 ** 8; 
+        manager = YumeriumManager(_manager_address);
+        owner = msg.sender;
     }
 
-    // setup function to be ran only 1 time
-    // setup token address
-    function setup(address token_address) {
-        require(!configSet);
-        Token = ERC20(token_address);
-        configSet = true;
-    }
-
-    function closeSale() external {
-      require(msg.sender==creator);
-      isFunding = false;
-    }
-    
-    function () payable {
-        this.contribute();
+    function () external payable {
+        buy("");
     }
 
     // CONTRIBUTE FUNCTION
     // converts ETH to TOKEN and sends new TOKEN to the sender
-    function contribute() external payable {
-        require(msg.value>0);
-        require(isFunding);
-        uint256 amount = msg.value * exchangeRate;
-        uint256 total = totalMinted + amount;
-        require(total<=maxMintable);
-        totalMinted += amount;
-        ETHWallet.transfer(msg.value);
-        Token.mintToken(msg.sender, amount);
-        Contribution(msg.sender, amount);
+    function contribute(bytes8 referralCode) external payable {
+        buy(referralCode);
+    }
+    
+    function becomeRenown() public payable {
+        generateRenown();
+        owner.transfer(msg.value);
     }
 
-    // update the ETH/COIN rate
-    function updateRate(uint256 rate) external {
-        require(msg.sender==creator);
-        require(isFunding);
-        exchangeRate = rate;
+    function generateRenown() private {
+        require(!renownedPlayers[msg.sender].isRenowned, "You already registered as renowned!");
+        bytes8 referralCode = bytes8(keccak256(abi.encodePacked(totalPariticpants + adjustedValue)));
+        // check hash collision and regenerate hash value again
+        while (renownedPlayers[referral[referralCode]].isRenowned)
+        {
+            adjustedValue = adjustedValue.add(1);
+            referralCode = bytes8(keccak256(abi.encodePacked(totalPariticpants + adjustedValue)));
+        }
+        renownedPlayers[msg.sender].addr = msg.sender;
+        renownedPlayers[msg.sender].referralCode = referralCode;
+        renownedPlayers[msg.sender].isRenowned = true;
+        referral[renownedPlayers[msg.sender].referralCode] = msg.sender;
+        totalPariticpants = totalPariticpants.add(1);
+    }
+    
+    function buy(bytes8 referralCode) internal {
+        require(msg.value>=minEthValue);
+        require(now < saleEnd4); // main sale postponed
+
+        // distribution for referral
+        uint256 remainEth = msg.value;
+        if (referral[referralCode] != msg.sender && renownedPlayers[referral[referralCode]].isRenowned)
+        {
+            uint256 referEth = msg.value.mul(10).div(100);
+            referral[referralCode].transfer(referEth);
+            remainEth = remainEth.sub(referEth);
+        }
+
+        if (!renownedPlayers[msg.sender].isRenowned)
+        {
+            generateRenown();
+        }
+        
+        uint256 amount = manager.getYumerium(msg.value, msg.sender);
+        uint256 total = totalSaled.add(amount);
+        owner.transfer(remainEth);
+        
+        require(total<=maxSale);
+        
+        totalSaled = total;
+        
+        emit Contribution(msg.sender, amount);
     }
 
-    // change creator address
-    function changeCreator(address _creator) external {
-        require(msg.sender==creator);
-        creator = _creator;
+    // change yumo address
+    function changeManagerAddress(address _manager_address) external {
+        require(msg.sender==owner, "You are not an owner!");
+        manager = YumeriumManager(_manager_address);
+    }
+    // change yumo address
+    function changeTeamWallet(address _team_address) external {
+        require(msg.sender==owner, "You are not an owner!");
+        owner = YumeriumManager(_team_address);
     }
 
-    // change transfer status for ERC20 token
-    function changeTransferStats(bool _allowed) external {
-        require(msg.sender==creator);
-        Token.changeTransfer(_allowed);
+    struct Renowned {
+        bool isRenowned;
+        address addr;
+        bytes8 referralCode;
     }
-
 }
