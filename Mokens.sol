@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0x11d40887eea3723574a4b51ad4da24d208d09f5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mokens at 0x2ae517a1f56798a7b4030da41edf5cd6d0feb1be
 */
 pragma solidity 0.4.24;
 pragma experimental "v0.5.0";
@@ -43,6 +43,8 @@ pragma experimental "v0.5.0";
 /******************************************************************************/
 ///////////////////////////////////////////////////////////////////////////////////
 //Storage contracts
+////////////
+//Some delegate contracts are listed with storage contracts they inherit.
 ///////////////////////////////////////////////////////////////////////////////////
 //Mokens
 ///////////////////////////////////////////////////////////////////////////////////
