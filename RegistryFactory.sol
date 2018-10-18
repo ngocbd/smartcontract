@@ -1,28 +1,137 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegistryFactory at 0xcc0df91b86795f21c3d43dbeb3ede0dfcf8dccaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RegistryFactory at 0x74bd1d07a158e8a9eecfbd2267766f5919e2b21c
 */
 pragma solidity ^0.4.20;
 
-// File: attrstore/AttributeStore.sol
+// File: tokens/eip20/EIP20Interface.sol
 
-pragma solidity^0.4.11;
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
+pragma solidity ^0.4.8;
 
-library AttributeStore {
-    struct Data {
-        mapping(bytes32 => uint) store;
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256 balance);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+// File: tokens/eip20/EIP20.sol
+
+/*
+Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
+pragma solidity ^0.4.8;
+
+
+contract EIP20 is EIP20Interface {
+
+    uint256 constant MAX_UINT256 = 2**256 - 1;
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
+
+     function EIP20(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+        ) public {
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
-    function getAttribute(Data storage self, bytes32 _UUID, string _attrName)
-    public view returns (uint) {
-        bytes32 key = keccak256(_UUID, _attrName);
-        return self.store[key];
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
-    function setAttribute(Data storage self, bytes32 _UUID, string _attrName, uint _attrVal)
-    public {
-        bytes32 key = keccak256(_UUID, _attrName);
-        self.store[key] = _attrVal;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        Transfer(_from, _to, _value);
+        return true;
     }
+
+    function balanceOf(address _owner) view public returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender)
+    view public returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
 // File: dll/DLL.sol
@@ -112,55 +221,26 @@ library DLL {
   }
 }
 
-// File: tokens/eip20/EIP20Interface.sol
+// File: attrstore/AttributeStore.sol
 
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.8;
+pragma solidity^0.4.11;
 
-contract EIP20Interface {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+library AttributeStore {
+    struct Data {
+        mapping(bytes32 => uint) store;
+    }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public view returns (uint256 balance);
+    function getAttribute(Data storage self, bytes32 _UUID, string _attrName)
+    public view returns (uint) {
+        bytes32 key = keccak256(_UUID, _attrName);
+        return self.store[key];
+    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function setAttribute(Data storage self, bytes32 _UUID, string _attrName, uint _attrVal)
+    public {
+        bytes32 key = keccak256(_UUID, _attrName);
+        self.store[key] = _attrVal;
+    }
 }
 
 // File: zeppelin/math/SafeMath.sol
@@ -208,7 +288,7 @@ contract PLCRVoting {
     // ============
 
     event _VoteCommitted(uint indexed pollID, uint numTokens, address indexed voter);
-    event _VoteRevealed(uint indexed pollID, uint numTokens, uint votesFor, uint votesAgainst, uint indexed choice, address indexed voter);
+    event _VoteRevealed(uint indexed pollID, uint numTokens, uint votesFor, uint votesAgainst, uint indexed choice, address indexed voter, uint salt);
     event _PollCreated(uint voteQuorum, uint commitEndDate, uint revealEndDate, uint indexed pollID, address indexed creator);
     event _VotingRightsGranted(uint numTokens, address indexed voter);
     event _VotingRightsWithdrawn(uint numTokens, address indexed voter);
@@ -228,8 +308,9 @@ contract PLCRVoting {
         uint voteQuorum;	    /// number of votes required for a proposal to pass
         uint votesFor;		    /// tally of votes supporting proposal
         uint votesAgainst;      /// tally of votes countering proposal
-        mapping(address => bool) didCommit;  /// indicates whether an address committed a vote for this poll
+        mapping(address => bool) didCommit;   /// indicates whether an address committed a vote for this poll
         mapping(address => bool) didReveal;   /// indicates whether an address revealed a vote for this poll
+        mapping(address => uint) voteOptions; /// stores the voteOption of an address that revealed
     }
 
     // ============
@@ -252,7 +333,7 @@ contract PLCRVoting {
     @param _token The address where the ERC20 token contract is deployed
     */
     function init(address _token) public {
-        require(_token != 0 && address(token) == 0);
+        require(_token != address(0) && address(token) == address(0));
 
         token = EIP20Interface(_token);
         pollNonce = INITIAL_POLL_NONCE;
@@ -404,7 +485,7 @@ contract PLCRVoting {
         require(revealPeriodActive(_pollID));
         require(pollMap[_pollID].didCommit[msg.sender]);                         // make sure user has committed a vote for this poll
         require(!pollMap[_pollID].didReveal[msg.sender]);                        // prevent user from revealing multiple times
-        require(keccak256(_voteOption, _salt) == getCommitHash(msg.sender, _pollID)); // compare resultant hash from inputs to original commitHash
+        require(keccak256(abi.encodePacked(_voteOption, _salt)) == getCommitHash(msg.sender, _pollID)); // compare resultant hash from inputs to original commitHash
 
         uint numTokens = getNumTokens(msg.sender, _pollID);
 
@@ -416,8 +497,9 @@ contract PLCRVoting {
 
         dllMap[msg.sender].remove(_pollID); // remove the node referring to this vote upon reveal
         pollMap[_pollID].didReveal[msg.sender] = true;
+        pollMap[_pollID].voteOptions[msg.sender] = _voteOption;
 
-        emit _VoteRevealed(_pollID, numTokens, pollMap[_pollID].votesFor, pollMap[_pollID].votesAgainst, _voteOption, msg.sender);
+        emit _VoteRevealed(_pollID, numTokens, pollMap[_pollID].votesFor, pollMap[_pollID].votesAgainst, _voteOption, msg.sender, _salt);
     }
 
     /**
@@ -438,19 +520,18 @@ contract PLCRVoting {
     }
 
     /**
-    @param _pollID Integer identifier associated with target poll
-    @param _salt Arbitrarily chosen integer used to generate secretHash
-    @return correctVotes Number of tokens voted for winning option
+    @param _voter           Address of voter who voted in the majority bloc
+    @param _pollID          Integer identifier associated with target poll
+    @return correctVotes    Number of tokens voted for winning option
     */
-    function getNumPassingTokens(address _voter, uint _pollID, uint _salt) public constant returns (uint correctVotes) {
+    function getNumPassingTokens(address _voter, uint _pollID) public constant returns (uint correctVotes) {
         require(pollEnded(_pollID));
         require(pollMap[_pollID].didReveal[_voter]);
 
         uint winningChoice = isPassed(_pollID) ? 1 : 0;
-        bytes32 winnerHash = keccak256(winningChoice, _salt);
-        bytes32 commitHash = getCommitHash(_voter, _pollID);
+        uint voterVoteOption = pollMap[_pollID].voteOptions[_voter];
 
-        require(winnerHash == commitHash);
+        require(voterVoteOption == winningChoice, "Voter revealed, but not in the majority");
 
         return getNumTokens(_voter, _pollID);
     }
@@ -634,28 +715,28 @@ contract PLCRVoting {
     */
     function getInsertPointForNumTokens(address _voter, uint _numTokens, uint _pollID)
     constant public returns (uint prevNode) {
-      // Get the last node in the list and the number of tokens in that node
-      uint nodeID = getLastNode(_voter);
-      uint tokensInNode = getNumTokens(_voter, nodeID);
+        // Get the last node in the list and the number of tokens in that node
+        uint nodeID = getLastNode(_voter);
+        uint tokensInNode = getNumTokens(_voter, nodeID);
 
-      // Iterate backwards through the list until reaching the root node
-      while(nodeID != 0) {
-        // Get the number of tokens in the current node
-        tokensInNode = getNumTokens(_voter, nodeID);
-        if(tokensInNode <= _numTokens) { // We found the insert point!
-          if(nodeID == _pollID) {
-            // This is an in-place update. Return the prev node of the node being updated
+        // Iterate backwards through the list until reaching the root node
+        while(nodeID != 0) {
+            // Get the number of tokens in the current node
+            tokensInNode = getNumTokens(_voter, nodeID);
+            if(tokensInNode <= _numTokens) { // We found the insert point!
+                if(nodeID == _pollID) {
+                    // This is an in-place update. Return the prev node of the node being updated
+                    nodeID = dllMap[_voter].getPrev(nodeID);
+                }
+                // Return the insert point
+                return nodeID; 
+            }
+            // We did not find the insert point. Continue iterating backwards through the list
             nodeID = dllMap[_voter].getPrev(nodeID);
-          }
-          // Return the insert point
-          return nodeID; 
         }
-        // We did not find the insert point. Continue iterating backwards through the list
-        nodeID = dllMap[_voter].getPrev(nodeID);
-      }
 
-      // The list is empty, or a smaller value than anything else in the list is being inserted
-      return nodeID;
+        // The list is empty, or a smaller value than anything else in the list is being inserted
+        return nodeID;
     }
 
     // ----------------
@@ -677,8 +758,153 @@ contract PLCRVoting {
     @return UUID Hash which is deterministic from _user and _pollID
     */
     function attrUUID(address _user, uint _pollID) public pure returns (bytes32 UUID) {
-        return keccak256(_user, _pollID);
+        return keccak256(abi.encodePacked(_user, _pollID));
     }
+}
+
+// File: plcr-revival/ProxyFactory.sol
+
+/***
+* Shoutouts:
+* 
+* Bytecode origin https://www.reddit.com/r/ethereum/comments/6ic49q/any_assembly_programmers_willing_to_write_a/dj5ceuw/
+* Modified version of Vitalik's https://www.reddit.com/r/ethereum/comments/6c1jui/delegatecall_forwarders_how_to_save_5098_on/
+* Credits to Jorge Izquierdo (@izqui) for coming up with this design here: https://gist.github.com/izqui/7f904443e6d19c1ab52ec7f5ad46b3a8
+* Credits to Stefan George (@Georgi87) for inspiration for many of the improvements from Gnosis Safe: https://github.com/gnosis/gnosis-safe-contracts
+* 
+* This version has many improvements over the original @izqui's library like using REVERT instead of THROWing on failed calls.
+* It also implements the awesome design pattern for initializing code as seen in Gnosis Safe Factory: https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/ProxyFactory.sol
+* but unlike this last one it doesn't require that you waste storage on both the proxy and the proxied contracts (v. https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/Proxy.sol#L8 & https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/GnosisSafe.sol#L14)
+* 
+* 
+* v0.0.2
+* The proxy is now only 60 bytes long in total. Constructor included.
+* No functionalities were added. The change was just to make the proxy leaner.
+* 
+* v0.0.3
+* Thanks @dacarley for noticing the incorrect check for the subsequent call to the proxy. ?
+* Note: I'm creating a new version of this that doesn't need that one call.
+*       Will add tests and put this in its own repository soon™. 
+* 
+* v0.0.4
+* All the merit in this fix + update of the factory is @dacarley 's. ?
+* Thank you! ?
+*
+* Potential updates can be found at https://gist.github.com/GNSPS/ba7b88565c947cfd781d44cf469c2ddb
+* 
+***/
+
+pragma solidity ^0.4.19;
+
+/* solhint-disable no-inline-assembly, indent, state-visibility, avoid-low-level-calls */
+
+contract ProxyFactory {
+    event ProxyDeployed(address proxyAddress, address targetAddress);
+    event ProxiesDeployed(address[] proxyAddresses, address targetAddress);
+
+    function createManyProxies(uint256 _count, address _target, bytes _data)
+        public
+    {
+        address[] memory proxyAddresses = new address[](_count);
+
+        for (uint256 i = 0; i < _count; ++i) {
+            proxyAddresses[i] = createProxyImpl(_target, _data);
+        }
+
+        emit ProxiesDeployed(proxyAddresses, _target);
+    }
+
+    function createProxy(address _target, bytes _data)
+        public
+        returns (address proxyContract)
+    {
+        proxyContract = createProxyImpl(_target, _data);
+
+        emit ProxyDeployed(proxyContract, _target);
+    }
+    
+    function createProxyImpl(address _target, bytes _data)
+        internal
+        returns (address proxyContract)
+    {
+        assembly {
+            let contractCode := mload(0x40) // Find empty storage location using "free memory pointer"
+           
+            mstore(add(contractCode, 0x0b), _target) // Add target address, with a 11 bytes [i.e. 23 - (32 - 20)] offset to later accomodate first part of the bytecode
+            mstore(sub(contractCode, 0x09), 0x000000000000000000603160008181600b9039f3600080808080368092803773) // First part of the bytecode, shifted left by 9 bytes, overwrites left padding of target address
+            mstore(add(contractCode, 0x2b), 0x5af43d828181803e808314602f57f35bfd000000000000000000000000000000) // Final part of bytecode, offset by 43 bytes
+
+            proxyContract := create(0, contractCode, 60) // total length 60 bytes
+            if iszero(extcodesize(proxyContract)) {
+                revert(0, 0)
+            }
+           
+            // check if the _data.length > 0 and if it is forward it to the newly created contract
+            let dataLength := mload(_data) 
+            if iszero(iszero(dataLength)) {
+                if iszero(call(gas, proxyContract, 0, add(_data, 0x20), dataLength, 0, 0)) {
+                    revert(0, 0)
+                }
+            }
+        }
+    }
+}
+
+// File: plcr-revival/PLCRFactory.sol
+
+contract PLCRFactory {
+
+  event newPLCR(address creator, EIP20 token, PLCRVoting plcr);
+
+  ProxyFactory public proxyFactory;
+  PLCRVoting public canonizedPLCR;
+
+  /// @dev constructor deploys a new canonical PLCRVoting contract and a proxyFactory.
+  constructor() public {
+    canonizedPLCR = new PLCRVoting();
+    proxyFactory = new ProxyFactory();
+  }
+
+  /*
+  @dev deploys and initializes a new PLCRVoting contract that consumes a token at an address
+  supplied by the user.
+  @param _token an EIP20 token to be consumed by the new PLCR contract
+  */
+  function newPLCRBYOToken(EIP20 _token) public returns (PLCRVoting) {
+    PLCRVoting plcr = PLCRVoting(proxyFactory.createProxy(canonizedPLCR, ""));
+    plcr.init(_token);
+
+    emit newPLCR(msg.sender, _token, plcr);
+
+    return plcr;
+  }
+  
+  /*
+  @dev deploys and initializes a new PLCRVoting contract and an EIP20 to be consumed by the PLCR's
+  initializer.
+  @param _supply the total number of tokens to mint in the EIP20 contract
+  @param _name the name of the new EIP20 token
+  @param _decimals the decimal precision to be used in rendering balances in the EIP20 token
+  @param _symbol the symbol of the new EIP20 token
+  */
+  function newPLCRWithToken(
+    uint _supply,
+    string _name,
+    uint8 _decimals,
+    string _symbol
+  ) public returns (PLCRVoting) {
+    // Create a new token and give all the tokens to the PLCR creator
+    EIP20 token = new EIP20(_supply, _name, _decimals, _symbol);
+    token.transfer(msg.sender, _supply);
+
+    // Create and initialize a new PLCR contract
+    PLCRVoting plcr = PLCRVoting(proxyFactory.createProxy(canonizedPLCR, ""));
+    plcr.init(token);
+
+    emit newPLCR(msg.sender, token, plcr);
+
+    return plcr;
+  }
 }
 
 // File: contracts/Parameterizer.sol
@@ -797,6 +1023,12 @@ contract Parameterizer {
 
         // type of majority out of 100 necessary for proposal success in parameterizer
         set("pVoteQuorum", _parameters[11]);
+
+        // minimum length of time user has to wait to exit the registry 
+        set("exitTimeDelay", _parameters[12]);
+
+        // maximum length of time user can wait to exit the registry
+        set("exitPeriodLen", _parameters[13]);
     }
 
     // -----------------------
@@ -810,10 +1042,10 @@ contract Parameterizer {
     */
     function proposeReparameterization(string _name, uint _value) public returns (bytes32) {
         uint deposit = get("pMinDeposit");
-        bytes32 propID = keccak256(_name, _value);
+        bytes32 propID = keccak256(abi.encodePacked(_name, _value));
 
-        if (keccak256(_name) == keccak256("dispensationPct") ||
-            keccak256(_name) == keccak256("pDispensationPct")) {
+        if (keccak256(abi.encodePacked(_name)) == keccak256(abi.encodePacked("dispensationPct")) ||
+            keccak256(abi.encodePacked(_name)) == keccak256(abi.encodePacked("pDispensationPct"))) {
             require(_value <= 100);
         }
 
@@ -870,7 +1102,7 @@ contract Parameterizer {
         //take tokens from challenger
         require(token.transferFrom(msg.sender, this, deposit));
 
-        var (commitEndDate, revealEndDate,) = voting.pollMap(pollID);
+        (uint commitEndDate, uint revealEndDate,,,) = voting.pollMap(pollID);
 
         emit _NewChallenge(_propID, pollID, commitEndDate, revealEndDate, msg.sender);
         return pollID;
@@ -924,23 +1156,23 @@ contract Parameterizer {
     /**
     @notice                 Claim the tokens owed for the msg.sender in the provided challenge
     @param _challengeID     the challenge ID to claim tokens for
-    @param _salt            the salt used to vote in the challenge being withdrawn for
     */
-    function claimReward(uint _challengeID, uint _salt) public {
+    function claimReward(uint _challengeID) public {
+        Challenge storage challenge = challenges[_challengeID];
         // ensure voter has not already claimed tokens and challenge results have been processed
-        require(challenges[_challengeID].tokenClaims[msg.sender] == false);
-        require(challenges[_challengeID].resolved == true);
+        require(challenge.tokenClaims[msg.sender] == false);
+        require(challenge.resolved == true);
 
-        uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID, _salt);
-        uint reward = voterReward(msg.sender, _challengeID, _salt);
+        uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID);
+        uint reward = voterReward(msg.sender, _challengeID);
 
         // subtract voter's information to preserve the participation ratios of other voters
         // compared to the remaining pool of rewards
-        challenges[_challengeID].winningTokens -= voterTokens;
-        challenges[_challengeID].rewardPool -= reward;
+        challenge.winningTokens -= voterTokens;
+        challenge.rewardPool -= reward;
 
         // ensures a voter cannot claim tokens again
-        challenges[_challengeID].tokenClaims[msg.sender] = true;
+        challenge.tokenClaims[msg.sender] = true;
 
         emit _RewardClaimed(_challengeID, reward, msg.sender);
         require(token.transfer(msg.sender, reward));
@@ -950,15 +1182,11 @@ contract Parameterizer {
     @dev                    Called by a voter to claim their rewards for each completed vote.
                             Someone must call updateStatus() before this can be called.
     @param _challengeIDs    The PLCR pollIDs of the challenges rewards are being claimed for
-    @param _salts           The salts of a voter's commit hashes in the given polls
     */
-    function claimRewards(uint[] _challengeIDs, uint[] _salts) public {
-        // make sure the array lengths are the same
-        require(_challengeIDs.length == _salts.length);
-
+    function claimRewards(uint[] _challengeIDs) public {
         // loop through arrays, claiming each individual vote reward
         for (uint i = 0; i < _challengeIDs.length; i++) {
-            claimReward(_challengeIDs[i], _salts[i]);
+            claimReward(_challengeIDs[i]);
         }
     }
 
@@ -970,14 +1198,13 @@ contract Parameterizer {
     @dev                Calculates the provided voter's token reward for the given poll.
     @param _voter       The address of the voter whose reward balance is to be returned
     @param _challengeID The ID of the challenge the voter's reward is being calculated for
-    @param _salt        The salt of the voter's commit hash in the given poll
     @return             The uint indicating the voter's reward
     */
-    function voterReward(address _voter, uint _challengeID, uint _salt)
+    function voterReward(address _voter, uint _challengeID)
     public view returns (uint) {
         uint winningTokens = challenges[_challengeID].winningTokens;
         uint rewardPool = challenges[_challengeID].rewardPool;
-        uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID, _salt);
+        uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID);
         return (voterTokens * rewardPool) / winningTokens;
     }
 
@@ -1028,7 +1255,7 @@ contract Parameterizer {
     @param _name the key whose value is to be determined
     */
     function get(string _name) public view returns (uint value) {
-        return params[keccak256(_name)];
+        return params[keccak256(abi.encodePacked(_name))];
     }
 
     /**
@@ -1077,233 +1304,8 @@ contract Parameterizer {
     @param _value the value to set the param to be set
     */
     function set(string _name, uint _value) private {
-        params[keccak256(_name)] = _value;
+        params[keccak256(abi.encodePacked(_name))] = _value;
     }
-}
-
-// File: plcr-revival/ProxyFactory.sol
-
-/***
-* Shoutouts:
-* 
-* Bytecode origin https://www.reddit.com/r/ethereum/comments/6ic49q/any_assembly_programmers_willing_to_write_a/dj5ceuw/
-* Modified version of Vitalik's https://www.reddit.com/r/ethereum/comments/6c1jui/delegatecall_forwarders_how_to_save_5098_on/
-* Credits to Jorge Izquierdo (@izqui) for coming up with this design here: https://gist.github.com/izqui/7f904443e6d19c1ab52ec7f5ad46b3a8
-* Credits to Stefan George (@Georgi87) for inspiration for many of the improvements from Gnosis Safe: https://github.com/gnosis/gnosis-safe-contracts
-* 
-* This version has many improvements over the original @izqui's library like using REVERT instead of THROWing on failed calls.
-* It also implements the awesome design pattern for initializing code as seen in Gnosis Safe Factory: https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/ProxyFactory.sol
-* but unlike this last one it doesn't require that you waste storage on both the proxy and the proxied contracts (v. https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/Proxy.sol#L8 & https://github.com/gnosis/gnosis-safe-contracts/blob/master/contracts/GnosisSafe.sol#L14)
-* 
-* 
-* v0.0.2
-* The proxy is now only 60 bytes long in total. Constructor included.
-* No functionalities were added. The change was just to make the proxy leaner.
-* 
-* v0.0.3
-* Thanks @dacarley for noticing the incorrect check for the subsequent call to the proxy. ?
-* Note: I'm creating a new version of this that doesn't need that one call.
-*       Will add tests and put this in its own repository soon™. 
-* 
-* v0.0.4
-* All the merit in this fix + update of the factory is @dacarley 's. ?
-* Thank you! ?
-*
-* Potential updates can be found at https://gist.github.com/GNSPS/ba7b88565c947cfd781d44cf469c2ddb
-* 
-***/
-
-pragma solidity ^0.4.19;
-
-/* solhint-disable no-inline-assembly, indent, state-visibility, avoid-low-level-calls */
-
-contract ProxyFactory {
-    event ProxyDeployed(address proxyAddress, address targetAddress);
-    event ProxiesDeployed(address[] proxyAddresses, address targetAddress);
-
-    function createManyProxies(uint256 _count, address _target, bytes _data)
-        public
-    {
-        address[] memory proxyAddresses = new address[](_count);
-
-        for (uint256 i = 0; i < _count; ++i) {
-            proxyAddresses[i] = createProxyImpl(_target, _data);
-        }
-
-        ProxiesDeployed(proxyAddresses, _target);
-    }
-
-    function createProxy(address _target, bytes _data)
-        public
-        returns (address proxyContract)
-    {
-        proxyContract = createProxyImpl(_target, _data);
-
-        ProxyDeployed(proxyContract, _target);
-    }
-    
-    function createProxyImpl(address _target, bytes _data)
-        internal
-        returns (address proxyContract)
-    {
-        assembly {
-            let contractCode := mload(0x40) // Find empty storage location using "free memory pointer"
-           
-            mstore(add(contractCode, 0x0b), _target) // Add target address, with a 11 bytes [i.e. 23 - (32 - 20)] offset to later accomodate first part of the bytecode
-            mstore(sub(contractCode, 0x09), 0x000000000000000000603160008181600b9039f3600080808080368092803773) // First part of the bytecode, shifted left by 9 bytes, overwrites left padding of target address
-            mstore(add(contractCode, 0x2b), 0x5af43d828181803e808314602f57f35bfd000000000000000000000000000000) // Final part of bytecode, offset by 43 bytes
-
-            proxyContract := create(0, contractCode, 60) // total length 60 bytes
-            if iszero(extcodesize(proxyContract)) {
-                revert(0, 0)
-            }
-           
-            // check if the _data.length > 0 and if it is forward it to the newly created contract
-            let dataLength := mload(_data) 
-            if iszero(iszero(dataLength)) {
-                if iszero(call(gas, proxyContract, 0, add(_data, 0x20), dataLength, 0, 0)) {
-                    revert(0, 0)
-                }
-            }
-        }
-    }
-}
-
-// File: tokens/eip20/EIP20.sol
-
-/*
-Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
-pragma solidity ^0.4.8;
-
-
-contract EIP20 is EIP20Interface {
-
-    uint256 constant MAX_UINT256 = 2**256 - 1;
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show.
-    string public symbol;                 //An identifier: eg SBX
-
-     function EIP20(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) public {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        uint256 allowance = allowed[_from][msg.sender];
-        require(balances[_from] >= _value && allowance >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        if (allowance < MAX_UINT256) {
-            allowed[_from][msg.sender] -= _value;
-        }
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) view public returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender)
-    view public returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-// File: plcr-revival/PLCRFactory.sol
-
-contract PLCRFactory {
-
-  event newPLCR(address creator, EIP20 token, PLCRVoting plcr);
-
-  ProxyFactory public proxyFactory;
-  PLCRVoting public canonizedPLCR;
-
-  /// @dev constructor deploys a new canonical PLCRVoting contract and a proxyFactory.
-  constructor() {
-    canonizedPLCR = new PLCRVoting();
-    proxyFactory = new ProxyFactory();
-  }
-
-  /*
-  @dev deploys and initializes a new PLCRVoting contract that consumes a token at an address
-  supplied by the user.
-  @param _token an EIP20 token to be consumed by the new PLCR contract
-  */
-  function newPLCRBYOToken(EIP20 _token) public returns (PLCRVoting) {
-    PLCRVoting plcr = PLCRVoting(proxyFactory.createProxy(canonizedPLCR, ""));
-    plcr.init(_token);
-
-    emit newPLCR(msg.sender, _token, plcr);
-
-    return plcr;
-  }
-  
-  /*
-  @dev deploys and initializes a new PLCRVoting contract and an EIP20 to be consumed by the PLCR's
-  initializer.
-  @param _supply the total number of tokens to mint in the EIP20 contract
-  @param _name the name of the new EIP20 token
-  @param _decimals the decimal precision to be used in rendering balances in the EIP20 token
-  @param _symbol the symbol of the new EIP20 token
-  */
-  function newPLCRWithToken(
-    uint _supply,
-    string _name,
-    uint8 _decimals,
-    string _symbol
-  ) public returns (PLCRVoting) {
-    // Create a new token and give all the tokens to the PLCR creator
-    EIP20 token = new EIP20(_supply, _name, _decimals, _symbol);
-    token.transfer(msg.sender, _supply);
-
-    // Create and initialize a new PLCR contract
-    PLCRVoting plcr = PLCRVoting(proxyFactory.createProxy(canonizedPLCR, ""));
-    plcr.init(token);
-
-    emit newPLCR(msg.sender, token, plcr);
-
-    return plcr;
-  }
 }
 
 // File: contracts/ParameterizerFactory.sol
@@ -1395,11 +1397,12 @@ contract Registry {
     event _ApplicationWhitelisted(bytes32 indexed listingHash);
     event _ApplicationRemoved(bytes32 indexed listingHash);
     event _ListingRemoved(bytes32 indexed listingHash);
-    event _ListingWithdrawn(bytes32 indexed listingHash);
+    event _ListingWithdrawn(bytes32 indexed listingHash, address indexed owner);
     event _TouchAndRemoved(bytes32 indexed listingHash);
     event _ChallengeFailed(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _ChallengeSucceeded(bytes32 indexed listingHash, uint indexed challengeID, uint rewardPool, uint totalTokens);
     event _RewardClaimed(uint indexed challengeID, uint reward, address indexed voter);
+    event _ExitInitialized(bytes32 indexed listingHash, uint exitTime, uint exitDelayEndDate, address indexed owner);
 
     using SafeMath for uint;
 
@@ -1409,6 +1412,8 @@ contract Registry {
         address owner;          // Owner of Listing
         uint unstakedDeposit;   // Number of tokens in the listing not locked in a challenge
         uint challengeID;       // Corresponds to a PollID in PLCRVoting
+	uint exitTime;		// Time the listing may leave the registry
+        uint exitTimeExpiry;    // Expiration date of exit period
     }
 
     struct Challenge {
@@ -1512,22 +1517,47 @@ contract Registry {
     }
 
     /**
-    @dev                Allows the owner of a listingHash to remove the listingHash from the whitelist
-                        Returns all tokens to the owner of the listingHash
-    @param _listingHash A listingHash msg.sender is the owner of.
+    @dev		Initialize an exit timer for a listing to leave the whitelist
+    @param _listingHash	A listing hash msg.sender is the owner of
     */
-    function exit(bytes32 _listingHash) external {
+    function initExit(bytes32 _listingHash) external {	
         Listing storage listing = listings[_listingHash];
 
         require(msg.sender == listing.owner);
         require(isWhitelisted(_listingHash));
-
         // Cannot exit during ongoing challenge
         require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
 
-        // Remove listingHash & return tokens
+        // Ensure user never initializedExit or exitPeriodLen passed
+        require(listing.exitTime == 0 || now > listing.exitTimeExpiry);
+
+        // Set when the listing may be removed from the whitelist
+        listing.exitTime = now.add(parameterizer.get("exitTimeDelay"));
+	// Set exit period end time
+	listing.exitTimeExpiry = listing.exitTime.add(parameterizer.get("exitPeriodLen"));
+        emit _ExitInitialized(_listingHash, listing.exitTime,
+            listing.exitTimeExpiry, msg.sender);
+    }
+
+    /**
+    @dev		Allow a listing to leave the whitelist
+    @param _listingHash A listing hash msg.sender is the owner of
+    */
+    function finalizeExit(bytes32 _listingHash) external {
+        Listing storage listing = listings[_listingHash];
+
+        require(msg.sender == listing.owner);
+        require(isWhitelisted(_listingHash));
+        // Cannot exit during ongoing challenge
+        require(listing.challengeID == 0 || challenges[listing.challengeID].resolved);
+
+        // Make sure the exit was initialized
+        require(listing.exitTime > 0);
+        // Time to exit has to be after exit delay but before the exitPeriodLen is over 
+	require(listing.exitTime < now && now < listing.exitTimeExpiry);
+
         resetListing(_listingHash);
-        emit _ListingWithdrawn(_listingHash);
+        emit _ListingWithdrawn(_listingHash, msg.sender);
     }
 
     // -----------------------
@@ -1582,7 +1612,7 @@ contract Registry {
         // Takes tokens from challenger
         require(token.transferFrom(msg.sender, this, minDeposit));
 
-        var (commitEndDate, revealEndDate,) = voting.pollMap(pollID);
+        (uint commitEndDate, uint revealEndDate,,,) = voting.pollMap(pollID);
 
         emit _Challenge(_listingHash, pollID, _data, commitEndDate, revealEndDate, msg.sender);
         return pollID;
@@ -1623,23 +1653,25 @@ contract Registry {
     @dev                Called by a voter to claim their reward for each completed vote. Someone
                         must call updateStatus() before this can be called.
     @param _challengeID The PLCR pollID of the challenge a reward is being claimed for
-    @param _salt        The salt of a voter's commit hash in the given poll
     */
-    function claimReward(uint _challengeID, uint _salt) public {
-        // Ensures the voter has not already claimed tokens and challenge results have been processed
-        require(challenges[_challengeID].tokenClaims[msg.sender] == false);
-        require(challenges[_challengeID].resolved == true);
+    function claimReward(uint _challengeID) public {
+        Challenge storage challengeInstance = challenges[_challengeID];
+        // Ensures the voter has not already claimed tokens and challengeInstance results have
+        // been processed
+        require(challengeInstance.tokenClaims[msg.sender] == false);
+        require(challengeInstance.resolved == true);
 
-        uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID, _salt);
-        uint reward = voterReward(msg.sender, _challengeID, _salt);
+        uint voterTokens = voting.getNumPassingTokens(msg.sender, _challengeID);
+        uint reward = voterTokens.mul(challengeInstance.rewardPool)
+                      .div(challengeInstance.totalTokens);
 
         // Subtracts the voter's information to preserve the participation ratios
         // of other voters compared to the remaining pool of rewards
-        challenges[_challengeID].totalTokens -= voterTokens;
-        challenges[_challengeID].rewardPool -= reward;
+        challengeInstance.totalTokens -= voterTokens;
+        challengeInstance.rewardPool -= reward;
 
         // Ensures a voter cannot claim tokens again
-        challenges[_challengeID].tokenClaims[msg.sender] = true;
+        challengeInstance.tokenClaims[msg.sender] = true;
 
         require(token.transfer(msg.sender, reward));
 
@@ -1650,15 +1682,11 @@ contract Registry {
     @dev                 Called by a voter to claim their rewards for each completed vote. Someone
                          must call updateStatus() before this can be called.
     @param _challengeIDs The PLCR pollIDs of the challenges rewards are being claimed for
-    @param _salts        The salts of a voter's commit hashes in the given polls
     */
-    function claimRewards(uint[] _challengeIDs, uint[] _salts) public {
-        // make sure the array lengths are the same
-        require(_challengeIDs.length == _salts.length);
-
+    function claimRewards(uint[] _challengeIDs) public {
         // loop through arrays, claiming each individual vote reward
         for (uint i = 0; i < _challengeIDs.length; i++) {
-            claimReward(_challengeIDs[i], _salts[i]);
+            claimReward(_challengeIDs[i]);
         }
     }
 
@@ -1670,15 +1698,14 @@ contract Registry {
     @dev                Calculates the provided voter's token reward for the given poll.
     @param _voter       The address of the voter whose reward balance is to be returned
     @param _challengeID The pollID of the challenge a reward balance is being queried for
-    @param _salt        The salt of the voter's commit hash in the given poll
     @return             The uint indicating the voter's reward
     */
-    function voterReward(address _voter, uint _challengeID, uint _salt)
+    function voterReward(address _voter, uint _challengeID)
     public view returns (uint) {
         uint totalTokens = challenges[_challengeID].totalTokens;
         uint rewardPool = challenges[_challengeID].rewardPool;
-        uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID, _salt);
-        return (voterTokens * rewardPool) / totalTokens;
+        uint voterTokens = voting.getNumPassingTokens(_voter, _challengeID);
+        return voterTokens.mul(rewardPool).div(totalTokens);
     }
 
     /**
