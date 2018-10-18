@@ -1,14 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BankrollLending at 0x4648f996d538676a11870fbe52d53c4de0423609
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BankrollLending at 0x6fcc56c41bfdb62fd09bb208c0de9dcc40efeb1a
 */
 /**
+ * Test & Staging servers.
  * Allows EDG token holders to lend the Edgeless Casino tokens for the bankroll.
  * Users may pay in their tokens at any time, but they will only be used for the bankroll
  * begining from the next cycle. When the cycle is closed (at the end of the month), they may
  * withdraw their stake of the bankroll. The casino may decide to limit the number of tokens
  * used for the bankroll. The user will be able to withdraw the remaining tokens along with the
  * bankroll tokens once per cycle.
- * author: Julia Altenried
+ * author: Rytis Grincevicius
  * */
 
 pragma solidity ^0.4.21;
