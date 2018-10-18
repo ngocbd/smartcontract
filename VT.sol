@@ -1,11 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VT at 0x38405fa410c6eba342f9eb5ac66b2aaf6498c8e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VT at 0xa8a0f9ca860649ddc83e98298b71179d82f75769
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract VT {
+contract owned {
+  address public owner;
+  function owned() {
+      owner = msg.sender;
+  }
+
+  modifier onlyOwner {
+      require(msg.sender == owner);
+      _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+      owner = newOwner;
+  }
+}
+
+
+contract VT is owned {
     // Public variables of the token
     string public name;
     string public symbol;
@@ -16,6 +33,10 @@ contract VT {
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public frozenAccount;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -49,6 +70,9 @@ contract VT {
         require(balanceOf[_from] >= _value);
         // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
+
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+        require(!frozenAccount[_to]);                       // Check if recipient is frozen
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
@@ -152,5 +176,13 @@ contract VT {
         totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
         return true;
+    }
+
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
     }
 }
